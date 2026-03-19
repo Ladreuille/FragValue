@@ -1,209 +1,201 @@
-// app.js — FragValue Frontend Logic
-// Appelle /api/stats, affiche le dashboard, génère les graphiques Chart.js
+// app.js — FragValue Scout Frontend
 
-// ── Permet aussi d'appuyer sur Entrée dans le champ ────────────────────────
-document.getElementById('steamInput').addEventListener('keydown', e => {
+document.getElementById('nickInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') searchPlayer();
 });
 
-// ── Références Chart.js (pour détruire avant de recréer) ──────────────────
-let chartWeapons = null;
-let chartWinrate = null;
+let chartKd = null;
+let chartHs = null;
 
-// ── Fonction principale ────────────────────────────────────────────────────
 async function searchPlayer() {
-  const input   = document.getElementById('steamInput');
-  const steamid = input.value.trim();
+  const input    = document.getElementById('nickInput');
+  const nickname = input.value.trim();
 
-  // Reset état
-  hideError();
-  hideDashboard();
+  hideError(); hideDashboard();
 
-  // Validation légère côté client
-  if (!steamid) {
-    showError('Entre ton SteamID64 avant de lancer la recherche.');
-    return;
-  }
+  if (!nickname) { showError('Entre un pseudo FACEIT.'); return; }
 
-  if (!/^\d{17}$/.test(steamid)) {
-    showError('SteamID invalide — il doit contenir exactement 17 chiffres. Utilise steamidfinder.com pour retrouver le tien.');
-    return;
-  }
-
-  // Affiche le loader
   showLoading(true);
   document.getElementById('searchBtn').disabled = true;
 
   try {
-    const res  = await fetch(`/api/stats?steamid=${steamid}`);
+    const res  = await fetch(`/api/scout?nickname=${encodeURIComponent(nickname)}`);
     const data = await res.json();
-
-    if (!res.ok) {
-      showError(data.error || 'Erreur inconnue.');
-      return;
-    }
-
+    if (!res.ok) { showError(data.error || 'Erreur inconnue.'); return; }
     renderDashboard(data);
-
-  } catch (err) {
-    showError('Impossible de contacter le serveur. Vérifie ta connexion et réessaie.');
+  } catch {
+    showError('Impossible de contacter le serveur. Vérifie ta connexion.');
   } finally {
     showLoading(false);
     document.getElementById('searchBtn').disabled = false;
   }
 }
 
-// ── Rendu du dashboard ─────────────────────────────────────────────────────
 function renderDashboard(data) {
-  const { player, stats, weapons } = data;
+  const { player, cs2, lifetime, recent, teams } = data;
 
-  // Scroll vers le dashboard
-  document.getElementById('hero').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  // Profil
-  const avatarEl = document.getElementById('profileAvatar');
+  // ── Profil ───────────────────────────────────────────────────────────────
   if (player.avatar) {
-    avatarEl.outerHTML = `<img class="profile-avatar" id="profileAvatar" src="${player.avatar}" alt="Avatar"/>`;
+    const img = document.createElement('img');
+    img.className = 'profile-avatar';
+    img.src = player.avatar;
+    img.alt = player.nickname;
+    document.getElementById('profileAvatar').replaceWith(img);
   }
-  document.getElementById('profileName').textContent = player.name;
-  document.getElementById('profileId').textContent   = `SteamID64: ${player.steamid}`;
+  document.getElementById('profileName').textContent    = player.nickname;
+  document.getElementById('profileCountry').textContent = player.country ? `🌍 ${player.country.toUpperCase()}` : '';
 
-  // Badges dynamiques
-  const badges = document.getElementById('profileBadges');
-  badges.innerHTML = '';
+  const lvl = cs2.level || 1;
+  const levelBadge = document.getElementById('levelBadge');
+  levelBadge.textContent  = `LEVEL ${lvl}`;
+  levelBadge.className    = `level-badge lvl-${lvl}`;
+  document.getElementById('eloVal').textContent = cs2.elo.toLocaleString();
 
-  const kdNum = parseFloat(stats.kd);
-  if (kdNum >= 1.5) addBadge(badges, `K/D ${stats.kd} — Excellent`, 'badge-green');
-  else if (kdNum >= 1.0) addBadge(badges, `K/D ${stats.kd} — Positif`, 'badge-accent');
-  else addBadge(badges, `K/D ${stats.kd}`, 'badge-orange');
+  if (teams.length > 0) {
+    document.getElementById('profileTeam').textContent = `Équipe : ${teams[0].name}`;
+  }
 
-  if (parseFloat(stats.hsPercent) >= 50) addBadge(badges, 'HS Machine', 'badge-green');
-  if (stats.hoursPlayed >= 1000) addBadge(badges, `${stats.hoursPlayed}h jouées`, 'badge-accent');
-  if (stats.mvpCount >= 500)    addBadge(badges, `${stats.mvpCount} MVPs`, 'badge-orange');
+  // Recent results dots
+  const resultsRow = document.getElementById('resultsRow');
+  resultsRow.innerHTML = '';
+  const recentRes = lifetime.recentResults || [];
+  recentRes.slice(0, 10).forEach(r => {
+    const dot = document.createElement('div');
+    dot.className = `res-dot ${r === '1' ? 'res-w' : 'res-l'}`;
+    resultsRow.appendChild(dot);
+  });
 
-  // KPI cards
-  const kpiGrid = document.getElementById('kpiGrid');
-  kpiGrid.innerHTML = '';
+  // ── Scout Score ──────────────────────────────────────────────────────────
+  const kdScore  = Math.min(parseFloat(recent.avgKd)  / 2.5 * 100, 100);
+  const hsScore  = Math.min(parseFloat(recent.avgHs)  / 70  * 100, 100);
+  const eloScore = Math.min(cs2.elo / 3000 * 100, 100);
+  const wrScore  = Math.min(parseFloat(recent.winRate), 100);
+  const totalScore = Math.round((kdScore * .35) + (hsScore * .2) + (eloScore * .3) + (wrScore * .15));
 
-  const kpis = [
-    { label: 'K/D Ratio',     value: stats.kd,                   cls: kdNum >= 1 ? 'good' : 'warn',   sub: `${stats.kills.toLocaleString()} kills / ${stats.deaths.toLocaleString()} morts` },
-    { label: 'Win Rate',      value: `${stats.winRate}%`,         cls: parseFloat(stats.winRate) >= 50 ? 'good' : 'warn', sub: `${stats.wins.toLocaleString()} victoires` },
-    { label: 'Headshot %',    value: `${stats.hsPercent}%`,       cls: parseFloat(stats.hsPercent) >= 40 ? 'good' : 'accent', sub: `${stats.hsKills.toLocaleString()} HS` },
-    { label: 'Précision',     value: `${stats.accuracy}%`,        cls: 'accent',   sub: `${stats.shotsHit.toLocaleString()} tirs au but` },
-    { label: 'Kills totaux',  value: stats.kills.toLocaleString(), cls: 'accent',  sub: `${stats.roundsPlayed.toLocaleString()} rounds joués` },
-    { label: 'MVPs',          value: stats.mvpCount.toLocaleString(), cls: 'good', sub: `${stats.hoursPlayed}h de jeu` },
+  document.getElementById('scoutScore').textContent = totalScore;
+  document.getElementById('scoutDesc').textContent  = scoreLabel(totalScore);
+
+  const barsData = [
+    { label: 'K/D moyen',   val: kdScore,  display: recent.avgKd },
+    { label: 'Headshot %',  val: hsScore,  display: `${recent.avgHs}%` },
+    { label: 'ELO',         val: eloScore, display: cs2.elo },
+    { label: 'Win rate',    val: wrScore,  display: `${recent.winRate}%` },
   ];
 
-  kpis.forEach((k, i) => {
+  const barsEl = document.getElementById('scoutBars');
+  barsEl.innerHTML = '';
+  barsData.forEach(b => {
+    barsEl.innerHTML += `
+      <div class="scout-bar-item">
+        <div class="scout-bar-label"><span>${b.label}</span><span>${b.display}</span></div>
+        <div class="scout-bar-track"><div class="scout-bar-fill" style="width:${b.val.toFixed(0)}%"></div></div>
+      </div>`;
+  });
+
+  // ── KPIs ─────────────────────────────────────────────────────────────────
+  const kpiGrid = document.getElementById('kpiGrid');
+  kpiGrid.innerHTML = '';
+  const kd = parseFloat(recent.avgKd);
+
+  const kpis = [
+    { label: 'K/D moyen',    value: recent.avgKd,      cls: kd >= 1.3 ? 'good' : kd >= 1 ? 'warn' : 'hot',  sub: '20 derniers matchs' },
+    { label: 'HS moyen',     value: `${recent.avgHs}%`, cls: parseFloat(recent.avgHs) >= 45 ? 'good' : 'accent', sub: 'headshot rate' },
+    { label: 'Win rate',     value: `${recent.winRate}%`, cls: parseFloat(recent.winRate) >= 55 ? 'good' : 'warn', sub: '20 derniers matchs' },
+    { label: 'ELO FACEIT',   value: cs2.elo.toLocaleString(), cls: 'hot', sub: `Niveau ${lvl}/10` },
+    { label: 'Matchs totaux', value: lifetime.matches.toLocaleString(), cls: 'accent', sub: `${lifetime.wins} victoires` },
+    { label: 'Meilleure série', value: lifetime.longestStreak, cls: 'good', sub: 'wins consécutives' },
+  ];
+
+  if (recent.avgKast) kpis.splice(2, 0, { label: 'KAST moyen', value: `${recent.avgKast}%`, cls: 'accent', sub: 'kill/assist/survived/traded' });
+  if (recent.avgAdr)  kpis.splice(3, 0, { label: 'ADR moyen',  value: recent.avgAdr,        cls: 'warn',   sub: 'avg damage per round' });
+
+  kpis.slice(0, 6).forEach((k, i) => {
     const card = document.createElement('div');
     card.className = 'kpi-card';
-    card.style.animationDelay = `${i * 0.06}s`;
-    card.innerHTML = `
-      <div class="kpi-label">${k.label}</div>
-      <div class="kpi-value ${k.cls}">${k.value}</div>
-      <div class="kpi-sub">${k.sub}</div>
-    `;
+    card.style.animationDelay = `${i * .05}s`;
+    card.innerHTML = `<div class="kpi-label">${k.label}</div><div class="kpi-value ${k.cls}">${k.value}</div><div class="kpi-sub">${k.sub}</div>`;
     kpiGrid.appendChild(card);
   });
 
-  // Graphique 1 — Kills par arme (bar chart)
-  if (chartWeapons) chartWeapons.destroy();
-  const top6 = weapons.slice(0, 6);
-  chartWeapons = new Chart(document.getElementById('chartWeapons'), {
+  // ── Graphiques ────────────────────────────────────────────────────────────
+  const matches  = recent.matches || [];
+  const labels   = matches.map((_, i) => `M${i + 1}`);
+  const kdVals   = matches.map(m => m.kd);
+  const hsVals   = matches.map(m => m.hsPct);
+
+  const chartDefaults = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#4A6580', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#1C2A3A' } },
+      y: { ticks: { color: '#4A6580', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#1C2A3A' } },
+    }
+  };
+
+  if (chartKd) chartKd.destroy();
+  chartKd = new Chart(document.getElementById('chartKd'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: kdVals, fill: true,
+        backgroundColor: 'rgba(255,85,0,.1)', borderColor: '#FF5500',
+        borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#FF5500', tension: .3,
+      }]
+    },
+    options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, suggestedMin: 0 } } }
+  });
+
+  if (chartHs) chartHs.destroy();
+  chartHs = new Chart(document.getElementById('chartHs'), {
     type: 'bar',
     data: {
-      labels: top6.map(w => w.label),
+      labels,
       datasets: [{
-        label: 'Kills',
-        data:  top6.map(w => w.kills),
-        backgroundColor: 'rgba(0,229,255,.25)',
-        borderColor:     '#00E5FF',
-        borderWidth: 1,
-        borderRadius: 4,
+        data: hsVals,
+        backgroundColor: hsVals.map(v => v >= 50 ? 'rgba(57,255,138,.4)' : 'rgba(0,229,255,.2)'),
+        borderColor:     hsVals.map(v => v >= 50 ? '#39FF8A' : '#00E5FF'),
+        borderWidth: 1, borderRadius: 3,
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#5A7A94', font: { family: 'DM Mono', size: 11 } }, grid: { color: '#1E2D3D' } },
-        y: { ticks: { color: '#5A7A94', font: { family: 'DM Mono', size: 11 } }, grid: { color: '#1E2D3D' } },
-      }
-    }
+    options: chartDefaults
   });
 
-  // Graphique 2 — Win rate (doughnut)
-  if (chartWinrate) chartWinrate.destroy();
-  const losses = 100 - parseFloat(stats.winRate);
-  chartWinrate = new Chart(document.getElementById('chartWinrate'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Victoires', 'Défaites'],
-      datasets: [{
-        data: [parseFloat(stats.winRate), losses > 0 ? losses : 0],
-        backgroundColor: ['rgba(57,255,138,.3)', 'rgba(255,69,96,.2)'],
-        borderColor:     ['#39FF8A', '#FF4560'],
-        borderWidth: 1,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '70%',
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { color: '#5A7A94', font: { family: 'DM Mono', size: 11 }, boxWidth: 12 }
-        }
-      }
-    }
-  });
-
-  // Tableau des armes
-  const tbody = document.getElementById('weaponsTable');
+  // ── Tableau matchs ───────────────────────────────────────────────────────
+  const tbody = document.getElementById('matchTable');
   tbody.innerHTML = '';
-  weapons.forEach(w => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="td-weapon">${w.label}</td>
-      <td class="td-num">${w.kills.toLocaleString()}</td>
-      <td class="td-hs">${w.hsPct}%</td>
-      <td class="td-num">${w.accuracy}%</td>
-    `;
-    tbody.appendChild(tr);
+  matches.forEach(m => {
+    const won  = m.result === 1;
+    const kdCl = m.kd >= 1.3 ? 'td-kd-good' : m.kd >= 1 ? 'td-kd-ok' : 'td-kd-bad';
+    tbody.innerHTML += `
+      <tr>
+        <td class="${won ? 'td-result-w' : 'td-result-l'}">${won ? 'VICTOIRE' : 'DÉFAITE'}</td>
+        <td class="td-map">${m.map || '—'}</td>
+        <td>${m.score || '—'}</td>
+        <td class="${kdCl}">${m.kd.toFixed(2)}</td>
+        <td>${m.kills}</td>
+        <td>${m.deaths}</td>
+        <td>${m.hsPct.toFixed(0)}%</td>
+        <td>${m.mvp}</td>
+      </tr>`;
   });
 
   showDashboard();
 }
 
-// ── Helpers UI ─────────────────────────────────────────────────────────────
-function addBadge(container, text, cls) {
-  const span = document.createElement('span');
-  span.className = `badge ${cls}`;
-  span.textContent = text;
-  container.appendChild(span);
+function scoreLabel(s) {
+  if (s >= 85) return 'Talent exceptionnel — à recruter immédiatement';
+  if (s >= 70) return 'Très bon joueur — fort potentiel';
+  if (s >= 55) return 'Joueur solide — à suivre';
+  if (s >= 40) return 'Niveau correct — progression possible';
+  return 'Niveau débutant/intermédiaire';
 }
 
-function showLoading(show) {
-  document.getElementById('loading').style.display   = show ? 'block' : 'none';
-}
-
+function showLoading(s) { document.getElementById('loading').style.display = s ? 'block' : 'none'; }
 function showDashboard() {
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
-
-function hideDashboard() {
-  document.getElementById('dashboard').style.display = 'none';
-}
-
-function showError(msg) {
-  const el = document.getElementById('errorMsg');
-  el.textContent    = msg;
-  el.style.display  = 'block';
-}
-
-function hideError() {
-  document.getElementById('errorMsg').style.display = 'none';
-}
+function hideDashboard() { document.getElementById('dashboard').style.display = 'none'; }
+function showError(msg)  { const el = document.getElementById('errorMsg'); el.textContent = msg; el.style.display = 'block'; }
+function hideError()     { document.getElementById('errorMsg').style.display = 'none'; }
