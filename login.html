@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FragValue — Mon espace</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#07090D;--surface:#0C1018;--card:#111720;
+      --border:#1C2A3A;--accent:#FF5500;--accent2:#00E5FF;
+      --text:#E8F4FD;--muted:#4A6580;--success:#39FF8A;--danger:#FF4560;--gold:#FFB800;
+      --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
+    }
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,85,0,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,85,0,.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 40px;background:rgba(7,9,13,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+    .logo{font-size:20px;font-weight:800;letter-spacing:-.5px;text-decoration:none;color:var(--text)}
+    .logo span{color:var(--accent)}
+    .nav-links{display:flex;align-items:center;gap:16px}
+    .nav-link{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}
+    .nav-link:hover{color:var(--text)}
+    .logout-btn{font-family:var(--mono);font-size:12px;color:var(--muted);background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:4px;cursor:pointer;transition:all .2s}
+    .logout-btn:hover{border-color:var(--danger);color:var(--danger)}
+
+    .page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:32px 24px 80px}
+
+    /* User header */
+    .user-header{display:flex;align-items:center;gap:20px;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:24px;animation:fadeUp .4s forwards}
+    .user-avatar{width:64px;height:64px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;flex-shrink:0;background:var(--surface)}
+    .user-info{flex:1}
+    .user-name{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
+    .user-email{font-family:var(--mono);font-size:12px;color:var(--muted)}
+    .sub-badge{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:4px;margin-top:6px}
+    .sub-free{background:rgba(74,101,128,.2);color:var(--muted);border:1px solid var(--border)}
+    .sub-pro{background:rgba(255,184,0,.15);color:var(--gold);border:1px solid rgba(255,184,0,.3)}
+    .sub-club{background:rgba(255,0,80,.15);color:#ff1a5e;border:1px solid rgba(255,0,80,.3)}
+    .upgrade-btn{font-family:var(--font);font-size:13px;font-weight:700;background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;transition:background .2s;white-space:nowrap}
+    .upgrade-btn:hover{background:#ff7733}
+
+    /* Section */
+    .section-title{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin:28px 0 12px;border-left:3px solid var(--accent);padding-left:10px}
+
+    /* Account tabs */
+    .account-tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px;width:fit-content}
+    .account-tab{font-family:var(--mono);font-size:12px;padding:9px 18px;border-radius:6px;cursor:pointer;color:var(--muted);border:none;background:transparent;transition:all .2s;white-space:nowrap}
+    .account-tab.active{background:var(--card);color:var(--text);border:1px solid var(--border)}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+
+    /* Cards */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:12px}
+    .card-empty{text-align:center;padding:48px 24px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+    .card-empty-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;font-family:var(--font)}
+
+    /* Watchlist */
+    .player-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(28,42,58,.5)}
+    .player-row:last-child{border-bottom:none;padding-bottom:0}
+    .player-avatar-sm{width:40px;height:40px;border-radius:6px;object-fit:cover;background:var(--surface);flex-shrink:0}
+    .player-info{flex:1}
+    .player-name{font-size:14px;font-weight:700;margin-bottom:2px}
+    .player-meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
+    .player-elo{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--gold)}
+    .player-actions{display:flex;gap:8px}
+    .btn-sm{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s}
+    .btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-sm.danger:hover{border-color:var(--danger);color:var(--danger)}
+
+    /* Add to watchlist */
+    .add-row{display:flex;gap:8px;margin-bottom:16px}
+    .add-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none}
+    .add-input:focus{border-color:var(--accent)}
+    .add-btn{background:var(--accent);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+    .add-btn:hover{background:#ff7733}
+
+    /* Roster */
+    .roster-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .roster-name{font-size:18px;font-weight:800;letter-spacing:-.3px}
+    .create-roster-btn{font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:6px;border:1px solid var(--accent);color:var(--accent);background:transparent;cursor:pointer;transition:all .2s}
+    .create-roster-btn:hover{background:var(--accent);color:#fff}
+
+    /* History */
+    .history-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid rgba(28,42,58,.5)}
+    .history-row:last-child{border-bottom:none}
+    .history-nick{font-size:14px;font-weight:700;flex:1}
+    .history-meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
+    .history-rating{font-family:var(--mono);font-size:13px;font-weight:500}
+
+    /* Subscription */
+    .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+    .pricing-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .2s}
+    .pricing-card.current{border-color:var(--accent);background:rgba(255,85,0,.04)}
+    .pricing-card:hover{border-color:rgba(255,85,0,.4)}
+    .pricing-name{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+    .pricing-price{font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:4px}
+    .pricing-period{font-family:var(--mono);font-size:12px;color:var(--muted)}
+    .pricing-features{margin:16px 0;display:flex;flex-direction:column;gap:7px}
+    .pricing-feature{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px}
+    .pricing-feature::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--border);flex-shrink:0}
+    .pricing-feature.ok{color:var(--text)}
+    .pricing-feature.ok::before{background:var(--success)}
+    .pricing-btn{width:100%;padding:11px;border-radius:6px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;border:1px solid var(--border);background:transparent;color:var(--muted);margin-top:4px}
+    .pricing-btn.cta{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .pricing-btn.cta:hover{background:#ff7733}
+    .pricing-btn.current-plan{color:var(--success);border-color:rgba(57,255,138,.3);cursor:default}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">Frag<span>Value</span></a>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link">Scout</a>
+    <a href="demo.html" class="nav-link">Analyse démo</a>
+    <button class="logout-btn" onclick="logout()">Déconnexion</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- User header -->
+  <div class="user-header" id="userHeader">
+    <img class="user-avatar" id="userAvatar" src="" alt="Avatar"/>
+    <div class="user-info">
+      <div class="user-name" id="userName">Chargement...</div>
+      <div class="user-email" id="userEmail"></div>
+      <span class="sub-badge sub-free" id="subBadge">Plan Free</span>
+    </div>
+    <button class="upgrade-btn" id="upgradeBtn" onclick="setAccountTab('subscription', null)">Passer à Pro</button>
+  </div>
+
+  <!-- Account tabs -->
+  <div class="account-tabs">
+    <button class="account-tab active" onclick="setAccountTab('watchlist', this)">Watchlist</button>
+    <button class="account-tab" onclick="setAccountTab('history', this)">Historique</button>
+    <button class="account-tab" onclick="setAccountTab('roster', this)">Roster</button>
+    <button class="account-tab" onclick="setAccountTab('subscription', this)">Abonnement</button>
+  </div>
+
+  <!-- WATCHLIST -->
+  <div class="tab-content active" id="tabWatchlist">
+    <div class="section-title">Joueurs suivis</div>
+    <div class="card">
+      <div class="add-row">
+        <input class="add-input" id="watchInput" type="text" placeholder="Pseudo FACEIT à ajouter..." autocomplete="off"/>
+        <button class="add-btn" onclick="addToWatchlist()">+ Ajouter</button>
+      </div>
+      <div id="watchlistContent">
+        <div class="card-empty">
+          <div class="card-empty-title">Watchlist vide</div>
+          Entre le pseudo FACEIT d'un joueur à surveiller
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIQUE -->
+  <div class="tab-content" id="tabHistory">
+    <div class="section-title">Historique des analyses</div>
+    <div class="card" id="historyContent">
+      <div class="card-empty">
+        <div class="card-empty-title">Aucune analyse</div>
+        Tes analyses apparaîtront ici automatiquement
+      </div>
+    </div>
+  </div>
+
+  <!-- ROSTER -->
+  <div class="tab-content" id="tabRoster">
+    <div class="section-title">Gestion d'équipe</div>
+    <div class="card">
+      <div class="roster-header">
+        <div class="roster-name" id="rosterName">Mon équipe</div>
+        <button class="create-roster-btn" onclick="createRoster()">+ Nouvelle équipe</button>
+      </div>
+      <div class="add-row">
+        <input class="add-input" id="rosterInput" type="text" placeholder="Pseudo FACEIT du joueur..." autocomplete="off"/>
+        <button class="add-btn" onclick="addToRoster()">+ Ajouter</button>
+      </div>
+      <div id="rosterContent">
+        <div class="card-empty">
+          <div class="card-empty-title">Équipe vide</div>
+          Ajoute des joueurs pour constituer ton roster
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABONNEMENT -->
+  <div class="tab-content" id="tabSubscription">
+    <div class="section-title">Ton abonnement</div>
+    <div class="pricing-grid">
+      <div class="pricing-card" id="planFree">
+        <div class="pricing-name">Free</div>
+        <div class="pricing-price">0 €</div>
+        <div class="pricing-period">pour toujours</div>
+        <div class="pricing-features">
+          <div class="pricing-feature ok">Recherche joueur FACEIT</div>
+          <div class="pricing-feature ok">Stats basiques</div>
+          <div class="pricing-feature ok">3 analyses / jour</div>
+          <div class="pricing-feature">Watchlist (5 joueurs max)</div>
+          <div class="pricing-feature">Historique limité</div>
+          <div class="pricing-feature">Analyse démo</div>
+        </div>
+        <button class="pricing-btn current-plan" id="btnFree">Plan actuel</button>
+      </div>
+      <div class="pricing-card" id="planPro">
+        <div class="pricing-name">Pro</div>
+        <div class="pricing-price">49 €</div>
+        <div class="pricing-period">par mois</div>
+        <div class="pricing-features">
+          <div class="pricing-feature ok">Tout le plan Free</div>
+          <div class="pricing-feature ok">Analyses illimitées</div>
+          <div class="pricing-feature ok">Watchlist illimitée</div>
+          <div class="pricing-feature ok">Historique complet</div>
+          <div class="pricing-feature ok">1 roster équipe</div>
+          <div class="pricing-feature ok">Analyse démo (5/mois)</div>
+        </div>
+        <button class="pricing-btn cta" onclick="subscribe('pro')">Passer à Pro</button>
+      </div>
+      <div class="pricing-card" id="planClub">
+        <div class="pricing-name">Club</div>
+        <div class="pricing-price">199 €</div>
+        <div class="pricing-period">par mois</div>
+        <div class="pricing-features">
+          <div class="pricing-feature ok">Tout le plan Pro</div>
+          <div class="pricing-feature ok">Multi-utilisateurs (5)</div>
+          <div class="pricing-feature ok">Rosters illimités</div>
+          <div class="pricing-feature ok">Démos illimitées</div>
+          <div class="pricing-feature ok">Export PDF rapports</div>
+          <div class="pricing-feature ok">Support prioritaire</div>
+        </div>
+        <button class="pricing-btn cta" onclick="subscribe('club')">Passer à Club</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL  = 'REMPLACE_PAR_TON_URL_SUPABASE';
+  const SUPABASE_ANON = 'REMPLACE_PAR_TA_CLE_ANON_SUPABASE';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  let currentUser   = null;
+  let currentRosterId = null;
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+    currentUser = session.user;
+    loadProfile();
+    loadWatchlist();
+    loadHistory();
+    loadRoster();
+  }
+
+  async function loadProfile() {
+    const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (!data) return;
+    document.getElementById('userName').textContent  = data.full_name || currentUser.email.split('@')[0];
+    document.getElementById('userEmail').textContent = currentUser.email;
+    if (data.avatar_url) document.getElementById('userAvatar').src = data.avatar_url;
+    const tier = data.subscription_tier || 'free';
+    const badge = document.getElementById('subBadge');
+    badge.textContent = tier === 'free' ? 'Plan Free' : tier === 'pro' ? 'Plan Pro' : 'Plan Club';
+    badge.className   = `sub-badge sub-${tier}`;
+    if (tier !== 'free') document.getElementById('upgradeBtn').style.display = 'none';
+    updatePricingCards(tier);
+  }
+
+  function updatePricingCards(tier) {
+    ['free','pro','club'].forEach(t => {
+      const btn = document.getElementById(`btn${t.charAt(0).toUpperCase()+t.slice(1)}`);
+      if (!btn) return;
+      if (t === tier) {
+        btn.textContent = 'Plan actuel';
+        btn.className   = 'pricing-btn current-plan';
+        document.getElementById(`plan${t.charAt(0).toUpperCase()+t.slice(1)}`).classList.add('current');
+      }
+    });
+  }
+
+  // ── Watchlist ──────────────────────────────────────────────────────────────
+  async function loadWatchlist() {
+    const { data } = await sb.from('watchlist').select('*').eq('user_id', currentUser.id).order('added_at', { ascending: false });
+    const el = document.getElementById('watchlistContent');
+    if (!data || data.length === 0) { el.innerHTML = `<div class="card-empty"><div class="card-empty-title">Watchlist vide</div>Entre le pseudo FACEIT d'un joueur à surveiller</div>`; return; }
+    el.innerHTML = data.map(p => `
+      <div class="player-row">
+        <img class="player-avatar-sm" src="${p.avatar_url || ''}" onerror="this.style.display='none'" alt=""/>
+        <div class="player-info">
+          <div class="player-name">${p.faceit_nickname}</div>
+          <div class="player-meta">${p.note || 'Aucune note'}</div>
+        </div>
+        <div class="player-elo">${p.faceit_elo ? p.faceit_elo + ' ELO' : '—'}</div>
+        <div class="player-actions">
+          <button class="btn-sm" onclick="analyseFromWatchlist('${p.faceit_nickname}')">Analyser</button>
+          <button class="btn-sm danger" onclick="removeFromWatchlist('${p.id}')">Retirer</button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function addToWatchlist() {
+    const nick = document.getElementById('watchInput').value.trim();
+    if (!nick) return;
+    const { error } = await sb.from('watchlist').insert({ user_id: currentUser.id, faceit_nickname: nick });
+    if (!error) { document.getElementById('watchInput').value = ''; loadWatchlist(); }
+  }
+
+  async function removeFromWatchlist(id) {
+    await sb.from('watchlist').delete().eq('id', id);
+    loadWatchlist();
+  }
+
+  function analyseFromWatchlist(nick) {
+    window.location.href = `index.html?analyse=${encodeURIComponent(nick)}`;
+  }
+
+  // ── Historique ─────────────────────────────────────────────────────────────
+  async function loadHistory() {
+    const { data } = await sb.from('analyses').select('*').eq('user_id', currentUser.id).order('analysed_at', { ascending: false }).limit(20);
+    const el = document.getElementById('historyContent');
+    if (!data || data.length === 0) { el.innerHTML = `<div class="card-empty"><div class="card-empty-title">Aucune analyse</div>Tes analyses apparaîtront ici automatiquement</div>`; return; }
+    el.innerHTML = data.map(a => {
+      const date = new Date(a.analysed_at).toLocaleDateString('fr-FR');
+      const rColor = parseFloat(a.fv_rating) >= 1.05 ? '#FFB800' : parseFloat(a.fv_rating) >= 0.9 ? '#39FF8A' : '#4A6580';
+      return `<div class="history-row">
+        <div class="history-nick">${a.faceit_nickname}</div>
+        <div class="history-meta">${a.faceit_elo ? a.faceit_elo + ' ELO · ' : ''}${date}</div>
+        <div class="history-rating" style="color:${rColor}">FV ${a.fv_rating || '—'}</div>
+        <div class="player-actions">
+          <button class="btn-sm" onclick="analyseFromWatchlist('${a.faceit_nickname}')">Revoir</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Roster ─────────────────────────────────────────────────────────────────
+  async function loadRoster() {
+    const { data: rosters } = await sb.from('rosters').select('*').eq('user_id', currentUser.id).limit(1);
+    if (!rosters || rosters.length === 0) {
+      document.getElementById('rosterContent').innerHTML = `<div class="card-empty"><div class="card-empty-title">Équipe vide</div>Ajoute des joueurs pour constituer ton roster</div>`;
+      return;
+    }
+    currentRosterId = rosters[0].id;
+    document.getElementById('rosterName').textContent = rosters[0].team_name;
+    const { data: players } = await sb.from('roster_players').select('*').eq('roster_id', currentRosterId);
+    const el = document.getElementById('rosterContent');
+    if (!players || players.length === 0) { el.innerHTML = `<div class="card-empty"><div class="card-empty-title">Équipe vide</div>Ajoute des joueurs</div>`; return; }
+    el.innerHTML = players.map(p => `
+      <div class="player-row">
+        <img class="player-avatar-sm" src="${p.avatar_url || ''}" onerror="this.style.display='none'" alt=""/>
+        <div class="player-info">
+          <div class="player-name">${p.faceit_nickname}</div>
+          <div class="player-meta">${p.role || 'Rôle non défini'} · Level ${p.faceit_level || '—'}</div>
+        </div>
+        <div class="player-elo">${p.faceit_elo ? p.faceit_elo + ' ELO' : '—'}</div>
+        <div class="player-actions">
+          <button class="btn-sm" onclick="analyseFromWatchlist('${p.faceit_nickname}')">Analyser</button>
+          <button class="btn-sm danger" onclick="removeFromRoster('${p.id}')">Retirer</button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function createRoster() {
+    const name = prompt('Nom de l\'équipe :');
+    if (!name) return;
+    const { data } = await sb.from('rosters').insert({ user_id: currentUser.id, team_name: name }).select().single();
+    if (data) { currentRosterId = data.id; loadRoster(); }
+  }
+
+  async function addToRoster() {
+    const nick = document.getElementById('rosterInput').value.trim();
+    if (!nick || !currentRosterId) return;
+    const { error } = await sb.from('roster_players').insert({ roster_id: currentRosterId, faceit_nickname: nick });
+    if (!error) { document.getElementById('rosterInput').value = ''; loadRoster(); }
+  }
+
+  async function removeFromRoster(id) {
+    await sb.from('roster_players').delete().eq('id', id);
+    loadRoster();
+  }
+
+  // ── Subscription ───────────────────────────────────────────────────────────
+  function subscribe(tier) {
+    // TODO: rediriger vers Stripe Checkout
+    alert(`Redirection vers Stripe pour le plan ${tier}.\nIntégration Stripe à connecter prochainement.`);
+  }
+
+  // ── Tab navigation ─────────────────────────────────────────────────────────
+  function setAccountTab(tab, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.account-tab').forEach(b => b.classList.remove('active'));
+    const map = { watchlist:'tabWatchlist', history:'tabHistory', roster:'tabRoster', subscription:'tabSubscription' };
+    document.getElementById(map[tab]).classList.add('active');
+    if (btn) btn.classList.add('active');
+    else document.querySelectorAll('.account-tab')[Object.keys(map).indexOf(tab)].classList.add('active');
+  }
+
+  // ── Auth ───────────────────────────────────────────────────────────────────
+  async function logout() {
+    await sb.auth.signOut();
+    window.location.href = 'index.html';
+  }
+
+  init();
+</script>
+</body>
+</html>
