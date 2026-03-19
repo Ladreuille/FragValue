@@ -332,14 +332,24 @@ function showDashboard(nickname) {
   document.getElementById('hero').style.display      = 'none';
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('topbar').style.display    = 'flex';
+  document.getElementById('tabBar').style.display    = 'flex';
   document.getElementById('topbarNick').textContent  = `Analyse : ${nickname}`;
   document.getElementById('topbarInput').value       = '';
+  switchTab('stats', document.querySelector('.tab-btn'));
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  if (btn) btn.classList.add('active');
 }
 
 function hideDashboard() {
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('topbar').style.display    = 'none';
+  document.getElementById('tabBar').style.display    = 'none';
   document.getElementById('hero').style.display      = 'block';
 }
 
