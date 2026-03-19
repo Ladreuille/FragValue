@@ -2,7 +2,7 @@
 // Proxy Steam API pour éviter les erreurs CORS côté navigateur
 // Déploie sur Vercel, ajoute STEAM_API_KEY dans les variables d'environnement
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // CORS headers — autorise les appels depuis ton domaine
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
