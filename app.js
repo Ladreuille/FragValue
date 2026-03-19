@@ -8,7 +8,7 @@ let charts = {};
 
 async function searchPlayer() {
   const nickname = document.getElementById('nickInput').value.trim();
-  hideError(); hideDashboard();
+  hideError(); hideDashboard(); resetDashboard();
   if (!nickname) { showError('Entre un pseudo FACEIT.'); return; }
   showLoading(true);
   document.getElementById('searchBtn').disabled = true;
@@ -19,6 +19,35 @@ async function searchPlayer() {
     renderDashboard(data);
   } catch { showError('Impossible de contacter le serveur. Vérifie ta connexion.'); }
   finally   { showLoading(false); document.getElementById('searchBtn').disabled = false; }
+}
+
+function resetDashboard() {
+  // Remet l'avatar en placeholder (evite le bug replaceWith qui perd l'id)
+  const avatarEl = document.getElementById('profileAvatar');
+  if (avatarEl && avatarEl.tagName === 'IMG') {
+    const ph = document.createElement('div');
+    ph.id = 'profileAvatar';
+    ph.className = 'profile-avatar-ph';
+    ph.textContent = String.fromCodePoint(0x1F464);
+    avatarEl.replaceWith(ph);
+  }
+  // Vide tous les containers dynamiques
+  ['profileName','profileCountry','profileRole','profileTeam',
+   'eloVal','resultsRow','scoutScore','scoutDesc','scoutBars',
+   'kpiMain','kpiSides','kpiUtility','kpiTrades',
+   'multiKillCards','clutchCards','mapCards','matchTable',
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
+  // Remet les badges
+  const fvBadge = document.getElementById('fvBadge');
+  if (fvBadge) { fvBadge.textContent = 'FV --'; fvBadge.className = 'fv-rating-badge fv-low'; }
+  const lvlBadge = document.getElementById('levelBadge');
+  if (lvlBadge) { lvlBadge.textContent = '--'; lvlBadge.className = 'level-badge'; }
+  // Detruit tous les graphiques
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e) {} });
+  charts = {};
 }
 
 // ── FV Rating helpers ──────────────────────────────────────────────────────
