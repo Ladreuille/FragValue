@@ -180,7 +180,7 @@ function renderDashboard(data) {
       </tr>`;
   });
 
-  showDashboard();
+  showDashboard(player.nickname);
 }
 
 function scoreLabel(s) {
@@ -192,10 +192,33 @@ function scoreLabel(s) {
 }
 
 function showLoading(s) { document.getElementById('loading').style.display = s ? 'block' : 'none'; }
-function showDashboard() {
+
+function showDashboard(nickname) {
+  document.getElementById('hero').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
-  document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('topbarNick').textContent = `Analyse : ${nickname}`;
+  document.getElementById('topbarInput').value = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-function hideDashboard() { document.getElementById('dashboard').style.display = 'none'; }
+
+function hideDashboard() {
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('topbar').style.display = 'none';
+  document.getElementById('hero').style.display = 'block';
+}
+
+function newSearch() {
+  const nick = document.getElementById('topbarInput').value.trim();
+  if (!nick) return;
+  document.getElementById('nickInput').value = nick;
+  searchPlayer();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const topInput = document.getElementById('topbarInput');
+  if (topInput) topInput.addEventListener('keydown', e => { if (e.key === 'Enter') newSearch(); });
+});
+
 function showError(msg)  { const el = document.getElementById('errorMsg'); el.textContent = msg; el.style.display = 'block'; }
 function hideError()     { document.getElementById('errorMsg').style.display = 'none'; }
