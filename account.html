@@ -171,6 +171,7 @@
       <div class="user-email" id="userEmail"></div>
       <div class="user-badges">
         <span class="badge badge-free" id="subBadge">Plan Free</span>
+        <span class="badge" id="faceitBadge" style="display:none"></span>
       </div>
     </div>
     <button class="upgrade-btn" id="upgradeBtn" onclick="setTab('subscription',null)">Passer à Pro</button>
@@ -182,6 +183,7 @@
     <button class="account-tab" onclick="setTab('history',this)">Historique</button>
     <button class="account-tab" onclick="setTab('roster',this)">Roster</button>
     <button class="account-tab" onclick="setTab('subscription',this)">Abonnement</button>
+    <button class="account-tab" onclick="setTab('settings',this)">Paramètres</button>
   </div>
 
   <!-- WATCHLIST -->
@@ -220,6 +222,56 @@
       </div>
       <div id="rosterContent">
         <div class="empty"><div class="empty-title">Roster vide</div><p class="empty-sub">Ajoute des joueurs pour constituer ton équipe</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARAMÈTRES -->
+  <div class="tab-content" id="tabSettings">
+    <div class="section-label">Compte FACEIT</div>
+    <div class="content-card" id="faceitSettingsCard">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+        <div style="width:40px;height:40px;border-radius:8px;background:rgba(255,85,0,.1);border:1px solid rgba(255,85,0,.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#FF5500;flex-shrink:0">F</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600;margin-bottom:3px">Compte FACEIT</div>
+          <div style="font-size:12px;color:var(--text3);font-family:var(--mono)" id="faceitLinkedStatus">Non lié</div>
+        </div>
+        <button class="add-btn" id="faceitLinkBtn" onclick="linkFaceit()" style="background:rgba(255,85,0,.9)">Lier FACEIT</button>
+      </div>
+      <div id="faceitLinkForm" style="display:none">
+        <div class="add-row">
+          <input class="add-input" id="faceitNickSetting" type="text" placeholder="Ton pseudo FACEIT exact..." autocomplete="off" spellcheck="false"/>
+          <button class="add-btn" onclick="saveFaceitFromSettings()">Vérifier</button>
+        </div>
+        <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:8px">Sensible à la casse — ex: s1mple, NiKo, karrigan</p>
+      </div>
+      <div id="faceitSettingsMsg" style="display:none;padding:10px 12px;border-radius:6px;font-size:12px;font-family:var(--mono);margin-top:10px"></div>
+    </div>
+
+    <div class="section-label" style="margin-top:24px">Données du compte</div>
+    <div class="content-card">
+      <div class="player-row">
+        <div style="flex:1">
+          <div class="player-name">Email</div>
+          <div class="player-meta" id="settingsEmail">—</div>
+        </div>
+      </div>
+      <div class="player-row">
+        <div style="flex:1">
+          <div class="player-name">Membre depuis</div>
+          <div class="player-meta" id="settingsCreated">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:24px">Danger zone</div>
+    <div class="content-card" style="border-color:rgba(240,107,107,.2)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="player-name" style="color:var(--danger)">Supprimer mon compte</div>
+          <div class="player-meta">Cette action est irréversible</div>
+        </div>
+        <button class="btn-sm danger" onclick="deleteAccount()">Supprimer</button>
       </div>
     </div>
   </div>
@@ -297,6 +349,7 @@
     loadWatchlist();
     loadHistory();
     loadRoster();
+    loadFaceitSettings();
   }
 
   async function loadProfile() {
@@ -450,7 +503,7 @@
 
   // ── Tab navigation ───────────────────────────────────────────────────────
   function setTab(tab, btn) {
-    const map = { watchlist:'tabWatchlist', history:'tabHistory', roster:'tabRoster', subscription:'tabSubscription' };
+    const map = { watchlist:'tabWatchlist', history:'tabHistory', roster:'tabRoster', subscription:'tabSubscription', settings:'tabSettings' };
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.account-tab').forEach(b => b.classList.remove('active'));
     document.getElementById(map[tab]).classList.add('active');
@@ -459,6 +512,58 @@
       const idx = Object.keys(map).indexOf(tab);
       document.querySelectorAll('.account-tab')[idx]?.classList.add('active');
     }
+  }
+
+  // ── FACEIT settings ──────────────────────────────────────────────────────
+  async function loadFaceitSettings() {
+    const { data } = await sb.from('profiles').select('faceit_nickname,created_at').eq('id', currentUser.id).single();
+    document.getElementById('settingsEmail').textContent = currentUser.email;
+    if (data?.created_at) {
+      document.getElementById('settingsCreated').textContent = new Date(data.created_at).toLocaleDateString('fr-FR', { year:'numeric', month:'long', day:'numeric' });
+    }
+    if (data?.faceit_nickname) {
+      document.getElementById('faceitLinkedStatus').textContent = `Lié à : ${data.faceit_nickname}`;
+      document.getElementById('faceitLinkBtn').textContent = 'Modifier';
+      const badge = document.getElementById('faceitBadge');
+      badge.textContent = `FACEIT · ${data.faceit_nickname}`;
+      badge.style.cssText = 'background:rgba(255,85,0,.1);color:#FF5500;border:1px solid rgba(255,85,0,.2)';
+      badge.style.display = '';
+    }
+  }
+
+  function linkFaceit() {
+    document.getElementById('faceitLinkForm').style.display = 'block';
+    document.getElementById('faceitLinkBtn').style.display = 'none';
+    document.getElementById('faceitNickSetting').focus();
+  }
+
+  async function saveFaceitFromSettings() {
+    const nick = document.getElementById('faceitNickSetting').value.trim();
+    if (!nick) return;
+    const msgEl = document.getElementById('faceitSettingsMsg');
+    msgEl.style.display = 'block';
+    msgEl.style.cssText += 'background:var(--accent-dim);border:1px solid rgba(59,127,245,.2);color:#60A5FA';
+    msgEl.textContent = 'Vérification...';
+    try {
+      const res = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`);
+      const data = await res.json();
+      if (!res.ok || !data.player) { msgEl.style.cssText += 'background:rgba(240,107,107,.08);color:var(--danger)'; msgEl.textContent = `Pseudo "${nick}" introuvable.`; return; }
+      await sb.from('profiles').update({ faceit_nickname: data.player.nickname, faceit_id: data.player.playerId }).eq('id', currentUser.id);
+      msgEl.style.cssText += 'background:rgba(45,212,160,.08);color:var(--success)';
+      msgEl.textContent = `Compte FACEIT "${data.player.nickname}" lié avec succès !`;
+      document.getElementById('faceitLinkedStatus').textContent = `Lié à : ${data.player.nickname}`;
+      const badge = document.getElementById('faceitBadge');
+      badge.textContent = `FACEIT · ${data.player.nickname}`;
+      badge.style.cssText = 'background:rgba(255,85,0,.1);color:#FF5500;border:1px solid rgba(255,85,0,.2)';
+      badge.style.display = '';
+    } catch { msgEl.textContent = 'Erreur. Réessaie.'; }
+  }
+
+  async function deleteAccount() {
+    if (!confirm('Es-tu sûr de vouloir supprimer ton compte ? Cette action est irréversible.')) return;
+    await sb.auth.admin?.deleteUser(currentUser.id);
+    await sb.auth.signOut();
+    window.location.href = 'index.html';
   }
 
   // ── Auth ─────────────────────────────────────────────────────────────────
