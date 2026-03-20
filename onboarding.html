@@ -177,8 +177,9 @@
       <!-- FACEIT OAuth (placeholder — nécessite FACEIT Developer App) -->
       <button class="faceit-btn" id="faceitOAuthBtn" onclick="connectFaceitOAuth()">
         <div class="faceit-logo">F</div>
-        Se connecter avec FACEIT
+        Connexion automatique avec FACEIT
       </button>
+      <p style="font-size:11px;color:var(--text3);text-align:center;font-family:var(--mono);margin-top:-4px;margin-bottom:4px">Recommandé — ton pseudo est récupéré automatiquement</p>
 
       <div class="divider">ou entre ton pseudo manuellement</div>
 
@@ -248,15 +249,61 @@
   // ── Gère le retour OAuth FACEIT ───────────────────────────────────────────
   async function handleFaceitCallback() {
     const params = new URLSearchParams(window.location.search);
-    if (!params.get('faceit_callback')) return;
-    const code  = params.get('code');
-    const state = params.get('state');
-    if (sessionStorage.getItem('faceit_oauth_state') !== state) {
-      showMsg('Erreur de sécurité OAuth.', 'error'); return;
+    const code   = params.get('code');
+    const state  = params.get('state');
+    if (!code) return; // Pas un retour OAuth
+
+    // Vérifie le state anti-CSRF
+    const savedState = sessionStorage.getItem('faceit_oauth_state');
+    if (savedState && savedState !== state) {
+      showMsg('Erreur de sécurité — réessaie.', 'error');
+      return;
     }
+    sessionStorage.removeItem('faceit_oauth_state');
+
+    // Cache le formulaire manuel, montre le loading
+    document.getElementById('mainCard').style.opacity = '.5';
     showMsg('Connexion FACEIT en cours...', 'loading');
-    // Ici appel à ton API pour échanger le code contre un token
-    // Pour l'instant on utilise le pseudo manuel
+
+    try {
+      // Échange le code via notre fonction serverless
+      const res = await fetch('/api/faceit-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, redirect_uri: 'https://frag-value.vercel.app/onboarding.html' }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        document.getElementById('mainCard').style.opacity = '1';
+        showMsg(data.error || 'Erreur FACEIT OAuth. Utilise le pseudo manuel.', 'error');
+        return;
+      }
+
+      // Sauvegarde dans Supabase
+      await sb.from('profiles').update({
+        faceit_nickname: data.nickname,
+        faceit_id:       data.playerId,
+        updated_at:      new Date().toISOString(),
+      }).eq('id', currentUser.id);
+
+      verifiedNick = data.nickname;
+
+      // Nettoie l'URL
+      window.history.replaceState({}, document.title, '/onboarding.html');
+
+      // Affiche la carte de confirmation
+      document.getElementById('mainCard').style.display = 'none';
+      document.getElementById('verifiedName').textContent = data.nickname;
+      document.getElementById('verifiedMeta').textContent =
+        `${data.level ? 'Level ' + data.level + ' · ' : ''}${data.elo ? data.elo + ' ELO · ' : ''}${data.country?.toUpperCase() || ''}`;
+      document.getElementById('verifiedCard').style.display = 'block';
+
+    } catch(err) {
+      document.getElementById('mainCard').style.opacity = '1';
+      showMsg('Erreur lors de la connexion FACEIT. Utilise le pseudo manuel.', 'error');
+    }
   }
 
   // ── Sauvegarde pseudo manuel ───────────────────────────────────────────────
