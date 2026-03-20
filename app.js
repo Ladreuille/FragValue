@@ -6,19 +6,33 @@ document.getElementById('nickInput').addEventListener('keydown', e => {
 
 let charts = {};
 
-async function searchPlayer() {
-  const nickname = document.getElementById('nickInput').value.trim();
-  hideError(); hideDashboard(); resetDashboard();
+async function searchPlayer(nicknameOverride) {
+  const nickname = nicknameOverride || document.getElementById('nickInput').value.trim();
+  hideError(); resetDashboard();
   if (!nickname) { showError('Entre un pseudo FACEIT.'); return; }
-  showLoading(true);
-  document.getElementById('searchBtn').disabled = true;
+
+  // Si on vient de la topbar, on reste sur le dashboard et montre un spinner inline
+  const fromTopbar = !!nicknameOverride;
+  if (!fromTopbar) {
+    hideDashboard();
+    showLoading(true);
+    document.getElementById('searchBtn').disabled = true;
+  } else {
+    // Depuis topbar : affiche état loading dans le dashboard sans le cacher
+    document.getElementById('topbarNick').textContent = `Recherche : ${nickname}...`;
+    showLoading(true);
+  }
+
   try {
     const res  = await fetch(`/api/scout?nickname=${encodeURIComponent(nickname)}`);
     const data = await res.json();
     if (!res.ok) { showError(data.error || 'Erreur inconnue.'); return; }
     renderDashboard(data);
   } catch { showError('Impossible de contacter le serveur. Vérifie ta connexion.'); }
-  finally   { showLoading(false); document.getElementById('searchBtn').disabled = false; }
+  finally {
+    showLoading(false);
+    document.getElementById('searchBtn').disabled = false;
+  }
 }
 
 function resetDashboard() {
@@ -356,8 +370,9 @@ function hideDashboard() {
 function newSearch() {
   const nick = document.getElementById('topbarInput').value.trim();
   if (!nick) return;
+  document.getElementById('topbarInput').value = '';
   document.getElementById('nickInput').value = nick;
-  searchPlayer();
+  searchPlayer(nick);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
