@@ -10,12 +10,12 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --bg:#08090C;
-      --surface:#0F1117;
-      --card:#161920;
-      --card2:#1C1F28;
-      --border:#1F2433;
-      --border2:#252B3B;
+      --bg:#0C0E13;
+      --surface:#131620;
+      --card:#191D27;
+      --card2:#1F2330;
+      --border:#252A38;
+      --border2:#2C3245;
       --accent:#3B7FF5;
       --accent-dim:rgba(59,127,245,.12);
       --accent-glow:rgba(59,127,245,.06);
@@ -199,10 +199,12 @@
     .profile-name{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
     .profile-badges{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 
-    /* FACEIT level badge with circular arc */
-    .level-badge-wrap{display:flex;align-items:center;gap:6px}
-    .level-ring{width:28px;height:28px;flex-shrink:0}
-    .level-num{font-size:12px;font-weight:700;font-family:var(--mono)}
+    .badge-level-1{color:#7A7A7A;border-color:rgba(122,122,122,.25);background:rgba(122,122,122,.08)}
+    .badge-level-2,.badge-level-3{color:#23C44E;border-color:rgba(35,196,78,.25);background:rgba(35,196,78,.08)}
+    .badge-level-4,.badge-level-5,.badge-level-6{color:#F5C842;border-color:rgba(245,200,66,.25);background:rgba(245,200,66,.08)}
+    .badge-level-7,.badge-level-8{color:#EDA020;border-color:rgba(237,160,32,.25);background:rgba(237,160,32,.08)}
+    .badge-level-9{color:#E05C2A;border-color:rgba(224,92,42,.25);background:rgba(224,92,42,.08)}
+    .badge-level-10{color:#D93535;border-color:rgba(217,53,53,.25);background:rgba(217,53,53,.08)}
 
     .badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.2px;display:inline-flex;align-items:center;gap:4px}
     .badge-fv-elite{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.2)}
@@ -444,10 +446,7 @@
       <div class="profile-info">
         <div class="profile-name" id="profileName"></div>
         <div class="profile-badges">
-          <div class="level-badge-wrap" id="levelBadgeWrap">
-            <canvas class="level-ring" id="levelRing" width="28" height="28"></canvas>
-            <span class="level-num" id="levelNum"></span>
-          </div>
+          <span class="badge" id="levelBadge"></span>
           <span class="badge" id="fvBadge"></span>
           <span class="badge badge-role" id="profileRole"></span>
           <span class="badge badge-country" id="profileCountry"></span>
@@ -554,42 +553,7 @@ _sb.auth.getSession().then(({ data }) => {
   }
 });
 
-// ── Level ring renderer ────────────────────────────────────────────────────
-const LEVEL_COLORS = {
-  1:'#7A7A7A',2:'#23C44E',3:'#23C44E',4:'#F5C842',5:'#F5C842',
-  6:'#F5C842',7:'#EDA020',8:'#EDA020',9:'#E05C2A',10:'#D93535'
-};
 
-function drawLevelRing(canvas, level) {
-  const ctx = canvas.getContext('2d');
-  const size = canvas.width;
-  const cx = size / 2, cy = size / 2, r = size / 2 - 2;
-  const color = LEVEL_COLORS[level] || '#7A7A7A';
-  const pct   = level / 10;
-  ctx.clearRect(0, 0, size, size);
-  // Track
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, -Math.PI * 0.75, Math.PI * 0.75);
-  ctx.strokeStyle = 'rgba(255,255,255,.08)';
-  ctx.lineWidth = 2.5;
-  ctx.lineCap = 'round';
-  ctx.stroke();
-  // Fill
-  const startAngle = -Math.PI * 0.75;
-  const endAngle   = startAngle + Math.PI * 1.5 * pct;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, startAngle, endAngle);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2.5;
-  ctx.lineCap = 'round';
-  ctx.stroke();
-  // Number
-  ctx.fillStyle = color;
-  ctx.font = `700 ${size * 0.38}px JetBrains Mono, monospace`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(level, cx, cy);
-}
 </script>
 <script src="app.js"></script>
 </body>
