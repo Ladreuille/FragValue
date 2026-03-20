@@ -112,7 +112,7 @@
   }
 
   async function loginGoogle() {
-    const { error } = await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo:'https://frag-value.vercel.app/account.html' } });
+    const { error } = await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo:'https://frag-value.vercel.app/onboarding.html' } });
     if (error) showMsg(error.message, 'error');
   }
   async function loginFaceit() { showMsg('Connexion FACEIT — bientôt disponible.', 'error'); }
@@ -132,6 +132,7 @@
         : await sb.auth.signUp({ email, password:pwd, options:{ emailRedirectTo:'https://frag-value.vercel.app/account.html' } });
       if (result.error) showMsg(translateError(result.error.message), 'error');
       else if (currentTab === 'register' && !result.data.session) showMsg('Vérifie ta boîte mail pour confirmer ton compte !', 'success');
+      else if (currentTab === 'register') window.location.href = 'onboarding.html';
       else window.location.href = 'account.html';
     } catch { showMsg('Erreur inattendue.', 'error'); }
     finally { btn.disabled=false; btn.textContent=currentTab==='login'?'Se connecter':'Créer mon compte'; }
