@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FragValue — Lier ton compte FACEIT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0C0E13;--surface:#131620;--card:#191D27;
+      --border:#252A38;--border2:#2C3245;
+      --accent:#3B7FF5;--accent-dim:rgba(59,127,245,.12);
+      --faceit:#FF5500;--faceit-dim:rgba(255,85,0,.1);
+      --text:#EDF0F7;--text2:#8892A4;--text3:#4A5568;
+      --success:#2DD4A0;--danger:#F06B6B;
+      --font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+    }
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 50% -10%, rgba(59,127,245,.07), transparent);pointer-events:none;z-index:0}
+
+    nav{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:52px;border-bottom:1px solid var(--border)}
+    .logo{font-size:16px;font-weight:700;letter-spacing:-.2px;text-decoration:none;color:var(--text)}
+    .logo-accent{color:var(--accent)}
+    .skip-btn{font-size:13px;color:var(--text3);background:transparent;border:none;cursor:pointer;font-family:var(--font);transition:color .15s}
+    .skip-btn:hover{color:var(--text2)}
+
+    .main{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;position:relative;z-index:1}
+
+    .onboarding-wrap{width:100%;max-width:480px}
+
+    /* Progress steps */
+    .steps{display:flex;align-items:center;gap:0;margin-bottom:40px}
+    .step{display:flex;align-items:center;gap:8px;font-size:12px;font-family:var(--mono)}
+    .step-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;transition:all .3s}
+    .step-dot.done{background:var(--success);color:#0C0E13}
+    .step-dot.active{background:var(--accent);color:#fff}
+    .step-dot.pending{background:var(--card);color:var(--text3);border:1px solid var(--border)}
+    .step-label{color:var(--text3)}
+    .step.active .step-label{color:var(--text)}
+    .step.done .step-label{color:var(--text2)}
+    .step-line{flex:1;height:1px;background:var(--border);margin:0 8px;min-width:24px}
+    .step-line.done{background:var(--success)}
+
+    /* Card */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:36px;animation:fadeUp .3s ease}
+    .card-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-weight:700;font-size:18px}
+    .icon-faceit{background:var(--faceit-dim);border:1px solid rgba(255,85,0,.2);color:var(--faceit)}
+    .card-title{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:8px}
+    .card-sub{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:28px}
+
+    /* Benefits */
+    .benefits{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+    .benefit{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px}
+    .benefit-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:700;font-family:var(--mono)}
+    .benefit-icon.blue{background:var(--accent-dim);color:var(--accent)}
+    .benefit-icon.green{background:rgba(45,212,160,.1);color:var(--success)}
+    .benefit-icon.orange{background:var(--faceit-dim);color:var(--faceit)}
+    .benefit-text{flex:1}
+    .benefit-title{font-size:13px;font-weight:600;margin-bottom:2px}
+    .benefit-desc{font-size:12px;color:var(--text3);font-family:var(--mono);line-height:1.5}
+
+    /* Main action — FACEIT OAuth */
+    .faceit-btn{
+      width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
+      padding:14px;border-radius:9px;font-family:var(--font);font-size:14px;font-weight:600;
+      cursor:pointer;transition:all .15s;margin-bottom:12px;
+      background:var(--faceit);color:#fff;border:none;
+    }
+    .faceit-btn:hover{opacity:.9}
+    .faceit-btn:disabled{opacity:.5;cursor:not-allowed}
+    .faceit-logo{width:22px;height:22px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--faceit);flex-shrink:0}
+
+    .divider{display:flex;align-items:center;gap:12px;margin:18px 0;font-size:11px;color:var(--text3);font-family:var(--mono)}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    /* Manual input */
+    .manual-section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px}
+    .manual-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);margin-bottom:10px}
+    .input-row{display:flex;gap:8px}
+    .faceit-input{
+      flex:1;background:var(--surface);border:1px solid var(--border);
+      border-radius:7px;padding:10px 14px;font-family:var(--mono);
+      font-size:13px;color:var(--text);outline:none;transition:border-color .15s;
+    }
+    .faceit-input:focus{border-color:var(--accent)}
+    .faceit-input::placeholder{color:var(--text3)}
+    .save-btn{
+      background:var(--accent);color:#fff;border:none;
+      padding:10px 18px;border-radius:7px;font-family:var(--font);
+      font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap;
+    }
+    .save-btn:hover{opacity:.9}
+    .save-btn:disabled{opacity:.5;cursor:not-allowed}
+    .manual-hint{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:8px;line-height:1.5}
+
+    /* Status messages */
+    .msg{display:none;padding:11px 14px;border-radius:7px;font-size:12px;font-family:var(--mono);margin-top:14px}
+    .msg.error{background:rgba(240,107,107,.08);border:1px solid rgba(240,107,107,.2);color:var(--danger)}
+    .msg.success{background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);color:var(--success)}
+    .msg.loading{background:var(--accent-dim);border:1px solid rgba(59,127,245,.2);color:#60A5FA}
+
+    /* Verified state */
+    .verified-card{display:none;background:rgba(45,212,160,.06);border:1px solid rgba(45,212,160,.2);border-radius:12px;padding:20px;text-align:center;animation:fadeUp .3s ease}
+    .verified-icon{font-size:32px;margin-bottom:12px}
+    .verified-name{font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
+    .verified-meta{font-size:12px;color:var(--text2);font-family:var(--mono);margin-bottom:16px}
+    .verified-continue{
+      display:inline-block;background:var(--success);color:#0C0E13;
+      padding:11px 24px;border-radius:8px;font-family:var(--font);
+      font-size:13px;font-weight:700;border:none;cursor:pointer;transition:opacity .15s;
+    }
+    .verified-continue:hover{opacity:.9}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
+  <button class="skip-btn" onclick="skipOnboarding()">Passer cette étape →</button>
+</nav>
+
+<div class="main">
+  <div class="onboarding-wrap">
+
+    <!-- Steps indicator -->
+    <div class="steps">
+      <div class="step done">
+        <div class="step-dot done">✓</div>
+        <span class="step-label">Compte créé</span>
+      </div>
+      <div class="step-line done"></div>
+      <div class="step active">
+        <div class="step-dot active">2</div>
+        <span class="step-label">Lier FACEIT</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step pending">
+        <div class="step-dot pending">3</div>
+        <span class="step-label">C'est parti</span>
+      </div>
+    </div>
+
+    <!-- Main card -->
+    <div class="card" id="mainCard">
+      <div class="card-icon icon-faceit">F</div>
+      <div class="card-title">Lie ton compte FACEIT</div>
+      <p class="card-sub">Pour analyser ton profil instantanément sans saisir ton pseudo à chaque fois et accéder à des fonctionnalités exclusives.</p>
+
+      <div class="benefits">
+        <div class="benefit">
+          <div class="benefit-icon blue">⚡</div>
+          <div class="benefit-text">
+            <div class="benefit-title">Analyse instantanée</div>
+            <div class="benefit-desc">Ton profil s'analyse automatiquement à chaque connexion</div>
+          </div>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon green">📊</div>
+          <div class="benefit-text">
+            <div class="benefit-title">Watchlist intelligente</div>
+            <div class="benefit-desc">Reçois des alertes quand tes joueurs suivis progressent</div>
+          </div>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon orange">🎮</div>
+          <div class="benefit-text">
+            <div class="benefit-title">Comparaison directe</div>
+            <div class="benefit-desc">Compare-toi instantanément à n'importe quel joueur</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FACEIT OAuth (placeholder — nécessite FACEIT Developer App) -->
+      <button class="faceit-btn" id="faceitOAuthBtn" onclick="connectFaceitOAuth()">
+        <div class="faceit-logo">F</div>
+        Se connecter avec FACEIT
+      </button>
+
+      <div class="divider">ou entre ton pseudo manuellement</div>
+
+      <!-- Manual input -->
+      <div class="manual-section">
+        <div class="manual-label">Pseudo FACEIT</div>
+        <div class="input-row">
+          <input class="faceit-input" id="faceitNickInput" type="text" placeholder="Ton pseudo FACEIT exact..." autocomplete="off" spellcheck="false"/>
+          <button class="save-btn" id="saveBtn" onclick="saveFaceitNick()">Vérifier</button>
+        </div>
+        <p class="manual-hint">Ton pseudo est sensible à la casse — ex: s1mple, NiKo, karrigan</p>
+      </div>
+
+      <div id="msgBox" class="msg"></div>
+    </div>
+
+    <!-- Verified state -->
+    <div class="verified-card" id="verifiedCard">
+      <div class="verified-icon">✓</div>
+      <div class="verified-name" id="verifiedName"></div>
+      <div class="verified-meta" id="verifiedMeta"></div>
+      <button class="verified-continue" onclick="continueToApp()">Accéder à FragValue →</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  let currentUser = null;
+  let verifiedNick = null;
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+    currentUser = session.user;
+
+    // Vérifie si FACEIT déjà lié
+    const { data: profile } = await sb.from('profiles').select('faceit_nickname').eq('id', currentUser.id).single();
+    if (profile?.faceit_nickname) {
+      // Déjà lié — redirige directement
+      window.location.href = `index.html?analyse=${encodeURIComponent(profile.faceit_nickname)}`;
+    }
+  }
+
+  // ── FACEIT OAuth ──────────────────────────────────────────────────────────
+  // Note: nécessite une FACEIT Developer App sur developers.faceit.com
+  // URL OAuth: https://accounts.faceit.com/accounts?redirect_popup=true&client_id=TON_CLIENT_ID
+  async function connectFaceitOAuth() {
+    const FACEIT_CLIENT_ID = 'TON_FACEIT_CLIENT_ID'; // À remplacer
+    if (FACEIT_CLIENT_ID === 'TON_FACEIT_CLIENT_ID') {
+      showMsg('FACEIT OAuth nécessite une app sur developers.faceit.com. Utilise le pseudo manuel pour l\'instant.', 'error');
+      return;
+    }
+    const redirectUri = encodeURIComponent('https://frag-value.vercel.app/onboarding.html?faceit_callback=1');
+    const scope = encodeURIComponent('openid profile email');
+    const state = Math.random().toString(36).substring(2);
+    sessionStorage.setItem('faceit_oauth_state', state);
+    window.location.href = `https://accounts.faceit.com/accounts?redirect_popup=true&client_id=${FACEIT_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}`;
+  }
+
+  // ── Gère le retour OAuth FACEIT ───────────────────────────────────────────
+  async function handleFaceitCallback() {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.get('faceit_callback')) return;
+    const code  = params.get('code');
+    const state = params.get('state');
+    if (sessionStorage.getItem('faceit_oauth_state') !== state) {
+      showMsg('Erreur de sécurité OAuth.', 'error'); return;
+    }
+    showMsg('Connexion FACEIT en cours...', 'loading');
+    // Ici appel à ton API pour échanger le code contre un token
+    // Pour l'instant on utilise le pseudo manuel
+  }
+
+  // ── Sauvegarde pseudo manuel ───────────────────────────────────────────────
+  async function saveFaceitNick() {
+    const nick = document.getElementById('faceitNickInput').value.trim();
+    if (!nick) { showMsg('Entre ton pseudo FACEIT.', 'error'); return; }
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Vérification...';
+    showMsg('Vérification du profil FACEIT...', 'loading');
+
+    try {
+      // Vérifie que le profil existe via l'API FragValue
+      const res  = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.player) {
+        showMsg(`Pseudo "${nick}" introuvable sur FACEIT. Vérifie l'orthographe.`, 'error');
+        return;
+      }
+
+      // Sauvegarde dans Supabase
+      await sb.from('profiles').update({
+        faceit_nickname: data.player.nickname,
+        faceit_id:       data.player.playerId,
+        updated_at:      new Date().toISOString(),
+      }).eq('id', currentUser.id);
+
+      verifiedNick = data.player.nickname;
+
+      // Affiche la carte de confirmation
+      document.getElementById('mainCard').style.display = 'none';
+      const vc = document.getElementById('verifiedCard');
+      document.getElementById('verifiedName').textContent = data.player.nickname;
+      document.getElementById('verifiedMeta').textContent = `Level ${data.cs2?.level || '—'} · ${data.cs2?.elo?.toLocaleString() || '—'} ELO · ${data.player.country?.toUpperCase() || ''}`;
+      vc.style.display = 'block';
+
+    } catch (e) {
+      showMsg('Impossible de vérifier le profil. Réessaie.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Vérifier';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('faceitNickInput');
+    if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') saveFaceitNick(); });
+  });
+
+  // ── Continue vers l'app ───────────────────────────────────────────────────
+  function continueToApp() {
+    if (verifiedNick) {
+      window.location.href = `index.html?analyse=${encodeURIComponent(verifiedNick)}`;
+    } else {
+      window.location.href = 'index.html';
+    }
+  }
+
+  // ── Skip ──────────────────────────────────────────────────────────────────
+  async function skipOnboarding() {
+    // Marque l'onboarding comme vu pour ne pas redemander
+    await sb.from('profiles').update({ updated_at: new Date().toISOString() }).eq('id', currentUser.id);
+    window.location.href = 'index.html';
+  }
+
+  // ── Messages ──────────────────────────────────────────────────────────────
+  function showMsg(text, type) {
+    const el = document.getElementById('msgBox');
+    el.textContent   = text;
+    el.className     = `msg ${type}`;
+    el.style.display = 'block';
+  }
+
+  // ── Start ─────────────────────────────────────────────────────────────────
+  handleFaceitCallback();
+  init();
+</script>
+</body>
+</html>
