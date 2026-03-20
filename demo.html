@@ -517,55 +517,66 @@ function startAnalysis() {
   document.getElementById('progressSection').scrollIntoView({ behavior:'smooth', block:'start' });
 
   // Simulate progress steps (real parsing will replace this)
-  simulateProgress(player, options);
+  uploadAndParse(player, options);
 }
 
-function simulateProgress(player, options) {
-  const steps = [
-    { title:'Lecture du fichier .dem',       sub:`Fichier: ${selectedFile.name}`,              pct: 10 },
-    { title:'Extraction des ticks',           sub:'Parsing ~64 ticks/seconde...',               pct: 30 },
-    { title:'Calcul des duels par zone',      sub:`Joueur analysé: ${player || 'tous'}`,        pct: 55 },
-    { title:'Génération des heatmaps',        sub:`${options.length} analyses: ${options.join(', ')}`, pct: 75 },
-    { title:'Calcul des KPIs avancés',        sub:'FV Rating, opening ratio, utility score...', pct: 90 },
-    { title:'Rendu final',                    sub:'Préparation de l\'interface...',              pct: 100 },
-  ];
+const PARSER_URL = 'https://fragvalue-demo-parser-production.up.railway.app';
 
-  let current = 0;
+async function uploadAndParse(player, options) {
   const stepEls = document.querySelectorAll('.progress-step');
   const bar     = document.getElementById('progressBar');
 
-  function nextStep() {
-    if (current > 0) {
-      stepEls[current - 1].classList.remove('active');
-      stepEls[current - 1].classList.add('done');
-    }
-    if (current < steps.length) {
-      const s = steps[current];
-      document.getElementById('progressTitle').textContent = s.title;
-      document.getElementById('progressSub').textContent   = s.sub;
-      bar.style.width = s.pct + '%';
-      if (stepEls[current]) stepEls[current].classList.add('active');
-      current++;
-      const delay = current === steps.length ? 800 : 1200 + Math.random() * 800;
-      setTimeout(nextStep, delay);
-    } else {
-      // Analysis complete — redirect to results
-      onAnalysisComplete();
-    }
+  function setStep(index, pct, title, sub) {
+    stepEls.forEach((el, i) => {
+      el.classList.remove('active','done');
+      if (i < index)  el.classList.add('done');
+      if (i === index) el.classList.add('active');
+    });
+    bar.style.width = pct + '%';
+    document.getElementById('progressTitle').textContent = title;
+    document.getElementById('progressSub').textContent   = sub;
   }
-  nextStep();
+
+  try {
+    setStep(0, 10, 'Envoi du fichier...', selectedFile.name + ' (' + formatSize(selectedFile.size) + ')');
+
+    const formData = new FormData();
+    formData.append('demo', selectedFile);
+    if (player) formData.append('player', player);
+    formData.append('options', JSON.stringify(options));
+
+    setStep(1, 25, 'Parsing en cours...', 'Extraction des ticks et positions...');
+
+    const res = await fetch(PARSER_URL + '/parse', { method: 'POST', body: formData });
+
+    setStep(2, 55, 'Calcul des duels...', 'Analyse des zones par map...');
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Erreur serveur' }));
+      throw new Error(err.error || 'Erreur serveur');
+    }
+
+    setStep(3, 75, 'Generation des heatmaps...', 'Preparation des visualisations...');
+    const data = await res.json();
+
+    setStep(4, 90, 'Calcul des KPIs...', 'FV Rating, opening ratio, utility score...');
+    await new Promise(r => setTimeout(r, 600));
+
+    setStep(5, 100, 'Analyse terminee !', 'Redirection vers les resultats...');
+    bar.style.background = 'var(--success)';
+
+    sessionStorage.setItem('demoData', JSON.stringify(data.data));
+    await new Promise(r => setTimeout(r, 800));
+    window.location.href = 'heatmap-results.html';
+
+  } catch (err) {
+    document.getElementById('progressSection').style.display = 'none';
+    document.getElementById('analyseBtn').disabled    = false;
+    document.getElementById('analyseBtn').textContent = "Lancer l'analyse de la demo";
+    showError('Erreur : ' + err.message);
+  }
 }
 
-function onAnalysisComplete() {
-  document.getElementById('progressTitle').textContent = 'Analyse terminée !';
-  document.getElementById('progressSub').textContent   = 'Redirection vers les résultats...';
-  document.getElementById('progressBar').style.background = 'var(--success)';
-
-  // TODO: redirect to heatmap results page
-  setTimeout(() => {
-    alert('Le parser de démos est en cours de développement.\nProchaine étape : connexion au service demofile-net sur Railway.');
-  }, 800);
-}
 
 // ── Error handling ─────────────────────────────────────────────────────────
 function showError(msg) {
