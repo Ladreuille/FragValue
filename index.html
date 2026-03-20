@@ -143,7 +143,11 @@
 <body>
 <nav>
   <div class="logo">Frag<span>Value</span> Scout</div>
-  <span class="nav-badge">CS2 TALENT TRACKER</span>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="nav-badge">CS2 TALENT TRACKER</span>
+    <a href="login.html" id="navLoginBtn" style="font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:6px 14px;border-radius:4px;transition:all .2s" onmouseover="this.style.borderColor='#FF5500';this.style.color='#FF5500'" onmouseout="this.style.borderColor='#1C2A3A';this.style.color='#4A6580'">Connexion</a>
+    <a href="account.html" id="navAccountBtn" style="display:none;font-family:var(--mono);font-size:12px;color:var(--accent);text-decoration:none;border:1px solid rgba(255,85,0,.3);padding:6px 14px;border-radius:4px">Mon compte</a>
+  </div>
 </nav>
 <div id="topbar">
   <input id="topbarInput" type="text" placeholder="Nouveau pseudo FACEIT..." autocomplete="off" spellcheck="false"/>
@@ -298,6 +302,19 @@
   <p>Import de démo, heatmaps de positions et analyse complète — passez à FragValue Pro</p>
   <a href="#" class="cta-btn">FragValue Pro — 49 €/mois</a>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const _sb = supabase.createClient(
+    'https://xmyruycvvkmcwysfygcq.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI'
+  );
+  _sb.auth.getSession().then(({ data }) => {
+    if (data.session) {
+      document.getElementById('navLoginBtn').style.display   = 'none';
+      document.getElementById('navAccountBtn').style.display = 'block';
+    }
+  });
+</script>
 <script src="app.js"></script>
 </body>
 </html>
