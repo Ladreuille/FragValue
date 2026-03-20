@@ -90,6 +90,31 @@
 </div>
 
 <script>
+// Map overview images (Source: csgostats.gg CDN - public assets)
+const MAP_IMAGES = {
+  'de_dust2':   'https://cdn.csgostats.gg/maps/de_dust2/overview.png',
+  'de_mirage':  'https://cdn.csgostats.gg/maps/de_mirage/overview.png',
+  'de_inferno': 'https://cdn.csgostats.gg/maps/de_inferno/overview.png',
+  'de_nuke':    'https://cdn.csgostats.gg/maps/de_nuke/overview.png',
+  'de_ancient': 'https://cdn.csgostats.gg/maps/de_ancient/overview.png',
+  'de_anubis':  'https://cdn.csgostats.gg/maps/de_anubis/overview.png',
+  'de_vertigo': 'https://cdn.csgostats.gg/maps/de_vertigo/overview.png',
+};
+let mapImg = null;
+let mapImgLoaded = false;
+
+function preloadMapImage(mapName) {
+  return new Promise(resolve => {
+    const url = MAP_IMAGES[mapName];
+    if (!url) { resolve(false); return; }
+    mapImg = new Image();
+    mapImg.crossOrigin = 'anonymous';
+    mapImg.onload  = () => { mapImgLoaded = true; resolve(true); };
+    mapImg.onerror = () => { mapImgLoaded = false; resolve(false); };
+    mapImg.src = url;
+  });
+}
+
 const MAP_BOUNDS={'de_dust2':{minX:-2476,maxX:1444,minY:-1228,maxY:3346},'de_mirage':{minX:-3230,maxX:870,minY:-2750,maxY:930},'de_inferno':{minX:-2087,maxX:2870,minY:-1200,maxY:3110},'de_nuke':{minX:-3453,maxX:2497,minY:-3000,maxY:2200},'de_ancient':{minX:-2953,maxX:2164,minY:-1600,maxY:3200},'de_anubis':{minX:-2100,maxX:2500,minY:-2000,maxY:2700}};
 let demoData=null,currentPlayer=null,currentHeatmap='kills',canvas,ctx;
 function w2c(x,y,map,W,H){const b=MAP_BOUNDS[map]||{minX:-3000,maxX:3000,minY:-3000,maxY:3000};return{px:((x-b.minX)/(b.maxX-b.minX))*W,py:(1-(y-b.minY)/(b.maxY-b.minY))*H}}
@@ -97,7 +122,14 @@ window.addEventListener('load',()=>{
   canvas=document.getElementById('heatmapCanvas');ctx=canvas.getContext('2d');
   const raw=sessionStorage.getItem('demoData');
   if(!raw){document.getElementById('noData').style.display='block';return;}
-  try{demoData=JSON.parse(raw);document.getElementById('mainContent').style.display='block';renderMeta();renderStats();renderPlayerList();renderHeatmap();}
+  try{
+    demoData=JSON.parse(raw);
+    document.getElementById('mainContent').style.display='block';
+    renderMeta();renderStats();renderPlayerList();
+    // Preload map image then render
+    const mapName = demoData.meta?.map || 'de_dust2';
+    preloadMapImage(mapName).then(() => renderHeatmap());
+  }
   catch(e){document.getElementById('noData').style.display='block';}
 });
 function renderMeta(){const m=demoData.meta;document.getElementById('metaCard').innerHTML=`<div class="meta-item"><div class="meta-val">${m.map||'—'}</div><div class="meta-label">Map</div></div><div class="meta-item"><div class="meta-val">${m.rounds||0}</div><div class="meta-label">Rounds</div></div><div class="meta-item"><div class="meta-val">${m.totalKills||0}</div><div class="meta-label">Kills</div></div><div class="meta-item"><div class="meta-val">${m.players?m.players.length:0}</div><div class="meta-label">Joueurs</div></div>${m.targetPlayer?`<div class="meta-item"><div class="meta-val" style="font-size:16px">${m.targetPlayer}</div><div class="meta-label">Analysé</div></div>`:''}`;}
@@ -105,7 +137,13 @@ function renderStats(){const kills=demoData.kills||[];const hs=kills.filter(k=>k
 function renderPlayerList(){const players=demoData.playerStats||[];const list=document.getElementById('playerList');list.innerHTML=`<button class="player-btn active" onclick="selectPlayer(null,this)">Tous<span class="player-kd">—</span></button>`;players.slice(0,10).forEach(p=>{list.innerHTML+=`<button class="player-btn" onclick="selectPlayer('${p.name}',this)">${p.name.substring(0,14)}<span class="player-kd">${p.kd}</span></button>`;});const tbody=document.getElementById('playersTable');tbody.innerHTML=players.map(p=>{const kd=parseFloat(p.kd);const cl=kd>=1.3?'td-good':kd>=1?'td-warn':'td-bad';return`<tr><td class="td-name">${p.name}</td><td>${p.kills}</td><td>${p.deaths}</td><td class="${cl}">${p.kd}</td><td>${p.hsPct}%</td></tr>`;}).join('');}
 function selectPlayer(name,btn){currentPlayer=name;document.querySelectorAll('.player-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHeatmap();}
 function switchHeatmap(type,btn){currentHeatmap=type;document.querySelectorAll('.heatmap-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHeatmap();}
-function renderHeatmap(){if(!demoData)return;const map=demoData.meta?.map||'de_dust2';const W=canvas.width,H=canvas.height;ctx.clearRect(0,0,W,H);ctx.fillStyle='#080C10';ctx.fillRect(0,0,W,H);ctx.strokeStyle='rgba(28,42,58,.3)';ctx.lineWidth=.5;for(let i=1;i<10;i++){ctx.beginPath();ctx.moveTo(i*W/10,0);ctx.lineTo(i*W/10,H);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*H/10);ctx.lineTo(W,i*H/10);ctx.stroke();}
+function renderHeatmap(){if(!demoData)return;const map=demoData.meta?.map||'de_dust2';const W=canvas.width,H=canvas.height;
+  // Draw map background if loaded
+ctx.clearRect(0,0,W,H);ctx.fillStyle='#080C10';ctx.fillRect(0,0,W,H);
+  // Draw map image as background
+  if(mapImgLoaded && mapImg){ctx.globalAlpha=0.45;ctx.drawImage(mapImg,0,0,W,H);ctx.globalAlpha=1;}
+  // Subtle grid on top
+  ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=.5;for(let i=1;i<10;i++){ctx.beginPath();ctx.moveTo(i*W/10,0);ctx.lineTo(i*W/10,H);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*H/10);ctx.lineTo(W,i*H/10);ctx.stroke();}
 if(currentHeatmap==='kills')drawKills(map,W,H,'attacker');else if(currentHeatmap==='deaths')drawKills(map,W,H,'victim');else if(currentHeatmap==='movement')drawMovement(map,W,H);else if(currentHeatmap==='duels')drawDuels(W,H);else if(currentHeatmap==='utility')drawUtility(map,W,H);
 ctx.fillStyle='rgba(7,9,13,.7)';ctx.fillRect(8,8,180,24);ctx.fillStyle='#E8F4FD';ctx.font='500 10px DM Mono,monospace';ctx.textAlign='left';const labels={kills:'KILL HEATMAP',deaths:'DEATH HEATMAP',movement:'DÉPLACEMENTS',duels:'DUEL WIN ZONES',utility:'UTILITY MAP'};ctx.fillText(labels[currentHeatmap]||'',14,23);updateLegend();}
 function drawKills(map,W,H,mode){let kills=demoData.kills||[];if(currentPlayer)kills=kills.filter(k=>mode==='attacker'?k.attacker===currentPlayer:k.victim===currentPlayer);const gs=24,grid={};let mx=0;kills.forEach(k=>{const x=mode==='attacker'?k.attackerX:k.victimX;const y=mode==='attacker'?k.attackerY:k.victimY;const{px,py}=w2c(x,y,map,W,H);const key=`${Math.floor(px/gs)}_${Math.floor(py/gs)}`;grid[key]=(grid[key]||0)+1;if(grid[key]>mx)mx=grid[key];});Object.entries(grid).forEach(([key,count])=>{const[gx,gy]=key.split('_').map(Number);const t=count/mx;ctx.fillStyle=mode==='attacker'?`rgba(255,${Math.floor(85*(1-t))},0,${.25+t*.6})`:`rgba(255,${Math.floor(69*t)},${Math.floor(96*t)},${.25+t*.6})`;ctx.fillRect(gx*gs,gy*gs,gs,gs);});kills.forEach(k=>{const x=mode==='attacker'?k.attackerX:k.victimX;const y=mode==='attacker'?k.attackerY:k.victimY;const{px,py}=w2c(x,y,map,W,H);ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fillStyle=mode==='attacker'?'rgba(255,85,0,.9)':'rgba(255,69,96,.9)';ctx.fill();});}
