@@ -1,4 +1,4 @@
-// app.js — FragValue Scout v4
+// app.js — FragValue Scout v6 — Premium Design
 
 document.getElementById('nickInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') searchPlayer();
@@ -6,6 +6,7 @@ document.getElementById('nickInput').addEventListener('keydown', e => {
 
 let charts = {};
 
+// ── Search ─────────────────────────────────────────────────────────────────
 async function searchPlayer(nicknameOverride) {
   const nickname = nicknameOverride || document.getElementById('nickInput').value.trim();
   hideError();
@@ -14,9 +15,7 @@ async function searchPlayer(nicknameOverride) {
   const fromTopbar = !!nicknameOverride;
 
   if (fromTopbar) {
-    // Depuis topbar : on garde l'affichage actuel et on montre juste l'état loading
     document.getElementById('topbarNick').textContent = `Recherche : ${nickname}...`;
-    // Overlay de chargement sur le dashboard existant
     showTopbarLoading(true);
   } else {
     hideDashboard();
@@ -29,10 +28,9 @@ async function searchPlayer(nicknameOverride) {
     const res  = await fetch(`/api/scout?nickname=${encodeURIComponent(nickname)}`);
     const data = await res.json();
     if (!res.ok) { showError(data.error || 'Erreur inconnue.'); return; }
-    // Reset UNIQUEMENT une fois les données reçues
     if (fromTopbar) resetDashboard();
     renderDashboard(data);
-  } catch { showError('Impossible de contacter le serveur. Vérifie ta connexion.'); }
+  } catch { showError('Impossible de contacter le serveur.'); }
   finally {
     showTopbarLoading(false);
     showLoading(false);
@@ -46,8 +44,8 @@ function showTopbarLoading(show) {
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'topbarLoadingOverlay';
-      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(7,9,13,.7);z-index:200;display:flex;align-items:center;justify-content:center;';
-      overlay.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px"><div style="width:36px;height:36px;border:2px solid #1C2A3A;border-top-color:#FF5500;border-radius:50%;animation:spin .7s linear infinite"></div><div style="font-family:DM Mono,monospace;font-size:13px;color:#E8F4FD">Recherche en cours...</div></div>';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(8,9,12,.75);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+      overlay.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px"><div style="width:32px;height:32px;border:2px solid #1F2433;border-top-color:#3B7FF5;border-radius:50%;animation:spin .7s linear infinite"></div><div style="font-family:JetBrains Mono,monospace;font-size:12px;color:#8892A4;letter-spacing:.5px">Chargement...</div></div>';
       document.body.appendChild(overlay);
     }
     overlay.style.display = 'flex';
@@ -56,40 +54,35 @@ function showTopbarLoading(show) {
   }
 }
 
+// ── Reset ──────────────────────────────────────────────────────────────────
 function resetDashboard() {
-  // Reset avatar sans replaceWith
   const avatarEl = document.getElementById('profileAvatar');
   if (avatarEl) {
     avatarEl.style.backgroundImage = '';
-    avatarEl.textContent = String.fromCodePoint(0x1F464);
+    avatarEl.textContent = '👤';
+    avatarEl.classList.remove('has-avatar');
   }
-  // Vide tous les containers dynamiques
   ['profileName','profileCountry','profileRole','profileTeam',
    'eloVal','resultsRow','scoutScore','scoutDesc','scoutBars',
    'kpiMain','kpiSides','kpiUtility','kpiTrades',
-   'multiKillCards','clutchCards','mapCards','matchTable',
-  ].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = '';
-  });
-  // Remet les badges
+   'multiKillCards','clutchCards','mapCards','matchTable','matchTableHead',
+  ].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+
   const fvBadge = document.getElementById('fvBadge');
-  if (fvBadge) { fvBadge.textContent = 'FV --'; fvBadge.className = 'fv-rating-badge fv-low'; }
-  const lvlBadge = document.getElementById('levelBadge');
-  if (lvlBadge) { lvlBadge.textContent = '--'; lvlBadge.className = 'level-badge'; }
-  // Detruit tous les graphiques
+  if (fvBadge) { fvBadge.textContent = ''; fvBadge.className = 'badge'; }
+
   Object.values(charts).forEach(c => { try { c.destroy(); } catch(e) {} });
   charts = {};
 }
 
 // ── FV Rating helpers ──────────────────────────────────────────────────────
-function fvClass(r) {
+function fvBadgeClass(r) {
   const v = parseFloat(r);
-  if (v >= 1.20) return 'fv-elite';
-  if (v >= 1.05) return 'fv-great';
-  if (v >= 0.90) return 'fv-good';
-  if (v >= 0.75) return 'fv-avg';
-  return 'fv-low';
+  if (v >= 1.20) return 'badge badge-fv-elite';
+  if (v >= 1.05) return 'badge badge-fv-great';
+  if (v >= 0.90) return 'badge badge-fv-good';
+  if (v >= 0.75) return 'badge badge-fv-avg';
+  return 'badge badge-fv-low';
 }
 function fvLabel(r) {
   const v = parseFloat(r);
@@ -101,45 +94,48 @@ function fvLabel(r) {
 }
 function fvColor(r) {
   const v = parseFloat(r);
-  if (v >= 1.20) return '#ff1a5e';
-  if (v >= 1.05) return '#FFB800';
-  if (v >= 0.90) return '#39FF8A';
-  if (v >= 0.75) return '#00E5FF';
-  return '#4A6580';
+  if (v >= 1.20) return '#2DD4A0';
+  if (v >= 1.05) return '#60A5FA';
+  if (v >= 0.90) return '#F5C842';
+  if (v >= 0.75) return '#EDA020';
+  return '#F06B6B';
 }
 
-// ── KPI card builder ───────────────────────────────────────────────────────
-function makeKpi(label, value, cls, sub, delay = 0) {
-  return `<div class="kpi-card" style="animation-delay:${delay}s">
+// ── KPI card ──────────────────────────────────────────────────────────────
+function kpiCard(label, value, cls, sub) {
+  return `<div class="kpi-card">
     <div class="kpi-label">${label}</div>
-    <div class="kpi-value ${cls}">${value}</div>
+    <div class="kpi-val ${cls}">${value}</div>
     <div class="kpi-sub">${sub}</div>
   </div>`;
 }
 
-// ── Stat mini card ─────────────────────────────────────────────────────────
-function makeMini(val, label, color = '#FF5500') {
-  return `<div class="stat-mini">
-    <div class="stat-mini-val" style="color:${color}">${val}</div>
-    <div class="stat-mini-label">${label}</div>
-  </div>`;
-}
-
 // ── Chart helper ──────────────────────────────────────────────────────────
-function makeChart(id, type, labels, data, color, opts = {}) {
-  if (charts[id]) charts[id].destroy();
-  const base = {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { ticks: { color: '#4A6580', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#1C2A3A' } },
-      y: { ticks: { color: '#4A6580', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#1C2A3A' }, ...opts.y },
-    }
-  };
-  charts[id] = new Chart(document.getElementById(id), {
+const CHART_DEFAULTS = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: {
+    backgroundColor: '#1C1F28', titleColor: '#EDF0F7', bodyColor: '#8892A4',
+    borderColor: '#252B3B', borderWidth: 1, padding: 10,
+    titleFont: { family: 'JetBrains Mono', size: 11 },
+    bodyFont:  { family: 'JetBrains Mono', size: 11 },
+  }},
+  scales: {
+    x: { ticks: { color: '#4A5568', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: '#1F2433' } },
+    y: { ticks: { color: '#4A5568', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: '#1F2433' } },
+  }
+};
+
+function makeChart(id, type, labels, data, opts = {}) {
+  if (charts[id]) { try { charts[id].destroy(); } catch(e) {} }
+  const el = document.getElementById(id);
+  if (!el) return;
+  charts[id] = new Chart(el, {
     type,
     data: { labels, datasets: [{ data, ...opts.dataset }] },
-    options: { ...base, ...opts.extra },
+    options: { ...CHART_DEFAULTS, ...opts.extra, scales: {
+      x: { ...CHART_DEFAULTS.scales.x },
+      y: { ...CHART_DEFAULTS.scales.y, ...(opts.yOpts||{}) },
+    }},
   });
 }
 
@@ -147,7 +143,7 @@ function makeChart(id, type, labels, data, color, opts = {}) {
 function renderDashboard(data) {
   const { player, cs2, lifetime, recent, mapStats, teams } = data;
 
-  // Profil — on modifie l'élément en place sans replaceWith
+  // Avatar
   const avatarEl = document.getElementById('profileAvatar');
   if (avatarEl) {
     if (player.avatar) {
@@ -155,204 +151,244 @@ function renderDashboard(data) {
       avatarEl.style.backgroundSize  = 'cover';
       avatarEl.style.backgroundPosition = 'center';
       avatarEl.textContent = '';
+      avatarEl.classList.add('has-avatar');
     } else {
       avatarEl.style.backgroundImage = '';
-      avatarEl.textContent = '\u{1F464}';
+      avatarEl.textContent = '👤';
     }
   }
-  document.getElementById('profileName').textContent    = player.nickname;
-  document.getElementById('profileCountry').textContent = player.country ? `🌍 ${player.country.toUpperCase()}` : '';
-  document.getElementById('profileRole').textContent    = `Rôle estimé : ${recent.role}`;
 
-  const fvBadge = document.getElementById('fvBadge');
-  fvBadge.textContent = `FV ${recent.fvRating} — ${fvLabel(recent.fvRating)}`;
-  fvBadge.className   = `fv-rating-badge ${fvClass(recent.fvRating)}`;
-
+  // Level ring
   const lvl = cs2.level || 1;
-  document.getElementById('levelBadge').textContent = `LEVEL ${lvl}`;
-  document.getElementById('levelBadge').className   = `level-badge lvl-${lvl}`;
-  document.getElementById('eloVal').textContent     = cs2.elo.toLocaleString();
-  if (teams.length > 0) document.getElementById('profileTeam').textContent = `Équipe : ${teams[0].name}`;
+  const canvas = document.getElementById('levelRing');
+  if (canvas && typeof drawLevelRing === 'function') drawLevelRing(canvas, lvl);
+  const levelNumEl = document.getElementById('levelNum');
+  if (levelNumEl) {
+    const LEVEL_COLORS = {1:'#7A7A7A',2:'#23C44E',3:'#23C44E',4:'#F5C842',5:'#F5C842',6:'#F5C842',7:'#EDA020',8:'#EDA020',9:'#E05C2A',10:'#D93535'};
+    levelNumEl.textContent = `Lvl ${lvl}`;
+    levelNumEl.style.color = LEVEL_COLORS[lvl] || '#7A7A7A';
+  }
 
+  document.getElementById('profileName').textContent = player.nickname;
+
+  // FV badge
+  const fvBadge = document.getElementById('fvBadge');
+  if (fvBadge) {
+    fvBadge.textContent = `FV ${recent.fvRating} — ${fvLabel(recent.fvRating)}`;
+    fvBadge.className   = fvBadgeClass(recent.fvRating);
+  }
+
+  // Role / country / team
+  const roleEl = document.getElementById('profileRole');
+  if (roleEl) roleEl.textContent = recent.role || 'Rifler';
+
+  const countryEl = document.getElementById('profileCountry');
+  if (countryEl) {
+    countryEl.textContent = player.country ? player.country.toUpperCase() : '';
+    countryEl.style.display = player.country ? '' : 'none';
+  }
+
+  const teamEl = document.getElementById('profileTeam');
+  if (teamEl) {
+    if (teams && teams.length > 0) {
+      teamEl.textContent = teams[0].name;
+      teamEl.style.display = '';
+    } else {
+      teamEl.style.display = 'none';
+    }
+  }
+
+  // ELO
+  document.getElementById('eloVal').textContent = cs2.elo.toLocaleString();
+
+  // Results
   const resultsRow = document.getElementById('resultsRow');
-  resultsRow.innerHTML = '';
-  (lifetime.recentResults || []).slice(0, 10).forEach(r => {
-    const dot = document.createElement('div');
-    dot.className = `res-dot ${r === '1' ? 'res-w' : 'res-l'}`;
-    resultsRow.appendChild(dot);
-  });
+  if (resultsRow) {
+    resultsRow.innerHTML = (lifetime.recentResults || []).slice(0, 10).map(r =>
+      `<div class="result-dot ${r === '1' ? 'w' : 'l'}"></div>`
+    ).join('');
+  }
 
-  // Scout Score
-  const fvScore  = Math.min(parseFloat(recent.fvRating) / 1.5 * 100, 100);
+  // ── Scout Score ────────────────────────────────────────────────────────
+  const fvScore  = Math.min(parseFloat(recent.fvRating)  / 1.5 * 100, 100);
   const eloScore = Math.min(cs2.elo / 3000 * 100, 100);
   const wrScore  = Math.min(parseFloat(recent.winRate), 100);
   const kdScore  = Math.min(parseFloat(recent.avgKd) / 2.5 * 100, 100);
   const hsScore  = Math.min(parseFloat(recent.avgHs) / 70 * 100, 100);
   const total    = Math.round(fvScore*.35 + eloScore*.30 + wrScore*.15 + kdScore*.10 + hsScore*.10);
+
   document.getElementById('scoutScore').textContent = total;
   document.getElementById('scoutDesc').textContent  = scoreLabel(total);
+
   const barsData = [
-    { label:'FV Rating',  val:fvScore,  display:recent.fvRating },
-    { label:'ELO',        val:eloScore, display:cs2.elo.toLocaleString() },
-    { label:'Win rate',   val:wrScore,  display:`${recent.winRate}%` },
-    { label:'K/D',        val:kdScore,  display:recent.avgKd },
-    { label:'HS%',        val:hsScore,  display:`${recent.avgHs}%` },
-    { label:'ADR',        val:Math.min(parseFloat(recent.avgAdr)/120*100,100), display:recent.avgAdr },
+    { label:'FV Rating', val:fvScore,  display:recent.fvRating },
+    { label:'ELO',       val:eloScore, display:cs2.elo.toLocaleString() },
+    { label:'Win rate',  val:wrScore,  display:`${recent.winRate}%` },
+    { label:'K/D',       val:kdScore,  display:recent.avgKd },
+    { label:'HS%',       val:hsScore,  display:`${recent.avgHs}%` },
+    { label:'ADR',       val:Math.min(parseFloat(recent.avgAdr)/120*100,100), display:recent.avgAdr },
   ];
   document.getElementById('scoutBars').innerHTML = barsData.map(b => `
-    <div class="scout-bar-item">
-      <div class="scout-bar-label"><span>${b.label}</span><span>${b.display}</span></div>
-      <div class="scout-bar-track"><div class="scout-bar-fill" style="width:${Math.max(0,b.val).toFixed(0)}%"></div></div>
+    <div class="bar-row">
+      <span class="bar-label">${b.label}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.max(0,b.val).toFixed(0)}%"></div></div>
+      <span class="bar-val">${b.display}</span>
     </div>`).join('');
 
-  // ── KPIs PRINCIPAUX ──────────────────────────────────────────────────────
+  // ── KPIs principaux ────────────────────────────────────────────────────
   const kd = parseFloat(recent.avgKd);
   document.getElementById('kpiMain').innerHTML = [
-    makeKpi('FV Rating 2.1', recent.fvRating, fvClass(recent.fvRating).replace('fv-','hot'), fvLabel(recent.fvRating), 0),
-    makeKpi('K/D moyen',     recent.avgKd,    kd>=1.3?'good':kd>=1?'warn':'hot', '20 derniers matchs', .04),
-    makeKpi('HS moyen',      `${recent.avgHs}%`, parseFloat(recent.avgHs)>=45?'good':'accent', 'headshot rate', .08),
-    makeKpi('ADR moyen',     recent.avgAdr,   parseFloat(recent.avgAdr)>=80?'good':'warn', 'avg dmg / round', .12),
-    makeKpi('KAST moyen',    `${recent.avgKast}%`, parseFloat(recent.avgKast)>=70?'good':'accent', 'kill/assist/surv/traded', .16),
-    makeKpi('Win rate',      `${recent.winRate}%`, parseFloat(recent.winRate)>=55?'good':'warn', '20 derniers matchs', .20),
-    makeKpi('ELO FACEIT',    cs2.elo.toLocaleString(), 'hot', `Niveau ${lvl}/10`, .24),
-    makeKpi('Matchs (life)', lifetime.matches.toLocaleString(), 'accent', `${lifetime.wins} victoires`, .28),
+    kpiCard('FV Rating 2.1', recent.fvRating, fvColor(recent.fvRating).startsWith('#2D')?'kpi-good':fvColor(recent.fvRating).startsWith('#60')?'kpi-blue':fvColor(recent.fvRating).startsWith('#F5')?'kpi-warn':'kpi-bad', fvLabel(recent.fvRating)),
+    kpiCard('K/D moyen',  recent.avgKd,        kd>=1.3?'kpi-good':kd>=1?'kpi-warn':'kpi-bad', '20 derniers matchs'),
+    kpiCard('HS%',        `${recent.avgHs}%`,  parseFloat(recent.avgHs)>=45?'kpi-good':'kpi-blue', 'headshot rate'),
+    kpiCard('ADR',        recent.avgAdr,        parseFloat(recent.avgAdr)>=80?'kpi-good':'kpi-warn', 'avg dmg / round'),
+    kpiCard('KAST',       `${recent.avgKast}%`, parseFloat(recent.avgKast)>=70?'kpi-good':'kpi-blue', 'kill/assist/surv/traded'),
+    kpiCard('Win rate',   `${recent.winRate}%`, parseFloat(recent.winRate)>=55?'kpi-good':'kpi-warn', '20 derniers matchs'),
+    kpiCard('ELO',        cs2.elo.toLocaleString(), 'kpi-neutral', `Niveau ${lvl}/10`),
+    kpiCard('Matchs',     lifetime.matches.toLocaleString(), 'kpi-blue', `${lifetime.wins} victoires`),
   ].join('');
 
-  // ── CT / T SPLIT ──────────────────────────────────────────────────────────
-  document.getElementById('kpiSides').innerHTML = [
-    makeKpi('Win rate CT',  `${recent.ctWinRate}%`, parseFloat(recent.ctWinRate)>=55?'good':'warn', 'côté CT', 0),
-    makeKpi('K/D CT',       recent.ctKd,  parseFloat(recent.ctKd)>=1.2?'good':'accent', 'côté CT', .04),
-    makeKpi('Win rate T',   `${recent.tWinRate}%`,  parseFloat(recent.tWinRate)>=45?'good':'warn', 'côté T', .08),
-    makeKpi('K/D T',        recent.tKd,   parseFloat(recent.tKd)>=1.1?'good':'accent', 'côté T', .12),
-    makeKpi('Opening ratio',recent.openingRatio, parseFloat(recent.openingRatio)>=1?'good':'hot', `${recent.totalFirstKills}K / ${recent.totalFirstDeaths}D`, .16),
-    makeKpi('Série max',    lifetime.longestStreak, 'good', 'wins consécutives', .20),
-    makeKpi('Série actuelle',(lifetime.currentStreak||0), (lifetime.currentStreak||0)>=3?'good':'accent', 'en cours', .24),
-    makeKpi('K/R moyen',    recent.avgKr, 'accent', 'kills per round', .28),
-  ].join('');
+  // ── CT/T split ─────────────────────────────────────────────────────────
+  document.getElementById('kpiSides').innerHTML = `
+    <div class="side-grid">
+      <div class="side-card">
+        <div class="side-title"><div class="side-dot ct"></div>Côté CT</div>
+        <div class="side-stats">
+          <div class="side-stat"><div class="side-stat-val kpi-blue">${recent.ctWinRate}%</div><div class="side-stat-label">Win rate</div></div>
+          <div class="side-stat"><div class="side-stat-val kpi-neutral">${recent.ctKd}</div><div class="side-stat-label">K/D</div></div>
+        </div>
+      </div>
+      <div class="side-card">
+        <div class="side-title"><div class="side-dot t"></div>Côté T</div>
+        <div class="side-stats">
+          <div class="side-stat"><div class="side-stat-val kpi-warn">${recent.tWinRate}%</div><div class="side-stat-label">Win rate</div></div>
+          <div class="side-stat"><div class="side-stat-val kpi-neutral">${recent.tKd}</div><div class="side-stat-label">K/D</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="kpi-grid" style="margin-top:8px">
+      ${kpiCard('Opening ratio', recent.openingRatio, parseFloat(recent.openingRatio)>=1?'kpi-good':'kpi-bad', `${recent.totalFirstKills}K / ${recent.totalFirstDeaths}D`)}
+      ${kpiCard('Série max', lifetime.longestStreak, 'kpi-good', 'wins consécutives')}
+      ${kpiCard('Série actuelle', lifetime.currentStreak||0, (lifetime.currentStreak||0)>=3?'kpi-good':'kpi-blue', 'en cours')}
+      ${kpiCard('K/R moyen', recent.avgKr, 'kpi-blue', 'kills per round')}
+    </div>`;
 
-  // ── FLASHES & UTILITY ─────────────────────────────────────────────────────
-  document.getElementById('kpiUtility').innerHTML = [
-    makeKpi('Flashes lancées',   recent.totalFlashesThrown,  'accent', '20 matchs', 0),
-    makeKpi('Ennemis flashés',   recent.totalEnemiesFlashed, 'good',   '20 matchs', .04),
-    makeKpi('Flash / round',     recent.avgFlashPerRound,    'accent', 'moyenne', .08),
-    makeKpi('Util. dmg total',   recent.totalUtilDmg,        'warn',   '20 matchs', .12),
-    makeKpi('Util. dmg / match', recent.avgUtilDmg,          'warn',   'moyenne', .16),
-    makeKpi('AWP / sniper kills',recent.totalSniperKills,    'hot',    `${recent.sniperKillRate}/match`, .20),
-  ].join('');
-
-  // ── TRADES & SAVES ────────────────────────────────────────────────────────
-  document.getElementById('kpiTrades').innerHTML = [
-    makeKpi('Trade kills',  recent.totalTradeKills,  'good',   '20 matchs', 0),
-    makeKpi('Trade deaths', recent.totalTradeDeaths, 'hot',    '20 matchs', .04),
-    makeKpi('Saves',        recent.totalSaves,        'accent', 'armes sauvées', .08),
-    makeKpi('Pistol win%',  `${recent.pistolWinRate}%`, parseFloat(recent.pistolWinRate)>=50?'good':'warn', `${recent.totalPistolWins}/${recent.totalPistolTotal}`, .12),
-  ].join('');
-
-  // ── GRAPHIQUES ────────────────────────────────────────────────────────────
+  // ── Charts ─────────────────────────────────────────────────────────────
   const matches = recent.matches || [];
-  const labels  = matches.map((_, i) => `M${i + 1}`);
+  const labels  = matches.map((_, i) => `M${i+1}`);
 
-  makeChart('chartKd', 'line', labels, matches.map(m => m.kd), '#FF5500', {
-    dataset: { fill:true, backgroundColor:'rgba(255,85,0,.1)', borderColor:'#FF5500', borderWidth:2, pointRadius:3, pointBackgroundColor:'#FF5500', tension:.3 },
-    y: { suggestedMin: 0 }
+  makeChart('chartKd', 'line', labels, matches.map(m => m.kd), {
+    dataset: { fill:true, backgroundColor:'rgba(59,127,245,.08)', borderColor:'#3B7FF5', borderWidth:1.5, pointRadius:2, pointBackgroundColor:'#3B7FF5', tension:.4 },
+    yOpts: { suggestedMin: 0 }
   });
-  const hsVals = matches.map(m => m.hsPct);
-  makeChart('chartHs', 'bar', labels, hsVals, '#00E5FF', {
-    dataset: { backgroundColor: hsVals.map(v => v>=50?'rgba(57,255,138,.4)':'rgba(0,229,255,.2)'), borderColor: hsVals.map(v => v>=50?'#39FF8A':'#00E5FF'), borderWidth:1, borderRadius:3 }
+  makeChart('chartHs', 'bar', labels, matches.map(m => m.hsPct), {
+    dataset: { backgroundColor:'rgba(59,127,245,.2)', borderColor:'#3B7FF5', borderWidth:1, borderRadius:2 },
+    yOpts: { suggestedMin: 0 }
   });
-  makeChart('chartAdr', 'line', labels, matches.map(m => m.adr), '#FFB800', {
-    dataset: { fill:true, backgroundColor:'rgba(255,184,0,.1)', borderColor:'#FFB800', borderWidth:2, pointRadius:3, pointBackgroundColor:'#FFB800', tension:.3 },
-    y: { suggestedMin: 0 }
+  makeChart('chartAdr', 'line', labels, matches.map(m => m.adr), {
+    dataset: { fill:true, backgroundColor:'rgba(245,200,66,.06)', borderColor:'#F5C842', borderWidth:1.5, pointRadius:2, pointBackgroundColor:'#F5C842', tension:.4 },
+    yOpts: { suggestedMin: 0 }
   });
-  const ratingVals = matches.map(m => m.fvRating);
-  makeChart('chartRating', 'line', labels, ratingVals, '#39FF8A', {
-    dataset: { fill:true, backgroundColor:'rgba(57,255,138,.08)', borderColor:'#39FF8A', borderWidth:2, pointRadius:4, pointBackgroundColor: ratingVals.map(v => v>=1.05?'#39FF8A':v>=0.9?'#FFB800':'#FF4560'), tension:.3 },
-    y: { suggestedMin: 0.4 }
-  });
-
-  // CT vs T bar chart
-  if (charts['chartSides']) charts['chartSides'].destroy();
-  charts['chartSides'] = new Chart(document.getElementById('chartSides'), {
-    type: 'bar',
-    data: {
-      labels: ['Win rate CT', 'Win rate T', 'K/D CT', 'K/D T'],
-      datasets: [{
-        data: [parseFloat(recent.ctWinRate)||0, parseFloat(recent.tWinRate)||0, parseFloat(recent.ctKd)||0, parseFloat(recent.tKd)||0],
-        backgroundColor: ['rgba(0,229,255,.3)','rgba(255,85,0,.3)','rgba(0,229,255,.5)','rgba(255,85,0,.5)'],
-        borderColor:     ['#00E5FF','#FF5500','#00E5FF','#FF5500'],
-        borderWidth: 1, borderRadius: 4,
-      }]
+  makeChart('chartFv', 'line', labels, matches.map(m => m.fvRating), {
+    dataset: {
+      fill:true, backgroundColor:'rgba(45,212,160,.06)', borderColor:'#2DD4A0',
+      borderWidth:1.5, pointRadius:3, tension:.4,
+      pointBackgroundColor: matches.map(m => m.fvRating>=1.05?'#2DD4A0':m.fvRating>=0.9?'#F5C842':'#F06B6B')
     },
-    options: {
-      responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-      scales: {
-        x: { ticks:{color:'#4A6580', font:{family:'DM Mono',size:10}}, grid:{color:'#1C2A3A'} },
-        y: { ticks:{color:'#4A6580', font:{family:'DM Mono',size:10}}, grid:{color:'#1C2A3A'}, suggestedMin:0 }
-      }
-    }
+    yOpts: { suggestedMin: 0.3 }
   });
 
-  // ── MULTI-KILLS ───────────────────────────────────────────────────────────
-  document.getElementById('multiKillCards').innerHTML = [
-    makeMini(recent.totalDoubles, '2K — Doubles', '#00E5FF'),
-    makeMini(recent.totalTriples, '3K — Triples', '#FFB800'),
-    makeMini(recent.totalQuads,   '4K — Quadros', '#FF5500'),
-    makeMini(recent.totalAces,    '5K — Aces',    '#ff1a5e'),
-  ].join('');
+  // ── Utility ────────────────────────────────────────────────────────────
+  document.getElementById('kpiUtility').innerHTML = `
+    <div class="utility-grid">
+      <div class="util-card"><div class="util-label">Flashes lancées</div><div class="util-val kpi-blue">${recent.totalFlashesThrown}</div><div class="util-sub">20 matchs</div></div>
+      <div class="util-card"><div class="util-label">Ennemis flashés</div><div class="util-val kpi-good">${recent.totalEnemiesFlashed}</div><div class="util-sub">20 matchs</div></div>
+      <div class="util-card"><div class="util-label">Flash / round</div><div class="util-val kpi-blue">${recent.avgFlashPerRound}</div><div class="util-sub">moyenne</div></div>
+      <div class="util-card"><div class="util-label">Utility dmg</div><div class="util-val kpi-warn">${recent.totalUtilDmg}</div><div class="util-sub">20 matchs</div></div>
+      <div class="util-card"><div class="util-label">AWP / sniper</div><div class="util-val kpi-neutral">${recent.totalSniperKills}</div><div class="util-sub">${recent.sniperKillRate}/match</div></div>
+    </div>`;
 
-  // ── CLUTCHES ─────────────────────────────────────────────────────────────
-  document.getElementById('clutchCards').innerHTML = [
-    makeMini(recent.totalClutch1v1, 'Clutch 1v1', '#39FF8A'),
-    makeMini(recent.totalClutch1v2, 'Clutch 1v2', '#FFB800'),
-    makeMini(recent.totalClutch1v3, 'Clutch 1v3', '#FF5500'),
-    makeMini(recent.totalClutch1v4, 'Clutch 1v4', '#ff1a5e'),
-    makeMini(recent.totalClutch1v5, 'Clutch 1v5', '#ff0040'),
-    makeMini(recent.totalFirstKills,  'Opening kills',  '#39FF8A'),
-    makeMini(recent.totalFirstDeaths, 'Opening deaths', '#FF4560'),
-    makeMini(recent.openingRatio,     'Opening ratio',  parseFloat(recent.openingRatio)>=1?'#39FF8A':'#FF5500'),
-  ].join('');
+  // ── Trades ─────────────────────────────────────────────────────────────
+  document.getElementById('kpiTrades').innerHTML = `
+    <div class="kpi-grid">
+      ${kpiCard('Trade kills',  recent.totalTradeKills,  'kpi-good',    '20 matchs')}
+      ${kpiCard('Trade deaths', recent.totalTradeDeaths, 'kpi-bad',     '20 matchs')}
+      ${kpiCard('Saves',        recent.totalSaves,        'kpi-blue',    'armes sauvées')}
+      ${kpiCard('Pistol win%',  `${recent.pistolWinRate}%`, parseFloat(recent.pistolWinRate)>=50?'kpi-good':'kpi-warn', `${recent.totalPistolWins}/${recent.totalPistolTotal}`)}
+    </div>`;
 
-  // ── MAP CARDS ─────────────────────────────────────────────────────────────
+  // ── Multi-kills ────────────────────────────────────────────────────────
+  document.getElementById('multiKillCards').innerHTML = `
+    <div class="mk-card"><div class="mk-label">Double kill</div><div class="mk-val mk-2k">${recent.totalDoubles}</div><div class="mk-sub">2K</div></div>
+    <div class="mk-card"><div class="mk-label">Triple kill</div><div class="mk-val mk-3k">${recent.totalTriples}</div><div class="mk-sub">3K</div></div>
+    <div class="mk-card"><div class="mk-label">Quadro kill</div><div class="mk-val mk-4k">${recent.totalQuads}</div><div class="mk-sub">4K</div></div>
+    <div class="mk-card"><div class="mk-label">Ace</div><div class="mk-val mk-5k">${recent.totalAces}</div><div class="mk-sub">5K</div></div>`;
+
+  // ── Clutches ───────────────────────────────────────────────────────────
+  document.getElementById('clutchCards').innerHTML = `
+    <div class="clutch-grid">
+      <div class="clutch-card"><div class="clutch-label">1v1</div><div class="clutch-val kpi-good">${recent.totalClutch1v1}</div></div>
+      <div class="clutch-card"><div class="clutch-label">1v2</div><div class="clutch-val kpi-blue">${recent.totalClutch1v2}</div></div>
+      <div class="clutch-card"><div class="clutch-label">1v3</div><div class="clutch-val kpi-warn">${recent.totalClutch1v3}</div></div>
+      <div class="clutch-card"><div class="clutch-label">1v4</div><div class="clutch-val kpi-bad">${recent.totalClutch1v4}</div></div>
+      <div class="clutch-card"><div class="clutch-label">1v5</div><div class="clutch-val" style="color:#D93535">${recent.totalClutch1v5}</div></div>
+    </div>
+    <div class="kpi-grid" style="margin-top:8px">
+      ${kpiCard('Opening kills',  recent.totalFirstKills,  'kpi-good', '20 matchs')}
+      ${kpiCard('Opening deaths', recent.totalFirstDeaths, 'kpi-bad',  '20 matchs')}
+      ${kpiCard('Opening ratio',  recent.openingRatio, parseFloat(recent.openingRatio)>=1?'kpi-good':'kpi-bad', 'K/D duels ouverture')}
+    </div>`;
+
+  // ── Map cards ──────────────────────────────────────────────────────────
   const mapContainer = document.getElementById('mapCards');
-  mapContainer.innerHTML = '';
-  (mapStats || []).forEach(m => {
-    const wr = parseFloat(m.winRate);
-    const borderColor = wr >= 60 ? '#39FF8A' : wr >= 45 ? '#FFB800' : '#FF4560';
-    mapContainer.innerHTML += `
-      <div class="map-card" style="border-color:${borderColor}40">
-        <div class="map-card-name">${m.map}</div>
-        <div class="map-card-wr" style="color:${borderColor}">${m.winRate}%</div>
-        <div class="map-card-sub">${m.matches} matchs</div>
-        <div class="map-card-row"><span>K/D</span><span>${m.kd}</span></div>
-        <div class="map-card-row"><span>CT win</span><span>${m.ctWinRate}%</span></div>
-        <div class="map-card-row"><span>T win</span><span>${m.tWinRate}%</span></div>
-        <div class="map-card-row"><span>ADR</span><span>${m.avgAdr}</span></div>
-        <div class="map-card-row"><span>FV Rating</span><span style="color:${fvColor(m.avgFvRating)}">${m.avgFvRating}</span></div>
+  if (mapContainer) {
+    mapContainer.innerHTML = (mapStats || []).map(m => {
+      const wr = parseFloat(m.winRate);
+      const wrColor = wr>=60 ? 'var(--success)' : wr>=45 ? 'var(--gold)' : 'var(--danger)';
+      return `<div class="map-card">
+        <div class="map-winrate">
+          <div class="map-name">${m.map}</div>
+          <div class="map-wr-val" style="color:${wrColor}">${m.winRate}%</div>
+        </div>
+        <div class="map-wr-bar"><div class="map-wr-fill" style="width:${wr}%"></div></div>
+        <div class="map-matches">${m.matches} matchs</div>
+        <div class="map-stats" style="margin-top:10px">
+          <div class="map-stat"><div class="map-stat-val kpi-neutral">${m.kd}</div><div class="map-stat-label">K/D</div></div>
+          <div class="map-stat"><div class="map-stat-val kpi-blue">${m.avgAdr}</div><div class="map-stat-label">ADR</div></div>
+          <div class="map-stat"><div class="map-stat-val" style="color:${fvColor(m.avgFvRating)}">${m.avgFvRating}</div><div class="map-stat-label">FV Rating</div></div>
+          <div class="map-stat"><div class="map-stat-val kpi-warn">${m.ctWinRate}%</div><div class="map-stat-label">CT win</div></div>
+        </div>
       </div>`;
-  });
+    }).join('');
+  }
 
-  // ── TABLEAU MATCHS ────────────────────────────────────────────────────────
+  // ── Match history ──────────────────────────────────────────────────────
+  const thead = document.getElementById('matchTableHead');
+  if (thead) {
+    thead.innerHTML = ['Résultat','Map','Score','K/D','K','D','A','HS%','ADR','KAST','MK','Clutch','MVP','FV'].map(h => `<th>${h}</th>`).join('');
+  }
   const tbody = document.getElementById('matchTable');
-  tbody.innerHTML = '';
-  matches.forEach(m => {
-    const won  = m.result === 1;
-    const kdCl = m.kd >= 1.3 ? 'td-kd-good' : m.kd >= 1 ? 'td-kd-ok' : 'td-kd-bad';
-    const frCl = m.fvRating >= 1.05 ? 'td-kd-good' : m.fvRating >= 0.9 ? 'td-kd-ok' : 'td-kd-bad';
-    tbody.innerHTML += `<tr>
-      <td class="${won?'td-result-w':'td-result-l'}">${won?'WIN':'LOSS'}</td>
-      <td class="td-map">${m.map}</td>
-      <td>${m.score}</td>
-      <td class="${kdCl}">${m.kd.toFixed(2)}</td>
-      <td>${m.kills}</td><td>${m.deaths}</td><td>${m.assists}</td>
-      <td>${m.hsPct.toFixed(0)}%</td>
-      <td>${m.adr>0?m.adr.toFixed(0):'—'}</td>
-      <td>${m.kast>0?m.kast.toFixed(0)+'%':'—'}</td>
-      <td>${m.double+m.triple+m.quad+m.ace}</td>
-      <td>${m.clutch1v1+m.clutch1v2+m.clutch1v3}</td>
-      <td>${m.mvp}</td>
-      <td class="${frCl}">${m.fvRating.toFixed(2)}</td>
-    </tr>`;
-  });
+  if (tbody) {
+    tbody.innerHTML = matches.map(m => {
+      const won  = m.result === 1;
+      const kdCl = m.kd>=1.3?'td-kd-good':m.kd>=1?'':'td-kd-bad';
+      const frCl = m.fvRating>=1.05?'td-kd-good':m.fvRating>=0.9?'':'td-kd-bad';
+      return `<tr>
+        <td class="${won?'td-win':'td-loss'}">${won?'W':'L'}</td>
+        <td class="td-map">${m.map}</td>
+        <td>${m.score}</td>
+        <td class="${kdCl}">${m.kd.toFixed(2)}</td>
+        <td>${m.kills}</td><td>${m.deaths}</td><td>${m.assists}</td>
+        <td>${m.hsPct.toFixed(0)}%</td>
+        <td>${m.adr>0?m.adr.toFixed(0):'—'}</td>
+        <td>${m.kast>0?m.kast.toFixed(0)+'%':'—'}</td>
+        <td>${m.double+m.triple+m.quad+m.ace}</td>
+        <td>${m.clutch1v1+m.clutch1v2+m.clutch1v3}</td>
+        <td>${m.mvp}</td>
+        <td class="${frCl}">${m.fvRating.toFixed(2)}</td>
+      </tr>`;
+    }).join('');
+  }
 
   showDashboard(player.nickname);
 }
@@ -365,24 +401,22 @@ function scoreLabel(s) {
   return 'Niveau débutant / intermédiaire';
 }
 
-function showLoading(s) { document.getElementById('loading').style.display = s ? 'block' : 'none'; }
+// ── Show/hide ──────────────────────────────────────────────────────────────
+function showLoading(show) {
+  const el = document.getElementById('loadingState');
+  if (el) el.style.display = show ? 'flex' : 'none';
+}
 
 function showDashboard(nickname) {
   document.getElementById('hero').style.display      = 'none';
+  document.getElementById('loadingState').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('topbar').style.display    = 'flex';
   document.getElementById('tabBar').style.display    = 'flex';
-  document.getElementById('topbarNick').textContent  = `Analyse : ${nickname}`;
+  document.getElementById('topbarNick').textContent  = nickname;
   document.getElementById('topbarInput').value       = '';
   switchTab('stats', document.querySelector('.tab-btn'));
   window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function switchTab(tab, btn) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
-  if (btn) btn.classList.add('active');
 }
 
 function hideDashboard() {
@@ -390,6 +424,13 @@ function hideDashboard() {
   document.getElementById('topbar').style.display    = 'none';
   document.getElementById('tabBar').style.display    = 'none';
   document.getElementById('hero').style.display      = 'block';
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  if (btn) btn.classList.add('active');
 }
 
 function newSearch() {
@@ -405,5 +446,5 @@ document.addEventListener('DOMContentLoaded', () => {
   if (t) t.addEventListener('keydown', e => { if (e.key === 'Enter') newSearch(); });
 });
 
-function showError(msg) { const el = document.getElementById('errorMsg'); el.textContent = msg; el.style.display = 'block'; }
-function hideError()    { document.getElementById('errorMsg').style.display = 'none'; }
+function showError(msg) { const el = document.getElementById('errorMsg'); if(el){el.textContent=msg;el.style.display='block';} }
+function hideError()    { const el = document.getElementById('errorMsg'); if(el) el.style.display='none'; }
