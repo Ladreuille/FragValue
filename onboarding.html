@@ -269,7 +269,8 @@
       code_challenge_method: 'S256',
     });
 
-    const authUrl = `https://accounts.faceit.com?${params.toString()}`;
+    // Use FACEIT's standard OAuth endpoint (not popup mode)
+    const authUrl = `https://accounts.faceit.com/accounts?${params.toString()}`;
     console.log('Auth URL:', authUrl);
     window.location.href = authUrl;
   }
