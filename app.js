@@ -8,30 +8,51 @@ let charts = {};
 
 async function searchPlayer(nicknameOverride) {
   const nickname = nicknameOverride || document.getElementById('nickInput').value.trim();
-  hideError(); resetDashboard();
+  hideError();
   if (!nickname) { showError('Entre un pseudo FACEIT.'); return; }
 
-  // Si on vient de la topbar, on reste sur le dashboard et montre un spinner inline
   const fromTopbar = !!nicknameOverride;
-  if (!fromTopbar) {
+
+  if (fromTopbar) {
+    // Depuis topbar : on garde l'affichage actuel et on montre juste l'état loading
+    document.getElementById('topbarNick').textContent = `Recherche : ${nickname}...`;
+    // Overlay de chargement sur le dashboard existant
+    showTopbarLoading(true);
+  } else {
     hideDashboard();
+    resetDashboard();
     showLoading(true);
     document.getElementById('searchBtn').disabled = true;
-  } else {
-    // Depuis topbar : affiche état loading dans le dashboard sans le cacher
-    document.getElementById('topbarNick').textContent = `Recherche : ${nickname}...`;
-    showLoading(true);
   }
 
   try {
     const res  = await fetch(`/api/scout?nickname=${encodeURIComponent(nickname)}`);
     const data = await res.json();
     if (!res.ok) { showError(data.error || 'Erreur inconnue.'); return; }
+    // Reset UNIQUEMENT une fois les données reçues
+    if (fromTopbar) resetDashboard();
     renderDashboard(data);
   } catch { showError('Impossible de contacter le serveur. Vérifie ta connexion.'); }
   finally {
+    showTopbarLoading(false);
     showLoading(false);
     document.getElementById('searchBtn').disabled = false;
+  }
+}
+
+function showTopbarLoading(show) {
+  let overlay = document.getElementById('topbarLoadingOverlay');
+  if (show) {
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'topbarLoadingOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(7,9,13,.7);z-index:200;display:flex;align-items:center;justify-content:center;';
+      overlay.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px"><div style="width:36px;height:36px;border:2px solid #1C2A3A;border-top-color:#FF5500;border-radius:50%;animation:spin .7s linear infinite"></div><div style="font-family:DM Mono,monospace;font-size:13px;color:#E8F4FD">Recherche en cours...</div></div>';
+      document.body.appendChild(overlay);
+    }
+    overlay.style.display = 'flex';
+  } else {
+    if (overlay) overlay.style.display = 'none';
   }
 }
 
