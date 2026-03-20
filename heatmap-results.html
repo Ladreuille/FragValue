@@ -41,11 +41,17 @@
     .heatmap-tab{font-family:var(--mono);font-size:12px;font-weight:500;padding:7px 14px;border-radius:6px;cursor:pointer;color:var(--text2);border:none;background:transparent;transition:all .15s}
     .heatmap-tab.active{background:var(--card);color:var(--text);border:1px solid var(--border)}
 
+    /* Nuke floor toggle */
+    .floor-toggle{display:none;gap:4px;margin-bottom:10px;align-items:center}
+    .floor-toggle.visible{display:flex}
+    .floor-btn{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:5px;cursor:pointer;color:var(--text2);border:1px solid var(--border);background:transparent;transition:all .15s}
+    .floor-btn.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(59,127,245,.4)}
+
     /* Canvas layout */
     .canvas-wrap{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:start}
     @media(max-width:700px){.canvas-wrap{grid-template-columns:1fr}}
     .canvas-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px}
-    #heatmapCanvas{width:100%;height:auto;border-radius:6px;display:block}
+    #heatmapCanvas{width:100%;height:auto;border-radius:6px;display:block;image-rendering:pixelated}
     .legend{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
     .legend-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--text3)}
     .legend-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
@@ -59,6 +65,11 @@
     .player-kd{font-size:10px;opacity:.7}
     .export-btn{width:100%;font-family:var(--mono);font-size:11px;padding:7px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;margin-top:8px}
     .export-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .compare-btn{width:100%;font-family:var(--mono);font-size:11px;padding:7px;border-radius:6px;border:1px solid rgba(45,212,160,.3);background:rgba(45,212,160,.06);color:var(--success);cursor:pointer;transition:all .15s;margin-top:6px}
+    .compare-btn:hover{border-color:var(--success);background:rgba(45,212,160,.12)}
+
+    /* Map not found notice */
+    .map-notice{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:6px;text-align:center}
 
     /* Table */
     .table-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:20px}
@@ -76,6 +87,7 @@
   <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
   <div>
     <a href="demo.html" class="nav-link">Nouvelle démo</a>
+    <a href="compare.html" class="nav-link">Comparer</a>
     <a href="index.html" class="nav-link">Scout</a>
   </div>
 </nav>
@@ -102,15 +114,24 @@
     <button class="heatmap-tab" onclick="switchHeatmap('utility',this)">Utility</button>
   </div>
 
+  <!-- Toggle étages Nuke / Vertigo -->
+  <div class="floor-toggle" id="floorToggle">
+    <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-right:4px">Étage :</span>
+    <button class="floor-btn active" onclick="switchFloor('upper',this)">Upper</button>
+    <button class="floor-btn" onclick="switchFloor('lower',this)">Lower</button>
+  </div>
+
   <div class="canvas-wrap">
     <div class="canvas-card">
-      <canvas id="heatmapCanvas" width="600" height="600"></canvas>
+      <canvas id="heatmapCanvas" width="1024" height="1024"></canvas>
+      <div class="map-notice" id="mapNotice"></div>
       <div class="legend" id="mapLegend"></div>
     </div>
     <div class="player-panel">
       <div class="panel-label">Joueur</div>
       <div id="playerList"></div>
-      <button class="export-btn" onclick="exportHeatmap()">Exporter PNG</button>
+      <button class="export-btn" onclick="exportHeatmap()">↓ Exporter PNG</button>
+      <button class="compare-btn" onclick="goCompare()">⇄ Comparer joueurs</button>
     </div>
   </div>
 
@@ -124,26 +145,290 @@
 </div>
 
 <script>
-const MAP_BOUNDS={'de_dust2':{minX:-2476,maxX:1444,minY:-1228,maxY:3346},'de_mirage':{minX:-3230,maxX:870,minY:-2750,maxY:930},'de_inferno':{minX:-2087,maxX:2870,minY:-1200,maxY:3110},'de_nuke':{minX:-3453,maxX:2497,minY:-3000,maxY:2200},'de_ancient':{minX:-2953,maxX:2164,minY:-1600,maxY:3200},'de_anubis':{minX:-2100,maxX:2500,minY:-2000,maxY:2700},'de_vertigo':{minX:-3168,maxX:1886,minY:-3316,maxY:1740}};
-let demoData=null,currentPlayer=null,currentHeatmap='kills',canvas,ctx;
+// ─── CONFIG MAPS ──────────────────────────────────────────────────────────────
+// Coordonnées world CS2 issues des overview.txt officiels
+// pos_x / pos_y = origine en haut à gauche, scale = unités par pixel
+const MAP_CONFIG = {
+  'de_dust2':   { img: 'maps/de_dust2_radar_psd.png',   posX: -2476, posY: 3239,  scale: 4.4 },
+  'de_mirage':  { img: 'maps/de_mirage_radar_psd.png',  posX: -3230, posY: 1713,  scale: 5.0 },
+  'de_inferno': { img: 'maps/de_inferno_radar_psd.png', posX: -2087, posY: 3870,  scale: 4.9 },
+  'de_anubis':  { img: 'maps/de_anubis_radar_psd.png',  posX: -2100, posY: 3232,  scale: 5.22 },
+  'de_nuke':    {
+    upper: { img: 'maps/nuke/de_nuke_radar_psd.png',       posX: -3453, posY: 2887, scale: 7.0 },
+    lower: { img: 'maps/nuke/de_nuke_lower_radar_psd.png', posX: -3453, posY: 2887, scale: 7.0 },
+  },
+  'de_ancient': { img: 'maps/de_ancient_radar_psd.png', posX: -2953, posY: 2164, scale: 5.0 },
+};
 
-function w2c(x,y,map,W,H){const b=MAP_BOUNDS[map]||{minX:-3000,maxX:3000,minY:-3000,maxY:3000};return{px:((x-b.minX)/(b.maxX-b.minX))*W,py:(1-(y-b.minY)/(b.maxY-b.minY))*H}}
+// MAP_BOUNDS gardé en fallback pour w2c sans PNG
+const MAP_BOUNDS = {
+  'de_dust2':   {minX:-2476,maxX:1444,minY:-1228,maxY:3346},
+  'de_mirage':  {minX:-3230,maxX:870, minY:-2750,maxY:930},
+  'de_inferno': {minX:-2087,maxX:2870,minY:-1200,maxY:3110},
+  'de_nuke':    {minX:-3453,maxX:2497,minY:-3000,maxY:2200},
+  'de_ancient': {minX:-2953,maxX:2164,minY:-1600,maxY:3200},
+  'de_anubis':  {minX:-2100,maxX:2500,minY:-2000,maxY:2700},
+};
 
-window.addEventListener('load',()=>{
-  canvas=document.getElementById('heatmapCanvas');
-  ctx=canvas.getContext('2d');
-  const raw=sessionStorage.getItem('demoData');
-  if(!raw){document.getElementById('noData').style.display='block';return;}
-  try{
-    demoData=JSON.parse(raw);
-    document.getElementById('mainContent').style.display='block';
-    renderMeta();renderStats();renderPlayerList();renderHeatmap();
-  }catch(e){document.getElementById('noData').style.display='block';}
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let demoData = null, currentPlayer = null, currentHeatmap = 'kills';
+let currentFloor = 'upper'; // pour Nuke/Vertigo
+let canvas, ctx;
+let mapImage = null; // Image objet chargé
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  canvas = document.getElementById('heatmapCanvas');
+  ctx = canvas.getContext('2d');
+  const raw = sessionStorage.getItem('demoData');
+  if (!raw) { document.getElementById('noData').style.display = 'block'; return; }
+  try {
+    demoData = JSON.parse(raw);
+    document.getElementById('mainContent').style.display = 'block';
+    renderMeta(); renderStats(); renderPlayerList();
+    loadMapImageThenDraw();
+  } catch(e) { document.getElementById('noData').style.display = 'block'; }
 });
 
-function renderMeta(){
-  const m=demoData.meta;
-  document.getElementById('metaCard').innerHTML=`
+// ─── CHARGEMENT IMAGE MAP ─────────────────────────────────────────────────────
+function getMapImgPath() {
+  const mapName = demoData.meta?.map || 'de_dust2';
+  const cfg = MAP_CONFIG[mapName];
+  if (!cfg) return null;
+  if (cfg.upper) {
+    // Nuke/Vertigo : choisir selon étage
+    return currentFloor === 'upper' ? cfg.upper.img : cfg.lower.img;
+  }
+  return cfg.img || null;
+}
+
+function loadMapImageThenDraw() {
+  const mapName = demoData.meta?.map || 'de_dust2';
+  const isMultiFloor = !!(MAP_CONFIG[mapName]?.upper);
+
+  // Afficher/cacher le toggle étages
+  document.getElementById('floorToggle').classList.toggle('visible', isMultiFloor);
+
+  const imgPath = getMapImgPath();
+  const notice = document.getElementById('mapNotice');
+
+  if (!imgPath) {
+    mapImage = null;
+    notice.textContent = `Radar PNG non disponible pour ${mapName} — fond générique utilisé`;
+    renderHeatmap();
+    return;
+  }
+
+  notice.textContent = '';
+  const img = new Image();
+  img.onload = () => {
+    mapImage = img;
+    // Adapter la taille du canvas au ratio de l'image
+    canvas.width = img.width;
+    canvas.height = img.height;
+    renderHeatmap();
+  };
+  img.onerror = () => {
+    mapImage = null;
+    notice.textContent = `Image introuvable : ${imgPath}`;
+    renderHeatmap();
+  };
+  img.src = imgPath;
+}
+
+// ─── PROJECTION WORLD → CANVAS ────────────────────────────────────────────────
+function w2c(x, y, mapName, W, H) {
+  const cfg = MAP_CONFIG[mapName];
+  if (cfg) {
+    // Utiliser la config posX/posY/scale (coordonnées CS2 officielles)
+    const activeCfg = cfg.upper
+      ? (currentFloor === 'upper' ? cfg.upper : cfg.lower)
+      : cfg;
+    const scale = activeCfg.scale;
+    const px = (x - activeCfg.posX) / scale;
+    const py = (activeCfg.posY - y) / scale; // Y inversé en CS2
+    return { px, py };
+  }
+  // Fallback bounds
+  const b = MAP_BOUNDS[mapName] || { minX:-3000, maxX:3000, minY:-3000, maxY:3000 };
+  return {
+    px: ((x - b.minX) / (b.maxX - b.minX)) * W,
+    py: (1 - (y - b.minY) / (b.maxY - b.minY)) * H
+  };
+}
+
+// ─── RENDU ────────────────────────────────────────────────────────────────────
+function renderHeatmap() {
+  if (!demoData) return;
+  const mapName = demoData.meta?.map || 'de_dust2';
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  if (mapImage) {
+    // Fond : radar PNG avec opacité réduite pour que la heatmap ressorte
+    ctx.globalAlpha = 1;
+    ctx.drawImage(mapImage, 0, 0, W, H);
+    // Légère couche sombre pour améliorer la lisibilité des points
+    ctx.fillStyle = 'rgba(10,12,18,0.35)';
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    // Fond générique avec grille
+    ctx.fillStyle = '#0A0C12';
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(37,42,56,.6)';
+    ctx.lineWidth = .5;
+    for (let i = 1; i < 10; i++) {
+      ctx.beginPath(); ctx.moveTo(i*W/10, 0); ctx.lineTo(i*W/10, H); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i*H/10); ctx.lineTo(W, i*H/10); ctx.stroke();
+    }
+  }
+
+  ctx.globalAlpha = 1;
+
+  if (currentHeatmap === 'kills')    drawKills(mapName, W, H, 'attacker');
+  else if (currentHeatmap === 'deaths')   drawKills(mapName, W, H, 'victim');
+  else if (currentHeatmap === 'movement') drawMovement(mapName, W, H);
+  else if (currentHeatmap === 'duels')    drawDuels(W, H);
+  else if (currentHeatmap === 'utility')  drawUtility(mapName, W, H);
+
+  // Label overlay
+  ctx.fillStyle = 'rgba(12,14,19,.82)';
+  ctx.fillRect(8, 8, 196, 26);
+  const labels = { kills:'KILL HEATMAP', deaths:'DEATH HEATMAP', movement:'DÉPLACEMENTS', duels:'DUEL WIN ZONES', utility:'UTILITY MAP' };
+  ctx.fillStyle = '#EDF0F7';
+  ctx.font = '500 11px JetBrains Mono,monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(labels[currentHeatmap] || '', 14, 25);
+
+  updateLegend();
+}
+
+// ─── DRAWS ────────────────────────────────────────────────────────────────────
+function drawKills(mapName, W, H, mode) {
+  let kills = demoData.kills || [];
+  if (currentPlayer) kills = kills.filter(k => mode === 'attacker' ? k.attacker === currentPlayer : k.victim === currentPlayer);
+  const gs = Math.floor(W / 32), grid = {}; let mx = 0;
+  kills.forEach(k => {
+    const x = mode === 'attacker' ? k.attackerX : k.victimX;
+    const y = mode === 'attacker' ? k.attackerY : k.victimY;
+    const { px, py } = w2c(x, y, mapName, W, H);
+    const key = `${Math.floor(px/gs)}_${Math.floor(py/gs)}`;
+    grid[key] = (grid[key] || 0) + 1;
+    if (grid[key] > mx) mx = grid[key];
+  });
+  Object.entries(grid).forEach(([key, count]) => {
+    const [gx, gy] = key.split('_').map(Number);
+    const t = count / mx;
+    ctx.fillStyle = mode === 'attacker'
+      ? `rgba(59,127,245,${.18 + t * .65})`
+      : `rgba(240,107,107,${.18 + t * .65})`;
+    ctx.fillRect(gx*gs, gy*gs, gs, gs);
+  });
+  kills.forEach(k => {
+    const x = mode === 'attacker' ? k.attackerX : k.victimX;
+    const y = mode === 'attacker' ? k.attackerY : k.victimY;
+    const { px, py } = w2c(x, y, mapName, W, H);
+    ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI*2);
+    ctx.fillStyle = mode === 'attacker' ? 'rgba(59,127,245,.95)' : 'rgba(240,107,107,.95)';
+    ctx.fill();
+    // petit halo
+    ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI*2);
+    ctx.fillStyle = mode === 'attacker' ? 'rgba(59,127,245,.15)' : 'rgba(240,107,107,.15)';
+    ctx.fill();
+  });
+}
+
+function drawMovement(mapName, W, H) {
+  const positions = demoData.positions || {};
+  const pts = currentPlayer ? (positions[currentPlayer] || []) : Object.values(positions).flat();
+  const gs = Math.floor(W / 40), grid = {}; let mx = 0;
+  pts.forEach(p => {
+    const { px, py } = w2c(p.x, p.y, mapName, W, H);
+    const key = `${Math.floor(px/gs)}_${Math.floor(py/gs)}`;
+    grid[key] = (grid[key] || 0) + 1;
+    if (grid[key] > mx) mx = grid[key];
+  });
+  Object.entries(grid).forEach(([key, count]) => {
+    const [gx, gy] = key.split('_').map(Number);
+    const t = count / mx;
+    ctx.fillStyle = `rgba(45,212,160,${.08 + t * .65})`;
+    ctx.fillRect(gx*gs, gy*gs, gs, gs);
+  });
+}
+
+function drawDuels(W, H) {
+  const zones = demoData.duelZones || [];
+  const GRID = 10, cs = W / GRID;
+  zones.forEach(z => {
+    const total = z.kills + z.deaths;
+    if (total === 0) return;
+    const wr = parseFloat(z.winRate);
+    const color = wr >= 65
+      ? `rgba(45,212,160,${.2 + wr/100 * .45})`
+      : wr >= 45
+        ? `rgba(245,200,66,.4)`
+        : `rgba(240,107,107,${.2 + (100-wr)/100 * .45})`;
+    const px = z.col * cs, py = (GRID - 1 - z.row) * cs;
+    ctx.fillStyle = color;
+    ctx.fillRect(px, py, cs, cs);
+    if (total >= 2) {
+      ctx.fillStyle = 'rgba(237,240,247,.9)';
+      ctx.font = `600 ${Math.floor(cs * .24)}px JetBrains Mono,monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(wr + '%', px + cs/2, py + cs/2 + 3);
+      ctx.font = `${Math.floor(cs * .16)}px JetBrains Mono,monospace`;
+      ctx.fillStyle = 'rgba(237,240,247,.5)';
+      ctx.fillText(total + ' duels', px + cs/2, py + cs/2 + cs * .22);
+    }
+  });
+}
+
+function drawUtility(mapName, W, H) {
+  let g = demoData.grenades || [];
+  if (currentPlayer) g = g.filter(x => x.thrower === currentPlayer);
+  const C = {
+    'weapon_flashbang': 'rgba(245,200,66,.9)',
+    'weapon_smokegrenade': 'rgba(45,212,160,.8)',
+    'weapon_hegrenade': 'rgba(240,107,107,.85)',
+    'weapon_molotov': 'rgba(237,160,32,.85)',
+    'weapon_incgrenade': 'rgba(237,160,32,.85)'
+  };
+  g.forEach(x => {
+    const { px, py } = w2c(x.startX, x.startY, mapName, W, H);
+    const color = C[x.type] || 'rgba(138,146,164,.6)';
+    // Halo
+    ctx.beginPath(); ctx.arc(px, py, 10, 0, Math.PI*2);
+    ctx.fillStyle = color.replace(/[\d.]+\)$/, '0.2)');
+    ctx.fill();
+    // Point
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(237,240,247,.25)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+}
+
+// ─── LEGEND ───────────────────────────────────────────────────────────────────
+function updateLegend() {
+  const L = {
+    kills:    [{color:'#3B7FF5',label:'Kills'},{color:'rgba(59,127,245,.2)',label:'Densité'}],
+    deaths:   [{color:'#F06B6B',label:'Deaths'}],
+    movement: [{color:'#2DD4A0',label:'Zones fréquentées'}],
+    duels:    [{color:'#2DD4A0',label:'>65% win'},{color:'#F5C842',label:'45-65%'},{color:'#F06B6B',label:'<45%'}],
+    utility:  [{color:'rgba(245,200,66,.9)',label:'Flash'},{color:'rgba(45,212,160,.8)',label:'Smoke'},{color:'rgba(240,107,107,.85)',label:'HE'},{color:'rgba(237,160,32,.85)',label:'Molotov'}],
+  };
+  const l = L[currentHeatmap] || [];
+  document.getElementById('mapLegend').innerHTML = l.map(i =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${i.color}"></div>${i.label}</div>`
+  ).join('');
+}
+
+// ─── META / STATS / PLAYERS ───────────────────────────────────────────────────
+function renderMeta() {
+  const m = demoData.meta;
+  document.getElementById('metaCard').innerHTML = `
     <div class="meta-item"><div class="meta-val">${m.map||'—'}</div><div class="meta-label">Map</div></div>
     <div class="meta-item"><div class="meta-val">${m.rounds||0}</div><div class="meta-label">Rounds</div></div>
     <div class="meta-item"><div class="meta-val">${m.totalKills||0}</div><div class="meta-label">Kills totaux</div></div>
@@ -151,90 +436,70 @@ function renderMeta(){
     ${m.targetPlayer?`<div class="meta-item"><div class="meta-val" style="font-size:16px;color:var(--text)">${m.targetPlayer}</div><div class="meta-label">Analysé</div></div>`:''}`;
 }
 
-function renderStats(){
-  const kills=demoData.kills||[];
-  const hs=kills.filter(k=>k.isHeadshot).length;
-  const hsPct=kills.length>0?((hs/kills.length)*100).toFixed(0):0;
-  document.getElementById('statsGrid').innerHTML=[
-    {label:'Kills totaux',val:kills.length,sub:'dans la démo',cls:'c-accent'},
-    {label:'Headshot %',val:hsPct+'%',sub:hs+' HS',cls:'c-good'},
-    {label:'Wallbangs',val:kills.filter(k=>k.isWallbang).length,sub:'à travers murs',cls:'c-warn'},
-    {label:'Thru smoke',val:kills.filter(k=>k.thruSmoke).length,sub:'kills smoke',cls:'c-accent'},
-    {label:'Rounds',val:(demoData.rounds||[]).length,sub:'joués',cls:'c-neutral'},
-    {label:'Grenades',val:(demoData.grenades||[]).length,sub:'lancées',cls:'c-accent'},
-  ].map(s=>`<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-val ${s.cls}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
+function renderStats() {
+  const kills = demoData.kills || [];
+  const hs = kills.filter(k => k.isHeadshot).length;
+  const hsPct = kills.length > 0 ? ((hs / kills.length) * 100).toFixed(0) : 0;
+  document.getElementById('statsGrid').innerHTML = [
+    {label:'Kills totaux', val:kills.length,                              sub:'dans la démo',    cls:'c-accent'},
+    {label:'Headshot %',   val:hsPct+'%',                                 sub:hs+' HS',          cls:'c-good'},
+    {label:'Wallbangs',    val:kills.filter(k=>k.isWallbang).length,      sub:'à travers murs',  cls:'c-warn'},
+    {label:'Thru smoke',   val:kills.filter(k=>k.thruSmoke).length,       sub:'kills smoke',     cls:'c-accent'},
+    {label:'Rounds',       val:(demoData.rounds||[]).length,               sub:'joués',           cls:'c-neutral'},
+    {label:'Grenades',     val:(demoData.grenades||[]).length,             sub:'lancées',         cls:'c-accent'},
+  ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-val ${s.cls}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
 }
 
-function renderPlayerList(){
-  const players=demoData.playerStats||[];
-  const list=document.getElementById('playerList');
-  list.innerHTML=`<button class="player-btn active" onclick="selectPlayer(null,this)"><span>Tous</span><span class="player-kd">—</span></button>`;
-  players.slice(0,10).forEach(p=>{list.innerHTML+=`<button class="player-btn" onclick="selectPlayer('${p.name}',this)"><span>${p.name.substring(0,14)}</span><span class="player-kd">${p.kd}</span></button>`;});
-  const tbody=document.getElementById('playersTable');
-  tbody.innerHTML=players.map(p=>{const kd=parseFloat(p.kd);const cl=kd>=1.3?'td-good':kd>=1?'':'td-bad';return`<tr><td class="td-name">${p.name}</td><td>${p.kills}</td><td>${p.deaths}</td><td class="${cl}">${p.kd}</td><td>${p.hsPct}%</td></tr>`;}).join('');
+function renderPlayerList() {
+  const players = demoData.playerStats || [];
+  const list = document.getElementById('playerList');
+  list.innerHTML = `<button class="player-btn active" onclick="selectPlayer(null,this)"><span>Tous</span><span class="player-kd">—</span></button>`;
+  players.slice(0, 10).forEach(p => {
+    list.innerHTML += `<button class="player-btn" onclick="selectPlayer('${p.name}',this)"><span>${p.name.substring(0,14)}</span><span class="player-kd">${p.kd}</span></button>`;
+  });
+  const tbody = document.getElementById('playersTable');
+  tbody.innerHTML = players.map(p => {
+    const kd = parseFloat(p.kd);
+    const cl = kd >= 1.3 ? 'td-good' : kd >= 1 ? '' : 'td-bad';
+    return `<tr><td class="td-name">${p.name}</td><td>${p.kills}</td><td>${p.deaths}</td><td class="${cl}">${p.kd}</td><td>${p.hsPct}%</td></tr>`;
+  }).join('');
 }
 
-function selectPlayer(name,btn){currentPlayer=name;document.querySelectorAll('.player-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHeatmap();}
-function switchHeatmap(type,btn){currentHeatmap=type;document.querySelectorAll('.heatmap-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHeatmap();}
-
-function renderHeatmap(){
-  if(!demoData)return;
-  const map=demoData.meta?.map||'de_dust2';
-  const W=canvas.width,H=canvas.height;
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#0A0C12';ctx.fillRect(0,0,W,H);
-  // Subtle grid
-  ctx.strokeStyle='rgba(37,42,56,.6)';ctx.lineWidth=.5;
-  for(let i=1;i<10;i++){ctx.beginPath();ctx.moveTo(i*W/10,0);ctx.lineTo(i*W/10,H);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*H/10);ctx.lineTo(W,i*H/10);ctx.stroke();}
-
-  if(currentHeatmap==='kills')drawKills(map,W,H,'attacker');
-  else if(currentHeatmap==='deaths')drawKills(map,W,H,'victim');
-  else if(currentHeatmap==='movement')drawMovement(map,W,H);
-  else if(currentHeatmap==='duels')drawDuels(W,H);
-  else if(currentHeatmap==='utility')drawUtility(map,W,H);
-
-  // Label overlay
-  ctx.fillStyle='rgba(12,14,19,.8)';ctx.fillRect(8,8,180,24);
-  const labels={kills:'KILL HEATMAP',deaths:'DEATH HEATMAP',movement:'DÉPLACEMENTS',duels:'DUEL WIN ZONES',utility:'UTILITY MAP'};
-  ctx.fillStyle='#EDF0F7';ctx.font='500 10px JetBrains Mono,monospace';ctx.textAlign='left';ctx.fillText(labels[currentHeatmap]||'',14,23);
-  updateLegend();
+// ─── INTERACTIONS ─────────────────────────────────────────────────────────────
+function selectPlayer(name, btn) {
+  currentPlayer = name;
+  document.querySelectorAll('.player-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHeatmap();
 }
 
-function drawKills(map,W,H,mode){
-  let kills=demoData.kills||[];
-  if(currentPlayer)kills=kills.filter(k=>mode==='attacker'?k.attacker===currentPlayer:k.victim===currentPlayer);
-  const gs=24,grid={};let mx=0;
-  kills.forEach(k=>{const x=mode==='attacker'?k.attackerX:k.victimX;const y=mode==='attacker'?k.attackerY:k.victimY;const{px,py}=w2c(x,y,map,W,H);const key=`${Math.floor(px/gs)}_${Math.floor(py/gs)}`;grid[key]=(grid[key]||0)+1;if(grid[key]>mx)mx=grid[key];});
-  Object.entries(grid).forEach(([key,count])=>{const[gx,gy]=key.split('_').map(Number);const t=count/mx;ctx.fillStyle=mode==='attacker'?`rgba(59,127,245,${.15+t*.6})`:`rgba(240,107,107,${.15+t*.6})`;ctx.fillRect(gx*gs,gy*gs,gs,gs);});
-  kills.forEach(k=>{const x=mode==='attacker'?k.attackerX:k.victimX;const y=mode==='attacker'?k.attackerY:k.victimY;const{px,py}=w2c(x,y,map,W,H);ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fillStyle=mode==='attacker'?'rgba(59,127,245,.9)':'rgba(240,107,107,.9)';ctx.fill();});
+function switchHeatmap(type, btn) {
+  currentHeatmap = type;
+  document.querySelectorAll('.heatmap-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHeatmap();
 }
 
-function drawMovement(map,W,H){
-  const positions=demoData.positions||{};
-  const pts=currentPlayer?(positions[currentPlayer]||[]):Object.values(positions).flat();
-  const gs=16,grid={};let mx=0;
-  pts.forEach(p=>{const{px,py}=w2c(p.x,p.y,map,W,H);const key=`${Math.floor(px/gs)}_${Math.floor(py/gs)}`;grid[key]=(grid[key]||0)+1;if(grid[key]>mx)mx=grid[key];});
-  Object.entries(grid).forEach(([key,count])=>{const[gx,gy]=key.split('_').map(Number);const t=count/mx;ctx.fillStyle=`rgba(45,212,160,${.08+t*.65})`;ctx.fillRect(gx*gs,gy*gs,gs,gs);});
+function switchFloor(floor, btn) {
+  currentFloor = floor;
+  document.querySelectorAll('.floor-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadMapImageThenDraw(); // Recharge l'image du bon étage
 }
 
-function drawDuels(W,H){
-  const zones=demoData.duelZones||[];const GRID=10,cs=W/GRID;
-  zones.forEach(z=>{const total=z.kills+z.deaths;if(total===0)return;const wr=parseFloat(z.winRate);let color=wr>=65?`rgba(45,212,160,${.2+wr/100*.45})`:wr>=45?`rgba(245,200,66,.4)`:`rgba(240,107,107,${.2+(100-wr)/100*.45})`;const px=z.col*cs,py=(GRID-1-z.row)*cs;ctx.fillStyle=color;ctx.fillRect(px,py,cs,cs);if(total>=2){ctx.fillStyle='rgba(237,240,247,.9)';ctx.font=`600 ${Math.floor(cs*.24)}px JetBrains Mono,monospace`;ctx.textAlign='center';ctx.fillText(wr+'%',px+cs/2,py+cs/2+3);ctx.font=`${Math.floor(cs*.16)}px JetBrains Mono,monospace`;ctx.fillStyle='rgba(237,240,247,.5)';ctx.fillText(total+' duels',px+cs/2,py+cs/2+cs*.22);}});
+function exportHeatmap() {
+  const link = document.createElement('a');
+  link.download = `fragvalue-${currentHeatmap}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
 }
 
-function drawUtility(map,W,H){
-  let g=demoData.grenades||[];if(currentPlayer)g=g.filter(x=>x.thrower===currentPlayer);
-  const C={'weapon_flashbang':'rgba(245,200,66,.85)','weapon_smokegrenade':'rgba(45,212,160,.7)','weapon_hegrenade':'rgba(240,107,107,.8)','weapon_molotov':'rgba(237,160,32,.8)','weapon_incgrenade':'rgba(237,160,32,.8)'};
-  g.forEach(x=>{const{px,py}=w2c(x.startX,x.startY,map,W,H);ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fillStyle=C[x.type]||'rgba(138,146,164,.6)';ctx.fill();ctx.strokeStyle='rgba(237,240,247,.2)';ctx.lineWidth=1;ctx.stroke();});
+function goCompare() {
+  const players = demoData.playerStats || [];
+  if (players.length < 2) return alert('Pas assez de joueurs dans la démo.');
+  const params = players.slice(0, 5).map(p => `p=${encodeURIComponent(p.name)}`).join('&');
+  window.location.href = `compare.html?${params}`;
 }
-
-function updateLegend(){
-  const L={kills:[{color:'#3B7FF5',label:'Kills'},{color:'rgba(59,127,245,.2)',label:'Densité'}],deaths:[{color:'#F06B6B',label:'Deaths'}],movement:[{color:'#2DD4A0',label:'Zones fréquentées'}],duels:[{color:'#2DD4A0',label:'>65% win'},{color:'#F5C842',label:'45-65%'},{color:'#F06B6B',label:'<45%'}],utility:[{color:'rgba(245,200,66,.85)',label:'Flash'},{color:'rgba(45,212,160,.7)',label:'Smoke'},{color:'rgba(240,107,107,.8)',label:'HE'},{color:'rgba(237,160,32,.8)',label:'Molotov'}]};
-  const l=L[currentHeatmap]||[];
-  document.getElementById('mapLegend').innerHTML=l.map(i=>`<div class="legend-item"><div class="legend-dot" style="background:${i.color}"></div>${i.label}</div>`).join('');
-}
-
-function exportHeatmap(){const link=document.createElement('a');link.download=`fragvalue-${currentHeatmap}.png`;link.href=canvas.toDataURL('image/png');link.click();}
 </script>
 </body>
 </html>
