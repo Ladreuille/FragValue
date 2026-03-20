@@ -70,6 +70,8 @@ function resetDashboard() {
 
   const fvBadge = document.getElementById('fvBadge');
   if (fvBadge) { fvBadge.textContent = ''; fvBadge.className = 'badge'; }
+  const levelBadge = document.getElementById('levelBadge');
+  if (levelBadge) { levelBadge.textContent = ''; levelBadge.className = 'badge'; }
 
   Object.values(charts).forEach(c => { try { c.destroy(); } catch(e) {} });
   charts = {};
@@ -158,15 +160,12 @@ function renderDashboard(data) {
     }
   }
 
-  // Level ring
+  // Level badge — texte coloré selon le niveau
   const lvl = cs2.level || 1;
-  const canvas = document.getElementById('levelRing');
-  if (canvas && typeof drawLevelRing === 'function') drawLevelRing(canvas, lvl);
-  const levelNumEl = document.getElementById('levelNum');
-  if (levelNumEl) {
-    const LEVEL_COLORS = {1:'#7A7A7A',2:'#23C44E',3:'#23C44E',4:'#F5C842',5:'#F5C842',6:'#F5C842',7:'#EDA020',8:'#EDA020',9:'#E05C2A',10:'#D93535'};
-    levelNumEl.textContent = `Lvl ${lvl}`;
-    levelNumEl.style.color = LEVEL_COLORS[lvl] || '#7A7A7A';
+  const levelBadge = document.getElementById('levelBadge');
+  if (levelBadge) {
+    levelBadge.textContent = `Level ${lvl}`;
+    levelBadge.className   = `badge badge-level-${lvl}`;
   }
 
   document.getElementById('profileName').textContent = player.nickname;
