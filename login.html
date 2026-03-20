@@ -4,96 +4,71 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FragValue — Connexion</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --bg:#07090D;--surface:#0C1018;--card:#111720;
-      --border:#1C2A3A;--accent:#FF5500;--accent2:#00E5FF;
-      --text:#E8F4FD;--muted:#4A6580;--success:#39FF8A;--danger:#FF4560;
-      --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
-    }
-    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
-    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,85,0,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,85,0,.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
-    nav{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:14px 40px;border-bottom:1px solid var(--border)}
-    .logo{font-size:20px;font-weight:800;letter-spacing:-.5px;text-decoration:none;color:var(--text)}
-    .logo span{color:var(--accent)}
-    .nav-back{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}
+    :root{--bg:#08090C;--surface:#0F1117;--card:#161920;--border:#1F2433;--border2:#252B3B;--accent:#3B7FF5;--accent-dim:rgba(59,127,245,.12);--text:#EDF0F7;--text2:#8892A4;--text3:#4A5568;--success:#2DD4A0;--danger:#F06B6B;--font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 50% 50% at 50% 0%, rgba(59,127,245,.06), transparent);pointer-events:none;z-index:0}
+    nav{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:52px;border-bottom:1px solid var(--border)}
+    .logo{font-size:16px;font-weight:700;letter-spacing:-.2px;text-decoration:none;color:var(--text)}
+    .logo-accent{color:var(--accent)}
+    .nav-back{font-size:13px;color:var(--text2);text-decoration:none;font-weight:500;transition:color .15s}
     .nav-back:hover{color:var(--text)}
     .main{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;position:relative;z-index:1}
-    .auth-card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;animation:fadeUp .5s forwards}
-    .auth-title{font-size:28px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px}
-    .auth-sub{font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:32px;line-height:1.6}
-
-    /* Tabs */
-    .auth-tabs{display:flex;gap:0;margin-bottom:28px;background:var(--surface);border-radius:8px;padding:3px}
-    .auth-tab{flex:1;font-family:var(--mono);font-size:12px;padding:9px;text-align:center;cursor:pointer;border-radius:6px;color:var(--muted);transition:all .2s;border:none;background:transparent}
-    .auth-tab.active{background:var(--card);color:var(--text);border:1px solid var(--border)}
-
-    /* Social buttons */
-    .social-btn{width:100%;display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;margin-bottom:10px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
-    .social-btn:hover{border-color:rgba(255,85,0,.5);background:rgba(255,85,0,.06)}
-    .social-icon{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
-    .google-icon{background:#fff;color:#333}
-    .faceit-icon{background:#FF5500;color:#fff}
-
-    .divider{display:flex;align-items:center;gap:12px;margin:20px 0;font-family:var(--mono);font-size:11px;color:var(--muted)}
+    .auth-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:36px;animation:fadeUp .3s ease}
+    .auth-header{margin-bottom:28px}
+    .auth-title{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px}
+    .auth-sub{font-size:13px;color:var(--text2);line-height:1.6}
+    .tabs{display:flex;gap:0;background:var(--card);border-radius:8px;padding:3px;margin-bottom:24px}
+    .tab{flex:1;font-size:13px;font-weight:500;padding:8px;text-align:center;cursor:pointer;border-radius:6px;color:var(--text2);transition:all .15s;border:none;background:transparent}
+    .tab.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+    .msg{display:none;padding:11px 14px;border-radius:7px;font-size:12px;font-family:var(--mono);margin-bottom:16px}
+    .msg.error{background:rgba(240,107,107,.08);border:1px solid rgba(240,107,107,.2);color:var(--danger)}
+    .msg.success{background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);color:var(--success)}
+    .social-btn{width:100%;display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;margin-bottom:8px;border:1px solid var(--border);background:var(--card);color:var(--text)}
+    .social-btn:hover{border-color:var(--border2);background:var(--card2)}
+    .social-icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;font-family:var(--mono)}
+    .g-icon{background:#fff;color:#222}.f-icon{background:#FF5500;color:#fff}
+    .divider{display:flex;align-items:center;gap:12px;margin:18px 0;font-size:11px;color:var(--text3);font-family:var(--mono)}
     .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
-
-    /* Form */
-    .form-group{margin-bottom:16px}
-    .form-label{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;display:block}
-    .form-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:13px 16px;font-family:var(--mono);font-size:14px;color:var(--text);outline:none;transition:border-color .2s}
-    .form-input::placeholder{color:var(--muted)}
+    .form-group{margin-bottom:14px}
+    .form-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;display:block;font-family:var(--mono)}
+    .form-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:11px 14px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
+    .form-input::placeholder{color:var(--text3)}
     .form-input:focus{border-color:var(--accent)}
-    .form-submit{width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:14px;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer;transition:background .2s;margin-top:4px}
-    .form-submit:hover{background:#ff7733}
-    .form-submit:disabled{background:var(--muted);cursor:not-allowed}
-    .form-link{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;margin-top:14px}
-    .form-link a{color:var(--accent);text-decoration:none}
-    .form-link a:hover{text-decoration:underline}
-
-    /* Messages */
-    .msg{display:none;padding:12px 14px;border-radius:6px;font-family:var(--mono);font-size:12px;margin-bottom:16px}
-    .msg.error{background:rgba(255,69,96,.1);border:1px solid rgba(255,69,96,.3);color:var(--danger)}
-    .msg.success{background:rgba(57,255,138,.1);border:1px solid rgba(57,255,138,.3);color:var(--success)}
-
-    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .submit-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:12px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s;margin-top:4px}
+    .submit-btn:hover{opacity:.9}
+    .submit-btn:disabled{opacity:.5;cursor:not-allowed}
+    .form-footer{font-size:12px;color:var(--text3);text-align:center;margin-top:14px;font-family:var(--mono)}
+    .form-footer a{color:var(--accent);text-decoration:none}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
 <nav>
-  <a href="index.html" class="logo">Frag<span>Value</span></a>
-  <a href="index.html" class="nav-back">← Retour au scout</a>
+  <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
+  <a href="index.html" class="nav-back">← Retour</a>
 </nav>
 <div class="main">
   <div class="auth-card">
-    <div class="auth-title" id="authTitle">Connexion</div>
-    <p class="auth-sub" id="authSub">Accède à ton espace FragValue — watchlist, roster et historique.</p>
-
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="setTab('login', this)">Connexion</button>
-      <button class="auth-tab" onclick="setTab('register', this)">Inscription</button>
+    <div class="auth-header">
+      <div class="auth-title" id="authTitle">Connexion</div>
+      <p class="auth-sub" id="authSub">Accède à ton espace FragValue.</p>
     </div>
-
+    <div class="tabs">
+      <button class="tab active" onclick="setTab('login',this)">Connexion</button>
+      <button class="tab" onclick="setTab('register',this)">Inscription</button>
+    </div>
     <div id="msgBox" class="msg"></div>
-
-    <!-- Google -->
     <button class="social-btn" onclick="loginGoogle()">
-      <span class="social-icon google-icon">G</span>
-      Continuer avec Google
+      <span class="social-icon g-icon">G</span>Continuer avec Google
     </button>
-
-    <!-- FACEIT -->
     <button class="social-btn" onclick="loginFaceit()">
-      <span class="social-icon faceit-icon">F</span>
-      Continuer avec FACEIT
+      <span class="social-icon f-icon">F</span>Continuer avec FACEIT
     </button>
-
     <div class="divider">ou par email</div>
-
-    <!-- Email form -->
     <div class="form-group">
       <label class="form-label">Email</label>
       <input class="form-input" id="emailInput" type="email" placeholder="ton@email.com" autocomplete="email"/>
@@ -106,111 +81,71 @@
       <label class="form-label">Confirmer le mot de passe</label>
       <input class="form-input" id="confirmInput" type="password" placeholder="••••••••"/>
     </div>
-    <button class="form-submit" id="submitBtn" onclick="submitForm()">Se connecter</button>
-    <p class="form-link" id="formLink">
-      Pas encore de compte ? <a href="#" onclick="setTab('register', null)">S'inscrire</a>
+    <button class="submit-btn" id="submitBtn" onclick="submitForm()">Se connecter</button>
+    <p class="form-footer" id="formLink">
+      Pas encore de compte ? <a href="#" onclick="setTab('register',null)">S'inscrire</a>
     </p>
   </div>
 </div>
-
 <script>
-  // ── Config Supabase ────────────────────────────────────────────────────────
-  const SUPABASE_URL = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+  const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
-
   let currentTab = 'login';
+  sb.auth.getSession().then(({ data }) => { if (data.session) window.location.href = 'account.html'; });
 
-  // Redirige si déjà connecté
-  sb.auth.getSession().then(({ data }) => {
-    if (data.session) window.location.href = 'account.html';
-  });
-
-  // ── Tabs ───────────────────────────────────────────────────────────────────
   function setTab(tab, btn) {
     currentTab = tab;
-    document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
-    else document.querySelectorAll('.auth-tab')[tab === 'login' ? 0 : 1].classList.add('active');
+    else document.querySelectorAll('.tab')[tab==='login'?0:1].classList.add('active');
     const isLogin = tab === 'login';
     document.getElementById('authTitle').textContent   = isLogin ? 'Connexion' : 'Créer un compte';
     document.getElementById('authSub').textContent     = isLogin ? 'Accède à ton espace FragValue.' : 'Rejoins FragValue — gratuit pour commencer.';
     document.getElementById('submitBtn').textContent   = isLogin ? 'Se connecter' : 'Créer mon compte';
     document.getElementById('confirmGroup').style.display = isLogin ? 'none' : 'block';
-    document.getElementById('formLink').innerHTML      = isLogin
+    document.getElementById('formLink').innerHTML = isLogin
       ? `Pas encore de compte ? <a href="#" onclick="setTab('register',null)">S'inscrire</a>`
       : `Déjà un compte ? <a href="#" onclick="setTab('login',null)">Se connecter</a>`;
     hideMsg();
   }
 
-  // ── Social auth ────────────────────────────────────────────────────────────
   async function loginGoogle() {
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin + '/account.html' }
-    });
+    const { error } = await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo:'https://frag-value.vercel.app/account.html' } });
     if (error) showMsg(error.message, 'error');
   }
+  async function loginFaceit() { showMsg('Connexion FACEIT — bientôt disponible.', 'error'); }
 
-  async function loginFaceit() {
-    // FACEIT OAuth custom — à configurer dans Supabase providers
-    showMsg('Connexion FACEIT — configurée prochainement dans Supabase.', 'error');
-  }
-
-  // ── Email auth ─────────────────────────────────────────────────────────────
   async function submitForm() {
-    const email    = document.getElementById('emailInput').value.trim();
-    const password = document.getElementById('passwordInput').value;
-    const confirm  = document.getElementById('confirmInput').value;
-    const btn      = document.getElementById('submitBtn');
-
-    if (!email || !password) { showMsg('Remplis tous les champs.', 'error'); return; }
-    if (currentTab === 'register' && password !== confirm) { showMsg('Les mots de passe ne correspondent pas.', 'error'); return; }
-    if (password.length < 8) { showMsg('Mot de passe trop court (8 caractères minimum).', 'error'); return; }
-
-    btn.disabled    = true;
-    btn.textContent = 'Chargement...';
-
+    const email = document.getElementById('emailInput').value.trim();
+    const pwd   = document.getElementById('passwordInput').value;
+    const conf  = document.getElementById('confirmInput').value;
+    const btn   = document.getElementById('submitBtn');
+    if (!email || !pwd) { showMsg('Remplis tous les champs.', 'error'); return; }
+    if (currentTab === 'register' && pwd !== conf) { showMsg('Les mots de passe ne correspondent pas.', 'error'); return; }
+    if (pwd.length < 8) { showMsg('Mot de passe trop court (8 caractères min).', 'error'); return; }
+    btn.disabled = true; btn.textContent = 'Chargement...';
     try {
-      let result;
-      if (currentTab === 'login') {
-        result = await sb.auth.signInWithPassword({ email, password });
-      } else {
-        result = await sb.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + '/account.html' } });
-      }
-
-      if (result.error) {
-        showMsg(translateError(result.error.message), 'error');
-      } else if (currentTab === 'register' && !result.data.session) {
-        showMsg('Vérifie ta boîte mail pour confirmer ton compte !', 'success');
-      } else {
-        window.location.href = 'account.html';
-      }
-    } catch (e) {
-      showMsg('Erreur inattendue. Réessaie.', 'error');
-    } finally {
-      btn.disabled    = false;
-      btn.textContent = currentTab === 'login' ? 'Se connecter' : 'Créer mon compte';
-    }
+      const result = currentTab === 'login'
+        ? await sb.auth.signInWithPassword({ email, password:pwd })
+        : await sb.auth.signUp({ email, password:pwd, options:{ emailRedirectTo:'https://frag-value.vercel.app/account.html' } });
+      if (result.error) showMsg(translateError(result.error.message), 'error');
+      else if (currentTab === 'register' && !result.data.session) showMsg('Vérifie ta boîte mail pour confirmer ton compte !', 'success');
+      else window.location.href = 'account.html';
+    } catch { showMsg('Erreur inattendue.', 'error'); }
+    finally { btn.disabled=false; btn.textContent=currentTab==='login'?'Se connecter':'Créer mon compte'; }
   }
 
-  document.getElementById('passwordInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitForm(); });
+  document.getElementById('passwordInput').addEventListener('keydown', e => { if (e.key==='Enter') submitForm(); });
 
   function translateError(msg) {
     if (msg.includes('Invalid login')) return 'Email ou mot de passe incorrect.';
     if (msg.includes('already registered')) return 'Cet email est déjà utilisé.';
-    if (msg.includes('weak password')) return 'Mot de passe trop faible.';
     return msg;
   }
-
-  function showMsg(text, type) {
-    const el = document.getElementById('msgBox');
-    el.textContent   = text;
-    el.className     = `msg ${type}`;
-    el.style.display = 'block';
-  }
-  function hideMsg() { document.getElementById('msgBox').style.display = 'none'; }
+  function showMsg(text, type) { const el=document.getElementById('msgBox'); el.textContent=text; el.className=`msg ${type}`; el.style.display='block'; }
+  function hideMsg() { document.getElementById('msgBox').style.display='none'; }
 </script>
 </body>
 </html>
