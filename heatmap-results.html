@@ -146,28 +146,18 @@
 
 <script>
 // ─── CONFIG MAPS ──────────────────────────────────────────────────────────────
-// Coordonnées world CS2 issues des overview.txt officiels
-// pos_x / pos_y = origine en haut à gauche, scale = unités par pixel
+// Chemins des radars PNG (1024×1024) — coords déjà en pixels depuis le parser
 const MAP_CONFIG = {
-  'de_dust2':   { img: 'maps/de_dust2_radar_psd.png',   posX: -2476, posY: 3239,  scale: 4.4 },
-  'de_mirage':  { img: 'maps/de_mirage_radar_psd.png',  posX: -3230, posY: 1713,  scale: 5.0 },
-  'de_inferno': { img: 'maps/de_inferno_radar_psd.png', posX: -2087, posY: 3870,  scale: 4.9 },
-  'de_anubis':  { img: 'maps/de_anubis_radar_psd.png',  posX: -2796, posY: 3328,  scale: 5.22 },
+  'de_dust2':   { img: 'maps/de_dust2_radar_psd.png'   },
+  'de_mirage':  { img: 'maps/de_mirage_radar_psd.png'  },
+  'de_inferno': { img: 'maps/de_inferno_radar_psd.png' },
+  'de_anubis':  { img: 'maps/de_anubis_radar_psd.png'  },
   'de_nuke':    {
-    upper: { img: 'maps/nuke/de_nuke_radar_psd.png',       posX: -3453, posY: 2887, scale: 7.0 },
-    lower: { img: 'maps/nuke/de_nuke_lower_radar_psd.png', posX: -3453, posY: 2887, scale: 7.0 },
+    upper: { img: 'maps/nuke/de_nuke_radar_psd.png'       },
+    lower: { img: 'maps/nuke/de_nuke_lower_radar_psd.png' },
   },
-  'de_ancient': { img: 'maps/de_ancient_radar_psd.png', posX: -2953, posY: 2164, scale: 5.0 },
-};
-
-// MAP_BOUNDS gardé en fallback pour w2c sans PNG
-const MAP_BOUNDS = {
-  'de_dust2':   {minX:-2476,maxX:1444,minY:-1228,maxY:3346},
-  'de_mirage':  {minX:-3230,maxX:870, minY:-2750,maxY:930},
-  'de_inferno': {minX:-2087,maxX:2870,minY:-1200,maxY:3110},
-  'de_nuke':    {minX:-3453,maxX:2497,minY:-3000,maxY:2200},
-  'de_ancient': {minX:-2953,maxX:2164,minY:-1600,maxY:3200},
-  'de_anubis':  {minX:-2100,maxX:2500,minY:-2000,maxY:2700},
+  'de_ancient': { img: 'maps/de_ancient_radar_psd.png' },
+  'de_overpass':{ img: 'maps/de_overpass_radar_psd.png'},
 };
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -238,22 +228,11 @@ function loadMapImageThenDraw() {
 
 // ─── PROJECTION WORLD → CANVAS ────────────────────────────────────────────────
 function w2c(x, y, mapName, W, H) {
-  const cfg = MAP_CONFIG[mapName];
-  if (cfg) {
-    // Utiliser la config posX/posY/scale (coordonnées CS2 officielles)
-    const activeCfg = cfg.upper
-      ? (currentFloor === 'upper' ? cfg.upper : cfg.lower)
-      : cfg;
-    const scale = activeCfg.scale;
-    const px = (x - activeCfg.posX) / scale;
-    const py = (activeCfg.posY - y) / scale; // Y inversé en CS2
-    return { px, py };
-  }
-  // Fallback bounds
-  const b = MAP_BOUNDS[mapName] || { minX:-3000, maxX:3000, minY:-3000, maxY:3000 };
+  // Le parser retourne des coordonnées déjà en pixels (0-1024)
+  // On scale juste au cas où le canvas aurait une taille différente
   return {
-    px: ((x - b.minX) / (b.maxX - b.minX)) * W,
-    py: (1 - (y - b.minY) / (b.maxY - b.minY)) * H
+    px: (x / 1024) * W,
+    py: (y / 1024) * H
   };
 }
 
