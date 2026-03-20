@@ -251,8 +251,8 @@
   }
 
   async function connectFaceitOAuth() {
-    const FACEIT_CLIENT_ID = 'c3e7d0d9-0de0-46e2-a05f-0698733571d9';
-    const redirectUri      = 'https://frag-value.vercel.app/onboarding.html';
+    const FACEIT_CLIENT_ID = 'fc0b3ea7-0309-4da7-adc8-6b0fe2384ab4';
+    const redirectUri      = 'https://frag-value.vercel.app/faceit-callback.html';
     const scope            = 'openid profile email';
 
     // PKCE flow
@@ -269,15 +269,17 @@
       code_challenge_method: 'S256',
     });
 
-    window.location.href = `https://accounts.faceit.com/?${params.toString()}`;
+    const authUrl = `https://accounts.faceit.com?${params.toString()}`;
+    console.log('Auth URL:', authUrl);
+    window.location.href = authUrl;
   }
 
   // ── Gère le retour OAuth FACEIT ───────────────────────────────────────────
   async function handleFaceitCallback() {
     const params = new URLSearchParams(window.location.search);
     const code   = params.get('code');
-    const state  = params.get('state');
     if (!code) return; // Pas un retour OAuth
+    console.log('FACEIT callback received, code:', code.substring(0, 10) + '...');
 
     // State optionnel
     sessionStorage.removeItem('faceit_oauth_state');
@@ -295,7 +297,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code,
-          redirect_uri:  'https://frag-value.vercel.app/onboarding.html',
+          redirect_uri:  'https://frag-value.vercel.app/faceit-callback.html',
           code_verifier: codeVerifier,
         }),
       });
