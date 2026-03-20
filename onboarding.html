@@ -146,7 +146,7 @@
 
     <!-- Main card -->
     <div class="card" id="mainCard">
-      <div class="card-icon icon-faceit" style="overflow:hidden;padding:6px"><svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%"><polygon points="10,10 90,10 90,45 45,45" fill="#FF5500"/><polygon points="10,10 45,45 10,75" fill="#FF5500"/></svg></div>
+      <div class="card-icon icon-faceit" style="overflow:hidden;padding:6px"><img src="https://cdn-frontend.faceit-cdn.net/web/static/media/faceit_logo_white.svg" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML='<span style=font-weight:800;color:#FF5500;font-size:14px>FACEIT</span>'"></div>
       <div class="card-title">Lie ton compte FACEIT</div>
       <p class="card-sub">Pour analyser ton profil instantanément sans saisir ton pseudo à chaque fois et accéder à des fonctionnalités exclusives.</p>
 
@@ -176,7 +176,7 @@
 
       <!-- FACEIT OAuth (placeholder — nécessite FACEIT Developer App) -->
       <button class="faceit-btn" id="faceitOAuthBtn" onclick="connectFaceitOAuth()">
-        <div class="faceit-logo" style="overflow:hidden;padding:2px"><svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%"><polygon points="10,10 90,10 90,45 45,45" fill="#FF5500"/><polygon points="10,10 45,45 10,75" fill="#FF5500"/></svg></div>
+        <div class="faceit-logo" style="overflow:hidden;padding:2px"><img src="https://cdn-frontend.faceit-cdn.net/web/static/media/faceit_logo_white.svg" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML='<span style=font-weight:800;color:#FF5500;font-size:14px>FACEIT</span>'"></div>
         Connexion automatique avec FACEIT
       </button>
       <p style="font-size:11px;color:var(--text3);text-align:center;font-family:var(--mono);margin-top:-4px;margin-bottom:4px">Recommandé — ton pseudo est récupéré automatiquement</p>
@@ -237,9 +237,7 @@
     const FACEIT_CLIENT_ID = 'Client_qfICFNNnoJ';
     const redirectUri = encodeURIComponent('https://frag-value.vercel.app/onboarding.html');
     const scope = encodeURIComponent('openid profile email');
-    const state = Math.random().toString(36).substring(2);
-    sessionStorage.setItem('faceit_oauth_state', state);
-    window.location.href = `https://accounts.faceit.com/accounts?redirect_popup=true&client_id=${FACEIT_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}`;
+    window.location.href = `https://accounts.faceit.com/accounts?redirect_popup=true&client_id=${FACEIT_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
   }
 
   // ── Gère le retour OAuth FACEIT ───────────────────────────────────────────
@@ -249,12 +247,7 @@
     const state  = params.get('state');
     if (!code) return; // Pas un retour OAuth
 
-    // Vérifie le state anti-CSRF
-    const savedState = sessionStorage.getItem('faceit_oauth_state');
-    if (savedState && savedState !== state) {
-      showMsg('Erreur de sécurité — réessaie.', 'error');
-      return;
-    }
+    // State optionnel
     sessionStorage.removeItem('faceit_oauth_state');
 
     // Cache le formulaire manuel, montre le loading
