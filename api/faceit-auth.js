@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { code, redirect_uri } = req.body;
+  const { code, redirect_uri, code_verifier } = req.body;
   if (!code) return res.status(400).json({ error: 'Code manquant' });
 
   const CLIENT_ID     = process.env.FACEIT_CLIENT_ID;
@@ -25,13 +25,16 @@ export default async function handler(req, res) {
     const tokenRes = await fetch('https://api.faceit.com/auth/v1/oauth/token', {
       method: 'POST',
       headers: {
-        'Content-Type':  'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+        // PKCE flow: no client_secret in header, use Basic auth only if secret available
+        ...(CLIENT_SECRET ? { 'Authorization': 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64') } : {}),
       },
       body: new URLSearchParams({
-        grant_type:   'authorization_code',
+        grant_type:    'authorization_code',
         code,
-        redirect_uri: redirect_uri || 'https://frag-value.vercel.app/onboarding.html',
+        redirect_uri:  redirect_uri || 'https://frag-value.vercel.app/onboarding.html',
+        client_id:     CLIENT_ID,
+        ...(code_verifier ? { code_verifier } : {}),
       }).toString(),
     });
 
