@@ -144,22 +144,14 @@
     hideMsg();
   }
 
+  // ── Social auth ────────────────────────────────────────────────────────────
   async function loginGoogle() {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://frag-value.vercel.app/account.html' }
+      options: { redirectTo: window.location.origin + '/account.html' }
     });
     if (error) showMsg(error.message, 'error');
   }
-```
-
-Et dans Supabase → **Authentication** → **URL Configuration**, assure-toi d'avoir exactement :
-
-**Site URL** : `https://frag-value.vercel.app`
-
-**Redirect URLs** :
-```
-https://frag-value.vercel.app/**
 
   async function loginFaceit() {
     // FACEIT OAuth custom — à configurer dans Supabase providers
