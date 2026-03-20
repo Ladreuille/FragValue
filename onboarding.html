@@ -235,10 +235,18 @@
   // URL OAuth: https://accounts.faceit.com/accounts?redirect_popup=true&client_id=TON_CLIENT_ID
   async function connectFaceitOAuth() {
     const FACEIT_CLIENT_ID = 'c3e7d0d9-0de0-46e2-a05f-0698733571d9';
-    const redirectUri = encodeURIComponent('https://frag-value.vercel.app/onboarding.html');
-    const scope = encodeURIComponent('openid profile email');
-    // FACEIT OAuth2 authorization endpoint (from openid_configuration)
-    window.location.href = `https://accounts.faceit.com?client_id=${FACEIT_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
+    const redirectUri = 'https://frag-value.vercel.app/onboarding.html';
+    const scope = 'openid profile email';
+    // Construction URL OAuth FACEIT
+    const params = new URLSearchParams({
+      client_id:     FACEIT_CLIENT_ID,
+      redirect_uri:  redirectUri,
+      response_type: 'code',
+      scope:         scope,
+    });
+    const url = `https://accounts.faceit.com/accounts/auth/sign-in-with-faceit?${params.toString()}`;
+    console.log('FACEIT OAuth URL:', url);
+    window.location.href = url;
   }
 
   // ── Gère le retour OAuth FACEIT ───────────────────────────────────────────
