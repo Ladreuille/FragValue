@@ -233,20 +233,43 @@
   // ── FACEIT OAuth ──────────────────────────────────────────────────────────
   // Note: nécessite une FACEIT Developer App sur developers.faceit.com
   // URL OAuth: https://accounts.faceit.com/accounts?redirect_popup=true&client_id=TON_CLIENT_ID
+  // PKCE helpers
+  function base64urlEncode(buffer) {
+    return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  async function generateCodeVerifier() {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return base64urlEncode(array);
+  }
+  async function generateCodeChallenge(verifier) {
+    const encoder = new TextEncoder();
+    const data    = encoder.encode(verifier);
+    const digest  = await crypto.subtle.digest('SHA-256', data);
+    return base64urlEncode(digest);
+  }
+
   async function connectFaceitOAuth() {
     const FACEIT_CLIENT_ID = 'c3e7d0d9-0de0-46e2-a05f-0698733571d9';
-    const redirectUri = 'https://frag-value.vercel.app/onboarding.html';
-    const scope = 'openid profile email';
-    // Construction URL OAuth FACEIT
+    const redirectUri      = 'https://frag-value.vercel.app/onboarding.html';
+    const scope            = 'openid profile email';
+
+    // PKCE flow
+    const codeVerifier  = await generateCodeVerifier();
+    const codeChallenge = await generateCodeChallenge(codeVerifier);
+    sessionStorage.setItem('faceit_code_verifier', codeVerifier);
+
     const params = new URLSearchParams({
-      client_id:     FACEIT_CLIENT_ID,
-      redirect_uri:  redirectUri,
-      response_type: 'code',
-      scope:         scope,
+      client_id:             FACEIT_CLIENT_ID,
+      redirect_uri:          redirectUri,
+      response_type:         'code',
+      scope:                 scope,
+      code_challenge:        codeChallenge,
+      code_challenge_method: 'S256',
     });
-    const url = `https://accounts.faceit.com/accounts/auth/sign-in-with-faceit?${params.toString()}`;
-    console.log('FACEIT OAuth URL:', url);
-    window.location.href = url;
+
+    window.location.href = `https://accounts.faceit.com/?${params.toString()}`;
   }
 
   // ── Gère le retour OAuth FACEIT ───────────────────────────────────────────
@@ -264,11 +287,17 @@
     showMsg('Connexion FACEIT en cours...', 'loading');
 
     try {
-      // Échange le code via notre fonction serverless
+      // Échange le code via notre fonction serverless (PKCE)
+      const codeVerifier = sessionStorage.getItem('faceit_code_verifier');
+      sessionStorage.removeItem('faceit_code_verifier');
       const res = await fetch('/api/faceit-auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, redirect_uri: 'https://frag-value.vercel.app/onboarding.html' }),
+        body: JSON.stringify({
+          code,
+          redirect_uri:  'https://frag-value.vercel.app/onboarding.html',
+          code_verifier: codeVerifier,
+        }),
       });
 
       const data = await res.json();
