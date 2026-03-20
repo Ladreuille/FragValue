@@ -57,14 +57,11 @@ function showTopbarLoading(show) {
 }
 
 function resetDashboard() {
-  // Remet l'avatar en placeholder (evite le bug replaceWith qui perd l'id)
+  // Reset avatar sans replaceWith
   const avatarEl = document.getElementById('profileAvatar');
-  if (avatarEl && avatarEl.tagName === 'IMG') {
-    const ph = document.createElement('div');
-    ph.id = 'profileAvatar';
-    ph.className = 'profile-avatar-ph';
-    ph.textContent = String.fromCodePoint(0x1F464);
-    avatarEl.replaceWith(ph);
+  if (avatarEl) {
+    avatarEl.style.backgroundImage = '';
+    avatarEl.textContent = String.fromCodePoint(0x1F464);
   }
   // Vide tous les containers dynamiques
   ['profileName','profileCountry','profileRole','profileTeam',
@@ -150,11 +147,18 @@ function makeChart(id, type, labels, data, color, opts = {}) {
 function renderDashboard(data) {
   const { player, cs2, lifetime, recent, mapStats, teams } = data;
 
-  // Profil
-  if (player.avatar) {
-    const img = document.createElement('img');
-    img.className = 'profile-avatar'; img.src = player.avatar; img.alt = player.nickname;
-    document.getElementById('profileAvatar').replaceWith(img);
+  // Profil — on modifie l'élément en place sans replaceWith
+  const avatarEl = document.getElementById('profileAvatar');
+  if (avatarEl) {
+    if (player.avatar) {
+      avatarEl.style.backgroundImage = `url(${player.avatar})`;
+      avatarEl.style.backgroundSize  = 'cover';
+      avatarEl.style.backgroundPosition = 'center';
+      avatarEl.textContent = '';
+    } else {
+      avatarEl.style.backgroundImage = '';
+      avatarEl.textContent = '\u{1F464}';
+    }
   }
   document.getElementById('profileName').textContent    = player.nickname;
   document.getElementById('profileCountry').textContent = player.country ? `🌍 ${player.country.toUpperCase()}` : '';
