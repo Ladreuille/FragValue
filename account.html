@@ -4,118 +4,159 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FragValue — Mon espace</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --bg:#07090D;--surface:#0C1018;--card:#111720;
-      --border:#1C2A3A;--accent:#FF5500;--accent2:#00E5FF;
-      --text:#E8F4FD;--muted:#4A6580;--success:#39FF8A;--danger:#FF4560;--gold:#FFB800;
-      --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
+      --bg:#0C0E13;--surface:#131620;--card:#191D27;--card2:#1C2030;
+      --border:#252A38;--border2:#2C3245;
+      --accent:#3B7FF5;--accent-dim:rgba(59,127,245,.12);
+      --text:#EDF0F7;--text2:#8892A4;--text3:#4A5568;
+      --success:#2DD4A0;--danger:#F06B6B;--gold:#F5C842;
+      --font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace;
     }
-    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
-    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,85,0,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,85,0,.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
-    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 40px;background:rgba(7,9,13,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
-    .logo{font-size:20px;font-weight:800;letter-spacing:-.5px;text-decoration:none;color:var(--text)}
-    .logo span{color:var(--accent)}
-    .nav-links{display:flex;align-items:center;gap:16px}
-    .nav-link{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s}
-    .nav-link:hover{color:var(--text)}
-    .logout-btn{font-family:var(--mono);font-size:12px;color:var(--muted);background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:4px;cursor:pointer;transition:all .2s}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+    /* Nav */
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:52px;background:rgba(12,14,19,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+    .logo{font-size:16px;font-weight:700;letter-spacing:-.2px;text-decoration:none;color:var(--text)}
+    .logo-accent{color:var(--accent)}
+    .nav-right{display:flex;align-items:center;gap:8px}
+    .nav-link{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all .15s;font-weight:500}
+    .nav-link:hover{color:var(--text);background:var(--card)}
+    .logout-btn{font-size:13px;font-weight:500;color:var(--text3);background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .15s}
     .logout-btn:hover{border-color:var(--danger);color:var(--danger)}
 
-    .page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:32px 24px 80px}
+    /* Page */
+    .page{max-width:1100px;margin:0 auto;padding:32px 32px 80px}
 
     /* User header */
-    .user-header{display:flex;align-items:center;gap:20px;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:24px;animation:fadeUp .4s forwards}
-    .user-avatar{width:64px;height:64px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;flex-shrink:0;background:var(--surface)}
-    .user-info{flex:1}
-    .user-name{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
-    .user-email{font-family:var(--mono);font-size:12px;color:var(--muted)}
-    .sub-badge{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:4px;margin-top:6px}
-    .sub-free{background:rgba(74,101,128,.2);color:var(--muted);border:1px solid var(--border)}
-    .sub-pro{background:rgba(255,184,0,.15);color:var(--gold);border:1px solid rgba(255,184,0,.3)}
-    .sub-club{background:rgba(255,0,80,.15);color:#ff1a5e;border:1px solid rgba(255,0,80,.3)}
-    .upgrade-btn{font-family:var(--font);font-size:13px;font-weight:700;background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;transition:background .2s;white-space:nowrap}
-    .upgrade-btn:hover{background:#ff7733}
-
-    /* Section */
-    .section-title{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin:28px 0 12px;border-left:3px solid var(--accent);padding-left:10px}
+    .user-header{
+      display:flex;align-items:center;gap:18px;
+      padding:20px 24px;background:var(--surface);
+      border:1px solid var(--border);border-radius:12px;
+      margin-bottom:24px;animation:fadeUp .3s ease;
+    }
+    .user-avatar{
+      width:52px;height:52px;border-radius:8px;
+      background:var(--card);border:1px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      font-size:20px;flex-shrink:0;
+      background-size:cover;background-position:center;
+    }
+    .user-info{flex:1;min-width:0}
+    .user-name{font-size:18px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px}
+    .user-email{font-size:12px;color:var(--text3);font-family:var(--mono)}
+    .user-badges{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+    .badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.2px}
+    .badge-free{background:var(--card);color:var(--text3);border:1px solid var(--border)}
+    .badge-pro{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.2)}
+    .badge-club{background:rgba(59,127,245,.1);color:#60A5FA;border:1px solid rgba(59,127,245,.2)}
+    .upgrade-btn{
+      font-size:13px;font-weight:600;background:var(--accent);
+      color:#fff;border:none;padding:9px 18px;border-radius:7px;
+      cursor:pointer;transition:opacity .15s;white-space:nowrap;
+    }
+    .upgrade-btn:hover{opacity:.9}
 
     /* Account tabs */
-    .account-tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px;width:fit-content}
-    .account-tab{font-family:var(--mono);font-size:12px;padding:9px 18px;border-radius:6px;cursor:pointer;color:var(--muted);border:none;background:transparent;transition:all .2s;white-space:nowrap}
+    .account-tabs{
+      display:flex;gap:4px;background:var(--surface);
+      border:1px solid var(--border);border-radius:8px;
+      padding:3px;width:fit-content;margin-bottom:20px;
+    }
+    .account-tab{
+      font-size:13px;font-weight:500;padding:8px 16px;border-radius:6px;
+      cursor:pointer;color:var(--text2);border:none;background:transparent;
+      transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:6px;
+    }
+    .account-tab:hover{color:var(--text)}
     .account-tab.active{background:var(--card);color:var(--text);border:1px solid var(--border)}
     .tab-content{display:none}
-    .tab-content.active{display:block}
+    .tab-content.active{display:block;animation:fadeUp .2s ease}
 
-    /* Cards */
-    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:12px}
-    .card-empty{text-align:center;padding:48px 24px;font-family:var(--mono);font-size:13px;color:var(--muted)}
-    .card-empty-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;font-family:var(--font)}
+    /* Section label */
+    .section-label{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;gap:10px;font-family:var(--mono)}
+    .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
-    /* Watchlist */
-    .player-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(28,42,58,.5)}
+    /* Card */
+    .content-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:14px}
+
+    /* Add row */
+    .add-row{display:flex;gap:8px;margin-bottom:16px}
+    .add-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px 14px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
+    .add-input:focus{border-color:var(--accent)}
+    .add-input::placeholder{color:var(--text3)}
+    .add-btn{background:var(--accent);color:#fff;border:none;padding:10px 18px;border-radius:7px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s}
+    .add-btn:hover{opacity:.9}
+
+    /* Player row */
+    .player-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(37,42,56,.5)}
     .player-row:last-child{border-bottom:none;padding-bottom:0}
-    .player-avatar-sm{width:40px;height:40px;border-radius:6px;object-fit:cover;background:var(--surface);flex-shrink:0}
-    .player-info{flex:1}
-    .player-name{font-size:14px;font-weight:700;margin-bottom:2px}
-    .player-meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
-    .player-elo{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--gold)}
-    .player-actions{display:flex;gap:8px}
-    .btn-sm{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s}
+    .player-row:first-child{padding-top:0}
+    .player-avatar-sm{
+      width:36px;height:36px;border-radius:6px;
+      background:var(--card);border:1px solid var(--border);
+      flex-shrink:0;object-fit:cover;
+    }
+    .player-name{font-size:13px;font-weight:600;flex:1}
+    .player-meta{font-size:11px;color:var(--text3);font-family:var(--mono)}
+    .player-elo{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--gold)}
+    .btn-sm{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .15s}
     .btn-sm:hover{border-color:var(--accent);color:var(--accent)}
     .btn-sm.danger:hover{border-color:var(--danger);color:var(--danger)}
+    .btn-actions{display:flex;gap:5px}
 
-    /* Add to watchlist */
-    .add-row{display:flex;gap:8px;margin-bottom:16px}
-    .add-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none}
-    .add-input:focus{border-color:var(--accent)}
-    .add-btn{background:var(--accent);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
-    .add-btn:hover{background:#ff7733}
+    /* Empty state */
+    .empty{text-align:center;padding:40px 24px;font-family:var(--mono)}
+    .empty-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;font-family:var(--font)}
+    .empty-sub{font-size:12px;color:var(--text3);line-height:1.6}
+
+    /* History row */
+    .history-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(37,42,56,.5)}
+    .history-row:last-child{border-bottom:none;padding-bottom:0}
+    .history-row:first-child{padding-top:0}
+    .history-nick{font-size:13px;font-weight:600;flex:1}
+    .history-meta{font-size:11px;color:var(--text3);font-family:var(--mono)}
+    .history-rating{font-family:var(--mono);font-size:12px;font-weight:500}
 
     /* Roster */
     .roster-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-    .roster-name{font-size:18px;font-weight:800;letter-spacing:-.3px}
-    .create-roster-btn{font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:6px;border:1px solid var(--accent);color:var(--accent);background:transparent;cursor:pointer;transition:all .2s}
-    .create-roster-btn:hover{background:var(--accent);color:#fff}
+    .roster-name{font-size:16px;font-weight:700;letter-spacing:-.3px}
+    .create-roster{font-family:var(--mono);font-size:12px;padding:7px 12px;border-radius:6px;border:1px solid var(--border);color:var(--text2);background:transparent;cursor:pointer;transition:all .15s}
+    .create-roster:hover{border-color:var(--accent);color:var(--accent)}
 
-    /* History */
-    .history-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid rgba(28,42,58,.5)}
-    .history-row:last-child{border-bottom:none}
-    .history-nick{font-size:14px;font-weight:700;flex:1}
-    .history-meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
-    .history-rating{font-family:var(--mono);font-size:13px;font-weight:500}
-
-    /* Subscription */
-    .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
-    .pricing-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .2s}
-    .pricing-card.current{border-color:var(--accent);background:rgba(255,85,0,.04)}
-    .pricing-card:hover{border-color:rgba(255,85,0,.4)}
-    .pricing-name{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-    .pricing-price{font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:4px}
-    .pricing-period{font-family:var(--mono);font-size:12px;color:var(--muted)}
-    .pricing-features{margin:16px 0;display:flex;flex-direction:column;gap:7px}
-    .pricing-feature{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px}
-    .pricing-feature::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--border);flex-shrink:0}
-    .pricing-feature.ok{color:var(--text)}
+    /* Pricing */
+    .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+    .pricing-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:22px;transition:border-color .15s}
+    .pricing-card:hover{border-color:var(--border2)}
+    .pricing-card.current{border-color:rgba(59,127,245,.3);background:rgba(59,127,245,.04)}
+    .pricing-tier{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+    .pricing-price{font-size:34px;font-weight:700;letter-spacing:-1.5px;font-family:var(--mono);margin-bottom:3px;line-height:1}
+    .pricing-period{font-size:12px;color:var(--text3);font-family:var(--mono);margin-bottom:16px}
+    .pricing-features{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+    .pricing-feature{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:7px;font-family:var(--mono)}
+    .pricing-feature::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0}
+    .pricing-feature.ok{color:var(--text2)}
     .pricing-feature.ok::before{background:var(--success)}
-    .pricing-btn{width:100%;padding:11px;border-radius:6px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;border:1px solid var(--border);background:transparent;color:var(--muted);margin-top:4px}
+    .pricing-btn{width:100%;padding:10px;border-radius:7px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:transparent;color:var(--text3)}
     .pricing-btn.cta{background:var(--accent);color:#fff;border-color:var(--accent)}
-    .pricing-btn.cta:hover{background:#ff7733}
-    .pricing-btn.current-plan{color:var(--success);border-color:rgba(57,255,138,.3);cursor:default}
+    .pricing-btn.cta:hover{opacity:.9}
+    .pricing-btn.active-plan{color:var(--success);border-color:rgba(45,212,160,.3);cursor:default}
 
-    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
 <nav>
-  <a href="index.html" class="logo">Frag<span>Value</span></a>
-  <div class="nav-links">
+  <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
+  <div class="nav-right">
     <a href="index.html" class="nav-link">Scout</a>
-    <a href="demo.html" class="nav-link">Analyse démo</a>
+    <a href="demo.html" class="nav-link">Démo</a>
     <button class="logout-btn" onclick="logout()">Déconnexion</button>
   </div>
 </nav>
@@ -124,92 +165,87 @@
 
   <!-- User header -->
   <div class="user-header" id="userHeader">
-    <img class="user-avatar" id="userAvatar" src="" alt="Avatar"/>
+    <div class="user-avatar" id="userAvatar">👤</div>
     <div class="user-info">
       <div class="user-name" id="userName">Chargement...</div>
       <div class="user-email" id="userEmail"></div>
-      <span class="sub-badge sub-free" id="subBadge">Plan Free</span>
+      <div class="user-badges">
+        <span class="badge badge-free" id="subBadge">Plan Free</span>
+      </div>
     </div>
-    <button class="upgrade-btn" id="upgradeBtn" onclick="setAccountTab('subscription', null)">Passer à Pro</button>
+    <button class="upgrade-btn" id="upgradeBtn" onclick="setTab('subscription',null)">Passer à Pro</button>
   </div>
 
-  <!-- Account tabs -->
+  <!-- Tabs -->
   <div class="account-tabs">
-    <button class="account-tab active" onclick="setAccountTab('watchlist', this)">Watchlist</button>
-    <button class="account-tab" onclick="setAccountTab('history', this)">Historique</button>
-    <button class="account-tab" onclick="setAccountTab('roster', this)">Roster</button>
-    <button class="account-tab" onclick="setAccountTab('subscription', this)">Abonnement</button>
+    <button class="account-tab active" onclick="setTab('watchlist',this)">Watchlist</button>
+    <button class="account-tab" onclick="setTab('history',this)">Historique</button>
+    <button class="account-tab" onclick="setTab('roster',this)">Roster</button>
+    <button class="account-tab" onclick="setTab('subscription',this)">Abonnement</button>
   </div>
 
   <!-- WATCHLIST -->
   <div class="tab-content active" id="tabWatchlist">
-    <div class="section-title">Joueurs suivis</div>
-    <div class="card">
+    <div class="section-label">Joueurs suivis</div>
+    <div class="content-card">
       <div class="add-row">
-        <input class="add-input" id="watchInput" type="text" placeholder="Pseudo FACEIT à ajouter..." autocomplete="off"/>
+        <input class="add-input" id="watchInput" type="text" placeholder="Pseudo FACEIT à suivre..." autocomplete="off" spellcheck="false"/>
         <button class="add-btn" onclick="addToWatchlist()">+ Ajouter</button>
       </div>
       <div id="watchlistContent">
-        <div class="card-empty">
-          <div class="card-empty-title">Watchlist vide</div>
-          Entre le pseudo FACEIT d'un joueur à surveiller
-        </div>
+        <div class="empty"><div class="empty-title">Watchlist vide</div><p class="empty-sub">Ajoute des joueurs pour les suivre facilement</p></div>
       </div>
     </div>
   </div>
 
   <!-- HISTORIQUE -->
   <div class="tab-content" id="tabHistory">
-    <div class="section-title">Historique des analyses</div>
-    <div class="card" id="historyContent">
-      <div class="card-empty">
-        <div class="card-empty-title">Aucune analyse</div>
-        Tes analyses apparaîtront ici automatiquement
-      </div>
+    <div class="section-label">Dernières analyses</div>
+    <div class="content-card" id="historyContent">
+      <div class="empty"><div class="empty-title">Aucune analyse</div><p class="empty-sub">Tes analyses apparaîtront ici automatiquement</p></div>
     </div>
   </div>
 
   <!-- ROSTER -->
   <div class="tab-content" id="tabRoster">
-    <div class="section-title">Gestion d'équipe</div>
-    <div class="card">
+    <div class="section-label">Gestion d'équipe</div>
+    <div class="content-card">
       <div class="roster-header">
         <div class="roster-name" id="rosterName">Mon équipe</div>
-        <button class="create-roster-btn" onclick="createRoster()">+ Nouvelle équipe</button>
+        <button class="create-roster" onclick="createRoster()">+ Nouvelle équipe</button>
       </div>
       <div class="add-row">
-        <input class="add-input" id="rosterInput" type="text" placeholder="Pseudo FACEIT du joueur..." autocomplete="off"/>
+        <input class="add-input" id="rosterInput" type="text" placeholder="Pseudo FACEIT du joueur..." autocomplete="off" spellcheck="false"/>
         <button class="add-btn" onclick="addToRoster()">+ Ajouter</button>
       </div>
       <div id="rosterContent">
-        <div class="card-empty">
-          <div class="card-empty-title">Équipe vide</div>
-          Ajoute des joueurs pour constituer ton roster
-        </div>
+        <div class="empty"><div class="empty-title">Roster vide</div><p class="empty-sub">Ajoute des joueurs pour constituer ton équipe</p></div>
       </div>
     </div>
   </div>
 
   <!-- ABONNEMENT -->
   <div class="tab-content" id="tabSubscription">
-    <div class="section-title">Ton abonnement</div>
+    <div class="section-label">Ton abonnement</div>
     <div class="pricing-grid">
+
       <div class="pricing-card" id="planFree">
-        <div class="pricing-name">Free</div>
+        <div class="pricing-tier">Free</div>
         <div class="pricing-price">0 €</div>
         <div class="pricing-period">pour toujours</div>
         <div class="pricing-features">
-          <div class="pricing-feature ok">Recherche joueur FACEIT</div>
+          <div class="pricing-feature ok">Recherche FACEIT illimitée</div>
           <div class="pricing-feature ok">Stats basiques</div>
           <div class="pricing-feature ok">3 analyses / jour</div>
-          <div class="pricing-feature">Watchlist (5 joueurs max)</div>
+          <div class="pricing-feature">Watchlist (5 joueurs)</div>
           <div class="pricing-feature">Historique limité</div>
           <div class="pricing-feature">Analyse démo</div>
         </div>
-        <button class="pricing-btn current-plan" id="btnFree">Plan actuel</button>
+        <button class="pricing-btn active-plan" id="btnFree">Plan actuel</button>
       </div>
+
       <div class="pricing-card" id="planPro">
-        <div class="pricing-name">Pro</div>
+        <div class="pricing-tier">Pro</div>
         <div class="pricing-price">49 €</div>
         <div class="pricing-period">par mois</div>
         <div class="pricing-features">
@@ -218,17 +254,18 @@
           <div class="pricing-feature ok">Watchlist illimitée</div>
           <div class="pricing-feature ok">Historique complet</div>
           <div class="pricing-feature ok">1 roster équipe</div>
-          <div class="pricing-feature ok">Analyse démo (5/mois)</div>
+          <div class="pricing-feature ok">5 démos / mois</div>
         </div>
         <button class="pricing-btn cta" onclick="subscribe('pro')">Passer à Pro</button>
       </div>
+
       <div class="pricing-card" id="planClub">
-        <div class="pricing-name">Club</div>
+        <div class="pricing-tier">Club</div>
         <div class="pricing-price">199 €</div>
         <div class="pricing-period">par mois</div>
         <div class="pricing-features">
           <div class="pricing-feature ok">Tout le plan Pro</div>
-          <div class="pricing-feature ok">Multi-utilisateurs (5)</div>
+          <div class="pricing-feature ok">5 utilisateurs</div>
           <div class="pricing-feature ok">Rosters illimités</div>
           <div class="pricing-feature ok">Démos illimitées</div>
           <div class="pricing-feature ok">Export PDF rapports</div>
@@ -236,6 +273,7 @@
         </div>
         <button class="pricing-btn cta" onclick="subscribe('club')">Passer à Club</button>
       </div>
+
     </div>
   </div>
 
@@ -247,10 +285,10 @@
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  let currentUser   = null;
+  let currentUser = null;
   let currentRosterId = null;
 
-  // ── Init ───────────────────────────────────────────────────────────────────
+  // ── Init ───────────────────────────────────────────────────────────────
   async function init() {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { window.location.href = 'login.html'; return; }
@@ -266,43 +304,51 @@
     if (!data) return;
     document.getElementById('userName').textContent  = data.full_name || currentUser.email.split('@')[0];
     document.getElementById('userEmail').textContent = currentUser.email;
-    if (data.avatar_url) document.getElementById('userAvatar').src = data.avatar_url;
-    const tier = data.subscription_tier || 'free';
+    if (data.avatar_url) {
+      const av = document.getElementById('userAvatar');
+      av.style.backgroundImage = `url(${data.avatar_url})`;
+      av.textContent = '';
+    }
+    const tier  = data.subscription_tier || 'free';
     const badge = document.getElementById('subBadge');
-    badge.textContent = tier === 'free' ? 'Plan Free' : tier === 'pro' ? 'Plan Pro' : 'Plan Club';
-    badge.className   = `sub-badge sub-${tier}`;
+    badge.textContent = tier === 'free' ? 'Plan Free' : tier === 'pro' ? 'Plan Pro ✦' : 'Plan Club ✦✦';
+    badge.className   = `badge badge-${tier}`;
     if (tier !== 'free') document.getElementById('upgradeBtn').style.display = 'none';
     updatePricingCards(tier);
   }
 
   function updatePricingCards(tier) {
     ['free','pro','club'].forEach(t => {
-      const btn = document.getElementById(`btn${t.charAt(0).toUpperCase()+t.slice(1)}`);
-      if (!btn) return;
+      const card = document.getElementById(`plan${t.charAt(0).toUpperCase()+t.slice(1)}`);
+      const btn  = document.getElementById(`btn${t.charAt(0).toUpperCase()+t.slice(1)}`);
+      if (!card || !btn) return;
       if (t === tier) {
+        card.classList.add('current');
         btn.textContent = 'Plan actuel';
-        btn.className   = 'pricing-btn current-plan';
-        document.getElementById(`plan${t.charAt(0).toUpperCase()+t.slice(1)}`).classList.add('current');
+        btn.className   = 'pricing-btn active-plan';
       }
     });
   }
 
-  // ── Watchlist ──────────────────────────────────────────────────────────────
+  // ── Watchlist ───────────────────────────────────────────────────────────
   async function loadWatchlist() {
     const { data } = await sb.from('watchlist').select('*').eq('user_id', currentUser.id).order('added_at', { ascending: false });
     const el = document.getElementById('watchlistContent');
-    if (!data || data.length === 0) { el.innerHTML = `<div class="card-empty"><div class="card-empty-title">Watchlist vide</div>Entre le pseudo FACEIT d'un joueur à surveiller</div>`; return; }
+    if (!data || data.length === 0) {
+      el.innerHTML = '<div class="empty"><div class="empty-title">Watchlist vide</div><p class="empty-sub">Ajoute des joueurs pour les suivre facilement</p></div>';
+      return;
+    }
     el.innerHTML = data.map(p => `
       <div class="player-row">
-        <img class="player-avatar-sm" src="${p.avatar_url || ''}" onerror="this.style.display='none'" alt=""/>
-        <div class="player-info">
+        <div class="player-avatar-sm" style="${p.avatar_url?`background-image:url(${p.avatar_url});background-size:cover;background-position:center`:''}"></div>
+        <div style="flex:1;min-width:0">
           <div class="player-name">${p.faceit_nickname}</div>
           <div class="player-meta">${p.note || 'Aucune note'}</div>
         </div>
-        <div class="player-elo">${p.faceit_elo ? p.faceit_elo + ' ELO' : '—'}</div>
-        <div class="player-actions">
-          <button class="btn-sm" onclick="analyseFromWatchlist('${p.faceit_nickname}')">Analyser</button>
-          <button class="btn-sm danger" onclick="removeFromWatchlist('${p.id}')">Retirer</button>
+        <div class="player-elo">${p.faceit_elo ? p.faceit_elo+' ELO' : '—'}</div>
+        <div class="btn-actions">
+          <button class="btn-sm" onclick="analysePlayer('${p.faceit_nickname}')">Analyser</button>
+          <button class="btn-sm danger" onclick="removeWatchlist('${p.id}')">Retirer</button>
         </div>
       </div>`).join('');
   }
@@ -310,61 +356,65 @@
   async function addToWatchlist() {
     const nick = document.getElementById('watchInput').value.trim();
     if (!nick) return;
-    const { error } = await sb.from('watchlist').insert({ user_id: currentUser.id, faceit_nickname: nick });
-    if (!error) { document.getElementById('watchInput').value = ''; loadWatchlist(); }
+    await sb.from('watchlist').insert({ user_id: currentUser.id, faceit_nickname: nick });
+    document.getElementById('watchInput').value = '';
+    loadWatchlist();
   }
 
-  async function removeFromWatchlist(id) {
+  async function removeWatchlist(id) {
     await sb.from('watchlist').delete().eq('id', id);
     loadWatchlist();
   }
 
-  function analyseFromWatchlist(nick) {
-    window.location.href = `index.html?analyse=${encodeURIComponent(nick)}`;
-  }
-
-  // ── Historique ─────────────────────────────────────────────────────────────
+  // ── History ─────────────────────────────────────────────────────────────
   async function loadHistory() {
     const { data } = await sb.from('analyses').select('*').eq('user_id', currentUser.id).order('analysed_at', { ascending: false }).limit(20);
     const el = document.getElementById('historyContent');
-    if (!data || data.length === 0) { el.innerHTML = `<div class="card-empty"><div class="card-empty-title">Aucune analyse</div>Tes analyses apparaîtront ici automatiquement</div>`; return; }
+    if (!data || data.length === 0) {
+      el.innerHTML = '<div class="empty"><div class="empty-title">Aucune analyse</div><p class="empty-sub">Tes analyses apparaîtront ici automatiquement</p></div>';
+      return;
+    }
     el.innerHTML = data.map(a => {
       const date = new Date(a.analysed_at).toLocaleDateString('fr-FR');
-      const rColor = parseFloat(a.fv_rating) >= 1.05 ? '#FFB800' : parseFloat(a.fv_rating) >= 0.9 ? '#39FF8A' : '#4A6580';
+      const fvR  = parseFloat(a.fv_rating);
+      const rColor = fvR>=1.05?'var(--success)':fvR>=0.9?'var(--gold)':'var(--text3)';
       return `<div class="history-row">
         <div class="history-nick">${a.faceit_nickname}</div>
-        <div class="history-meta">${a.faceit_elo ? a.faceit_elo + ' ELO · ' : ''}${date}</div>
-        <div class="history-rating" style="color:${rColor}">FV ${a.fv_rating || '—'}</div>
-        <div class="player-actions">
-          <button class="btn-sm" onclick="analyseFromWatchlist('${a.faceit_nickname}')">Revoir</button>
+        <div class="history-meta">${a.faceit_elo ? a.faceit_elo+' ELO · ' : ''}${date}</div>
+        <div class="history-rating" style="color:${rColor}">FV ${a.fv_rating||'—'}</div>
+        <div class="btn-actions">
+          <button class="btn-sm" onclick="analysePlayer('${a.faceit_nickname}')">Revoir</button>
         </div>
       </div>`;
     }).join('');
   }
 
-  // ── Roster ─────────────────────────────────────────────────────────────────
+  // ── Roster ──────────────────────────────────────────────────────────────
   async function loadRoster() {
     const { data: rosters } = await sb.from('rosters').select('*').eq('user_id', currentUser.id).limit(1);
     if (!rosters || rosters.length === 0) {
-      document.getElementById('rosterContent').innerHTML = `<div class="card-empty"><div class="card-empty-title">Équipe vide</div>Ajoute des joueurs pour constituer ton roster</div>`;
+      document.getElementById('rosterContent').innerHTML = '<div class="empty"><div class="empty-title">Roster vide</div><p class="empty-sub">Crée une équipe et ajoute des joueurs</p></div>';
       return;
     }
     currentRosterId = rosters[0].id;
     document.getElementById('rosterName').textContent = rosters[0].team_name;
     const { data: players } = await sb.from('roster_players').select('*').eq('roster_id', currentRosterId);
     const el = document.getElementById('rosterContent');
-    if (!players || players.length === 0) { el.innerHTML = `<div class="card-empty"><div class="card-empty-title">Équipe vide</div>Ajoute des joueurs</div>`; return; }
+    if (!players || players.length === 0) {
+      el.innerHTML = '<div class="empty"><div class="empty-title">Équipe vide</div><p class="empty-sub">Ajoute des joueurs à ton roster</p></div>';
+      return;
+    }
     el.innerHTML = players.map(p => `
       <div class="player-row">
-        <img class="player-avatar-sm" src="${p.avatar_url || ''}" onerror="this.style.display='none'" alt=""/>
-        <div class="player-info">
+        <div class="player-avatar-sm" style="${p.avatar_url?`background-image:url(${p.avatar_url});background-size:cover;background-position:center`:''}"></div>
+        <div style="flex:1;min-width:0">
           <div class="player-name">${p.faceit_nickname}</div>
-          <div class="player-meta">${p.role || 'Rôle non défini'} · Level ${p.faceit_level || '—'}</div>
+          <div class="player-meta">${p.role||'Rôle non défini'} · Level ${p.faceit_level||'—'}</div>
         </div>
-        <div class="player-elo">${p.faceit_elo ? p.faceit_elo + ' ELO' : '—'}</div>
-        <div class="player-actions">
-          <button class="btn-sm" onclick="analyseFromWatchlist('${p.faceit_nickname}')">Analyser</button>
-          <button class="btn-sm danger" onclick="removeFromRoster('${p.id}')">Retirer</button>
+        <div class="player-elo">${p.faceit_elo ? p.faceit_elo+' ELO' : '—'}</div>
+        <div class="btn-actions">
+          <button class="btn-sm" onclick="analysePlayer('${p.faceit_nickname}')">Analyser</button>
+          <button class="btn-sm danger" onclick="removeRosterPlayer('${p.id}')">Retirer</button>
         </div>
       </div>`).join('');
   }
@@ -379,32 +429,39 @@
   async function addToRoster() {
     const nick = document.getElementById('rosterInput').value.trim();
     if (!nick || !currentRosterId) return;
-    const { error } = await sb.from('roster_players').insert({ roster_id: currentRosterId, faceit_nickname: nick });
-    if (!error) { document.getElementById('rosterInput').value = ''; loadRoster(); }
+    await sb.from('roster_players').insert({ roster_id: currentRosterId, faceit_nickname: nick });
+    document.getElementById('rosterInput').value = '';
+    loadRoster();
   }
 
-  async function removeFromRoster(id) {
+  async function removeRosterPlayer(id) {
     await sb.from('roster_players').delete().eq('id', id);
     loadRoster();
   }
 
-  // ── Subscription ───────────────────────────────────────────────────────────
+  // ── Actions ─────────────────────────────────────────────────────────────
+  function analysePlayer(nick) {
+    window.location.href = `index.html?analyse=${encodeURIComponent(nick)}`;
+  }
+
   function subscribe(tier) {
-    // TODO: rediriger vers Stripe Checkout
     alert(`Redirection vers Stripe pour le plan ${tier}.\nIntégration Stripe à connecter prochainement.`);
   }
 
-  // ── Tab navigation ─────────────────────────────────────────────────────────
-  function setAccountTab(tab, btn) {
+  // ── Tab navigation ───────────────────────────────────────────────────────
+  function setTab(tab, btn) {
+    const map = { watchlist:'tabWatchlist', history:'tabHistory', roster:'tabRoster', subscription:'tabSubscription' };
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.account-tab').forEach(b => b.classList.remove('active'));
-    const map = { watchlist:'tabWatchlist', history:'tabHistory', roster:'tabRoster', subscription:'tabSubscription' };
     document.getElementById(map[tab]).classList.add('active');
     if (btn) btn.classList.add('active');
-    else document.querySelectorAll('.account-tab')[Object.keys(map).indexOf(tab)].classList.add('active');
+    else {
+      const idx = Object.keys(map).indexOf(tab);
+      document.querySelectorAll('.account-tab')[idx]?.classList.add('active');
+    }
   }
 
-  // ── Auth ───────────────────────────────────────────────────────────────────
+  // ── Auth ─────────────────────────────────────────────────────────────────
   async function logout() {
     await sb.auth.signOut();
     window.location.href = 'index.html';
