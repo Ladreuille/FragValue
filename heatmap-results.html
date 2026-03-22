@@ -38,6 +38,26 @@
     .floor-toggle.visible{display:flex}
     .floor-btn{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:5px;cursor:pointer;color:var(--text2);border:1px solid var(--border);background:transparent;transition:all .15s}
     .floor-btn.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(59,127,245,.4)}
+
+    /* Side toggle CT/T */
+    .side-toggle{display:flex;gap:4px;margin-bottom:14px;align-items:center}
+    .side-toggle-label{font-family:var(--mono);font-size:11px;color:var(--text3);margin-right:4px}
+    .side-btn{font-family:var(--mono);font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all .15s}
+    .side-btn:hover{color:var(--text);border-color:var(--border2)}
+    .side-btn.active-all{background:var(--card);color:var(--text);border-color:var(--border2)}
+    .side-btn.active-ct{background:rgba(74,158,255,.12);color:#4A9EFF;border-color:rgba(74,158,255,.3)}
+    .side-btn.active-t{background:rgba(245,200,66,.1);color:var(--gold);border-color:rgba(245,200,66,.25)}
+
+    /* Stats CT/T split sous la heatmap */
+    .side-stats-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+    .side-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+    .side-stat-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
+    .side-dot-ct{width:7px;height:7px;border-radius:50%;background:#4A9EFF;flex-shrink:0}
+    .side-dot-t{width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0}
+    .side-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .side-stat-item{text-align:center}
+    .side-stat-val{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.5px}
+    .side-stat-lbl{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
     .canvas-wrap{display:grid;grid-template-columns:1fr 220px;gap:14px;align-items:start}
     @media(max-width:700px){.canvas-wrap{grid-template-columns:1fr}}
     .canvas-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px}
@@ -123,6 +143,27 @@
       <canvas id="heatmapCanvas" width="1024" height="1024"></canvas>
       <div class="map-notice" id="mapNotice"></div>
       <div class="legend" id="mapLegend"></div>
+      <!-- Stats CT/T split -->
+      <div class="side-stats-bar" id="sideStatsBar" style="display:none">
+        <div class="side-stat-card">
+          <div class="side-stat-header"><div class="side-dot-ct"></div>CT Side</div>
+          <div class="side-stat-grid">
+            <div class="side-stat-item"><div class="side-stat-val" id="ctKills">—</div><div class="side-stat-lbl">Kills</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="ctDeaths">—</div><div class="side-stat-lbl">Deaths</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="ctHS">—</div><div class="side-stat-lbl">HS%</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="ctKD">—</div><div class="side-stat-lbl">K/D</div></div>
+          </div>
+        </div>
+        <div class="side-stat-card">
+          <div class="side-stat-header"><div class="side-dot-t"></div>T Side</div>
+          <div class="side-stat-grid">
+            <div class="side-stat-item"><div class="side-stat-val" id="tKills">—</div><div class="side-stat-lbl">Kills</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="tDeaths">—</div><div class="side-stat-lbl">Deaths</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="tHS">—</div><div class="side-stat-lbl">HS%</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="tKD">—</div><div class="side-stat-lbl">K/D</div></div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="player-panel">
       <div class="panel-label">Joueurs affichés</div>
@@ -198,6 +239,7 @@ window.addEventListener('load', () => {
     renderStats();
     renderPlayerList();
     loadMapImageThenDraw();
+    renderSideStats();
   } catch(e) { document.getElementById('noData').style.display = 'block'; }
 });
 
@@ -512,6 +554,46 @@ function switchFloor(floor, btn) {
   document.querySelectorAll('.floor-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   loadMapImageThenDraw();
+}
+
+function switchSide(side, btn) {
+  currentSide = side;
+  document.querySelectorAll('.side-btn').forEach(b => {
+    b.classList.remove('active-all','active-ct','active-t');
+  });
+  btn.classList.add(side === 'all' ? 'active-all' : side === 'ct' ? 'active-ct' : 'active-t');
+  renderHeatmap();
+  renderSideStats();
+}
+
+function renderSideStats() {
+  if (!demoData) return;
+  const kills = demoData.kills || [];
+  const players = [...activePlayers];
+  const filterKills = (team) => kills.filter(k =>
+    (players.length === 0 || players.includes(k.attacker)) && k.attackerTeam === team
+  );
+  const ct = filterKills(2);
+  const t  = filterKills(3);
+
+  const hs  = (arr) => arr.length > 0 ? Math.round(arr.filter(k=>k.isHeadshot).length/arr.length*100) : 0;
+  const deaths = (team) => kills.filter(k =>
+    (players.length === 0 || players.includes(k.victim)) && k.victimTeam === team
+  ).length;
+
+  const ctD = deaths(2), tD = deaths(3);
+
+  document.getElementById('ctKills').textContent  = ct.length;
+  document.getElementById('ctDeaths').textContent = ctD;
+  document.getElementById('ctHS').textContent     = hs(ct) + '%';
+  document.getElementById('ctKD').textContent     = ctD > 0 ? (ct.length/ctD).toFixed(2) : ct.length;
+  document.getElementById('tKills').textContent   = t.length;
+  document.getElementById('tDeaths').textContent  = tD;
+  document.getElementById('tHS').textContent      = hs(t) + '%';
+  document.getElementById('tKD').textContent      = tD > 0 ? (t.length/tD).toFixed(2) : t.length;
+
+  // Afficher les stats CT/T seulement si on filtre par joueur(s)
+  document.getElementById('sideStatsBar').style.display = activePlayers.size > 0 ? 'grid' : 'none';
 }
 
 function exportHeatmap() {
