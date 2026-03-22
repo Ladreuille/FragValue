@@ -143,7 +143,7 @@ function makeChart(id, type, labels, data, opts = {}) {
 
 // ── Main render ────────────────────────────────────────────────────────────
 function renderDashboard(data) {
-  const { player, cs2, lifetime, recent, mapStats, teams } = data;
+  const { player, cs2, lifetime, recent, mapStats, teams, fvScore } = data;
 
   // Avatar
   const avatarEl = document.getElementById('profileAvatar');
@@ -160,12 +160,22 @@ function renderDashboard(data) {
     }
   }
 
-  // Level badge — texte coloré selon le niveau
+  // Level badge — sous-niveau dynamique pour lvl 10
   const lvl = cs2.level || 1;
   const levelBadge = document.getElementById('levelBadge');
   if (levelBadge) {
-    levelBadge.textContent = `Level ${lvl}`;
-    levelBadge.className   = `badge badge-level-${lvl}`;
+    const bracket = fvScore?.eloBracket;
+    if (lvl === 10 && bracket) {
+      levelBadge.textContent = bracket === 'Challenger'
+        ? `⚡ Challenger${fvScore.challengerRank ? ' #'+fvScore.challengerRank : ''}`
+        : `Level ${bracket}`; // ex: "Level 10.5"
+      levelBadge.className = bracket === 'Challenger'
+        ? 'badge badge-challenger'
+        : `badge badge-level-10`;
+    } else {
+      levelBadge.textContent = `Level ${lvl}`;
+      levelBadge.className   = `badge badge-level-${lvl}`;
+    }
   }
 
   document.getElementById('profileName').textContent = player.nickname;
@@ -208,31 +218,71 @@ function renderDashboard(data) {
     ).join('');
   }
 
-  // ── Scout Score ────────────────────────────────────────────────────────
-  const fvScore  = Math.min(parseFloat(recent.fvRating)  / 1.5 * 100, 100);
-  const eloScore = Math.min(cs2.elo / 3000 * 100, 100);
-  const wrScore  = Math.min(parseFloat(recent.winRate), 100);
-  const kdScore  = Math.min(parseFloat(recent.avgKd) / 2.5 * 100, 100);
-  const hsScore  = Math.min(parseFloat(recent.avgHs) / 70 * 100, 100);
-  const total    = Math.round(fvScore*.35 + eloScore*.30 + wrScore*.15 + kdScore*.10 + hsScore*.10);
+  // ── FV Score /100 (depuis API) ────────────────────────────────────────
+  const score = fvScore || null;
+  const total = score?.total ?? Math.round(
+    Math.min(parseFloat(recent.fvRating)/1.5*100,100)*.35 +
+    Math.min(cs2.elo/3000*100,100)*.30 +
+    Math.min(parseFloat(recent.winRate),100)*.15 +
+    Math.min(parseFloat(recent.avgKd)/2.5*100,100)*.10 +
+    Math.min(parseFloat(recent.avgHs)/70*100,100)*.10
+  );
 
   document.getElementById('scoutScore').textContent = total;
-  document.getElementById('scoutDesc').textContent  = scoreLabel(total);
+  document.getElementById('scoutDesc').textContent  = score?.label
+    ? `${score.label} — ${scoreLabel(total)}`
+    : scoreLabel(total);
 
-  const barsData = [
-    { label:'FV Rating', val:fvScore,  display:recent.fvRating },
-    { label:'ELO',       val:eloScore, display:cs2.elo.toLocaleString() },
-    { label:'Win rate',  val:wrScore,  display:`${recent.winRate}%` },
-    { label:'K/D',       val:kdScore,  display:recent.avgKd },
-    { label:'HS%',       val:hsScore,  display:`${recent.avgHs}%` },
-    { label:'ADR',       val:Math.min(parseFloat(recent.avgAdr)/120*100,100), display:recent.avgAdr },
-  ];
-  document.getElementById('scoutBars').innerHTML = barsData.map(b => `
-    <div class="bar-row">
-      <span class="bar-label">${b.label}</span>
-      <div class="bar-track"><div class="bar-fill" style="width:${Math.max(0,b.val).toFixed(0)}%"></div></div>
-      <span class="bar-val">${b.display}</span>
-    </div>`).join('');
+  // Barre de sous-niveau lvl10 (si applicable)
+  const subLevelHtml = (score?.subLevel && score?.subLevelProgress !== null) ? `
+    <div class="sublevel-bar-wrap">
+      <div class="sublevel-bar-label">
+        <span>${score.eloBracket || 'Lvl 10'}</span>
+        <span style="color:var(--text3)">${score.subLevelProgress}% vers ${score.subLevel < 10 ? 'Lvl 10.'+(score.subLevel+1) : 'Challenger'}</span>
+      </div>
+      <div class="bar-track" style="margin:4px 0 10px">
+        <div class="bar-fill" style="width:${score.subLevelProgress}%;background:linear-gradient(90deg,#3B7FF5,#2DD4A0)"></div>
+      </div>
+    </div>` : '';
+
+  // Breakdown FV Score si disponible
+  const breakdownHtml = score?.breakdown ? `
+    <div class="fvscore-breakdown">
+      ${[
+        { key:'performance', label:'Performance', color:'#3B7FF5', icon:'⚡' },
+        { key:'consistency', label:'Consistance',  color:'#2DD4A0', icon:'📈' },
+        { key:'impact',      label:'Impact',       color:'#F5C842', icon:'💥' },
+        { key:'utility',     label:'Utilité',      color:'#EDA020', icon:'🔧' },
+      ].map(d => {
+        const dim = score.breakdown[d.key];
+        const pct = Math.round((dim.score / dim.max) * 100);
+        return `<div class="fvscore-dim">
+          <div class="fvscore-dim-header">
+            <span class="fvscore-dim-label">${d.icon} ${d.label}</span>
+            <span class="fvscore-dim-val" style="color:${d.color}">${dim.score.toFixed(0)}<span style="color:var(--text3);font-size:10px">/${dim.max}</span></span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${pct}%;background:${d.color}22;border-right:2px solid ${d.color}"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+
+  document.getElementById('scoutBars').innerHTML = subLevelHtml + breakdownHtml + `
+    <div style="margin-top:12px">
+    ${[
+      { label:'FV Rating', val:Math.min(parseFloat(recent.fvRating)/1.5*100,100),  display:recent.fvRating },
+      { label:'ELO',       val:Math.min(cs2.elo/3000*100,100),                     display:cs2.elo.toLocaleString() },
+      { label:'Win rate',  val:Math.min(parseFloat(recent.winRate),100),            display:`${recent.winRate}%` },
+      { label:'K/D',       val:Math.min(parseFloat(recent.avgKd)/2.5*100,100),     display:recent.avgKd },
+      { label:'ADR',       val:Math.min(parseFloat(recent.avgAdr)/120*100,100),    display:recent.avgAdr },
+    ].map(b => `
+      <div class="bar-row">
+        <span class="bar-label">${b.label}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(0,b.val).toFixed(0)}%"></div></div>
+        <span class="bar-val">${b.display}</span>
+      </div>`).join('')}
+    </div>`;
 
   // ── KPIs principaux ────────────────────────────────────────────────────
   const kd = parseFloat(recent.avgKd);
