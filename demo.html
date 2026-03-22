@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FragValue — Analyse de démo</title>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{--bg:#08090C;--surface:#0F1117;--card:#161920;--card2:#1C1F28;--border:#1F2433;--border2:#252B3B;--accent:#3B7FF5;--accent-dim:rgba(59,127,245,.12);--text:#EDF0F7;--text2:#8892A4;--text3:#4A5568;--success:#2DD4A0;--danger:#F06B6B;--font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace}
@@ -114,8 +115,12 @@
   <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
   <div class="nav-links">
     <a href="index.html" class="nav-link">Scout</a>
+    <a href="compare.html" class="nav-link">Comparer</a>
     <a href="demo.html" class="nav-link active">Démo</a>
     <span class="nav-badge">BETA</span>
+    <div style="width:1px;height:18px;background:var(--border);margin:0 4px"></div>
+    <a href="login.html" class="nav-link" id="navLoginBtn">Connexion</a>
+    <a href="account.html" class="nav-link" id="navAccountBtn" style="display:none">Mon espace</a>
   </div>
 </nav>
 
@@ -305,6 +310,8 @@ async function startAnalysis() {
     setStep(5, 100, 'Terminé !', 'Redirection...');
     bar.style.background = 'var(--success)';
     sessionStorage.setItem('demoData', JSON.stringify(data.data));
+    // Sauvegarde dans Supabase si connecté
+    await saveDemoAnalysis(data.data);
     await new Promise(r => setTimeout(r, 700));
     window.location.href = 'heatmap-results.html';
   } catch (err) {
@@ -317,6 +324,36 @@ async function startAnalysis() {
 
 function showError(msg) { const el=document.getElementById('errorCard'); el.textContent=msg; el.style.display='block'; }
 function hideError()    { document.getElementById('errorCard').style.display='none'; }
+
+// ── Auth nav ──────────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+_sb.auth.getSession().then(({ data }) => {
+  if (data.session) {
+    document.getElementById('navLoginBtn').style.display  = 'none';
+    document.getElementById('navAccountBtn').style.display = '';
+  }
+});
+
+// ── Sauvegarde démo dans Supabase ─────────────────────────────────────────
+async function saveDemoAnalysis(demoData) {
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) return;
+    const meta = demoData?.meta || {};
+    await _sb.from('demos').insert({
+      user_id:      session.user.id,
+      map:          meta.map          || null,
+      rounds:       meta.rounds       || null,
+      total_kills:  meta.totalKills   || null,
+      analysed_at:  new Date().toISOString(),
+    });
+  } catch(e) {
+    console.warn('saveDemoAnalysis:', e.message);
+  }
+}
 </script>
 </body>
 </html>
