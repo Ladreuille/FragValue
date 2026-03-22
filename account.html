@@ -433,9 +433,31 @@
   async function addToWatchlist() {
     const nick = document.getElementById('watchInput').value.trim();
     if (!nick) return;
-    await sb.from('watchlist').insert({ user_id: currentUser.id, faceit_nickname: nick });
-    document.getElementById('watchInput').value = '';
-    loadWatchlist();
+    const btn = document.querySelector('#tabWatchlist .add-btn');
+    btn.textContent = '...'; btn.disabled = true;
+    try {
+      // Récupérer les vraies données FACEIT
+      const res  = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`);
+      const data = await res.json();
+      const elo  = data?.cs2?.elo || null;
+      const avatar = data?.player?.avatar || null;
+      await sb.from('watchlist').upsert({
+        user_id: currentUser.id,
+        faceit_nickname: data?.player?.nickname || nick,
+        faceit_elo: elo,
+        avatar_url: avatar,
+        note: elo ? `Lvl ${data?.cs2?.level} · ${elo} ELO` : null,
+      }, { onConflict: 'user_id,faceit_nickname' });
+      document.getElementById('watchInput').value = '';
+      loadWatchlist();
+    } catch(e) {
+      // Ajout sans données si API fail
+      await sb.from('watchlist').insert({ user_id: currentUser.id, faceit_nickname: nick });
+      document.getElementById('watchInput').value = '';
+      loadWatchlist();
+    } finally {
+      btn.textContent = '+ Ajouter'; btn.disabled = false;
+    }
   }
 
   async function removeWatchlist(id) {
@@ -506,9 +528,28 @@
   async function addToRoster() {
     const nick = document.getElementById('rosterInput').value.trim();
     if (!nick || !currentRosterId) return;
-    await sb.from('roster_players').insert({ roster_id: currentRosterId, faceit_nickname: nick });
-    document.getElementById('rosterInput').value = '';
-    loadRoster();
+    const btn = document.querySelector('#tabRoster .add-btn');
+    btn.textContent = '...'; btn.disabled = true;
+    try {
+      const res  = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`);
+      const data = await res.json();
+      await sb.from('roster_players').insert({
+        roster_id:       currentRosterId,
+        faceit_nickname: data?.player?.nickname || nick,
+        faceit_elo:      data?.cs2?.elo   || null,
+        faceit_level:    data?.cs2?.level || null,
+        avatar_url:      data?.player?.avatar || null,
+        role:            data?.recent?.role || null,
+      });
+      document.getElementById('rosterInput').value = '';
+      loadRoster();
+    } catch(e) {
+      await sb.from('roster_players').insert({ roster_id: currentRosterId, faceit_nickname: nick });
+      document.getElementById('rosterInput').value = '';
+      loadRoster();
+    } finally {
+      btn.textContent = '+ Ajouter'; btn.disabled = false;
+    }
   }
 
   async function removeRosterPlayer(id) {
@@ -542,8 +583,10 @@
   async function loadFaceitSettings() {
     const { data } = await sb.from('profiles').select('faceit_nickname,created_at').eq('id', currentUser.id).single();
     document.getElementById('settingsEmail').textContent = currentUser.email;
-    if (data?.created_at) {
-      document.getElementById('settingsCreated').textContent = new Date(data.created_at).toLocaleDateString('fr-FR', { year:'numeric', month:'long', day:'numeric' });
+    // created_at depuis profiles ou depuis l'objet auth user
+    const createdAt = data?.created_at || currentUser.created_at;
+    if (createdAt) {
+      document.getElementById('settingsCreated').textContent = new Date(createdAt).toLocaleDateString('fr-FR', { year:'numeric', month:'long', day:'numeric' });
     }
     if (data?.faceit_nickname) {
       document.getElementById('faceitLinkedStatus').textContent = `Lié à : ${data.faceit_nickname}`;
