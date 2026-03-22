@@ -198,37 +198,75 @@ module.exports = async function handler(req, res) {
     const winRate  = ((wins / n) * 100).toFixed(0);
     const fvRatingAvg = avg('fvRating').toFixed(2);
 
-    // ── CT / T split global ────────────────────────────────────────────────
+    // ── Total rounds pour les calculs ──────────────────────────────────────
+    const totalRoundsAll = recentMatches.reduce((s, m) => s + (m.rounds || 0), 0) || n * 24;
+
+    // ── CT / T split — depuis les matchs récents ou lifetime segments ───────
     const totCtRounds = sum('ctRounds');
     const totTRounds  = sum('tRounds');
-    const ctWinRate   = totCtRounds > 0 ? ((sum('ctWins') / totCtRounds) * 100).toFixed(0) : '—';
-    const tWinRate    = totTRounds  > 0 ? ((sum('tWins')  / totTRounds)  * 100).toFixed(0) : '—';
-    const ctKd        = sum('ctDeaths') > 0 ? (sum('ctKills') / sum('ctDeaths')).toFixed(2) : '—';
-    const tKd         = sum('tDeaths')  > 0 ? (sum('tKills')  / sum('tDeaths')).toFixed(2)  : '—';
 
-    // ── Flashes ────────────────────────────────────────────────────────────
-    const totalFlashesThrown  = sum('flashesThrown');
-    const totalEnemiesFlashed = sum('enemiesFlashed');
-    const avgFlashPerRound    = totCtRounds + totTRounds > 0
-      ? (totalFlashesThrown / ((totCtRounds + totTRounds) || 1)).toFixed(2) : '0.00';
+    // Fallback lifetime pour CT/T split
+    const lifetimeCtWinRate = parseFloat(lifetime['Win Rate % CT']) || parseFloat(lifetime['CT Win Rate %']) || 0;
+    const lifetimeTWinRate  = parseFloat(lifetime['Win Rate % T'])  || parseFloat(lifetime['T Win Rate %'])  || 0;
+    const lifetimeCtKd = parseFloat(lifetime['K/D Ratio CT']) || parseFloat(lifetime['CT K/D']) || 0;
+    const lifetimeTKd  = parseFloat(lifetime['K/D Ratio T'])  || parseFloat(lifetime['T K/D'])  || 0;
 
-    // ── Utility ────────────────────────────────────────────────────────────
-    const totalUtilDmg   = sum('utilDmg');
-    const avgUtilDmg     = (totalUtilDmg / n).toFixed(0);
+    const ctWinRate = totCtRounds > 0
+      ? ((sum('ctWins') / totCtRounds) * 100).toFixed(0)
+      : lifetimeCtWinRate > 0 ? lifetimeCtWinRate.toFixed(0) : '—';
+    const tWinRate  = totTRounds > 0
+      ? ((sum('tWins') / totTRounds) * 100).toFixed(0)
+      : lifetimeTWinRate > 0 ? lifetimeTWinRate.toFixed(0) : '—';
+    const ctKd = sum('ctDeaths') > 0
+      ? (sum('ctKills') / sum('ctDeaths')).toFixed(2)
+      : lifetimeCtKd > 0 ? lifetimeCtKd.toFixed(2) : '—';
+    const tKd  = sum('tDeaths') > 0
+      ? (sum('tKills') / sum('tDeaths')).toFixed(2)
+      : lifetimeTKd > 0 ? lifetimeTKd.toFixed(2) : '—';
 
-    // ── Trades & saves ────────────────────────────────────────────────────
-    const totalTradeKills  = sum('tradeKills');
-    const totalTradeDeaths = sum('tradeDeaths');
-    const totalSaves       = sum('saves');
+    // ── Flashes — depuis lifetime si pas dans les matchs ──────────────────
+    const sumFlashesThrown  = sum('flashesThrown');
+    const sumEnemiesFlashed = sum('enemiesFlashed');
+    const lifetimeFlashes   = parseInt(lifetime['Flash Count']) || parseInt(lifetime['Flashes Thrown']) || 0;
+    const lifetimeFlashed   = parseInt(lifetime['Enemies Flashed']) || parseInt(lifetime['Flash Assists']) || 0;
+
+    const totalFlashesThrown  = sumFlashesThrown  > 0 ? sumFlashesThrown  : lifetimeFlashes;
+    const totalEnemiesFlashed = sumEnemiesFlashed > 0 ? sumEnemiesFlashed : lifetimeFlashed;
+    const avgFlashPerRound    = totalRoundsAll > 0 && totalFlashesThrown > 0
+      ? (totalFlashesThrown / totalRoundsAll).toFixed(2) : '0.00';
+
+    // ── Utility ───────────────────────────────────────────────────────────
+    const sumUtilDmg = sum('utilDmg');
+    const lifetimeUtilDmg = parseInt(lifetime['Utility Damage']) || parseInt(lifetime['Utility DMG']) || 0;
+    const totalUtilDmg = sumUtilDmg > 0 ? sumUtilDmg : lifetimeUtilDmg;
+    const avgUtilDmg   = (totalUtilDmg / n).toFixed(0);
+
+    // ── Trades & saves ─────────────────────────────────────────────────────
+    const sumTradeKills  = sum('tradeKills');
+    const sumTradeDeaths = sum('tradeDeaths');
+    const sumSaves       = sum('saves');
+    const lifetimeTrades = parseInt(lifetime['Trade Kills'])  || 0;
+    const lifetimeSaves  = parseInt(lifetime['Saves'])        || 0;
+
+    const totalTradeKills  = sumTradeKills  > 0 ? sumTradeKills  : lifetimeTrades;
+    const totalTradeDeaths = sumTradeDeaths > 0 ? sumTradeDeaths : 0;
+    const totalSaves       = sumSaves       > 0 ? sumSaves       : lifetimeSaves;
 
     // ── Pistol rounds ─────────────────────────────────────────────────────
-    const totalPistolWins  = sum('pistolWins');
-    const totalPistolTotal = sum('pistolTotal');
+    const sumPistolWins  = sum('pistolWins');
+    const sumPistolTotal = sum('pistolTotal');
+    const lifetimePistolWins  = parseInt(lifetime['Pistol Round Wins'])   || parseInt(lifetime['Pistol Wins'])  || 0;
+    const lifetimePistolTotal = parseInt(lifetime['Pistol Round Played'])  || parseInt(lifetime['Pistol Played'])|| 0;
+
+    const totalPistolWins  = sumPistolWins  > 0 ? sumPistolWins  : lifetimePistolWins;
+    const totalPistolTotal = sumPistolTotal > 0 ? sumPistolTotal : lifetimePistolTotal;
     const pistolWinRate    = totalPistolTotal > 0
       ? ((totalPistolWins / totalPistolTotal) * 100).toFixed(0) : '—';
 
     // ── Sniper ────────────────────────────────────────────────────────────
-    const totalSniperKills = sum('sniperKills');
+    const sumSniperKills = sum('sniperKills');
+    const lifetimeSniper = parseInt(lifetime['Sniper Kills']) || parseInt(lifetime['AWP Kills']) || 0;
+    const totalSniperKills = sumSniperKills > 0 ? sumSniperKills : lifetimeSniper;
     const sniperKillRate   = n > 0 ? (totalSniperKills / n).toFixed(1) : '0.0';
 
     // ── Multi-kills ───────────────────────────────────────────────────────
@@ -237,16 +275,35 @@ module.exports = async function handler(req, res) {
     const totalQuads   = sum('quad');
     const totalAces    = sum('ace');
 
-    // ── Clutches ──────────────────────────────────────────────────────────
-    const totalClutch1v1 = sum('clutch1v1');
-    const totalClutch1v2 = sum('clutch1v2');
-    const totalClutch1v3 = sum('clutch1v3');
-    const totalClutch1v4 = sum('clutch1v4');
-    const totalClutch1v5 = sum('clutch1v5');
+    // ── Clutches — depuis lifetime si les matchs n'ont pas ces champs ─────
+    // FACEIT retourne ces stats dans lifetime mais pas toujours par match
+    const lifetimeClutch1v1 = parseInt(lifetime['1v1Wins']) || parseInt(lifetime['1v1 Wins']) || 0;
+    const lifetimeClutch1v2 = parseInt(lifetime['1v2Wins']) || parseInt(lifetime['1v2 Wins']) || 0;
+    const lifetimeClutch1v3 = parseInt(lifetime['1v3Wins']) || parseInt(lifetime['1v3 Wins']) || 0;
+    const lifetimeClutch1v4 = parseInt(lifetime['1v4Wins']) || parseInt(lifetime['1v4 Wins']) || 0;
+    const lifetimeClutch1v5 = parseInt(lifetime['1v5Wins']) || parseInt(lifetime['1v5 Wins']) || 0;
+
+    const sumClutch1v1 = sum('clutch1v1');
+    const sumClutch1v2 = sum('clutch1v2');
+    const sumClutch1v3 = sum('clutch1v3');
+    const sumClutch1v4 = sum('clutch1v4');
+    const sumClutch1v5 = sum('clutch1v5');
+
+    // Utiliser les données par match si disponibles, sinon lifetime
+    const totalClutch1v1 = sumClutch1v1 > 0 ? sumClutch1v1 : lifetimeClutch1v1;
+    const totalClutch1v2 = sumClutch1v2 > 0 ? sumClutch1v2 : lifetimeClutch1v2;
+    const totalClutch1v3 = sumClutch1v3 > 0 ? sumClutch1v3 : lifetimeClutch1v3;
+    const totalClutch1v4 = sumClutch1v4 > 0 ? sumClutch1v4 : lifetimeClutch1v4;
+    const totalClutch1v5 = sumClutch1v5 > 0 ? sumClutch1v5 : lifetimeClutch1v5;
 
     // ── Opening duels ─────────────────────────────────────────────────────
-    const totalFirstKills  = sum('firstKills');
-    const totalFirstDeaths = sum('firstDeaths');
+    const sumFirstKills  = sum('firstKills');
+    const sumFirstDeaths = sum('firstDeaths');
+    const lifetimeFirstKills  = parseInt(lifetime['First Kills'])  || parseInt(lifetime['Opening Kills'])  || 0;
+    const lifetimeFirstDeaths = parseInt(lifetime['First Deaths']) || parseInt(lifetime['Opening Deaths']) || 0;
+
+    const totalFirstKills  = sumFirstKills  > 0 ? sumFirstKills  : lifetimeFirstKills;
+    const totalFirstDeaths = sumFirstDeaths > 0 ? sumFirstDeaths : lifetimeFirstDeaths;
     const openingRatio     = totalFirstDeaths > 0
       ? (totalFirstKills / totalFirstDeaths).toFixed(2) : totalFirstKills.toString();
 
