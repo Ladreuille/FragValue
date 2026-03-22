@@ -311,7 +311,71 @@ module.exports = async function handler(req, res) {
       // On utilise avgFvRating déjà calculé (≈ HLTV 2.1) comme base
       // puis on l'ajuste selon le niveau ELO (contexte adversaires)
       const eloLevel = cs2data.skill_level || 5; // 1-10
-      const eloFactor = 0.85 + (eloLevel / 10) * 0.30; // lvl1=0.88, lvl10=1.15
+      const eloValue  = cs2data.faceit_elo    || 0;
+
+      // Segmentation fine du lvl 10 selon l'ELO précis
+      // Distribution réelle FACEIT CS2 :
+      //   2001-2500 → Lvl 10 standard
+      //   2501-3000 → Lvl 10 Elite      (~top 15%)
+      //   3001-3500 → Lvl 10 Elite+     (~top 5%)
+      //   3501+     → Challenger        (~top 1000)
+      // ── Récupération du seuil Challenger en temps réel ──────────────────
+      // L'API FACEIT Rankings retourne le top 1000 de la région du joueur
+      // On récupère l'ELO du joueur #1000 pour avoir le vrai seuil live
+      let challengerThreshold = 3787; // fallback basé sur le leaderboard EU actuel
+      let challengerRank = null;       // position dans le leaderboard si Challenger
+      try {
+        const region = cs2data.region || 'EU';
+        // Endpoint rankings FACEIT v4 : retourne le classement régional
+        const rankRes = await fetch(
+          `${BASE}/rankings/games/cs2/regions/${region}?limit=2&offset=998`,
+          { headers }
+        );
+        if (rankRes.ok) {
+          const rankData = await rankRes.json();
+          const items = rankData.items || [];
+          // Le joueur en position 1000 (offset 998 = positions 999 et 1000)
+          const rank1000 = items.find(r => r.position === 1000) || items[items.length - 1];
+          if (rank1000?.faceit_elo) {
+            challengerThreshold = rank1000.faceit_elo;
+          }
+          // Vérifier si le joueur analysé est lui-même Challenger
+          if (eloValue >= challengerThreshold) {
+            // Récupérer sa position exacte
+            const playerRankRes = await fetch(
+              `${BASE}/rankings/games/cs2/regions/${region}/players/${playerId}?limit=1`,
+              { headers }
+            );
+            if (playerRankRes.ok) {
+              const playerRankData = await playerRankRes.json();
+              challengerRank = playerRankData.position || null;
+            }
+          }
+        }
+      } catch(e) {
+        // Fallback silencieux — on garde le threshold par défaut
+        console.warn('Challenger threshold fetch failed, using fallback:', e.message);
+      }
+
+      // ── 10 sous-niveaux dynamiques du lvl 10 ────────────────────────────
+      // La plage 2001 → challengerThreshold est divisée en 10 tranches égales
+      // Chaque sous-niveau correspond à 1/10 de cette plage
+      const LVL10_BASE = 2001;
+      const lvl10Range = challengerThreshold - LVL10_BASE;
+      const subLevelSize = lvl10Range / 10;
+
+      // Sous-niveau 1-10 (1 = entrée lvl10, 10 = juste avant Challenger)
+      const subLevel = eloLevel === 10 && eloValue < challengerThreshold
+        ? Math.min(10, Math.max(1, Math.ceil((eloValue - LVL10_BASE) / subLevelSize)))
+        : null;
+
+      // eloFactor progressif : 1.15 (sous-niveau 1) → 1.44 (sous-niveau 10) → 1.45 (Challenger)
+      const eloFactor = (() => {
+        if (eloLevel < 10) return 0.85 + (eloLevel / 10) * 0.30;
+        if (eloValue >= challengerThreshold) return 1.45; // Challenger
+        // Interpolation linéaire entre 1.15 et 1.44 selon le sous-niveau
+        return parseFloat((1.15 + (subLevel - 1) * (0.29 / 9)).toFixed(4));
+      })();
 
       // Performance brute normalisée sur [0,35]
       // fvRating moyen : 0.5 (très mauvais) → 1.5 (excellent)
@@ -462,13 +526,32 @@ module.exports = async function handler(req, res) {
           },
         },
         // Label qualitatif
-        label: total >= 85 ? 'Exceptionnel' :
-               total >= 72 ? 'Excellent'    :
-               total >= 60 ? 'Très bon'     :
-               total >= 48 ? 'Bon'          :
-               total >= 36 ? 'Moyen'        :
+        label: total >= 90 ? 'Challenger'    :
+               total >= 80 ? 'Élite+'        :
+               total >= 70 ? 'Élite'         :
+               total >= 58 ? 'Très bon'      :
+               total >= 46 ? 'Bon'           :
+               total >= 34 ? 'Moyen'         :
                total >= 20 ? 'En progression':
                              'Débutant',
+        // Bracket dynamique basé sur le leaderboard live
+        eloBracket: eloLevel === 10
+          ? (eloValue >= challengerThreshold
+            ? 'Challenger'
+            : `Lvl 10.${subLevel}`)
+          : null,
+        // Sous-niveau précis (1-10) dans le lvl 10
+        subLevel,
+        // Progression dans le sous-niveau actuel (0-100%)
+        subLevelProgress: subLevel !== null
+          ? Math.round(((eloValue - LVL10_BASE - (subLevel - 1) * subLevelSize) / subLevelSize) * 100)
+          : null,
+        // Position dans le leaderboard Challenger (si applicable)
+        challengerRank,
+        // Seuil ELO Challenger de la région au moment de l'analyse
+        challengerThreshold,
+        // Taille d'une tranche de sous-niveau
+        subLevelSize: Math.round(subLevelSize),
       };
     })();
 
