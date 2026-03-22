@@ -372,7 +372,7 @@ function renderPlayerCards() {
 function renderRadarChart() {
   if (radarChartInst) { radarChartInst.destroy(); radarChartInst = null; }
 
-  const labels = ['FV Rating','K/D','HS%','ADR','Win rate','ELO'];
+  const labels = ['FV Score','K/D','HS%','ADR','KAST','ELO'];
 
   // Normalize values to 0-100
   const normalize = (val, min, max) => Math.min(100, Math.max(0, ((val - min) / (max - min)) * 100));
@@ -382,11 +382,11 @@ function renderRadarChart() {
     return {
       label: p.player.nickname,
       data: [
-        normalize(parseFloat(r.fvRating), 0.3, 1.5),
+        normalize(p.fvScore?.total ?? parseFloat(r.fvRating)*60, 0, 100),
         normalize(parseFloat(r.avgKd),    0.3, 2.5),
         normalize(parseFloat(r.avgHs),    10,  80),
         normalize(parseFloat(r.avgAdr),   40,  130),
-        normalize(parseFloat(r.winRate),  20,  80),
+        normalize(parseFloat(r.avgKast),  40,  95),
         normalize(p.cs2.elo,              500, 3500),
       ],
       backgroundColor: p.color + '18',
@@ -446,14 +446,16 @@ function renderBarChart() {
 // ── Bar compare ────────────────────────────────────────────────────────────
 function renderBarCompare() {
   const stats = [
-    { key: r => parseFloat(r.avgKd),    label: 'K/D moyen',    fmt: v => v.toFixed(2), max: 3 },
-    { key: r => parseFloat(r.avgHs),    label: 'HS%',           fmt: v => v.toFixed(1)+'%', max: 80 },
-    { key: r => parseFloat(r.avgAdr),   label: 'ADR',           fmt: v => v.toFixed(0), max: 130 },
-    { key: r => parseFloat(r.winRate),  label: 'Win rate',      fmt: v => v.toFixed(0)+'%', max: 100 },
-    { key: r => parseFloat(r.avgKast),  label: 'KAST',          fmt: v => v.toFixed(0)+'%', max: 100 },
-    { key: r => parseFloat(r.fvRating), label: 'FV Rating',     fmt: v => v.toFixed(2), max: 1.5 },
-    { key: (r,p) => p.cs2.elo,          label: 'ELO FACEIT',    fmt: v => v.toLocaleString(), max: 3500 },
-    { key: r => parseFloat(r.openingRatio), label: 'Opening ratio', fmt: v => parseFloat(v).toFixed(2), max: 3 },
+    { key: (r,p) => p.fvScore?.total ?? 0,          label: 'FV Score /100',  fmt: v => v+'/100', max: 100 },
+    { key: r => parseFloat(r.fvRating),              label: 'FV Rating',      fmt: v => v.toFixed(2), max: 1.5 },
+    { key: r => parseFloat(r.avgKd),                 label: 'K/D moyen',      fmt: v => v.toFixed(2), max: 3 },
+    { key: r => parseFloat(r.avgHs),                 label: 'HS%',            fmt: v => v.toFixed(1)+'%', max: 80 },
+    { key: r => parseFloat(r.avgAdr),                label: 'ADR',            fmt: v => v.toFixed(0), max: 130 },
+    { key: r => parseFloat(r.avgKast),               label: 'KAST',           fmt: v => v.toFixed(0)+'%', max: 100 },
+    { key: r => parseFloat(r.winRate),               label: 'Win rate',       fmt: v => v.toFixed(0)+'%', max: 100 },
+    { key: (r,p) => p.cs2.elo,                       label: 'ELO FACEIT',     fmt: v => v.toLocaleString(), max: 3500 },
+    { key: r => parseFloat(r.openingRatio)||0,       label: 'Opening ratio',  fmt: v => v.toFixed(2), max: 3 },
+    { key: r => r.totalClutch1v1+r.totalClutch1v2||0,label: 'Clutches totaux',fmt: v => v, max: 20 },
   ];
 
   document.getElementById('barCompare').innerHTML = stats.map(stat => {
