@@ -312,7 +312,7 @@ function renderHeatmap() {
 // ─── DRAWS ────────────────────────────────────────────────────────────────────
 function drawKills(mapName, W, H, mode) {
   const kills = demoData.kills || [];
-  const gs = Math.floor(W / 32);
+  const gs = Math.floor(W / 48); // grille plus fine = moins de fusion
   [...activePlayers].forEach(name => {
     const filtered = kills.filter(k => (mode === 'attacker' ? k.attacker : k.victim) === name);
     drawKillSet(filtered, getColor(name), mapName, W, H, gs, mode);
@@ -334,14 +334,20 @@ function drawKillSet(kills, color, mapName, W, H, gs, mode) {
     ctx.fillStyle = `rgba(${color.rgb},${.15 + (count/mx) * .5})`;
     ctx.fillRect(gx*gs, gy*gs, gs, gs);
   });
+  // Dessiner chaque point individuellement
   kills.forEach(k => {
     const x = mode === 'attacker' ? k.attackerX : k.victimX;
     const y = mode === 'attacker' ? k.attackerY : k.victimY;
     const { px, py } = w2c(x, y, mapName, W, H);
-    ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI*2);
+    // Halo
+    ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(${color.rgb},.1)`; ctx.fill();
+    // Point principal
+    ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2);
     ctx.fillStyle = color.solid; ctx.fill();
-    ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI*2);
-    ctx.fillStyle = `rgba(${color.rgb},.12)`; ctx.fill();
+    // Contour blanc pour lisibilité
+    ctx.strokeStyle = 'rgba(237,240,247,.4)'; ctx.lineWidth = 1;
+    ctx.stroke();
   });
 }
 
