@@ -30,6 +30,8 @@ async function searchPlayer(nicknameOverride) {
     if (!res.ok) { showError(data.error || 'Erreur inconnue.'); return; }
     if (fromTopbar) resetDashboard();
     renderDashboard(data);
+    // ── Sauvegarde historique Supabase ────────────────────────────────────
+    saveAnalysis(data);
   } catch { showError('Impossible de contacter le serveur.'); }
   finally {
     showTopbarLoading(false);
@@ -497,3 +499,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function showError(msg) { const el = document.getElementById('errorMsg'); if(el){el.textContent=msg;el.style.display='block';} }
 function hideError()    { const el = document.getElementById('errorMsg'); if(el) el.style.display='none'; }
+
+// ── Sauvegarde auto Supabase ───────────────────────────────────────────────
+async function saveAnalysis(data) {
+  try {
+    // Récupérer la session Supabase si dispo
+    const sbUrl  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+    const sbAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+    if (!window.supabase) return; // Supabase non chargé
+    const sb = window.supabase.createClient(sbUrl, sbAnon);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return; // Pas connecté → pas de sauvegarde
+    await sb.from('analyses').insert({
+      user_id:         session.user.id,
+      faceit_nickname: data.player?.nickname,
+      faceit_elo:      data.cs2?.elo,
+      fv_rating:       parseFloat(data.recent?.fvRating) || null,
+      analysed_at:     new Date().toISOString(),
+    });
+  } catch(e) {
+    // Silencieux — pas critique
+    console.warn('saveAnalysis:', e.message);
+  }
+}
