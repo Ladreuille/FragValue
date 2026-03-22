@@ -39,14 +39,16 @@
     .floor-btn{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:5px;cursor:pointer;color:var(--text2);border:1px solid var(--border);background:transparent;transition:all .15s}
     .floor-btn.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(59,127,245,.4)}
 
-    /* Side toggle CT/T */
-    .side-toggle{display:flex;gap:4px;margin-bottom:14px;align-items:center}
+    /* Side toggle CT/T — checkboxes indépendantes */
+    .side-toggle{display:flex;gap:6px;margin-bottom:14px;align-items:center}
     .side-toggle-label{font-family:var(--mono);font-size:11px;color:var(--text3);margin-right:4px}
-    .side-btn{font-family:var(--mono);font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all .15s}
+    .side-btn{font-family:var(--mono);font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all .15s;display:flex;align-items:center;gap:5px}
     .side-btn:hover{color:var(--text);border-color:var(--border2)}
-    .side-btn.active-all{background:var(--card);color:var(--text);border-color:var(--border2)}
     .side-btn.active-ct{background:rgba(74,158,255,.12);color:#4A9EFF;border-color:rgba(74,158,255,.3)}
     .side-btn.active-t{background:rgba(245,200,66,.1);color:var(--gold);border-color:rgba(245,200,66,.25)}
+    .side-check{width:10px;height:10px;border-radius:2px;border:1.5px solid currentColor;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+    .side-check::after{content:'';width:5px;height:5px;border-radius:1px;background:currentColor;display:none}
+    .side-btn.active-ct .side-check::after,.side-btn.active-t .side-check::after{display:block}
 
     /* Stats CT/T split sous la heatmap */
     .side-stats-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
@@ -220,7 +222,7 @@ let demoData = null;
 let activePlayers = new Set();
 let currentHeatmap = 'kills';
 let currentFloor   = 'upper';
-let currentSide    = 'all';   // 'all' | 'ct' | 't'
+let showCT = true, showT = true; // filtres side indépendants
 let canvas, ctx, mapImage = null;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -378,11 +380,12 @@ function drawKills(mapName, W, H, mode) {
   const kills = demoData.kills || [];
   const gs = Math.floor(W / 48);
 
-  // Filtre side
+  // Filtre side — CT et T indépendants
   const sideFilter = k => {
-    if (currentSide === 'all') return true;
     const team = mode === 'attacker' ? k.attackerTeam : k.victimTeam;
-    return currentSide === 'ct' ? team === 2 : team === 3;
+    if (team === 2) return showCT;
+    if (team === 3) return showT;
+    return true; // team inconnue → toujours afficher
   };
 
   [...activePlayers].forEach(name => {
@@ -512,14 +515,10 @@ function updateLegend() {
   } else if (currentHeatmap === 'duels') {
     items = [{color:'#2DD4A0',label:'>65% win'},{color:'#F5C842',label:'45-65%'},{color:'#F06B6B',label:'<45%'}];
   } else {
-    // Couleurs joueurs + indicateur CT/T
     const shown = [...activePlayers];
     items = shown.map(name => ({ color: getColor(name).solid, label: name }));
-    // Ajouter légende CT/T
-    if (currentSide === 'all') {
-      items.push({ color: '#4A9EFF', label: 'contour CT' });
-      items.push({ color: '#F5C842', label: 'contour T' });
-    }
+    if (showCT) items.push({ color: '#4A9EFF', label: 'contour CT' });
+    if (showT)  items.push({ color: '#F5C842', label: 'contour T' });
   }
   document.getElementById('mapLegend').innerHTML = items.map(i =>
     `<div class="legend-item"><div class="legend-dot" style="background:${i.color}"></div>${i.label}</div>`
@@ -614,12 +613,24 @@ function switchFloor(floor, btn) {
   loadMapImageThenDraw();
 }
 
-function switchSide(side, btn) {
-  currentSide = side;
-  document.querySelectorAll('.side-btn').forEach(b => {
-    b.classList.remove('active-all','active-ct','active-t');
-  });
-  btn.classList.add(side === 'all' ? 'active-all' : side === 'ct' ? 'active-ct' : 'active-t');
+function toggleSide(side) {
+  if (side === 'ct') {
+    showCT = !showCT;
+    const btn = document.getElementById('btnCT');
+    if (showCT) btn.classList.add('active-ct');
+    else        btn.classList.remove('active-ct');
+  } else {
+    showT = !showT;
+    const btn = document.getElementById('btnT');
+    if (showT) btn.classList.add('active-t');
+    else       btn.classList.remove('active-t');
+  }
+  // Empêcher les deux d'être désactivés en même temps
+  if (!showCT && !showT) {
+    showCT = true; showT = true;
+    document.getElementById('btnCT').classList.add('active-ct');
+    document.getElementById('btnT').classList.add('active-t');
+  }
   renderHeatmap();
   renderSideStats();
 }
@@ -631,6 +642,7 @@ function renderSideStats() {
   const filterKills = (team) => kills.filter(k =>
     (players.length === 0 || players.includes(k.attacker)) && k.attackerTeam === team
   );
+  // Toujours afficher les stats CT/T indépendamment du filtre
   const ct = filterKills(2);
   const t  = filterKills(3);
 
