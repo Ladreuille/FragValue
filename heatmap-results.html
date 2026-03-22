@@ -38,7 +38,7 @@
     .floor-toggle.visible{display:flex}
     .floor-btn{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:5px;cursor:pointer;color:var(--text2);border:1px solid var(--border);background:transparent;transition:all .15s}
     .floor-btn.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(59,127,245,.4)}
-    .canvas-wrap{display:grid;grid-template-columns:1fr 210px;gap:14px;align-items:start}
+    .canvas-wrap{display:grid;grid-template-columns:1fr 220px;gap:14px;align-items:start}
     @media(max-width:700px){.canvas-wrap{grid-template-columns:1fr}}
     .canvas-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px}
     #heatmapCanvas{width:100%;height:auto;border-radius:6px;display:block}
@@ -46,19 +46,30 @@
     .legend{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
     .legend-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--text3)}
     .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+    /* Player panel */
     .player-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
-    .panel-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:10px;font-family:var(--mono)}
-    .player-btn{width:100%;text-align:left;padding:8px 10px;border-radius:6px;font-family:var(--mono);font-size:11px;color:var(--text2);border:1px solid transparent;background:transparent;cursor:pointer;transition:all .15s;margin-bottom:3px;display:flex;align-items:center;gap:7px}
+    .panel-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;font-family:var(--mono)}
+    .panel-hint{font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:10px}
+    .panel-hint span{color:var(--accent)}
+    .player-btn{width:100%;text-align:left;padding:7px 10px;border-radius:6px;font-family:var(--mono);font-size:11px;color:var(--text2);border:1px solid transparent;background:transparent;cursor:pointer;transition:all .12s;margin-bottom:3px;display:flex;align-items:center;gap:7px}
     .player-btn:hover{border-color:var(--border);color:var(--text)}
-    .player-btn.active{border-color:rgba(255,255,255,.1);color:var(--text);background:rgba(255,255,255,.04)}
-    .p-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .player-btn.active{color:var(--text);background:rgba(255,255,255,.05)}
+    .player-btn.disabled-max{opacity:.4;cursor:not-allowed}
+    .p-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:opacity .12s}
+    .p-dot.off{opacity:.2}
     .p-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .p-kd{font-size:10px;color:var(--text3);flex-shrink:0}
-    .p-star{color:var(--gold);font-size:10px}
+    .p-star{color:var(--gold);font-size:10px;flex-shrink:0}
+    .p-check{font-size:10px;color:var(--success);flex-shrink:0;opacity:0;transition:opacity .12s}
+    .player-btn.active .p-check{opacity:1}
+    .select-all-btn{width:100%;font-family:var(--mono);font-size:10px;padding:5px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;margin-bottom:8px;transition:all .12s}
+    .select-all-btn:hover{color:var(--text);border-color:var(--text3)}
     .export-btn{width:100%;font-family:var(--mono);font-size:11px;padding:7px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;margin-top:8px}
     .export-btn:hover{border-color:var(--accent);color:var(--accent)}
     .compare-btn{width:100%;font-family:var(--mono);font-size:11px;padding:7px;border-radius:6px;border:1px solid rgba(45,212,160,.3);background:rgba(45,212,160,.06);color:var(--success);cursor:pointer;transition:all .15s;margin-top:6px}
     .compare-btn:hover{border-color:var(--success);background:rgba(45,212,160,.12)}
+
     .table-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:20px}
     table{width:100%;border-collapse:collapse;font-size:12px;min-width:380px}
     th{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--card);letter-spacing:.5px;font-weight:500}
@@ -114,7 +125,9 @@
       <div class="legend" id="mapLegend"></div>
     </div>
     <div class="player-panel">
-      <div class="panel-label">Joueur</div>
+      <div class="panel-label">Joueurs affichés</div>
+      <div class="panel-hint">Clic pour toggle · max <span>5</span> simultanés</div>
+      <button class="select-all-btn" onclick="selectNone()">Tout désélectionner</button>
       <div id="playerList"></div>
       <button class="export-btn" onclick="exportHeatmap()">↓ Exporter PNG</button>
       <button class="compare-btn" onclick="goCompare()">⇄ Comparer joueurs</button>
@@ -124,7 +137,7 @@
   <div class="section-label">Classement joueurs</div>
   <div class="table-card">
     <table>
-      <thead><tr><th style="width:24px"></th><th>Joueur</th><th>K</th><th>D</th><th>K/D</th><th>HS%</th></tr></thead>
+      <thead><tr><th style="width:20px"></th><th>Joueur</th><th>K</th><th>D</th><th>K/D</th><th>HS%</th></tr></thead>
       <tbody id="playersTable"></tbody>
     </table>
   </div>
@@ -132,7 +145,6 @@
 
 <script>
 // ─── CONFIG MAPS ──────────────────────────────────────────────────────────────
-// posX/posY = coin haut-gauche en coords world CS2 | scale = world units par pixel PNG
 const MAP_CONFIG = {
   'de_dust2':   { img: 'maps/de_dust2_radar_psd.png',   posX: -2476, posY: 3239, scale: 4.4  },
   'de_mirage':  { img: 'maps/de_mirage_radar_psd.png',  posX: -3230, posY: 1713, scale: 5.0  },
@@ -146,19 +158,27 @@ const MAP_CONFIG = {
   'de_overpass':{ img: 'maps/de_overpass_radar_psd.png',posX: -4831, posY: 1781, scale: 5.2  },
 };
 
-// ─── COULEURS JOUEURS (5 fixes) ───────────────────────────────────────────────
+// ─── 10 COULEURS FIXES ────────────────────────────────────────────────────────
 const PLAYER_COLORS = [
-  { solid: '#3B7FF5', rgb: '59,127,245'  },  // bleu
-  { solid: '#F06B6B', rgb: '240,107,107' },  // rouge
-  { solid: '#2DD4A0', rgb: '45,212,160'  },  // vert
-  { solid: '#EDA020', rgb: '237,160,32'  },  // orange
-  { solid: '#A76EF5', rgb: '167,110,245' },  // violet
+  { solid: '#3B7FF5', rgb: '59,127,245'   },  // bleu
+  { solid: '#F06B6B', rgb: '240,107,107'  },  // rouge
+  { solid: '#2DD4A0', rgb: '45,212,160'   },  // vert
+  { solid: '#F5C842', rgb: '245,200,66'   },  // jaune
+  { solid: '#A76EF5', rgb: '167,110,245'  },  // violet
+  { solid: '#EDA020', rgb: '237,160,32'   },  // orange
+  { solid: '#F06BB7', rgb: '240,107,183'  },  // rose
+  { solid: '#20C4ED', rgb: '32,196,237'   },  // cyan
+  { solid: '#ED4E20', rgb: '237,78,32'    },  // rouge-orangé
+  { solid: '#6BF0A0', rgb: '107,240,160'  },  // vert clair
 ];
 const NEUTRAL_COLOR = { solid: '#8892A4', rgb: '136,146,164' };
-let playerColorMap = {}; // { playerName: index }
+let playerColorMap = {}; // { name: index }
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
-let demoData = null, currentPlayer = null, currentHeatmap = 'kills', currentFloor = 'upper';
+let demoData = null;
+let activePlayers = new Set(); // joueurs actuellement affichés (max 5)
+let currentHeatmap = 'kills';
+let currentFloor = 'upper';
 let canvas, ctx, mapImage = null;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -171,8 +191,9 @@ window.addEventListener('load', () => {
     demoData = JSON.parse(raw);
     document.getElementById('mainContent').style.display = 'block';
     assignPlayerColors();
-    // Par défaut : joueur analysé (targetPlayer)
-    currentPlayer = demoData.meta?.targetPlayer || null;
+    // Par défaut : activer uniquement le targetPlayer
+    const target = demoData.meta?.targetPlayer;
+    if (target) activePlayers.add(target);
     renderMeta();
     renderStats();
     renderPlayerList();
@@ -182,14 +203,34 @@ window.addEventListener('load', () => {
 
 // ─── COULEURS ─────────────────────────────────────────────────────────────────
 function assignPlayerColors() {
-  // Les 5 premiers joueurs par ordre de playerStats reçoivent une couleur
-  const players = demoData.playerStats || [];
-  players.slice(0, 5).forEach((p, i) => { playerColorMap[p.name] = i; });
+  (demoData.playerStats || []).forEach((p, i) => {
+    playerColorMap[p.name] = i % PLAYER_COLORS.length;
+  });
 }
 
-function getPlayerColor(name) {
+function getColor(name) {
   const idx = playerColorMap[name];
   return idx !== undefined ? PLAYER_COLORS[idx] : NEUTRAL_COLOR;
+}
+
+// ─── TOGGLE JOUEUR ────────────────────────────────────────────────────────────
+function togglePlayer(name) {
+  if (activePlayers.has(name)) {
+    activePlayers.delete(name);
+  } else {
+    if (activePlayers.size >= 5) return; // max 5
+    activePlayers.add(name);
+  }
+  renderPlayerList();
+  renderStats();
+  renderHeatmap();
+}
+
+function selectNone() {
+  activePlayers.clear();
+  renderPlayerList();
+  renderStats();
+  renderHeatmap();
 }
 
 // ─── PROJECTION WORLD CS2 → CANVAS ───────────────────────────────────────────
@@ -197,10 +238,8 @@ function w2c(worldX, worldY, mapName, W, H) {
   const cfg = MAP_CONFIG[mapName];
   if (!cfg) return { px: W/2, py: H/2 };
   const c = cfg.upper ? (currentFloor === 'upper' ? cfg.upper : cfg.lower) : cfg;
-  // PNG de référence = 1024×1024px, scale en world units/pixel
   const pxRaw = (worldX - c.posX) / c.scale;
-  const pyRaw = (c.posY - worldY) / c.scale; // Y inversé en CS2
-  // Adapter si le canvas a une taille différente de 1024
+  const pyRaw = (c.posY - worldY) / c.scale;
   return { px: (pxRaw / 1024) * W, py: (pyRaw / 1024) * H };
 }
 
@@ -215,15 +254,10 @@ function getMapImgPath() {
 
 function loadMapImageThenDraw() {
   const mapName = demoData.meta?.map || 'de_dust2';
-  const isMultiFloor = !!(MAP_CONFIG[mapName]?.upper);
-  document.getElementById('floorToggle').classList.toggle('visible', isMultiFloor);
+  document.getElementById('floorToggle').classList.toggle('visible', !!(MAP_CONFIG[mapName]?.upper));
   const imgPath = getMapImgPath();
   const notice = document.getElementById('mapNotice');
-  if (!imgPath) {
-    mapImage = null;
-    notice.textContent = `Radar PNG non disponible pour ${mapName}`;
-    renderHeatmap(); return;
-  }
+  if (!imgPath) { mapImage = null; notice.textContent = `Radar PNG non disponible pour ${mapName}`; renderHeatmap(); return; }
   notice.textContent = '';
   const img = new Image();
   img.onload = () => { mapImage = img; canvas.width = img.width; canvas.height = img.height; renderHeatmap(); };
@@ -253,22 +287,24 @@ function renderHeatmap() {
   }
   ctx.globalAlpha = 1;
 
-  if (currentHeatmap === 'kills')         drawKills(mapName, W, H, 'attacker');
-  else if (currentHeatmap === 'deaths')   drawKills(mapName, W, H, 'victim');
-  else if (currentHeatmap === 'movement') drawMovement(mapName, W, H);
-  else if (currentHeatmap === 'duels')    drawDuels(W, H);
-  else if (currentHeatmap === 'utility')  drawUtility(mapName, W, H);
+  if (activePlayers.size === 0) {
+    // Aucun joueur sélectionné : message
+    ctx.fillStyle = 'rgba(12,14,19,.85)'; ctx.fillRect(W/2-120, H/2-20, 240, 36);
+    ctx.fillStyle = '#8892A4'; ctx.font = '400 11px JetBrains Mono,monospace'; ctx.textAlign = 'center';
+    ctx.fillText('Sélectionne des joueurs →', W/2, H/2+4);
+  } else {
+    if (currentHeatmap === 'kills')         drawKills(mapName, W, H, 'attacker');
+    else if (currentHeatmap === 'deaths')   drawKills(mapName, W, H, 'victim');
+    else if (currentHeatmap === 'movement') drawMovement(mapName, W, H);
+    else if (currentHeatmap === 'duels')    drawDuels(W, H);
+    else if (currentHeatmap === 'utility')  drawUtility(mapName, W, H);
+  }
 
-  // Label overlay
-  const label = { kills:'KILL HEATMAP', deaths:'DEATH HEATMAP', movement:'DÉPLACEMENTS', duels:'DUEL WIN ZONES', utility:'UTILITY MAP' }[currentHeatmap] || '';
-  const playerLabel = currentPlayer || 'TOUS LES JOUEURS';
-  ctx.fillStyle = 'rgba(12,14,19,.85)'; ctx.fillRect(8, 8, 220, 40);
-  ctx.font = '500 11px JetBrains Mono,monospace'; ctx.textAlign = 'left';
-  ctx.fillStyle = '#EDF0F7'; ctx.fillText(label, 14, 24);
-  if (currentPlayer) { ctx.fillStyle = getPlayerColor(currentPlayer).solid; }
-  else { ctx.fillStyle = '#8892A4'; }
-  ctx.font = '400 10px JetBrains Mono,monospace';
-  ctx.fillText('▶ ' + playerLabel, 14, 40);
+  // Overlay label
+  const labelMap = { kills:'KILL HEATMAP', deaths:'DEATH HEATMAP', movement:'DÉPLACEMENTS', duels:'DUEL WIN ZONES', utility:'UTILITY MAP' };
+  ctx.fillStyle = 'rgba(12,14,19,.85)'; ctx.fillRect(8, 8, 220, 26);
+  ctx.fillStyle = '#EDF0F7'; ctx.font = '500 11px JetBrains Mono,monospace'; ctx.textAlign = 'left';
+  ctx.fillText(labelMap[currentHeatmap] || '', 14, 25);
 
   updateLegend();
 }
@@ -277,11 +313,9 @@ function renderHeatmap() {
 function drawKills(mapName, W, H, mode) {
   const kills = demoData.kills || [];
   const gs = Math.floor(W / 32);
-  const playersToShow = currentPlayer ? [currentPlayer] : Object.keys(playerColorMap);
-  playersToShow.forEach(name => {
+  [...activePlayers].forEach(name => {
     const filtered = kills.filter(k => (mode === 'attacker' ? k.attacker : k.victim) === name);
-    const color = getPlayerColor(name);
-    drawKillSet(filtered, color, mapName, W, H, gs, mode);
+    drawKillSet(filtered, getColor(name), mapName, W, H, gs, mode);
   });
 }
 
@@ -314,10 +348,9 @@ function drawKillSet(kills, color, mapName, W, H, gs, mode) {
 function drawMovement(mapName, W, H) {
   const positions = demoData.positions || {};
   const gs = Math.floor(W / 40);
-  const playersToShow = currentPlayer ? [currentPlayer] : Object.keys(playerColorMap);
-  playersToShow.forEach(name => {
+  [...activePlayers].forEach(name => {
     const pts = positions[name] || [];
-    const color = getPlayerColor(name);
+    const color = getColor(name);
     const grid = {}; let mx = 0;
     pts.forEach(p => {
       const { px, py } = w2c(p.x, p.y, mapName, W, H);
@@ -337,8 +370,7 @@ function drawDuels(W, H) {
   const zones = demoData.duelZones || [];
   const GRID = 10, cs = W / GRID;
   zones.forEach(z => {
-    const total = z.kills + z.deaths;
-    if (total === 0) return;
+    const total = z.kills + z.deaths; if (total === 0) return;
     const wr = parseFloat(z.winRate);
     const color = wr >= 65 ? `rgba(45,212,160,${.2+wr/100*.45})` : wr >= 45 ? `rgba(245,200,66,.4)` : `rgba(240,107,107,${.2+(100-wr)/100*.45})`;
     const px = z.col * cs, py = (GRID-1-z.row) * cs;
@@ -354,7 +386,8 @@ function drawDuels(W, H) {
 
 function drawUtility(mapName, W, H) {
   let g = demoData.grenades || [];
-  if (currentPlayer) g = g.filter(x => x.thrower === currentPlayer);
+  // Filtrer si des joueurs sont sélectionnés
+  g = g.filter(x => activePlayers.has(x.thrower));
   const C = {'weapon_flashbang':'rgba(245,200,66,.9)','weapon_smokegrenade':'rgba(45,212,160,.8)','weapon_hegrenade':'rgba(240,107,107,.85)','weapon_molotov':'rgba(237,160,32,.85)','weapon_incgrenade':'rgba(237,160,32,.85)'};
   g.forEach(x => {
     const { px, py } = w2c(x.startX, x.startY, mapName, W, H);
@@ -373,8 +406,7 @@ function updateLegend() {
   } else if (currentHeatmap === 'duels') {
     items = [{color:'#2DD4A0',label:'>65% win'},{color:'#F5C842',label:'45-65%'},{color:'#F06B6B',label:'<45%'}];
   } else {
-    const shown = currentPlayer ? [currentPlayer] : Object.keys(playerColorMap);
-    items = shown.map(name => ({ color: getPlayerColor(name).solid, label: name }));
+    items = [...activePlayers].map(name => ({ color: getColor(name).solid, label: name }));
   }
   document.getElementById('mapLegend').innerHTML = items.map(i =>
     `<div class="legend-item"><div class="legend-dot" style="background:${i.color}"></div>${i.label}</div>`
@@ -394,50 +426,58 @@ function renderMeta() {
 
 function renderStats() {
   const kills = demoData.kills || [];
-  const playerKills = currentPlayer ? kills.filter(k => k.attacker === currentPlayer) : kills;
+  const active = [...activePlayers];
+  const playerKills = active.length > 0 ? kills.filter(k => active.includes(k.attacker)) : kills;
   const hs = playerKills.filter(k => k.isHeadshot).length;
   const hsPct = playerKills.length > 0 ? ((hs/playerKills.length)*100).toFixed(0) : 0;
-  const grenades = (demoData.grenades||[]).filter(g => !currentPlayer || g.thrower === currentPlayer);
+  const grenades = (demoData.grenades||[]).filter(g => active.length === 0 || active.includes(g.thrower));
   document.getElementById('statsGrid').innerHTML = [
-    {label:'Kills',       val:playerKills.length,                         sub:'dans la démo',   cls:'c-accent'},
-    {label:'Headshot %',  val:hsPct+'%',                                  sub:hs+' HS',         cls:'c-good'},
-    {label:'Wallbangs',   val:playerKills.filter(k=>k.isWallbang).length, sub:'à travers murs', cls:'c-warn'},
-    {label:'Thru smoke',  val:playerKills.filter(k=>k.thruSmoke).length,  sub:'kills smoke',    cls:'c-accent'},
-    {label:'Rounds',      val:(demoData.rounds||[]).length,                sub:'joués',          cls:'c-neutral'},
-    {label:'Grenades',    val:grenades.length,                            sub:'lancées',         cls:'c-accent'},
+    {label:'Kills',      val:playerKills.length,                         sub: active.length===1 ? active[0] : active.length+' joueurs', cls:'c-accent'},
+    {label:'Headshot %', val:hsPct+'%',                                  sub:hs+' HS',         cls:'c-good'},
+    {label:'Wallbangs',  val:playerKills.filter(k=>k.isWallbang).length, sub:'à travers murs', cls:'c-warn'},
+    {label:'Thru smoke', val:playerKills.filter(k=>k.thruSmoke).length,  sub:'kills smoke',    cls:'c-accent'},
+    {label:'Rounds',     val:(demoData.rounds||[]).length,                sub:'joués',          cls:'c-neutral'},
+    {label:'Grenades',   val:grenades.length,                            sub:'lancées',         cls:'c-accent'},
   ].map(s=>`<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-val ${s.cls}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
 }
 
 function renderPlayerList() {
   const players = demoData.playerStats || [];
   const target = demoData.meta?.targetPlayer || null;
+  const atMax = activePlayers.size >= 5;
   const list = document.getElementById('playerList');
 
-  list.innerHTML = `<button class="player-btn ${!currentPlayer?'active':''}" onclick="selectPlayer(null,this)">
-    <span class="p-dot" style="background:var(--border)"></span>
-    <span class="p-name" style="color:var(--text2)">Tous les joueurs</span>
-  </button>`;
-
-  players.slice(0, 10).forEach(p => {
-    const c = getPlayerColor(p.name);
-    const isActive = p.name === currentPlayer;
+  list.innerHTML = players.map(p => {
+    const c = getColor(p.name);
+    const isActive = activePlayers.has(p.name);
     const isTarget = p.name === target;
-    list.innerHTML += `<button class="player-btn ${isActive?'active':''}" onclick="selectPlayer('${p.name.replace(/'/g,"\\'")}',this)">
-      <span class="p-dot" style="background:${c.solid}"></span>
+    const isDisabled = !isActive && atMax;
+    return `<button
+      class="player-btn ${isActive?'active':''} ${isDisabled?'disabled-max':''}"
+      onclick="togglePlayer('${p.name.replace(/'/g,"\\'")}')"
+      title="${isDisabled ? 'Max 5 joueurs atteint' : ''}"
+    >
+      <span class="p-dot ${isActive?'':'off'}" style="background:${c.solid}"></span>
       <span class="p-name">${p.name.substring(0,15)}</span>
       ${isTarget ? '<span class="p-star">★</span>' : ''}
       <span class="p-kd">${p.kd}</span>
+      <span class="p-check">✓</span>
     </button>`;
-  });
+  }).join('');
+
+  // Mise à jour compteur hint
+  document.querySelector('.panel-hint').innerHTML =
+    `Clic pour toggle · <span style="color:${atMax?'var(--danger)':'var(--accent)'}">${activePlayers.size}/5</span> actifs`;
 
   // Table
   document.getElementById('playersTable').innerHTML = players.map(p => {
     const kd = parseFloat(p.kd);
     const cl = kd >= 1.3 ? 'td-good' : kd < 1 ? 'td-bad' : '';
-    const c = getPlayerColor(p.name);
+    const c = getColor(p.name);
     const isTarget = p.name === target;
-    return `<tr>
-      <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.solid}"></span></td>
+    const isActive = activePlayers.has(p.name);
+    return `<tr style="${isActive?'background:rgba(255,255,255,.03)':''}">
+      <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.solid};opacity:${isActive?1:.3}"></span></td>
       <td class="td-name">${p.name}${isTarget?' <span style="color:var(--gold);font-size:10px">★</span>':''}</td>
       <td>${p.kills}</td><td>${p.deaths}</td>
       <td class="${cl}">${p.kd}</td>
@@ -447,14 +487,6 @@ function renderPlayerList() {
 }
 
 // ─── INTERACTIONS ─────────────────────────────────────────────────────────────
-function selectPlayer(name, btn) {
-  currentPlayer = name;
-  document.querySelectorAll('.player-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderStats();
-  renderHeatmap();
-}
-
 function switchHeatmap(type, btn) {
   currentHeatmap = type;
   document.querySelectorAll('.heatmap-tab').forEach(b => b.classList.remove('active'));
@@ -471,7 +503,8 @@ function switchFloor(floor, btn) {
 
 function exportHeatmap() {
   const link = document.createElement('a');
-  link.download = `fragvalue-${currentHeatmap}-${currentPlayer||'all'}.png`;
+  const names = [...activePlayers].join('-') || 'all';
+  link.download = `fragvalue-${currentHeatmap}-${names}.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
