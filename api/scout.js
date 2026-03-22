@@ -319,45 +319,13 @@ module.exports = async function handler(req, res) {
       //   2501-3000 → Lvl 10 Elite      (~top 15%)
       //   3001-3500 → Lvl 10 Elite+     (~top 5%)
       //   3501+     → Challenger        (~top 1000)
-      // ── Récupération du seuil Challenger en temps réel ──────────────────
-      // Fallback par région si l'API échoue (mis à jour manuellement si besoin)
+      // ── Seuil Challenger par région (mis à jour depuis le leaderboard live) ──
+      // EU: 3787 | NA: 3100 | SA: 2800 (valeurs saison 7, mars 2026)
       const CHALLENGER_FALLBACKS = { EU: 3787, NA: 3100, SA: 2800, OCE: 2500, SEA: 2500 };
-      let challengerThreshold = CHALLENGER_FALLBACKS[cs2data.region] || 3787;
+      const region = (cs2data.region || 'EU').toUpperCase();
+      const challengerThreshold = CHALLENGER_FALLBACKS[region] || 3787;
       let challengerRank = null;
-
-      // On ne tente l'appel Rankings que pour les lvl 10 (inutile sinon)
-      if (eloLevel === 10) {
-        try {
-          const region = (cs2data.region || 'EU').toUpperCase();
-          // GET /rankings/games/cs2/regions/{region}?offset=999&limit=1
-          // Retourne le joueur en position 1000 → son ELO = seuil Challenger
-          const rankRes = await Promise.race([
-            fetch(`${BASE}/rankings/games/cs2/regions/${region}?offset=999&limit=1`, { headers }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-          ]);
-          if (rankRes.ok) {
-            const rankData = await rankRes.json();
-            const items = rankData.items || [];
-            if (items[0]?.faceit_elo) {
-              challengerThreshold = items[0].faceit_elo;
-              console.log(`Challenger threshold (${region}): ${challengerThreshold}`);
-            }
-          }
-          // Si le joueur est Challenger, récupérer sa position exacte
-          if (eloValue >= challengerThreshold) {
-            const playerRankRes = await Promise.race([
-              fetch(`${BASE}/rankings/games/cs2/regions/${region}/players/${playerId}?limit=1`, { headers }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-            ]);
-            if (playerRankRes.ok) {
-              const playerRankData = await playerRankRes.json();
-              challengerRank = playerRankData.position || null;
-            }
-          }
-        } catch(e) {
-          console.warn(`Challenger threshold fetch failed (${cs2data.region}), using fallback ${challengerThreshold}:`, e.message);
-        }
-      }
+      // Note : la position exacte Challenger sera ajoutée via un endpoint dédié ultérieurement
 
       // ── 10 sous-niveaux dynamiques du lvl 10 ────────────────────────────
       // La plage 2001 → challengerThreshold est divisée en 10 tranches égales
