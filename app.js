@@ -146,6 +146,7 @@ function makeChart(id, type, labels, data, opts = {}) {
 // ── Main render ────────────────────────────────────────────────────────────
 function renderDashboard(data) {
   const { player, cs2, lifetime, recent, mapStats, teams, fvScore } = data;
+  _currentPlayerData = data; // Stocker pour le bouton Suivre
 
   // Avatar
   const avatarEl = document.getElementById('profileAvatar');
@@ -468,6 +469,8 @@ function showDashboard(nickname) {
   document.getElementById('topbarInput').value       = '';
   switchTab('stats', document.querySelector('.tab-btn'));
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Afficher bouton Suivre si connecté
+  initFollowBtn();
 }
 
 function hideDashboard() {
@@ -499,6 +502,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function showError(msg) { const el = document.getElementById('errorMsg'); if(el){el.textContent=msg;el.style.display='block';} }
 function hideError()    { const el = document.getElementById('errorMsg'); if(el) el.style.display='none'; }
+
+// ── Bouton Suivre (Watchlist) ─────────────────────────────────────────────
+let _currentPlayerData = null;
+
+async function initFollowBtn() {
+  const btn = document.getElementById('followBtn');
+  if (!btn || !_currentPlayerData) return;
+  try {
+    const sbUrl  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+    const sbAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+    if (!window.supabase) return;
+    const sb = window.supabase.createClient(sbUrl, sbAnon);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return; // Pas connecté → cacher le bouton
+    btn.style.display = 'block';
+    // Vérifier si déjà en watchlist
+    const nick = _currentPlayerData.player?.nickname;
+    const { data } = await sb.from('watchlist').select('id').eq('user_id', session.user.id).eq('faceit_nickname', nick).single();
+    if (data) { btn.textContent = '✓ Suivi'; btn.classList.add('following'); }
+    else       { btn.textContent = '+ Suivre'; btn.classList.remove('following'); }
+  } catch(e) {}
+}
+
+async function toggleWatchlist() {
+  const btn = document.getElementById('followBtn');
+  if (!btn || !_currentPlayerData) return;
+  const sbUrl  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+  const sbAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+  const sb   = window.supabase.createClient(sbUrl, sbAnon);
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; return; }
+  const nick = _currentPlayerData.player?.nickname;
+  const elo  = _currentPlayerData.cs2?.elo;
+  const avatar = _currentPlayerData.player?.avatar;
+  const lvl  = _currentPlayerData.cs2?.level;
+  btn.disabled = true;
+  try {
+    if (btn.classList.contains('following')) {
+      await sb.from('watchlist').delete().eq('user_id', session.user.id).eq('faceit_nickname', nick);
+      btn.textContent = '+ Suivre'; btn.classList.remove('following');
+    } else {
+      await sb.from('watchlist').upsert({
+        user_id: session.user.id, faceit_nickname: nick,
+        faceit_elo: elo, avatar_url: avatar,
+        note: `Lvl ${lvl} · ${elo} ELO`,
+      }, { onConflict: 'user_id,faceit_nickname' });
+      btn.textContent = '✓ Suivi'; btn.classList.add('following');
+    }
+  } catch(e) { console.warn('toggleWatchlist:', e.message); }
+  finally    { btn.disabled = false; }
+}
 
 // ── Sauvegarde auto Supabase ───────────────────────────────────────────────
 async function saveAnalysis(data) {
