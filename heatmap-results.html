@@ -355,24 +355,56 @@ function renderHeatmap() {
   updateLegend();
 }
 
+// ─── COULEURS SIDES ──────────────────────────────────────────────────────────
+const CT_COLOR = { solid: '#4A9EFF', rgb: '74,158,255' };
+const T_COLOR  = { solid: '#F5C842', rgb: '245,200,66' };
+
+function getSideColor(kill, mode) {
+  // En mode "all" → couleur du joueur
+  // En mode CT/T ou quand on affiche tous les sides → couleur CT/T par kill
+  if (currentSide === 'all') return null; // null = utiliser couleur joueur
+  return currentSide === 'ct' ? CT_COLOR : T_COLOR;
+}
+
+function getKillSideColor(kill, mode) {
+  // Couleur basée sur le side du joueur pour CE kill précis
+  const team = mode === 'attacker' ? kill.attackerTeam : kill.victimTeam;
+  return team === 2 ? CT_COLOR : T_COLOR;
+}
+
 // ─── DRAWS ────────────────────────────────────────────────────────────────────
 function drawKills(mapName, W, H, mode) {
   const kills = demoData.kills || [];
-  const gs = Math.floor(W / 48); // grille plus fine = moins de fusion
+  const gs = Math.floor(W / 48);
+
+  // Filtre side
+  const sideFilter = k => {
+    if (currentSide === 'all') return true;
+    const team = mode === 'attacker' ? k.attackerTeam : k.victimTeam;
+    return currentSide === 'ct' ? team === 2 : team === 3;
+  };
+
   [...activePlayers].forEach(name => {
-    const filtered = kills.filter(k => (mode === 'attacker' ? k.attacker : k.victim) === name);
-    drawKillSet(filtered, getColor(name), mapName, W, H, gs, mode);
+    const filtered = kills.filter(k =>
+      (mode === 'attacker' ? k.attacker : k.victim) === name && sideFilter(k)
+    );
+    const playerColor = getColor(name);
+    // Si mode "all" : différencier CT/T par couleur même sans filtre actif
+    // Toujours passer playerColor — le contour CT/T est géré dans drawKillSet
+    drawKillSet(filtered, playerColor, playerColor, mapName, W, H, gs, mode, false);
   });
 }
 
-function drawKillSet(kills, color, mapName, W, H, gs, mode) {
-  // Filtrer les kills avec coords hors canvas (positions invalides du parser)
+// color = couleur du point (side), playerColor = couleur pour la densité heatmap
+// usePlayerForHeat = utiliser playerColor pour la grille de densité
+function drawKillSet(kills, color, playerColor, mapName, W, H, gs, mode, usePlayerForHeat = false) {
   const valid = kills.filter(k => {
     const x = mode === 'attacker' ? k.attackerX : k.victimX;
     const y = mode === 'attacker' ? k.attackerY : k.victimY;
     const { px, py } = w2c(x, y, mapName, W, H);
     return inBounds(px, py, W, H);
   });
+  // Grille de densité
   const grid = {}; let mx = 0;
   valid.forEach(k => {
     const x = mode === 'attacker' ? k.attackerX : k.victimX;
@@ -382,21 +414,39 @@ function drawKillSet(kills, color, mapName, W, H, gs, mode) {
     grid[key] = (grid[key]||0) + 1;
     if (grid[key] > mx) mx = grid[key];
   });
+  const heatColor = usePlayerForHeat ? playerColor : color;
   Object.entries(grid).forEach(([key, count]) => {
     const [gx, gy] = key.split('_').map(Number);
-    ctx.fillStyle = `rgba(${color.rgb},${.15 + (count/mx) * .5})`;
+    ctx.fillStyle = `rgba(${heatColor.rgb},${.12 + (count/mx) * .45})`;
     ctx.fillRect(gx*gs, gy*gs, gs, gs);
   });
+  // Points individuels : couleur joueur + indicateur CT/T
   valid.forEach(k => {
     const x = mode === 'attacker' ? k.attackerX : k.victimX;
     const y = mode === 'attacker' ? k.attackerY : k.victimY;
     const { px, py } = w2c(x, y, mapName, W, H);
-    ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI*2);
-    ctx.fillStyle = `rgba(${color.rgb},.1)`; ctx.fill();
-    ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2);
-    ctx.fillStyle = color.solid; ctx.fill();
-    ctx.strokeStyle = 'rgba(237,240,247,.4)'; ctx.lineWidth = 1;
-    ctx.stroke();
+    const team = mode === 'attacker' ? k.attackerTeam : k.victimTeam;
+    const isCT = team === 2;
+
+    // Halo couleur joueur
+    ctx.beginPath(); ctx.arc(px, py, 9, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(${playerColor.rgb},.1)`; ctx.fill();
+
+    // Point principal couleur joueur
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI*2);
+    ctx.fillStyle = playerColor.solid; ctx.fill();
+
+    // Contour CT (bleu) ou T (jaune)
+    ctx.strokeStyle = isCT ? '#4A9EFF' : '#F5C842';
+    ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Petite lettre C ou T au centre du point
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 5px JetBrains Mono,monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(isCT ? 'C' : 'T', px, py);
+    ctx.textBaseline = 'alphabetic';
   });
 }
 
@@ -461,7 +511,14 @@ function updateLegend() {
   } else if (currentHeatmap === 'duels') {
     items = [{color:'#2DD4A0',label:'>65% win'},{color:'#F5C842',label:'45-65%'},{color:'#F06B6B',label:'<45%'}];
   } else {
-    items = [...activePlayers].map(name => ({ color: getColor(name).solid, label: name }));
+    // Couleurs joueurs + indicateur CT/T
+    const shown = [...activePlayers];
+    items = shown.map(name => ({ color: getColor(name).solid, label: name }));
+    // Ajouter légende CT/T
+    if (currentSide === 'all') {
+      items.push({ color: '#4A9EFF', label: 'contour CT' });
+      items.push({ color: '#F5C842', label: 'contour T' });
+    }
   }
   document.getElementById('mapLegend').innerHTML = items.map(i =>
     `<div class="legend-item"><div class="legend-dot" style="background:${i.color}"></div>${i.label}</div>`
