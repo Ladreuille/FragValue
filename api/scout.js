@@ -331,10 +331,10 @@ module.exports = async function handler(req, res) {
           const region = (cs2data.region || 'EU').toUpperCase();
           // GET /rankings/games/cs2/regions/{region}?offset=999&limit=1
           // Retourne le joueur en position 1000 → son ELO = seuil Challenger
-          const rankRes = await fetch(
-            `${BASE}/rankings/games/cs2/regions/${region}?offset=999&limit=1`,
-            { headers, signal: AbortSignal.timeout(4000) } // timeout 4s max
-          );
+          const rankRes = await Promise.race([
+            fetch(`${BASE}/rankings/games/cs2/regions/${region}?offset=999&limit=1`, { headers }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+          ]);
           if (rankRes.ok) {
             const rankData = await rankRes.json();
             const items = rankData.items || [];
@@ -345,10 +345,10 @@ module.exports = async function handler(req, res) {
           }
           // Si le joueur est Challenger, récupérer sa position exacte
           if (eloValue >= challengerThreshold) {
-            const playerRankRes = await fetch(
-              `${BASE}/rankings/games/cs2/regions/${region}/players/${playerId}?limit=1`,
-              { headers, signal: AbortSignal.timeout(3000) }
-            );
+            const playerRankRes = await Promise.race([
+              fetch(`${BASE}/rankings/games/cs2/regions/${region}/players/${playerId}?limit=1`, { headers }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+            ]);
             if (playerRankRes.ok) {
               const playerRankData = await playerRankRes.json();
               challengerRank = playerRankData.position || null;
