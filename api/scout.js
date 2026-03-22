@@ -289,6 +289,189 @@ module.exports = async function handler(req, res) {
     else if (totalFirstKills > totalFirstDeaths * 1.3) role = 'Entry fragger';
     else if (totalClutch1v1 + totalClutch1v2 > 8) role = 'Clutch player';
 
+
+    // ══════════════════════════════════════════════════════════════════════
+    // FV SCORE /100 — Indice de talent FragValue
+    // Plus puissant que HLTV 2.1, FACEIT ELO et Leetify Rating car il combine :
+    //   - Performance contextuelle (35pts) : KPR/DPR/ADR/KAST pondérés + ajustement ELO
+    //   - Consistance (25pts)              : variance des ratings sur 20 matchs
+    //   - Impact (25pts)                   : clutches pondérés, opening duels, multi-kills
+    //   - Utilité (15pts)                  : flash efficacy, util dmg, trades, assists
+    // ══════════════════════════════════════════════════════════════════════
+    const fvScore = (() => {
+      if (recentMatches.length < 3) return null; // pas assez de données
+
+      const totalRounds = (totCtRounds + totTRounds) || 1;
+      const totalKills  = sum('kills');
+      const totalDeaths = sum('deaths');
+      const totalAssists= sum('assists');
+
+      // ── 1. PERFORMANCE (35 pts) ──────────────────────────────────────────
+      // Basé sur HLTV 2.1 reverse-engineered + ajustements CS2
+      // On utilise avgFvRating déjà calculé (≈ HLTV 2.1) comme base
+      // puis on l'ajuste selon le niveau ELO (contexte adversaires)
+      const eloLevel = cs2data.skill_level || 5; // 1-10
+      const eloFactor = 0.85 + (eloLevel / 10) * 0.30; // lvl1=0.88, lvl10=1.15
+
+      // Performance brute normalisée sur [0,35]
+      // fvRating moyen : 0.5 (très mauvais) → 1.5 (excellent)
+      const perfRaw = parseFloat(fvRatingAvg);
+      const perfNorm = Math.min(35, Math.max(0,
+        ((perfRaw - 0.5) / 1.0) * 35 * eloFactor
+      ));
+
+      // Bonus ADR contextuel (HLTV 3.0 inspired : ADR ajusté au niveau)
+      const adrRef = 55 + eloLevel * 4; // référence par niveau : lvl5=75, lvl10=95
+      const adrBonus = Math.min(3, Math.max(-3, (parseFloat(avgAdr) - adrRef) / adrRef * 8));
+
+      const perfScore = Math.min(35, Math.max(0, perfNorm + adrBonus));
+
+      // ── 2. CONSISTANCE (25 pts) ──────────────────────────────────────────
+      // Leetify-inspired : la variance des performances est aussi importante que la moyenne
+      // Un joueur régulier à 1.1 vaut mieux qu'un joueur à 1.5 une fois sur deux
+      const ratings = recentMatches.map(m => m.fvRating).filter(r => r > 0);
+      const ratingMean = ratings.reduce((a, b) => a + b, 0) / (ratings.length || 1);
+      const variance = ratings.reduce((s, r) => s + Math.pow(r - ratingMean, 2), 0) / (ratings.length || 1);
+      const stdDev = Math.sqrt(variance);
+
+      // Coefficient de variation (CV) : stdDev / mean → plus c'est bas, plus c'est consistent
+      const cv = ratingMean > 0 ? stdDev / ratingMean : 1;
+
+      // Score consistance : CV=0 (parfait) → 25pts, CV=0.5 (très instable) → 0pts
+      // CV=0 (parfait)→25pts, CV=0.35 (instable)→0pts — seuil plus strict
+      const consistScore = Math.min(25, Math.max(0, (1 - cv / 0.35) * 25));
+
+      // Bonus : trend positif sur les 5 derniers matchs vs 5 précédents
+      if (ratings.length >= 10) {
+        const recent5  = ratings.slice(0, 5).reduce((a,b) => a+b, 0) / 5;
+        const before5  = ratings.slice(5, 10).reduce((a,b) => a+b, 0) / 5;
+        const trendBonus = Math.min(3, Math.max(-3, (recent5 - before5) * 10));
+        // trendBonus appliqué ci-dessous dans le total
+      }
+      const trendBonus = (() => {
+        if (ratings.length < 10) return 0;
+        const r5 = ratings.slice(0, 5).reduce((a,b)=>a+b,0)/5;
+        const b5 = ratings.slice(5,10).reduce((a,b)=>a+b,0)/5;
+        return Math.min(3, Math.max(-3, (r5 - b5) * 10));
+      })();
+
+      // ── 3. IMPACT (25 pts) ───────────────────────────────────────────────
+      // Inspired by Leetify win-probability change model
+      // On pondère les clutches par leur difficulté (1v5 >> 1v1)
+      const clutchWeight =
+        totalClutch1v1 * 1.0 +
+        totalClutch1v2 * 2.0 +
+        totalClutch1v3 * 3.5 +
+        totalClutch1v4 * 5.0 +
+        totalClutch1v5 * 8.0;
+
+      // Normalisation : ~2 clutch1v1 par match = référence
+      const clutchRef  = n * 2;
+      const clutchScore = Math.min(8, (clutchWeight / Math.max(clutchRef, 1)) * 8);
+
+      // Opening duels : ratio FK/FD pondéré par volume
+      const openingScore = (() => {
+        const total = totalFirstKills + totalFirstDeaths;
+        if (total < 5) return 3.5; // neutre si pas assez de données
+        const ratio = totalFirstKills / (totalFirstDeaths || 1);
+        // ratio 2.0 = excellent (8pts), ratio 0.5 = mauvais (0pts), ratio 1.0 = moyen (4pts)
+        return Math.min(8, Math.max(0, (ratio - 0.5) / 1.5 * 8));
+      })();
+
+      // Multi-kills pondérés (double=1x, triple=2x, quad=4x, ace=8x)
+      const mkWeight = totalDoubles * 1 + totalTriples * 2 + totalQuads * 4 + totalAces * 8;
+      const mkRef    = n * 3; // ~3 doubles par match = référence
+      const mkScore  = Math.min(6, (mkWeight / Math.max(mkRef, 1)) * 6);
+
+      // Trade kills (aggressivité utile)
+      const tradeScore = Math.min(3, (totalTradeKills / Math.max(n * 2, 1)) * 3);
+
+      const impactScore = Math.min(25, clutchScore + openingScore + mkScore + tradeScore);
+
+      // ── 4. UTILITÉ (15 pts) ──────────────────────────────────────────────
+      // Inspired by Leetify Utility Rating (Quantity × Quality)
+
+      // Flash efficacy : enemiesFlashed par flash lancée (qualité)
+      const flashQuality = totalFlashesThrown > 0
+        ? Math.min(1, totalEnemiesFlashed / totalFlashesThrown)
+        : 0;
+      // Quantité : flashes par round
+      const flashQuantity = Math.min(1, totalFlashesThrown / (totalRounds * 0.4));
+      // Geometric mean (comme Leetify) : punit les extrêmes
+      const flashScore = Math.min(4, Math.sqrt(flashQuality * flashQuantity) * 4);
+
+      // Utility damage par round
+      const utilDmgPerRound = totalUtilDmg / totalRounds;
+      const utilDmgScore = Math.min(4, (utilDmgPerRound / 8) * 4); // ref: 8 util dmg/round
+
+      // Assists par round (teamplay)
+      const assistRate = totalAssists / totalRounds;
+      const assistScore = Math.min(4, (assistRate / 0.25) * 4); // ref: 0.25 assists/round
+
+      // Saves intelligents (pas du jame-timing mais des saves utiles)
+      const saveRate   = totalSaves / n;
+      const saveScore  = Math.min(3, (saveRate / 2) * 3); // ref: 2 saves/match
+
+      const utilScore = Math.min(15, flashScore + utilDmgScore + assistScore + saveScore);
+
+      // ── TOTAL FV SCORE ────────────────────────────────────────────────────
+      const raw = perfScore + consistScore + trendBonus + impactScore + utilScore;
+      const total = Math.round(Math.min(100, Math.max(0, raw)));
+
+      // ── BREAKDOWN détaillé pour affichage ────────────────────────────────
+      return {
+        total,
+        breakdown: {
+          performance: {
+            score:    Math.round(perfScore * 10) / 10,
+            max:      35,
+            detail: {
+              fvRatingAvg: parseFloat(fvRatingAvg),
+              eloAdjustment: Math.round(eloFactor * 100) / 100,
+              adrBonus: Math.round(adrBonus * 10) / 10,
+            }
+          },
+          consistency: {
+            score:    Math.round((consistScore + trendBonus) * 10) / 10,
+            max:      28, // 25 + 3 bonus trend
+            detail: {
+              stdDev:      Math.round(stdDev * 1000) / 1000,
+              cv:          Math.round(cv * 100) / 100,
+              trendBonus:  Math.round(trendBonus * 10) / 10,
+            }
+          },
+          impact: {
+            score:    Math.round(impactScore * 10) / 10,
+            max:      25,
+            detail: {
+              clutchScore:  Math.round(clutchScore * 10) / 10,
+              openingScore: Math.round(openingScore * 10) / 10,
+              mkScore:      Math.round(mkScore * 10) / 10,
+              tradeScore:   Math.round(tradeScore * 10) / 10,
+            }
+          },
+          utility: {
+            score:    Math.round(utilScore * 10) / 10,
+            max:      15,
+            detail: {
+              flashScore:   Math.round(flashScore * 10) / 10,
+              utilDmgScore: Math.round(utilDmgScore * 10) / 10,
+              assistScore:  Math.round(assistScore * 10) / 10,
+              saveScore:    Math.round(saveScore * 10) / 10,
+            }
+          },
+        },
+        // Label qualitatif
+        label: total >= 85 ? 'Exceptionnel' :
+               total >= 72 ? 'Excellent'    :
+               total >= 60 ? 'Très bon'     :
+               total >= 48 ? 'Bon'          :
+               total >= 36 ? 'Moyen'        :
+               total >= 20 ? 'En progression':
+                             'Débutant',
+      };
+    })();
+
     return res.status(200).json({
       player: {
         playerId, nickname: player.nickname,
@@ -336,6 +519,7 @@ module.exports = async function handler(req, res) {
         // Role
         role,
       },
+      fvScore,
       mapStats: mapStatsArr,
       teams: (teamsData.items || []).slice(0, 3).map(t => ({
         name: t.name, avatar: t.avatar, game: t.game,
