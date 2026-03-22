@@ -320,41 +320,43 @@ module.exports = async function handler(req, res) {
       //   3001-3500 → Lvl 10 Elite+     (~top 5%)
       //   3501+     → Challenger        (~top 1000)
       // ── Récupération du seuil Challenger en temps réel ──────────────────
-      // L'API FACEIT Rankings retourne le top 1000 de la région du joueur
-      // On récupère l'ELO du joueur #1000 pour avoir le vrai seuil live
-      let challengerThreshold = 3787; // fallback basé sur le leaderboard EU actuel
-      let challengerRank = null;       // position dans le leaderboard si Challenger
-      try {
-        const region = cs2data.region || 'EU';
-        // Endpoint rankings FACEIT v4 : retourne le classement régional
-        const rankRes = await fetch(
-          `${BASE}/rankings/games/cs2/regions/${region}?limit=2&offset=998`,
-          { headers }
-        );
-        if (rankRes.ok) {
-          const rankData = await rankRes.json();
-          const items = rankData.items || [];
-          // Le joueur en position 1000 (offset 998 = positions 999 et 1000)
-          const rank1000 = items.find(r => r.position === 1000) || items[items.length - 1];
-          if (rank1000?.faceit_elo) {
-            challengerThreshold = rank1000.faceit_elo;
+      // Fallback par région si l'API échoue (mis à jour manuellement si besoin)
+      const CHALLENGER_FALLBACKS = { EU: 3787, NA: 3100, SA: 2800, OCE: 2500, SEA: 2500 };
+      let challengerThreshold = CHALLENGER_FALLBACKS[cs2data.region] || 3787;
+      let challengerRank = null;
+
+      // On ne tente l'appel Rankings que pour les lvl 10 (inutile sinon)
+      if (eloLevel === 10) {
+        try {
+          const region = (cs2data.region || 'EU').toUpperCase();
+          // GET /rankings/games/cs2/regions/{region}?offset=999&limit=1
+          // Retourne le joueur en position 1000 → son ELO = seuil Challenger
+          const rankRes = await fetch(
+            `${BASE}/rankings/games/cs2/regions/${region}?offset=999&limit=1`,
+            { headers, signal: AbortSignal.timeout(4000) } // timeout 4s max
+          );
+          if (rankRes.ok) {
+            const rankData = await rankRes.json();
+            const items = rankData.items || [];
+            if (items[0]?.faceit_elo) {
+              challengerThreshold = items[0].faceit_elo;
+              console.log(`Challenger threshold (${region}): ${challengerThreshold}`);
+            }
           }
-          // Vérifier si le joueur analysé est lui-même Challenger
+          // Si le joueur est Challenger, récupérer sa position exacte
           if (eloValue >= challengerThreshold) {
-            // Récupérer sa position exacte
             const playerRankRes = await fetch(
               `${BASE}/rankings/games/cs2/regions/${region}/players/${playerId}?limit=1`,
-              { headers }
+              { headers, signal: AbortSignal.timeout(3000) }
             );
             if (playerRankRes.ok) {
               const playerRankData = await playerRankRes.json();
               challengerRank = playerRankData.position || null;
             }
           }
+        } catch(e) {
+          console.warn(`Challenger threshold fetch failed (${cs2data.region}), using fallback ${challengerThreshold}:`, e.message);
         }
-      } catch(e) {
-        // Fallback silencieux — on garde le threshold par défaut
-        console.warn('Challenger threshold fetch failed, using fallback:', e.message);
       }
 
       // ── 10 sous-niveaux dynamiques du lvl 10 ────────────────────────────
