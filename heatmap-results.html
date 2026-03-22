@@ -243,6 +243,10 @@ function w2c(worldX, worldY, mapName, W, H) {
   return { px: (pxRaw / 1024) * W, py: (pyRaw / 1024) * H };
 }
 
+function inBounds(px, py, W, H) {
+  return px >= 0 && px <= W && py >= 0 && py <= H;
+}
+
 // ─── CHARGEMENT IMAGE MAP ─────────────────────────────────────────────────────
 function getMapImgPath() {
   const mapName = demoData.meta?.map || 'de_dust2';
@@ -320,8 +324,15 @@ function drawKills(mapName, W, H, mode) {
 }
 
 function drawKillSet(kills, color, mapName, W, H, gs, mode) {
+  // Filtrer les kills avec coords hors canvas (positions invalides du parser)
+  const valid = kills.filter(k => {
+    const x = mode === 'attacker' ? k.attackerX : k.victimX;
+    const y = mode === 'attacker' ? k.attackerY : k.victimY;
+    const { px, py } = w2c(x, y, mapName, W, H);
+    return inBounds(px, py, W, H);
+  });
   const grid = {}; let mx = 0;
-  kills.forEach(k => {
+  valid.forEach(k => {
     const x = mode === 'attacker' ? k.attackerX : k.victimX;
     const y = mode === 'attacker' ? k.attackerY : k.victimY;
     const { px, py } = w2c(x, y, mapName, W, H);
@@ -334,18 +345,14 @@ function drawKillSet(kills, color, mapName, W, H, gs, mode) {
     ctx.fillStyle = `rgba(${color.rgb},${.15 + (count/mx) * .5})`;
     ctx.fillRect(gx*gs, gy*gs, gs, gs);
   });
-  // Dessiner chaque point individuellement
-  kills.forEach(k => {
+  valid.forEach(k => {
     const x = mode === 'attacker' ? k.attackerX : k.victimX;
     const y = mode === 'attacker' ? k.attackerY : k.victimY;
     const { px, py } = w2c(x, y, mapName, W, H);
-    // Halo
     ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI*2);
     ctx.fillStyle = `rgba(${color.rgb},.1)`; ctx.fill();
-    // Point principal
     ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2);
     ctx.fillStyle = color.solid; ctx.fill();
-    // Contour blanc pour lisibilité
     ctx.strokeStyle = 'rgba(237,240,247,.4)'; ctx.lineWidth = 1;
     ctx.stroke();
   });
