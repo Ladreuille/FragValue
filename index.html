@@ -3,307 +3,229 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FragValue — CS2 Talent Scout</title>
+  <title>FragValue — CS2 Talent Analytics</title>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --bg:#0C0E13;
-      --surface:#131620;
-      --card:#191D27;
-      --card2:#1F2330;
-      --border:#252A38;
-      --border2:#2C3245;
-      --accent:#3B7FF5;
-      --accent-dim:rgba(59,127,245,.12);
-      --accent-glow:rgba(59,127,245,.06);
-      --text:#EDF0F7;
-      --text2:#8892A4;
-      --text3:#4A5568;
-      --success:#2DD4A0;
-      --danger:#F06B6B;
-      --gold:#F5C842;
-      --font:'Instrument Sans',sans-serif;
-      --mono:'JetBrains Mono',monospace;
-      /* FACEIT level colors */
+      --bg:#08090D;--surface:#0F1119;--card:#141720;--border:#1E2233;--border2:#252B3B;
+      --accent:#3B7FF5;--accent-dim:rgba(59,127,245,.10);
+      --text:#EDF0F7;--text2:#7A8499;--text3:#3D4459;
+      --success:#2DD4A0;--danger:#F06B6B;--gold:#F5C842;
+      --font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace;
       --lvl1:#7A7A7A;--lvl2:#23C44E;--lvl3:#23C44E;
       --lvl4:#F5C842;--lvl5:#F5C842;--lvl6:#F5C842;--lvl7:#EDA020;
       --lvl8:#EDA020;--lvl9:#E05C2A;--lvl10:#D93535;
     }
     html{scroll-behavior:smooth}
     body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar{width:4px}
-    ::-webkit-scrollbar-track{background:var(--bg)}
-    ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-
-    /* ── Nav ── */
-    nav{
-      position:sticky;top:0;z-index:100;
-      display:flex;align-items:center;justify-content:space-between;
-      padding:0 32px;height:52px;
-      background:rgba(8,9,12,.9);backdrop-filter:blur(16px);
-      border-bottom:1px solid var(--border);
-    }
-    .logo{font-size:16px;font-weight:700;letter-spacing:-.2px;text-decoration:none;color:var(--text)}
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;background:rgba(8,9,13,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(30,34,51,.5)}
+    .logo{font-size:16px;font-weight:700;letter-spacing:-.3px;text-decoration:none;color:var(--text)}
     .logo-accent{color:var(--accent)}
-    .nav-links{display:flex;align-items:center;gap:4px}
-    .nav-link{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all .15s;font-weight:500}
-    .nav-link:hover{color:var(--text);background:var(--card)}
-    .nav-link.active{color:var(--text)}
-    .nav-divider{width:1px;height:18px;background:var(--border);margin:0 8px}
-    .nav-account{font-size:13px;font-weight:500;color:var(--text2);text-decoration:none;padding:6px 14px;border-radius:6px;border:1px solid var(--border);transition:all .15s}
-    .nav-account:hover{border-color:var(--border2);color:var(--text)}
-    .nav-account-active{background:var(--accent-dim);color:var(--accent);border-color:rgba(59,127,245,.3)}
+    .nav-center{display:flex;align-items:center;gap:2px}
+    .nav-link{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 14px;border-radius:6px;transition:all .15s;font-weight:500}
+    .nav-link:hover{color:var(--text);background:rgba(255,255,255,.04)}
+    .nav-right{display:flex;align-items:center;gap:8px}
+    .nav-ghost{font-size:13px;font-weight:500;color:var(--text2);text-decoration:none;padding:7px 16px;border-radius:7px;border:1px solid var(--border2);transition:all .15s}
+    .nav-ghost:hover{color:var(--text)}
+    .nav-solid{font-size:13px;font-weight:600;color:#fff;background:var(--accent);text-decoration:none;padding:7px 16px;border-radius:7px;transition:opacity .15s;border:none;cursor:pointer}
+    .nav-solid:hover{opacity:.9}
 
-    /* ── Topbar ── */
-    #topbar{
-      display:none;align-items:center;gap:10px;
-      padding:10px 32px;
-      background:var(--surface);
-      border-bottom:1px solid var(--border);
-      position:sticky;top:52px;z-index:99;
-    }
-    #topbarInput{
-      width:240px;background:var(--card);
-      border:1px solid var(--border);border-radius:7px;
-      padding:8px 14px;font-family:var(--font);font-size:13px;
-      color:var(--text);outline:none;transition:border-color .15s;
-    }
+    /* TOPBAR */
+    #topbar{display:none;align-items:center;gap:10px;padding:10px 40px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:56px;z-index:99}
+    #topbarInput{width:240px;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:8px 14px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
     #topbarInput:focus{border-color:var(--accent)}
     #topbarInput::placeholder{color:var(--text3)}
-    .topbar-btn{
-      background:var(--accent);color:#fff;border:none;
-      padding:8px 16px;border-radius:7px;font-family:var(--font);
-      font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s;
-    }
+    .topbar-btn{background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:7px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
     .topbar-btn:hover{opacity:.9}
-    #topbarNick{font-size:12px;color:var(--text3);margin-left:auto;font-family:var(--mono)}
+    #topbarNick{font-family:var(--mono);font-size:13px;color:var(--text2)}
+    .tab-bar{display:none;align-items:center;gap:4px;padding:8px 40px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:calc(56px + 48px);z-index:98}
+    .tab-btn{font-size:13px;font-weight:500;padding:7px 16px;border-radius:7px;border:none;background:transparent;color:var(--text2);cursor:pointer;transition:all .15s}
+    .tab-btn:hover{color:var(--text);background:var(--card)}
+    .tab-btn.active{background:var(--card);color:var(--text);border:1px solid var(--border)}
+    .tab-new{font-size:9px;font-weight:700;background:var(--accent);color:#fff;padding:2px 5px;border-radius:3px;margin-left:4px;vertical-align:middle}
 
-    /* ── Tab bar ── */
-    .tab-bar{
-      display:none;align-items:center;gap:0;
-      padding:0 32px;
-      background:var(--surface);
-      border-bottom:1px solid var(--border);
-      position:sticky;top:102px;z-index:98;
-    }
-    .tab-btn{
-      font-size:13px;font-weight:500;
-      padding:11px 16px;color:var(--text2);
-      border:none;background:transparent;cursor:pointer;
-      border-bottom:2px solid transparent;
-      margin-bottom:-1px;transition:all .15s;
-      display:flex;align-items:center;gap:6px;
-    }
-    .tab-btn:hover{color:var(--text)}
-    .tab-btn.active{color:var(--text);border-bottom-color:var(--accent)}
-    .tab-new{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--accent-dim);color:var(--accent);letter-spacing:.3px}
-    .tab-panel{display:none}
-    .tab-panel.active{display:block}
-
-    /* ── Hero ── */
-    .hero{
-      display:flex;flex-direction:column;align-items:center;
-      justify-content:center;text-align:center;
-      padding:40px 24px 20px;min-height:auto;
-      position:relative;z-index:1;
-    }
-    .hero::before{
-      content:'';position:absolute;inset:0;z-index:-1;
-      background:radial-gradient(ellipse 60% 40% at 50% 30%, rgba(59,127,245,.07), transparent);
-    }
-    .hero-eyebrow{
-      font-size:11px;font-weight:600;letter-spacing:1.5px;
-      color:var(--accent);text-transform:uppercase;margin-bottom:20px;
-      display:flex;align-items:center;gap:8px;
-    }
-    .hero-eyebrow::before,.hero-eyebrow::after{content:'';width:28px;height:1px;background:var(--accent);opacity:.5}
-    .hero-title{
-      font-size:clamp(28px,4vw,48px);font-weight:700;
-      letter-spacing:-1.5px;line-height:1.05;margin-bottom:12px;
-      color:var(--text);
-    }
-    .hero-title span{color:var(--accent)}
-    .hero-sub{
-      font-size:16px;color:var(--text2);max-width:440px;
-      line-height:1.6;margin-bottom:0;font-weight:400;font-size:15px;
-    }
-
-    /* ── Search ── */
-    .search-wrap{
-      display:flex;gap:0;max-width:460px;width:100%;
-      background:var(--surface);
-      border:1px solid var(--border);border-radius:10px;
-      overflow:hidden;transition:border-color .15s;
-    }
-    .search-wrap:focus-within{border-color:var(--accent)}
-    #nickInput{
-      flex:1;background:transparent;border:none;outline:none;
-      padding:14px 18px;font-family:var(--font);font-size:14px;
-      color:var(--text);
-    }
+    /* HERO */
+    .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 64px;position:relative;overflow:hidden}
+    .hero-bg{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 80% 50% at 50% -5%,rgba(59,127,245,.13),transparent),radial-gradient(ellipse 40% 30% at 80% 60%,rgba(45,212,160,.04),transparent)}
+    .hero-grid{position:absolute;inset:0;z-index:0;background-image:linear-gradient(rgba(30,34,51,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(30,34,51,.25) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent)}
+    .hero-content{position:relative;z-index:1;max-width:700px}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;background:rgba(59,127,245,.08);border:1px solid rgba(59,127,245,.15);padding:5px 14px;border-radius:20px;margin-bottom:28px}
+    .hero-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+    .hero-title{font-size:clamp(38px,6vw,72px);font-weight:700;letter-spacing:-2.5px;line-height:.97;margin-bottom:20px}
+    .hero-gradient{background:linear-gradient(135deg,var(--accent) 0%,#7BBFFF 50%,var(--success) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .hero-sub{font-size:17px;color:var(--text2);max-width:480px;line-height:1.7;margin:0 auto 36px}
+    .hero-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:52px}
+    .btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:13px 26px;border-radius:9px;font-size:14px;font-weight:600;text-decoration:none;border:none;cursor:pointer;transition:all .2s;box-shadow:0 0 32px rgba(59,127,245,.2)}
+    .btn-primary:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 0 48px rgba(59,127,245,.35)}
+    .btn-secondary{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);color:var(--text);padding:13px 26px;border-radius:9px;font-size:14px;font-weight:500;text-decoration:none;border:1px solid var(--border2);transition:all .2s}
+    .btn-secondary:hover{background:rgba(255,255,255,.07);transform:translateY(-1px)}
+    .hero-stats{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .hero-stat{padding:16px 28px;text-align:center;position:relative}
+    .hero-stat+.hero-stat::before{content:'';position:absolute;left:0;top:20%;height:60%;width:1px;background:var(--border)}
+    .hero-stat-val{font-size:20px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;line-height:1}
+    .hero-stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;font-family:var(--mono)}
+    #heroSearch{display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:480px;margin-top:28px}
+    .search-box{display:flex;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .15s}
+    .search-box:focus-within{border-color:var(--accent)}
+    #nickInput{flex:1;background:transparent;border:none;padding:13px 18px;font-family:var(--font);font-size:14px;color:var(--text);outline:none}
     #nickInput::placeholder{color:var(--text3)}
-    #searchBtn{
-      background:var(--accent);color:#fff;border:none;
-      padding:14px 24px;font-family:var(--font);font-size:14px;
-      font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap;
-    }
+    #searchBtn{background:var(--accent);color:#fff;border:none;padding:13px 22px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}
     #searchBtn:hover{opacity:.9}
-    #searchBtn:disabled{opacity:.5;cursor:not-allowed}
-    .search-hint{font-size:12px;color:var(--text3);margin-top:10px}
+    #errorMsg{font-family:var(--mono);font-size:12px;color:var(--danger);display:none;margin-top:4px}
+    .back-link{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:var(--mono);transition:color .15s}
+    .back-link:hover{color:var(--text2)}
 
-    /* ── Loading ── */
-    #loadingState{
-      display:none;flex-direction:column;align-items:center;
-      gap:14px;padding:60px 24px;
-    }
-    .loader{
-      width:32px;height:32px;
-      border:2px solid var(--border);border-top-color:var(--accent);
-      border-radius:50%;animation:spin .7s linear infinite;
-    }
-    .loading-text{font-size:13px;color:var(--text2);font-family:var(--mono)}
+    /* FEATURES */
+    .section{padding:88px 40px;max-width:1080px;margin:0 auto}
+    .sec-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+    .sec-title{font-size:clamp(24px,3.5vw,38px);font-weight:700;letter-spacing:-1px;margin-bottom:12px}
+    .sec-sub{font-size:15px;color:var(--text2);line-height:1.7;max-width:480px}
+    .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:44px}
+    @media(max-width:860px){.feat-grid{grid-template-columns:1fr}}
+    .feat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;display:flex;flex-direction:column;transition:border-color .2s,transform .2s;position:relative;overflow:hidden;text-decoration:none;color:inherit;cursor:pointer}
+    .feat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--fc,var(--accent)),transparent);opacity:0;transition:opacity .2s}
+    .feat-card:hover{border-color:var(--fc,var(--accent));transform:translateY(-3px)}
+    .feat-card:hover::after{opacity:1}
+    .feat-icon{width:44px;height:44px;border-radius:10px;background:rgba(59,127,245,.08);border:1px solid rgba(59,127,245,.15);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:18px}
+    .feat-tag{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--fc,var(--accent));margin-bottom:8px}
+    .feat-title{font-size:18px;font-weight:700;letter-spacing:-.4px;margin-bottom:10px}
+    .feat-desc{font-size:13px;color:var(--text2);line-height:1.65;flex:1;margin-bottom:18px}
+    .feat-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:20px}
+    .feat-pill{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--card);border:1px solid var(--border);color:var(--text3)}
+    .feat-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--fc,var(--accent));padding:10px 16px;border-radius:7px;background:rgba(59,127,245,.08);border:1px solid rgba(59,127,245,.15);width:fit-content;transition:opacity .15s}
+    .feat-btn:hover{opacity:.8}
+    .feat-btn svg{transition:transform .15s}
+    .feat-card:hover .feat-btn svg{transform:translateX(3px)}
 
-    /* ── Error ── */
-    #errorMsg{
-      display:none;background:rgba(240,107,107,.08);
-      border:1px solid rgba(240,107,107,.2);border-radius:8px;
-      padding:12px 16px;font-size:13px;color:var(--danger);
-      max-width:460px;margin-top:12px;font-family:var(--mono);
-    }
+    /* HOW */
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-top:44px}
+    @media(max-width:700px){.steps{grid-template-columns:1fr}}
+    .step{background:var(--surface);padding:32px 28px}
+    .step-num{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.5px;margin-bottom:16px}
+    .step-icon{font-size:28px;margin-bottom:14px}
+    .step-title{font-size:16px;font-weight:700;letter-spacing:-.3px;margin-bottom:8px}
+    .step-desc{font-size:13px;color:var(--text2);line-height:1.6}
 
-    /* ── Dashboard ── */
-    #dashboard{display:none;max-width:1120px;margin:0 auto;padding:28px 32px 80px}
+    /* FV SCORE */
+    .score-preview{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px;margin-top:44px}
+    @media(max-width:700px){.score-preview{grid-template-columns:1fr;padding:28px}}
+    .score-circle-wrap{width:148px;height:148px;position:relative;margin:0 auto 20px}
+    .score-circle-svg{width:100%;height:100%;transform:rotate(-90deg)}
+    .score-circle-bg{fill:none;stroke:var(--border);stroke-width:10}
+    .score-circle-fill{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-dasharray:408;stroke-dashoffset:90;transition:stroke-dashoffset .8s ease}
+    .score-circle-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .score-big{font-size:38px;font-weight:700;font-family:var(--mono);letter-spacing:-2px;line-height:1}
+    .score-max{font-size:12px;color:var(--text3);font-family:var(--mono)}
+    .score-label{font-size:14px;font-weight:600;color:var(--success);text-align:center}
+    .score-dims{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+    .sdim{display:flex;align-items:center;gap:10px}
+    .sdim-label{font-size:12px;color:var(--text2);width:90px;flex-shrink:0}
+    .sdim-bar{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+    .sdim-fill{height:100%;border-radius:2px}
+    .sdim-val{font-family:var(--mono);font-size:11px;color:var(--text2);width:36px;text-align:right}
+    .score-info-title{font-size:26px;font-weight:700;letter-spacing:-.8px;margin-bottom:12px}
+    .score-info-desc{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:24px}
+    .score-bullets{display:flex;flex-direction:column;gap:10px}
+    .sbullet{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text2)}
+    .sbullet-icon{font-size:15px;flex-shrink:0;margin-top:1px}
 
-    /* ── Profile card ── */
-    .profile-card{
-      display:flex;align-items:center;gap:20px;
-      padding:22px 24px;background:var(--surface);
-      border:1px solid var(--border);border-radius:12px;
-      margin-bottom:20px;
-    }
-    .profile-avatar-ph{
-      width:56px;height:56px;border-radius:8px;
-      background:var(--card);border:1px solid var(--border);
-      display:flex;align-items:center;justify-content:center;
-      font-size:22px;flex-shrink:0;
-      background-size:cover;background-position:center;
-      transition:border-color .2s;
-    }
-    .profile-avatar-ph.has-avatar{border-color:var(--border2)}
+    /* PLANS */
+    .plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:44px}
+    @media(max-width:700px){.plans-grid{grid-template-columns:1fr}}
+    .plan{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px}
+    .plan.featured{border-color:rgba(59,127,245,.3);background:rgba(59,127,245,.03)}
+    .plan-name{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
+    .plan-price{font-size:36px;font-weight:700;letter-spacing:-2px;font-family:var(--mono);margin-bottom:2px}
+    .plan-period{font-size:12px;color:var(--text3);margin-bottom:20px;font-family:var(--mono)}
+    .plan-feats{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
+    .plan-feat{font-size:13px;color:var(--text3);display:flex;align-items:center;gap:8px}
+    .plan-feat::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0}
+    .plan-feat.on::before{background:var(--success)}
+    .plan-feat.on{color:var(--text)}
+    .plan-btn{width:100%;padding:11px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .15s}
+    .plan-btn.cta{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .plan-btn.cta:hover{opacity:.9}
+
+    /* DASHBOARD */
+    #dashboard{display:none;padding:28px 40px 80px;max-width:1200px;margin:0 auto}
+    .tab-panel{display:none}.tab-panel.active{display:block}
+    .panel-title{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;gap:10px;font-family:var(--mono)}
+    .panel-title::after{content:'';flex:1;height:1px;background:var(--border)}
+    .profile-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+    .profile-avatar-ph{width:56px;height:56px;border-radius:10px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;background-size:cover;background-position:center}
     .profile-info{flex:1;min-width:0}
-    .profile-name{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
-    .profile-badges{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-
-    .badge-level-1{color:#7A7A7A;border-color:rgba(122,122,122,.25);background:rgba(122,122,122,.08)}
-    .badge-level-2,.badge-level-3{color:#23C44E;border-color:rgba(35,196,78,.25);background:rgba(35,196,78,.08)}
-    .badge-level-4,.badge-level-5,.badge-level-6{color:#F5C842;border-color:rgba(245,200,66,.25);background:rgba(245,200,66,.08)}
-    .badge-level-7,.badge-level-8{color:#EDA020;border-color:rgba(237,160,32,.25);background:rgba(237,160,32,.08)}
-    .badge-level-9{color:#E05C2A;border-color:rgba(224,92,42,.25);background:rgba(224,92,42,.08)}
-    .badge-level-10{color:#D93535;border-color:rgba(217,53,53,.25);background:rgba(217,53,53,.08)}
-
-    .badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.2px;display:inline-flex;align-items:center;gap:4px}
-    .badge-fv-elite{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.2)}
+    .profile-name{font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
+    .profile-badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.2px}
+    .badge-lvl1,.badge-lvl2,.badge-lvl3{background:rgba(35,196,78,.1);color:#23C44E;border:1px solid rgba(35,196,78,.2)}
+    .badge-lvl4,.badge-lvl5,.badge-lvl6{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
+    .badge-lvl7,.badge-lvl8{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
+    .badge-lvl9{background:rgba(224,92,42,.1);color:#E05C2A;border:1px solid rgba(224,92,42,.2)}
+    .badge-lvl10{background:rgba(217,53,53,.1);color:#D93535;border:1px solid rgba(217,53,53,.2)}
+    .badge-fv-elite{background:rgba(45,212,160,.1);color:#2DD4A0;border:1px solid rgba(45,212,160,.2)}
     .badge-fv-great{background:rgba(59,127,245,.1);color:#60A5FA;border:1px solid rgba(59,127,245,.2)}
-    .badge-fv-good{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.2)}
-    .badge-fv-avg{background:rgba(224,92,42,.1);color:#EDA020;border:1px solid rgba(224,92,42,.2)}
-    .badge-fv-low{background:rgba(240,107,107,.1);color:var(--danger);border:1px solid rgba(240,107,107,.2)}
-    .badge-role{background:var(--card);color:var(--text2);border:1px solid var(--border)}
-    .badge-country{background:var(--card);color:var(--text2);border:1px solid var(--border)}
-    .badge-team{background:var(--card);color:var(--text2);border:1px solid var(--border)}
-
+    .badge-fv-good{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
+    .badge-fv-avg{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
+    .badge-fv-low{background:rgba(240,107,107,.1);color:#F06B6B;border:1px solid rgba(240,107,107,.2)}
+    .badge-role,.badge-country{background:var(--card);color:var(--text3);border:1px solid var(--border)}
+    .badge-team{background:rgba(59,127,245,.08);color:#60A5FA;border:1px solid rgba(59,127,245,.15)}
+    .badge-challenger{background:linear-gradient(135deg,rgba(245,200,66,.15),rgba(237,160,32,.15));color:var(--gold);border:1px solid rgba(245,200,66,.3)}
     .profile-elo-wrap{text-align:right;flex-shrink:0}
-    .profile-elo{font-size:32px;font-weight:700;letter-spacing:-1.5px;font-family:var(--mono)}
-    .profile-elo-label{font-size:11px;color:var(--text2);margin-top:2px;letter-spacing:.3px}
-    .recent-results{display:flex;gap:3px;margin-top:6px;justify-content:flex-end}
-    .result-dot{width:8px;height:8px;border-radius:50%}
-    .result-dot.w{background:var(--success)}
-    .result-dot.l{background:var(--danger)}
-    .result-dot.d{background:var(--text3)}
-
-    /* ── Section label ── */
-    .section-label{
-      font-size:11px;font-weight:600;letter-spacing:.8px;
-      color:var(--text3);text-transform:uppercase;
-      margin:24px 0 12px;display:flex;align-items:center;gap:10px;
-    }
-    .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
-
-    /* ── KPI grid ── */
-    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:20px}
-    .kpi-card{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:8px;padding:14px 16px;transition:border-color .15s;
-    }
-    .kpi-card:hover{border-color:var(--border2)}
-    .kpi-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+    .profile-elo{font-size:32px;font-weight:700;letter-spacing:-1.5px;font-family:var(--mono);line-height:1}
+    .profile-elo-label{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+    .recent-results{display:flex;gap:3px;margin-top:8px;justify-content:flex-end}
+    .result-dot{width:8px;height:8px;border-radius:2px}
+    .kpi-positive{color:var(--success)}.kpi-negative{color:var(--danger)}.kpi-neutral{color:var(--accent)}
+    .follow-btn{margin-top:8px;width:100%;font-family:var(--mono);font-size:11px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .15s}
+    .follow-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .follow-btn.following{border-color:rgba(45,212,160,.3);color:var(--success);background:rgba(45,212,160,.06)}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:20px}
+    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+    .kpi-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:8px;font-family:var(--mono)}
     .kpi-val{font-size:24px;font-weight:700;letter-spacing:-.8px;font-family:var(--mono);line-height:1}
-    .kpi-sub{font-size:11px;color:var(--text3);margin-top:5px}
-    .kpi-good{color:var(--success)}.kpi-warn{color:var(--gold)}.kpi-bad{color:var(--danger)}.kpi-blue{color:#60A5FA}.kpi-neutral{color:var(--text)}
-
-    /* ── Score card ── */
-    .score-card{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:10px;padding:22px 24px;margin-bottom:20px;
-      display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;
-    }
-    .score-number{
-      font-size:56px;font-weight:700;letter-spacing:-3px;
-      color:var(--accent);line-height:1;font-family:var(--mono);
-    }
-    .score-denom{font-size:14px;color:var(--text3);margin-top:2px;font-family:var(--mono)}
-    .score-title{font-size:15px;font-weight:600;margin-bottom:14px}
-    .score-bars{display:flex;flex-direction:column;gap:8px}
-    .bar-row{display:flex;align-items:center;gap:10px}
-    .bar-label{font-size:11px;color:var(--text3);width:70px;flex-shrink:0;font-family:var(--mono)}
-    .bar-track{flex:1;height:2px;background:var(--border);border-radius:1px;overflow:hidden}
-    .bar-fill{height:100%;background:var(--accent);border-radius:1px;transition:width .6s ease}
-    .bar-val{font-size:11px;color:var(--text2);width:42px;text-align:right;font-family:var(--mono);font-weight:500}
-
-    /* ── Side split ── */
-    .side-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
-    .side-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px}
-    .side-title{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .kpi-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
+    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+    @media(max-width:700px){.charts-grid{grid-template-columns:1fr}}
+    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
+    .chart-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;font-family:var(--mono)}
+    .chart-wrap{position:relative;height:200px}
+    .side-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+    .side-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
+    .side-header{display:flex;align-items:center;gap:8px;margin-bottom:14px}
     .side-dot{width:7px;height:7px;border-radius:50%}
-    .side-dot.ct{background:#4A9EFF}.side-dot.t{background:#F5C842}
-    .side-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-    .side-stat{text-align:center}
+    .side-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);color:var(--text2)}
+    .side-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .side-stat{text-align:center;background:var(--card);border-radius:6px;padding:10px 8px}
     .side-stat-val{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.5px}
-    .side-stat-label{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
-
-    /* ── Charts grid ── */
-    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
-    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px}
-    .chart-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
-    .chart-wrap{height:140px;position:relative}
-
-    /* ── Match table ── */
-    .match-table-wrap{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:10px;overflow:hidden;margin-bottom:20px;
-    }
-    .match-table{width:100%;border-collapse:collapse;font-size:12px}
-    .match-table th{
-      font-family:var(--mono);font-size:10px;color:var(--text3);
-      padding:10px 14px;border-bottom:1px solid var(--border);
-      text-align:left;letter-spacing:.5px;font-weight:500;
-      background:var(--card);
-    }
-    .match-table td{
-      padding:10px 14px;border-bottom:1px solid rgba(31,36,51,.5);
-      color:var(--text2);font-family:var(--mono);
-    }
+    .side-stat-label{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
+    .score-card{display:grid;grid-template-columns:180px 1fr;gap:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;align-items:center}
+    @media(max-width:600px){.score-card{grid-template-columns:1fr}}
+    .score-donut-wrap{position:relative;width:140px;height:140px;margin:0 auto}
+    .score-donut-canvas{width:100%;height:100%}
+    .score-donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .score-donut-val{font-size:32px;font-weight:700;letter-spacing:-1.5px;font-family:var(--mono);line-height:1}
+    .score-donut-max{font-size:11px;color:var(--text3);font-family:var(--mono)}
+    .fvscore-label-badge{font-size:12px;font-weight:600;color:var(--success);text-align:center;margin-top:8px}
+    .fvscore-breakdown{display:flex;flex-direction:column;gap:8px}
+    .fvscore-dim-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+    .fvscore-dim-label{font-size:12px;color:var(--text2);font-family:var(--mono)}
+    .fvscore-dim-val{font-size:11px;color:var(--text3);font-family:var(--mono)}
+    .sublevel-bar-wrap{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:2px}
+    .sublevel-bar-label{font-size:10px;color:var(--text3);margin-top:6px;font-family:var(--mono)}
+    .match-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
+    .match-table{width:100%;border-collapse:collapse}
+    .match-table th{font-family:var(--mono);font-size:10px;color:var(--text3);padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;letter-spacing:.5px;font-weight:500;background:var(--card)}
+    .match-table td{padding:10px 14px;border-bottom:1px solid rgba(31,36,51,.5);color:var(--text2);font-family:var(--mono)}
     .match-table tr:last-child td{border-bottom:none}
     .match-table tr:hover td{background:rgba(255,255,255,.02)}
-    .td-map{color:var(--text);font-weight:500}
-    .td-win{color:var(--success)}.td-loss{color:var(--danger)}
+    .td-map{color:var(--text);font-weight:500}.td-win{color:var(--success)}.td-loss{color:var(--danger)}
     .td-kd-good{color:var(--success)}.td-kd-avg{color:var(--text)}.td-kd-bad{color:var(--danger)}
-
-    /* ── Map cards ── */
     .map-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:20px}
     .map-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;transition:border-color .15s}
     .map-card:hover{border-color:var(--border2)}
@@ -312,331 +234,289 @@
     .map-stat{text-align:center;background:var(--card);border-radius:6px;padding:8px}
     .map-stat-val{font-size:15px;font-weight:700;font-family:var(--mono)}
     .map-stat-label{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
-    .map-winrate{
-      display:flex;align-items:center;justify-content:space-between;
-      margin-bottom:8px;
-    }
+    .map-winrate{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
     .map-wr-val{font-size:15px;font-weight:700;font-family:var(--mono)}
     .map-wr-bar{height:2px;background:var(--border);border-radius:1px;margin-bottom:8px;overflow:hidden}
     .map-wr-fill{height:100%;background:var(--accent);border-radius:1px}
     .map-matches{font-size:10px;color:var(--text3);font-family:var(--mono)}
-
-    /* ── Multi-kills ── */
     .mk-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
-    .mk-card{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:8px;padding:14px;text-align:center;
-    }
+    .mk-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}
     .mk-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
     .mk-val{font-size:28px;font-weight:700;font-family:var(--mono);letter-spacing:-1px}
     .mk-sub{font-size:10px;color:var(--text3);margin-top:4px}
     .mk-2k{color:var(--text2)}.mk-3k{color:#60A5FA}.mk-4k{color:var(--gold)}.mk-5k{color:var(--danger)}
-
-    /* ── Clutch ── */
     .clutch-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
-    .clutch-card{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:8px;padding:14px;text-align:center;
-    }
+    .clutch-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}
     .clutch-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
     .clutch-val{font-size:22px;font-weight:700;font-family:var(--mono)}
     .clutch-rate{font-size:10px;color:var(--text3);margin-top:4px}
-
-    /* ── Demo CTA panel ── */
-    .demo-panel{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:12px;padding:32px;text-align:center;margin-bottom:20px;
-    }
+    .demo-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;text-align:center;margin-bottom:20px}
     .demo-panel-title{font-size:20px;font-weight:700;letter-spacing:-.4px;margin-bottom:8px}
     .demo-panel-sub{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:24px;max-width:480px;margin-left:auto;margin-right:auto}
-    .demo-panel-btn{
-      display:inline-block;background:var(--accent);color:#fff;
-      padding:12px 28px;border-radius:8px;font-family:var(--font);
-      font-size:14px;font-weight:600;text-decoration:none;
-      transition:opacity .15s;
-    }
+    .demo-panel-btn{display:inline-block;background:var(--accent);color:#fff;padding:12px 28px;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;text-decoration:none;transition:opacity .15s}
     .demo-panel-btn:hover{opacity:.9}
     .demo-features{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:24px}
-    .demo-feature{
-      background:var(--card);border:1px solid var(--border);
-      border-radius:8px;padding:14px;text-align:left;
-    }
-    .demo-feature-code{
-      font-family:var(--mono);font-size:11px;color:var(--accent);
-      font-weight:500;margin-bottom:6px;
-    }
+    .demo-feature{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:left}
+    .demo-feature-code{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:500;margin-bottom:6px}
     .demo-feature-title{font-size:12px;font-weight:600;margin-bottom:3px}
     .demo-feature-desc{font-size:11px;color:var(--text3);line-height:1.5}
-
-    /* ── Utility stats ── */
     .utility-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:20px}
     .util-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
     .util-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600}
     .util-val{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--text);letter-spacing:-.5px}
     .util-sub{font-size:11px;color:var(--text3);margin-top:4px}
-
-
-    /* ── Challenger badge ── */
-    .badge-challenger{
-      color:#F5C842;border:1px solid rgba(245,200,66,.35);
-      background:linear-gradient(135deg,rgba(245,200,66,.12),rgba(237,160,32,.08));
-      font-weight:700;letter-spacing:.3px;
-      box-shadow:0 0 10px rgba(245,200,66,.15);
-    }
-
-    /* ── Sous-niveau lvl10 progress bar ── */
-    .sublevel-bar-wrap{margin-bottom:14px}
-    .sublevel-bar-label{
-      display:flex;justify-content:space-between;
-      font-size:11px;font-family:var(--mono);
-      color:var(--text2);margin-bottom:5px;
-    }
-
-    /* ── FV Score breakdown ── */
-    .fvscore-breakdown{
-      display:flex;flex-direction:column;gap:10px;
-      margin-bottom:16px;
-      padding:14px;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:8px;
-    }
-    .fvscore-dim-header{
-      display:flex;justify-content:space-between;align-items:center;
-      margin-bottom:5px;
-    }
-    .fvscore-dim-label{
-      font-size:11px;color:var(--text2);
-      font-family:var(--mono);font-weight:500;
-    }
-    .fvscore-dim-val{
-      font-size:13px;font-weight:700;
-      font-family:var(--mono);letter-spacing:-.3px;
-    }
-    .fvscore-dim .bar-track{height:3px}
-    .fvscore-dim .bar-fill{height:100%;border-radius:1px}
-
-    /* ── Follow button ── */
-    .follow-btn{
-      margin-top:8px;width:100%;
-      font-family:var(--mono);font-size:11px;font-weight:500;
-      padding:6px 12px;border-radius:6px;cursor:pointer;
-      border:1px solid var(--border);background:transparent;
-      color:var(--text3);transition:all .15s;
-    }
-    .follow-btn:hover{border-color:var(--accent);color:var(--accent)}
-    .follow-btn.following{border-color:rgba(45,212,160,.3);color:var(--success);background:rgba(45,212,160,.06)}
-
-    /* ── Feature cards ── */
-    .features-section{
-      max-width:960px;margin:0 auto;padding:0 24px 48px;
-    }
-    .features-eyebrow{
-      font-size:11px;font-weight:600;letter-spacing:1.2px;
-      color:var(--text3);text-transform:uppercase;
-      font-family:var(--mono);text-align:center;margin-bottom:32px;
-    }
-    .features-grid{
-      display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
-    }
-    @media(max-width:768px){.features-grid{grid-template-columns:1fr}}
-    @media(max-width:1024px) and (min-width:769px){.features-grid{grid-template-columns:repeat(2,1fr)}}
-    .feature-card{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:12px;padding:24px;
-      display:flex;flex-direction:column;gap:0;
-      transition:border-color .2s,transform .2s;
-      cursor:pointer;text-decoration:none;color:inherit;
-      position:relative;overflow:hidden;
-    }
-    .feature-card::before{
-      content:'';position:absolute;inset:0;
-      background:radial-gradient(ellipse at top left,var(--fc-glow,rgba(59,127,245,.04)),transparent 60%);
-      pointer-events:none;
-    }
-    .feature-card:hover{border-color:var(--fc-color,var(--accent));transform:translateY(-2px)}
-    .feature-card-icon{
-      width:40px;height:40px;border-radius:9px;
-      background:var(--fc-bg,var(--accent-dim));
-      border:1px solid var(--fc-border,rgba(59,127,245,.2));
-      display:flex;align-items:center;justify-content:center;
-      margin-bottom:16px;font-size:18px;flex-shrink:0;
-    }
-    .feature-card-tag{
-      font-family:var(--mono);font-size:10px;font-weight:600;
-      letter-spacing:.8px;text-transform:uppercase;
-      color:var(--fc-color,var(--accent));margin-bottom:8px;
-    }
-    .feature-card-title{
-      font-size:17px;font-weight:700;letter-spacing:-.4px;
-      margin-bottom:8px;line-height:1.2;
-    }
-    .feature-card-desc{
-      font-size:13px;color:var(--text2);line-height:1.65;
-      flex:1;margin-bottom:20px;
-    }
-    .feature-card-pills{
-      display:flex;flex-wrap:wrap;gap:5px;margin-bottom:20px;
-    }
-    .feature-pill{
-      font-family:var(--mono);font-size:10px;
-      padding:3px 8px;border-radius:4px;
-      background:var(--card);border:1px solid var(--border);
-      color:var(--text3);
-    }
-    .feature-card-btn{
-      display:inline-flex;align-items:center;gap:6px;
-      font-size:13px;font-weight:600;
-      color:var(--fc-color,var(--accent));
-      padding:9px 16px;border-radius:7px;
-      background:var(--fc-bg,var(--accent-dim));
-      border:1px solid var(--fc-border,rgba(59,127,245,.2));
-      transition:opacity .15s;width:fit-content;
-      text-decoration:none;
-    }
-    .feature-card-btn:hover{opacity:.8}
-    .feature-card-btn svg{transition:transform .15s}
-    .feature-card:hover .feature-card-btn svg{transform:translateX(3px)}
-
-    /* ── Animations ── */
+    #loadingState{display:none;text-align:center;padding:80px 24px}
+    .loader{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
+    .loading-text{font-family:var(--mono);font-size:13px;color:var(--text3)}
+    .search-hint{font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:8px}
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
     .fade-in{animation:fadeUp .3s ease forwards}
-
-    /* ── Responsive ── */
     @media(max-width:768px){
-      #dashboard{padding:16px}
-      nav{padding:0 16px}
-      #topbar{padding:10px 16px}
-      .tab-bar{padding:0 16px}
-      .kpi-grid{grid-template-columns:repeat(2,1fr)}
-      .charts-grid{grid-template-columns:1fr}
-      .side-grid{grid-template-columns:1fr}
-      .mk-grid,.clutch-grid{grid-template-columns:repeat(3,1fr)}
-      .score-card{grid-template-columns:1fr}
+      #dashboard{padding:16px}nav{padding:0 16px}#topbar{padding:10px 16px}.tab-bar{padding:0 16px}
+      .kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}
+      .side-grid{grid-template-columns:1fr}.mk-grid,.clutch-grid{grid-template-columns:repeat(3,1fr)}
+      .score-card{grid-template-columns:1fr}.section{padding:56px 20px}nav{padding:0 20px}
     }
   </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
   <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
-  <div class="nav-links">
-    <a href="index.html" class="nav-link active">Scout</a>
+  <div class="nav-center">
+    <a href="index.html" class="nav-link">Scout</a>
     <a href="compare.html" class="nav-link">Comparer</a>
     <a href="demo.html" class="nav-link">Démo</a>
-    <div class="nav-divider"></div>
-    <a href="login.html" class="nav-account" id="navLoginBtn">Connexion</a>
-    <a href="account.html" class="nav-account nav-account-active" id="navAccountBtn" style="display:none">Mon espace</a>
+  </div>
+  <div class="nav-right">
+    <a href="login.html" class="nav-ghost" id="navLoginBtn">Connexion</a>
+    <a href="account.html" class="nav-solid" id="navAccountBtn" style="display:none">Mon espace</a>
   </div>
 </nav>
 
+<!-- TOPBAR -->
 <div id="topbar">
   <input id="topbarInput" type="text" placeholder="Rechercher un joueur..." autocomplete="off" spellcheck="false"/>
   <button class="topbar-btn" onclick="newSearch()">Analyser</button>
   <span id="topbarNick"></span>
 </div>
-
 <div class="tab-bar" id="tabBar">
   <button class="tab-btn active" onclick="switchTab('stats',this)">Stats FACEIT</button>
   <button class="tab-btn" onclick="switchTab('demo',this)">Analyse démo <span class="tab-new">NEW</span></button>
 </div>
 
-<!-- Hero compact -->
-<section class="hero" id="hero">
-  <div class="hero-eyebrow">CS2 Talent Analytics</div>
-  <h1 class="hero-title">Scout smarter.<br/><span>Play better.</span></h1>
-  <p class="hero-sub">Analyse complète des profils FACEIT — FV Rating, CT/T split, heatmaps de démos et score de potentiel de recrutement.</p>
-  <div id="heroSearch" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:480px;margin-top:24px">
-    <div class="search-wrap" style="width:100%">
-      <input id="nickInput" type="text" placeholder="Pseudo FACEIT..." autocomplete="off" spellcheck="false"
-        onkeydown="if(event.key==='Enter')searchPlayer()"/>
-      <button id="searchBtn" onclick="searchPlayer()">Analyser</button>
+<!-- LANDING -->
+<div id="landingPage">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <span class="hero-dot"></span>CS2 Talent Analytics
+      </div>
+      <h1 class="hero-title">Scout smarter.<br/><span class="hero-gradient">Play better.</span></h1>
+      <p class="hero-sub">FV Score, heatmaps de démo, comparaison multi-joueurs — tout ce dont tu as besoin pour recruter ou progresser.</p>
+      <div class="hero-cta" id="heroCta">
+        <button class="btn-primary" onclick="showScoutSearch()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Analyser un joueur
+        </button>
+        <a href="compare.html" class="btn-secondary">Comparer des joueurs →</a>
+      </div>
+      <div class="hero-stats" id="heroStats">
+        <div class="hero-stat"><div class="hero-stat-val" style="color:var(--accent)">FV Score</div><div class="hero-stat-label">Score /100</div></div>
+        <div class="hero-stat"><div class="hero-stat-val" style="color:var(--success)">CT/T</div><div class="hero-stat-label">Split side</div></div>
+        <div class="hero-stat"><div class="hero-stat-val" style="color:var(--gold)">Démo</div><div class="hero-stat-label">Heatmaps</div></div>
+        <div class="hero-stat"><div class="hero-stat-val" style="color:#A78BFA">5v5</div><div class="hero-stat-label">Comparaison</div></div>
+      </div>
+      <div id="heroSearch">
+        <div class="search-box">
+          <input id="nickInput" type="text" placeholder="Pseudo FACEIT... ex: s1mple" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')searchPlayer()"/>
+          <button id="searchBtn" onclick="searchPlayer()">Analyser</button>
+        </div>
+        <div id="errorMsg"></div>
+        <button class="back-link" onclick="hideScoutSearch()">← Retour</button>
+      </div>
     </div>
-    <div id="errorMsg"></div>
-    <button onclick="document.getElementById('heroSearch').style.display='none';document.getElementById('featuresSection').style.display='block'"
-      style="font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:var(--mono)">
-      ← Retour
-    </button>
-  </div>
-  <div id="errorMsg" style="display:none"></div>
-</section>
+  </section>
 
-<!-- Feature cards -->
-<div class="features-section" id="featuresSection">
-  <div class="features-eyebrow">Ce que tu peux faire avec FragValue</div>
-  <div class="features-grid">
+  <!-- FEATURES -->
+  <section class="section">
+    <div class="sec-eyebrow">Fonctionnalités</div>
+    <div class="sec-title">Tout ce dont tu as besoin.</div>
+    <p class="sec-sub">FragValue centralise l'analyse FACEIT, la comparaison de joueurs et l'analyse de démo en un seul outil.</p>
+    <div class="feat-grid">
 
-    <!-- Scout -->
-    <div class="feature-card"
-       style="--fc-color:#3B7FF5;--fc-bg:rgba(59,127,245,.08);--fc-border:rgba(59,127,245,.2);--fc-glow:rgba(59,127,245,.06)">
-      <div class="feature-card-icon">🔍</div>
-      <div class="feature-card-tag">Scout</div>
-      <div class="feature-card-title">Analyse un profil FACEIT</div>
-      <div class="feature-card-desc">FV Score /100, FV Rating, KAST estimé, CT/T split, historique 20 matchs, sous-niveau lvl 10 et potentiel de recrutement.</div>
-      <div class="feature-card-pills">
-        <span class="feature-pill">FV Score</span>
-        <span class="feature-pill">K/D · ADR · HS%</span>
-        <span class="feature-pill">CT/T split</span>
-        <span class="feature-pill">Consistance</span>
+      <div class="feat-card" style="--fc:#3B7FF5" onclick="showScoutSearch()">
+        <div class="feat-icon" style="background:rgba(59,127,245,.1);border-color:rgba(59,127,245,.2)">🔍</div>
+        <div class="feat-tag">Scout FACEIT</div>
+        <div class="feat-title">Analyse complète d'un joueur</div>
+        <div class="feat-desc">FV Score /100, FV Rating, KAST, CT/T split, historique 20 matchs et évaluation de recrutement.</div>
+        <div class="feat-pills"><span class="feat-pill">FV Score</span><span class="feat-pill">K/D · ADR</span><span class="feat-pill">CT/T</span><span class="feat-pill">Consistance</span></div>
+        <div class="feat-btn" style="color:#3B7FF5;background:rgba(59,127,245,.08);border-color:rgba(59,127,245,.15)">
+          Analyser un joueur <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
       </div>
-      <button onclick="openScout()" class="feature-card-btn" style="margin-top:auto;border:none;cursor:pointer">
-        Analyser un joueur
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
+
+      <a class="feat-card" href="compare.html" style="--fc:#2DD4A0">
+        <div class="feat-icon" style="background:rgba(45,212,160,.1);border-color:rgba(45,212,160,.2)">⚡</div>
+        <div class="feat-tag" style="color:#2DD4A0">Comparaison</div>
+        <div class="feat-title">Compare 2 à 5 joueurs</div>
+        <div class="feat-desc">Spider chart, barres de comparaison, tableau complet côte à côte. Identifie le meilleur recrutement.</div>
+        <div class="feat-pills"><span class="feat-pill">Spider chart</span><span class="feat-pill">FV Score</span><span class="feat-pill">Multi-kills</span><span class="feat-pill">ELO</span></div>
+        <div class="feat-btn" style="color:#2DD4A0;background:rgba(45,212,160,.08);border-color:rgba(45,212,160,.15)">
+          Comparer maintenant <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+      </a>
+
+      <a class="feat-card" href="demo.html" style="--fc:#F5C842">
+        <div class="feat-icon" style="background:rgba(245,200,66,.1);border-color:rgba(245,200,66,.2)">🎬</div>
+        <div class="feat-tag" style="color:#F5C842">Analyse Démo · Beta</div>
+        <div class="feat-title">Visualise ton jeu</div>
+        <div class="feat-desc">Importe un .dem CS2 — heatmaps kills/deaths CT/T, zones de duels, déplacements et utility map.</div>
+        <div class="feat-pills"><span class="feat-pill">Heatmaps</span><span class="feat-pill">CT vs T</span><span class="feat-pill">Duel zones</span><span class="feat-pill">Utility</span></div>
+        <div class="feat-btn" style="color:#F5C842;background:rgba(245,200,66,.08);border-color:rgba(245,200,66,.15)">
+          Analyser une démo <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+      </a>
+
     </div>
+  </section>
 
-    <!-- Comparer -->
-    <a class="feature-card" href="compare.html"
-       style="--fc-color:#2DD4A0;--fc-bg:rgba(45,212,160,.08);--fc-border:rgba(45,212,160,.2);--fc-glow:rgba(45,212,160,.05)">
-      <div class="feature-card-icon">⚡</div>
-      <div class="feature-card-tag">Comparer</div>
-      <div class="feature-card-title">Compare 2 à 5 joueurs</div>
-      <div class="feature-card-desc">Spider chart, barres de comparaison, tableau complet avec tous les stats côte à côte. Identifie le meilleur recrutement possible.</div>
-      <div class="feature-card-pills">
-        <span class="feature-pill">Spider chart</span>
-        <span class="feature-pill">FV Score</span>
-        <span class="feature-pill">Multi-kills</span>
-        <span class="feature-pill">ELO FACEIT</span>
+  <!-- HOW -->
+  <section class="section" style="padding-top:0">
+    <div class="sec-eyebrow">Comment ça marche</div>
+    <div class="sec-title">Simple et rapide.</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-icon">🔎</div>
+        <div class="step-title">Entre un pseudo FACEIT</div>
+        <div class="step-desc">Ton pseudo, celui d'un adversaire ou d'un futur coéquipier. Résultat en moins de 5 secondes.</div>
       </div>
-      <span class="feature-card-btn">
-        Comparer des joueurs
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </span>
-    </a>
-
-    <!-- Démo -->
-    <a class="feature-card" href="demo.html"
-       style="--fc-color:#F5C842;--fc-bg:rgba(245,200,66,.08);--fc-border:rgba(245,200,66,.2);--fc-glow:rgba(245,200,66,.04)">
-      <div class="feature-card-icon">🎬</div>
-      <div class="feature-card-tag">Analyse Démo · BETA</div>
-      <div class="feature-card-title">Visualise ton jeu en profondeur</div>
-      <div class="feature-card-desc">Importe un fichier .dem CS2 — heatmaps de kills/deaths par side CT/T, déplacements, zones de duels, utility et economy.</div>
-      <div class="feature-card-pills">
-        <span class="feature-pill">Heatmaps</span>
-        <span class="feature-pill">CT vs T</span>
-        <span class="feature-pill">Duel zones</span>
-        <span class="feature-pill">Utility map</span>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-icon">📊</div>
+        <div class="step-title">Reçois l'analyse complète</div>
+        <div class="step-desc">FV Score /100, stats des 20 derniers matchs, CT/T split, multi-kills et évaluation de potentiel.</div>
       </div>
-      <span class="feature-card-btn">
-        Analyser une démo
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </span>
-    </a>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-icon">🎯</div>
+        <div class="step-title">Agis sur les données</div>
+        <div class="step-desc">Watchlist, comparaison avec d'autres joueurs ou analyse démo pour identifier les axes d'amélioration.</div>
+      </div>
+    </div>
+  </section>
 
+  <!-- FV SCORE -->
+  <section class="section" style="padding-top:0">
+    <div class="sec-eyebrow">FV Score</div>
+    <div class="sec-title">Au-delà du simple K/D.</div>
+    <div class="score-preview">
+      <div style="text-align:center">
+        <div class="score-circle-wrap">
+          <svg class="score-circle-svg" viewBox="0 0 148 148">
+            <circle class="score-circle-bg" cx="74" cy="74" r="65"/>
+            <circle class="score-circle-fill" cx="74" cy="74" r="65"/>
+          </svg>
+          <div class="score-circle-inner">
+            <div class="score-big">78</div>
+            <div class="score-max">/ 100</div>
+          </div>
+        </div>
+        <div class="score-label">Élite+</div>
+        <div class="score-dims">
+          <div class="sdim"><div class="sdim-label">Performance</div><div class="sdim-bar"><div class="sdim-fill" style="width:100%;background:var(--accent)"></div></div><div class="sdim-val">35/35</div></div>
+          <div class="sdim"><div class="sdim-label">Consistance</div><div class="sdim-bar"><div class="sdim-fill" style="width:75%;background:var(--success)"></div></div><div class="sdim-val">21/28</div></div>
+          <div class="sdim"><div class="sdim-label">Impact</div><div class="sdim-bar"><div class="sdim-fill" style="width:68%;background:var(--gold)"></div></div><div class="sdim-val">17/25</div></div>
+          <div class="sdim"><div class="sdim-label">Utilité</div><div class="sdim-bar"><div class="sdim-fill" style="width:33%;background:#A78BFA"></div></div><div class="sdim-val">5/15</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="score-info-title">Une métrique qui va plus loin.</div>
+        <div class="score-info-desc">Le FV Score combine 4 dimensions clés pour donner une évaluation complète et objective d'un joueur CS2. Inspiré du HLTV Rating 2.0, calibré sur les données FACEIT lvl10.</div>
+        <div class="score-bullets">
+          <div class="sbullet"><span class="sbullet-icon">🎯</span>Performance — FV Rating, ADR, K/D contextualisé par niveau ELO</div>
+          <div class="sbullet"><span class="sbullet-icon">📈</span>Consistance — coefficient de variation sur 20 matchs + trend haussier</div>
+          <div class="sbullet"><span class="sbullet-icon">💥</span>Impact — clutches, opening kills, multi-kills pondérés</div>
+          <div class="sbullet"><span class="sbullet-icon">🤝</span>Utilité — flash efficacy, utility damage, assists, saves intelligents</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLANS -->
+  <section class="section" style="padding-top:0">
+    <div class="sec-eyebrow">Tarifs</div>
+    <div class="sec-title">Commencer gratuitement.</div>
+    <div class="plans-grid">
+      <div class="plan">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">0 €</div>
+        <div class="plan-period">pour toujours</div>
+        <div class="plan-feats">
+          <div class="plan-feat on">Recherche FACEIT illimitée</div>
+          <div class="plan-feat on">FV Score complet</div>
+          <div class="plan-feat on">Stats 20 matchs</div>
+          <div class="plan-feat">Watchlist 5 joueurs</div>
+          <div class="plan-feat">Analyse démo</div>
+        </div>
+        <button class="plan-btn" onclick="window.location.href='login.html'">Commencer</button>
+      </div>
+      <div class="plan featured">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">49 €</div>
+        <div class="plan-period">par mois</div>
+        <div class="plan-feats">
+          <div class="plan-feat on">Tout le plan Free</div>
+          <div class="plan-feat on">Watchlist illimitée</div>
+          <div class="plan-feat on">Historique complet</div>
+          <div class="plan-feat on">1 roster équipe</div>
+          <div class="plan-feat on">5 démos / mois</div>
+        </div>
+        <button class="plan-btn cta">Passer à Pro</button>
+      </div>
+      <div class="plan">
+        <div class="plan-name">Club</div>
+        <div class="plan-price">199 €</div>
+        <div class="plan-period">par mois</div>
+        <div class="plan-feats">
+          <div class="plan-feat on">Tout le plan Pro</div>
+          <div class="plan-feat on">5 utilisateurs</div>
+          <div class="plan-feat on">Rosters illimités</div>
+          <div class="plan-feat on">Démos illimitées</div>
+          <div class="plan-feat on">Export PDF</div>
+        </div>
+        <button class="plan-btn cta">Passer à Club</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <div style="border-top:1px solid var(--border);padding:36px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;max-width:1080px;margin:0 auto">
+    <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
+    <div style="display:flex;gap:20px">
+      <a href="compare.html" style="font-size:12px;color:var(--text3);text-decoration:none">Comparer</a>
+      <a href="demo.html" style="font-size:12px;color:var(--text3);text-decoration:none">Démo</a>
+      <a href="account.html" style="font-size:12px;color:var(--text3);text-decoration:none">Mon espace</a>
+    </div>
+    <div style="font-size:12px;color:var(--text3);font-family:var(--mono)">© 2026 FragValue</div>
   </div>
-</div>
 
-<div id="loadingState">
-  <div class="loader"></div>
-  <div class="loading-text" id="loadingText">Chargement du profil...</div>
-</div>
+</div><!-- /landingPage -->
 
-<!-- Dashboard -->
+<!-- LOADING -->
+<div id="loadingState"><div class="loader"></div><div class="loading-text" id="loadingText">Chargement du profil...</div></div>
+
+<!-- DASHBOARD -->
 <div id="dashboard">
   <div class="tab-panel active" id="panelStats">
-
-    <!-- Profile -->
     <div class="profile-card fade-in">
       <div class="profile-avatar-ph" id="profileAvatar">👤</div>
       <div class="profile-info">
@@ -653,86 +533,43 @@
         <div class="profile-elo kpi-neutral" id="eloVal">—</div>
         <div class="profile-elo-label">ELO FACEIT</div>
         <div class="recent-results" id="resultsRow"></div>
-        <button class="follow-btn" id="followBtn" onclick="toggleWatchlist()" style="display:none">
-          + Suivre
-        </button>
+        <button class="follow-btn" id="followBtn" onclick="toggleWatchlist()" style="display:none">+ Suivre</button>
       </div>
     </div>
-
-    <!-- KPIs -->
-    <div class="section-label">Stats clés — 20 derniers matchs</div>
-    <div class="kpi-grid" id="kpiMain"></div>
-
-    <!-- Score -->
-    <div class="section-label">Évaluation recrutement</div>
-    <div class="score-card">
-      <div>
-        <div class="score-number" id="scoutScore">—</div>
-        <div class="score-denom">/ 100</div>
-      </div>
-      <div>
-        <div class="score-title" id="scoutDesc"></div>
-        <div class="score-bars" id="scoutBars"></div>
-      </div>
+    <div class="panel-title">Évaluation recrutement</div>
+    <div class="score-card fade-in" id="scoreCard" style="display:none"></div>
+    <div class="panel-title">Stats clés</div>
+    <div class="kpi-grid fade-in" id="kpiGrid"></div>
+    <div class="panel-title">CT Side VS T Side</div>
+    <div class="side-grid fade-in" id="sideGrid"></div>
+    <div class="panel-title">Évolution</div>
+    <div class="charts-grid fade-in">
+      <div class="chart-card"><div class="chart-title">FV Rating — 20 derniers matchs</div><div class="chart-wrap"><canvas id="ratingChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">K/D ratio</div><div class="chart-wrap"><canvas id="kdChart"></canvas></div></div>
     </div>
-
-    <!-- CT/T split -->
-    <div class="section-label">CT side vs T side</div>
-    <div id="kpiSides"></div>
-
-    <!-- Charts -->
-    <div class="section-label">Progression — 20 derniers matchs</div>
-    <div class="charts-grid">
-      <div class="chart-card"><div class="chart-title">K/D ratio</div><div class="chart-wrap"><canvas id="chartKd"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">HS%</div><div class="chart-wrap"><canvas id="chartHs"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">ADR</div><div class="chart-wrap"><canvas id="chartAdr"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">FV Rating</div><div class="chart-wrap"><canvas id="chartFv"></canvas></div></div>
+    <div class="panel-title">Stats par carte</div>
+    <div class="map-grid fade-in" id="mapGrid"></div>
+    <div class="panel-title">Multi-kills</div>
+    <div class="mk-grid fade-in" id="mkGrid"></div>
+    <div class="panel-title">Clutches</div>
+    <div class="clutch-grid fade-in" id="clutchGrid"></div>
+    <div class="panel-title">Utility</div>
+    <div class="utility-grid fade-in" id="utilityGrid"></div>
+    <div class="panel-title">20 derniers matchs</div>
+    <div class="match-table-wrap fade-in">
+      <table class="match-table"><thead><tr><th>Date</th><th>Carte</th><th>Score</th><th>K</th><th>D</th><th>K/D</th><th>HS%</th><th>ADR</th><th>KAST</th><th>FV Rating</th></tr></thead><tbody id="matchBody"></tbody></table>
     </div>
-
-    <!-- Utility -->
-    <div class="section-label">Flashes & utility</div>
-    <div id="kpiUtility"></div>
-
-    <!-- Trades -->
-    <div class="section-label">Trades, saves & pistol</div>
-    <div id="kpiTrades"></div>
-
-    <!-- Multi-kills -->
-    <div class="section-label">Multi-kills</div>
-    <div class="mk-grid" id="multiKillCards"></div>
-
-    <!-- Clutches -->
-    <div class="section-label">Clutches & opening duels</div>
-    <div id="clutchCards"></div>
-
-    <!-- Maps -->
-    <div class="section-label">Performance par map</div>
-    <div class="map-grid" id="mapCards"></div>
-
-    <!-- Match history -->
-    <div class="section-label">Historique — 20 derniers matchs</div>
-    <div class="match-table-wrap">
-      <table class="match-table">
-        <thead><tr id="matchTableHead"></tr></thead>
-        <tbody id="matchTable"></tbody>
-      </table>
-    </div>
-
   </div>
-
-  <!-- Demo tab -->
   <div class="tab-panel" id="panelDemo">
     <div class="demo-panel fade-in">
-      <div class="demo-panel-title">Analyse ta démo en profondeur</div>
-      <p class="demo-panel-sub">Importe un fichier .dem CS2 et obtiens des heatmaps de positions, duels par zone, trajectoires de grenades et tous les KPIs invisibles depuis FACEIT.</p>
-      <a href="demo.html" class="demo-panel-btn">Déposer ma démo</a>
+      <div class="demo-panel-title">Analyse ta démo CS2</div>
+      <p class="demo-panel-sub">Importe un fichier .dem pour obtenir des heatmaps de positions, zones de duels, déplacements CT/T et KPIs avancés.</p>
+      <a href="demo.html" class="demo-panel-btn">Analyser une démo →</a>
       <div class="demo-features">
-        <div class="demo-feature"><div class="demo-feature-code">HK</div><div class="demo-feature-title">Kill heatmap</div><div class="demo-feature-desc">Zones où tu kills et meurs sur chaque map</div></div>
-        <div class="demo-feature"><div class="demo-feature-code">MV</div><div class="demo-feature-title">Movement map</div><div class="demo-feature-desc">Tes déplacements et zones fréquentées</div></div>
-        <div class="demo-feature"><div class="demo-feature-code">DZ</div><div class="demo-feature-title">Duel win zones</div><div class="demo-feature-desc">% de duels gagnés par zone</div></div>
-        <div class="demo-feature"><div class="demo-feature-code">UT</div><div class="demo-feature-title">Utility map</div><div class="demo-feature-desc">Trajectoires grenades, smokes, flashs</div></div>
-        <div class="demo-feature"><div class="demo-feature-code">EC</div><div class="demo-feature-title">Economy timeline</div><div class="demo-feature-desc">Armes et argent round par round</div></div>
-        <div class="demo-feature"><div class="demo-feature-code">RP</div><div class="demo-feature-title">Round replay</div><div class="demo-feature-desc">Rejeu animé des rounds clés</div></div>
+        <div class="demo-feature"><div class="demo-feature-code">01</div><div class="demo-feature-title">Kill heatmap</div><div class="demo-feature-desc">Zones de kills et deaths par side</div></div>
+        <div class="demo-feature"><div class="demo-feature-code">02</div><div class="demo-feature-title">Déplacements CT/T</div><div class="demo-feature-desc">Trajectoires et zones de présence</div></div>
+        <div class="demo-feature"><div class="demo-feature-code">03</div><div class="demo-feature-title">Duel zones</div><div class="demo-feature-desc">% de duels gagnés par zone</div></div>
+        <div class="demo-feature"><div class="demo-feature-code">04</div><div class="demo-feature-title">Utility map</div><div class="demo-feature-desc">Grenades, smokes, flashes</div></div>
       </div>
     </div>
   </div>
@@ -740,7 +577,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ── Supabase auth nav ──────────────────────────────────────────────────────
 const _sb = supabase.createClient(
   'https://xmyruycvvkmcwysfygcq.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI'
@@ -748,11 +584,20 @@ const _sb = supabase.createClient(
 _sb.auth.getSession().then(({ data }) => {
   if (data.session) {
     document.getElementById('navLoginBtn').style.display = 'none';
-    document.getElementById('navAccountBtn').style.display = 'inline-flex';
+    document.getElementById('navAccountBtn').style.display = '';
   }
 });
-
-
+function showScoutSearch() {
+  document.getElementById('heroSearch').style.display = 'flex';
+  document.getElementById('heroCta').style.display = 'none';
+  document.getElementById('heroStats').style.display = 'none';
+  setTimeout(() => document.getElementById('nickInput').focus(), 50);
+}
+function hideScoutSearch() {
+  document.getElementById('heroSearch').style.display = 'none';
+  document.getElementById('heroCta').style.display = 'flex';
+  document.getElementById('heroStats').style.display = 'flex';
+}
 </script>
 <script src="app.js"></script>
 </body>
