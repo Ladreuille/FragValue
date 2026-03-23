@@ -109,7 +109,7 @@
     .hero{
       display:flex;flex-direction:column;align-items:center;
       justify-content:center;text-align:center;
-      padding:48px 24px 32px;min-height:auto;
+      padding:40px 24px 20px;min-height:auto;
       position:relative;z-index:1;
     }
     .hero::before{
@@ -123,14 +123,14 @@
     }
     .hero-eyebrow::before,.hero-eyebrow::after{content:'';width:28px;height:1px;background:var(--accent);opacity:.5}
     .hero-title{
-      font-size:clamp(32px,5vw,58px);font-weight:700;
-      letter-spacing:-2px;line-height:1.05;margin-bottom:14px;
+      font-size:clamp(28px,4vw,48px);font-weight:700;
+      letter-spacing:-1.5px;line-height:1.05;margin-bottom:12px;
       color:var(--text);
     }
     .hero-title span{color:var(--accent)}
     .hero-sub{
       font-size:16px;color:var(--text2);max-width:440px;
-      line-height:1.7;margin-bottom:32px;font-weight:400;
+      line-height:1.6;margin-bottom:0;font-weight:400;font-size:15px;
     }
 
     /* ── Search ── */
@@ -542,17 +542,14 @@
   <button class="tab-btn" onclick="switchTab('demo',this)">Analyse démo <span class="tab-new">NEW</span></button>
 </div>
 
-<!-- Hero -->
+<!-- Hero compact -->
 <section class="hero" id="hero">
   <div class="hero-eyebrow">CS2 Talent Analytics</div>
   <h1 class="hero-title">Scout smarter.<br/><span>Play better.</span></h1>
   <p class="hero-sub">Analyse complète des profils FACEIT — FV Rating, CT/T split, heatmaps de démos et score de potentiel de recrutement.</p>
-  <div class="search-wrap">
-    <input id="nickInput" type="text" placeholder="Pseudo FACEIT..." autocomplete="off" spellcheck="false"/>
-    <button id="searchBtn" onclick="searchPlayer()">Analyser</button>
-  </div>
   <div id="errorMsg"></div>
-  <p class="search-hint">Essaie avec un pseudo FACEIT actif — ex: s1mple, NiKo, karrigan</p>
+  <!-- Search bar cachée, utilisée via topbar uniquement -->
+  <input id="nickInput" type="text" style="position:absolute;opacity:0;pointer-events:none" autocomplete="off"/>
 </section>
 
 <!-- Feature cards -->
@@ -561,7 +558,7 @@
   <div class="features-grid">
 
     <!-- Scout -->
-    <a class="feature-card" href="#" onclick="document.getElementById('nickInput').focus();return false;"
+    <div class="feature-card"
        style="--fc-color:#3B7FF5;--fc-bg:rgba(59,127,245,.08);--fc-border:rgba(59,127,245,.2);--fc-glow:rgba(59,127,245,.06)">
       <div class="feature-card-icon">🔍</div>
       <div class="feature-card-tag">Scout</div>
@@ -573,11 +570,25 @@
         <span class="feature-pill">CT/T split</span>
         <span class="feature-pill">Consistance</span>
       </div>
-      <span class="feature-card-btn">
-        Analyser un joueur
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </span>
-    </a>
+      <!-- Search inline dans la card -->
+      <div style="display:flex;gap:6px;margin-top:auto">
+        <input id="cardNickInput" type="text" placeholder="Pseudo FACEIT..."
+          autocomplete="off" spellcheck="false"
+          onkeydown="if(event.key==='Enter')cardSearch()"
+          style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:7px;
+                 padding:9px 12px;font-family:var(--mono);font-size:12px;color:var(--text);
+                 outline:none;transition:border-color .15s;"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='var(--border)'"/>
+        <button onclick="cardSearch()"
+          style="background:var(--accent);color:#fff;border:none;padding:9px 16px;
+                 border-radius:7px;font-family:var(--font);font-size:13px;font-weight:600;
+                 cursor:pointer;white-space:nowrap;transition:opacity .15s;"
+          onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+          Analyser →
+        </button>
+      </div>
+    </div>
 
     <!-- Comparer -->
     <a class="feature-card" href="compare.html"
