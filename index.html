@@ -427,6 +427,76 @@
     .follow-btn:hover{border-color:var(--accent);color:var(--accent)}
     .follow-btn.following{border-color:rgba(45,212,160,.3);color:var(--success);background:rgba(45,212,160,.06)}
 
+    /* ── Feature cards ── */
+    .features-section{
+      max-width:900px;margin:0 auto;padding:0 24px 64px;
+    }
+    .features-eyebrow{
+      font-size:11px;font-weight:600;letter-spacing:1.2px;
+      color:var(--text3);text-transform:uppercase;
+      font-family:var(--mono);text-align:center;margin-bottom:32px;
+    }
+    .features-grid{
+      display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+    }
+    @media(max-width:600px){.features-grid{grid-template-columns:1fr}}
+    .feature-card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:12px;padding:24px;
+      display:flex;flex-direction:column;gap:0;
+      transition:border-color .2s,transform .2s;
+      cursor:pointer;text-decoration:none;color:inherit;
+      position:relative;overflow:hidden;
+    }
+    .feature-card::before{
+      content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse at top left,var(--fc-glow,rgba(59,127,245,.04)),transparent 60%);
+      pointer-events:none;
+    }
+    .feature-card:hover{border-color:var(--fc-color,var(--accent));transform:translateY(-2px)}
+    .feature-card-icon{
+      width:40px;height:40px;border-radius:9px;
+      background:var(--fc-bg,var(--accent-dim));
+      border:1px solid var(--fc-border,rgba(59,127,245,.2));
+      display:flex;align-items:center;justify-content:center;
+      margin-bottom:16px;font-size:18px;flex-shrink:0;
+    }
+    .feature-card-tag{
+      font-family:var(--mono);font-size:10px;font-weight:600;
+      letter-spacing:.8px;text-transform:uppercase;
+      color:var(--fc-color,var(--accent));margin-bottom:8px;
+    }
+    .feature-card-title{
+      font-size:17px;font-weight:700;letter-spacing:-.4px;
+      margin-bottom:8px;line-height:1.2;
+    }
+    .feature-card-desc{
+      font-size:13px;color:var(--text2);line-height:1.65;
+      flex:1;margin-bottom:20px;
+    }
+    .feature-card-pills{
+      display:flex;flex-wrap:wrap;gap:5px;margin-bottom:20px;
+    }
+    .feature-pill{
+      font-family:var(--mono);font-size:10px;
+      padding:3px 8px;border-radius:4px;
+      background:var(--card);border:1px solid var(--border);
+      color:var(--text3);
+    }
+    .feature-card-btn{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:13px;font-weight:600;
+      color:var(--fc-color,var(--accent));
+      padding:9px 16px;border-radius:7px;
+      background:var(--fc-bg,var(--accent-dim));
+      border:1px solid var(--fc-border,rgba(59,127,245,.2));
+      transition:opacity .15s;width:fit-content;
+      text-decoration:none;
+    }
+    .feature-card-btn:hover{opacity:.8}
+    .feature-card-btn svg{transition:transform .15s}
+    .feature-card:hover .feature-card-btn svg{transform:translateX(3px)}
+
     /* ── Animations ── */
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -483,6 +553,90 @@
   <div id="errorMsg"></div>
   <p class="search-hint">Essaie avec un pseudo FACEIT actif — ex: s1mple, NiKo, karrigan</p>
 </section>
+
+<!-- Feature cards -->
+<div class="features-section" id="featuresSection">
+  <div class="features-eyebrow">Ce que tu peux faire avec FragValue</div>
+  <div class="features-grid">
+
+    <!-- Scout -->
+    <a class="feature-card" href="#" onclick="document.getElementById('nickInput').focus();return false;"
+       style="--fc-color:#3B7FF5;--fc-bg:rgba(59,127,245,.08);--fc-border:rgba(59,127,245,.2);--fc-glow:rgba(59,127,245,.06)">
+      <div class="feature-card-icon">🔍</div>
+      <div class="feature-card-tag">Scout</div>
+      <div class="feature-card-title">Analyse un profil FACEIT</div>
+      <div class="feature-card-desc">FV Score /100, FV Rating, KAST estimé, CT/T split, historique 20 matchs, sous-niveau lvl 10 et potentiel de recrutement.</div>
+      <div class="feature-card-pills">
+        <span class="feature-pill">FV Score</span>
+        <span class="feature-pill">K/D · ADR · HS%</span>
+        <span class="feature-pill">CT/T split</span>
+        <span class="feature-pill">Consistance</span>
+      </div>
+      <span class="feature-card-btn">
+        Analyser un joueur
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </span>
+    </a>
+
+    <!-- Comparer -->
+    <a class="feature-card" href="compare.html"
+       style="--fc-color:#2DD4A0;--fc-bg:rgba(45,212,160,.08);--fc-border:rgba(45,212,160,.2);--fc-glow:rgba(45,212,160,.05)">
+      <div class="feature-card-icon">⚡</div>
+      <div class="feature-card-tag">Comparer</div>
+      <div class="feature-card-title">Compare 2 à 5 joueurs</div>
+      <div class="feature-card-desc">Spider chart, barres de comparaison, tableau complet avec tous les stats côte à côte. Identifie le meilleur recrutement possible.</div>
+      <div class="feature-card-pills">
+        <span class="feature-pill">Spider chart</span>
+        <span class="feature-pill">FV Score</span>
+        <span class="feature-pill">Multi-kills</span>
+        <span class="feature-pill">ELO FACEIT</span>
+      </div>
+      <span class="feature-card-btn">
+        Comparer des joueurs
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </span>
+    </a>
+
+    <!-- Démo -->
+    <a class="feature-card" href="demo.html"
+       style="--fc-color:#F5C842;--fc-bg:rgba(245,200,66,.08);--fc-border:rgba(245,200,66,.2);--fc-glow:rgba(245,200,66,.04)">
+      <div class="feature-card-icon">🎬</div>
+      <div class="feature-card-tag">Analyse Démo · BETA</div>
+      <div class="feature-card-title">Visualise ton jeu en profondeur</div>
+      <div class="feature-card-desc">Importe un fichier .dem CS2 — heatmaps de kills/deaths par side CT/T, déplacements, zones de duels, utility et economy.</div>
+      <div class="feature-card-pills">
+        <span class="feature-pill">Heatmaps</span>
+        <span class="feature-pill">CT vs T</span>
+        <span class="feature-pill">Duel zones</span>
+        <span class="feature-pill">Utility map</span>
+      </div>
+      <span class="feature-card-btn">
+        Analyser une démo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </span>
+    </a>
+
+    <!-- Mon espace -->
+    <a class="feature-card" href="account.html" id="featureAccount"
+       style="--fc-color:#A78BFA;--fc-bg:rgba(167,139,250,.08);--fc-border:rgba(167,139,250,.2);--fc-glow:rgba(167,139,250,.04)">
+      <div class="feature-card-icon">👤</div>
+      <div class="feature-card-tag">Mon espace</div>
+      <div class="feature-card-title">Watchlist, Roster & Historique</div>
+      <div class="feature-card-desc">Suis tes joueurs favoris, gère ton roster d'équipe, retrouve toutes tes analyses passées et configure ton compte FACEIT.</div>
+      <div class="feature-card-pills">
+        <span class="feature-pill">Watchlist</span>
+        <span class="feature-pill">Roster équipe</span>
+        <span class="feature-pill">Historique</span>
+        <span class="feature-pill">Abonnement</span>
+      </div>
+      <span class="feature-card-btn" id="featureAccountBtn">
+        Accéder à mon espace
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </span>
+    </a>
+
+  </div>
+</div>
 
 <div id="loadingState">
   <div class="loader"></div>
