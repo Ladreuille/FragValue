@@ -547,9 +547,19 @@
   <div class="hero-eyebrow">CS2 Talent Analytics</div>
   <h1 class="hero-title">Scout smarter.<br/><span>Play better.</span></h1>
   <p class="hero-sub">Analyse complète des profils FACEIT — FV Rating, CT/T split, heatmaps de démos et score de potentiel de recrutement.</p>
-  <div id="errorMsg"></div>
-  <!-- Search bar cachée, utilisée via topbar uniquement -->
-  <input id="nickInput" type="text" style="position:absolute;opacity:0;pointer-events:none" autocomplete="off"/>
+  <div id="heroSearch" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:480px;margin-top:24px">
+    <div class="search-wrap" style="width:100%">
+      <input id="nickInput" type="text" placeholder="Pseudo FACEIT..." autocomplete="off" spellcheck="false"
+        onkeydown="if(event.key==='Enter')searchPlayer()"/>
+      <button id="searchBtn" onclick="searchPlayer()">Analyser</button>
+    </div>
+    <div id="errorMsg"></div>
+    <button onclick="document.getElementById('heroSearch').style.display='none';document.getElementById('featuresSection').style.display='block'"
+      style="font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:var(--mono)">
+      ← Retour
+    </button>
+  </div>
+  <div id="errorMsg" style="display:none"></div>
 </section>
 
 <!-- Feature cards -->
@@ -570,24 +580,10 @@
         <span class="feature-pill">CT/T split</span>
         <span class="feature-pill">Consistance</span>
       </div>
-      <!-- Search inline dans la card -->
-      <div style="display:flex;gap:6px;margin-top:auto">
-        <input id="cardNickInput" type="text" placeholder="Pseudo FACEIT..."
-          autocomplete="off" spellcheck="false"
-          onkeydown="if(event.key==='Enter')cardSearch()"
-          style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:7px;
-                 padding:9px 12px;font-family:var(--mono);font-size:12px;color:var(--text);
-                 outline:none;transition:border-color .15s;"
-          onfocus="this.style.borderColor='var(--accent)'"
-          onblur="this.style.borderColor='var(--border)'"/>
-        <button onclick="cardSearch()"
-          style="background:var(--accent);color:#fff;border:none;padding:9px 16px;
-                 border-radius:7px;font-family:var(--font);font-size:13px;font-weight:600;
-                 cursor:pointer;white-space:nowrap;transition:opacity .15s;"
-          onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-          Analyser →
-        </button>
-      </div>
+      <button onclick="openScout()" class="feature-card-btn" style="margin-top:auto;border:none;cursor:pointer">
+        Analyser un joueur
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
     </div>
 
     <!-- Comparer -->
