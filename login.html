@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FragValue — Connexion</title>
+  <title>FragValue : Connexion</title>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -95,7 +95,7 @@
 </head>
 <body>
 
-<!-- LEFT — Proposition de valeur -->
+<!-- LEFT : Proposition de valeur -->
 <div class="left">
   <div class="left-bg"></div>
   <a href="index.html" class="left-logo">Frag<span>Value</span></a>
@@ -106,23 +106,23 @@
       Analyse ton jeu.<br/>
       <span>Progresse vraiment.</span>
     </div>
-    <p class="left-sub">FragValue t'aide à comprendre tes vraies forces et faiblesses — que tu veuilles progresser ou recruter le bon joueur.</p>
+    <p class="left-sub">FragValue t'aide à comprendre tes vraies forces et faiblesses : que tu veuilles progresser ou recruter le bon joueur.</p>
     <div class="features-list">
       <div class="feature-item">
         <span class="feature-icon">🎯</span>
-        <div class="feature-text"><strong>FV Score /100</strong> — une métrique composite qui va bien au-delà du K/D et de l'ELO</div>
+        <div class="feature-text"><strong>FV Score /100</strong> une métrique composite qui va bien au-delà du K/D et de l'ELO</div>
       </div>
       <div class="feature-item">
         <span class="feature-icon">📈</span>
-        <div class="feature-text"><strong>Points d'amélioration</strong> — identifie exactement ce sur quoi travailler en priorité</div>
+        <div class="feature-text"><strong>Points d'amélioration</strong> identifie exactement ce sur quoi travailler en priorité</div>
       </div>
       <div class="feature-item">
         <span class="feature-icon">🎬</span>
-        <div class="feature-text"><strong>Heatmaps de démo</strong> — visualise tes positions CT/T, zones de duels et utility</div>
+        <div class="feature-text"><strong>Heatmaps de démo</strong> visualise tes positions CT/T, zones de duels et utility</div>
       </div>
       <div class="feature-item">
         <span class="feature-icon">⚡</span>
-        <div class="feature-text"><strong>Comparaison multi-joueurs</strong> — spider chart et tableau complet côte à côte</div>
+        <div class="feature-text"><strong>Comparaison multi-joueurs</strong> spider chart et tableau complet côte à côte</div>
       </div>
     </div>
   </div>
@@ -141,7 +141,7 @@
   </div>
 </div>
 
-<!-- RIGHT — Formulaire -->
+<!-- RIGHT : Formulaire -->
 <div class="right">
   <div class="right-inner">
     <a href="index.html" class="mobile-logo">Frag<span>Value</span></a>
@@ -183,7 +183,7 @@
     <p class="form-footer" id="formLink">
       Pas encore de compte ? <a href="#" onclick="setTab('register',null)">S'inscrire gratuitement</a>
     </p>
-    <p class="terms">En t'inscrivant tu acceptes nos conditions d'utilisation.<br/>Gratuit pour commencer — aucune carte requise.</p>
+    <p class="terms">En t'inscrivant tu acceptes nos conditions d'utilisation.<br/>Gratuit pour commencer : aucune carte requise.</p>
   </div>
 </div>
 
@@ -195,7 +195,7 @@
 
   // Rediriger si déjà connecté
   sb.auth.getSession().then(({ data }) => {
-    if (data.session) window.location.href = 'account.html';
+    if (data.session) window.location.href = 'dashboard.html';
   });
 
   // Pré-remplir l'onglet selon URL
@@ -211,7 +211,7 @@
     document.getElementById('authTitle').textContent = isLogin ? 'Connexion' : 'Créer un compte';
     document.getElementById('authSub').textContent   = isLogin
       ? 'Bon retour sur FragValue.'
-      : 'Gratuit pour commencer — rejoins FragValue.';
+      : 'Gratuit pour commencer : rejoins FragValue.';
     document.getElementById('submitBtn').textContent = isLogin ? 'Se connecter' : 'Créer mon compte gratuit';
     document.getElementById('confirmGroup').style.display = isLogin ? 'none' : 'block';
     document.getElementById('formLink').innerHTML = isLogin
@@ -241,7 +241,7 @@
       if (currentTab === 'login') {
         const { error } = await sb.auth.signInWithPassword({ email, password: pwd });
         if (error) { showMsg(translateError(error.message), 'error'); return; }
-        window.location.href = 'account.html';
+        window.location.href = 'dashboard.html';
       } else {
         const { data, error } = await sb.auth.signUp({
           email, password: pwd,
