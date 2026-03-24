@@ -3,415 +3,314 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FragValue — Lier ton compte FACEIT</title>
+  <title>FragValue — Bienvenue</title>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --bg:#0C0E13;--surface:#131620;--card:#191D27;
-      --border:#252A38;--border2:#2C3245;
-      --accent:#3B7FF5;--accent-dim:rgba(59,127,245,.12);
-      --faceit:#FF5500;--faceit-dim:rgba(255,85,0,.1);
-      --text:#EDF0F7;--text2:#8892A4;--text3:#4A5568;
-      --success:#2DD4A0;--danger:#F06B6B;
+      --bg:#08090D;--surface:#0F1119;--card:#141720;--border:#1E2233;--border2:#252B3B;
+      --accent:#3B7FF5;--text:#EDF0F7;--text2:#7A8499;--text3:#3D4459;
+      --success:#2DD4A0;--danger:#F06B6B;--gold:#F5C842;
       --font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace;
     }
-    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
-    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 50% -10%, rgba(59,127,245,.07), transparent);pointer-events:none;z-index:0}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;-webkit-font-smoothing:antialiased;position:relative;overflow:hidden}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 50% 0%, rgba(59,127,245,.08),transparent);pointer-events:none}
 
-    nav{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:52px;border-bottom:1px solid var(--border)}
-    .logo{font-size:16px;font-weight:700;letter-spacing:-.2px;text-decoration:none;color:var(--text)}
-    .logo-accent{color:var(--accent)}
-    .skip-btn{font-size:13px;color:var(--text3);background:transparent;border:none;cursor:pointer;font-family:var(--font);transition:color .15s}
-    .skip-btn:hover{color:var(--text2)}
+    .logo{font-size:16px;font-weight:700;text-decoration:none;color:var(--text);position:fixed;top:28px;left:40px;z-index:10}
+    .logo span{color:var(--accent)}
 
-    .main{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;position:relative;z-index:1}
+    .step{width:100%;max-width:640px;text-align:center;animation:fadeUp .4s ease}
 
-    .onboarding-wrap{width:100%;max-width:480px}
+    /* Step indicators */
+    .steps-indicator{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:44px}
+    .step-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:all .3s}
+    .step-dot.active{background:var(--accent);width:24px;border-radius:4px}
+    .step-dot.done{background:var(--success)}
 
-    /* Progress steps */
-    .steps{display:flex;align-items:center;gap:0;margin-bottom:40px}
-    .step{display:flex;align-items:center;gap:8px;font-size:12px;font-family:var(--mono)}
-    .step-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;transition:all .3s}
-    .step-dot.done{background:var(--success);color:#0C0E13}
-    .step-dot.active{background:var(--accent);color:#fff}
-    .step-dot.pending{background:var(--card);color:var(--text3);border:1px solid var(--border)}
-    .step-label{color:var(--text3)}
-    .step.active .step-label{color:var(--text)}
-    .step.done .step-label{color:var(--text2)}
-    .step-line{flex:1;height:1px;background:var(--border);margin:0 8px;min-width:24px}
-    .step-line.done{background:var(--success)}
+    .eyebrow{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+    .step-title{font-size:clamp(26px,4vw,38px);font-weight:700;letter-spacing:-1.2px;margin-bottom:12px;line-height:1.1}
+    .step-sub{font-size:15px;color:var(--text2);line-height:1.7;max-width:480px;margin:0 auto 40px}
 
-    /* Card */
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:36px;animation:fadeUp .3s ease}
-    .card-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-weight:700;font-size:18px}
-    .icon-faceit{background:var(--faceit-dim);border:1px solid rgba(255,85,0,.2);color:var(--faceit)}
-    .card-title{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:8px}
-    .card-sub{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:28px}
-
-    /* Benefits */
-    .benefits{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
-    .benefit{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px}
-    .benefit-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:700;font-family:var(--mono)}
-    .benefit-icon.blue{background:var(--accent-dim);color:var(--accent)}
-    .benefit-icon.green{background:rgba(45,212,160,.1);color:var(--success)}
-    .benefit-icon.orange{background:var(--faceit-dim);color:var(--faceit)}
-    .benefit-text{flex:1}
-    .benefit-title{font-size:13px;font-weight:600;margin-bottom:2px}
-    .benefit-desc{font-size:12px;color:var(--text3);font-family:var(--mono);line-height:1.5}
-
-    /* Main action — FACEIT OAuth */
-    .faceit-btn{
-      width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
-      padding:14px;border-radius:9px;font-family:var(--font);font-size:14px;font-weight:600;
-      cursor:pointer;transition:all .15s;margin-bottom:12px;
-      background:var(--faceit);color:#fff;border:none;
+    /* Mode cards */
+    .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;text-align:left}
+    @media(max-width:560px){.mode-grid{grid-template-columns:1fr}}
+    .mode-card{
+      background:var(--surface);border:2px solid var(--border);border-radius:14px;
+      padding:28px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
     }
-    .faceit-btn:hover{opacity:.9}
-    .faceit-btn:disabled{opacity:.5;cursor:not-allowed}
-    .faceit-logo{width:22px;height:22px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--faceit);flex-shrink:0}
+    .mode-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--mc-color,var(--accent));transform:scaleX(0);transform-origin:left;transition:transform .25s}
+    .mode-card:hover{border-color:var(--mc-color,var(--accent));transform:translateY(-2px)}
+    .mode-card:hover::before{transform:scaleX(1)}
+    .mode-card.selected{border-color:var(--mc-color,var(--accent));background:var(--mc-bg,rgba(59,127,245,.06))}
+    .mode-card.selected::before{transform:scaleX(1)}
+    .mode-card-icon{font-size:32px;margin-bottom:16px}
+    .mode-card-tag{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--mc-color,var(--accent));margin-bottom:8px}
+    .mode-card-title{font-size:18px;font-weight:700;letter-spacing:-.4px;margin-bottom:8px}
+    .mode-card-desc{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px}
+    .mode-card-features{display:flex;flex-direction:column;gap:6px}
+    .mode-feat{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:7px}
+    .mode-feat::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--mc-color,var(--accent));flex-shrink:0;opacity:.7}
+    .mode-check{position:absolute;top:16px;right:16px;width:20px;height:20px;border-radius:50%;border:2px solid var(--border2);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:10px}
+    .mode-card.selected .mode-check{background:var(--mc-color,var(--accent));border-color:var(--mc-color,var(--accent));color:#fff}
 
-    .divider{display:flex;align-items:center;gap:12px;margin:18px 0;font-size:11px;color:var(--text3);font-family:var(--mono)}
-    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
-
-    /* Manual input */
-    .manual-section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px}
-    .manual-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);margin-bottom:10px}
-    .input-row{display:flex;gap:8px}
-    .faceit-input{
-      flex:1;background:var(--surface);border:1px solid var(--border);
-      border-radius:7px;padding:10px 14px;font-family:var(--mono);
-      font-size:13px;color:var(--text);outline:none;transition:border-color .15s;
+    /* FACEIT input step */
+    .faceit-input-wrap{
+      display:flex;gap:0;width:100%;max-width:420px;margin:0 auto 12px;
+      background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;
+      transition:border-color .15s;
     }
-    .faceit-input:focus{border-color:var(--accent)}
+    .faceit-input-wrap:focus-within{border-color:var(--accent)}
+    .faceit-input{flex:1;background:transparent;border:none;padding:14px 18px;font-family:var(--mono);font-size:14px;color:var(--text);outline:none}
     .faceit-input::placeholder{color:var(--text3)}
-    .save-btn{
+    .faceit-verify-btn{background:var(--accent);color:#fff;border:none;padding:14px 20px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap}
+    .faceit-verify-btn:hover{opacity:.9}
+    .skip-link{font-size:12px;color:var(--text3);font-family:var(--mono);cursor:pointer;background:none;border:none;transition:color .15s}
+    .skip-link:hover{color:var(--text2)}
+    .faceit-verified{display:none;align-items:center;gap:10px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);border-radius:8px;padding:12px 16px;margin:0 auto 12px;max-width:420px;width:100%}
+    .faceit-verified-avatar{width:36px;height:36px;border-radius:7px;background:var(--card);background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .faceit-verified-name{font-size:14px;font-weight:700}
+    .faceit-verified-meta{font-size:11px;color:var(--success);font-family:var(--mono)}
+
+    /* CTA button */
+    .cta-btn{
+      display:inline-flex;align-items:center;gap:8px;
       background:var(--accent);color:#fff;border:none;
-      padding:10px 18px;border-radius:7px;font-family:var(--font);
-      font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap;
+      padding:14px 32px;border-radius:9px;font-family:var(--font);font-size:15px;font-weight:600;
+      cursor:pointer;transition:all .2s;box-shadow:0 0 28px rgba(59,127,245,.2);
     }
-    .save-btn:hover{opacity:.9}
-    .save-btn:disabled{opacity:.5;cursor:not-allowed}
-    .manual-hint{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:8px;line-height:1.5}
+    .cta-btn:hover{opacity:.9;transform:translateY(-1px)}
+    .cta-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+    .cta-ghost{display:inline-flex;align-items:center;gap:6px;background:transparent;color:var(--text3);border:none;font-family:var(--mono);font-size:12px;cursor:pointer;padding:8px 16px;transition:color .15s;margin-top:8px}
+    .cta-ghost:hover{color:var(--text2)}
 
-    /* Status messages */
-    .msg{display:none;padding:11px 14px;border-radius:7px;font-size:12px;font-family:var(--mono);margin-top:14px}
-    .msg.error{background:rgba(240,107,107,.08);border:1px solid rgba(240,107,107,.2);color:var(--danger)}
-    .msg.success{background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);color:var(--success)}
-    .msg.loading{background:var(--accent-dim);border:1px solid rgba(59,127,245,.2);color:#60A5FA}
+    /* Progress bar */
+    .progress-wrap{position:fixed;top:0;left:0;right:0;height:2px;background:var(--border)}
+    .progress-fill{height:100%;background:var(--accent);transition:width .4s ease}
 
-    /* Verified state */
-    .verified-card{display:none;background:rgba(45,212,160,.06);border:1px solid rgba(45,212,160,.2);border-radius:12px;padding:20px;text-align:center;animation:fadeUp .3s ease}
-    .verified-icon{font-size:32px;margin-bottom:12px}
-    .verified-name{font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
-    .verified-meta{font-size:12px;color:var(--text2);font-family:var(--mono);margin-bottom:16px}
-    .verified-continue{
-      display:inline-block;background:var(--success);color:#0C0E13;
-      padding:11px 24px;border-radius:8px;font-family:var(--font);
-      font-size:13px;font-weight:700;border:none;cursor:pointer;transition:opacity .15s;
-    }
-    .verified-continue:hover{opacity:.9}
-
-    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   </style>
 </head>
 <body>
-<nav>
-  <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
-  <button class="skip-btn" onclick="skipOnboarding()">Passer cette étape →</button>
-</nav>
 
-<div class="main">
-  <div class="onboarding-wrap">
+<div class="progress-wrap"><div class="progress-fill" id="progressFill" style="width:33%"></div></div>
+<a href="index.html" class="logo">Frag<span>Value</span></a>
 
-    <!-- Steps indicator -->
-    <div class="steps">
-      <div class="step done">
-        <div class="step-dot done">✓</div>
-        <span class="step-label">Compte créé</span>
-      </div>
-      <div class="step-line done"></div>
-      <div class="step active">
-        <div class="step-dot active">2</div>
-        <span class="step-label">Lier FACEIT</span>
-      </div>
-      <div class="step-line"></div>
-      <div class="step pending">
-        <div class="step-dot pending">3</div>
-        <span class="step-label">C'est parti</span>
-      </div>
-    </div>
-
-    <!-- Main card -->
-    <div class="card" id="mainCard">
-      <div class="card-icon icon-faceit" style="overflow:hidden;padding:6px"><img src="https://cdn-frontend.faceit-cdn.net/web/static/media/faceit_logo_white.svg" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML='<span style=font-weight:800;color:#FF5500;font-size:14px>FACEIT</span>'"></div>
-      <div class="card-title">Lie ton compte FACEIT</div>
-      <p class="card-sub">Pour analyser ton profil instantanément sans saisir ton pseudo à chaque fois et accéder à des fonctionnalités exclusives.</p>
-
-      <div class="benefits">
-        <div class="benefit">
-          <div class="benefit-icon blue">⚡</div>
-          <div class="benefit-text">
-            <div class="benefit-title">Analyse instantanée</div>
-            <div class="benefit-desc">Ton profil s'analyse automatiquement à chaque connexion</div>
-          </div>
-        </div>
-        <div class="benefit">
-          <div class="benefit-icon green">📊</div>
-          <div class="benefit-text">
-            <div class="benefit-title">Watchlist intelligente</div>
-            <div class="benefit-desc">Reçois des alertes quand tes joueurs suivis progressent</div>
-          </div>
-        </div>
-        <div class="benefit">
-          <div class="benefit-icon orange">🎮</div>
-          <div class="benefit-text">
-            <div class="benefit-title">Comparaison directe</div>
-            <div class="benefit-desc">Compare-toi instantanément à n'importe quel joueur</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- FACEIT OAuth (placeholder — nécessite FACEIT Developer App) -->
-      <div style="width:100%;padding:13px;border-radius:9px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:12px;margin-bottom:12px;opacity:.5;cursor:not-allowed">
-        <div style="width:22px;height:22px;overflow:hidden;flex-shrink:0"><img src="https://cdn-frontend.faceit-cdn.net/web/static/media/faceit_logo_white.svg" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML='<span style=font-weight:800;color:#FF5500;font-size:12px>F</span>'"></div>
-        <span style="font-size:13px;font-weight:600;color:var(--text2)">Connexion automatique FACEIT</span>
-        <span style="margin-left:auto;font-size:10px;font-family:var(--mono);color:var(--text3);background:var(--surface);border:1px solid var(--border);padding:2px 7px;border-radius:4px">Bientôt</span>
-      </div>
-
-      <div class="divider">ou entre ton pseudo manuellement</div>
-
-      <!-- Manual input -->
-      <div class="manual-section">
-        <div class="manual-label">Pseudo FACEIT</div>
-        <div class="input-row">
-          <input class="faceit-input" id="faceitNickInput" type="text" placeholder="Ton pseudo FACEIT exact..." autocomplete="off" spellcheck="false"/>
-          <button class="save-btn" id="saveBtn" onclick="saveFaceitNick()">Vérifier</button>
-        </div>
-        <p class="manual-hint">Ton pseudo est sensible à la casse — ex: s1mple, NiKo, karrigan</p>
-      </div>
-
-      <div id="msgBox" class="msg"></div>
-    </div>
-
-    <!-- Verified state -->
-    <div class="verified-card" id="verifiedCard">
-      <div class="verified-icon">✓</div>
-      <div class="verified-name" id="verifiedName"></div>
-      <div class="verified-meta" id="verifiedMeta"></div>
-      <button class="verified-continue" onclick="continueToApp()">Accéder à FragValue →</button>
-    </div>
-
+<!-- STEP 1 : Choix du mode -->
+<div class="step" id="step1">
+  <div class="steps-indicator">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
   </div>
+  <div class="eyebrow">Bienvenue sur FragValue</div>
+  <h1 class="step-title">Comment vas-tu utiliser FragValue ?</h1>
+  <p class="step-sub">Choisis ton profil — l'interface sera adaptée à ton intention.</p>
+
+  <div class="mode-grid">
+    <div class="mode-card" id="modePlayer" style="--mc-color:#3B7FF5;--mc-bg:rgba(59,127,245,.06)"
+         onclick="selectMode('player')">
+      <div class="mode-check" id="checkPlayer"></div>
+      <div class="mode-card-icon">🎮</div>
+      <div class="mode-card-tag">Joueur</div>
+      <div class="mode-card-title">Je veux progresser</div>
+      <div class="mode-card-desc">Analyse mon jeu, identifie mes axes d'amélioration et suis ma progression dans le temps.</div>
+      <div class="mode-card-features">
+        <div class="mode-feat">Points d'amélioration personnalisés</div>
+        <div class="mode-feat">Analyse démo CT/T</div>
+        <div class="mode-feat">Suivi de progression</div>
+        <div class="mode-feat">Heatmaps de positions</div>
+      </div>
+    </div>
+
+    <div class="mode-card" id="modeScout" style="--mc-color:#2DD4A0;--mc-bg:rgba(45,212,160,.06)"
+         onclick="selectMode('scout')">
+      <div class="mode-check" id="checkScout"></div>
+      <div class="mode-card-icon">🔍</div>
+      <div class="mode-card-tag">Scout / Coach</div>
+      <div class="mode-card-title">Je recrute ou coache</div>
+      <div class="mode-card-desc">Analyse et compare des joueurs, gère un roster, identifie les meilleurs profils à recruter.</div>
+      <div class="mode-card-features">
+        <div class="mode-feat">Comparaison multi-joueurs</div>
+        <div class="mode-feat">Watchlist & Roster</div>
+        <div class="mode-feat">FV Score /100</div>
+        <div class="mode-feat">Fiches joueurs complètes</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="cta-btn" id="step1Btn" onclick="goStep2()" disabled>
+    Continuer
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </button>
+</div>
+
+<!-- STEP 2 : Lier compte FACEIT -->
+<div class="step" id="step2" style="display:none">
+  <div class="steps-indicator">
+    <div class="step-dot done" id="dot1b"></div>
+    <div class="step-dot active" id="dot2b"></div>
+    <div class="step-dot" id="dot3b"></div>
+  </div>
+  <div class="eyebrow" id="step2Eyebrow">Pour les joueurs</div>
+  <h1 class="step-title" id="step2Title">Quel est ton pseudo FACEIT ?</h1>
+  <p class="step-sub" id="step2Sub">On vérifie ton compte pour personnaliser ton expérience.</p>
+
+  <div class="faceit-input-wrap">
+    <input class="faceit-input" id="faceitInput" type="text"
+      placeholder="Ton pseudo FACEIT exact..." autocomplete="off" spellcheck="false"
+      onkeydown="if(event.key==='Enter')verifyFaceit()"/>
+    <button class="faceit-verify-btn" onclick="verifyFaceit()">Vérifier →</button>
+  </div>
+
+  <div class="faceit-verified" id="faceitVerified">
+    <div class="faceit-verified-avatar" id="verifiedAvatar">👤</div>
+    <div>
+      <div class="faceit-verified-name" id="verifiedName"></div>
+      <div class="faceit-verified-meta" id="verifiedMeta"></div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0;margin-top:16px">
+    <button class="cta-btn" id="step2Btn" onclick="goStep3()" disabled>
+      Continuer
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+    <button class="cta-ghost" onclick="skipFaceit()">Passer cette étape →</button>
+  </div>
+</div>
+
+<!-- STEP 3 : Prêt -->
+<div class="step" id="step3" style="display:none">
+  <div class="steps-indicator">
+    <div class="step-dot done"></div>
+    <div class="step-dot done"></div>
+    <div class="step-dot active"></div>
+  </div>
+  <div style="font-size:56px;margin-bottom:20px">🚀</div>
+  <div class="eyebrow">Tout est prêt</div>
+  <h1 class="step-title" id="step3Title">Bienvenue sur FragValue !</h1>
+  <p class="step-sub" id="step3Sub">Ton compte est configuré. Commence par analyser ton premier joueur.</p>
+  <button class="cta-btn" onclick="finish()">
+    Accéder à mon espace
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </button>
 </div>
 
 <script>
   const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
-  const { createClient } = supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
+  let selectedMode = null;
+  let verifiedFaceitNick = null;
   let currentUser = null;
-  let verifiedNick = null;
 
-  // ── Init ──────────────────────────────────────────────────────────────────
-  async function init() {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { window.location.href = 'login.html'; return; }
-    currentUser = session.user;
+  // Vérifier session
+  sb.auth.getSession().then(({ data }) => {
+    if (!data.session) { window.location.href = 'login.html'; return; }
+    currentUser = data.session.user;
 
-    // Vérifie si FACEIT déjà lié
-    const { data: profile } = await sb.from('profiles').select('faceit_nickname').eq('id', currentUser.id).single();
-    if (profile?.faceit_nickname) {
-      // Déjà lié — redirige directement
-      window.location.href = `index.html?analyse=${encodeURIComponent(profile.faceit_nickname)}`;
-    }
-  }
-
-  // ── FACEIT OAuth ──────────────────────────────────────────────────────────
-  // Note: nécessite une FACEIT Developer App sur developers.faceit.com
-  // URL OAuth: https://accounts.faceit.com/accounts?redirect_popup=true&client_id=TON_CLIENT_ID
-  // PKCE helpers
-  function base64urlEncode(buffer) {
-    return btoa(String.fromCharCode(...new Uint8Array(buffer)))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  }
-  async function generateCodeVerifier() {
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    return base64urlEncode(array);
-  }
-  async function generateCodeChallenge(verifier) {
-    const encoder = new TextEncoder();
-    const data    = encoder.encode(verifier);
-    const digest  = await crypto.subtle.digest('SHA-256', data);
-    return base64urlEncode(digest);
-  }
-
-  async function connectFaceitOAuth() {
-    const FACEIT_CLIENT_ID = 'fc0b3ea7-0309-4da7-adc8-6b0fe2384ab4';
-    const redirectUri      = 'https://frag-value.vercel.app/faceit-callback.html';
-    const scope            = 'openid profile email';
-
-    // PKCE flow
-    const codeVerifier  = await generateCodeVerifier();
-    const codeChallenge = await generateCodeChallenge(codeVerifier);
-    sessionStorage.setItem('faceit_code_verifier', codeVerifier);
-
-    const params = new URLSearchParams({
-      client_id:             FACEIT_CLIENT_ID,
-      redirect_uri:          redirectUri,
-      response_type:         'code',
-      scope:                 scope,
-      code_challenge:        codeChallenge,
-      code_challenge_method: 'S256',
-    });
-
-    // Use FACEIT's standard OAuth endpoint (not popup mode)
-    const authUrl = `https://accounts.faceit.com/accounts?${params.toString()}`;
-    console.log('Auth URL:', authUrl);
-    window.location.href = authUrl;
-  }
-
-  // ── Gère le retour OAuth FACEIT ───────────────────────────────────────────
-  async function handleFaceitCallback() {
-    const params = new URLSearchParams(window.location.search);
-    const code   = params.get('code');
-    if (!code) return; // Pas un retour OAuth
-    console.log('FACEIT callback received, code:', code.substring(0, 10) + '...');
-
-    // State optionnel
-    sessionStorage.removeItem('faceit_oauth_state');
-
-    // Cache le formulaire manuel, montre le loading
-    document.getElementById('mainCard').style.opacity = '.5';
-    showMsg('Connexion FACEIT en cours...', 'loading');
-
-    try {
-      // Échange le code via notre fonction serverless (PKCE)
-      const codeVerifier = sessionStorage.getItem('faceit_code_verifier');
-      sessionStorage.removeItem('faceit_code_verifier');
-      const res = await fetch('/api/faceit-auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code,
-          redirect_uri:  'https://frag-value.vercel.app/faceit-callback.html',
-          code_verifier: codeVerifier,
-        }),
+    // Vérifier si déjà onboardé
+    sb.from('profiles').select('mode,faceit_nickname').eq('id', currentUser.id).single()
+      .then(({ data: profile }) => {
+        if (profile?.mode) {
+          // Déjà onboardé → rediriger
+          window.location.href = 'account.html';
+        }
       });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        document.getElementById('mainCard').style.opacity = '1';
-        showMsg(data.error || 'Erreur FACEIT OAuth. Utilise le pseudo manuel.', 'error');
-        return;
-      }
-
-      // Sauvegarde dans Supabase
-      await sb.from('profiles').update({
-        faceit_nickname: data.nickname,
-        faceit_id:       data.playerId,
-        updated_at:      new Date().toISOString(),
-      }).eq('id', currentUser.id);
-
-      verifiedNick = data.nickname;
-
-      // Nettoie l'URL
-      window.history.replaceState({}, document.title, '/onboarding.html');
-
-      // Affiche la carte de confirmation
-      document.getElementById('mainCard').style.display = 'none';
-      document.getElementById('verifiedName').textContent = data.nickname;
-      document.getElementById('verifiedMeta').textContent =
-        `${data.level ? 'Level ' + data.level + ' · ' : ''}${data.elo ? data.elo + ' ELO · ' : ''}${data.country?.toUpperCase() || ''}`;
-      document.getElementById('verifiedCard').style.display = 'block';
-
-    } catch(err) {
-      document.getElementById('mainCard').style.opacity = '1';
-      showMsg('Erreur lors de la connexion FACEIT. Utilise le pseudo manuel.', 'error');
-    }
-  }
-
-  // ── Sauvegarde pseudo manuel ───────────────────────────────────────────────
-  async function saveFaceitNick() {
-    const nick = document.getElementById('faceitNickInput').value.trim();
-    if (!nick) { showMsg('Entre ton pseudo FACEIT.', 'error'); return; }
-
-    const btn = document.getElementById('saveBtn');
-    btn.disabled = true;
-    btn.textContent = 'Vérification...';
-    showMsg('Vérification du profil FACEIT...', 'loading');
-
-    try {
-      // Vérifie que le profil existe via l'API FragValue
-      const res  = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`);
-      const data = await res.json();
-
-      if (!res.ok || !data.player) {
-        showMsg(`Pseudo "${nick}" introuvable sur FACEIT. Vérifie l'orthographe.`, 'error');
-        return;
-      }
-
-      // Sauvegarde dans Supabase
-      await sb.from('profiles').update({
-        faceit_nickname: data.player.nickname,
-        faceit_id:       data.player.playerId,
-        updated_at:      new Date().toISOString(),
-      }).eq('id', currentUser.id);
-
-      verifiedNick = data.player.nickname;
-
-      // Affiche la carte de confirmation
-      document.getElementById('mainCard').style.display = 'none';
-      const vc = document.getElementById('verifiedCard');
-      document.getElementById('verifiedName').textContent = data.player.nickname;
-      document.getElementById('verifiedMeta').textContent = `Level ${data.cs2?.level || '—'} · ${data.cs2?.elo?.toLocaleString() || '—'} ELO · ${data.player.country?.toUpperCase() || ''}`;
-      vc.style.display = 'block';
-
-    } catch (e) {
-      showMsg('Impossible de vérifier le profil. Réessaie.', 'error');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Vérifier';
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const input = document.getElementById('faceitNickInput');
-    if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') saveFaceitNick(); });
   });
 
-  // ── Continue vers l'app ───────────────────────────────────────────────────
-  function continueToApp() {
-    if (verifiedNick) {
-      window.location.href = `index.html?analyse=${encodeURIComponent(verifiedNick)}`;
-    } else {
-      window.location.href = 'index.html';
+  function selectMode(mode) {
+    selectedMode = mode;
+    document.getElementById('modePlayer').classList.toggle('selected', mode === 'player');
+    document.getElementById('modeScout').classList.toggle('selected', mode === 'scout');
+    document.getElementById('checkPlayer').textContent = mode === 'player' ? '✓' : '';
+    document.getElementById('checkScout').textContent  = mode === 'scout'  ? '✓' : '';
+    document.getElementById('step1Btn').disabled = false;
+  }
+
+  function goStep2() {
+    if (!selectedMode) return;
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'block';
+    document.getElementById('progressFill').style.width = '66%';
+
+    if (selectedMode === 'scout') {
+      document.getElementById('step2Eyebrow').textContent = 'Pour les scouts & coaches';
+      document.getElementById('step2Title').textContent   = 'Quel joueur veux-tu analyser en premier ?';
+      document.getElementById('step2Sub').textContent     = 'Entre un pseudo FACEIT pour démarrer — tu peux aussi passer cette étape.';
+    }
+    setTimeout(() => document.getElementById('faceitInput').focus(), 100);
+  }
+
+  async function verifyFaceit() {
+    const nick = document.getElementById('faceitInput').value.trim();
+    if (!nick) return;
+    const btn = document.querySelector('.faceit-verify-btn');
+    btn.textContent = '...'; btn.disabled = true;
+    try {
+      const res  = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`);
+      const data = await res.json();
+      if (!res.ok || !data.player) {
+        document.getElementById('faceitInput').style.borderColor = 'var(--danger)';
+        btn.textContent = 'Pseudo introuvable'; btn.disabled = false;
+        return;
+      }
+      verifiedFaceitNick = data.player.nickname;
+      // Afficher confirmation
+      const verifiedEl = document.getElementById('faceitVerified');
+      const avatar = data.player.avatar;
+      const avatarEl = document.getElementById('verifiedAvatar');
+      if (avatar) { avatarEl.style.backgroundImage = `url(${avatar})`; avatarEl.textContent = ''; }
+      document.getElementById('verifiedName').textContent = data.player.nickname;
+      document.getElementById('verifiedMeta').textContent = `Lvl ${data.cs2?.level} · ${data.cs2?.elo} ELO · ✓ Compte vérifié`;
+      verifiedEl.style.display = 'flex';
+      document.getElementById('step2Btn').disabled = false;
+      btn.textContent = '✓ Vérifié'; btn.style.background = 'var(--success)';
+    } catch {
+      btn.textContent = 'Erreur'; btn.disabled = false;
     }
   }
 
-  // ── Skip ──────────────────────────────────────────────────────────────────
-  async function skipOnboarding() {
-    // Marque l'onboarding comme vu pour ne pas redemander
-    await sb.from('profiles').update({ updated_at: new Date().toISOString() }).eq('id', currentUser.id);
-    window.location.href = 'index.html';
+  function skipFaceit() {
+    verifiedFaceitNick = null;
+    goStep3();
   }
 
-  // ── Messages ──────────────────────────────────────────────────────────────
-  function showMsg(text, type) {
-    const el = document.getElementById('msgBox');
-    el.textContent   = text;
-    el.className     = `msg ${type}`;
-    el.style.display = 'block';
+  async function goStep3() {
+    // Sauvegarder mode + faceit dans Supabase
+    if (currentUser) {
+      const update = { mode: selectedMode };
+      if (verifiedFaceitNick) update.faceit_nickname = verifiedFaceitNick;
+      await sb.from('profiles').update(update).eq('id', currentUser.id);
+    }
+
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('step3').style.display = 'block';
+    document.getElementById('progressFill').style.width = '100%';
+
+    // Message personnalisé
+    if (selectedMode === 'player') {
+      document.getElementById('step3Title').textContent = verifiedFaceitNick
+        ? `Bienvenue ${verifiedFaceitNick} !`
+        : 'Bienvenue sur FragValue !';
+      document.getElementById('step3Sub').textContent = 'Ton compte joueur est prêt. Lance ta première analyse pour voir tes axes d\'amélioration.';
+    } else {
+      document.getElementById('step3Title').textContent = 'Ton espace scout est prêt !';
+      document.getElementById('step3Sub').textContent = 'Commence par analyser un joueur ou configure ta watchlist de recrutement.';
+    }
   }
 
-  // ── Start ─────────────────────────────────────────────────────────────────
-  handleFaceitCallback();
-  init();
+  function finish() {
+    // Si joueur avec FACEIT lié → analyser directement
+    if (selectedMode === 'player' && verifiedFaceitNick) {
+      window.location.href = `index.html?analyse=${encodeURIComponent(verifiedFaceitNick)}`;
+    } else {
+      window.location.href = 'account.html';
+    }
+  }
 </script>
 </body>
 </html>
