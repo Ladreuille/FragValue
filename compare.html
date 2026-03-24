@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FragValue — Comparaison joueurs</title>
+  <title>FragValue : Comparaison joueurs</title>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
@@ -150,7 +150,7 @@
   <div class="page-header">
     <div class="page-eyebrow">Analyse comparative</div>
     <h1 class="page-title">Comparer les joueurs</h1>
-    <p class="page-sub">Compare les stats de 2 à 5 joueurs FACEIT — FV Rating, K/D, HS%, ADR, CT/T split, multi-kills et plus.</p>
+    <p class="page-sub">Compare les stats de 2 à 5 joueurs FACEIT : FV Rating, K/D, HS%, ADR, CT/T split, multi-kills et plus.</p>
   </div>
 
   <!-- Search -->
@@ -197,7 +197,7 @@
     <div class="section-label">Vue d'ensemble</div>
     <div class="charts-row">
       <div class="chart-card">
-        <div class="chart-title">Spider chart — profil global</div>
+        <div class="chart-title">Spider chart : profil global</div>
         <div class="radar-wrap"><canvas id="radarChart"></canvas></div>
       </div>
       <div class="chart-card">
@@ -535,17 +535,29 @@ function renderTable() {
   const tbody = document.getElementById('tableBody');
   tbody.innerHTML = groups.map(group => {
     const headerRow = `<tr class="stat-group-header"><td colspan="${playersData.length + 1}">${group.title}</td></tr>`;
-    const dataRows  = group.rows.map(row => {
-      const rawVals = playersData.map(p => parseFloat(row.get(p)) || 0);
-      const best    = row.higher ? Math.max(...rawVals) : Math.min(...rawVals);
-      const worst   = row.higher ? Math.min(...rawVals) : Math.max(...rawVals);
-      const cells   = playersData.map((p, i) => {
+
+    const dataRows = group.rows.map(row => {
+      const rawVals  = playersData.map(p => parseFloat(row.get(p)) || 0);
+      const dispVals = playersData.map(p => row.get(p));
+
+      // Masquer la ligne si toutes les valeurs sont 0 ou '-' (donnée non disponible)
+      const allEmpty = dispVals.every(v => !v || v === '0' || v === '-' || v === '0%' || v === '%' || parseFloat(v) === 0);
+      if (allEmpty) return '';
+
+      const best  = row.higher ? Math.max(...rawVals) : Math.min(...rawVals);
+      const worst = row.higher ? Math.min(...rawVals) : Math.max(...rawVals);
+      const cells = playersData.map((p, i) => {
         const raw = rawVals[i];
-        const cls = raw === best && playersData.length > 1 ? 'stat-best' : raw === worst && playersData.length > 1 && best !== worst ? 'stat-worst' : 'stat-mid';
-        return `<td class="stat-val ${cls}">${row.get(p)}</td>`;
+        const cls = raw === best && playersData.length > 1 ? 'stat-best'
+                  : raw === worst && playersData.length > 1 && best !== worst ? 'stat-worst'
+                  : 'stat-mid';
+        return `<td class="stat-val ${cls}">${dispVals[i]}</td>`;
       }).join('');
       return `<tr><td class="stat-name">${row.label}</td>${cells}</tr>`;
     }).join('');
+
+    // Masquer le groupe entier si toutes ses lignes sont vides
+    if (!dataRows.trim()) return '';
     return headerRow + dataRows;
   }).join('');
 }
