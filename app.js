@@ -1,4 +1,4 @@
-// app.js — FragValue Scout v6 — Premium Design
+// app.js : FragValue Scout v6 : Premium Design
 
 document.getElementById('nickInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') searchPlayer();
@@ -163,7 +163,7 @@ function renderDashboard(data) {
     }
   }
 
-  // Level badge — sous-niveau dynamique pour lvl 10
+  // Level badge : sous-niveau dynamique pour lvl 10
   const lvl = cs2.level || 1;
   const levelBadge = document.getElementById('levelBadge');
   if (levelBadge) {
@@ -186,7 +186,7 @@ function renderDashboard(data) {
   // FV badge
   const fvBadge = document.getElementById('fvBadge');
   if (fvBadge) {
-    fvBadge.textContent = `FV ${recent.fvRating} — ${fvLabel(recent.fvRating)}`;
+    fvBadge.textContent = `FV ${recent.fvRating} : ${fvLabel(recent.fvRating)}`;
     fvBadge.className   = fvBadgeClass(recent.fvRating);
   }
 
@@ -233,7 +233,7 @@ function renderDashboard(data) {
 
   document.getElementById('scoutScore').textContent = total;
   document.getElementById('scoutDesc').textContent  = score?.label
-    ? `${score.label} — ${scoreLabel(total)}`
+    ? `${score.label} : ${scoreLabel(total)}`
     : scoreLabel(total);
 
   // Barre de sous-niveau lvl10 (si applicable)
@@ -432,8 +432,8 @@ function renderDashboard(data) {
         <td class="${kdCl}">${m.kd.toFixed(2)}</td>
         <td>${m.kills}</td><td>${m.deaths}</td><td>${m.assists}</td>
         <td>${m.hsPct.toFixed(0)}%</td>
-        <td>${m.adr>0?m.adr.toFixed(0):'—'}</td>
-        <td>${m.kast>0?m.kast.toFixed(0)+'%':'—'}</td>
+        <td>${m.adr>0?m.adr.toFixed(0):''}</td>
+        <td>${m.kast>0?m.kast.toFixed(0)+'%':''}</td>
         <td>${m.double+m.triple+m.quad+m.ace}</td>
         <td>${m.clutch1v1+m.clutch1v2+m.clutch1v3}</td>
         <td>${m.mvp}</td>
@@ -446,10 +446,10 @@ function renderDashboard(data) {
 }
 
 function scoreLabel(s) {
-  if (s >= 85) return 'Talent exceptionnel — recruter immédiatement';
-  if (s >= 70) return 'Très bon joueur — fort potentiel';
-  if (s >= 55) return 'Joueur solide — à suivre';
-  if (s >= 40) return 'Niveau correct — progression possible';
+  if (s >= 85) return 'Talent exceptionnel : recruter immédiatement';
+  if (s >= 70) return 'Très bon joueur : fort potentiel';
+  if (s >= 55) return 'Joueur solide : à suivre';
+  if (s >= 40) return 'Niveau correct : progression possible';
   return 'Niveau débutant / intermédiaire';
 }
 
@@ -572,7 +572,7 @@ async function saveAnalysis(data) {
       analysed_at:     new Date().toISOString(),
     });
   } catch(e) {
-    // Silencieux — pas critique
+    // Silencieux : pas critique
     console.warn('saveAnalysis:', e.message);
   }
 }
