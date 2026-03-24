@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FragValue — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#08090D;--surface:#0F1119;--card:#141720;--border:#1E2233;--border2:#252B3B;
+      --accent:#3B7FF5;--accent-dim:rgba(59,127,245,.10);
+      --text:#EDF0F7;--text2:#7A8499;--text3:#3D4459;
+      --success:#2DD4A0;--danger:#F06B6B;--gold:#F5C842;
+      --font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,13,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+    .logo{font-size:16px;font-weight:700;letter-spacing:-.3px;text-decoration:none;color:var(--text)}
+    .logo span{color:var(--accent)}
+    .nav-center{display:flex;align-items:center;gap:2px}
+    .nav-link{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 14px;border-radius:6px;transition:all .15s;font-weight:500}
+    .nav-link:hover{color:var(--text);background:rgba(255,255,255,.04)}
+    .nav-right{display:flex;align-items:center;gap:8px}
+    .nav-user{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:8px;border:1px solid var(--border)}
+    .nav-avatar{width:26px;height:26px;border-radius:6px;background:var(--card);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+    .nav-username{font-size:13px;font-weight:500;font-family:var(--mono)}
+    .nav-logout{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;padding:6px 10px;border-radius:6px;transition:all .15s;font-family:var(--mono)}
+    .nav-logout:hover{color:var(--danger)}
+    .page{max-width:1200px;margin:0 auto;padding:28px 32px 80px;display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start}
+    @media(max-width:900px){.page{grid-template-columns:1fr;padding:16px}}
+    .sidebar{position:sticky;top:76px;display:flex;flex-direction:column;gap:4px}
+    @media(max-width:900px){.sidebar{display:grid;grid-template-columns:repeat(3,1fr);position:static}}
+    .sidebar-section{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);padding:6px 10px;margin-top:6px}
+    @media(max-width:900px){.sidebar-section{display:none}}
+    .sidebar-btn{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;border:none;background:transparent;color:var(--text2);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;width:100%;text-align:left}
+    .sidebar-btn:hover{background:var(--surface);color:var(--text)}
+    .sidebar-btn.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+    .sidebar-btn svg{flex-shrink:0;opacity:.5;transition:opacity .15s}
+    .sidebar-btn.active svg,.sidebar-btn:hover svg{opacity:1}
+    .sidebar-badge{font-family:var(--mono);font-size:9px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(59,127,245,.2);padding:1px 5px;border-radius:3px;margin-left:auto}
+    .main{min-width:0}
+    .tab-panel{display:none}.tab-panel.active{display:block;animation:fadeUp .25s ease}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .sec-label{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:0 0 12px;display:flex;align-items:center;gap:10px;font-family:var(--mono)}
+    .sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+    .hero-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:16px;position:relative;overflow:hidden}
+    .hero-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 0% 50%,rgba(59,127,245,.06),transparent);pointer-events:none}
+    .hero-top{display:flex;align-items:center;gap:16px;margin-bottom:18px;position:relative;z-index:1}
+    .hero-avatar{width:60px;height:60px;border-radius:11px;background:var(--card);border:1px solid var(--border);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .hero-info{flex:1;min-width:0}
+    .hero-name{font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:5px}
+    .hero-badges{display:flex;gap:5px;flex-wrap:wrap}
+    .badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.2px}
+    .badge-lvl10{background:rgba(217,53,53,.1);color:#D93535;border:1px solid rgba(217,53,53,.2)}
+    .badge-lvl9{background:rgba(224,92,42,.1);color:#E05C2A;border:1px solid rgba(224,92,42,.2)}
+    .badge-lvl7,.badge-lvl8{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
+    .badge-lvl4,.badge-lvl5,.badge-lvl6{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
+    .badge-lvl1,.badge-lvl2,.badge-lvl3{background:rgba(35,196,78,.1);color:#23C44E;border:1px solid rgba(35,196,78,.2)}
+    .badge-fv-elite{background:rgba(45,212,160,.1);color:#2DD4A0;border:1px solid rgba(45,212,160,.2)}
+    .badge-fv-great{background:rgba(59,127,245,.1);color:#60A5FA;border:1px solid rgba(59,127,245,.2)}
+    .badge-fv-good{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
+    .badge-fv-avg{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
+    .badge-fv-low{background:rgba(240,107,107,.1);color:#F06B6B;border:1px solid rgba(240,107,107,.2)}
+    .badge-challenger{background:linear-gradient(135deg,rgba(245,200,66,.15),rgba(237,160,32,.15));color:var(--gold);border:1px solid rgba(245,200,66,.3)}
+    .hero-elo{text-align:right;flex-shrink:0}
+    .hero-elo-val{font-size:28px;font-weight:700;letter-spacing:-1.5px;font-family:var(--mono);color:var(--accent);line-height:1}
+    .hero-elo-label{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px}
+    .hero-results{display:flex;gap:3px;margin-top:5px;justify-content:flex-end}
+    .rdot{width:7px;height:7px;border-radius:2px}.rdot.w{background:var(--success)}.rdot.l{background:var(--danger)}
+    .hero-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;position:relative;z-index:1}
+    @media(max-width:600px){.hero-kpis{grid-template-columns:repeat(3,1fr)}}
+    .hero-kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+    .hero-kpi-val{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.8px;line-height:1}
+    .hero-kpi-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-top:4px;font-family:var(--mono)}
+    .fvscore-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+    @media(max-width:600px){.fvscore-card{grid-template-columns:1fr}}
+    .fvscore-donut-wrap{position:relative;width:120px;height:120px;flex-shrink:0;margin:0 auto}
+    .fvscore-donut-svg{width:100%;height:100%;transform:rotate(-90deg)}
+    .fvscore-donut-bg{fill:none;stroke:var(--border);stroke-width:10}
+    .fvscore-donut-fill{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-dasharray:345;stroke-dashoffset:86;transition:stroke-dashoffset .8s ease}
+    .fvscore-donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .fvscore-val{font-size:30px;font-weight:700;font-family:var(--mono);letter-spacing:-1.5px;line-height:1}
+    .fvscore-max{font-size:11px;color:var(--text3);font-family:var(--mono)}
+    .fvscore-label{font-size:12px;font-weight:600;color:var(--success);margin-top:6px;text-align:center}
+    .fvscore-dims{display:flex;flex-direction:column;gap:8px}
+    .fvscore-dim{display:flex;align-items:center;gap:10px}
+    .fvscore-dim-name{font-size:12px;color:var(--text2);width:88px;flex-shrink:0}
+    .fvscore-dim-bar{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+    .fvscore-dim-fill{height:100%;border-radius:2px;transition:width .6s ease}
+    .fvscore-dim-val{font-family:var(--mono);font-size:11px;color:var(--text2);width:36px;text-align:right;flex-shrink:0}
+    .sublevel-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+    .sublevel-label{font-size:11px;font-family:var(--mono);color:var(--text2)}
+    .sublevel-pct{font-size:10px;color:var(--text3);font-family:var(--mono)}
+    .sublevel-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:12px}
+    .sublevel-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--success));border-radius:2px}
+    .impr-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px}
+    .impr-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+    .impr-section-title{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-family:var(--mono)}
+    .impr-match-badge{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px}
+    .impr-match-badge.win{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.2)}
+    .impr-match-badge.loss{background:rgba(240,107,107,.08);color:var(--danger);border:1px solid rgba(240,107,107,.2)}
+    .impr-trend-up{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--success);background:rgba(45,212,160,.1);border:1px solid rgba(45,212,160,.2);padding:4px 10px;border-radius:5px}
+    .impr-trend-down{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--danger);background:rgba(240,107,107,.08);border:1px solid rgba(240,107,107,.2);padding:4px 10px;border-radius:5px}
+    .impr-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:700px){.impr-cols{grid-template-columns:1fr}}
+    .impr-col{display:flex;flex-direction:column;gap:8px}
+    .impr-col-header{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);margin-bottom:4px;padding:6px 10px;border-radius:6px}
+    .impr-col-header.strength{color:var(--success);background:rgba(45,212,160,.06);border:1px solid rgba(45,212,160,.12)}
+    .impr-col-header.warning{color:var(--gold);background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.12)}
+    .impr-col-header.improvement{color:#60A5FA;background:rgba(59,127,245,.06);border:1px solid rgba(59,127,245,.12)}
+    .impr-item{display:flex;gap:10px;padding:12px;border-radius:8px;border:1px solid transparent}
+    .impr-item.strength{background:rgba(45,212,160,.04);border-color:rgba(45,212,160,.1)}
+    .impr-item.warning{background:rgba(245,200,66,.04);border-color:rgba(245,200,66,.1)}
+    .impr-item.improvement{background:rgba(59,127,245,.04);border-color:rgba(59,127,245,.1)}
+    .impr-item.improvement.high{background:rgba(240,107,107,.04);border-color:rgba(240,107,107,.12)}
+    .impr-item-icon{width:30px;height:30px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .impr-item-icon.strength{background:rgba(45,212,160,.12);color:var(--success)}
+    .impr-item-icon.warning{background:rgba(245,200,66,.12);color:var(--gold)}
+    .impr-item-icon.improvement{background:rgba(59,127,245,.12);color:#60A5FA}
+    .impr-item-content{flex:1;min-width:0}
+    .impr-item-header-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px}
+    .impr-item-label{font-size:13px;font-weight:600;letter-spacing:-.2px}
+    .impr-item-detail{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:4px}
+    .impr-item-advice{font-size:12px;color:var(--text2);line-height:1.55;background:rgba(255,255,255,.02);border-left:2px solid var(--border2);padding:6px 8px;border-radius:0 4px 4px 0;margin-top:4px}
+    .impr-item-metric{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px}
+    .impr-priority-badge{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+    .impr-priority-badge.high{background:rgba(240,107,107,.12);color:var(--danger)}
+    .impr-priority-badge.medium{background:rgba(245,200,66,.1);color:var(--gold)}
+    .impr-priority-badge.low{background:rgba(59,127,245,.1);color:#60A5FA}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px}
+    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px}
+    .kpi-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:7px;font-family:var(--mono)}
+    .kpi-val{font-size:22px;font-weight:700;letter-spacing:-.8px;font-family:var(--mono);line-height:1}
+    .kpi-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
+    .kpi-good{color:var(--success)}.kpi-bad{color:var(--danger)}.kpi-warn{color:var(--gold)}.kpi-blue{color:#60A5FA}.kpi-neutral{color:var(--accent)}
+    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}
+    .chart-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;font-family:var(--mono)}
+    .chart-wrap{height:180px;position:relative}
+    .match-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+    .match-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
+    .match-table th{background:var(--card);padding:9px 12px;text-align:left;color:var(--text3);letter-spacing:.5px;font-weight:500;border-bottom:1px solid var(--border)}
+    .match-table td{padding:9px 12px;border-bottom:1px solid rgba(30,34,51,.5);color:var(--text2)}
+    .match-table tr:last-child td{border-bottom:none}
+    .match-table tr:hover td{background:rgba(255,255,255,.015)}
+    .td-win{color:var(--success);font-weight:600}.td-loss{color:var(--danger);font-weight:600}
+    .td-map{color:var(--text);font-weight:500}
+    .td-good{color:var(--success)}.td-warn{color:var(--gold)}.td-bad{color:var(--danger)}
+    .wl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:border-color .15s}
+    .wl-card:hover{border-color:var(--border2)}
+    .wl-avatar{width:36px;height:36px;border-radius:8px;background:var(--card);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+    .wl-name{font-size:13px;font-weight:600}
+    .wl-elo{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--gold)}
+    .wl-btn{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .15s}
+    .wl-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .empty-state{text-align:center;padding:48px 24px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+    .empty-title{font-size:15px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px}
+    .empty-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:18px;max-width:300px;margin-left:auto;margin-right:auto}
+    .empty-btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:opacity .15s}
+    .empty-btn:hover{opacity:.9}
+    #loadingOverlay{display:none;position:fixed;inset:0;background:rgba(8,9,13,.85);z-index:300;backdrop-filter:blur(8px);flex-direction:column;align-items:center;justify-content:center;gap:14px}
+    .load-spinner{width:34px;height:34px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+    .load-text{font-family:var(--mono);font-size:12px;color:var(--text3)}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .link-prompt{background:var(--surface);border:1px solid rgba(59,127,245,.2);border-radius:12px;padding:28px;text-align:center;margin-bottom:20px}
+    .link-prompt-title{font-size:18px;font-weight:700;letter-spacing:-.4px;margin-bottom:8px}
+    .link-prompt-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px}
+    .link-form{display:flex;gap:0;max-width:380px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:9px;overflow:hidden;transition:border-color .15s}
+    .link-form:focus-within{border-color:var(--accent)}
+    .link-input{flex:1;background:transparent;border:none;padding:12px 16px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none}
+    .link-input::placeholder{color:var(--text3)}
+    .link-btn{background:var(--accent);color:#fff;border:none;padding:12px 18px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+    .link-btn:hover{opacity:.9}
+    .link-msg{font-family:var(--mono);font-size:12px;text-align:center;margin-top:10px;min-height:16px}
+    @media(max-width:768px){nav{padding:0 16px}.page{padding:16px}.hero-kpis{grid-template-columns:repeat(3,1fr)}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+
+<div id="loadingOverlay" style="display:none">
+  <div class="load-spinner"></div>
+  <div class="load-text" id="loadText">Chargement...</div>
+</div>
+
+<nav>
+  <a href="index.html" class="logo">Frag<span>Value</span></a>
+  <div class="nav-center">
+    <a href="index.html" class="nav-link">Scout</a>
+    <a href="compare.html" class="nav-link">Comparer</a>
+    <a href="demo.html" class="nav-link">Démo</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-avatar" id="navAvatar"></div>
+      <span class="nav-username" id="navUsername">...</span>
+    </div>
+    <button class="nav-logout" onclick="logout()">Déconnexion</button>
+  </div>
+</nav>
+
+<div class="page">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">Mon dashboard</div>
+    <button class="sidebar-btn active" onclick="setTab('overview',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Vue d'ensemble
+    </button>
+    <button class="sidebar-btn" onclick="setTab('improve',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      Amélioration
+      <span class="sidebar-badge">NEW</span>
+    </button>
+    <button class="sidebar-btn" onclick="setTab('matches',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Mes matchs
+    </button>
+    <div class="sidebar-section">Gestion</div>
+    <button class="sidebar-btn" onclick="setTab('watchlist',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+      Watchlist
+    </button>
+    <button class="sidebar-btn" onclick="setTab('roster',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Roster
+    </button>
+    <div class="sidebar-section">Compte</div>
+    <button class="sidebar-btn" onclick="window.location.href='account.html'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Paramètres
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- VUE D'ENSEMBLE -->
+    <div class="tab-panel active" id="panelOverview">
+      <div id="profileHeroCard" class="hero-card">
+        <div class="hero-top">
+          <div class="hero-avatar"></div>
+          <div class="hero-info"><div class="hero-name">Chargement...</div></div>
+        </div>
+      </div>
+      <div class="sec-label">FV Score</div>
+      <div class="fvscore-card" id="fvScoreCard">
+        <div style="text-align:center">
+          <div class="fvscore-donut-wrap">
+            <svg class="fvscore-donut-svg" viewBox="0 0 120 120">
+              <circle class="fvscore-donut-bg" cx="60" cy="60" r="50"/>
+              <circle class="fvscore-donut-fill" id="fvDonutFill" cx="60" cy="60" r="50"/>
+            </svg>
+            <div class="fvscore-donut-center">
+              <div class="fvscore-val" id="fvScoreVal">...</div>
+              <div class="fvscore-max">/ 100</div>
+            </div>
+          </div>
+          <div class="fvscore-label" id="fvScoreLabel"></div>
+        </div>
+        <div style="flex:1"><div id="fvSubLevel"></div><div class="fvscore-dims" id="fvDims"></div></div>
+      </div>
+      <div class="sec-label">Stats clés (20 matchs)</div>
+      <div class="kpi-grid" id="kpiGrid"></div>
+      <div class="sec-label">Évolution FV Rating</div>
+      <div class="chart-card"><div class="chart-title">FV Rating sur 20 matchs</div><div class="chart-wrap"><canvas id="chartFvRating"></canvas></div></div>
+      <div class="sec-label">Dernier match</div>
+      <div id="lastMatchSection"></div>
+      <div class="sec-label">20 derniers matchs</div>
+      <div class="match-table-wrap"><table class="match-table"><thead><tr id="matchHead"></tr></thead><tbody id="matchBody"></tbody></table></div>
+    </div>
+
+    <!-- AMÉLIORATION -->
+    <div class="tab-panel" id="panelImprove">
+      <div id="improvementsPanel"><div class="empty-state"><div class="empty-title">Chargement de l'analyse...</div></div></div>
+    </div>
+
+    <!-- MATCHS -->
+    <div class="tab-panel" id="panelMatches">
+      <div class="sec-label">Historique des matchs</div>
+      <div class="match-table-wrap"><table class="match-table"><thead><tr id="matchHead2"></tr></thead><tbody id="matchBody2"></tbody></table></div>
+    </div>
+
+    <!-- WATCHLIST -->
+    <div class="tab-panel" id="panelWatchlist">
+      <div class="sec-label">Joueurs suivis</div>
+      <div id="watchlistContent">
+        <div class="empty-state">
+          <div class="empty-title">Watchlist vide</div>
+          <div class="empty-sub">Ajoute des joueurs depuis le Scout pour les retrouver ici.</div>
+          <a href="index.html" class="empty-btn">Aller sur le Scout</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROSTER -->
+    <div class="tab-panel" id="panelRoster">
+      <div class="sec-label">Mon équipe</div>
+      <div id="rosterContent">
+        <div class="empty-state">
+          <div class="empty-title">Roster vide</div>
+          <div class="empty-sub">Configure ton équipe depuis les paramètres.</div>
+          <a href="account.html" class="empty-btn">Configurer</a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+let currentUser = null, playerData = null, fvChart = null;
+
+async function init() {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; return; }
+  currentUser = session.user;
+  const meta = currentUser.user_metadata || {};
+  document.getElementById('navUsername').textContent = meta.full_name || meta.name || currentUser.email.split('@')[0];
+  const avatarUrl = meta.avatar_url || meta.picture;
+  const av = document.getElementById('navAvatar');
+  if (avatarUrl) { av.style.backgroundImage=`url(${avatarUrl})`;av.style.backgroundSize='cover'; } else { av.textContent='👤'; }
+  const { data:profile } = await sb.from('profiles').select('*').eq('id',currentUser.id).single();
+  const nick = profile?.faceit_nickname;
+  if (nick) loadFaceitData(nick); else showLinkPrompt();
+  loadWatchlist(); loadRoster();
+}
+
+function showLinkPrompt() {
+  document.getElementById('profileHeroCard').innerHTML = `
+    <div class="link-prompt">
+      <div class="link-prompt-title">Lie ton compte FACEIT</div>
+      <p class="link-prompt-sub">Entre ton pseudo FACEIT pour charger tes stats et activer l'analyse d'amélioration.</p>
+      <div class="link-form">
+        <input class="link-input" id="linkNick" type="text" placeholder="Ton pseudo FACEIT exact..." onkeydown="if(event.key==='Enter')saveFaceitNick()"/>
+        <button class="link-btn" onclick="saveFaceitNick()">Lier</button>
+      </div>
+      <div class="link-msg" id="linkMsg"></div>
+    </div>`;
+  document.getElementById('fvScoreCard').style.display='none';
+  document.getElementById('kpiGrid').innerHTML='';
+}
+
+async function saveFaceitNick() {
+  const nick = document.getElementById('linkNick')?.value.trim();
+  if (!nick) return;
+  const msg = document.getElementById('linkMsg');
+  msg.style.color='var(--text3)'; msg.textContent='Vérification...';
+  try {
+    const res = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`);
+    const d = await res.json();
+    if (!res.ok||!d.player) { msg.style.color='var(--danger)'; msg.textContent='Pseudo introuvable.'; return; }
+    await sb.from('profiles').update({faceit_nickname:d.player.nickname}).eq('id',currentUser.id);
+    loadFaceitData(d.player.nickname);
+  } catch { msg.style.color='var(--danger)'; msg.textContent='Erreur. Réessaie.'; }
+}
+
+async function loadFaceitData(nick) {
+  showLoading(true,`Chargement de ${nick}...`);
+  try {
+    const res = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`);
+    const d = await res.json();
+    if (!res.ok||!d.player) { showLinkPrompt(); return; }
+    playerData = d;
+    renderProfile(d); renderFvScore(d); renderKpis(d); renderChart(d);
+    renderLastMatch(d); renderMatches(d); renderImprovements(d);
+  } catch(e) { console.error(e); } finally { showLoading(false); }
+}
+
+function renderProfile(d) {
+  const {player,cs2,recent,lifetime} = d;
+  const lvl = cs2.level||1;
+  const fvR = parseFloat(recent.fvRating);
+  const fvBadge = fvR>=1.2?'badge-fv-elite':fvR>=1.05?'badge-fv-great':fvR>=0.9?'badge-fv-good':fvR>=0.75?'badge-fv-avg':'badge-fv-low';
+  const fvLbl = fvR>=1.2?'Élite':fvR>=1.05?'Excellent':fvR>=0.9?'Bon':fvR>=0.75?'Moyen':'Faible';
+  document.getElementById('profileHeroCard').innerHTML = `
+    <div class="hero-top">
+      <div class="hero-avatar" style="${player.avatar?`background-image:url(${player.avatar});background-size:cover;background-position:center`:''}">
+        ${player.avatar?'':'👤'}
+      </div>
+      <div class="hero-info">
+        <div class="hero-name">${player.nickname}</div>
+        <div class="hero-badges">
+          <span class="badge badge-lvl${lvl}">Level ${lvl}</span>
+          <span class="badge ${fvBadge}">FV ${recent.fvRating} · ${fvLbl}</span>
+          ${player.country?`<span class="badge" style="background:var(--card);color:var(--text3);border:1px solid var(--border)">${player.country.toUpperCase()}</span>`:''}
+        </div>
+      </div>
+      <div class="hero-elo">
+        <div class="hero-elo-val">${cs2.elo.toLocaleString()}</div>
+        <div class="hero-elo-label">ELO FACEIT</div>
+        <div class="hero-results">${(lifetime.recentResults||[]).slice(0,10).map(r=>`<div class="rdot ${r==='1'?'w':'l'}"></div>`).join('')}</div>
+      </div>
+    </div>
+    <div class="hero-kpis">
+      ${[
+        {label:'K/D',val:recent.avgKd,c:parseFloat(recent.avgKd)>=1.3?'var(--success)':parseFloat(recent.avgKd)>=1?'var(--gold)':'var(--danger)'},
+        {label:'ADR',val:recent.avgAdr,c:'#60A5FA'},
+        {label:'HS%',val:recent.avgHs+'%',c:'var(--text)'},
+        {label:'KAST',val:recent.avgKast+'%',c:parseFloat(recent.avgKast)>=70?'var(--success)':'var(--gold)'},
+        {label:'Win%',val:recent.winRate+'%',c:parseFloat(recent.winRate)>=55?'var(--success)':'var(--gold)'},
+      ].map(k=>`<div class="hero-kpi"><div class="hero-kpi-val" style="color:${k.c}">${k.val}</div><div class="hero-kpi-label">${k.label}</div></div>`).join('')}
+    </div>`;
+}
+
+function renderFvScore(d) {
+  const s = d.fvScore; if (!s) return;
+  const t = s.total||0;
+  document.getElementById('fvScoreVal').textContent = t;
+  document.getElementById('fvScoreLabel').textContent = s.label||'';
+  const c = t>=80?'#2DD4A0':t>=60?'#3B7FF5':t>=40?'#F5C842':'#F06B6B';
+  const fill = document.getElementById('fvDonutFill');
+  fill.style.strokeDashoffset = 345 - (t/100)*345;
+  fill.style.stroke = c;
+  document.getElementById('fvScoreVal').style.color = c;
+  if (s.subLevel && s.subLevelProgress !== null) {
+    document.getElementById('fvSubLevel').innerHTML = `
+      <div class="sublevel-row">
+        <span class="sublevel-label">${s.eloBracket||'Lvl 10'}</span>
+        <span class="sublevel-pct">${s.subLevelProgress}% vers ${s.subLevel<10?'Lvl 10.'+(s.subLevel+1):'Challenger'}</span>
+      </div>
+      <div class="sublevel-bar"><div class="sublevel-fill" style="width:${s.subLevelProgress}%"></div></div>`;
+  }
+  if (s.breakdown) {
+    document.getElementById('fvDims').innerHTML = [
+      {key:'performance',label:'Performance',color:'#3B7FF5'},
+      {key:'consistency',label:'Consistance',color:'#2DD4A0'},
+      {key:'impact',label:'Impact',color:'#F5C842'},
+      {key:'utility',label:'Utilité',color:'#EDA020'},
+    ].map(dim => {
+      const v = s.breakdown[dim.key]; if (!v) return '';
+      const pct = Math.round((v.score/v.max)*100);
+      return `<div class="fvscore-dim">
+        <div class="fvscore-dim-name">${dim.label}</div>
+        <div class="fvscore-dim-bar"><div class="fvscore-dim-fill" style="width:${pct}%;background:${dim.color}"></div></div>
+        <div class="fvscore-dim-val">${v.score.toFixed(0)}/${v.max}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderKpis(d) {
+  const {recent,cs2,lifetime} = d;
+  const kd = parseFloat(recent.avgKd);
+  document.getElementById('kpiGrid').innerHTML = [
+    {label:'FV Rating',val:recent.fvRating,cls:parseFloat(recent.fvRating)>=1.05?'kpi-good':'kpi-warn',sub:'2.0 style'},
+    {label:'K/D moyen',val:recent.avgKd,cls:kd>=1.3?'kpi-good':kd>=1?'kpi-warn':'kpi-bad',sub:'20 matchs'},
+    {label:'HS%',val:recent.avgHs+'%',cls:'kpi-blue',sub:'headshots'},
+    {label:'ADR',val:recent.avgAdr,cls:'kpi-warn',sub:'dmg/round'},
+    {label:'KAST',val:recent.avgKast+'%',cls:parseFloat(recent.avgKast)>=70?'kpi-good':'kpi-warn',sub:'présence'},
+    {label:'Win rate',val:recent.winRate+'%',cls:parseFloat(recent.winRate)>=55?'kpi-good':'kpi-warn',sub:'victoires'},
+    {label:'Opening',val:recent.openingRatio,cls:parseFloat(recent.openingRatio)>=1?'kpi-good':'kpi-bad',sub:'duels ouv.'},
+    {label:'Matchs',val:lifetime.matches,cls:'kpi-neutral',sub:`${lifetime.wins} wins`},
+  ].map(k=>`<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val ${k.cls}">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+}
+
+function renderChart(d) {
+  const ms = (d.recent.matches||[]).slice().reverse();
+  if (fvChart) { fvChart.destroy(); fvChart=null; }
+  const ctx = document.getElementById('chartFvRating'); if (!ctx) return;
+  fvChart = new Chart(ctx,{type:'line',data:{labels:ms.map((_,i)=>`M${i+1}`),datasets:[{
+    data:ms.map(m=>m.fvRating),fill:true,backgroundColor:'rgba(59,127,245,.07)',borderColor:'#3B7FF5',
+    borderWidth:1.5,pointRadius:3,tension:.4,
+    pointBackgroundColor:ms.map(m=>m.fvRating>=1.05?'#2DD4A0':m.fvRating>=0.9?'#F5C842':'#F06B6B'),
+  }]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#141720',borderColor:'#1E2233',borderWidth:1,
+      titleColor:'#EDF0F7',bodyColor:'#7A8499',titleFont:{family:'JetBrains Mono',size:11},bodyFont:{family:'JetBrains Mono',size:11}}},
+    scales:{x:{ticks:{color:'#3D4459',font:{family:'JetBrains Mono',size:10}},grid:{color:'#1E2233'}},
+            y:{ticks:{color:'#3D4459',font:{family:'JetBrains Mono',size:10}},grid:{color:'#1E2233'},suggestedMin:.3}}}});
+}
+
+function renderLastMatch(d) {
+  const m = (d.recent.matches||[])[0]; if (!m) return;
+  const ins = analyzeLastMatch(m); const icons = getIcons();
+  document.getElementById('lastMatchSection').innerHTML = `
+    <div class="impr-section">
+      <div class="impr-section-header">
+        <div class="impr-section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          ${m.map||'Inconnu'} · ${m.date||''}
+        </div>
+        <div class="impr-match-badge ${m.result===1?'win':'loss'}">${m.result===1?'Victoire':'Défaite'} ${m.score||''}</div>
+      </div>
+      <div class="impr-cols">
+        ${ins.strengths.length?`<div class="impr-col"><div class="impr-col-header strength"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Ce qui a bien marché</div>${ins.strengths.map(s=>`<div class="impr-item strength"><div class="impr-item-icon strength">${icons[s.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-label">${s.label}</div><div class="impr-item-detail">${s.detail}</div></div></div>`).join('')}</div>`:''}
+        ${ins.warnings.length?`<div class="impr-col"><div class="impr-col-header warning"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>A corriger</div>${ins.warnings.map(w=>`<div class="impr-item warning"><div class="impr-item-icon warning">${icons[w.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-label">${w.label}</div><div class="impr-item-detail">${w.detail}</div><div class="impr-item-advice">${w.advice}</div></div></div>`).join('')}</div>`:''}
+      </div>
+    </div>`;
+}
+
+function renderMatches(d) {
+  const ms = d.recent.matches||[];
+  const heads = ['','Map','Score','K/D','K','D','HS%','ADR','KAST','FV Rating'];
+  ['matchHead','matchHead2'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=heads.map(h=>`<th>${h}</th>`).join('');});
+  const rows = ms.map(m=>{
+    const kd=m.kd||0,kdC=kd>=1.3?'td-good':kd>=1?'':'td-bad',fvC=m.fvRating>=1.05?'td-good':m.fvRating>=0.9?'':'td-bad';
+    return `<tr><td class="${m.result===1?'td-win':'td-loss'}">${m.result===1?'W':'L'}</td><td class="td-map">${m.map||''}</td><td>${m.score||''}</td><td class="${kdC}">${(kd).toFixed(2)}</td><td>${m.kills||0}</td><td>${m.deaths||0}</td><td>${(m.hsPct||0).toFixed(0)}%</td><td>${m.adr>0?(m.adr).toFixed(0):''}</td><td>${m.kast>0?(m.kast).toFixed(0)+'%':''}</td><td class="${fvC}">${(m.fvRating||0).toFixed(2)}</td></tr>`;
+  }).join('');
+  ['matchBody','matchBody2'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=rows;});
+}
+
+function renderImprovements(d) {
+  const g = analyzeGlobal(d.recent,d.cs2,d.fvScore,d.recent.matches||[]);
+  const icons = getIcons();
+  const m = (d.recent.matches||[])[0];
+  let lastHtml = '';
+  if (m) {
+    const ins = analyzeLastMatch(m);
+    lastHtml = `<div class="impr-section"><div class="impr-section-header"><div class="impr-section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Dernier match · ${m.map||''}</div><div class="impr-match-badge ${m.result===1?'win':'loss'}">${m.result===1?'Victoire':'Défaite'}</div></div><div class="impr-cols">${ins.strengths.length?`<div class="impr-col"><div class="impr-col-header strength"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Ce qui a bien marché</div>${ins.strengths.map(s=>`<div class="impr-item strength"><div class="impr-item-icon strength">${icons[s.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-label">${s.label}</div><div class="impr-item-detail">${s.detail}</div></div></div>`).join('')}</div>`:''} ${ins.warnings.length?`<div class="impr-col"><div class="impr-col-header warning"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>A corriger</div>${ins.warnings.map(w=>`<div class="impr-item warning"><div class="impr-item-icon warning">${icons[w.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-label">${w.label}</div><div class="impr-item-detail">${w.detail}</div><div class="impr-item-advice">${w.advice}</div></div></div>`).join('')}</div>`:''}</div></div>`;
+  }
+  document.getElementById('improvementsPanel').innerHTML = lastHtml + `
+    <div class="impr-section">
+      <div class="impr-section-header">
+        <div class="impr-section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 16 4-4 4 4 5-5"/></svg>Tendances globales (20 matchs)</div>
+        ${g.trendUp?'<div class="impr-trend-up">En progression</div>':g.trendDown?'<div class="impr-trend-down">Tendance baissière</div>':''}
+      </div>
+      <div class="impr-cols">
+        ${g.strengths.length?`<div class="impr-col"><div class="impr-col-header strength"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Points forts</div>${g.strengths.map(s=>`<div class="impr-item strength"><div class="impr-item-icon strength">${icons[s.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-label">${s.label}</div><div class="impr-item-detail">${s.detail}</div></div></div>`).join('')}</div>`:''}
+        ${g.improvements.length?`<div class="impr-col"><div class="impr-col-header improvement"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Axes prioritaires</div>${g.improvements.map(imp=>`<div class="impr-item improvement ${imp.priority}"><div class="impr-item-icon improvement">${icons[imp.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-header-row"><div class="impr-item-label">${imp.label}</div><div class="impr-priority-badge ${imp.priority}">${imp.priority==='high'?'Priorité haute':imp.priority==='medium'?'A travailler':'Secondaire'}</div></div><div class="impr-item-detail">${imp.detail}</div><div class="impr-item-advice">${imp.advice}</div><div class="impr-item-metric">${imp.metric}</div></div></div>`).join('')}</div>`:''}
+      </div>
+    </div>`;
+}
+
+async function loadWatchlist() {
+  const {data} = await sb.from('watchlist').select('*').eq('user_id',currentUser.id).order('added_at',{ascending:false});
+  const el = document.getElementById('watchlistContent'); if (!data||data.length===0) return;
+  el.innerHTML = data.map(p=>`<div class="wl-card"><div class="wl-avatar" style="${p.avatar_url?`background-image:url(${p.avatar_url});background-size:cover;background-position:center`:''}"></div><div style="flex:1"><div class="wl-name">${p.faceit_nickname}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${p.note||''}</div></div><div class="wl-elo">${p.faceit_elo?p.faceit_elo+' ELO':''}</div><button class="wl-btn" onclick="window.location.href='index.html?analyse=${encodeURIComponent(p.faceit_nickname)}'">Analyser</button></div>`).join('');
+}
+
+async function loadRoster() {
+  const {data:rosters} = await sb.from('rosters').select('*').eq('user_id',currentUser.id).limit(1);
+  if (!rosters||rosters.length===0) return;
+  const {data:players} = await sb.from('roster_players').select('*').eq('roster_id',rosters[0].id);
+  if (!players||players.length===0) return;
+  document.getElementById('rosterContent').innerHTML = `<div style="font-size:14px;font-weight:600;margin-bottom:14px">${rosters[0].team_name}</div>${players.map(p=>`<div class="wl-card"><div class="wl-avatar" style="${p.avatar_url?`background-image:url(${p.avatar_url});background-size:cover`:''}"></div><div style="flex:1"><div class="wl-name">${p.faceit_nickname}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${p.role||'Role non défini'} · Level ${p.faceit_level||'?'}</div></div><div class="wl-elo">${p.faceit_elo?p.faceit_elo+' ELO':''}</div><button class="wl-btn" onclick="window.location.href='index.html?analyse=${encodeURIComponent(p.faceit_nickname)}'">Analyser</button></div>`).join('')}`;
+}
+
+// MOTEUR D'AMÉLIORATION
+function analyzeLastMatch(m) {
+  const strengths=[],warnings=[];
+  const kd=parseFloat(m.kd)||0,hs=parseFloat(m.hsPct)||0,adr=parseFloat(m.adr)||0,kast=parseFloat(m.kast)||0,fvR=parseFloat(m.fvRating)||0;
+  if(kd>=1.5)strengths.push({icon:'kill',label:'Excellent fragger',detail:`K/D ${kd.toFixed(2)}`});
+  if(hs>=60)strengths.push({icon:'hs',label:'HS% très élevé',detail:`${hs.toFixed(0)}% de headshots`});
+  if(adr>=90)strengths.push({icon:'dmg',label:'Impact offensif fort',detail:`${adr.toFixed(0)} ADR`});
+  if(kast>=75)strengths.push({icon:'pres',label:'Présence constante',detail:`${kast.toFixed(0)}% KAST`});
+  const cl=(m.clutch1v1||0)+(m.clutch1v2||0)+(m.clutch1v3||0);
+  if(cl>=2)strengths.push({icon:'clutch',label:'Clutcheur en forme',detail:`${cl} clutches`});
+  if(fvR>=1.2)strengths.push({icon:'fv',label:'FV Rating élite',detail:`${fvR.toFixed(2)}`});
+  if(kd<0.8)warnings.push({icon:'kd',label:'K/D difficile',detail:`${kd.toFixed(2)} ce match`,advice:'Joue plus en équipe, évite les duels isolés en fin de round.'});
+  if(hs<35&&kd<1.2)warnings.push({icon:'hs',label:'HS% faible',detail:`${hs.toFixed(0)}%`,advice:'Travaille le positionnement de ta mire à hauteur de tête.'});
+  if(adr<65)warnings.push({icon:'dmg',label:'Peu de dégâts',detail:`${adr.toFixed(0)} ADR`,advice:'Damage check les ennemis avant les duels.'});
+  if(kast<60)warnings.push({icon:'pres',label:'Faible présence',detail:`${kast.toFixed(0)}% KAST`,advice:'Sois plus actif : trade, assist ou survive dans chaque round.'});
+  if((m.firstDeaths||0)>(m.firstKills||0)+1)warnings.push({icon:'open',label:'Opening duels perdus',detail:`${m.firstKills||0}FK vs ${m.firstDeaths||0}FD`,advice:`Attends que tes coéquipiers prennent les duels d'info en premier.`});
+  return {strengths:strengths.slice(0,3),warnings:warnings.slice(0,3)};
+}
+
+function analyzeGlobal(recent,cs2,fvScore,matches) {
+  const strengths=[],improvements=[];
+  const kd=parseFloat(recent.avgKd)||0,hs=parseFloat(recent.avgHs)||0,adr=parseFloat(recent.avgAdr)||0;
+  const kast=parseFloat(recent.avgKast)||0,winRate=parseFloat(recent.winRate)||0;
+  const opening=parseFloat(recent.openingRatio)||0,ctWR=parseFloat(recent.ctWinRate)||0,tWR=parseFloat(recent.tWinRate)||0;
+  const flashPR=parseFloat(recent.avgFlashPerRound)||0;
+  const ratings=matches.map(m=>parseFloat(m.fvRating)).filter(v=>v>0);
+  const avg=ratings.reduce((a,b)=>a+b,0)/(ratings.length||1);
+  const std=Math.sqrt(ratings.reduce((s,v)=>s+(v-avg)**2,0)/(ratings.length||1));
+  const cv=avg>0?std/avg:1;
+  const last5=ratings.slice(0,5).reduce((a,b)=>a+b,0)/5;
+  const prev5=ratings.slice(5,10).reduce((a,b)=>a+b,0)/5;
+  const trendUp=last5>prev5+0.05,trendDown=last5<prev5-0.05;
+  if(kd>=1.4)strengths.push({icon:'kill',label:'Fragger solide',detail:`K/D ${kd.toFixed(2)}`});
+  if(hs>=55)strengths.push({icon:'hs',label:'Mire précise',detail:`${hs.toFixed(0)}% HS`});
+  if(adr>=85)strengths.push({icon:'dmg',label:'Impact offensif',detail:`${adr.toFixed(0)} ADR`});
+  if(kast>=72)strengths.push({icon:'pres',label:'Présence constante',detail:`${kast.toFixed(0)}% KAST`});
+  if(winRate>=58)strengths.push({icon:'win',label:'Win rate solide',detail:`${winRate.toFixed(0)}%`});
+  if(opening>=1.2)strengths.push({icon:'open',label:'Bon duelliste',detail:`Opening ratio ${opening.toFixed(2)}`});
+  if(cv<=0.12)strengths.push({icon:'cons',label:'Très consistant',detail:'Faible variabilité sur 20 matchs'});
+  if(trendUp)strengths.push({icon:'trend',label:'En progression',detail:'FV Rating en hausse'});
+  if(opening<0.85)improvements.push({icon:'open',label:'Opening ratio faible',detail:`${opening.toFixed(2)}`,advice:'Évite les duels d\'information en premier. Prends le trade si un coéquipier peek.',priority:'high',metric:`${opening.toFixed(2)} ratio`});
+  if(ctWR>0&&tWR>0&&ctWR-tWR>=12)improvements.push({icon:'tside',label:'Côté T sous-performant',detail:`CT ${ctWR}% vs T ${tWR}%`,advice:'Travaille les exécutions en équipe avec utility avant d\'entrer sur le site.',priority:'high',metric:`${(ctWR-tWR).toFixed(0)}pt d\'écart`});
+  if(kast<65)improvements.push({icon:'kast',label:'Faible présence',detail:`${kast.toFixed(0)}% KAST`,advice:'Contribue dans chaque round : assist, trade ou survive.',priority:'high',metric:`${kast.toFixed(0)}%`});
+  if(cv>=0.22)improvements.push({icon:'cons',label:'Manque de consistance',detail:'Forte variabilité',advice:'Joue simple dans les mauvais matchs, concentre-toi sur la survie.',priority:cv>=0.3?'high':'medium',metric:`CV ${(cv*100).toFixed(0)}%`});
+  if(adr<72)improvements.push({icon:'dmg',label:'Impact insuffisant',detail:`${adr.toFixed(0)} ADR`,advice:'Damage check avant les duels. Chaque dégât compte.',priority:'medium',metric:`${adr.toFixed(0)} ADR`});
+  if(flashPR<0.25&&(cs2.elo||0)>1500)improvements.push({icon:'util',label:'Utility peu utilisée',detail:`${flashPR.toFixed(2)} flash/round`,advice:'Flash avant de peeaker un angle ou entrer sur un site.',priority:'medium',metric:`${flashPR.toFixed(2)}/round`});
+  if(trendDown&&!trendUp)improvements.push({icon:'trend',label:'Tendance baissière',detail:'FV Rating en baisse',advice:'Fais une pause ou change de map pool.',priority:'medium',metric:`${((last5-prev5)/prev5*100).toFixed(0)}%`});
+  return{strengths:strengths.slice(0,4),improvements:improvements.sort((a,b)=>(a.priority==='high'?0:a.priority==='medium'?1:2)-(b.priority==='high'?0:b.priority==='medium'?1:2)).slice(0,4),trendUp,trendDown};
+}
+
+function getIcons(){return{
+  kill:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6.3 6.9 1-5 4.8 1.2 6.9L12 18l-6.1 3 1.2-6.9-5-4.8 6.9-1z"/></svg>`,
+  hs:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>`,
+  dmg:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+  pres:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  clutch:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>`,
+  fv:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`,
+  open:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22l-4-4 4-4M8 18h8a4 4 0 000-8h-1"/></svg>`,
+  cons:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 16 4-4 4 4 5-5"/></svg>`,
+  tside:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
+  kast:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>`,
+  util:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>`,
+  trend:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>`,
+  kd:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
+  win:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>`,
+};}
+
+function setTab(tab,btn) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+
+function showLoading(show,text) {
+  const el=document.getElementById('loadingOverlay');
+  el.style.display=show?'flex':'none';
+  if(text)document.getElementById('loadText').textContent=text;
+}
+
+async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
+
+init();
+</script>
+</body>
+</html>
