@@ -443,6 +443,9 @@ function renderDashboard(data) {
   }
 
   showDashboard(player.nickname);
+  // Générer la section amélioration
+  injectImprovementCSS();
+  renderImprovements(data);
 }
 
 function scoreLabel(s) {
@@ -575,4 +578,394 @@ async function saveAnalysis(data) {
     // Silencieux : pas critique
     console.warn('saveAnalysis:', e.message);
   }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MOTEUR D'AMÉLIORATION PERSONNELLE
+// ═══════════════════════════════════════════════════════════════════════════
+
+function generateImprovements(data) {
+  const { recent, cs2, fvScore } = data;
+  const matches = recent.matches || [];
+  const last = matches[0] || null; // Dernier match
+
+  // ── Analyse dernier match ─────────────────────────────────────────────
+  const lastMatchInsights = last ? analyzeLastMatch(last, recent) : null;
+
+  // ── Analyse globale (20 matchs) ───────────────────────────────────────
+  const globalInsights = analyzeGlobal(recent, cs2, fvScore, matches);
+
+  return { lastMatchInsights, globalInsights };
+}
+
+function analyzeLastMatch(m, recent) {
+  const strengths = [];
+  const warnings  = [];
+
+  const kd   = parseFloat(m.kd)   || 0;
+  const hs   = parseFloat(m.hsPct)|| 0;
+  const adr  = parseFloat(m.adr)  || 0;
+  const kast = parseFloat(m.kast) || 0;
+  const fvR  = parseFloat(m.fvRating) || 0;
+  const won  = m.result === 1;
+
+  // Points forts
+  if (kd >= 1.5)  strengths.push({ icon: 'kill', label: 'Excellent fragger', detail: `K/D ${kd.toFixed(2)} sur ce match` });
+  if (hs >= 60)   strengths.push({ icon: 'hs', label: 'HS% très élevé', detail: `${hs.toFixed(0)}% de headshots` });
+  if (adr >= 90)  strengths.push({ icon: 'dmg', label: 'Impact offensif fort', detail: `${adr.toFixed(0)} ADR sur la partie` });
+  if (kast >= 75) strengths.push({ icon: 'pres', label: 'Présence constante', detail: `${kast.toFixed(0)}% KAST` });
+  const clutchesThisMatch = (m.clutch1v1||0) + (m.clutch1v2||0) + (m.clutch1v3||0);
+  if (clutchesThisMatch >= 2) strengths.push({ icon: 'clutch', label: 'Clutcheur en forme', detail: `${clutchesThisMatch} clutches gagnés` });
+  const mkThisMatch = (m.triple||0) + (m.quad||0)*2 + (m.ace||0)*3;
+  if (mkThisMatch >= 2) strengths.push({ icon: 'mk', label: 'Multi-kills décisifs', detail: `${m.triple||0} triples · ${m.quad||0} quads` });
+  if (fvR >= 1.2) strengths.push({ icon: 'fv', label: 'FV Rating élite', detail: `${fvR.toFixed(2)} ce match` });
+
+  // Points à améliorer
+  if (kd < 0.8)  warnings.push({
+    icon: 'kd', label: 'K/D difficile',
+    detail: `${kd.toFixed(2)} ce match`,
+    advice: 'Joue plus en équipe, évite les duels isolés en fin de round.'
+  });
+  if (kd >= 0.8 && kd < 1.0) warnings.push({
+    icon: 'kd', label: 'K/D légèrement négatif',
+    detail: `${kd.toFixed(2)} ce match`,
+    advice: 'Privilégie les duels favorables — recule si ta position est compromise.'
+  });
+  if (hs < 35 && kd < 1.2) warnings.push({
+    icon: 'hs', label: 'HS% faible',
+    detail: `${hs.toFixed(0)}% de headshots`,
+    advice: 'Travaille le positionnement de ta mire — vise naturellement à hauteur de tête.'
+  });
+  if (adr < 65) warnings.push({
+    icon: 'dmg', label: 'Peu de dégâts infligés',
+    detail: `${adr.toFixed(0)} ADR seulement`,
+    advice: 'Essaie de damage checker les ennemis avant les duels — chaque point comptes.'
+  });
+  if (kast < 60) warnings.push({
+    icon: 'pres', label: 'Faible présence dans les rounds',
+    detail: `${kast.toFixed(0)}% KAST`,
+    advice: 'Sois plus actif dans chaque round : trade, assist ou survive. Évite de mourir sans impact.'
+  });
+  if ((m.firstDeaths||0) > (m.firstKills||0) + 1) warnings.push({
+    icon: 'open', label: 'Trop de duels d'ouverture perdus',
+    detail: `${m.firstKills||0} opening kills vs ${m.firstDeaths||0} opening deaths`,
+    advice: `Sur ${m.map || 'cette map'}, attends que tes coéquipiers prennent les duels d'info en premier.`
+  });
+
+  return {
+    match: m,
+    won,
+    strengths: strengths.slice(0, 3),
+    warnings: warnings.slice(0, 3),
+  };
+}
+
+function analyzeGlobal(recent, cs2, fvScore, matches) {
+  const strengths = [];
+  const improvements = [];
+
+  const kd      = parseFloat(recent.avgKd)   || 0;
+  const hs      = parseFloat(recent.avgHs)   || 0;
+  const adr     = parseFloat(recent.avgAdr)  || 0;
+  const kast    = parseFloat(recent.avgKast) || 0;
+  const winRate = parseFloat(recent.winRate) || 0;
+  const fvR     = parseFloat(recent.fvRating)|| 0;
+  const opening = parseFloat(recent.openingRatio) || 0;
+  const ctWR    = parseFloat(recent.ctWinRate) || 0;
+  const tWR     = parseFloat(recent.tWinRate)  || 0;
+  const flashPR = parseFloat(recent.avgFlashPerRound) || 0;
+  const elo     = cs2.elo || 0;
+
+  // Calculer la consistance (CV sur les 20 matchs)
+  const fvRatings = matches.map(m => parseFloat(m.fvRating)).filter(v => v > 0);
+  const avg = fvRatings.reduce((a,b)=>a+b,0) / (fvRatings.length||1);
+  const std = Math.sqrt(fvRatings.reduce((s,v)=>s+(v-avg)**2,0)/(fvRatings.length||1));
+  const cv  = avg > 0 ? std/avg : 1;
+
+  // Trend : 5 derniers vs 5 précédents
+  const last5  = fvRatings.slice(0,5).reduce((a,b)=>a+b,0)/5;
+  const prev5  = fvRatings.slice(5,10).reduce((a,b)=>a+b,0)/5;
+  const trendUp = last5 > prev5 + 0.05;
+  const trendDown = last5 < prev5 - 0.05;
+
+  // ── POINTS FORTS ─────────────────────────────────────────────────────
+  if (kd >= 1.4)   strengths.push({ icon:'kill', label:'Fragger solide',        detail:`K/D moyen ${kd.toFixed(2)} sur 20 matchs`, color:'#2DD4A0' });
+  if (hs >= 55)    strengths.push({ icon:'hs',   label:'Mire précise',          detail:`${hs.toFixed(0)}% de headshots en moyenne`,  color:'#3B7FF5' });
+  if (adr >= 85)   strengths.push({ icon:'dmg',  label:'Impact offensif',       detail:`${adr.toFixed(0)} ADR moyen sur 20 matchs`,  color:'#2DD4A0' });
+  if (kast >= 72)  strengths.push({ icon:'pres', label:'Présence constante',    detail:`${kast.toFixed(0)}% KAST en moyenne`,        color:'#2DD4A0' });
+  if (winRate >= 58) strengths.push({ icon:'win', label:'Win rate solide',      detail:`${winRate.toFixed(0)}% de victoires`,         color:'#2DD4A0' });
+  if (opening >= 1.2) strengths.push({ icon:'open', label:'Bon duelliste d'ouverture', detail:`Opening ratio ${opening.toFixed(2)}`, color:'#3B7FF5' });
+  if (cv <= 0.12)  strengths.push({ icon:'cons', label:'Très consistant',       detail:`Écart-type faible sur 20 matchs`,            color:'#A78BFA' });
+  if (recent.totalClutch1v1 + recent.totalClutch1v2 >= 5)
+                   strengths.push({ icon:'clutch', label:'Clutcheur',           detail:`${recent.totalClutch1v1 + recent.totalClutch1v2} clutches gagnés`, color:'#F5C842' });
+  if (trendUp)     strengths.push({ icon:'trend', label:'En progression',       detail:'FV Rating en hausse sur les 5 derniers matchs', color:'#2DD4A0' });
+
+  // ── AXES D'AMÉLIORATION ───────────────────────────────────────────────
+  // Opening ratio
+  if (opening < 0.85) improvements.push({
+    icon: 'open', label: 'Opening ratio faible',
+    detail: `${opening.toFixed(2)} sur 20 matchs`,
+    advice: 'Évite de prendre les duels d'information en premier. Laisse un coéquipier peeaker et prends le trade si nécessaire.',
+    priority: 'high',
+    metric: `${opening.toFixed(2)} ratio`,
+  });
+
+  // T side sous-performant vs CT
+  if (ctWR > 0 && tWR > 0 && ctWR - tWR >= 12) improvements.push({
+    icon: 'tside', label: 'Côté T sous-performant',
+    detail: `CT ${ctWR}% vs T ${tWR}% de win rate`,
+    advice: 'Travaille les exécutions en équipe côté T. Utilise ta utility avant d'entrer — smokes, flashes et molotovs font la différence.',
+    priority: 'high',
+    metric: `${(ctWR - tWR).toFixed(0)}pt d'écart`,
+  });
+
+  // KAST faible
+  if (kast < 65) improvements.push({
+    icon: 'kast', label: 'Faible présence dans les rounds',
+    detail: `${kast.toFixed(0)}% KAST sur 20 matchs`,
+    advice: 'Cherche à contribuer dans chaque round : assist, trade, ou survive. Mourir sans impact est le problème principal à régler.',
+    priority: 'high',
+    metric: `${kast.toFixed(0)}% KAST`,
+  });
+
+  // Inconsistance
+  if (cv >= 0.22) improvements.push({
+    icon: 'cons', label: 'Manque de consistance',
+    detail: `Forte variabilité de ton FV Rating`,
+    advice: 'Joue simple dans les matchs où tu te sens moins bien : prends moins de risques, concentre-toi sur ta survie et tes échanges.',
+    priority: cv >= 0.3 ? 'high' : 'medium',
+    metric: `CV ${(cv*100).toFixed(0)}%`,
+  });
+
+  // ADR faible
+  if (adr < 72) improvements.push({
+    icon: 'dmg', label: 'Impact en jeu insuffisant',
+    detail: `${adr.toFixed(0)} ADR moyen`,
+    advice: 'Damage check systématiquement avant les duels. Chaque point de dégât augmente ta présence dans les rounds même sans kill.',
+    priority: 'medium',
+    metric: `${adr.toFixed(0)} ADR`,
+  });
+
+  // Utility passive
+  if (flashPR < 0.25 && elo > 1500) improvements.push({
+    icon: 'util', label: 'Utilisation de l'utility limitée',
+    detail: `${flashPR.toFixed(2)} flash par round`,
+    advice: 'Flash avant d'entrer sur un site ou de peeaker un angle difficile. Une bonne flash peut te sauver le duel.',
+    priority: 'medium',
+    metric: `${flashPR.toFixed(2)} flash/round`,
+  });
+
+  // HS% trop élevé (dépendance headshot)
+  if (hs >= 72 && kd < 1.3) improvements.push({
+    icon: 'hs', label: 'Dépendance aux headshots',
+    detail: `${hs.toFixed(0)}% de HS — attention aux angles fermés`,
+    advice: 'Un HS% très élevé indique parfois que tu vises trop haut sur des angles difficiles. Spray sur le torse sur les duels lointains.',
+    priority: 'low',
+    metric: `${hs.toFixed(0)}% HS`,
+  });
+
+  // Trend baissier
+  if (trendDown && !trendUp) improvements.push({
+    icon: 'trend', label: 'Tendance baissière récente',
+    detail: 'FV Rating en baisse sur tes 5 derniers matchs',
+    advice: 'Fais une pause ou change de map pool. Continuer sur une mauvaise série empire souvent les habitudes.',
+    priority: 'medium',
+    metric: `${((last5-prev5)/prev5*100).toFixed(0)}% de baisse`,
+  });
+
+  return {
+    strengths: strengths.slice(0, 4),
+    improvements: improvements.sort((a,b) => (a.priority==='high'?0:a.priority==='medium'?1:2) - (b.priority==='high'?0:b.priority==='medium'?1:2)).slice(0, 4),
+    trendUp,
+    trendDown,
+    cv,
+  };
+}
+
+// ── Render improvements section ──────────────────────────────────────────
+function renderImprovements(data) {
+  const { lastMatchInsights, globalInsights } = generateImprovements(data);
+  const { recent } = data;
+  const matches = recent.matches || [];
+  const last = matches[0];
+
+  const container = document.getElementById('improvementsPanel');
+  if (!container) return;
+
+  // Icônes SVG inline par type
+  const icons = {
+    kill:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6.3 6.9 1-5 4.8 1.2 6.9L12 18l-6.1 3 1.2-6.9-5-4.8 6.9-1z"/></svg>`,
+    hs:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>`,
+    dmg:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+    pres:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+    clutch:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>`,
+    mk:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>`,
+    fv:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`,
+    win:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>`,
+    open:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22l-4-4 4-4M8 18h8a4 4 0 000-8h-1"/><path d="M12 2l4 4-4 4"/><path d="M16 6H8a4 4 0 000 8h1"/></svg>`,
+    cons:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 12l4-4 4 4 5-5"/></svg>`,
+    tside: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
+    kast:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>`,
+    util:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>`,
+    trend: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>`,
+    kd:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
+  };
+
+  const getIcon = (key) => icons[key] || icons.fv;
+
+  // ── Dernier match ────────────────────────────────────────────────────
+  let lastMatchHtml = '';
+  if (lastMatchInsights && last) {
+    const won = lastMatchInsights.won;
+    const map = last.map || 'Inconnu';
+    const date = last.date || '';
+    const score = last.score || '';
+
+    lastMatchHtml = `
+    <div class="impr-section">
+      <div class="impr-section-header">
+        <div class="impr-section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Dernier match
+        </div>
+        <div class="impr-match-badge ${won ? 'win' : 'loss'}">
+          ${won ? 'Victoire' : 'Défaite'} · ${map} · ${score}
+        </div>
+      </div>
+
+      <div class="impr-cols">
+        ${lastMatchInsights.strengths.length > 0 ? `
+        <div class="impr-col">
+          <div class="impr-col-header strength">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Ce qui a bien marché
+          </div>
+          ${lastMatchInsights.strengths.map(s => `
+          <div class="impr-item strength">
+            <div class="impr-item-icon strength">${getIcon(s.icon)}</div>
+            <div class="impr-item-content">
+              <div class="impr-item-label">${s.label}</div>
+              <div class="impr-item-detail">${s.detail}</div>
+            </div>
+          </div>`).join('')}
+        </div>` : ''}
+
+        ${lastMatchInsights.warnings.length > 0 ? `
+        <div class="impr-col">
+          <div class="impr-col-header warning">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="9" x2="12" y2="13"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            À corriger
+          </div>
+          ${lastMatchInsights.warnings.map(w => `
+          <div class="impr-item warning">
+            <div class="impr-item-icon warning">${getIcon(w.icon)}</div>
+            <div class="impr-item-content">
+              <div class="impr-item-label">${w.label}</div>
+              <div class="impr-item-detail">${w.detail}</div>
+              <div class="impr-item-advice">${w.advice}</div>
+            </div>
+          </div>`).join('')}
+        </div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // ── Analyse globale ──────────────────────────────────────────────────
+  const globalHtml = `
+    <div class="impr-section">
+      <div class="impr-section-header">
+        <div class="impr-section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 16 4-4 4 4 5-5"/></svg>
+          Tendances globales (20 matchs)
+        </div>
+        ${globalInsights.trendUp ? '<div class="impr-trend-up">En progression</div>' :
+          globalInsights.trendDown ? '<div class="impr-trend-down">Tendance baissière</div>' : ''}
+      </div>
+
+      <div class="impr-cols">
+        ${globalInsights.strengths.length > 0 ? `
+        <div class="impr-col">
+          <div class="impr-col-header strength">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Tes points forts
+          </div>
+          ${globalInsights.strengths.map(s => `
+          <div class="impr-item strength">
+            <div class="impr-item-icon strength">${getIcon(s.icon)}</div>
+            <div class="impr-item-content">
+              <div class="impr-item-label">${s.label}</div>
+              <div class="impr-item-detail">${s.detail}</div>
+            </div>
+          </div>`).join('')}
+        </div>` : ''}
+
+        ${globalInsights.improvements.length > 0 ? `
+        <div class="impr-col">
+          <div class="impr-col-header improvement">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Axes prioritaires
+          </div>
+          ${globalInsights.improvements.map(imp => `
+          <div class="impr-item improvement ${imp.priority}">
+            <div class="impr-item-icon improvement">${getIcon(imp.icon)}</div>
+            <div class="impr-item-content">
+              <div class="impr-item-header-row">
+                <div class="impr-item-label">${imp.label}</div>
+                <div class="impr-priority-badge ${imp.priority}">${imp.priority === 'high' ? 'Priorité haute' : imp.priority === 'medium' ? 'À travailler' : 'Secondaire'}</div>
+              </div>
+              <div class="impr-item-detail">${imp.detail}</div>
+              <div class="impr-item-advice">${imp.advice}</div>
+              <div class="impr-item-metric">${imp.metric}</div>
+            </div>
+          </div>`).join('')}
+        </div>` : ''}
+      </div>
+    </div>`;
+
+  container.innerHTML = lastMatchHtml + globalHtml;
+}
+
+// ── CSS à injecter ───────────────────────────────────────────────────────
+function injectImprovementCSS() {
+  if (document.getElementById('impr-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'impr-styles';
+  style.textContent = `
+    .impr-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px}
+    .impr-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+    .impr-section-title{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-family:var(--mono)}
+    .impr-match-badge{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px}
+    .impr-match-badge.win{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.2)}
+    .impr-match-badge.loss{background:rgba(240,107,107,.08);color:var(--danger);border:1px solid rgba(240,107,107,.2)}
+    .impr-trend-up{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--success);background:rgba(45,212,160,.1);border:1px solid rgba(45,212,160,.2);padding:4px 10px;border-radius:5px}
+    .impr-trend-down{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--danger);background:rgba(240,107,107,.08);border:1px solid rgba(240,107,107,.2);padding:4px 10px;border-radius:5px}
+    .impr-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:700px){.impr-cols{grid-template-columns:1fr}}
+    .impr-col{display:flex;flex-direction:column;gap:8px}
+    .impr-col-header{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);margin-bottom:4px;padding:6px 10px;border-radius:6px}
+    .impr-col-header.strength{color:var(--success);background:rgba(45,212,160,.06);border:1px solid rgba(45,212,160,.12)}
+    .impr-col-header.warning{color:var(--gold);background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.12)}
+    .impr-col-header.improvement{color:#60A5FA;background:rgba(59,127,245,.06);border:1px solid rgba(59,127,245,.12)}
+    .impr-item{display:flex;gap:10px;padding:12px;border-radius:8px;border:1px solid transparent;transition:border-color .15s}
+    .impr-item.strength{background:rgba(45,212,160,.04);border-color:rgba(45,212,160,.1)}
+    .impr-item.warning{background:rgba(245,200,66,.04);border-color:rgba(245,200,66,.1)}
+    .impr-item.improvement{background:rgba(59,127,245,.04);border-color:rgba(59,127,245,.1)}
+    .impr-item.improvement.high{background:rgba(240,107,107,.04);border-color:rgba(240,107,107,.12)}
+    .impr-item-icon{width:30px;height:30px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .impr-item-icon.strength{background:rgba(45,212,160,.12);color:var(--success)}
+    .impr-item-icon.warning{background:rgba(245,200,66,.12);color:var(--gold)}
+    .impr-item-icon.improvement{background:rgba(59,127,245,.12);color:#60A5FA}
+    .impr-item-content{flex:1;min-width:0}
+    .impr-item-header-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px}
+    .impr-item-label{font-size:13px;font-weight:600;letter-spacing:-.2px}
+    .impr-item-detail{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:4px}
+    .impr-item-advice{font-size:12px;color:var(--text2);line-height:1.55;background:rgba(255,255,255,.02);border-left:2px solid var(--border2);padding:6px 8px;border-radius:0 4px 4px 0;margin-top:4px}
+    .impr-item-metric{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px}
+    .impr-priority-badge{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+    .impr-priority-badge.high{background:rgba(240,107,107,.12);color:var(--danger)}
+    .impr-priority-badge.medium{background:rgba(245,200,66,.1);color:var(--gold)}
+    .impr-priority-badge.low{background:rgba(59,127,245,.1);color:#60A5FA}
+  `;
+  document.head.appendChild(style);
 }
