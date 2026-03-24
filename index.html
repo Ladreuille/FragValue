@@ -104,13 +104,20 @@
     .feat-card:hover .feat-btn svg{transform:translateX(3px)}
 
     /* HOW */
-    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-top:44px}
-    @media(max-width:700px){.steps{grid-template-columns:1fr}}
-    .step{background:var(--surface);padding:32px 28px}
-    .step-num{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.5px;margin-bottom:16px}
-    .step-icon{font-size:28px;margin-bottom:14px}
-    .step-title{font-size:16px;font-weight:700;letter-spacing:-.3px;margin-bottom:8px}
-    .step-desc{font-size:13px;color:var(--text2);line-height:1.6}
+    /* HOW IT WORKS tabs */
+    .how-tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:3px;width:fit-content;margin:32px 0 40px}
+    .how-tab{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;padding:9px 18px;border-radius:7px;cursor:pointer;color:var(--text2);border:none;background:transparent;transition:all .2s}
+    .how-tab:hover{color:var(--text)}
+    .how-tab.active{background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+    .how-steps{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:0;align-items:start;margin-top:0}
+    @media(max-width:900px){.how-steps{grid-template-columns:1fr;gap:0}.how-step-arrow{transform:rotate(90deg);margin:8px auto;display:flex;justify-content:center}}
+    .how-step{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;transition:border-color .2s}
+    .how-step:hover{border-color:var(--border2)}
+    .how-step-arrow{display:flex;align-items:center;justify-content:center;padding:0 8px;padding-top:60px}
+    .how-step-icon{width:48px;height:48px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:var(--si,var(--accent));background:color-mix(in srgb,var(--si,var(--accent)) 10%,transparent);border:1px solid color-mix(in srgb,var(--si,var(--accent)) 20%,transparent)}
+    .how-step-num{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.5px;margin-bottom:8px}
+    .how-step-title{font-size:14px;font-weight:700;letter-spacing:-.3px;margin-bottom:8px}
+    .how-step-desc{font-size:12px;color:var(--text2);line-height:1.6}
 
     /* FV SCORE */
     .score-preview{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px;margin-top:44px}
@@ -388,28 +395,126 @@
     </div>
   </section>
 
-  <!-- HOW -->
+  <!-- HOW IT WORKS — Joueur vs Scout -->
   <section class="section" style="padding-top:0">
     <div class="sec-eyebrow">Comment ça marche</div>
-    <div class="sec-title">Simple et rapide.</div>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">01</div>
-        <div class="step-icon">🔎</div>
-        <div class="step-title">Entre un pseudo FACEIT</div>
-        <div class="step-desc">Ton pseudo, celui d'un adversaire ou d'un futur coéquipier. Résultat en moins de 5 secondes.</div>
+    <div class="sec-title">Une expérience pensée pour toi.</div>
+
+    <!-- Toggle Joueur / Scout -->
+    <div class="how-tabs">
+      <button class="how-tab active" id="tabPlayer" onclick="switchHow('player')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Je suis joueur
+      </button>
+      <button class="how-tab" id="tabScout" onclick="switchHow('scout')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        Je suis scout / coach
+      </button>
+    </div>
+
+    <!-- Steps Joueur -->
+    <div class="how-steps" id="stepsPlayer">
+      <div class="how-step">
+        <div class="how-step-icon" style="--si:#3B7FF5">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+        </div>
+        <div class="how-step-num">01</div>
+        <div class="how-step-title">Entre ton pseudo FACEIT</div>
+        <div class="how-step-desc">Tape ton pseudo exact — FragValue récupère tes 20 derniers matchs et ton historique complet en quelques secondes.</div>
       </div>
-      <div class="step">
-        <div class="step-num">02</div>
-        <div class="step-icon">📊</div>
-        <div class="step-title">Reçois l'analyse complète</div>
-        <div class="step-desc">FV Score /100, stats des 20 derniers matchs, CT/T split, multi-kills et évaluation de potentiel.</div>
+      <div class="how-step-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </div>
-      <div class="step">
-        <div class="step-num">03</div>
-        <div class="step-icon">🎯</div>
-        <div class="step-title">Agis sur les données</div>
-        <div class="step-desc">Watchlist, comparaison avec d'autres joueurs ou analyse démo pour identifier les axes d'amélioration.</div>
+      <div class="how-step">
+        <div class="how-step-icon" style="--si:#2DD4A0">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3 3v18h18"/><path d="m7 16 4-4 4 4 5-5"/>
+          </svg>
+        </div>
+        <div class="how-step-num">02</div>
+        <div class="how-step-title">Identifie tes axes d'amélioration</div>
+        <div class="how-step-desc">FV Score /100, CT/T split, opening ratio, flash efficacy — tu vois exactement ce qui plombe ton niveau et ce sur quoi travailler en priorité.</div>
+      </div>
+      <div class="how-step-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="how-step">
+        <div class="how-step-icon" style="--si:#F5C842">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01"/>
+          </svg>
+        </div>
+        <div class="how-step-num">03</div>
+        <div class="how-step-title">Visualise ta démo</div>
+        <div class="how-step-desc">Importe ton fichier .dem pour voir tes heatmaps de kills CT/T, tes zones de déplacement et les spots où tu perds tes duels.</div>
+      </div>
+      <div class="how-step-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="how-step">
+        <div class="how-step-icon" style="--si:#A78BFA">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        </div>
+        <div class="how-step-num">04</div>
+        <div class="how-step-title">Suis ta progression</div>
+        <div class="how-step-desc">Reviens analyser ton profil après tes sessions — vois ton FV Score évoluer et mesure concrètement tes progrès dans le temps.</div>
+      </div>
+    </div>
+
+    <!-- Steps Scout -->
+    <div class="how-steps" id="stepsScout" style="display:none">
+      <div class="how-step">
+        <div class="how-step-icon" style="--si:#2DD4A0">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+        </div>
+        <div class="how-step-num">01</div>
+        <div class="how-step-title">Recherche un joueur</div>
+        <div class="how-step-desc">Entre n'importe quel pseudo FACEIT — FragValue génère une fiche complète avec FV Score, CT/T split, consistance sur 20 matchs.</div>
+      </div>
+      <div class="how-step-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="how-step">
+        <div class="how-step-icon" style="--si:#3B7FF5">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <div class="how-step-num">02</div>
+        <div class="how-step-title">Analyse sa fiche en détail</div>
+        <div class="how-step-desc">FV Score /100 décomposé en 4 dimensions : Performance, Consistance, Impact et Utilité. Tout ce qu'il faut pour évaluer un profil objectivement.</div>
+      </div>
+      <div class="how-step-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="how-step">
+        <div class="how-step-icon" style="--si:#F5C842">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+          </svg>
+        </div>
+        <div class="how-step-num">03</div>
+        <div class="how-step-title">Compare les candidats</div>
+        <div class="how-step-desc">Mets jusqu'à 5 joueurs côte à côte — spider chart, barres de comparaison, tableau complet. Identifie le meilleur profil pour ton équipe.</div>
+      </div>
+      <div class="how-step-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="how-step">
+        <div class="how-step-icon" style="--si:#F06B6B">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+          </svg>
+        </div>
+        <div class="how-step-num">04</div>
+        <div class="how-step-title">Sauvegarde dans ta watchlist</div>
+        <div class="how-step-desc">Ajoute les profils intéressants à ta watchlist ou ton roster. Retrouve-les en un clic pour suivre leur évolution avant de recruter.</div>
       </div>
     </div>
   </section>
@@ -587,6 +692,13 @@ _sb.auth.getSession().then(({ data }) => {
     document.getElementById('navAccountBtn').style.display = '';
   }
 });
+function switchHow(mode) {
+  document.getElementById('tabPlayer').classList.toggle('active', mode === 'player');
+  document.getElementById('tabScout').classList.toggle('active', mode === 'scout');
+  document.getElementById('stepsPlayer').style.display = mode === 'player' ? 'grid' : 'none';
+  document.getElementById('stepsScout').style.display  = mode === 'scout'  ? 'grid' : 'none';
+}
+
 function showScoutSearch() {
   document.getElementById('heroSearch').style.display = 'flex';
   document.getElementById('heroCta').style.display = 'none';
