@@ -1,3 +1,108 @@
+const { createClient } = require('@supabase/supabase-js');
+
+// ── Supabase client ──────────────────────────────────────────────────────────
+function getSbClient() {
+  const url  = process.env.SUPABASE_URL  || 'https://xmyruycvvkmcwysfygcq.supabase.co';
+  const key  = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY ||
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+  return createClient(url, key);
+}
+
+// ── Cache helpers ─────────────────────────────────────────────────────────────
+const CACHE_TTL_H = 24; // heures
+
+async function readCache(playerId) {
+  try {
+    const sb = getSbClient();
+    const { data } = await sb
+      .from('player_advanced_cache')
+      .select('advanced_stats, cached_at')
+      .eq('player_id', playerId)
+      .single();
+    if (!data) return null;
+    const age = (Date.now() - new Date(data.cached_at).getTime()) / 3600000;
+    if (age > CACHE_TTL_H) return null; // expiré
+    return data.advanced_stats;
+  } catch { return null; }
+}
+
+async function writeCache(playerId, nickname, advancedStats) {
+  try {
+    const sb = getSbClient();
+    await sb.from('player_advanced_cache').upsert({
+      player_id:      playerId,
+      nickname:       nickname,
+      advanced_stats: advancedStats,
+      cached_at:      new Date().toISOString(),
+    }, { onConflict: 'player_id' });
+  } catch(e) { console.warn('Cache write error:', e.message); }
+}
+
+// ── Fetch stats avancées depuis match details FACEIT ─────────────────────────
+// Récupère CT/T split, clutches, opening kills, flashes, trades, saves
+// pour chaque match via /matches/{id}/stats
+async function fetchAdvancedMatchStats(matchIds, playerId, headers) {
+  const BASE = 'https://open.faceit.com/data/v4';
+  const results = {};
+
+  // Batch : max 5 appels simultanés pour éviter rate limiting
+  const BATCH = 5;
+  for (let i = 0; i < matchIds.length; i += BATCH) {
+    const batch = matchIds.slice(i, i + BATCH);
+    const responses = await Promise.allSettled(
+      batch.map(matchId =>
+        fetch(`${BASE}/matches/${matchId}/stats`, { headers })
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null)
+      )
+    );
+    responses.forEach((res, idx) => {
+      const matchId = batch[idx];
+      if (res.status !== 'fulfilled' || !res.value) return;
+      const matchData = res.value;
+      // Trouver les stats du joueur dans le match
+      const rounds = matchData.rounds || [];
+      for (const round of rounds) {
+        const teams = round.teams || [];
+        for (const team of teams) {
+          const players = team.players || [];
+          const playerStats = players.find(p => p.player_id === playerId);
+          if (playerStats) {
+            const s = playerStats.player_stats || {};
+            results[matchId] = {
+              clutch1v1:  parseInt(s['1v1Wins'])  || parseInt(s['1v1 Wins'])  || 0,
+              clutch1v2:  parseInt(s['1v2Wins'])  || parseInt(s['1v2 Wins'])  || 0,
+              clutch1v3:  parseInt(s['1v3Wins'])  || parseInt(s['1v3 Wins'])  || 0,
+              clutch1v4:  parseInt(s['1v4Wins'])  || parseInt(s['1v4 Wins'])  || 0,
+              clutch1v5:  parseInt(s['1v5Wins'])  || parseInt(s['1v5 Wins'])  || 0,
+              firstKills: parseInt(s['First Kills'])  || parseInt(s['Opening Kills'])  || 0,
+              firstDeaths:parseInt(s['First Deaths']) || parseInt(s['Opening Deaths']) || 0,
+              ctKills:    parseInt(s['Kills - CT'])  || parseInt(s['CT Kills'])  || 0,
+              ctDeaths:   parseInt(s['Deaths - CT']) || parseInt(s['CT Deaths']) || 0,
+              ctWins:     parseInt(s['Wins - CT'])   || parseInt(s['CT Wins'])   || 0,
+              ctRounds:   parseInt(s['Rounds - CT']) || parseInt(s['CT Rounds']) || 0,
+              tKills:     parseInt(s['Kills - T'])   || parseInt(s['T Kills'])   || 0,
+              tDeaths:    parseInt(s['Deaths - T'])  || parseInt(s['T Deaths'])  || 0,
+              tWins:      parseInt(s['Wins - T'])    || parseInt(s['T Wins'])    || 0,
+              tRounds:    parseInt(s['Rounds - T'])  || parseInt(s['T Rounds'])  || 0,
+              flashesThrown:   parseInt(s['Flash Count']) || parseInt(s['Flashes Thrown']) || 0,
+              enemiesFlashed:  parseInt(s['Enemies Flashed']) || parseInt(s['Flash Assists']) || 0,
+              utilDmg:    parseInt(s['Utility Damage']) || parseInt(s['Utility DMG']) || 0,
+              tradeKills: parseInt(s['Trade Kills'])  || 0,
+              tradeDeaths:parseInt(s['Trade Deaths']) || 0,
+              saves:      parseInt(s['Saves'])        || 0,
+              sniperKills:parseInt(s['Sniper Kills']) || parseInt(s['AWP Kills']) || 0,
+            };
+          }
+        }
+      }
+    });
+    // Petite pause entre batches pour respecter le rate limit
+    if (i + BATCH < matchIds.length) await new Promise(r => setTimeout(r, 150));
+  }
+  return results;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
@@ -22,6 +127,9 @@ module.exports = async function handler(req, res) {
     const playerId = player.player_id;
     const cs2data = player.games?.cs2;
     if (!cs2data) return res.status(404).json({ error: `Ce joueur n'a pas de données CS2 sur FACEIT.` });
+
+    // 2. Lire le cache Supabase pour les stats avancées
+    const cachedAdvanced = await readCache(playerId);
 
     // 2. Appels parallèles
     const [statsRes, historyRes, recentStatsRes, teamsRes] = await Promise.all([
@@ -182,6 +290,57 @@ module.exports = async function handler(req, res) {
         pistolWins, pistolTotal,
         sniperKills,
       };
+    });
+
+    // ── Enrichissement avec stats avancées (cache ou fetch) ──────────────
+    let advancedByMatch = {};
+
+    if (cachedAdvanced) {
+      // Cache valide : utiliser directement
+      advancedByMatch = cachedAdvanced;
+    } else {
+      // Pas de cache : fetch des match details en arrière-plan
+      // On répond d'abord avec les données de base, le cache se remplira
+      const matchIds = recentMatches
+        .map(m => m.matchId)
+        .filter(Boolean);
+
+      if (matchIds.length > 0) {
+        // Fetch asynchrone — ne bloque pas la réponse
+        fetchAdvancedMatchStats(matchIds, playerId, headers)
+          .then(results => {
+            if (Object.keys(results).length > 0) {
+              writeCache(playerId, nickname, results);
+            }
+          })
+          .catch(e => console.warn('Advanced stats fetch error:', e.message));
+      }
+    }
+
+    // Fusionner les stats avancées dans chaque match
+    recentMatches.forEach(m => {
+      const adv = advancedByMatch[m.matchId];
+      if (!adv) return;
+      // Surcharger les champs qui étaient à 0 si le cache a des vraies valeurs
+      if (adv.clutch1v1 > 0) m.clutch1v1 = adv.clutch1v1;
+      if (adv.clutch1v2 > 0) m.clutch1v2 = adv.clutch1v2;
+      if (adv.clutch1v3 > 0) m.clutch1v3 = adv.clutch1v3;
+      if (adv.clutch1v4 > 0) m.clutch1v4 = adv.clutch1v4;
+      if (adv.clutch1v5 > 0) m.clutch1v5 = adv.clutch1v5;
+      if (adv.firstKills  > 0) m.firstKills  = adv.firstKills;
+      if (adv.firstDeaths > 0) m.firstDeaths = adv.firstDeaths;
+      if (adv.ctKills > 0 || adv.ctRounds > 0) {
+        m.ctKills = adv.ctKills; m.ctDeaths = adv.ctDeaths;
+        m.ctWins  = adv.ctWins;  m.ctRounds = adv.ctRounds;
+        m.tKills  = adv.tKills;  m.tDeaths  = adv.tDeaths;
+        m.tWins   = adv.tWins;   m.tRounds  = adv.tRounds;
+      }
+      if (adv.flashesThrown  > 0) m.flashesThrown  = adv.flashesThrown;
+      if (adv.enemiesFlashed > 0) m.enemiesFlashed = adv.enemiesFlashed;
+      if (adv.utilDmg    > 0) m.utilDmg    = adv.utilDmg;
+      if (adv.tradeKills > 0) m.tradeKills = adv.tradeKills;
+      if (adv.saves      > 0) m.saves      = adv.saves;
+      if (adv.sniperKills > 0) m.sniperKills = adv.sniperKills;
     });
 
     const n = recentMatches.length || 1;
