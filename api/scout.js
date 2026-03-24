@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
 
     const lifetime = statsData?.lifetime || {};
 
-    // 3. Stats par match — extraction complète
+    // 3. Stats par match : extraction complète
     const recentMatches = (recentStatsData.items || []).map(item => {
       const s = item.stats || {};
 
@@ -168,8 +168,8 @@ module.exports = async function handler(req, res) {
       return {
         matchId: s['Match Id'] || '',
         date:    s['Match Finished At'] ? new Date(parseInt(s['Match Finished At'])).toLocaleDateString('fr-FR') : '',
-        map:     s['Map'] || '—',
-        score:   s['Score'] || '—',
+        map:     s['Map'] || '',
+        score:   s['Score'] || '',
         result, kills, deaths, assists, hs, hsPct, kd, kr, adr, kast, mvp, rounds,
         double, triple, quad, ace,
         clutch1v1, clutch1v2, clutch1v3, clutch1v4, clutch1v5,
@@ -201,7 +201,7 @@ module.exports = async function handler(req, res) {
     // ── Total rounds pour les calculs ──────────────────────────────────────
     const totalRoundsAll = recentMatches.reduce((s, m) => s + (m.rounds || 0), 0) || n * 24;
 
-    // ── CT / T split — depuis les matchs récents ou lifetime segments ───────
+    // ── CT / T split : depuis les matchs récents ou lifetime segments ───────
     const totCtRounds = sum('ctRounds');
     const totTRounds  = sum('tRounds');
 
@@ -213,18 +213,18 @@ module.exports = async function handler(req, res) {
 
     const ctWinRate = totCtRounds > 0
       ? ((sum('ctWins') / totCtRounds) * 100).toFixed(0)
-      : lifetimeCtWinRate > 0 ? lifetimeCtWinRate.toFixed(0) : '—';
+      : lifetimeCtWinRate > 0 ? lifetimeCtWinRate.toFixed(0) : '';
     const tWinRate  = totTRounds > 0
       ? ((sum('tWins') / totTRounds) * 100).toFixed(0)
-      : lifetimeTWinRate > 0 ? lifetimeTWinRate.toFixed(0) : '—';
+      : lifetimeTWinRate > 0 ? lifetimeTWinRate.toFixed(0) : '';
     const ctKd = sum('ctDeaths') > 0
       ? (sum('ctKills') / sum('ctDeaths')).toFixed(2)
-      : lifetimeCtKd > 0 ? lifetimeCtKd.toFixed(2) : '—';
+      : lifetimeCtKd > 0 ? lifetimeCtKd.toFixed(2) : '';
     const tKd  = sum('tDeaths') > 0
       ? (sum('tKills') / sum('tDeaths')).toFixed(2)
-      : lifetimeTKd > 0 ? lifetimeTKd.toFixed(2) : '—';
+      : lifetimeTKd > 0 ? lifetimeTKd.toFixed(2) : '';
 
-    // ── Flashes — depuis lifetime si pas dans les matchs ──────────────────
+    // ── Flashes : depuis lifetime si pas dans les matchs ──────────────────
     const sumFlashesThrown  = sum('flashesThrown');
     const sumEnemiesFlashed = sum('enemiesFlashed');
     const lifetimeFlashes   = parseInt(lifetime['Flash Count']) || parseInt(lifetime['Flashes Thrown']) || 0;
@@ -261,7 +261,7 @@ module.exports = async function handler(req, res) {
     const totalPistolWins  = sumPistolWins  > 0 ? sumPistolWins  : lifetimePistolWins;
     const totalPistolTotal = sumPistolTotal > 0 ? sumPistolTotal : lifetimePistolTotal;
     const pistolWinRate    = totalPistolTotal > 0
-      ? ((totalPistolWins / totalPistolTotal) * 100).toFixed(0) : '—';
+      ? ((totalPistolWins / totalPistolTotal) * 100).toFixed(0) : '';
 
     // ── Sniper ────────────────────────────────────────────────────────────
     const sumSniperKills = sum('sniperKills');
@@ -275,7 +275,7 @@ module.exports = async function handler(req, res) {
     const totalQuads   = sum('quad');
     const totalAces    = sum('ace');
 
-    // ── Clutches — depuis lifetime si les matchs n'ont pas ces champs ─────
+    // ── Clutches : depuis lifetime si les matchs n'ont pas ces champs ─────
     // FACEIT retourne ces stats dans lifetime mais pas toujours par match
     const lifetimeClutch1v1 = parseInt(lifetime['1v1Wins']) || parseInt(lifetime['1v1 Wins']) || 0;
     const lifetimeClutch1v2 = parseInt(lifetime['1v2Wins']) || parseInt(lifetime['1v2 Wins']) || 0;
@@ -310,7 +310,7 @@ module.exports = async function handler(req, res) {
     // ── Stats par map ─────────────────────────────────────────────────────
     const mapStats = {};
     recentMatches.forEach(m => {
-      if (!m.map || m.map === '—') return;
+      if (!m.map || m.map === '') return;
       if (!mapStats[m.map]) mapStats[m.map] = {
         wins: 0, total: 0, kills: 0, deaths: 0,
         ctWins: 0, ctRounds: 0, tWins: 0, tRounds: 0,
@@ -332,8 +332,8 @@ module.exports = async function handler(req, res) {
       matches:     d.total,
       winRate:     ((d.wins / d.total) * 100).toFixed(0),
       kd:          d.deaths > 0 ? (d.kills / d.deaths).toFixed(2) : d.kills.toString(),
-      ctWinRate:   d.ctRounds > 0 ? ((d.ctWins / d.ctRounds) * 100).toFixed(0) : '—',
-      tWinRate:    d.tRounds  > 0 ? ((d.tWins  / d.tRounds)  * 100).toFixed(0) : '—',
+      ctWinRate:   d.ctRounds > 0 ? ((d.ctWins / d.ctRounds) * 100).toFixed(0) : '',
+      tWinRate:    d.tRounds  > 0 ? ((d.tWins  / d.tRounds)  * 100).toFixed(0) : '',
       avgAdr:      (d.adr  / d.total).toFixed(0),
       avgKast:     (d.kast / d.total).toFixed(0),
       avgFvRating: (d.fvRating / d.total).toFixed(2),
@@ -348,7 +348,7 @@ module.exports = async function handler(req, res) {
 
 
     // ══════════════════════════════════════════════════════════════════════
-    // FV SCORE /100 — Indice de talent FragValue
+    // FV SCORE /100 : Indice de talent FragValue
     // Plus puissant que HLTV 2.1, FACEIT ELO et Leetify Rating car il combine :
     //   - Performance contextuelle (35pts) : KPR/DPR/ADR/KAST pondérés + ajustement ELO
     //   - Consistance (25pts)              : variance des ratings sur 20 matchs
@@ -429,7 +429,7 @@ module.exports = async function handler(req, res) {
       const cv = ratingMean > 0 ? stdDev / ratingMean : 1;
 
       // Score consistance : CV=0 (parfait) → 25pts, CV=0.5 (très instable) → 0pts
-      // CV=0 (parfait)→25pts, CV=0.35 (instable)→0pts — seuil plus strict
+      // CV=0 (parfait)→25pts, CV=0.35 (instable)→0pts : seuil plus strict
       const consistScore = Math.min(25, Math.max(0, (1 - cv / 0.35) * 25));
 
       // Bonus : trend positif sur les 5 derniers matchs vs 5 précédents
