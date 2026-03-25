@@ -341,19 +341,7 @@ async function init() {
 }
 
 function showLinkPrompt() {
-  // Pas de pseudo FACEIT lié — rediriger vers l'onboarding pour compléter le profil
-  // Mettre à jour la nav avec les infos FACEIT
-  document.getElementById('navUsername').textContent = player.nickname;
-  const navAv = document.getElementById('navAvatar');
-  if (player.avatar) {
-    navAv.style.backgroundImage = `url(${player.avatar})`;
-    navAv.style.backgroundSize  = 'cover';
-    navAv.style.backgroundPosition = 'center';
-    navAv.textContent = '';
-  } else {
-    navAv.textContent = player.nickname.charAt(0).toUpperCase();
-  }
-
+  // Pas de pseudo FACEIT lié — rediriger vers l'onboarding
   document.getElementById('profileHeroCard').innerHTML = `
     <div class="link-prompt" style="text-align:center;padding:32px">
       <div style="font-size:32px;margin-bottom:16px">
@@ -419,6 +407,18 @@ async function loadFaceitData(nick) {
 
 function renderProfile(d) {
   const {player,cs2,recent,lifetime} = d;
+
+  // Mettre à jour la nav avec les infos FACEIT
+  document.getElementById('navUsername').textContent = player.nickname;
+  const navAv = document.getElementById('navAvatar');
+  if (player.avatar) {
+    navAv.style.backgroundImage    = `url(${player.avatar})`;
+    navAv.style.backgroundSize     = 'cover';
+    navAv.style.backgroundPosition = 'center';
+    navAv.textContent = '';
+  } else {
+    navAv.textContent = player.nickname.charAt(0).toUpperCase();
+  }
   const lvl = cs2.level||1;
   const fvR = parseFloat(recent.fvRating);
   const fvBadge = fvR>=1.2?'badge-fv-elite':fvR>=1.05?'badge-fv-great':fvR>=0.9?'badge-fv-good':fvR>=0.75?'badge-fv-avg':'badge-fv-low';
