@@ -344,15 +344,24 @@ async function init() {
 }
 
 function showLinkPrompt() {
+  // Pas de pseudo FACEIT lié — rediriger vers l'onboarding pour compléter le profil
   document.getElementById('profileHeroCard').innerHTML = `
-    <div class="link-prompt">
-      <div class="link-prompt-title">Lie ton compte FACEIT</div>
-      <p class="link-prompt-sub">Entre ton pseudo FACEIT pour charger tes stats et activer l'analyse d'amélioration.</p>
-      <div class="link-form">
-        <input class="link-input" id="linkNick" type="text" placeholder="Ton pseudo FACEIT exact..." onkeydown="if(event.key==='Enter')saveFaceitNick()"/>
-        <button class="link-btn" onclick="saveFaceitNick()">Lier</button>
+    <div class="link-prompt" style="text-align:center;padding:32px">
+      <div style="font-size:32px;margin-bottom:16px">
+        <svg width="48" height="48" viewBox="0 0 48 48" style="margin:0 auto;display:block">
+          <rect width="48" height="48" rx="12" fill="rgba(59,127,245,.1)"/>
+          <rect x="10" y="10" width="6" height="28" rx="2" fill="#3B7FF5"/>
+          <rect x="10" y="10" width="18" height="6" rx="2" fill="#3B7FF5"/>
+          <rect x="10" y="21" width="13" height="6" rx="2" fill="#3B7FF5"/>
+          <path d="M24 14 L31 34 L38 14" stroke="url(#dg)" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <defs><linearGradient id="dg" x1="24" y1="14" x2="38" y2="34" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3B7FF5"/><stop offset="100%" stop-color="#2DD4A0"/></linearGradient></defs>
+        </svg>
       </div>
-      <div class="link-msg" id="linkMsg"></div>
+      <div class="link-prompt-title">Configure ton profil</div>
+      <p class="link-prompt-sub">Ton compte FACEIT n'est pas encore lié. Complète ton profil pour accéder à tes stats et à l'analyse d'amélioration.</p>
+      <a href="onboarding.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;transition:opacity .15s" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+        Compléter mon profil →
+      </a>
     </div>`;
   document.getElementById('fvScoreCard').style.display='none';
   document.getElementById('kpiGrid').innerHTML='';
