@@ -322,11 +322,8 @@ async function init() {
   const { data:{ session } } = await sb.auth.getSession();
   if (!session) { window.location.href = 'login.html'; return; }
   currentUser = session.user;
-  const meta = currentUser.user_metadata || {};
-  document.getElementById('navUsername').textContent = meta.full_name || meta.name || currentUser.email.split('@')[0];
-  const avatarUrl = meta.avatar_url || meta.picture;
-  const av = document.getElementById('navAvatar');
-  if (avatarUrl) { av.style.backgroundImage=`url(${avatarUrl})`;av.style.backgroundSize='cover'; } else { av.textContent='👤'; }
+  // Nav : placeholder en attendant les infos FACEIT
+  document.getElementById('navUsername').textContent = '...';
   const { data:profile } = await sb.from('profiles').select('*').eq('id',currentUser.id).single();
   // Chercher le pseudo FACEIT dans profiles puis dans user_metadata comme fallback
   const nick = profile?.faceit_nickname
@@ -345,6 +342,18 @@ async function init() {
 
 function showLinkPrompt() {
   // Pas de pseudo FACEIT lié — rediriger vers l'onboarding pour compléter le profil
+  // Mettre à jour la nav avec les infos FACEIT
+  document.getElementById('navUsername').textContent = player.nickname;
+  const navAv = document.getElementById('navAvatar');
+  if (player.avatar) {
+    navAv.style.backgroundImage = `url(${player.avatar})`;
+    navAv.style.backgroundSize  = 'cover';
+    navAv.style.backgroundPosition = 'center';
+    navAv.textContent = '';
+  } else {
+    navAv.textContent = player.nickname.charAt(0).toUpperCase();
+  }
+
   document.getElementById('profileHeroCard').innerHTML = `
     <div class="link-prompt" style="text-align:center;padding:32px">
       <div style="font-size:32px;margin-bottom:16px">
