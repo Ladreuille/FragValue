@@ -1,870 +1,284 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8"/>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzA4MDkwRCIvPgogIDxyZWN0IHg9IjUiIHk9IjUiIHdpZHRoPSIzLjUiIGhlaWdodD0iMjAiIHJ4PSIxLjUiIGZpbGw9IiMzQjdGRjUiLz4KICA8cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iMTMiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHJlY3QgeD0iNSIgeT0iMTMuNSIgd2lkdGg9IjkiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHBhdGggZD0iTTE1LjUgOC41IEwyMC41IDIzLjUgTDI1LjUgOC41IiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIxNS41IiB5MT0iOC41IiB4Mj0iMjUuNSIgeTI9IjIzLjUiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzNCN0ZGNSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMyREQ0QTAiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgo8L3N2Zz4="/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FragValue : CS2 Talent Analytics</title>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --bg:#08090D;--surface:#0F1119;--card:#141720;--border:#1E2233;--border2:#252B3B;
-      --accent:#3B7FF5;--accent-dim:rgba(59,127,245,.10);
-      --text:#EDF0F7;--text2:#7A8499;--text3:#3D4459;
-      --success:#2DD4A0;--danger:#F06B6B;--gold:#F5C842;
-      --font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace;
-      --lvl1:#7A7A7A;--lvl2:#23C44E;--lvl3:#23C44E;
-      --lvl4:#F5C842;--lvl5:#F5C842;--lvl6:#F5C842;--lvl7:#EDA020;
-      --lvl8:#EDA020;--lvl9:#E05C2A;--lvl10:#D93535;
-    }
-    html{scroll-behavior:smooth}
-    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+const express = require('express');
+const multer  = require('multer');
+const cors    = require('cors');
+const fs      = require('fs');
+const os      = require('os');
+const { parseEvent, parsePlayerInfo } = require('@laihoe/demoparser2');
 
-    /* NAV */
-    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;background:rgba(8,9,13,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(30,34,51,.5)}
-    .logo{font-size:16px;font-weight:700;letter-spacing:-.3px;text-decoration:none;color:var(--text)}
-    .logo-accent{color:var(--accent)}
-    .nav-center{display:flex;align-items:center;gap:2px}
-    .nav-link{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 14px;border-radius:6px;transition:all .15s;font-weight:500}
-    .nav-link:hover{color:var(--text);background:rgba(255,255,255,.04)}
-    .nav-right{display:flex;align-items:center;gap:8px}
-    .nav-ghost{font-size:13px;font-weight:500;color:var(--text2);text-decoration:none;padding:7px 16px;border-radius:7px;border:1px solid var(--border2);transition:all .15s}
-    .nav-ghost:hover{color:var(--text)}
-    .nav-solid{font-size:13px;font-weight:600;color:#fff;background:var(--accent);text-decoration:none;padding:7px 16px;border-radius:7px;transition:opacity .15s;border:none;cursor:pointer}
-    .nav-solid:hover{opacity:.9}
+const app  = express();
+const PORT = process.env.PORT || 3001;
 
-    /* TOPBAR */
-    #topbar{display:none;align-items:center;gap:10px;padding:10px 40px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:56px;z-index:99}
-    #topbarInput{width:240px;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:8px 14px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
-    #topbarInput:focus{border-color:var(--accent)}
-    #topbarInput::placeholder{color:var(--text3)}
-    .topbar-btn{background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:7px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
-    .topbar-btn:hover{opacity:.9}
-    #topbarNick{font-family:var(--mono);font-size:13px;color:var(--text2)}
-    .tab-bar{display:none;align-items:center;gap:4px;padding:8px 40px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:calc(56px + 48px);z-index:98}
-    .tab-btn{font-size:13px;font-weight:500;padding:7px 16px;border-radius:7px;border:none;background:transparent;color:var(--text2);cursor:pointer;transition:all .15s}
-    .tab-btn:hover{color:var(--text);background:var(--card)}
-    .tab-btn.active{background:var(--card);color:var(--text);border:1px solid var(--border)}
-    .tab-new{font-size:9px;font-weight:700;background:var(--accent);color:#fff;padding:2px 5px;border-radius:3px;margin-left:4px;vertical-align:middle}
+// CORS : autoriser Vercel + localhost
+app.use(cors({
+  origin: [
+    'https://frag-value.vercel.app',
+    'https://frag-value-git-main-ladreuilles-projects.vercel.app',
+    /\.vercel\.app$/,
+    'http://localhost:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+  ],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false,
+}));
 
-    /* HERO */
-    .hero{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 40px;position:relative}
-    .hero-bg{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 80% 50% at 50% -5%,rgba(59,127,245,.13),transparent),radial-gradient(ellipse 40% 30% at 80% 60%,rgba(45,212,160,.04),transparent)}
-    .hero-grid{position:absolute;inset:0;z-index:0;background-image:linear-gradient(rgba(30,34,51,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(30,34,51,.25) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent)}
-    .hero-content{position:relative;z-index:1;max-width:700px}
-    .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;background:rgba(59,127,245,.08);border:1px solid rgba(59,127,245,.15);padding:5px 14px;border-radius:20px;margin-bottom:28px}
-    .hero-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
-    .hero-title{font-size:clamp(38px,6vw,72px);font-weight:700;letter-spacing:-2.5px;line-height:.97;margin-bottom:20px}
-    .hero-gradient{background:linear-gradient(135deg,var(--accent) 0%,#7BBFFF 50%,var(--success) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .hero-sub{font-size:16px;color:var(--text2);max-width:480px;line-height:1.7;margin:0 auto 28px}
-    .hero-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:32px}
-    .btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:13px 26px;border-radius:9px;font-size:14px;font-weight:600;text-decoration:none;border:none;cursor:pointer;transition:all .2s;box-shadow:0 0 32px rgba(59,127,245,.2)}
-    .btn-primary:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 0 48px rgba(59,127,245,.35)}
-    .btn-secondary{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);color:var(--text);padding:13px 26px;border-radius:9px;font-size:14px;font-weight:500;text-decoration:none;border:1px solid var(--border2);transition:all .2s}
-    .btn-secondary:hover{background:rgba(255,255,255,.07);transform:translateY(-1px)}
-    .hero-stats{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-    .hero-stat{padding:16px 28px;text-align:center;position:relative}
-    .hero-stat+.hero-stat::before{content:'';position:absolute;left:0;top:20%;height:60%;width:1px;background:var(--border)}
-    .hero-stat-val{font-size:20px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;line-height:1}
-    .hero-stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;font-family:var(--mono)}
-    #heroSearch{display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:480px;margin-top:28px}
-    .search-box{display:flex;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .15s}
-    .search-box:focus-within{border-color:var(--accent)}
-    #nickInput{flex:1;background:transparent;border:none;padding:13px 18px;font-family:var(--font);font-size:14px;color:var(--text);outline:none}
-    #nickInput::placeholder{color:var(--text3)}
-    #searchBtn{background:var(--accent);color:#fff;border:none;padding:13px 22px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}
-    #searchBtn:hover{opacity:.9}
-    #errorMsg{font-family:var(--mono);font-size:12px;color:var(--danger);display:none;margin-top:4px}
-    .back-link{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:var(--mono);transition:color .15s}
-    .back-link:hover{color:var(--text2)}
+// Preflight OPTIONS pour toutes les routes
+app.options('*', cors());
+app.use(express.json());
 
-    /* FEATURES */
-    .section{padding:64px 40px;max-width:1080px;margin:0 auto}
-    .sec-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
-    .sec-title{font-size:clamp(24px,3.5vw,38px);font-weight:700;letter-spacing:-1px;margin-bottom:12px}
-    .sec-sub{font-size:15px;color:var(--text2);line-height:1.7;max-width:480px}
-    .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:44px}
-    @media(max-width:860px){.feat-grid{grid-template-columns:1fr}}
-    .feat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;display:flex;flex-direction:column;transition:border-color .2s,transform .2s;position:relative;overflow:hidden;text-decoration:none;color:inherit;cursor:pointer}
-    .feat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--fc,var(--accent)),transparent);opacity:0;transition:opacity .2s}
-    .feat-card:hover{border-color:var(--fc,var(--accent));transform:translateY(-3px)}
-    .feat-card:hover::after{opacity:1}
-    .feat-icon{width:44px;height:44px;border-radius:10px;background:rgba(59,127,245,.08);border:1px solid rgba(59,127,245,.15);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:18px}
-    .feat-tag{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--fc,var(--accent));margin-bottom:8px}
-    .feat-title{font-size:18px;font-weight:700;letter-spacing:-.4px;margin-bottom:10px}
-    .feat-desc{font-size:13px;color:var(--text2);line-height:1.65;flex:1;margin-bottom:18px}
-    .feat-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:20px}
-    .feat-pill{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--card);border:1px solid var(--border);color:var(--text3)}
-    .feat-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--fc,var(--accent));padding:10px 16px;border-radius:7px;background:rgba(59,127,245,.08);border:1px solid rgba(59,127,245,.15);width:fit-content;transition:opacity .15s}
-    .feat-btn:hover{opacity:.8}
-    .feat-btn svg{transition:transform .15s}
-    .feat-card:hover .feat-btn svg{transform:translateX(3px)}
-
-    /* HOW */
-    /* HOW IT WORKS tabs */
-    .how-tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:3px;width:fit-content;margin:32px 0 40px}
-    .how-tab{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;padding:9px 18px;border-radius:7px;cursor:pointer;color:var(--text2);border:none;background:transparent;transition:all .2s}
-    .how-tab:hover{color:var(--text)}
-    .how-tab.active{background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.2)}
-    .how-steps{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:0;align-items:start;margin-top:0}
-    @media(max-width:900px){.how-steps{grid-template-columns:1fr;gap:0}.how-step-arrow{transform:rotate(90deg);margin:8px auto;display:flex;justify-content:center}}
-    .how-step{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;transition:border-color .2s}
-    .how-step:hover{border-color:var(--border2)}
-    .how-step-arrow{display:flex;align-items:center;justify-content:center;padding:0 8px;padding-top:60px}
-    .how-step-icon{width:48px;height:48px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:var(--si,var(--accent));background:color-mix(in srgb,var(--si,var(--accent)) 10%,transparent);border:1px solid color-mix(in srgb,var(--si,var(--accent)) 20%,transparent)}
-    .how-step-num{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.5px;margin-bottom:8px}
-    .how-step-title{font-size:14px;font-weight:700;letter-spacing:-.3px;margin-bottom:8px}
-    .how-step-desc{font-size:12px;color:var(--text2);line-height:1.6}
-
-    /* FV SCORE */
-    .score-preview{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px;margin-top:44px}
-    @media(max-width:700px){.score-preview{grid-template-columns:1fr;padding:28px}}
-    .score-circle-wrap{width:148px;height:148px;position:relative;margin:0 auto 20px}
-    .score-circle-svg{width:100%;height:100%;transform:rotate(-90deg)}
-    .score-circle-bg{fill:none;stroke:var(--border);stroke-width:10}
-    .score-circle-fill{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-dasharray:408;stroke-dashoffset:90;transition:stroke-dashoffset .8s ease}
-    .score-circle-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-    .score-big{font-size:38px;font-weight:700;font-family:var(--mono);letter-spacing:-2px;line-height:1}
-    .score-max{font-size:12px;color:var(--text3);font-family:var(--mono)}
-    .score-label{font-size:14px;font-weight:600;color:var(--success);text-align:center}
-    .score-dims{display:flex;flex-direction:column;gap:10px;margin-top:22px}
-    .sdim{display:flex;align-items:center;gap:10px}
-    .sdim-label{font-size:12px;color:var(--text2);width:90px;flex-shrink:0}
-    .sdim-bar{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
-    .sdim-fill{height:100%;border-radius:2px}
-    .sdim-val{font-family:var(--mono);font-size:11px;color:var(--text2);width:36px;text-align:right}
-    .score-info-title{font-size:26px;font-weight:700;letter-spacing:-.8px;margin-bottom:12px}
-    .score-info-desc{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:24px}
-    .score-bullets{display:flex;flex-direction:column;gap:10px}
-    .sbullet{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text2)}
-    .sbullet-icon{font-size:15px;flex-shrink:0;margin-top:1px}
-
-    /* PLANS */
-    .plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:44px}
-    @media(max-width:700px){.plans-grid{grid-template-columns:1fr}}
-    .plan{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px}
-    .plan.featured{border-color:rgba(59,127,245,.3);background:rgba(59,127,245,.03)}
-    .plan-name{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
-    .plan-price{font-size:36px;font-weight:700;letter-spacing:-2px;font-family:var(--mono);margin-bottom:2px}
-    .plan-period{font-size:12px;color:var(--text3);margin-bottom:20px;font-family:var(--mono)}
-    .plan-feats{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
-    .plan-feat{font-size:13px;color:var(--text3);display:flex;align-items:center;gap:8px}
-    .plan-feat::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0}
-    .plan-feat.on::before{background:var(--success)}
-    .plan-feat.on{color:var(--text)}
-    .plan-btn{width:100%;padding:11px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .15s}
-    .plan-btn.cta{background:var(--accent);color:#fff;border-color:var(--accent)}
-    .plan-btn.cta:hover{opacity:.9}
-
-    /* DASHBOARD */
-    #dashboard{display:none;padding:28px 40px 80px;max-width:1200px;margin:0 auto}
-    .tab-panel{display:none}.tab-panel.active{display:block}
-    .panel-title{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;gap:10px;font-family:var(--mono)}
-    .panel-title::after{content:'';flex:1;height:1px;background:var(--border)}
-    .profile-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-    .profile-avatar-ph{width:56px;height:56px;border-radius:10px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;background-size:cover;background-position:center}
-    .profile-info{flex:1;min-width:0}
-    .profile-name{font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
-    .profile-badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-    .badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.2px}
-    .badge-lvl1,.badge-lvl2,.badge-lvl3{background:rgba(35,196,78,.1);color:#23C44E;border:1px solid rgba(35,196,78,.2)}
-    .badge-lvl4,.badge-lvl5,.badge-lvl6{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
-    .badge-lvl7,.badge-lvl8{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
-    .badge-lvl9{background:rgba(224,92,42,.1);color:#E05C2A;border:1px solid rgba(224,92,42,.2)}
-    .badge-lvl10{background:rgba(217,53,53,.1);color:#D93535;border:1px solid rgba(217,53,53,.2)}
-    .badge-fv-elite{background:rgba(45,212,160,.1);color:#2DD4A0;border:1px solid rgba(45,212,160,.2)}
-    .badge-fv-great{background:rgba(59,127,245,.1);color:#60A5FA;border:1px solid rgba(59,127,245,.2)}
-    .badge-fv-good{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
-    .badge-fv-avg{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
-    .badge-fv-low{background:rgba(240,107,107,.1);color:#F06B6B;border:1px solid rgba(240,107,107,.2)}
-    .badge-role,.badge-country{background:var(--card);color:var(--text3);border:1px solid var(--border)}
-    .badge-team{background:rgba(59,127,245,.08);color:#60A5FA;border:1px solid rgba(59,127,245,.15)}
-    .badge-challenger{background:linear-gradient(135deg,rgba(245,200,66,.15),rgba(237,160,32,.15));color:var(--gold);border:1px solid rgba(245,200,66,.3)}
-    .profile-elo-wrap{text-align:right;flex-shrink:0}
-    .profile-elo{font-size:32px;font-weight:700;letter-spacing:-1.5px;font-family:var(--mono);line-height:1}
-    .profile-elo-label{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
-    .recent-results{display:flex;gap:3px;margin-top:8px;justify-content:flex-end}
-    .result-dot{width:8px;height:8px;border-radius:2px}
-    .kpi-positive{color:var(--success)}.kpi-negative{color:var(--danger)}.kpi-neutral{color:var(--accent)}
-    .follow-btn{margin-top:8px;width:100%;font-family:var(--mono);font-size:11px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .15s}
-    .follow-btn:hover{border-color:var(--accent);color:var(--accent)}
-    .follow-btn.following{border-color:rgba(45,212,160,.3);color:var(--success);background:rgba(45,212,160,.06)}
-    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:20px}
-    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
-    .kpi-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:8px;font-family:var(--mono)}
-    .kpi-val{font-size:24px;font-weight:700;letter-spacing:-.8px;font-family:var(--mono);line-height:1}
-    .kpi-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
-    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
-    @media(max-width:700px){.charts-grid{grid-template-columns:1fr}}
-    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
-    .chart-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;font-family:var(--mono)}
-    .chart-wrap{position:relative;height:200px}
-    .side-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
-    .side-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
-    .side-header{display:flex;align-items:center;gap:8px;margin-bottom:14px}
-    .side-dot{width:7px;height:7px;border-radius:50%}
-    .side-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);color:var(--text2)}
-    .side-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .side-stat{text-align:center;background:var(--card);border-radius:6px;padding:10px 8px}
-    .side-stat-val{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.5px}
-    .side-stat-label{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
-    .score-card{display:grid;grid-template-columns:180px 1fr;gap:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;align-items:center}
-    @media(max-width:600px){.score-card{grid-template-columns:1fr}}
-    .score-donut-wrap{position:relative;width:140px;height:140px;margin:0 auto}
-    .score-donut-canvas{width:100%;height:100%}
-    .score-donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-    .score-donut-val{font-size:32px;font-weight:700;letter-spacing:-1.5px;font-family:var(--mono);line-height:1}
-    .score-donut-max{font-size:11px;color:var(--text3);font-family:var(--mono)}
-    .fvscore-label-badge{font-size:12px;font-weight:600;color:var(--success);text-align:center;margin-top:8px}
-    .fvscore-breakdown{display:flex;flex-direction:column;gap:8px}
-    .fvscore-dim-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-    .fvscore-dim-label{font-size:12px;color:var(--text2);font-family:var(--mono)}
-    .fvscore-dim-val{font-size:11px;color:var(--text3);font-family:var(--mono)}
-    .sublevel-bar-wrap{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:2px}
-    .sublevel-bar-label{font-size:10px;color:var(--text3);margin-top:6px;font-family:var(--mono)}
-    .match-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
-    .match-table{width:100%;border-collapse:collapse}
-    .match-table th{font-family:var(--mono);font-size:10px;color:var(--text3);padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;letter-spacing:.5px;font-weight:500;background:var(--card)}
-    .match-table td{padding:10px 14px;border-bottom:1px solid rgba(31,36,51,.5);color:var(--text2);font-family:var(--mono)}
-    .match-table tr:last-child td{border-bottom:none}
-    .match-table tr:hover td{background:rgba(255,255,255,.02)}
-    .td-map{color:var(--text);font-weight:500}.td-win{color:var(--success)}.td-loss{color:var(--danger)}
-    .td-kd-good{color:var(--success)}.td-kd-avg{color:var(--text)}.td-kd-bad{color:var(--danger)}
-    .map-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:20px}
-    .map-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;transition:border-color .15s}
-    .map-card:hover{border-color:var(--border2)}
-    .map-name{font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text)}
-    .map-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-    .map-stat{text-align:center;background:var(--card);border-radius:6px;padding:8px}
-    .map-stat-val{font-size:15px;font-weight:700;font-family:var(--mono)}
-    .map-stat-label{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
-    .map-winrate{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-    .map-wr-val{font-size:15px;font-weight:700;font-family:var(--mono)}
-    .map-wr-bar{height:2px;background:var(--border);border-radius:1px;margin-bottom:8px;overflow:hidden}
-    .map-wr-fill{height:100%;background:var(--accent);border-radius:1px}
-    .map-matches{font-size:10px;color:var(--text3);font-family:var(--mono)}
-    .mk-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
-    .mk-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}
-    .mk-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-    .mk-val{font-size:28px;font-weight:700;font-family:var(--mono);letter-spacing:-1px}
-    .mk-sub{font-size:10px;color:var(--text3);margin-top:4px}
-    .mk-2k{color:var(--text2)}.mk-3k{color:#60A5FA}.mk-4k{color:var(--gold)}.mk-5k{color:var(--danger)}
-    .clutch-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
-    .clutch-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}
-    .clutch-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-    .clutch-val{font-size:22px;font-weight:700;font-family:var(--mono)}
-    .clutch-rate{font-size:10px;color:var(--text3);margin-top:4px}
-    .demo-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;text-align:center;margin-bottom:20px}
-    .demo-panel-title{font-size:20px;font-weight:700;letter-spacing:-.4px;margin-bottom:8px}
-    .demo-panel-sub{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:24px;max-width:480px;margin-left:auto;margin-right:auto}
-    .demo-panel-btn{display:inline-block;background:var(--accent);color:#fff;padding:12px 28px;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;text-decoration:none;transition:opacity .15s}
-    .demo-panel-btn:hover{opacity:.9}
-    .demo-features{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:24px}
-    .demo-feature{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:left}
-    .demo-feature-code{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:500;margin-bottom:6px}
-    .demo-feature-title{font-size:12px;font-weight:600;margin-bottom:3px}
-    .demo-feature-desc{font-size:11px;color:var(--text3);line-height:1.5}
-    .utility-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:20px}
-    .util-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
-    .util-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600}
-    .util-val{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--text);letter-spacing:-.5px}
-    .util-sub{font-size:11px;color:var(--text3);margin-top:4px}
-    #loadingState{display:none;text-align:center;padding:80px 24px}
-    .loader{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
-    .loading-text{font-family:var(--mono);font-size:13px;color:var(--text3)}
-    .search-hint{font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:8px}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-    .fade-in{animation:fadeUp .3s ease forwards}
-    @media(max-width:768px){
-      #dashboard{padding:16px}nav{padding:0 16px}#topbar{padding:10px 16px}.tab-bar{padding:0 16px}
-      .kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}
-      .side-grid{grid-template-columns:1fr}.mk-grid,.clutch-grid{grid-template-columns:repeat(3,1fr)}
-      .score-card{grid-template-columns:1fr}.section{padding:56px 20px}nav{padding:0 20px}
-    }
-
-    /* ── Bloc auth sous features ── */
-    .auth-block{
-      max-width:1080px;margin:0 auto;padding:0 40px 64px;
-    }
-    .auth-block-inner{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:14px;padding:32px 40px;
-      display:flex;align-items:center;justify-content:space-between;gap:24px;
-      flex-wrap:wrap;position:relative;overflow:hidden;
-    }
-    .auth-block-inner::before{
-      content:'';position:absolute;inset:0;
-      background:radial-gradient(ellipse 50% 80% at 100% 50%,rgba(59,127,245,.05),transparent);
-      pointer-events:none;
-    }
-    .auth-block-left{position:relative;z-index:1}
-    .auth-block-label{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
-    .auth-block-title{font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
-    .auth-block-sub{font-size:13px;color:var(--text2);line-height:1.6}
-    .auth-block-pills{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-    .auth-block-pill{font-family:var(--mono);font-size:10px;color:var(--text3);background:var(--card);border:1px solid var(--border);padding:3px 8px;border-radius:4px}
-    .auth-block-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px;position:relative;z-index:1}
-    @media(max-width:640px){.auth-block-right{align-items:stretch;width:100%}}
-    .auth-block-btns{display:flex;gap:8px;flex-wrap:wrap}
-    @media(max-width:640px){.auth-block-btns{flex-direction:column}}
-    .auth-primary{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;border:none;cursor:pointer;transition:all .2s;box-shadow:0 0 24px rgba(59,127,245,.2);white-space:nowrap}
-    .auth-primary:hover{opacity:.9;transform:translateY(-1px)}
-    .auth-ghost{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--text2);padding:12px 22px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;border:1px solid var(--border2);transition:all .2s;white-space:nowrap}
-    .auth-ghost:hover{color:var(--text);border-color:var(--border2);transform:translateY(-1px)}
-    .auth-block-note{font-size:11px;color:var(--text3);font-family:var(--mono);text-align:right}
-    @media(max-width:640px){.auth-block-note{text-align:left}}
-
-    /* ── Sticky CTA bar ── */
-    #stickyCta{
-      position:fixed;bottom:0;left:0;right:0;z-index:150;
-      background:rgba(8,9,13,.92);backdrop-filter:blur(20px);
-      border-top:1px solid var(--border);
-      padding:12px 40px;
-      display:flex;align-items:center;justify-content:space-between;gap:16px;
-      transform:translateY(100%);transition:transform .35s cubic-bezier(.16,1,.3,1);
-    }
-    #stickyCta.visible{transform:translateY(0)}
-    .sticky-left{display:flex;align-items:center;gap:12px}
-    .sticky-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;flex-shrink:0}
-    .sticky-text{font-size:13px;color:var(--text2)}
-    .sticky-text strong{color:var(--text);font-weight:600}
-    .sticky-right{display:flex;align-items:center;gap:8px}
-    .sticky-close{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 8px;font-size:18px;line-height:1;transition:color .15s}
-    .sticky-close:hover{color:var(--text)}
-    @media(max-width:600px){
-      #stickyCta{padding:10px 16px;flex-wrap:wrap}
-      .sticky-text{font-size:12px}
-    }
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-  </style>
-</head>
-<body>
-
-<!-- NAV -->
-<nav>
-  <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
-  <div class="nav-center">
-    <a href="index.html" class="nav-link">Scout</a>
-    <a href="compare.html" class="nav-link">Comparer</a>
-    <a href="demo.html" class="nav-link">Démo</a>
-  </div>
-  <div class="nav-right">
-    <a href="login.html" class="nav-ghost" id="navLoginBtn">Connexion</a>
-    <a href="dashboard.html" class="nav-solid" id="navAccountBtn" style="display:none">Mon espace</a>
-  </div>
-</nav>
-
-<!-- TOPBAR -->
-<div id="topbar">
-  <input id="topbarInput" type="text" placeholder="Rechercher un joueur..." autocomplete="off" spellcheck="false"/>
-  <button class="topbar-btn" onclick="newSearch()">Analyser</button>
-  <span id="topbarNick"></span>
-</div>
-<div class="tab-bar" id="tabBar">
-  <button class="tab-btn active" onclick="switchTab('stats',this)">Stats FACEIT</button>
-  <button class="tab-btn" onclick="switchTab('improvements',this)">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-    Amélioration
-  </button>
-  <button class="tab-btn" onclick="switchTab('demo',this)">Analyse démo <span class="tab-new">NEW</span></button>
-</div>
-
-<!-- LANDING -->
-<div id="landingPage">
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-bg"></div>
-    <div class="hero-grid"></div>
-    <div class="hero-content">
-      <div class="hero-eyebrow">
-        <span class="hero-dot"></span>CS2 Talent Analytics
-      </div>
-      <h1 class="hero-title">Scout smarter.<br/><span class="hero-gradient">Play better.</span></h1>
-      <p class="hero-sub">FV Score, heatmaps de démo, comparaison multi-joueurs : tout ce dont tu as besoin pour recruter ou progresser.</p>
-      <div class="hero-cta" id="heroCta">
-        <button class="btn-primary" onclick="showScoutSearch()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          Analyser un joueur
-        </button>
-        <a href="compare.html" class="btn-secondary">Comparer des joueurs →</a>
-      </div>
-      <div class="hero-stats" id="heroStats">
-        <div class="hero-stat"><div class="hero-stat-val" style="color:var(--accent)">FV Score</div><div class="hero-stat-label">Score /100</div></div>
-        <div class="hero-stat"><div class="hero-stat-val" style="color:var(--success)">CT/T</div><div class="hero-stat-label">Split side</div></div>
-        <div class="hero-stat"><div class="hero-stat-val" style="color:var(--gold)">Démo</div><div class="hero-stat-label">Heatmaps</div></div>
-        <div class="hero-stat"><div class="hero-stat-val" style="color:#A78BFA">5v5</div><div class="hero-stat-label">Comparaison</div></div>
-      </div>
-      <div id="heroSearch">
-        <div class="search-box">
-          <input id="nickInput" type="text" placeholder="Pseudo FACEIT... ex: s1mple" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')searchPlayer()"/>
-          <button id="searchBtn" onclick="searchPlayer()">Analyser</button>
-        </div>
-        <div id="errorMsg"></div>
-        <button class="back-link" onclick="hideScoutSearch()">← Retour</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- FEATURES -->
-  <section class="section">
-    <div class="sec-eyebrow">Fonctionnalités</div>
-    <div class="sec-title">Tout ce dont tu as besoin.</div>
-    <p class="sec-sub">FragValue centralise l'analyse FACEIT, la comparaison de joueurs et l'analyse de démo en un seul outil.</p>
-    <div class="feat-grid">
-
-      <div class="feat-card" style="--fc:#3B7FF5" onclick="showScoutSearch()">
-        <div class="feat-icon" style="background:rgba(59,127,245,.1);border-color:rgba(59,127,245,.2)">🔍</div>
-        <div class="feat-tag">Scout FACEIT</div>
-        <div class="feat-title">Analyse complète d'un joueur</div>
-        <div class="feat-desc">FV Score /100, FV Rating, KAST, CT/T split, historique 20 matchs et évaluation de recrutement.</div>
-        <div class="feat-pills"><span class="feat-pill">FV Score</span><span class="feat-pill">K/D · ADR</span><span class="feat-pill">CT/T</span><span class="feat-pill">Consistance</span></div>
-        <div class="feat-btn" style="color:#3B7FF5;background:rgba(59,127,245,.08);border-color:rgba(59,127,245,.15)">
-          Analyser un joueur <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </div>
-      </div>
-
-      <a class="feat-card" href="compare.html" style="--fc:#2DD4A0">
-        <div class="feat-icon" style="background:rgba(45,212,160,.1);border-color:rgba(45,212,160,.2)">⚡</div>
-        <div class="feat-tag" style="color:#2DD4A0">Comparaison</div>
-        <div class="feat-title">Compare 2 à 5 joueurs</div>
-        <div class="feat-desc">Spider chart, barres de comparaison, tableau complet côte à côte. Identifie le meilleur recrutement.</div>
-        <div class="feat-pills"><span class="feat-pill">Spider chart</span><span class="feat-pill">FV Score</span><span class="feat-pill">Multi-kills</span><span class="feat-pill">ELO</span></div>
-        <div class="feat-btn" style="color:#2DD4A0;background:rgba(45,212,160,.08);border-color:rgba(45,212,160,.15)">
-          Comparer maintenant <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </div>
-      </a>
-
-      <a class="feat-card" href="demo.html" style="--fc:#F5C842">
-        <div class="feat-icon" style="background:rgba(245,200,66,.1);border-color:rgba(245,200,66,.2)">🎬</div>
-        <div class="feat-tag" style="color:#F5C842">Analyse Démo · Beta</div>
-        <div class="feat-title">Visualise ton jeu</div>
-        <div class="feat-desc">Importe un .dem CS2 : heatmaps kills/deaths CT/T, zones de duels, déplacements et utility map.</div>
-        <div class="feat-pills"><span class="feat-pill">Heatmaps</span><span class="feat-pill">CT vs T</span><span class="feat-pill">Duel zones</span><span class="feat-pill">Utility</span></div>
-        <div class="feat-btn" style="color:#F5C842;background:rgba(245,200,66,.08);border-color:rgba(245,200,66,.15)">
-          Analyser une démo <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </div>
-      </a>
-
-    </div>
-  </section>
-
-  <!-- HOW IT WORKS : Joueur vs Scout -->
-  <section class="section" style="padding-top:0">
-    <div class="sec-eyebrow">Comment ça marche</div>
-    <div class="sec-title">Une expérience pensée pour toi.</div>
-
-    <!-- Toggle Joueur / Scout -->
-    <div class="how-tabs">
-      <button class="how-tab active" id="tabPlayer" onclick="switchHow('player')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        Je suis joueur
-      </button>
-      <button class="how-tab" id="tabScout" onclick="switchHow('scout')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
-        Je suis scout / coach
-      </button>
-    </div>
-
-    <!-- Steps Joueur -->
-    <div class="how-steps" id="stepsPlayer">
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#3B7FF5">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-          </svg>
-        </div>
-        <div class="how-step-num">01</div>
-        <div class="how-step-title">Entre ton pseudo FACEIT</div>
-        <div class="how-step-desc">Tape ton pseudo exact : FragValue récupère tes 20 derniers matchs et ton historique complet en quelques secondes.</div>
-      </div>
-      <div class="how-step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#2DD4A0">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M3 3v18h18"/><path d="m7 16 4-4 4 4 5-5"/>
-          </svg>
-        </div>
-        <div class="how-step-num">02</div>
-        <div class="how-step-title">Identifie tes axes d'amélioration</div>
-        <div class="how-step-desc">FV Score /100, CT/T split, opening ratio, flash efficacy : tu vois exactement ce qui plombe ton niveau et ce sur quoi travailler en priorité.</div>
-      </div>
-      <div class="how-step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#F5C842">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01"/>
-          </svg>
-        </div>
-        <div class="how-step-num">03</div>
-        <div class="how-step-title">Visualise ta démo</div>
-        <div class="how-step-desc">Importe ton fichier .dem pour voir tes heatmaps de kills CT/T, tes zones de déplacement et les spots où tu perds tes duels.</div>
-      </div>
-      <div class="how-step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#A78BFA">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          </svg>
-        </div>
-        <div class="how-step-num">04</div>
-        <div class="how-step-title">Suis ta progression</div>
-        <div class="how-step-desc">Reviens analyser ton profil après tes sessions : vois ton FV Score évoluer et mesure concrètement tes progrès dans le temps.</div>
-      </div>
-    </div>
-
-    <!-- Steps Scout -->
-    <div class="how-steps" id="stepsScout" style="display:none">
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#2DD4A0">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-        </div>
-        <div class="how-step-num">01</div>
-        <div class="how-step-title">Recherche un joueur</div>
-        <div class="how-step-desc">Entre n'importe quel pseudo FACEIT : FragValue génère une fiche complète avec FV Score, CT/T split, consistance sur 20 matchs.</div>
-      </div>
-      <div class="how-step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#3B7FF5">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-          </svg>
-        </div>
-        <div class="how-step-num">02</div>
-        <div class="how-step-title">Analyse sa fiche en détail</div>
-        <div class="how-step-desc">FV Score /100 décomposé en 4 dimensions : Performance, Consistance, Impact et Utilité. Tout ce qu'il faut pour évaluer un profil objectivement.</div>
-      </div>
-      <div class="how-step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#F5C842">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-          </svg>
-        </div>
-        <div class="how-step-num">03</div>
-        <div class="how-step-title">Compare les candidats</div>
-        <div class="how-step-desc">Mets jusqu'à 5 joueurs côte à côte : spider chart, barres de comparaison, tableau complet. Identifie le meilleur profil pour ton équipe.</div>
-      </div>
-      <div class="how-step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#F06B6B">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
-          </svg>
-        </div>
-        <div class="how-step-num">04</div>
-        <div class="how-step-title">Sauvegarde dans ta watchlist</div>
-        <div class="how-step-desc">Ajoute les profils intéressants à ta watchlist ou ton roster. Retrouve-les en un clic pour suivre leur évolution avant de recruter.</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FV SCORE -->
-  <section class="section" style="padding-top:0">
-    <div class="sec-eyebrow">FV Score</div>
-    <div class="sec-title">Au-delà du simple K/D.</div>
-    <div class="score-preview">
-      <div style="text-align:center">
-        <div class="score-circle-wrap">
-          <svg class="score-circle-svg" viewBox="0 0 148 148">
-            <circle class="score-circle-bg" cx="74" cy="74" r="65"/>
-            <circle class="score-circle-fill" cx="74" cy="74" r="65"/>
-          </svg>
-          <div class="score-circle-inner">
-            <div class="score-big">78</div>
-            <div class="score-max">/ 100</div>
-          </div>
-        </div>
-        <div class="score-label">Élite+</div>
-        <div class="score-dims">
-          <div class="sdim"><div class="sdim-label">Performance</div><div class="sdim-bar"><div class="sdim-fill" style="width:100%;background:var(--accent)"></div></div><div class="sdim-val">35/35</div></div>
-          <div class="sdim"><div class="sdim-label">Consistance</div><div class="sdim-bar"><div class="sdim-fill" style="width:75%;background:var(--success)"></div></div><div class="sdim-val">21/28</div></div>
-          <div class="sdim"><div class="sdim-label">Impact</div><div class="sdim-bar"><div class="sdim-fill" style="width:68%;background:var(--gold)"></div></div><div class="sdim-val">17/25</div></div>
-          <div class="sdim"><div class="sdim-label">Utilité</div><div class="sdim-bar"><div class="sdim-fill" style="width:33%;background:#A78BFA"></div></div><div class="sdim-val">5/15</div></div>
-        </div>
-      </div>
-      <div>
-        <div class="score-info-title">Une métrique qui va plus loin.</div>
-        <div class="score-info-desc">Le FV Score combine 4 dimensions clés pour donner une évaluation complète et objective d'un joueur CS2. Inspiré du HLTV Rating 2.0, calibré sur les données FACEIT lvl10.</div>
-        <div class="score-bullets">
-          <div class="sbullet"><span class="sbullet-icon">🎯</span>Performance : FV Rating, ADR, K/D contextualisé par niveau ELO</div>
-          <div class="sbullet"><span class="sbullet-icon">📈</span>Consistance : coefficient de variation sur 20 matchs + trend haussier</div>
-          <div class="sbullet"><span class="sbullet-icon">💥</span>Impact : clutches, opening kills, multi-kills pondérés</div>
-          <div class="sbullet"><span class="sbullet-icon">🤝</span>Utilité : flash efficacy, utility damage, assists, saves intelligents</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- BLOC AUTH -->
-  <div class="auth-block" id="authBlock">
-    <div class="auth-block-inner">
-      <div class="auth-block-left">
-        <div class="auth-block-label">Gratuit pour commencer</div>
-        <div class="auth-block-title">Prêt à progresser ou recruter ?</div>
-        <div class="auth-block-sub">Crée ton compte en 30 secondes — aucune carte requise. Accède au FV Score, à l'analyse de démo et à la comparaison multi-joueurs.</div>
-        <div class="auth-block-pills">
-          <span class="auth-block-pill">FV Score /100</span>
-          <span class="auth-block-pill">Analyse démo</span>
-          <span class="auth-block-pill">Watchlist</span>
-          <span class="auth-block-pill">Comparaison 5v5</span>
-        </div>
-      </div>
-      <div class="auth-block-right">
-        <div class="auth-block-btns">
-          <a href="login.html?tab=register" class="auth-primary">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-            Créer un compte gratuit
-          </a>
-          <a href="login.html" class="auth-ghost">
-            Se connecter →
-          </a>
-        </div>
-        <div class="auth-block-note">Aucune carte · Gratuit pour toujours</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PLANS -->
-  <section class="section" style="padding-top:0">
-    <div class="sec-eyebrow">Tarifs</div>
-    <div class="sec-title">Commencer gratuitement.</div>
-    <div class="plans-grid">
-      <div class="plan">
-        <div class="plan-name">Free</div>
-        <div class="plan-price">0 €</div>
-        <div class="plan-period">pour toujours</div>
-        <div class="plan-feats">
-          <div class="plan-feat on">Recherche FACEIT illimitée</div>
-          <div class="plan-feat on">FV Score complet</div>
-          <div class="plan-feat on">Stats 20 matchs</div>
-          <div class="plan-feat">Watchlist 5 joueurs</div>
-          <div class="plan-feat">Analyse démo</div>
-        </div>
-        <button class="plan-btn" onclick="window.location.href='login.html'">Commencer</button>
-      </div>
-      <div class="plan featured">
-        <div class="plan-name">Pro</div>
-        <div class="plan-price">49 €</div>
-        <div class="plan-period">par mois</div>
-        <div class="plan-feats">
-          <div class="plan-feat on">Tout le plan Free</div>
-          <div class="plan-feat on">Watchlist illimitée</div>
-          <div class="plan-feat on">Historique complet</div>
-          <div class="plan-feat on">1 roster équipe</div>
-          <div class="plan-feat on">5 démos / mois</div>
-        </div>
-        <button class="plan-btn cta">Passer à Pro</button>
-      </div>
-      <div class="plan">
-        <div class="plan-name">Club</div>
-        <div class="plan-price">199 €</div>
-        <div class="plan-period">par mois</div>
-        <div class="plan-feats">
-          <div class="plan-feat on">Tout le plan Pro</div>
-          <div class="plan-feat on">5 utilisateurs</div>
-          <div class="plan-feat on">Rosters illimités</div>
-          <div class="plan-feat on">Démos illimitées</div>
-          <div class="plan-feat on">Export PDF</div>
-        </div>
-        <button class="plan-btn cta">Passer à Club</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <div style="border-top:1px solid var(--border);padding:36px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;max-width:1080px;margin:0 auto">
-    <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
-    <div style="display:flex;gap:20px">
-      <a href="compare.html" style="font-size:12px;color:var(--text3);text-decoration:none">Comparer</a>
-      <a href="demo.html" style="font-size:12px;color:var(--text3);text-decoration:none">Démo</a>
-      <a href="account.html" style="font-size:12px;color:var(--text3);text-decoration:none">Mon espace</a>
-    </div>
-    <div style="font-size:12px;color:var(--text3);font-family:var(--mono)">© 2026 FragValue</div>
-  </div>
-
-</div><!-- /landingPage -->
-
-<!-- STICKY CTA BAR -->
-<div id="stickyCta">
-  <div class="sticky-left">
-    <div class="sticky-dot"></div>
-    <div class="sticky-text"><strong>FragValue est gratuit.</strong> Analyse ton profil, progresse, recrute.</div>
-  </div>
-  <div class="sticky-right">
-    <a href="login.html?tab=register" class="auth-primary" style="padding:9px 18px;font-size:13px">
-      Créer un compte
-    </a>
-    <a href="login.html" class="auth-ghost" style="padding:9px 16px;font-size:13px">
-      Se connecter
-    </a>
-    <button class="sticky-close" onclick="dismissSticky()" aria-label="Fermer">×</button>
-  </div>
-</div>
-
-<!-- LOADING -->
-<div id="loadingState"><div class="loader"></div><div class="loading-text" id="loadingText">Chargement du profil...</div></div>
-
-<!-- DASHBOARD -->
-<div id="dashboard">
-  <div class="tab-panel active" id="panelStats">
-    <div class="profile-card fade-in">
-      <div class="profile-avatar-ph" id="profileAvatar">👤</div>
-      <div class="profile-info">
-        <div class="profile-name" id="profileName"></div>
-        <div class="profile-badges">
-          <span class="badge" id="levelBadge"></span>
-          <span class="badge" id="fvBadge"></span>
-          <span class="badge badge-role" id="profileRole"></span>
-          <span class="badge badge-country" id="profileCountry"></span>
-          <span class="badge badge-team" id="profileTeam" style="display:none"></span>
-        </div>
-      </div>
-      <div class="profile-elo-wrap">
-        <div class="profile-elo kpi-neutral" id="eloVal">-</div>
-        <div class="profile-elo-label">ELO FACEIT</div>
-        <div class="recent-results" id="resultsRow"></div>
-        <button class="follow-btn" id="followBtn" onclick="toggleWatchlist()" style="display:none">+ Suivre</button>
-      </div>
-    </div>
-    <div class="panel-title">Évaluation recrutement</div>
-    <div class="score-card fade-in" id="scoreCard" style="display:none"></div>
-    <div class="panel-title">Stats clés</div>
-    <div class="kpi-grid fade-in" id="kpiGrid"></div>
-    <div class="panel-title">CT Side VS T Side</div>
-    <div class="side-grid fade-in" id="sideGrid"></div>
-    <div class="panel-title">Évolution</div>
-    <div class="charts-grid fade-in">
-      <div class="chart-card"><div class="chart-title">FV Rating : 20 derniers matchs</div><div class="chart-wrap"><canvas id="ratingChart"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">K/D ratio</div><div class="chart-wrap"><canvas id="kdChart"></canvas></div></div>
-    </div>
-    <div class="panel-title">Stats par carte</div>
-    <div class="map-grid fade-in" id="mapGrid"></div>
-    <div class="panel-title">Multi-kills</div>
-    <div class="mk-grid fade-in" id="mkGrid"></div>
-    <div class="panel-title">Clutches</div>
-    <div class="clutch-grid fade-in" id="clutchGrid"></div>
-    <div class="panel-title">Utility</div>
-    <div class="utility-grid fade-in" id="utilityGrid"></div>
-    <div class="panel-title">20 derniers matchs</div>
-    <div class="match-table-wrap fade-in">
-      <table class="match-table"><thead><tr><th>Date</th><th>Carte</th><th>Score</th><th>K</th><th>D</th><th>K/D</th><th>HS%</th><th>ADR</th><th>KAST</th><th>FV Rating</th></tr></thead><tbody id="matchBody"></tbody></table>
-    </div>
-  </div>
-  <!-- PANEL AMÉLIORATION -->
-  <div class="tab-panel" id="panelImprovements">
-    <div class="panel-title">Dernier match</div>
-    <div id="improvementsPanel">
-      <div style="text-align:center;padding:48px 24px;color:var(--text3);font-family:var(--mono);font-size:13px">
-        Analyse en cours...
-      </div>
-    </div>
-  </div>
-
-  <div class="tab-panel" id="panelDemo">
-    <div class="demo-panel fade-in">
-      <div class="demo-panel-title">Analyse ta démo CS2</div>
-      <p class="demo-panel-sub">Importe un fichier .dem pour obtenir des heatmaps de positions, zones de duels, déplacements CT/T et KPIs avancés.</p>
-      <a href="demo.html" class="demo-panel-btn">Analyser une démo →</a>
-      <div class="demo-features">
-        <div class="demo-feature"><div class="demo-feature-code">01</div><div class="demo-feature-title">Kill heatmap</div><div class="demo-feature-desc">Zones de kills et deaths par side</div></div>
-        <div class="demo-feature"><div class="demo-feature-code">02</div><div class="demo-feature-title">Déplacements CT/T</div><div class="demo-feature-desc">Trajectoires et zones de présence</div></div>
-        <div class="demo-feature"><div class="demo-feature-code">03</div><div class="demo-feature-title">Duel zones</div><div class="demo-feature-desc">% de duels gagnés par zone</div></div>
-        <div class="demo-feature"><div class="demo-feature-code">04</div><div class="demo-feature-title">Utility map</div><div class="demo-feature-desc">Grenades, smokes, flashes</div></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const _sb = supabase.createClient(
-  'https://xmyruycvvkmcwysfygcq.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI'
-);
-_sb.auth.getSession().then(({ data }) => {
-  if (data.session) {
-    document.getElementById('navLoginBtn').style.display = 'none';
-    document.getElementById('navAccountBtn').style.display = '';
+const upload = multer({
+  dest: os.tmpdir(),
+  limits: { fileSize: 600 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.originalname.endsWith('.dem')) return cb(new Error('Seuls les fichiers .dem sont acceptés'));
+    cb(null, true);
   }
 });
-function switchHow(mode) {
-  document.getElementById('tabPlayer').classList.toggle('active', mode === 'player');
-  document.getElementById('tabScout').classList.toggle('active', mode === 'scout');
-  document.getElementById('stepsPlayer').style.display = mode === 'player' ? 'grid' : 'none';
-  document.getElementById('stepsScout').style.display  = mode === 'scout'  ? 'grid' : 'none';
-}
 
-function showScoutSearch() {
-  document.getElementById('heroSearch').style.display = 'flex';
-  document.getElementById('heroCta').style.display = 'none';
-  document.getElementById('heroStats').style.display = 'none';
-  setTimeout(() => document.getElementById('nickInput').focus(), 50);
-}
-function hideScoutSearch() {
-  document.getElementById('heroSearch').style.display = 'none';
-  document.getElementById('heroCta').style.display = 'flex';
-  document.getElementById('heroStats').style.display = 'flex';
-}
+app.get('/', (req, res) => res.json({ status: 'ok', service: 'FragValue Demo Parser CS2', version: '6.2.0' }));
 
-// ── Sticky CTA bar ────────────────────────────────────────────────────────
-let _stickyDismissed = false;
-let _stickyShown     = false;
-
-function dismissSticky() {
-  _stickyDismissed = true;
-  document.getElementById('stickyCta').classList.remove('visible');
-  sessionStorage.setItem('stickyClosed', '1');
-}
-
-// Afficher la sticky bar après 4 secondes si non connecté
-_sb.auth.getSession().then(({ data }) => {
-  if (data.session) {
-    // Connecté : cacher le bloc auth et la sticky bar
-    const ab = document.getElementById('authBlock');
-    if (ab) ab.style.display = 'none';
-    document.getElementById('stickyCta').style.display = 'none';
-    return;
+app.post('/parse', upload.single('demo'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu.' });
+  const demoPath   = req.file.path;
+  const targetPlayer = req.body.player || null;
+  console.log(`Parsing: ${req.file.originalname} (${(req.file.size/1024/1024).toFixed(1)} MB)`);
+  res.setTimeout(300000);
+  try {
+    const result = await parseCS2Demo(demoPath, targetPlayer);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error('Parse error:', err.message);
+    res.status(500).json({ error: err.message });
+  } finally {
+    fs.unlink(demoPath, () => {});
   }
-  // Non connecté : afficher après délai si pas déjà fermée
-  if (sessionStorage.getItem('stickyClosed')) return;
-  setTimeout(() => {
-    if (!_stickyDismissed) {
-      document.getElementById('stickyCta').classList.add('visible');
-      _stickyShown = true;
-    }
-  }, 4000);
-
-  // Aussi au scroll — afficher dès qu'on passe les features
-  window.addEventListener('scroll', () => {
-    if (_stickyShown || _stickyDismissed || sessionStorage.getItem('stickyClosed')) return;
-    if (window.scrollY > 400) {
-      document.getElementById('stickyCta').classList.add('visible');
-      _stickyShown = true;
-    }
-  }, { passive: true });
 });
-</script>
-<script src="app.js"></script>
-</body>
-</html>
+
+async function parseCS2Demo(demoPath, targetPlayer) {
+
+  // ── 1. Infos joueurs ──────────────────────────────────────────────────────
+  const playerInfoRaw = parsePlayerInfo(demoPath);
+  const playerNames = [...new Set(playerInfoRaw.map(p => p.name).filter(Boolean))];
+  console.log(`Players: ${playerNames.join(', ')}`);
+
+  // Map steamid → name
+  const steamToName = {};
+  playerInfoRaw.forEach(p => { if (p.steamid && p.name) steamToName[String(p.steamid)] = p.name; });
+
+  // ── 2. Kills ──────────────────────────────────────────────────────────────
+  const killEvents = parseEvent(
+    demoPath,
+    'player_death',
+    ['X', 'Y', 'Z', 'team_num'],
+    ['weapon', 'headshot', 'thrusmoke', 'penetrated', 'total_rounds_played', 'tick']
+  );
+
+  const kills = killEvents.map(e => ({
+    round:        e.total_rounds_played ?? 0,
+    tick:         e.tick ?? 0,
+    attacker:     e.attacker_name  || e.attacker || 'Unknown',
+    attackerTeam: e.attacker_team_num ?? 0,
+    attackerX:    e.attacker_X ?? 0,
+    attackerY:    e.attacker_Y ?? 0,
+    attackerZ:    e.attacker_Z ?? 0,
+    victim:       e.user_name || e.user || 'Unknown',
+    victimTeam:   e.user_team_num ?? 0,
+    victimX:      e.user_X ?? 0,
+    victimY:      e.user_Y ?? 0,
+    victimZ:      e.user_Z ?? 0,
+    weapon:       e.weapon    || '',
+    isHeadshot:   !!e.headshot,
+    thruSmoke:    !!e.thrusmoke,
+    isWallbang:   (e.penetrated ?? 0) > 0,
+  })).filter(k => k.attacker !== 'Unknown' && k.victim !== 'Unknown');
+
+  console.log(`Kills: ${kills.length}`);
+
+  // ── 3. Map name ───────────────────────────────────────────────────────────
+  let mapName = 'de_dust2';
+  try {
+    const serverInfo = parseEvent(demoPath, 'server_info', [], ['map_name']);
+    if (serverInfo.length > 0 && serverInfo[0].map_name) {
+      mapName = serverInfo[0].map_name.replace(/^workshop\/\d+\//, '');
+    }
+  } catch(e) {
+    const known = ['de_dust2','de_mirage','de_inferno','de_nuke','de_ancient','de_anubis','de_overpass'];
+    for (const m of known) { if (demoPath.includes(m)) { mapName = m; break; } }
+  }
+  console.log(`Map: ${mapName}`);
+
+  // ── 4. Rounds ─────────────────────────────────────────────────────────────
+  const roundEndEvents = parseEvent(demoPath, 'round_end', [], ['winner', 'reason', 'total_rounds_played']);
+  const rounds = roundEndEvents.map((e, i) => ({
+    round:  e.total_rounds_played ?? i + 1,
+    winner: e.winner ?? 0,
+    reason: e.reason ?? 0,
+  }));
+  const totalRounds = rounds.length || 1;
+  console.log(`Rounds: ${totalRounds}`);
+
+  // ── 5. Positions : player_footstep + player_hurt + kills ────────────────────
+  // player_footstep = positions continues à chaque pas (léger, ~200 events/joueur/round)
+  // player_hurt = positions aux échanges de dégâts
+  // kills = positions de mort
+  let positions = {};
+
+  // Fonction utilitaire pour ajouter une position
+  const addPos = (name, x, y, z, team, round, tick) => {
+    if (!name || name === 'Unknown' || x == null) return;
+    if (!positions[name]) positions[name] = [];
+    if (positions[name].length < 2000)
+      positions[name].push({ x, y, z, team: team ?? 0, round: round ?? 0, tick: tick ?? 0 });
+  };
+
+  try {
+    // 1. player_footstep — positions continues à chaque pas
+    try {
+      const footEvents = parseEvent(
+        demoPath, 'player_footstep',
+        ['X', 'Y', 'Z', 'team_num'],
+        ['total_rounds_played', 'tick']
+      );
+      footEvents.forEach(e => {
+        const name = e.user_name || e.user;
+        addPos(name, e.user_X, e.user_Y, e.user_Z, e.user_team_num, e.total_rounds_played, e.tick);
+      });
+      console.log(`Footstep positions: ${Object.keys(positions).length} players`);
+    } catch(fe) {
+      console.warn('player_footstep failed:', fe.message);
+    }
+
+    // 2. player_hurt — enrichir avec positions de dégâts
+    const hurtEvents = parseEvent(
+      demoPath, 'player_hurt',
+      ['X', 'Y', 'Z', 'team_num'],
+      ['total_rounds_played', 'tick']
+    );
+    hurtEvents.forEach(e => {
+      const round = e.total_rounds_played ?? 0;
+      const tick  = e.tick ?? 0;
+      addPos(e.attacker_name || e.attacker, e.attacker_X, e.attacker_Y, e.attacker_Z, e.attacker_team_num, round, tick);
+      addPos(e.user_name || e.user, e.user_X, e.user_Y, e.user_Z, e.user_team_num, round, tick);
+    });
+
+    // 3. Kills — positions de mort
+    kills.forEach(k => {
+      addPos(k.attacker, k.attackerX, k.attackerY, k.attackerZ, k.attackerTeam, k.round, k.tick || 0);
+      addPos(k.victim,   k.victimX,   k.victimY,   k.victimZ,   k.victimTeam,   k.round, (k.tick || 0) + 1);
+    });
+
+    // 4. Trier par round puis tick pour l'interpolation
+    Object.keys(positions).forEach(name => {
+      positions[name].sort((a, b) => a.round !== b.round ? a.round - b.round : a.tick - b.tick);
+    });
+    console.log(`Positions (player_hurt): ${Object.keys(positions).length} players, ex: ${Object.keys(positions)[0]} → ${Object.values(positions)[0]?.length} pts`);
+  } catch(e) {
+    console.warn('Positions warning:', e.message);
+    // Fallback minimal : kills seulement
+    kills.forEach(k => {
+      if (!positions[k.attacker]) positions[k.attacker] = [];
+      positions[k.attacker].push({ x: k.attackerX, y: k.attackerY, z: k.attackerZ, team: k.attackerTeam });
+      if (!positions[k.victim]) positions[k.victim] = [];
+      positions[k.victim].push({ x: k.victimX, y: k.victimY, z: k.victimZ, team: k.victimTeam });
+    });
+  }
+
+  console.log(`Positions: ${Object.keys(positions).length} players, sample sizes: ${Object.entries(positions).slice(0,3).map(([k,v])=>`${k}:${v.length}`).join(', ')}`);
+
+  // ── 6. Grenades ───────────────────────────────────────────────────────────
+  let grenades = [];
+  try {
+    const grenadeEvents = parseEvent(
+      demoPath, 'weapon_fire',
+      ['X', 'Y', 'Z', 'team_num'],
+      ['weapon']
+    );
+    const grenadeTypes = new Set(['weapon_flashbang','weapon_smokegrenade','weapon_hegrenade','weapon_molotov','weapon_incgrenade']);
+    grenades = grenadeEvents
+      .filter(e => grenadeTypes.has(e.weapon))
+      .map(e => ({
+        round:   e.total_rounds_played ?? 0,
+        type:    e.weapon,
+        thrower: e.user_name || e.user || 'Unknown',
+        team:    e.user_team_num ?? 0,
+        startX:  e.user_X ?? 0,
+        startY:  e.user_Y ?? 0,
+        startZ:  e.user_Z ?? 0,
+      }));
+  } catch(e) {
+    console.warn('Grenades warning:', e.message);
+  }
+  console.log(`Grenades: ${grenades.length}`);
+
+  // ── 7. Player stats ───────────────────────────────────────────────────────
+  const statsMap = {};
+  kills.forEach(k => {
+    if (!statsMap[k.attacker]) statsMap[k.attacker] = { name: k.attacker, kills: 0, deaths: 0, hs: 0 };
+    if (!statsMap[k.victim])   statsMap[k.victim]   = { name: k.victim,   kills: 0, deaths: 0, hs: 0 };
+    statsMap[k.attacker].kills++;
+    statsMap[k.victim].deaths++;
+    if (k.isHeadshot) statsMap[k.attacker].hs++;
+  });
+  const playerStats = Object.values(statsMap).map(p => ({
+    name:   p.name,
+    kills:  p.kills,
+    deaths: p.deaths,
+    hs:     p.hs,
+    kd:     p.deaths > 0 ? (p.kills / p.deaths).toFixed(2) : p.kills.toFixed(2),
+    hsPct:  p.kills > 0  ? ((p.hs / p.kills) * 100).toFixed(1) : '0.0',
+  })).sort((a, b) => b.kills - a.kills);
+
+  // ── 8. Duel zones ─────────────────────────────────────────────────────────
+  const duelZones = computeDuelZones(kills, mapName);
+
+  // ── 9. Target player ──────────────────────────────────────────────────────
+  const allNames = playerStats.map(p => p.name);
+  const resolvedTarget = targetPlayer && allNames.includes(targetPlayer)
+    ? targetPlayer
+    : playerStats[0]?.name || null;
+
+  return {
+    meta: {
+      map: mapName, rounds: totalRounds, totalKills: kills.length,
+      players: allNames, parsedAt: new Date().toISOString(), targetPlayer: resolvedTarget,
+    },
+    kills: kills.slice(0, 5000),
+    positions, grenades, rounds, playerStats, duelZones,
+  };
+}
+
+function computeDuelZones(kills, mapName) {
+  const BOUNDS = {
+    'de_dust2':   {minX:-2476,maxX:1444,minY:-1228,maxY:3346},
+    'de_mirage':  {minX:-3230,maxX:870, minY:-2750,maxY:930},
+    'de_inferno': {minX:-2087,maxX:2870,minY:-1200,maxY:3110},
+    'de_nuke':    {minX:-3453,maxX:2497,minY:-3000,maxY:2200},
+    'de_ancient': {minX:-2953,maxX:2164,minY:-1600,maxY:3200},
+    'de_anubis':  {minX:-2796,maxX:2500,minY:-2000,maxY:3328},
+    'de_overpass':{minX:-4831,maxX:1781,minY:-1600,maxY:3200},
+  };
+  const b = BOUNDS[mapName] || {minX:-3000,maxX:3000,minY:-3000,maxY:3000};
+  const G = 10, zones = {};
+  const clamp = v => Math.max(0, Math.min(G-1, v));
+  kills.forEach(k => {
+    const col = clamp(Math.floor(((k.attackerX-b.minX)/(b.maxX-b.minX))*G));
+    const row = clamp(Math.floor(((k.attackerY-b.minY)/(b.maxY-b.minY))*G));
+    const key = `${col}_${row}`;
+    if (!zones[key]) zones[key] = {kills:0,deaths:0,col,row};
+    zones[key].kills++;
+  });
+  kills.forEach(k => {
+    const col = clamp(Math.floor(((k.victimX-b.minX)/(b.maxX-b.minX))*G));
+    const row = clamp(Math.floor(((k.victimY-b.minY)/(b.maxY-b.minY))*G));
+    const key = `${col}_${row}`;
+    if (!zones[key]) zones[key] = {kills:0,deaths:0,col,row};
+    zones[key].deaths++;
+  });
+  return Object.entries(zones).map(([key, z]) => ({
+    key, col: z.col, row: z.row, kills: z.kills, deaths: z.deaths,
+    winRate: z.kills+z.deaths > 0 ? ((z.kills/(z.kills+z.deaths))*100).toFixed(0) : '50',
+  }));
+}
+
+app.listen(PORT, () => console.log(`FragValue Demo Parser CS2 v6.2 on port ${PORT}`));
