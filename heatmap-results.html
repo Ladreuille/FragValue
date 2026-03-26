@@ -151,6 +151,32 @@
     .rp-kill{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:5px;background:rgba(240,107,107,.08);color:var(--danger);border:1px solid rgba(240,107,107,.14);display:flex;align-items:center;gap:4px}
     .rp-kill.hs{background:rgba(245,200,66,.08);color:var(--gold);border-color:rgba(245,200,66,.14)}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+    /* Stats joueur sélectionné */
+    .player-stats-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:10px;
+      padding:20px 24px;animation:fadeUp .2s ease;
+    }
+    .psc-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+    .psc-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+    .psc-name{font-size:18px;font-weight:700;letter-spacing:-.4px}
+    .psc-kd-badge{font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 9px;border-radius:5px;margin-left:auto}
+    .psc-kd-good{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.2)}
+    .psc-kd-bad{background:rgba(240,107,107,.08);color:var(--danger);border:1px solid rgba(240,107,107,.2)}
+    .psc-kd-neutral{background:rgba(59,127,245,.1);color:var(--accent);border:1px solid rgba(59,127,245,.2)}
+    .psc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px}
+    .psc-stat{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+    .psc-stat-val{font-size:20px;font-weight:700;font-family:var(--mono);letter-spacing:-.6px;line-height:1}
+    .psc-stat-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;font-family:var(--mono)}
+    .psc-rounds{display:flex;flex-direction:column;gap:3px}
+    .psc-rounds-title{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+    .psc-round-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:5px;background:var(--card);font-family:var(--mono);font-size:10px}
+    .psc-round-num{color:var(--text3);width:20px;flex-shrink:0}
+    .psc-round-kills{color:var(--success);width:20px;font-weight:600}
+    .psc-round-hs{color:var(--gold);width:30px}
+    .psc-round-result{margin-left:auto;font-weight:600}
+    .psc-round-result.w{color:var(--success)}.psc-round-result.l{color:var(--danger)}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
@@ -170,10 +196,6 @@
 </div>
 
 <div class="page" id="mainContent" style="display:none">
-  <div class="section-label">Résultats de l'analyse</div>
-  <div class="meta-card" id="metaCard"></div>
-  <div class="section-label">Stats clés</div>
-  <div class="stats-grid" id="statsGrid"></div>
   <div class="section-label">Heatmaps</div>
 
   <div class="heatmap-tabs">
@@ -298,6 +320,17 @@
     </div>
   </div>
 
+  <div class="section-label">Résultats de l'analyse</div>
+  <div class="meta-card" id="metaCard"></div>
+  <div class="section-label">Stats clés</div>
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <!-- Stats joueur sélectionné -->
+  <div id="playerStatsPanel" style="display:none">
+    <div class="section-label">Analyse joueur</div>
+    <div class="player-stats-card" id="playerStatsCard"></div>
+  </div>
+
   <div class="section-label">Classement joueurs</div>
   <div class="table-card">
     <table>
@@ -334,6 +367,68 @@ let canvas, ctx, mapImage=null;
 let replayRound=null, replayFrames=[], replayFrameIdx=0;
 let replayPlaying=false, replayTimer=null, replaySpeed=1;
 const FPS=20;
+let currentStatsPlayer=null;
+
+function showPlayerStats(name){
+  if(!demoData)return;
+  currentStatsPlayer=name;
+  const kills=demoData.kills||[];
+  const rounds=demoData.rounds||[];
+  const color=getColor(name);
+  const kd=parseFloat((demoData.playerStats||[]).find(p=>p.name===name)?.kd||0);
+
+  // Stats globales du joueur
+  const playerKills=kills.filter(k=>k.attacker===name);
+  const playerDeaths=kills.filter(k=>k.victim===name);
+  const hs=playerKills.filter(k=>k.isHeadshot).length;
+  const hsPct=playerKills.length>0?Math.round(hs/playerKills.length*100):0;
+  const wb=playerKills.filter(k=>k.isWallbang).length;
+  const smk=playerKills.filter(k=>k.thruSmoke).length;
+  const ctKills=playerKills.filter(k=>k.attackerTeam===2).length;
+  const tKills=playerKills.filter(k=>k.attackerTeam===3).length;
+
+  // Stats par round
+  const roundStats={};
+  playerKills.forEach(k=>{if(!roundStats[k.round])roundStats[k.round]={k:0,hs:0,d:0};roundStats[k.round].k++;if(k.isHeadshot)roundStats[k.round].hs++;});
+  playerDeaths.forEach(k=>{if(!roundStats[k.round])roundStats[k.round]={k:0,hs:0,d:0};roundStats[k.round].d++;});
+
+  const kdCls=kd>=1.3?'psc-kd-good':kd<1?'psc-kd-bad':'psc-kd-neutral';
+
+  const roundRows=rounds.map((rd,i)=>{
+    const r=i+1,rs=roundStats[r]||{k:0,hs:0,d:0};
+    const won=rd.winner>0;
+    return `<div class="psc-round-row">
+      <span class="psc-round-num">R${r}</span>
+      <span class="psc-round-kills">${rs.k>0?rs.k+'K':'-'}</span>
+      <span class="psc-round-hs">${rs.hs>0?rs.hs+' HS':''}</span>
+      <span class="psc-round-result ${won?'w':'l'}">${won?'W':'L'}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('playerStatsCard').innerHTML=`
+    <div class="psc-header">
+      <div class="psc-dot" style="background:${color.solid}"></div>
+      <div class="psc-name">${name}</div>
+      <div class="psc-kd-badge ${kdCls}">K/D ${kd.toFixed(2)}</div>
+    </div>
+    <div class="psc-grid">
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--accent)">${playerKills.length}</div><div class="psc-stat-lbl">Kills</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--danger)">${playerDeaths.length}</div><div class="psc-stat-lbl">Deaths</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--gold)">${hsPct}%</div><div class="psc-stat-lbl">HS%</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--success)">${ctKills}</div><div class="psc-stat-lbl">Kills CT</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--gold)">${tKills}</div><div class="psc-stat-lbl">Kills T</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--text2)">${wb}</div><div class="psc-stat-lbl">Wallbangs</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--text2)">${smk}</div><div class="psc-stat-lbl">Thru smoke</div></div>
+    </div>
+    <div class="psc-rounds">
+      <div class="psc-rounds-title">Détail par round</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:3px">${roundRows}</div>
+    </div>`;
+
+  document.getElementById('playerStatsPanel').style.display='block';
+  // Scroll doux vers les stats
+  setTimeout(()=>document.getElementById('playerStatsPanel').scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
 
 window.addEventListener('load',()=>{
   canvas=document.getElementById('heatmapCanvas');
@@ -353,7 +448,19 @@ window.addEventListener('load',()=>{
 
 function assignPlayerColors(){(demoData.playerStats||[]).forEach((p,i)=>{playerColorMap[p.name]=i%PLAYER_COLORS.length;});}
 function getColor(name){const idx=playerColorMap[name];return idx!==undefined?PLAYER_COLORS[idx]:NEUTRAL_COLOR;}
-function togglePlayer(name){if(activePlayers.has(name))activePlayers.delete(name);else{if(activePlayers.size>=5)return;activePlayers.add(name);}renderPlayerList();renderStats();renderHeatmap();}
+function togglePlayer(name){
+  if(activePlayers.has(name)){
+    activePlayers.delete(name);
+    // Si on désélectionne le joueur affiché dans le panel → cacher le panel
+    if(currentStatsPlayer===name){currentStatsPlayer=null;document.getElementById('playerStatsPanel').style.display='none';}
+  }else{
+    if(activePlayers.size>=5)return;
+    activePlayers.add(name);
+  }
+  renderPlayerList();renderStats();renderHeatmap();
+  // Afficher les stats du joueur cliqué
+  if(activePlayers.has(name)){showPlayerStats(name);}
+}
 function selectNone(){activePlayers.clear();renderPlayerList();renderStats();renderHeatmap();}
 function w2c(wx,wy,map,W,H){const cfg=MAP_CONFIG[map];if(!cfg)return{px:W/2,py:H/2};const c=cfg.upper?(currentFloor==='upper'?cfg.upper:cfg.lower):cfg;return{px:((wx-c.posX)/c.scale/1024)*W,py:((c.posY-wy)/c.scale/1024)*H};}
 function inBounds(px,py,W,H){return px>=0&&px<=W&&py>=0&&py<=H;}
