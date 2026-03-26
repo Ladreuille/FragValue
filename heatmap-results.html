@@ -61,6 +61,7 @@
     .side-stat-item{text-align:center}
     .side-stat-val{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.5px}
     .side-stat-lbl{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
+    .canvas-outer{display:flex;flex-direction:column;gap:12px}
     .canvas-wrap{display:grid;grid-template-columns:1fr 220px;gap:14px;align-items:start}
     @media(max-width:700px){.canvas-wrap{grid-template-columns:1fr}}
     .canvas-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px}
@@ -156,72 +157,190 @@
     <button class="floor-btn" onclick="switchFloor('lower',this)">Lower</button>
   </div>
 
-  <!-- Barre rounds -->
-  <div class="rounds-bar-wrap" id="roundsBarWrap" style="display:none">
-    <div class="rounds-bar-label">Rounds</div>
-    <div class="rounds-bar" id="roundsBar"></div>
+
+
+    <!-- Info row -->
+    <div class="replay-info-row">
+      <div class="replay-round-tag">
+        <span class="replay-dot"></span>
+        <span id="replayRoundLabel">Round 1</span>
+      </div>
+      <div class="replay-time-display">
+        <span class="replay-time-current" id="replayTimeCurrent">0:00</span>
+        <span> / </span>
+        <span id="replayTimeTotal">0:00</span>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="replay-timeline-wrap">
+      <div class="replay-timeline" id="replayTimeline"
+           onclick="seekReplay(event)"
+           onmousemove="hoverTimeline(event)"
+           onmouseleave="hoverTimelineEnd()">
+        <div class="replay-timeline-fill" id="replayFill" style="width:0%"></div>
+        <div id="replayKillMarkers"></div>
+        <div class="replay-timeline-thumb" id="replayThumb" style="left:0%"></div>
+      </div>
+    </div>
+
+    <!-- Transport controls -->
+    <div class="replay-controls-row">
+      <div class="replay-ctrl-group">
+        <!-- Skip to start -->
+        <button class="rctrl" onclick="replaySkipBack()" title="Début du round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/>
+          </svg>
+        </button>
+        <!-- Step back -->
+        <button class="rctrl" onclick="replayStepBack()" title="Reculer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="19 20 9 12 19 4 19 20"/><polygon points="11 20 1 12 11 4 11 20"/>
+          </svg>
+        </button>
+        <!-- Play / Pause -->
+        <button class="rctrl play" id="replayPlayBtn" onclick="toggleReplay()" title="Play / Pause">
+          <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          <svg id="pauseIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+            <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
+          </svg>
+        </button>
+        <!-- Step fwd -->
+        <button class="rctrl" onclick="replayStepFwd()" title="Avancer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 4 15 12 5 20 5 4"/><polygon points="13 4 23 12 13 20 13 4"/>
+          </svg>
+        </button>
+        <!-- Skip to end -->
+        <button class="rctrl" onclick="replaySkipFwd()" title="Fin du round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Speed -->
+      <div class="replay-speed-group">
+        <button class="rspeed active" onclick="setSpeed(0.5,this)">0.5×</button>
+        <button class="rspeed" onclick="setSpeed(1,this)">1×</button>
+        <button class="rspeed" onclick="setSpeed(2,this)">2×</button>
+        <button class="rspeed" onclick="setSpeed(4,this)">4×</button>
+      </div>
+    </div>
+
+    <!-- Kills du round -->
+    <div class="replay-kills-row" id="replayKillsRow"></div>
   </div>
 
-  <!-- Replay controls -->
-  <div class="replay-wrap" id="replayWrap">
-    <div class="replay-header">
-      <div class="replay-round-label" id="replayRoundLabel">Round 1</div>
-      <div class="replay-time" id="replayTime">0:00 / 0:00</div>
-    </div>
-    <div class="replay-timeline" id="replayTimeline" onclick="seekReplay(event)">
-      <div class="replay-timeline-fill" id="replayFill" style="width:0%"></div>
-      <div class="replay-timeline-thumb" id="replayThumb" style="left:0%"></div>
-    </div>
-    <div class="replay-controls">
-      <button class="replay-btn" onclick="replaySkipBack()" title="Début">⏮</button>
-      <button class="replay-btn" onclick="replayStepBack()" title="Précédent">⏴</button>
-      <button class="replay-btn" id="replayPlayBtn" onclick="toggleReplay()" title="Play/Pause">▶</button>
-      <button class="replay-btn" onclick="replayStepFwd()" title="Suivant">⏵</button>
-      <button class="replay-btn" onclick="replaySkipFwd()" title="Fin">⏭</button>
-      <span class="replay-speed">Vitesse :</span>
-      <button class="replay-speed-btn active" onclick="setSpeed(1,this)">1×</button>
-      <button class="replay-speed-btn" onclick="setSpeed(2,this)">2×</button>
-      <button class="replay-speed-btn" onclick="setSpeed(4,this)">4×</button>
-    </div>
-    <div class="replay-events" id="replayEvents"></div>
-  </div>
-
-  <div class="canvas-wrap">
-    <div class="canvas-card">
-      <canvas id="heatmapCanvas" width="1024" height="1024"></canvas>
-      <div class="map-notice" id="mapNotice"></div>
-      <div class="legend" id="mapLegend"></div>
-      <!-- Stats CT/T split -->
-      <div class="side-stats-bar" id="sideStatsBar" style="display:none">
-        <div class="side-stat-card">
-          <div class="side-stat-header"><div class="side-dot-ct"></div>CT Side</div>
-          <div class="side-stat-grid">
-            <div class="side-stat-item"><div class="side-stat-val" id="ctKills">-</div><div class="side-stat-lbl">Kills</div></div>
-            <div class="side-stat-item"><div class="side-stat-val" id="ctDeaths">-</div><div class="side-stat-lbl">Deaths</div></div>
-            <div class="side-stat-item"><div class="side-stat-val" id="ctHS">-</div><div class="side-stat-lbl">HS%</div></div>
-            <div class="side-stat-item"><div class="side-stat-val" id="ctKD">-</div><div class="side-stat-lbl">K/D</div></div>
+  <div class="canvas-outer">
+    <div class="canvas-wrap">
+      <div class="canvas-card">
+        <canvas id="heatmapCanvas" width="1024" height="1024"></canvas>
+        <div class="map-notice" id="mapNotice"></div>
+        <div class="legend" id="mapLegend"></div>
+        <div class="side-stats-bar" id="sideStatsBar" style="display:none">
+          <div class="side-stat-card">
+            <div class="side-stat-header"><div class="side-dot-ct"></div>CT Side</div>
+            <div class="side-stat-grid">
+              <div class="side-stat-item"><div class="side-stat-val" id="ctKills">-</div><div class="side-stat-lbl">Kills</div></div>
+              <div class="side-stat-item"><div class="side-stat-val" id="ctDeaths">-</div><div class="side-stat-lbl">Deaths</div></div>
+              <div class="side-stat-item"><div class="side-stat-val" id="ctHS">-</div><div class="side-stat-lbl">HS%</div></div>
+              <div class="side-stat-item"><div class="side-stat-val" id="ctKD">-</div><div class="side-stat-lbl">K/D</div></div>
+            </div>
           </div>
-        </div>
-        <div class="side-stat-card">
-          <div class="side-stat-header"><div class="side-dot-t"></div>T Side</div>
-          <div class="side-stat-grid">
-            <div class="side-stat-item"><div class="side-stat-val" id="tKills">-</div><div class="side-stat-lbl">Kills</div></div>
-            <div class="side-stat-item"><div class="side-stat-val" id="tDeaths">-</div><div class="side-stat-lbl">Deaths</div></div>
-            <div class="side-stat-item"><div class="side-stat-val" id="tHS">-</div><div class="side-stat-lbl">HS%</div></div>
-            <div class="side-stat-item"><div class="side-stat-val" id="tKD">-</div><div class="side-stat-lbl">K/D</div></div>
+          <div class="side-stat-card">
+            <div class="side-stat-header"><div class="side-dot-t"></div>T Side</div>
+            <div class="side-stat-grid">
+              <div class="side-stat-item"><div class="side-stat-val" id="tKills">-</div><div class="side-stat-lbl">Kills</div></div>
+              <div class="side-stat-item"><div class="side-stat-val" id="tDeaths">-</div><div class="side-stat-lbl">Deaths</div></div>
+              <div class="side-stat-item"><div class="side-stat-val" id="tHS">-</div><div class="side-stat-lbl">HS%</div></div>
+              <div class="side-stat-item"><div class="side-stat-val" id="tKD">-</div><div class="side-stat-lbl">K/D</div></div>
+            </div>
           </div>
         </div>
       </div>
+      <div class="player-panel">
+        <div class="panel-label">Joueurs affichés</div>
+        <div class="panel-hint">Clic pour toggle · max <span>5</span> simultanés</div>
+        <button class="select-all-btn" onclick="selectNone()">Tout désélectionner</button>
+        <div id="playerList"></div>
+        <button class="export-btn" onclick="exportHeatmap()">↓ Exporter PNG</button>
+        <button class="compare-btn" onclick="goCompare()">⇄ Comparer joueurs</button>
+      </div>
     </div>
-    <div class="player-panel">
-      <div class="panel-label">Joueurs affichés</div>
-      <div class="panel-hint">Clic pour toggle · max <span>5</span> simultanés</div>
-      <button class="select-all-btn" onclick="selectNone()">Tout désélectionner</button>
-      <div id="playerList"></div>
-      <button class="export-btn" onclick="exportHeatmap()">↓ Exporter PNG</button>
-      <button class="compare-btn" onclick="goCompare()">⇄ Comparer joueurs</button>
-    </div>
-  </div>
+
+    <!-- ══ SYSTÈME REPLAY — pleine largeur sous la carte ══ -->
+    <div class="replay-system" id="replaySystem">
+
+      <!-- BARRE 1 : Navigation rounds -->
+      <div class="rounds-nav">
+        <div class="rounds-nav-header">
+          <span class="rounds-nav-title">Rounds</span>
+          <div class="rounds-nav-legend">
+            <div class="rnl-item"><div class="rnl-pip" style="background:var(--success)"></div>Victoire</div>
+            <div class="rnl-item"><div class="rnl-pip" style="background:var(--danger)"></div>Défaite</div>
+          </div>
+        </div>
+        <div class="rounds-list" id="roundsBar"></div>
+      </div>
+
+      <!-- BARRE 2 : Timeline du round -->
+      <div class="round-player">
+        <div class="rp-header">
+          <div class="rp-round-tag">
+            <span class="rp-live-dot"></span>
+            <span id="replayRoundLabel">Round 1</span>
+          </div>
+          <div class="rp-time">
+            <span class="rp-time-cur" id="replayTimeCurrent">0:00</span>
+            <span class="rp-time-sep">/</span>
+            <span class="rp-time-tot" id="replayTimeTotal">0:00</span>
+          </div>
+        </div>
+
+        <div class="rp-timeline-wrap">
+          <div class="rp-track" id="replayTimeline" onclick="seekReplay(event)">
+            <div class="rp-fill" id="replayFill" style="width:0%"></div>
+            <div id="replayKillMarkers"></div>
+            <div class="rp-thumb" id="replayThumb" style="left:0%"></div>
+          </div>
+        </div>
+
+        <div class="rp-controls">
+          <div class="rp-btn-group">
+            <button class="rpb" onclick="replaySkipBack()" title="Début">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+            </button>
+            <button class="rpb" onclick="replayStepBack()" title="Reculer">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4"/><polygon points="11 20 1 12 11 4"/></svg>
+            </button>
+            <button class="rpb rpb-play" id="replayPlayBtn" onclick="toggleReplay()">
+              <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <svg id="pauseIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+            </button>
+            <button class="rpb" onclick="replayStepFwd()" title="Avancer">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20"/><polygon points="13 4 23 12 13 20"/></svg>
+            </button>
+            <button class="rpb" onclick="replaySkipFwd()" title="Fin">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+            </button>
+          </div>
+          <div class="rp-speeds">
+            <button class="rps on" onclick="setSpeed(0.5,this)">0.5×</button>
+            <button class="rps" onclick="setSpeed(1,this)">1×</button>
+            <button class="rps" onclick="setSpeed(2,this)">2×</button>
+            <button class="rps" onclick="setSpeed(4,this)">4×</button>
+          </div>
+        </div>
+
+        <div class="rp-kills" id="replayKillsRow"></div>
+      </div>
+
+    </div><!-- /replay-system -->
+  </div><!-- /canvas-outer -->
 
   <div class="section-label">Classement joueurs</div>
   <div class="table-card">
@@ -649,14 +768,14 @@ function renderPlayerList() {
 function switchHeatmap(type, btn) {
   currentHeatmap = type;
   document.querySelectorAll('.heatmap-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  btn.classList.add('on');
   renderHeatmap();
 }
 
 function switchFloor(floor, btn) {
   currentFloor = floor;
   document.querySelectorAll('.floor-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  btn.classList.add('on');
   loadMapImageThenDraw();
 }
 
@@ -729,4 +848,177 @@ function goCompare() {
 }
 </script>
 </body>
-</html>
+</html>    /* ══ REPLAY SYSTEM ══════════════════════════════════════════════════ */
+
+    /* Wrapper global sous la heatmap */
+    .replay-system{display:none;flex-direction:column;gap:0;margin-top:14px}
+    .replay-system.visible{display:flex}
+
+    /* ── Barre 1 : Navigation rounds ── */
+    .rounds-nav{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:12px 12px 0 0;padding:14px 18px 12px;
+      border-bottom:none;
+    }
+    .rounds-nav-header{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .rounds-nav-title{
+      font-family:var(--mono);font-size:10px;font-weight:700;
+      letter-spacing:.9px;text-transform:uppercase;color:var(--text3);
+    }
+    .rounds-nav-legend{display:flex;gap:12px}
+    .rnl-item{display:flex;align-items:center;gap:5px;
+      font-family:var(--mono);font-size:9px;color:var(--text3)}
+    .rnl-pip{width:10px;height:3px;border-radius:2px}
+    .rounds-list{display:flex;gap:3px;flex-wrap:wrap;align-items:center}
+    .rnd{
+      position:relative;width:26px;height:30px;
+      border-radius:6px;border:1px solid var(--border);
+      background:var(--card);color:var(--text3);
+      font-family:var(--mono);font-size:9px;font-weight:700;
+      cursor:pointer;transition:all .18s;
+      display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;overflow:hidden;
+    }
+    .rnd::after{
+      content:'';position:absolute;bottom:0;left:0;right:0;
+      height:2px;
+    }
+    .rnd.win::after{background:var(--success)}
+    .rnd.loss::after{background:var(--danger)}
+    .rnd:hover{border-color:var(--accent-dim,rgba(59,127,245,.4));
+      color:var(--text);transform:translateY(-2px);
+      background:rgba(59,127,245,.06)}
+    .rnd.sel{
+      background:var(--accent);border-color:var(--accent);
+      color:#fff;transform:translateY(-2px);
+      box-shadow:0 4px 12px rgba(59,127,245,.35);
+    }
+    .rnd.sel::after{background:rgba(255,255,255,.4)}
+    .rnd-all{
+      width:auto;padding:0 10px;
+      font-size:9px;letter-spacing:.4px;
+    }
+    .rnd-sep{
+      width:1px;height:20px;
+      background:var(--border2);
+      flex-shrink:0;margin:0 2px;
+    }
+
+    /* ── Barre 2 : Timeline du round ── */
+    .round-player{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:0 0 12px 12px;padding:14px 18px;
+      border-top:1px solid var(--border2);
+    }
+    .rp-header{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:12px;
+    }
+    .rp-round-tag{
+      display:inline-flex;align-items:center;gap:7px;
+      font-family:var(--mono);font-size:11px;font-weight:700;
+      background:rgba(59,127,245,.1);color:var(--accent);
+      border:1px solid rgba(59,127,245,.2);
+      padding:5px 12px;border-radius:7px;
+    }
+    .rp-live-dot{
+      width:5px;height:5px;border-radius:50%;
+      background:var(--accent);
+      animation:pulse 1.8s infinite;
+    }
+    .rp-time{font-family:var(--mono);font-size:11px}
+    .rp-time-cur{color:var(--text);font-weight:700}
+    .rp-time-sep{color:var(--text3);margin:0 3px}
+    .rp-time-tot{color:var(--text3)}
+
+    /* Timeline barre */
+    .rp-timeline-wrap{
+      position:relative;margin-bottom:14px;
+      user-select:none;
+    }
+    .rp-track{
+      height:6px;background:var(--border);border-radius:3px;
+      cursor:pointer;position:relative;overflow:visible;
+    }
+    .rp-track:hover{background:var(--border2)}
+    .rp-fill{
+      height:100%;
+      background:linear-gradient(90deg,#3B7FF5,#60A5FA);
+      border-radius:3px;pointer-events:none;
+    }
+    .rp-thumb{
+      position:absolute;top:50%;
+      width:14px;height:14px;border-radius:50%;
+      background:#fff;border:3px solid var(--accent);
+      transform:translate(-50%,-50%);
+      pointer-events:none;
+      box-shadow:0 0 0 3px rgba(59,127,245,.2);
+      transition:box-shadow .15s;
+    }
+    .rp-track:hover .rp-thumb{box-shadow:0 0 0 5px rgba(59,127,245,.25)}
+    .rp-kill-mark{
+      position:absolute;top:50%;transform:translate(-50%,-50%);
+      width:3px;height:10px;border-radius:1.5px;
+      background:var(--danger);opacity:.5;pointer-events:none;
+    }
+
+    /* Contrôles transport */
+    .rp-controls{display:flex;align-items:center;gap:8px}
+    .rp-btn-group{display:flex;align-items:center;gap:4px}
+    .rpb{
+      width:36px;height:36px;border-radius:9px;
+      background:var(--card);border:1px solid var(--border);
+      color:var(--text2);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      transition:all .18s;flex-shrink:0;
+    }
+    .rpb:hover{
+      border-color:rgba(59,127,245,.5);color:var(--accent);
+      background:rgba(59,127,245,.07);
+    }
+    .rpb svg{pointer-events:none;display:block}
+    .rpb-play{
+      width:44px;height:44px;border-radius:12px;
+      background:var(--accent);border-color:var(--accent);color:#fff;
+      box-shadow:0 4px 14px rgba(59,127,245,.35);
+    }
+    .rpb-play:hover{
+      opacity:.92;background:var(--accent);
+      box-shadow:0 6px 20px rgba(59,127,245,.45);
+    }
+    .rp-speeds{
+      display:flex;align-items:center;
+      background:var(--card);border:1px solid var(--border);
+      border-radius:8px;padding:3px;gap:2px;margin-left:auto;
+    }
+    .rps{
+      font-family:var(--mono);font-size:10px;font-weight:600;
+      padding:5px 9px;border-radius:6px;cursor:pointer;
+      color:var(--text3);border:none;background:transparent;transition:all .15s;
+    }
+    .rps:hover:not(.on){color:var(--text)}
+    .rps.on{background:var(--accent);color:#fff}
+
+    /* Kills du round */
+    .rp-kills{
+      display:flex;gap:5px;flex-wrap:wrap;
+      margin-top:12px;padding-top:11px;
+      border-top:1px solid var(--border);
+      min-height:24px;
+    }
+    .rp-kill{
+      font-family:var(--mono);font-size:9px;
+      padding:3px 8px;border-radius:5px;
+      background:rgba(240,107,107,.08);color:var(--danger);
+      border:1px solid rgba(240,107,107,.14);
+      display:flex;align-items:center;gap:4px;
+    }
+    .rp-kill.hs{
+      background:rgba(245,200,66,.08);color:var(--gold);
+      border-color:rgba(245,200,66,.14);
+    }
+
+    
