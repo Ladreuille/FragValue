@@ -2,8 +2,9 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzA4MDkwRCIvPgogIDxyZWN0IHg9IjUiIHk9IjUiIHdpZHRoPSIzLjUiIGhlaWdodD0iMjAiIHJ4PSIxLjUiIGZpbGw9IiMzQjdGRjUiLz4KICA8cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iMTMiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHJlY3QgeD0iNSIgeT0iMTMuNSIgd2lkdGg9IjkiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHBhdGggZD0iTTE1LjUgOC41IEwyMC41IDIzLjUgTDI1LjUgOC41IiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIxNS41IiB5MT0iOC41IiB4Mj0iMjUuNSIgeTI9IjIzLjUiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzNCN0ZGNSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMyREQ0QTAiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgo8L3N2Zz4="/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FragValue — Résultats démo</title>
+  <title>FragValue : Résultats démo</title>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -39,7 +40,7 @@
     .floor-btn{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:5px;cursor:pointer;color:var(--text2);border:1px solid var(--border);background:transparent;transition:all .15s}
     .floor-btn.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(59,127,245,.4)}
 
-    /* Side toggle CT/T — checkboxes indépendantes */
+    /* Side toggle CT/T : checkboxes indépendantes */
     .side-toggle{display:flex;gap:6px;margin-bottom:14px;align-items:center}
     .side-toggle-label{font-family:var(--mono);font-size:11px;color:var(--text3);margin-right:4px}
     .side-btn{font-family:var(--mono);font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all .15s;display:flex;align-items:center;gap:5px}
@@ -132,6 +133,10 @@
     <button class="heatmap-tab" onclick="switchHeatmap('movement',this)">Déplacements</button>
     <button class="heatmap-tab" onclick="switchHeatmap('duels',this)">Duel zones</button>
     <button class="heatmap-tab" onclick="switchHeatmap('utility',this)">Utility</button>
+    <button class="heatmap-tab" onclick="switchHeatmap('replay',this)">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:3px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Replay
+    </button>
   </div>
 
   <!-- Toggle CT / T side -->
@@ -151,6 +156,36 @@
     <button class="floor-btn" onclick="switchFloor('lower',this)">Lower</button>
   </div>
 
+  <!-- Barre rounds -->
+  <div class="rounds-bar-wrap" id="roundsBarWrap" style="display:none">
+    <div class="rounds-bar-label">Rounds</div>
+    <div class="rounds-bar" id="roundsBar"></div>
+  </div>
+
+  <!-- Replay controls -->
+  <div class="replay-wrap" id="replayWrap">
+    <div class="replay-header">
+      <div class="replay-round-label" id="replayRoundLabel">Round 1</div>
+      <div class="replay-time" id="replayTime">0:00 / 0:00</div>
+    </div>
+    <div class="replay-timeline" id="replayTimeline" onclick="seekReplay(event)">
+      <div class="replay-timeline-fill" id="replayFill" style="width:0%"></div>
+      <div class="replay-timeline-thumb" id="replayThumb" style="left:0%"></div>
+    </div>
+    <div class="replay-controls">
+      <button class="replay-btn" onclick="replaySkipBack()" title="Début">⏮</button>
+      <button class="replay-btn" onclick="replayStepBack()" title="Précédent">⏴</button>
+      <button class="replay-btn" id="replayPlayBtn" onclick="toggleReplay()" title="Play/Pause">▶</button>
+      <button class="replay-btn" onclick="replayStepFwd()" title="Suivant">⏵</button>
+      <button class="replay-btn" onclick="replaySkipFwd()" title="Fin">⏭</button>
+      <span class="replay-speed">Vitesse :</span>
+      <button class="replay-speed-btn active" onclick="setSpeed(1,this)">1×</button>
+      <button class="replay-speed-btn" onclick="setSpeed(2,this)">2×</button>
+      <button class="replay-speed-btn" onclick="setSpeed(4,this)">4×</button>
+    </div>
+    <div class="replay-events" id="replayEvents"></div>
+  </div>
+
   <div class="canvas-wrap">
     <div class="canvas-card">
       <canvas id="heatmapCanvas" width="1024" height="1024"></canvas>
@@ -161,19 +196,19 @@
         <div class="side-stat-card">
           <div class="side-stat-header"><div class="side-dot-ct"></div>CT Side</div>
           <div class="side-stat-grid">
-            <div class="side-stat-item"><div class="side-stat-val" id="ctKills">—</div><div class="side-stat-lbl">Kills</div></div>
-            <div class="side-stat-item"><div class="side-stat-val" id="ctDeaths">—</div><div class="side-stat-lbl">Deaths</div></div>
-            <div class="side-stat-item"><div class="side-stat-val" id="ctHS">—</div><div class="side-stat-lbl">HS%</div></div>
-            <div class="side-stat-item"><div class="side-stat-val" id="ctKD">—</div><div class="side-stat-lbl">K/D</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="ctKills">-</div><div class="side-stat-lbl">Kills</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="ctDeaths">-</div><div class="side-stat-lbl">Deaths</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="ctHS">-</div><div class="side-stat-lbl">HS%</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="ctKD">-</div><div class="side-stat-lbl">K/D</div></div>
           </div>
         </div>
         <div class="side-stat-card">
           <div class="side-stat-header"><div class="side-dot-t"></div>T Side</div>
           <div class="side-stat-grid">
-            <div class="side-stat-item"><div class="side-stat-val" id="tKills">—</div><div class="side-stat-lbl">Kills</div></div>
-            <div class="side-stat-item"><div class="side-stat-val" id="tDeaths">—</div><div class="side-stat-lbl">Deaths</div></div>
-            <div class="side-stat-item"><div class="side-stat-val" id="tHS">—</div><div class="side-stat-lbl">HS%</div></div>
-            <div class="side-stat-item"><div class="side-stat-val" id="tKD">—</div><div class="side-stat-lbl">K/D</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="tKills">-</div><div class="side-stat-lbl">Kills</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="tDeaths">-</div><div class="side-stat-lbl">Deaths</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="tHS">-</div><div class="side-stat-lbl">HS%</div></div>
+            <div class="side-stat-item"><div class="side-stat-val" id="tKD">-</div><div class="side-stat-lbl">K/D</div></div>
           </div>
         </div>
       </div>
@@ -254,6 +289,7 @@ window.addEventListener('load', () => {
     renderPlayerList();
     loadMapImageThenDraw();
     renderSideStats();
+    initRoundsBar();
   } catch(e) { document.getElementById('noData').style.display = 'block'; }
 });
 
@@ -391,7 +427,7 @@ function drawKills(mapName, W, H, mode) {
   const kills = demoData.kills || [];
   const gs = Math.floor(W / 48);
 
-  // Filtre side — CT et T indépendants
+  // Filtre side : CT et T indépendants
   const sideFilter = k => {
     const team = mode === 'attacker' ? k.attackerTeam : k.victimTeam;
     if (team === 2) return showCT;
@@ -405,7 +441,7 @@ function drawKills(mapName, W, H, mode) {
     );
     const playerColor = getColor(name);
     // Si mode "all" : différencier CT/T par couleur même sans filtre actif
-    // Toujours passer playerColor — le contour CT/T est géré dans drawKillSet
+    // Toujours passer playerColor : le contour CT/T est géré dans drawKillSet
     drawKillSet(filtered, playerColor, playerColor, mapName, W, H, gs, mode, false);
   });
 }
@@ -540,7 +576,7 @@ function updateLegend() {
 function renderMeta() {
   const m = demoData.meta;
   document.getElementById('metaCard').innerHTML = `
-    <div class="meta-item"><div class="meta-val">${m.map||'—'}</div><div class="meta-label">Map</div></div>
+    <div class="meta-item"><div class="meta-val">${m.map||'-'}</div><div class="meta-label">Map</div></div>
     <div class="meta-item"><div class="meta-val">${m.rounds||0}</div><div class="meta-label">Rounds</div></div>
     <div class="meta-item"><div class="meta-val">${m.totalKills||0}</div><div class="meta-label">Kills totaux</div></div>
     <div class="meta-item"><div class="meta-val">${m.players?m.players.length:0}</div><div class="meta-label">Joueurs</div></div>
