@@ -341,11 +341,14 @@
 </div>
 
 <script>
+// Offsets basés sur les fichiers .txt officiels Valve (meta/maps/*.txt)
+// posX/posY = coordonnées world du coin haut-gauche du radar
+// scale = unités world CS2 par pixel (image 1024x1024)
 const MAP_CONFIG = {
-  'de_dust2':   { img:'maps/de_dust2_radar_psd.png',   posX:-2476, posY:3239, scale:4.4  },
-  'de_mirage':  { img:'maps/de_mirage_radar_psd.png',  posX:-3230, posY:1713, scale:5.0  },
-  'de_inferno': { img:'maps/de_inferno_radar_psd.png', posX:-2087, posY:3870, scale:4.9  },
-  'de_anubis':  { img:'maps/de_anubis_radar_psd.png',  posX:-2796, posY:3328, scale:5.22 },
+  'de_dust2':   { img:'maps/de_dust2_radar_psd.png',   posX:-2476, posY:3239,  scale:4.4  },
+  'de_mirage':  { img:'maps/de_mirage_radar_psd.png',  posX:-3230, posY:1713,  scale:5.0  },
+  'de_inferno': { img:'maps/de_inferno_radar_psd.png', posX:-2087, posY:3870,  scale:4.9  },
+  'de_anubis':  { img:'maps/de_anubis_radar_psd.png',  posX:-2796, posY:3328,  scale:5.22 },
   'de_nuke': {
     upper: { img:'maps/nuke/de_nuke_radar_psd.png',       posX:-3453, posY:2887, scale:7.0 },
     lower: { img:'maps/nuke/de_nuke_lower_radar_psd.png', posX:-3453, posY:2887, scale:7.0 },
@@ -462,7 +465,16 @@ function togglePlayer(name){
   if(activePlayers.has(name)){showPlayerStats(name);}
 }
 function selectNone(){activePlayers.clear();renderPlayerList();renderStats();renderHeatmap();}
-function w2c(wx,wy,map,W,H){const cfg=MAP_CONFIG[map];if(!cfg)return{px:W/2,py:H/2};const c=cfg.upper?(currentFloor==='upper'?cfg.upper:cfg.lower):cfg;return{px:((wx-c.posX)/c.scale/1024)*W,py:((c.posY-wy)/c.scale/1024)*H};}
+function w2c(wx,wy,map,W,H){
+  const cfg=MAP_CONFIG[map];
+  if(!cfg)return{px:W/2,py:H/2};
+  const c=cfg.upper?(currentFloor==='upper'?cfg.upper:cfg.lower):cfg;
+  // Formule Valve : pixel = (world - origin) / scale
+  // Image radar = 1024x1024, on normalise vers W×H du canvas
+  const rawPx=(wx-c.posX)/c.scale;
+  const rawPy=(c.posY-wy)/c.scale;
+  return{px:(rawPx/1024)*W, py:(rawPy/1024)*H};
+}
 function inBounds(px,py,W,H){return px>=0&&px<=W&&py>=0&&py<=H;}
 
 function getMapImgPath(){const cfg=MAP_CONFIG[demoData.meta?.map||'de_dust2'];if(!cfg)return null;if(cfg.upper)return currentFloor==='upper'?cfg.upper.img:cfg.lower.img;return cfg.img||null;}
@@ -690,7 +702,11 @@ function buildReplayFrames(round){
   roundKills.forEach(k=>allTicks.push(k.tick||0));
   const minTick=Math.min(...allTicks,0),maxTick=Math.max(...allTicks,1);
   const span=Math.max(maxTick-minTick,1);
-  const N=Math.min(120,Math.max(40,Math.floor(span/4)));
+  // span = différence de ticks, tickrate CS2 = 128/sec
+  // On veut ~20 frames/sec × durée réelle du round
+  const durationSec = span / 128;
+  const N = Math.min(300, Math.max(60, Math.round(durationSec * 20)));
+  console.log(`Round ${round}: ${durationSec.toFixed(1)}s, ${N} frames, tick span ${span}`);
   replayFrames=[];
   for(let f=0;f<=N;f++){
     const progress=f/N,tick=minTick+progress*span;
