@@ -363,11 +363,11 @@
     .hl-val{font-family:var(--mono);font-size:12px;color:var(--text2);margin-top:1px}
 
     /* ── Tableau équipes étendu ── */
-    .ms-cols{display:grid;grid-template-columns:1fr 80px 70px 70px 70px 80px 80px;align-items:center;padding:0 20px;border-bottom:1px solid rgba(37,42,56,.4)}
-    .ms-player-row{display:grid;grid-template-columns:1fr 80px 70px 70px 70px 80px 80px;align-items:center;padding:10px 20px;border-bottom:1px solid rgba(37,42,56,.35);transition:background .12s;cursor:pointer}
+    .ms-cols{display:grid;grid-template-columns:1fr 80px 65px 60px 70px 60px 60px 80px;align-items:center;padding:0 20px;border-bottom:1px solid rgba(37,42,56,.4)}
+    .ms-player-row{display:grid;grid-template-columns:1fr 80px 65px 60px 70px 60px 60px 80px;align-items:center;padding:10px 20px;border-bottom:1px solid rgba(37,42,56,.35);transition:background .12s;cursor:pointer}
     .ms-player-row:last-child{border-bottom:none}
     .ms-player-row:hover{background:rgba(255,255,255,.02)}
-    @media(max-width:800px){.ms-player-row,.ms-cols{grid-template-columns:1fr 70px 65px 65px 70px}}
+    @media(max-width:900px){.ms-player-row,.ms-cols{grid-template-columns:1fr 70px 60px 55px 65px 55px}}
 
     /* ── Graphique barres FV Rating ── */
     .perf-chart{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-top:20px}
@@ -427,23 +427,6 @@
     <div id="perfBars"></div>
   </div>
 
-  <!-- STATS INDIVIDUELLES -->
-  <div class="section-label" style="margin-top:28px">Analyse individuelle</div>
-  <div class="table-card">
-    <table>
-      <thead><tr>
-        <th style="width:20px"></th>
-        <th>Joueur</th>
-        <th>K-D</th>
-        <th>ADR</th>
-        <th>KAST</th>
-        <th style="color:var(--success);font-weight:700">FV Rating</th>
-        <th>HS%</th>
-        <th>WB</th>
-      </tr></thead>
-      <tbody id="playersTable"></tbody>
-    </table>
-  </div>
 </div>
 
 <!-- REPLAY FULLSCREEN -->
@@ -991,7 +974,27 @@ function renderMatchStats() {
     const fvr     = calcFvRating(sKills.length, sDeaths.length, 0, numR);
     const kd      = `${sKills.length}-${sDeaths.length}`;
     const kdNum   = sDeaths.length > 0 ? sKills.length/sDeaths.length : sKills.length;
-    teamPlayers[team].push({ name:p.name, kd, kdNum, kills:sKills.length, deaths:sDeaths.length, hsCount, hsPct, adr, kast, fvr });
+
+    // Opening K-D : premier duel de chaque round (kill avec tick minimum du round)
+    let opK = 0, opD = 0;
+    sideRounds.forEach((_, i) => {
+      const r = i + 1;
+      const rk = kills.filter(k => k.round === r);
+      if (!rk.length) return;
+      const fk = rk.reduce((a, b) => (a.tick||0) <= (b.tick||0) ? a : b);
+      if (fk.attacker === p.name) opK++;
+      else if (fk.victim === p.name) opD++;
+    });
+    const opKdNum = opD > 0 ? opK / opD : opK;
+    const duelPct = (opK + opD) > 0 ? Math.round(opK / (opK + opD) * 100) : 0;
+
+    // Multi-kills : rounds avec 2+ kills
+    const mks = sideRounds.reduce((acc, _, i) => {
+      const r = i + 1;
+      return acc + (sKills.filter(k => k.round === r).length >= 2 ? 1 : 0);
+    }, 0);
+
+    teamPlayers[team].push({ name:p.name, kd, kdNum, kills:sKills.length, deaths:sDeaths.length, hsCount, hsPct, adr, kast, fvr, opK, opD, opKdNum, duelPct, mks });
   });
 
   const ctWins = allRounds.filter(r=>r.winner===2).length;
@@ -1009,10 +1012,11 @@ function renderMatchStats() {
           ${p.name}
         </div>
         <div class="ms-val ${kdCls}">${p.kd}</div>
-        <div class="ms-val">${p.kills}(${p.hsCount})</div>
         <div class="ms-val">${p.kast}%</div>
         <div class="ms-val">${p.adr}</div>
-        <div class="ms-val">${p.hsPct}%</div>
+        <div class="ms-val ${p.opKdNum>=1?'good':p.opKdNum<1&&p.opK+p.opD>0?'bad':''}">${p.opK}-${p.opD}</div>
+        <div class="ms-val ${p.duelPct>=55?'good':p.duelPct<=44&&p.opK+p.opD>0?'bad':''}">${p.opK+p.opD>0?p.duelPct+'%':'-'}</div>
+        <div class="ms-val">${p.mks>0?p.mks:'-'}</div>
         <div class="ms-val rating ${fvrCls}">${p.fvr.toFixed(2)}</div>
       </div>`;
     }).join('');
@@ -1025,10 +1029,11 @@ function renderMatchStats() {
       <div class="ms-cols ms-cols-header">
         <div class="ms-col ms-col-name">Joueur</div>
         <div class="ms-col">K-D</div>
-        <div class="ms-col">K(hs)</div>
         <div class="ms-col">KAST</div>
         <div class="ms-col">ADR</div>
-        <div class="ms-col">HS%</div>
+        <div class="ms-col" title="Opening K-D (premier duel du round)">Op. K-D</div>
+        <div class="ms-col" title="% duels gagnés (1v1 directs)">Duel%</div>
+        <div class="ms-col" title="Multi-kills (rounds avec 2+ kills)">MKs</div>
         <div class="ms-col" style="color:var(--success)">FV Rating</div>
       </div>
       ${rows}
@@ -1070,28 +1075,6 @@ function renderPlayerList(){
   }).join('');
   if(playerListEl) playerListEl.innerHTML=playerListEl.innerHTML; // already set
   const phEl=document.querySelector('.panel-hint'); if(phEl) phEl.innerHTML=`Clic pour toggle · <span style="color:${atMax?'var(--danger)':'var(--accent)'}">${activePlayers.size}/5</span> actifs`;
-  const ptEl=document.getElementById('playersTable');if(!ptEl)return;
-  ptEl.innerHTML=players.map(p=>{
-    const kd=parseFloat(p.kd),c=getColor(p.name),isActive=activePlayers.has(p.name);
-    const pKills2=kills.filter(k=>k.attacker===p.name);
-    const wb=pKills2.filter(k=>k.isWallbang).length;
-    const smk=pKills2.filter(k=>k.thruSmoke).length;
-    const hs2=pKills2.filter(k=>k.isHeadshot).length;
-    const hsPct2=pKills2.length>0?Math.round(hs2/pKills2.length*100):0;
-    const fvr=calcFvRating(p.kills,p.deaths,0,demoData.rounds?.length||1);
-    const fvrCls=fvr>=1.15?'td-good':fvr<0.9?'td-bad':'';
-    return `<tr style="${isActive?'background:rgba(255,255,255,.03)':''}" onclick="showPlayerStats('${p.name.replace(/'/g,"\'")}'); event.stopPropagation()">
-      <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.solid};opacity:${isActive?1:.3}"></span></td>
-      <td class="td-name" style="cursor:pointer">${p.name}${p.name===target?' <span style="color:var(--gold);font-size:10px">★</span>':''}</td>
-      <td class="${kd>=1.3?'td-good':kd<1?'td-bad':''}">${p.kills}-${p.deaths}</td>
-      <td>${hsPct2}%</td>
-      <td class="${fvrCls}" style="font-weight:700">${fvr.toFixed(2)}</td>
-      <td style="color:var(--gold)">${wb||'-'}</td>
-      <td style="color:var(--accent)">${smk||'-'}</td>
-    </tr>`;
-  }).join('');
-  ptEl.innerHTML=ptEl.innerHTML;
-}
 
 function switchHeatmap(type,btn){
   currentHeatmap=type;
