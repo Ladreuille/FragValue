@@ -578,6 +578,29 @@ function showPlayerStats(name){
   setTimeout(()=>document.getElementById('playerStatsPanel').scrollIntoView({behavior:'smooth',block:'nearest'}),100);
 }
 
+// Décompresse les kills au format compact (champs courts) → format long
+function expandKills(kills){
+  if(!kills||!kills.length)return kills;
+  // Détecter si déjà au format long (présence de 'attacker')
+  if(kills[0].attacker!==undefined)return kills;
+  return kills.map(k=>({
+    round:       k.r  ?? 0,
+    tick:        k.t  ?? 0,
+    attacker:    k.a  || 'Unknown',
+    attackerTeam:k.at ?? 0,
+    attackerX:   k.ax ?? 0,
+    attackerY:   k.ay ?? 0,
+    victim:      k.v  || 'Unknown',
+    victimTeam:  k.vt ?? 0,
+    victimX:     k.vx ?? 0,
+    victimY:     k.vy ?? 0,
+    weapon:      k.w  || '',
+    isHeadshot:  !!k.h,
+    thruSmoke:   !!k.s,
+    isWallbang:  !!k.wb,
+  }));
+}
+
 window.addEventListener('load',()=>{
   canvas=document.getElementById('heatmapCanvas');
   if(canvas) ctx=canvas.getContext('2d');
@@ -585,6 +608,8 @@ window.addEventListener('load',()=>{
   if(!raw){document.getElementById('noData').style.display='block';return;}
   try{
     demoData=JSON.parse(raw);
+    // Décompresser les kills si envoyés en format compact par le parser
+    if(demoData.kills) demoData.kills=expandKills(demoData.kills);
     document.getElementById('mainContent').style.display='block';
     assignPlayerColors();
     const target=demoData.meta?.targetPlayer;
@@ -630,7 +655,8 @@ function inBounds(px,py,W,H){return px>=0&&px<=W&&py>=0&&py<=H;}
 function getMapImgPath(){const cfg=MAP_CONFIG[demoData.meta?.map||'de_dust2'];if(!cfg)return null;if(cfg.upper)return currentFloor==='upper'?cfg.upper.img:cfg.lower.img;return cfg.img||null;}
 function loadMapImageThenDraw(){
   const mapName=demoData.meta?.map||'de_dust2';
-  document.getElementById('floorToggle').classList.toggle('visible',!!(MAP_CONFIG[mapName]?.upper));
+  const floorToggleEl=document.getElementById('floorToggle');
+  if(floorToggleEl)floorToggleEl.classList.toggle('visible',!!(MAP_CONFIG[mapName]?.upper));
   const imgPath=getMapImgPath();
   const notice=document.getElementById('mapNotice');
   if(!imgPath){mapImage=null;notice.textContent=`Radar non disponible pour ${mapName}`;renderHeatmap();return;}
