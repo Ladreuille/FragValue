@@ -374,8 +374,6 @@
   <!-- Canvas caché pour compatibilité JS (rendu dans le fullscreen uniquement) -->
   <canvas id="heatmapCanvas" style="display:none" width="1024" height="1024"></canvas>
 
-  <!-- HEADER MATCH -->
-  <div class="match-header" id="matchHeader"></div>
 
   <!-- TOGGLE SIDE : Both / CT / T -->
   <div class="side-filter-bar">
@@ -766,9 +764,9 @@ function setSideFilter(side, btn) {
 }
 
 function renderMeta(){
-  const m=demoData.meta;
   const el=document.getElementById('matchHeader');
   if(!el)return;
+  const m=demoData.meta;
   const rounds=demoData.rounds||[];
   const ctWins=rounds.filter(r=>r.winner===2).length;
   const tWins=rounds.filter(r=>r.winner===3).length;
@@ -795,33 +793,45 @@ function calcFvRating(kills, deaths, assists, rounds) {
 function renderMatchStats() {
   if (!demoData) return;
   const kills = demoData.kills || [];
-  const rounds = (demoData.rounds||[]).length || 1;
+  const allRounds = demoData.rounds || [];
   const players = demoData.playerStats || [];
   const sf = currentSideFilter;
 
-  // Filtrer kills selon le side
-  const filteredKills = kills.filter(k => {
-    if (sf === 'both') return true;
-    if (sf === 'ct')   return k.attackerTeam === 2;
-    if (sf === 't')    return k.attackerTeam === 3;
-    return true;
-  });
+  // Rounds joués par side (pour ADR et FV Rating corrects)
+  const ctRounds = allRounds.filter(r=>r.winner===2||r.winner===3).length || 1;
+  const tRounds  = ctRounds; // symétrique sur une partie complète
+  const sideRounds = sf==='ct' ? ctRounds : sf==='t' ? tRounds : allRounds.length || 1;
 
-  // Grouper les joueurs par équipe
+  // Filtrer kills selon le side ATTAQUANT pour K, et VICTIME pour D
+  const sideKillsFor   = k => sf==='both' ? true : sf==='ct' ? k.attackerTeam===2 : k.attackerTeam===3;
+  const sideKillsAgainst = k => sf==='both' ? true : sf==='ct' ? k.victimTeam===2   : k.victimTeam===3;
+
+  // Déterminer l'équipe principale d'un joueur via kills+deaths sur TOUTE la partie
+  // (plus robuste que kills seuls car certains joueurs ont peu de kills)
+  const getPlayerTeam = name => {
+    const asKillerCT = kills.filter(k=>k.attacker===name&&k.attackerTeam===2).length;
+    const asKillerT  = kills.filter(k=>k.attacker===name&&k.attackerTeam===3).length;
+    const asVictimCT = kills.filter(k=>k.victim===name&&k.victimTeam===2).length;
+    const asVictimT  = kills.filter(k=>k.victim===name&&k.victimTeam===3).length;
+    const scoreCT = asKillerCT + asVictimCT;
+    const scoreT  = asKillerT  + asVictimT;
+    // Tie-break : si égal, prendre le side avec le plus de rounds joués
+    return scoreCT >= scoreT ? 2 : 3;
+  };
+
+  // Grouper les joueurs par équipe avec stats filtrées par side
   const teamPlayers = {2: [], 3: []};
   players.forEach(p => {
-    const pKills = kills.filter(k => k.attacker === p.name);
-    const team = pKills.length > 0
-      ? (pKills.filter(k=>k.attackerTeam===2).length >= pKills.filter(k=>k.attackerTeam===3).length ? 2 : 3)
-      : 2;
-    // Stats selon filtre side
-    const sKills  = filteredKills.filter(k => k.attacker === p.name);
-    const sDeaths = filteredKills.filter(k => k.victim   === p.name);
+    const team = getPlayerTeam(p.name);
+    // K = kills faits par ce joueur quand il jouait du bon côté
+    const sKills  = kills.filter(k => k.attacker===p.name && sideKillsFor(k));
+    // D = morts de ce joueur quand il jouait du bon côté
+    const sDeaths = kills.filter(k => k.victim===p.name   && sideKillsAgainst(k));
     const hs      = sKills.filter(k => k.isHeadshot).length;
     const hsPct   = sKills.length > 0 ? Math.round(hs/sKills.length*100) : 0;
-    // ADR approximé (ADR = kills * 80 + assists * 30) / rounds — proxy sans vraies données
-    const assists = kills.filter(k => false).length; // pas de données assists dans kills
-    const fvr     = calcFvRating(sKills.length, sDeaths.length, 0, rounds);
+    // ADR approximatif : kills * 80 / rounds joués sur ce side
+    const adr     = sideRounds > 0 ? Math.round(sKills.length * 80 / sideRounds) : 0;
+    const fvr     = calcFvRating(sKills.length, sDeaths.length, 0, sideRounds);
     const kd      = `${sKills.length}-${sDeaths.length}`;
     const kdNum   = sDeaths.length > 0 ? sKills.length/sDeaths.length : sKills.length;
     teamPlayers[team].push({
@@ -829,14 +839,14 @@ function renderMatchStats() {
       kd, kdNum,
       kills: sKills.length,
       deaths: sDeaths.length,
-      hsPct,
+      hsPct, adr,
       fvr,
       color: getColor(p.name).solid,
     });
   });
 
-  const ctWins  = (demoData.rounds||[]).filter(r=>r.winner===2).length;
-  const tWins   = (demoData.rounds||[]).filter(r=>r.winner===3).length;
+  const ctWins  = allRounds.filter(r=>r.winner===2).length;
+  const tWins   = allRounds.filter(r=>r.winner===3).length;
 
   function teamBlock(teamNum, label, color, score) {
     const tPlayers = (teamPlayers[teamNum]||[]).sort((a,b)=>b.fvr-a.fvr);
@@ -851,7 +861,7 @@ function renderMatchStats() {
         </div>
         <div class="ms-val ${kdCls}">${p.kd}</div>
         <div class="ms-val">${p.hsPct}%</div>
-        <div class="ms-val">-</div>
+        <div class="ms-val">${p.adr}</div>
         <div class="ms-val">-</div>
         <div class="ms-val rating ${fvrCls}">${p.fvr.toFixed(2)}</div>
       </div>`;
