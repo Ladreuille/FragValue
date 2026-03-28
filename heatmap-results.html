@@ -371,6 +371,8 @@
 </div>
 
 <div class="page" id="mainContent" style="display:none">
+  <!-- Canvas caché pour compatibilité JS (rendu dans le fullscreen uniquement) -->
+  <canvas id="heatmapCanvas" style="display:none" width="1024" height="1024"></canvas>
 
   <!-- HEADER MATCH -->
   <div class="match-header" id="matchHeader"></div>
@@ -578,7 +580,7 @@ function showPlayerStats(name){
 
 window.addEventListener('load',()=>{
   canvas=document.getElementById('heatmapCanvas');
-  ctx=canvas.getContext('2d');
+  if(canvas) ctx=canvas.getContext('2d');
   const raw=sessionStorage.getItem('demoData');
   if(!raw){document.getElementById('noData').style.display='block';return;}
   try{
