@@ -53,8 +53,25 @@
     .file-remove:hover{border-color:var(--danger);color:var(--danger)}
 
     /* Sections */
+    .section-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;opacity:0;animation:fadeUp .3s forwards}
+    .section-label{font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;font-family:var(--mono);margin-bottom:12px}
+    .player-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:11px 14px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
+    .player-input:focus{border-color:var(--accent)}
+    .player-input::placeholder{color:var(--text3)}
+    .input-hint{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:8px}
 
+    /* Options */
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     @media(max-width:500px){.options-grid{grid-template-columns:1fr}}
+    .option{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s}
+    .option:hover{border-color:var(--border2)}
+    .option.active{border-color:rgba(59,127,245,.35);background:var(--accent-dim)}
+    .option-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+    .option.active .option-check{background:var(--accent);border-color:var(--accent)}
+    .option-check-inner{width:7px;height:7px;background:#fff;border-radius:1px;transform:scale(0);transition:transform .15s}
+    .option.active .option-check-inner{transform:scale(1)}
+    .option-label{font-size:13px;font-weight:500;margin-bottom:1px}
+    .option-desc{font-size:11px;color:var(--text3);font-family:var(--mono)}
 
     /* Submit */
     .submit-btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s;opacity:0;animation:fadeUp .3s .35s forwards}
@@ -140,6 +157,43 @@
     <button class="file-remove" onclick="removeFile()">Supprimer</button>
   </div>
 
+  <!-- Player input -->
+  <div class="section-card" style="animation-delay:.28s">
+    <div class="section-label">Joueur à analyser</div>
+    <input class="player-input" id="playerInput" type="text" placeholder="Pseudo Steam ou FACEIT dans la démo..." autocomplete="off" spellcheck="false"/>
+    <p class="input-hint">Laisse vide pour analyser tous les joueurs</p>
+  </div>
+
+  <!-- Options -->
+  <div class="section-card" style="animation-delay:.31s">
+    <div class="section-label">Analyses à générer</div>
+    <div class="options-grid" id="optionsGrid">
+      <div class="option active" onclick="this.classList.toggle('active')">
+        <div class="option-check"><div class="option-check-inner"></div></div>
+        <div><div class="option-label">Kill heatmap</div><div class="option-desc">Zones de kills et deaths</div></div>
+      </div>
+      <div class="option active" onclick="this.classList.toggle('active')">
+        <div class="option-check"><div class="option-check-inner"></div></div>
+        <div><div class="option-label">Movement map</div><div class="option-desc">Déplacements et zones</div></div>
+      </div>
+      <div class="option active" onclick="this.classList.toggle('active')">
+        <div class="option-check"><div class="option-check-inner"></div></div>
+        <div><div class="option-label">Duel win zones</div><div class="option-desc">% duels gagnés par zone</div></div>
+      </div>
+      <div class="option active" onclick="this.classList.toggle('active')">
+        <div class="option-check"><div class="option-check-inner"></div></div>
+        <div><div class="option-label">Utility map</div><div class="option-desc">Grenades, smokes, flashes</div></div>
+      </div>
+      <div class="option" onclick="this.classList.toggle('active')">
+        <div class="option-check"><div class="option-check-inner"></div></div>
+        <div><div class="option-label">Economy timeline</div><div class="option-desc">Armes et argent / round</div></div>
+      </div>
+      <div class="option" onclick="this.classList.toggle('active')">
+        <div class="option-check"><div class="option-check-inner"></div></div>
+        <div><div class="option-label">Round replay</div><div class="option-desc">Rejeu animé des rounds</div></div>
+      </div>
+    </div>
+  </div>
 
   <!-- Submit -->
   <button class="submit-btn" id="analyseBtn" onclick="startAnalysis()" disabled>Dépose d'abord ta démo</button>
@@ -220,8 +274,9 @@ function formatSize(b) {
 
 async function startAnalysis() {
   if (!selectedFile) return;
-  const player  = '';
-  const options = ['Kill heatmap', 'Movement map', 'Duel win zones', 'Utility map'];
+  const player  = document.getElementById('playerInput').value.trim();
+  const options = [...document.querySelectorAll('.option.active')].map(el => el.querySelector('.option-label').textContent);
+  if (options.length === 0) { showError('Sélectionne au moins une analyse.'); return; }
 
   document.getElementById('analyseBtn').disabled = true;
   document.getElementById('progressSection').style.display = 'block';
@@ -254,7 +309,20 @@ async function startAnalysis() {
     await new Promise(r => setTimeout(r, 500));
     setStep(5, 100, 'Terminé !', 'Redirection...');
     bar.style.background = 'var(--success)';
-    sessionStorage.setItem('demoData', JSON.stringify(data.data));
+    // Tenter de stocker — si quota dépassé, retirer les positions (replay désactivé)
+    const fullData = JSON.stringify(data.data);
+    try {
+      sessionStorage.setItem('demoData', fullData);
+    } catch(e) {
+      console.warn('sessionStorage quota exceeded, removing positions:', e.message);
+      const lite = {...data.data, positions: {}};
+      try {
+        sessionStorage.setItem('demoData', JSON.stringify(lite));
+        console.log('Stored lite version without positions');
+      } catch(e2) {
+        console.error('Storage failed even without positions:', e2.message);
+      }
+    }
     // Sauvegarde dans Supabase si connecté
     await saveDemoAnalysis(data.data);
     await new Promise(r => setTimeout(r, 700));
