@@ -1029,10 +1029,27 @@ function renderMatchStats() {
   // CS2 demoparser2 : winner=2 = CT, winner=3 = T
   // Mais certaines démos retournent winner=1 (CT) ou winner=2 (T)
   // On détecte automatiquement le format
+  // Détecter le format winner
   const winnerVals = [...new Set(allRounds.map(r=>r.winner).filter(w=>w>0))];
   const useAlt = winnerVals.length > 0 && !winnerVals.includes(2) && !winnerVals.includes(3);
-  const ctWins = allRounds.filter(r => useAlt ? r.winner===1 : r.winner===2).length;
-  const tWins  = allRounds.filter(r => useAlt ? r.winner===2 : r.winner===3).length;
+  let ctWins = allRounds.filter(r => useAlt ? r.winner===1 : r.winner===2).length;
+  let tWins  = allRounds.filter(r => useAlt ? r.winner===2 : r.winner===3).length;
+
+  // Fallback : si winner=0 partout, déduire depuis les kills
+  // L'équipe qui a fait le dernier kill du round a probablement gagné
+  if (ctWins === 0 && tWins === 0 && kills.length > 0) {
+    allRounds.forEach((rd, i) => {
+      const r = i + 1;
+      const rKills = kills.filter(k => k.round === r);
+      if (!rKills.length) return;
+      // Dernier kill du round = tick max
+      const lastKill = rKills.reduce((a,b) => (a.tick||0)>=(b.tick||0)?a:b);
+      // CS2 : team_num CT=3, T=2 — l'attaquant du dernier kill a gagné
+      if (lastKill.attackerTeam === 3) ctWins++;      // CT gagne
+      else if (lastKill.attackerTeam === 2) tWins++;  // T gagne
+    });
+    console.log('[FragValue] Wins déduits des kills — CT:', ctWins, 'T:', tWins);
+  }
   console.log('[FragValue] Rounds winner vals:', winnerVals, '| CT wins:', ctWins, '| T wins:', tWins);
 
   function teamBlock(teamNum, label, color, score) {
@@ -1055,14 +1072,11 @@ function renderMatchStats() {
         <div class="ms-val rating ${fvrCls}">${p.fvr.toFixed(2)}</div>
       </div>`;
     }).join('');
-    const avgFvr = tPlayers.length > 0
-      ? (tPlayers.reduce((s,p)=>s+p.fvr,0)/tPlayers.length).toFixed(2)
-      : '-';
     return `<div class="ms-team-block">
       <div class="ms-team-header">
         <div class="ms-team-dot" style="background:${color}"></div>
         <div class="ms-team-name">${label}</div>
-        <div class="ms-team-score" style="color:${color}" title="FV Rating moyen">⌀ ${avgFvr}</div>
+        <div class="ms-team-score" style="color:${color}" title="Rounds gagnés">${score}</div>
       </div>
       <div class="ms-cols ms-cols-header">
         <div class="ms-col ms-col-name">Joueur</div>
