@@ -204,9 +204,9 @@
     <button class="heatmap-tab" onclick="switchHeatmap('movement',this)">Déplacements</button>
     <button class="heatmap-tab" onclick="switchHeatmap('duels',this)">Duel zones</button>
     <button class="heatmap-tab" onclick="switchHeatmap('utility',this)">Utility</button>
-    <button class="heatmap-tab" onclick="switchHeatmap('replay',this)">
+    <button class="heatmap-tab" id="tabReplay" onclick="switchHeatmap('replay',this)" style="background:var(--accent);color:#fff;border-color:var(--accent)">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-      Replay
+      Replay 2D
     </button>
   </div>
 
@@ -259,7 +259,7 @@
     </div>
 
     <!-- REPLAY — sous la heatmap, pleine largeur -->
-    <div class="replay-system" id="replaySystem">
+    <div class="replay-system visible" id="replaySystem">
       <div class="rounds-nav">
         <div class="rounds-nav-header">
           <span class="rounds-nav-title">Navigation rounds</span>
@@ -446,6 +446,11 @@ window.addEventListener('load',()=>{
     if(target) activePlayers.add(target);
     renderMeta(); renderStats(); renderPlayerList();
     loadMapImageThenDraw(); renderSideStats(); initRoundsBar();
+    // Activer le replay par défaut
+    setTimeout(() => {
+      const replayTab = document.getElementById('tabReplay');
+      switchHeatmap('replay', replayTab);
+    }, 500);
   }catch(e){console.error(e);document.getElementById('noData').style.display='block';}
 });
 
@@ -620,14 +625,8 @@ function switchHeatmap(type,btn){
   currentHeatmap=type;
   document.querySelectorAll('.heatmap-tab').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  if(type==='replay'){
-    document.getElementById('replaySystem').classList.add('visible');
-    if(replayRound!==null)drawReplayFrame(replayFrameIdx);
-    else selectRound(1,document.getElementById('roundBtn1'));
-  }else{
-    clearInterval(replayTimer);replayPlaying=false;setPlayPause(false);
-    loadMapImageThenDraw();
-  }
+  clearInterval(replayTimer);replayPlaying=false;setPlayPause(false);
+  loadMapImageThenDraw();
 }
 function switchFloor(floor,btn){currentFloor=floor;document.querySelectorAll('.floor-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');loadMapImageThenDraw();}
 function toggleSide(side){
@@ -692,9 +691,16 @@ function buildReplayFrames(round){
   const positions=demoData.positions||{},kills=demoData.kills||[];
   const roundKills=kills.filter(k=>k.round===round);
   const roundPos={};
+  // Trouver le tick minimum du round (début du round)
+  const roundKillsAll = kills.filter(k=>k.round===round);
+  const roundStartTick = roundKillsAll.length > 0
+    ? Math.min(...roundKillsAll.map(k=>k.tick)) - 5000  // avant le premier kill
+    : null;
+
   Object.entries(positions).forEach(([name,pts])=>{
-    const rpts=pts.filter(p=>p.round===round);
-    if(rpts.length>0)roundPos[name]=rpts;
+    // Garder toutes les positions du round
+    const rpts = pts.filter(p => p.round === round);
+    if(rpts.length > 0) roundPos[name] = rpts;
   });
   if(Object.keys(roundPos).length===0&&roundKills.length===0){replayFrames=[];return;}
   let allTicks=[];
@@ -703,10 +709,9 @@ function buildReplayFrames(round){
   const minTick=Math.min(...allTicks,0),maxTick=Math.max(...allTicks,1);
   const span=Math.max(maxTick-minTick,1);
   // span = différence de ticks, tickrate CS2 = 128/sec
-  // On veut ~20 frames/sec × durée réelle du round
+  // On veut ~15 frames/sec × durée réelle du round (max 600 frames ~40sec)
   const durationSec = span / 128;
-  const N = Math.min(300, Math.max(60, Math.round(durationSec * 20)));
-  console.log(`Round ${round}: ${durationSec.toFixed(1)}s, ${N} frames, tick span ${span}`);
+  const N = Math.min(600, Math.max(80, Math.round(durationSec * 15)));
   replayFrames=[];
   for(let f=0;f<=N;f++){
     const progress=f/N,tick=minTick+progress*span;
