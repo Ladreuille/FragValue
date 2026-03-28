@@ -62,11 +62,110 @@
     .side-stat-item{text-align:center}
     .side-stat-val{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.5px}
     .side-stat-lbl{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
+    /* ── Layout fullscreen replay ─────────────────────────────── */
     .canvas-outer{display:flex;flex-direction:column;gap:0}
+
+    /* Mode normal (heatmaps) */
     .canvas-wrap{display:grid;grid-template-columns:1fr 220px;gap:14px;align-items:start}
     @media(max-width:700px){.canvas-wrap{grid-template-columns:1fr}}
     .canvas-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px}
     #heatmapCanvas{width:100%;height:auto;border-radius:6px;display:block}
+
+    /* Mode replay fullscreen */
+    .replay-fullscreen{
+      position:fixed;inset:0;z-index:200;
+      background:var(--bg);
+      display:none;flex-direction:column;
+    }
+    .replay-fullscreen.active{display:flex}
+
+    /* Header replay */
+    .rf-header{
+      height:48px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 16px;
+      background:rgba(12,14,19,.95);
+      border-bottom:1px solid var(--border);
+    }
+    .rf-title{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:8px}
+    .rf-map{color:var(--accent)}
+    .rf-close{background:var(--card);border:1px solid var(--border);color:var(--text2);padding:5px 12px;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .15s}
+    .rf-close:hover{border-color:var(--danger);color:var(--danger)}
+    .rf-round-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;background:rgba(59,127,245,.1);color:var(--accent);border:1px solid rgba(59,127,245,.2);padding:4px 10px;border-radius:6px}
+    .rf-live-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 1.8s infinite}
+
+    /* Zone principale */
+    .rf-main{flex:1;display:grid;grid-template-columns:1fr 200px;min-height:0;overflow:hidden}
+
+    /* Canvas */
+    .rf-canvas-wrap{position:relative;background:#0A0C12;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    #replayCanvas{max-width:100%;max-height:100%;display:block}
+
+    /* Panel droit joueurs */
+    .rf-panel{
+      background:var(--surface);border-left:1px solid var(--border);
+      display:flex;flex-direction:column;overflow-y:auto;
+      padding:10px;gap:4px;
+    }
+    .rf-panel-title{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+    .rf-player{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:all .12s;border:1px solid transparent}
+    .rf-player:hover{background:rgba(255,255,255,.04)}
+    .rf-player.active{background:rgba(59,127,245,.06);border-color:rgba(59,127,245,.15)}
+    .rf-player-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .rf-player-name{font-family:var(--mono);font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rf-player-kd{font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0}
+    .rf-player.dead .rf-player-name{opacity:.35;text-decoration:line-through}
+
+    /* Footer replay */
+    .rf-footer{
+      flex-shrink:0;
+      background:rgba(12,14,19,.97);
+      border-top:1px solid var(--border);
+      padding:10px 16px 12px;
+      display:flex;flex-direction:column;gap:8px;
+    }
+
+    /* Barre rounds dans le footer */
+    .rf-rounds{display:flex;gap:2px;flex-wrap:nowrap;overflow-x:auto;align-items:center;padding-bottom:2px}
+    .rf-rounds::-webkit-scrollbar{height:3px}
+    .rf-rounds::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+    .rnd2{
+      position:relative;min-width:24px;height:28px;border-radius:5px;
+      border:1px solid var(--border);background:var(--card);
+      color:var(--text3);font-family:var(--mono);font-size:9px;font-weight:700;
+      cursor:pointer;transition:all .15s;
+      display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;overflow:hidden;
+    }
+    .rnd2::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+    .rnd2.win::after{background:var(--success)}
+    .rnd2.loss::after{background:var(--danger)}
+    .rnd2:hover{border-color:rgba(59,127,245,.4);color:var(--text)}
+    .rnd2.sel{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(59,127,245,.4)}
+    .rnd2-all{min-width:auto;padding:0 8px;font-size:9px}
+    .rnd2-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;margin:0 2px}
+
+    /* Timeline + controls dans footer */
+    .rf-controls-row{display:flex;align-items:center;gap:10px}
+    .rf-time{font-family:var(--mono);font-size:10px;color:var(--text2);white-space:nowrap;min-width:80px}
+    .rf-timeline{flex:1;position:relative;height:5px;background:var(--border);border-radius:3px;cursor:pointer}
+    .rf-timeline:hover{background:var(--border2)}
+    .rf-tl-fill{height:100%;background:linear-gradient(90deg,#3B7FF5,#60A5FA);border-radius:3px;pointer-events:none}
+    .rf-tl-thumb{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--accent);transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 2px rgba(59,127,245,.2)}
+    .rf-kill-mark{position:absolute;top:50%;transform:translate(-50%,-50%);width:3px;height:8px;border-radius:1.5px;background:var(--danger);opacity:.5;pointer-events:none}
+    .rf-btns{display:flex;align-items:center;gap:3px}
+    .rfb{width:32px;height:32px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+    .rfb:hover{border-color:rgba(59,127,245,.5);color:var(--accent)}
+    .rfb svg{pointer-events:none;display:block}
+    .rfb-play{width:38px;height:38px;border-radius:10px;background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 10px rgba(59,127,245,.35)}
+    .rfb-play:hover{opacity:.9}
+    .rf-speeds{display:flex;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:2px;gap:1px}
+    .rfs{font-family:var(--mono);font-size:9px;font-weight:600;padding:4px 7px;border-radius:5px;cursor:pointer;color:var(--text3);border:none;background:transparent;transition:all .15s}
+    .rfs:hover:not(.on){color:var(--text)}
+    .rfs.on{background:var(--accent);color:#fff}
+    .rf-kills-chips{display:flex;gap:4px;flex-wrap:wrap;min-height:16px}
+    .rfc{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(240,107,107,.08);color:var(--danger);border:1px solid rgba(240,107,107,.14)}
+    .rfc.hs{background:rgba(245,200,66,.08);color:var(--gold);border-color:rgba(245,200,66,.14)}
     .map-notice{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:6px;text-align:center}
     .legend{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
     .legend-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--text3)}
@@ -337,6 +436,78 @@
       <thead><tr><th style="width:20px"></th><th>Joueur</th><th>K</th><th>D</th><th>K/D</th><th>HS%</th></tr></thead>
       <tbody id="playersTable"></tbody>
     </table>
+  </div>
+</div>
+
+<!-- REPLAY FULLSCREEN -->
+<div class="replay-fullscreen" id="replayFullscreen">
+
+  <!-- Header -->
+  <div class="rf-header">
+    <div class="rf-title">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <span>FragValue</span>
+      <span style="color:var(--border2)">·</span>
+      <span class="rf-map" id="rfMapName">de_dust2</span>
+      <span style="color:var(--border2)">·</span>
+      <div class="rf-round-tag">
+        <span class="rf-live-dot" id="rfLiveDot"></span>
+        <span id="rfRoundLabel">Round 1</span>
+      </div>
+    </div>
+    <button class="rf-close" onclick="closeReplayFS()">✕ Quitter</button>
+  </div>
+
+  <!-- Main : carte + panel joueurs -->
+  <div class="rf-main">
+    <div class="rf-canvas-wrap">
+      <canvas id="replayCanvas"></canvas>
+    </div>
+    <div class="rf-panel">
+      <div class="rf-panel-title">Joueurs</div>
+      <div id="rfPlayerList"></div>
+    </div>
+  </div>
+
+  <!-- Footer : rounds + timeline + controls -->
+  <div class="rf-footer">
+    <!-- Rounds -->
+    <div class="rf-rounds" id="rfRoundsBar"></div>
+
+    <!-- Timeline + controls -->
+    <div class="rf-controls-row">
+      <div class="rf-btns">
+        <button class="rfb" onclick="rfSkipBack()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+        </button>
+        <button class="rfb" onclick="rfStepBack()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4"/><polygon points="11 20 1 12 11 4"/></svg>
+        </button>
+        <button class="rfb rfb-play" id="rfPlayBtn" onclick="rfTogglePlay()">
+          <svg id="rfPlayIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg id="rfPauseIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+        </button>
+        <button class="rfb" onclick="rfStepFwd()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20"/><polygon points="13 4 23 12 13 20"/></svg>
+        </button>
+        <button class="rfb" onclick="rfSkipFwd()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+        </button>
+      </div>
+      <div class="rf-time"><span id="rfTimeCur">0:00</span> / <span id="rfTimeTot">0:00</span></div>
+      <div class="rf-timeline" id="rfTimeline" onclick="rfSeek(event)">
+        <div class="rf-tl-fill" id="rfFill" style="width:0%"></div>
+        <div id="rfKillMarks"></div>
+        <div class="rf-tl-thumb" id="rfThumb" style="left:0%"></div>
+      </div>
+      <div class="rf-speeds">
+        <button class="rfs on" onclick="rfSetSpeed(0.5,this)">0.5×</button>
+        <button class="rfs" onclick="rfSetSpeed(1,this)">1×</button>
+        <button class="rfs" onclick="rfSetSpeed(2,this)">2×</button>
+        <button class="rfs" onclick="rfSetSpeed(4,this)">4×</button>
+      </div>
+    </div>
+    <div class="rf-kills-chips" id="rfKillChips"></div>
   </div>
 </div>
 
@@ -625,6 +796,10 @@ function switchHeatmap(type,btn){
   currentHeatmap=type;
   document.querySelectorAll('.heatmap-tab').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
+  if(type==='replay'){
+    openReplayFS();
+    return;
+  }
   clearInterval(replayTimer);replayPlaying=false;setPlayPause(false);
   loadMapImageThenDraw();
 }
@@ -794,6 +969,218 @@ function replaySkipFwd(){clearInterval(replayTimer);replayPlaying=false;setPlayP
 function replayStepBack(){clearInterval(replayTimer);replayPlaying=false;setPlayPause(false);replayFrameIdx=Math.max(0,replayFrameIdx-5);drawReplayFrame(replayFrameIdx);}
 function replayStepFwd(){clearInterval(replayTimer);replayPlaying=false;setPlayPause(false);replayFrameIdx=Math.min(replayFrames.length-1,replayFrameIdx+5);drawReplayFrame(replayFrameIdx);}
 function seekReplay(e){const rect=document.getElementById('replayTimeline').getBoundingClientRect();const pct=Math.min(1,Math.max(0,(e.clientX-rect.left)/rect.width));replayFrameIdx=Math.round(pct*(replayFrames.length-1));drawReplayFrame(replayFrameIdx);}
+
+// ══ REPLAY FULLSCREEN ════════════════════════════════════════════════════════
+let rfCanvas, rfCtx, rfMapImg=null, rfRound=null, rfFrames=[], rfIdx=0;
+let rfPlaying=false, rfTimer=null, rfSpeed=1, rfMapName='de_dust2';
+const RF_FPS=24;
+
+function openReplayFS(){
+  if(!demoData)return;
+  rfMapName=(demoData.meta?.map||'de_dust2').toLowerCase();
+  document.getElementById('rfMapName').textContent=rfMapName;
+  document.getElementById('replayFullscreen').classList.add('active');
+
+  rfCanvas=document.getElementById('replayCanvas');
+  rfCtx=rfCanvas.getContext('2d');
+
+  // Charger l'image de carte
+  const cfg=MAP_CONFIG[rfMapName];
+  if(cfg){
+    const img=new Image();
+    img.onload=()=>{
+      rfMapImg=img;
+      rfCanvas.width=img.width; rfCanvas.height=img.height;
+      initRfRoundsBar();
+      rfSelectRound(1,document.getElementById('rfRoundBtn1'));
+    };
+    img.onerror=()=>{ rfMapImg=null; initRfRoundsBar(); rfSelectRound(1,document.getElementById('rfRoundBtn1')); };
+    img.src=cfg.upper?cfg.upper.img:cfg.img;
+  } else {
+    rfCanvas.width=1024; rfCanvas.height=1024;
+    initRfRoundsBar();
+    rfSelectRound(1,document.getElementById('rfRoundBtn1'));
+  }
+  initRfPlayerList();
+}
+
+function closeReplayFS(){
+  document.getElementById('replayFullscreen').classList.remove('active');
+  clearInterval(rfTimer); rfPlaying=false; rfSetPlayPause(false);
+}
+
+function initRfRoundsBar(){
+  const rounds=demoData.rounds||[], kills=demoData.kills||[];
+  const target=demoData.meta?.targetPlayer;
+  const bar=document.getElementById('rfRoundsBar');
+  let html='';
+  rounds.forEach((rd,i)=>{
+    const r=i+1;
+    const rK=kills.filter(k=>k.round===r&&k.attacker===target).length;
+    if(r===16)html+=`<div class="rnd2-sep"></div>`;
+    html+=`<button class="rnd2 ${rd.winner>0?'win':'loss'}" id="rfRoundBtn${r}" onclick="rfSelectRound(${r},this)" title="R${r}·${rK}K">${r}</button>`;
+  });
+  bar.innerHTML=html;
+}
+
+function initRfPlayerList(){
+  const players=demoData.playerStats||[];
+  document.getElementById('rfPlayerList').innerHTML=players.map(p=>{
+    const c=getColor(p.name);
+    return `<div class="rf-player active" id="rfp-${p.name.replace(/\s/g,'_')}" onclick="rfTogglePlayer('${p.name.replace(/'/g,"\'")}',this)">
+      <div class="rf-player-dot" style="background:${c.solid}"></div>
+      <div class="rf-player-name">${p.name.slice(0,14)}</div>
+      <div class="rf-player-kd">${p.kd}</div>
+    </div>`;
+  }).join('');
+}
+
+let rfHiddenPlayers=new Set();
+function rfTogglePlayer(name,el){
+  if(rfHiddenPlayers.has(name)){rfHiddenPlayers.delete(name);el.classList.add('active');}
+  else{rfHiddenPlayers.add(name);el.classList.remove('active');}
+}
+
+function rfSelectRound(round,btn){
+  rfRound=round;
+  clearInterval(rfTimer); rfPlaying=false; rfSetPlayPause(false);
+  document.querySelectorAll('.rnd2').forEach(b=>b.classList.remove('sel'));
+  if(btn)btn.classList.add('sel');
+  document.getElementById('rfRoundLabel').textContent=`Round ${round}`;
+  rfBuildFrames(round);
+  rfIdx=0; rfDrawFrame(0);
+}
+
+function rfBuildFrames(round){
+  const positions=demoData.positions||{}, kills=demoData.kills||[];
+  const roundKills=kills.filter(k=>k.round===round);
+  const roundStartTicks=demoData.roundStartTicks||{};
+  const freezeEnd=roundStartTicks[round]||0;
+
+  const roundPos={};
+  Object.entries(positions).forEach(([name,pts])=>{
+    // Ne garder que les positions APRÈS le freeze time
+    const rpts=pts.filter(p=>p.round===round&&(freezeEnd===0||p.tick>=freezeEnd));
+    if(rpts.length>0)roundPos[name]=rpts;
+  });
+
+  if(!Object.keys(roundPos).length&&!roundKills.length){rfFrames=[];return;}
+
+  let allTicks=[];
+  Object.values(roundPos).forEach(pts=>pts.forEach(p=>allTicks.push(p.tick||0)));
+  roundKills.forEach(k=>allTicks.push(k.tick||0));
+  const minT=Math.min(...allTicks), maxT=Math.max(...allTicks);
+  const span=Math.max(maxT-minT,1);
+  const durSec=span/128;
+  const N=Math.min(600,Math.max(80,Math.round(durSec*RF_FPS)));
+
+  rfFrames=[];
+  for(let f=0;f<=N;f++){
+    const progress=f/N, tick=minT+progress*span;
+    const frame={tick,players:{},deaths:[]};
+    Object.entries(roundPos).forEach(([name,pts])=>{
+      if(!pts.length)return;
+      let prev=pts[0],next=pts[pts.length-1];
+      for(let i=0;i<pts.length-1;i++){
+        if((pts[i].tick||0)<=tick&&(pts[i+1].tick||0)>=tick){prev=pts[i];next=pts[i+1];break;}
+      }
+      const s=Math.max((next.tick||0)-(prev.tick||0),1);
+      const t=Math.min(1,Math.max(0,(tick-(prev.tick||0))/s));
+      frame.players[name]={x:prev.x+(next.x-prev.x)*t,y:prev.y+(next.y-prev.y)*t,team:prev.team,alive:true};
+    });
+    roundKills.forEach(k=>{
+      if((k.tick||0)<=tick){
+        if(frame.players[k.victim])frame.players[k.victim].alive=false;
+        frame.deaths.push({x:k.victimX,y:k.victimY});
+      }
+    });
+    rfFrames.push(frame);
+  }
+
+  // Timer
+  const tot=Math.round(span/128);
+  document.getElementById('rfTimeTot').textContent=`${Math.floor(tot/60)}:${String(tot%60).padStart(2,'0')}`;
+
+  // Kill chips
+  document.getElementById('rfKillChips').innerHTML=roundKills.slice(0,8).map(k=>
+    `<div class="rfc ${k.isHeadshot?'hs':''}">${k.attacker}→${k.victim}${k.isHeadshot?' 💥':''}</div>`
+  ).join('');
+
+  // Kill markers
+  document.getElementById('rfKillMarks').innerHTML=roundKills.map(k=>{
+    const pct=Math.min(100,Math.max(0,((k.tick||0)-minT)/span*100));
+    return `<div class="rf-kill-mark" style="left:${pct}%"></div>`;
+  }).join('');
+}
+
+function rfDrawFrame(idx){
+  if(!rfFrames.length||!rfCtx)return;
+  const frame=rfFrames[Math.min(idx,rfFrames.length-1)];
+  const W=rfCanvas.width, H=rfCanvas.height;
+  rfCtx.clearRect(0,0,W,H);
+  if(rfMapImg){rfCtx.drawImage(rfMapImg,0,0,W,H);rfCtx.fillStyle='rgba(10,12,18,.35)';rfCtx.fillRect(0,0,W,H);}
+  else{rfCtx.fillStyle='#0A0C12';rfCtx.fillRect(0,0,W,H);}
+
+  // Croix morts
+  frame.deaths.forEach(d=>{
+    const{px,py}=w2c(d.x,d.y,rfMapName,W,H);
+    if(!inBounds(px,py,W,H))return;
+    rfCtx.strokeStyle='rgba(240,107,107,.8)';rfCtx.lineWidth=2;
+    rfCtx.beginPath();rfCtx.moveTo(px-5,py-5);rfCtx.lineTo(px+5,py+5);rfCtx.stroke();
+    rfCtx.beginPath();rfCtx.moveTo(px+5,py-5);rfCtx.lineTo(px-5,py+5);rfCtx.stroke();
+  });
+
+  // Joueurs
+  Object.entries(frame.players).forEach(([name,p])=>{
+    if(!p.alive)return;
+    if(rfHiddenPlayers.has(name))return;
+    const{px,py}=w2c(p.x,p.y,rfMapName,W,H);
+    if(!inBounds(px,py,W,H))return;
+    const color=getColor(name), isCT=p.team===2;
+    rfCtx.beginPath();rfCtx.arc(px,py,12,0,Math.PI*2);rfCtx.fillStyle=`rgba(${color.rgb},.12)`;rfCtx.fill();
+    rfCtx.beginPath();rfCtx.arc(px,py,6,0,Math.PI*2);rfCtx.fillStyle=color.solid;rfCtx.fill();
+    rfCtx.strokeStyle=isCT?'#4A9EFF':'#F5C842';rfCtx.lineWidth=2.5;rfCtx.stroke();
+    rfCtx.fillStyle='#fff';rfCtx.font='bold 9px JetBrains Mono,monospace';rfCtx.textAlign='center';
+    rfCtx.fillText(name.slice(0,8),px,py-11);
+  });
+
+  // Timeline
+  const pct=rfFrames.length>1?(idx/(rfFrames.length-1))*100:0;
+  document.getElementById('rfFill').style.width=pct+'%';
+  document.getElementById('rfThumb').style.left=pct+'%';
+  const secs=Math.round((frame.tick-(rfFrames[0]?.tick||0))/128);
+  document.getElementById('rfTimeCur').textContent=`${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;
+
+  // Marquer morts dans panel joueurs
+  Object.entries(frame.players).forEach(([name,p])=>{
+    const el=document.getElementById(`rfp-${name.replace(/\s/g,'_')}`);
+    if(el)el.classList.toggle('dead',!p.alive);
+  });
+}
+
+function rfSetPlayPause(playing){
+  const pi=document.getElementById('rfPlayIcon'),pa=document.getElementById('rfPauseIcon');
+  if(pi)pi.style.display=playing?'none':'block';
+  if(pa)pa.style.display=playing?'block':'none';
+}
+function rfTogglePlay(){
+  if(!rfFrames.length)return;
+  rfPlaying=!rfPlaying; rfSetPlayPause(rfPlaying);
+  if(rfPlaying){
+    if(rfIdx>=rfFrames.length-1)rfIdx=0;
+    rfTimer=setInterval(()=>{
+      rfIdx++;
+      if(rfIdx>=rfFrames.length){rfIdx=rfFrames.length-1;clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);}
+      else rfDrawFrame(rfIdx);
+    },Math.round(1000/RF_FPS/rfSpeed));
+  }else clearInterval(rfTimer);
+}
+function rfSetSpeed(s,btn){rfSpeed=s;document.querySelectorAll('.rfs').forEach(b=>b.classList.remove('on'));btn.classList.add('on');if(rfPlaying){clearInterval(rfTimer);rfPlaying=false;rfTogglePlay();}}
+function rfSkipBack(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);rfIdx=0;rfDrawFrame(0);}
+function rfSkipFwd(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);rfIdx=rfFrames.length-1;rfDrawFrame(rfIdx);}
+function rfStepBack(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);rfIdx=Math.max(0,rfIdx-5);rfDrawFrame(rfIdx);}
+function rfStepFwd(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);rfIdx=Math.min(rfFrames.length-1,rfIdx+5);rfDrawFrame(rfIdx);}
+function rfSeek(e){const rect=document.getElementById('rfTimeline').getBoundingClientRect();const pct=Math.min(1,Math.max(0,(e.clientX-rect.left)/rect.width));rfIdx=Math.round(pct*(rfFrames.length-1));rfDrawFrame(rfIdx);}
 </script>
 </body>
 </html>
