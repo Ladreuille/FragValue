@@ -249,6 +249,48 @@
     .rp-kills{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px;padding-top:11px;border-top:1px solid var(--border);min-height:24px}
     .rp-kill{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:5px;background:rgba(240,107,107,.08);color:var(--danger);border:1px solid rgba(240,107,107,.14);display:flex;align-items:center;gap:4px}
     .rp-kill.hs{background:rgba(245,200,66,.08);color:var(--gold);border-color:rgba(245,200,66,.14)}
+
+    /* ── Match header ── */
+    .match-header{display:flex;align-items:center;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 24px;margin-bottom:16px;flex-wrap:wrap;gap:24px}
+    .mh-item{text-align:center}
+    .mh-val{font-size:22px;font-weight:700;letter-spacing:-.8px;color:var(--accent);font-family:var(--mono);line-height:1}
+    .mh-lbl{font-size:9px;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
+    .mh-div{width:1px;height:36px;background:var(--border);flex-shrink:0}
+
+    /* ── Side filter bar ── */
+    .side-filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+    .sfb-label{font-family:var(--mono);font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+    .sfb-btns{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:3px;gap:2px}
+    .sfb-btn{font-family:var(--mono);font-size:11px;font-weight:600;padding:6px 14px;border-radius:5px;cursor:pointer;color:var(--text2);border:none;background:transparent;transition:all .15s}
+    .sfb-btn.active{background:var(--card);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+    .sfb-btn.ct.active{background:rgba(74,158,255,.15);color:#4A9EFF}
+    .sfb-btn.t.active{background:rgba(245,200,66,.12);color:var(--gold)}
+    .btn-2d-demo{display:inline-flex;align-items:center;gap:7px;margin-left:auto;background:var(--accent);color:#fff;padding:9px 18px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;box-shadow:0 0 16px rgba(59,127,245,.25)}
+    .btn-2d-demo:hover{opacity:.9;transform:translateY(-1px)}
+
+    /* ── Match stats HLTV style ── */
+    .ms-team-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px}
+    .ms-team-header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--card)}
+    .ms-team-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+    .ms-team-name{font-size:16px;font-weight:700;letter-spacing:-.3px}
+    .ms-team-score{font-family:var(--mono);font-size:20px;font-weight:700;margin-left:auto}
+    .ms-cols{display:grid;grid-template-columns:1fr 90px 80px 80px 80px 80px;align-items:center;padding:0 20px;border-bottom:1px solid rgba(37,42,56,.4)}
+    .ms-cols-header{padding:8px 20px;font-family:var(--mono);font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+    .ms-col{text-align:center;font-family:var(--mono);font-size:12px;color:var(--text3)}
+    .ms-col-name{text-align:left}
+    .ms-player-row{display:grid;grid-template-columns:1fr 90px 80px 80px 80px 80px;align-items:center;padding:10px 20px;border-bottom:1px solid rgba(37,42,56,.35);transition:background .12s;cursor:pointer}
+    .ms-player-row:last-child{border-bottom:none}
+    .ms-player-row:hover{background:rgba(255,255,255,.02)}
+    .ms-player-name{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500}
+    .ms-player-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .ms-val{text-align:center;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text2)}
+    .ms-val.good{color:var(--success);font-weight:700}
+    .ms-val.bad{color:var(--danger)}
+    .ms-val.rating{font-size:14px;font-weight:700}
+    .ms-val.rating.good{color:var(--success)}
+    .ms-val.rating.avg{color:var(--gold)}
+    .ms-val.rating.bad{color:var(--danger)}
+    @media(max-width:700px){.ms-player-row,.ms-cols{grid-template-columns:1fr 70px 65px 65px}}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
     /* ── Layout replay-only ── */
@@ -329,145 +371,41 @@
 </div>
 
 <div class="page" id="mainContent" style="display:none">
-  <div class="section-label">Heatmaps</div>
 
-  <div class="heatmap-tabs">
-    <button class="heatmap-tab active" onclick="switchHeatmap('kills',this)">Kills</button>
-    <button class="heatmap-tab" onclick="switchHeatmap('deaths',this)">Deaths</button>
-    <button class="heatmap-tab" onclick="switchHeatmap('movement',this)">Déplacements</button>
-    <button class="heatmap-tab" onclick="switchHeatmap('duels',this)">Duel zones</button>
-    <button class="heatmap-tab" onclick="switchHeatmap('utility',this)">Utility</button>
-    <button class="heatmap-tab" id="tabReplay" onclick="switchHeatmap('replay',this)" style="background:var(--accent);color:#fff;border-color:var(--accent)">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-      Replay 2D
+  <!-- HEADER MATCH -->
+  <div class="match-header" id="matchHeader"></div>
+
+  <!-- TOGGLE SIDE : Both / CT / T -->
+  <div class="side-filter-bar">
+    <div class="sfb-label">Side</div>
+    <div class="sfb-btns">
+      <button class="sfb-btn active" onclick="setSideFilter('both',this)">Both</button>
+      <button class="sfb-btn ct" onclick="setSideFilter('ct',this)">CT</button>
+      <button class="sfb-btn t" onclick="setSideFilter('t',this)">T</button>
+    </div>
+    <button class="btn-2d-demo" onclick="openReplayFS()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Voir la 2D Demo
     </button>
   </div>
 
-  <div class="side-toggle">
-    <span class="side-toggle-label">Side :</span>
-    <button class="side-btn active-ct" id="btnCT" onclick="toggleSide('ct')"><span class="side-check"></span> CT</button>
-    <button class="side-btn active-t"  id="btnT"  onclick="toggleSide('t')"><span class="side-check"></span> T</button>
-  </div>
-  <div class="floor-toggle" id="floorToggle">
-    <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-right:4px">Étage :</span>
-    <button class="floor-btn active" onclick="switchFloor('upper',this)">Upper</button>
-    <button class="floor-btn" onclick="switchFloor('lower',this)">Lower</button>
-  </div>
+  <!-- STATS PAR EQUIPE (style HLTV) -->
+  <div id="matchStatsBlock"></div>
 
-  <div class="canvas-outer">
-    <div class="canvas-wrap">
-      <div class="canvas-card">
-        <canvas id="heatmapCanvas" width="1024" height="1024"></canvas>
-        <div class="map-notice" id="mapNotice"></div>
-        <div class="legend" id="mapLegend"></div>
-        <div class="side-stats-bar" id="sideStatsBar" style="display:none">
-          <div class="side-stat-card">
-            <div class="side-stat-header"><div class="side-dot-ct"></div>CT Side</div>
-            <div class="side-stat-grid">
-              <div class="side-stat-item"><div class="side-stat-val" id="ctKills">-</div><div class="side-stat-lbl">Kills</div></div>
-              <div class="side-stat-item"><div class="side-stat-val" id="ctDeaths">-</div><div class="side-stat-lbl">Deaths</div></div>
-              <div class="side-stat-item"><div class="side-stat-val" id="ctHS">-</div><div class="side-stat-lbl">HS%</div></div>
-              <div class="side-stat-item"><div class="side-stat-val" id="ctKD">-</div><div class="side-stat-lbl">K/D</div></div>
-            </div>
-          </div>
-          <div class="side-stat-card">
-            <div class="side-stat-header"><div class="side-dot-t"></div>T Side</div>
-            <div class="side-stat-grid">
-              <div class="side-stat-item"><div class="side-stat-val" id="tKills">-</div><div class="side-stat-lbl">Kills</div></div>
-              <div class="side-stat-item"><div class="side-stat-val" id="tDeaths">-</div><div class="side-stat-lbl">Deaths</div></div>
-              <div class="side-stat-item"><div class="side-stat-val" id="tHS">-</div><div class="side-stat-lbl">HS%</div></div>
-              <div class="side-stat-item"><div class="side-stat-val" id="tKD">-</div><div class="side-stat-lbl">K/D</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="player-panel">
-        <div class="panel-label">Joueurs affichés</div>
-        <div class="panel-hint">Clic pour toggle · <span>0/5</span> actifs</div>
-        <button class="select-all-btn" onclick="selectNone()">Tout désélectionner</button>
-        <div id="playerList"></div>
-        <button class="export-btn" onclick="exportHeatmap()">↓ Exporter PNG</button>
-        <button class="compare-btn" onclick="goCompare()">⇄ Comparer joueurs</button>
-      </div>
-    </div>
-
-    <!-- REPLAY — sous la heatmap, pleine largeur -->
-    <div class="replay-system visible" id="replaySystem">
-      <div class="rounds-nav">
-        <div class="rounds-nav-header">
-          <span class="rounds-nav-title">Navigation rounds</span>
-          <div class="rounds-nav-legend">
-            <div class="rnl-item"><div class="rnl-pip" style="background:var(--success)"></div>Victoire</div>
-            <div class="rnl-item"><div class="rnl-pip" style="background:var(--danger)"></div>Défaite</div>
-          </div>
-        </div>
-        <div class="rounds-list" id="roundsBar"></div>
-      </div>
-      <div class="round-player">
-        <div class="rp-header">
-          <div class="rp-round-tag">
-            <span class="rp-live-dot"></span>
-            <span id="replayRoundLabel">Round 1</span>
-          </div>
-          <div class="rp-time">
-            <span class="rp-time-cur" id="replayTimeCurrent">0:00</span>
-            <span class="rp-time-sep">/</span>
-            <span class="rp-time-tot" id="replayTimeTotal">0:00</span>
-          </div>
-        </div>
-        <div class="rp-timeline-wrap">
-          <div class="rp-track" id="replayTimeline" onclick="seekReplay(event)">
-            <div class="rp-fill" id="replayFill" style="width:0%"></div>
-            <div id="replayKillMarkers"></div>
-            <div class="rp-thumb" id="replayThumb" style="left:0%"></div>
-          </div>
-        </div>
-        <div class="rp-controls">
-          <div class="rp-btn-group">
-            <button class="rpb" onclick="replaySkipBack()" title="Début">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
-            </button>
-            <button class="rpb" onclick="replayStepBack()" title="Reculer">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4"/><polygon points="11 20 1 12 11 4"/></svg>
-            </button>
-            <button class="rpb rpb-play" id="replayPlayBtn" onclick="toggleReplay()">
-              <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <svg id="pauseIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
-            </button>
-            <button class="rpb" onclick="replayStepFwd()" title="Avancer">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20"/><polygon points="13 4 23 12 13 20"/></svg>
-            </button>
-            <button class="rpb" onclick="replaySkipFwd()" title="Fin">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
-            </button>
-          </div>
-          <div class="rp-speeds">
-            <button class="rps on" onclick="setSpeed(0.5,this)">0.5×</button>
-            <button class="rps" onclick="setSpeed(1,this)">1×</button>
-            <button class="rps" onclick="setSpeed(2,this)">2×</button>
-            <button class="rps" onclick="setSpeed(4,this)">4×</button>
-          </div>
-        </div>
-        <div class="rp-kills" id="replayKillsRow"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Stats synthèse en haut -->
-  <div class="match-header" id="matchHeader"></div>
-  <div class="section-label">Analyse par équipe</div>
-  <div class="teams-grid" id="teamsGrid"></div>
-
-  <!-- Stats joueur sélectionné -->
-  <div id="playerStatsPanel" style="display:none">
-    <div class="section-label">Analyse joueur</div>
-    <div class="player-stats-card" id="playerStatsCard"></div>
-  </div>
-
-  <div class="section-label">Analyse individuelle</div>
+  <!-- STATS INDIVIDUELLES -->
+  <div class="section-label" style="margin-top:28px">Analyse individuelle</div>
   <div class="table-card">
     <table>
-      <thead><tr><th style="width:20px"></th><th>Joueur</th><th>K</th><th>D</th><th>K/D</th><th>HS%</th><th>Wallbangs</th><th>Thru smoke</th></tr></thead>
+      <thead><tr>
+        <th style="width:20px"></th>
+        <th>Joueur</th>
+        <th>K-D</th>
+        <th>ADR</th>
+        <th>KAST</th>
+        <th style="color:var(--success);font-weight:700">FV Rating</th>
+        <th>HS%</th>
+        <th>WB</th>
+      </tr></thead>
       <tbody id="playersTable"></tbody>
     </table>
   </div>
@@ -649,10 +587,8 @@ window.addEventListener('load',()=>{
     assignPlayerColors();
     const target=demoData.meta?.targetPlayer;
     if(target) activePlayers.add(target);
-    renderMeta(); renderTeams(); renderPlayerList();
+    renderMeta(); renderMatchStats(); renderPlayerList();
     loadMapImageThenDraw(); initRoundsBar();
-    // Démarrer replay sur round 1 automatiquement
-    setTimeout(()=>selectRound(1,document.getElementById('roundBtn1')),500);
     // Activer le replay par défaut
     setTimeout(() => {
       const replayTab = document.getElementById('tabReplay');
@@ -792,68 +728,128 @@ function updateLegend(){
   document.getElementById('mapLegend').innerHTML=items.map(i=>`<div class="legend-item"><div class="legend-dot" style="background:${i.color}"></div>${i.label}</div>`).join('');
 }
 
+let currentSideFilter = 'both';
+
+function setSideFilter(side, btn) {
+  currentSideFilter = side;
+  document.querySelectorAll('.sfb-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderMatchStats();
+}
+
 function renderMeta(){
   const m=demoData.meta;
   const el=document.getElementById('matchHeader');
   if(!el)return;
-  el.innerHTML=`
-    <div class="mh-item"><div class="mh-val">${m.map||'-'}</div><div class="mh-lbl">Map</div></div>
-    <div class="mh-divider"></div>
-    <div class="mh-item"><div class="mh-val">${m.rounds||0}</div><div class="mh-lbl">Rounds</div></div>
-    <div class="mh-divider"></div>
-    <div class="mh-item"><div class="mh-val">${m.totalKills||0}</div><div class="mh-lbl">Kills</div></div>
-    <div class="mh-divider"></div>
-    <div class="mh-item"><div class="mh-val">${m.players?m.players.length:0}</div><div class="mh-lbl">Joueurs</div></div>
-    ${m.targetPlayer?`<div class="mh-divider"></div><div class="mh-item"><div class="mh-val" style="font-size:14px;color:var(--gold)">${m.targetPlayer}</div><div class="mh-lbl">Analysé</div></div>`:''}`;
-}
-function renderTeams(){
-  if(!demoData)return;
-  const kills=demoData.kills||[];
   const rounds=demoData.rounds||[];
-  // Déterminer les deux équipes depuis les kills (team 2=CT, team 3=T)
-  const team2players=new Set(),team3players=new Set();
-  kills.forEach(k=>{
-    if(k.attackerTeam===2)team2players.add(k.attacker);
-    if(k.attackerTeam===3)team3players.add(k.attacker);
-  });
   const ctWins=rounds.filter(r=>r.winner===2).length;
   const tWins=rounds.filter(r=>r.winner===3).length;
-  const ctKills=kills.filter(k=>k.attackerTeam===2).length;
-  const tKills=kills.filter(k=>k.attackerTeam===3).length;
-  const ctHS=kills.filter(k=>k.attackerTeam===2&&k.isHeadshot).length;
-  const tHS=kills.filter(k=>k.attackerTeam===3&&k.isHeadshot).length;
-  const ctDeaths=kills.filter(k=>k.victimTeam===2).length;
-  const tDeaths=kills.filter(k=>k.victimTeam===3).length;
-  const teamsEl=document.getElementById('teamsGrid');
-  if(!teamsEl)return;
-  teamsEl.innerHTML=`
-    <div class="team-card">
-      <div class="team-header">
-        <div class="team-dot" style="background:#4A9EFF"></div>
-        <div class="team-name">CT Side</div>
-        <div class="team-score" style="color:#4A9EFF">${ctWins}</div>
-      </div>
-      <div class="team-stats-row">
-        <div class="team-stat"><div class="team-stat-val" style="color:var(--success)">${ctKills}</div><div class="team-stat-lbl">Kills</div></div>
-        <div class="team-stat"><div class="team-stat-val" style="color:var(--danger)">${ctDeaths}</div><div class="team-stat-lbl">Deaths</div></div>
-        <div class="team-stat"><div class="team-stat-val" style="color:var(--gold)">${ctKills>0?Math.round(ctHS/ctKills*100):0}%</div><div class="team-stat-lbl">HS%</div></div>
-        <div class="team-stat"><div class="team-stat-val" style="color:var(--accent)">${ctDeaths>0?(ctKills/ctDeaths).toFixed(2):ctKills}</div><div class="team-stat-lbl">K/D</div></div>
-      </div>
-    </div>
-    <div class="team-card">
-      <div class="team-header">
-        <div class="team-dot" style="background:var(--gold)"></div>
-        <div class="team-name">T Side</div>
-        <div class="team-score" style="color:var(--gold)">${tWins}</div>
-      </div>
-      <div class="team-stats-row">
-        <div class="team-stat"><div class="team-stat-val" style="color:var(--success)">${tKills}</div><div class="team-stat-lbl">Kills</div></div>
-        <div class="team-stat"><div class="team-stat-val" style="color:var(--danger)">${tDeaths}</div><div class="team-stat-lbl">Deaths</div></div>
-        <div class="team-stat"><div class="team-stat-val" style="color:var(--gold)">${tKills>0?Math.round(tHS/tKills*100):0}%</div><div class="team-stat-lbl">HS%</div></div>
-        <div class="team-stat"><div class="team-stat-val" style="color:var(--accent)">${tDeaths>0?(tKills/tDeaths).toFixed(2):tKills}</div><div class="team-stat-lbl">K/D</div></div>
-      </div>
-    </div>`;
+  el.innerHTML=`
+    <div class="mh-item"><div class="mh-val" style="color:var(--text)">${m.map||'-'}</div><div class="mh-lbl">Map</div></div>
+    <div class="mh-div"></div>
+    <div class="mh-item"><div class="mh-val" style="color:#4A9EFF">${ctWins}</div><div class="mh-lbl">CT Wins</div></div>
+    <div class="mh-div"></div>
+    <div class="mh-item"><div class="mh-val" style="color:var(--gold)">${tWins}</div><div class="mh-lbl">T Wins</div></div>
+    <div class="mh-div"></div>
+    <div class="mh-item"><div class="mh-val">${m.rounds||0}</div><div class="mh-lbl">Rounds</div></div>
+    <div class="mh-div"></div>
+    <div class="mh-item"><div class="mh-val">${m.totalKills||0}</div><div class="mh-lbl">Kills</div></div>
+    ${m.targetPlayer?`<div class="mh-div"></div><div class="mh-item"><div class="mh-val" style="font-size:14px;color:var(--gold)">${m.targetPlayer}</div><div class="mh-lbl">Analysé</div></div>`:''}`;
 }
+
+function calcFvRating(kills, deaths, assists, rounds) {
+  if (!rounds || rounds <= 0) return 0;
+  const kpr = kills/rounds, dpr = deaths/rounds, apr = assists/rounds;
+  const kast = Math.min(0.92, Math.max(0.50, 0.0073*75 + 0.3591*kpr - 0.5329*dpr + 0.2372*(2.13*kpr+0.42*apr-0.41) + 0.0032*70 + 0.1587));
+  return parseFloat((0.0073*kast*100 + 0.3591*kpr - 0.5329*dpr + 0.2372*(2.13*kpr+0.42*apr-0.41) + 0.0032*70 + 0.1587).toFixed(2));
+}
+
+function renderMatchStats() {
+  if (!demoData) return;
+  const kills = demoData.kills || [];
+  const rounds = (demoData.rounds||[]).length || 1;
+  const players = demoData.playerStats || [];
+  const sf = currentSideFilter;
+
+  // Filtrer kills selon le side
+  const filteredKills = kills.filter(k => {
+    if (sf === 'both') return true;
+    if (sf === 'ct')   return k.attackerTeam === 2;
+    if (sf === 't')    return k.attackerTeam === 3;
+    return true;
+  });
+
+  // Grouper les joueurs par équipe
+  const teamPlayers = {2: [], 3: []};
+  players.forEach(p => {
+    const pKills = kills.filter(k => k.attacker === p.name);
+    const team = pKills.length > 0
+      ? (pKills.filter(k=>k.attackerTeam===2).length >= pKills.filter(k=>k.attackerTeam===3).length ? 2 : 3)
+      : 2;
+    // Stats selon filtre side
+    const sKills  = filteredKills.filter(k => k.attacker === p.name);
+    const sDeaths = filteredKills.filter(k => k.victim   === p.name);
+    const hs      = sKills.filter(k => k.isHeadshot).length;
+    const hsPct   = sKills.length > 0 ? Math.round(hs/sKills.length*100) : 0;
+    // ADR approximé (ADR = kills * 80 + assists * 30) / rounds — proxy sans vraies données
+    const assists = kills.filter(k => false).length; // pas de données assists dans kills
+    const fvr     = calcFvRating(sKills.length, sDeaths.length, 0, rounds);
+    const kd      = `${sKills.length}-${sDeaths.length}`;
+    const kdNum   = sDeaths.length > 0 ? sKills.length/sDeaths.length : sKills.length;
+    teamPlayers[team].push({
+      name: p.name,
+      kd, kdNum,
+      kills: sKills.length,
+      deaths: sDeaths.length,
+      hsPct,
+      fvr,
+      color: getColor(p.name).solid,
+    });
+  });
+
+  const ctWins  = (demoData.rounds||[]).filter(r=>r.winner===2).length;
+  const tWins   = (demoData.rounds||[]).filter(r=>r.winner===3).length;
+
+  function teamBlock(teamNum, label, color, score) {
+    const tPlayers = (teamPlayers[teamNum]||[]).sort((a,b)=>b.fvr-a.fvr);
+    const rows = tPlayers.map(p => {
+      const fvrCls = p.fvr>=1.15?'good':p.fvr>=0.9?'avg':'bad';
+      const kdCls  = p.kdNum>=1.3?'good':p.kdNum<1?'bad':'';
+      const c = getColor(p.name).solid;
+      return `<div class="ms-player-row" onclick="showPlayerStats('${p.name.replace(/'/g,"\'")}')">
+        <div class="ms-player-name">
+          <span class="ms-player-dot" style="background:${c}"></span>
+          ${p.name}
+        </div>
+        <div class="ms-val ${kdCls}">${p.kd}</div>
+        <div class="ms-val">${p.hsPct}%</div>
+        <div class="ms-val">-</div>
+        <div class="ms-val">-</div>
+        <div class="ms-val rating ${fvrCls}">${p.fvr.toFixed(2)}</div>
+      </div>`;
+    }).join('');
+    return `<div class="ms-team-block">
+      <div class="ms-team-header">
+        <div class="ms-team-dot" style="background:${color}"></div>
+        <div class="ms-team-name">${label}</div>
+        <div class="ms-team-score" style="color:${color}">${score}</div>
+      </div>
+      <div class="ms-cols ms-cols-header">
+        <div class="ms-col ms-col-name">Joueur</div>
+        <div class="ms-col">K-D</div>
+        <div class="ms-col">HS%</div>
+        <div class="ms-col">ADR</div>
+        <div class="ms-col">KAST</div>
+        <div class="ms-col" style="color:var(--success)">FV Rating</div>
+      </div>
+      ${rows}
+    </div>`;
+  }
+
+  const el = document.getElementById('matchStatsBlock');
+  if (el) el.innerHTML = teamBlock(2,'CT Side','#4A9EFF',ctWins) + teamBlock(3,'T Side','#F5C842',tWins);
+}
+// renderTeams replaced by renderMatchStats
 function renderStats(){
   const kills=demoData.kills||[],active=[...activePlayers];
   const pk=active.length>0?kills.filter(k=>active.includes(k.attacker)):kills;
@@ -871,22 +867,27 @@ function renderStats(){
 function renderPlayerList(){
   const players=demoData.playerStats||[],target=demoData.meta?.targetPlayer,atMax=activePlayers.size>=5;
   const kills=demoData.kills||[];
-  document.getElementById('playerList').innerHTML=players.map(p=>{
+  const playerListEl=document.getElementById('playerList'); if(playerListEl) playerListEl.innerHTML=players.map(p=>{
     const c=getColor(p.name),isActive=activePlayers.has(p.name),isDisabled=!isActive&&atMax;
     return `<button class="player-btn ${isActive?'active':''} ${isDisabled?'disabled-max':''}" onclick="togglePlayer('${p.name.replace(/'/g,"\\'")}')"><span class="p-dot ${isActive?'':'off'}" style="background:${c.solid}"></span><span class="p-name">${p.name.substring(0,15)}</span>${p.name===target?'<span class="p-star">★</span>':''}<span class="p-kd">${p.kd}</span><span class="p-check">✓</span></button>`;
   }).join('');
-  document.querySelector('.panel-hint').innerHTML=`Clic pour toggle · <span style="color:${atMax?'var(--danger)':'var(--accent)'}">${activePlayers.size}/5</span> actifs`;
+  if(playerListEl) playerListEl.innerHTML=playerListEl.innerHTML; // already set
+  const phEl=document.querySelector('.panel-hint'); if(phEl) phEl.innerHTML=`Clic pour toggle · <span style="color:${atMax?'var(--danger)':'var(--accent)'}">${activePlayers.size}/5</span> actifs`;
   document.getElementById('playersTable').innerHTML=players.map(p=>{
     const kd=parseFloat(p.kd),c=getColor(p.name),isActive=activePlayers.has(p.name);
-    const pKills=kills.filter(k=>k.attacker===p.name);
-    const wb=pKills.filter(k=>k.isWallbang).length;
-    const smk=pKills.filter(k=>k.thruSmoke).length;
-    return `<tr style="${isActive?'background:rgba(255,255,255,.03)':''}">
+    const pKills2=kills.filter(k=>k.attacker===p.name);
+    const wb=pKills2.filter(k=>k.isWallbang).length;
+    const smk=pKills2.filter(k=>k.thruSmoke).length;
+    const hs2=pKills2.filter(k=>k.isHeadshot).length;
+    const hsPct2=pKills2.length>0?Math.round(hs2/pKills2.length*100):0;
+    const fvr=calcFvRating(p.kills,p.deaths,0,demoData.rounds?.length||1);
+    const fvrCls=fvr>=1.15?'td-good':fvr<0.9?'td-bad':'';
+    return `<tr style="${isActive?'background:rgba(255,255,255,.03)':''}" onclick="showPlayerStats('${p.name.replace(/'/g,"\'")}'); event.stopPropagation()">
       <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.solid};opacity:${isActive?1:.3}"></span></td>
-      <td class="td-name">${p.name}${p.name===target?' <span style="color:var(--gold);font-size:10px">★</span>':''}</td>
-      <td>${p.kills}</td><td>${p.deaths}</td>
-      <td class="${kd>=1.3?'td-good':kd<1?'td-bad':''}">${p.kd}</td>
-      <td>${p.hsPct}%</td>
+      <td class="td-name" style="cursor:pointer">${p.name}${p.name===target?' <span style="color:var(--gold);font-size:10px">★</span>':''}</td>
+      <td class="${kd>=1.3?'td-good':kd<1?'td-bad':''}">${p.kills}-${p.deaths}</td>
+      <td>${hsPct2}%</td>
+      <td class="${fvrCls}" style="font-weight:700">${fvr.toFixed(2)}</td>
       <td style="color:var(--gold)">${wb||'-'}</td>
       <td style="color:var(--accent)">${smk||'-'}</td>
     </tr>`;
