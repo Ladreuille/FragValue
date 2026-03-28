@@ -682,7 +682,9 @@ function togglePlayer(name){
 }
 function selectNone(){activePlayers.clear();renderPlayerList();renderHeatmap();}
 function w2c(wx,wy,map,W,H){
-  const cfg=MAP_CONFIG[map];
+  // Normaliser le nom de map (enlever préfixes workshop, casse, espaces)
+  const normMap = (map||'').toLowerCase().replace(/^.*\//, '').trim();
+  const cfg=MAP_CONFIG[normMap]||MAP_CONFIG[map];
   if(!cfg)return{px:W/2,py:H/2};
   const c=cfg.upper?(currentFloor==='upper'?cfg.upper:cfg.lower):cfg;
   // Formule Valve : pixel = (world - origin) / scale
@@ -693,9 +695,13 @@ function w2c(wx,wy,map,W,H){
 }
 function inBounds(px,py,W,H){return px>=0&&px<=W&&py>=0&&py<=H;}
 
-function getMapImgPath(){const cfg=MAP_CONFIG[demoData.meta?.map||'de_dust2'];if(!cfg)return null;if(cfg.upper)return currentFloor==='upper'?cfg.upper.img:cfg.lower.img;return cfg.img||null;}
+function getMapImgPath(){
+  const rawMap=demoData.meta?.map||'de_dust2';
+  const normMap=rawMap.toLowerCase().replace(/^.*\//,'').trim();
+  const cfg=MAP_CONFIG[normMap]||MAP_CONFIG[rawMap];if(!cfg)return null;if(cfg.upper)return currentFloor==='upper'?cfg.upper.img:cfg.lower.img;return cfg.img||null;}
 function loadMapImageThenDraw(){
-  const mapName=demoData.meta?.map||'de_dust2';
+  const rawMapName=demoData.meta?.map||'de_dust2';
+  const mapName=rawMapName.toLowerCase().replace(/^.*\//,'').trim();
   const floorToggleEl=document.getElementById('floorToggle');
   if(floorToggleEl)floorToggleEl.classList.toggle('visible',!!(MAP_CONFIG[mapName]?.upper));
   const imgPath=getMapImgPath();
@@ -964,12 +970,15 @@ function renderMatchStats() {
   const sideKillsFor    = k => sf==='both'||( sf==='ct'?k.attackerTeam===2:k.attackerTeam===3);
   const sideKillsAgainst= k => sf==='both'||( sf==='ct'?k.victimTeam===2  :k.victimTeam===3);
 
-  // Attribution équipe via kills+deaths combinés
-  const getPlayerTeam = name => {
-    const sCT = kills.filter(k=>(k.attacker===name&&k.attackerTeam===2)||(k.victim===name&&k.victimTeam===2)).length;
-    const sT  = kills.filter(k=>(k.attacker===name&&k.attackerTeam===3)||(k.victim===name&&k.victimTeam===3)).length;
-    return sCT >= sT ? 2 : 3;
-  };
+  // Attribution équipe : score CT vs T par joueur, puis partition stricte 5/5
+  const teamScores = players.map(p => {
+    const sCT = kills.filter(k=>(k.attacker===p.name&&k.attackerTeam===2)||(k.victim===p.name&&k.victimTeam===2)).length;
+    const sT  = kills.filter(k=>(k.attacker===p.name&&k.attackerTeam===3)||(k.victim===p.name&&k.victimTeam===3)).length;
+    return { name: p.name, ctScore: sCT, tScore: sT, diff: sCT - sT };
+  }).sort((a,b) => b.diff - a.diff); // plus CT en premier
+  const half = Math.ceil(teamScores.length / 2);
+  const ctSet = new Set(teamScores.slice(0, half).map(p => p.name));
+  const getPlayerTeam = name => ctSet.has(name) ? 2 : 3;
 
   // First kill par round (approximation : kill avec tick minimum du round)
   const firstKillMap = {};
@@ -1017,8 +1026,14 @@ function renderMatchStats() {
     teamPlayers[team].push({ name:p.name, kd, kdNum, kills:sKills.length, deaths:sDeaths.length, hsCount, hsPct, adr, kast, fvr, opK, opD, opKdNum, duelPct, mks });
   });
 
-  const ctWins = allRounds.filter(r=>r.winner===2).length;
-  const tWins  = allRounds.filter(r=>r.winner===3).length;
+  // CS2 demoparser2 : winner=2 = CT, winner=3 = T
+  // Mais certaines démos retournent winner=1 (CT) ou winner=2 (T)
+  // On détecte automatiquement le format
+  const winnerVals = [...new Set(allRounds.map(r=>r.winner).filter(w=>w>0))];
+  const useAlt = winnerVals.length > 0 && !winnerVals.includes(2) && !winnerVals.includes(3);
+  const ctWins = allRounds.filter(r => useAlt ? r.winner===1 : r.winner===2).length;
+  const tWins  = allRounds.filter(r => useAlt ? r.winner===2 : r.winner===3).length;
+  console.log('[FragValue] Rounds winner vals:', winnerVals, '| CT wins:', ctWins, '| T wins:', tWins);
 
   function teamBlock(teamNum, label, color, score) {
     const tPlayers = (teamPlayers[teamNum]||[]).sort((a,b)=>b.fvr-a.fvr);
@@ -1314,7 +1329,7 @@ const RF_FPS=24;
 
 function openReplayFS(){
   if(!demoData)return;
-  rfMapName=(demoData.meta?.map||'de_dust2').toLowerCase();
+  rfMapName=(demoData.meta?.map||'de_dust2').toLowerCase().replace(/^.*\//,'').trim();
   document.getElementById('rfMapName').textContent=rfMapName;
   document.getElementById('replayFullscreen').classList.add('active');
 
@@ -1355,7 +1370,8 @@ function initRfRoundsBar(){
     const r=i+1;
     const rK=kills.filter(k=>k.round===r&&k.attacker===target).length;
     if(r===16)html+=`<div class="rnd2-sep"></div>`;
-    html+=`<button class="rnd2 ${rd.winner>0?'win':'loss'}" id="rfRoundBtn${r}" onclick="rfSelectRound(${r},this)" title="R${r}·${rK}K">${r}</button>`;
+    const rdWon = rd.winner===2||rd.winner===3||rd.winner===1;
+    html+=`<button class="rnd2 ${rdWon?'win':'loss'}" id="rfRoundBtn${r}" onclick="rfSelectRound(${r},this)" title="R${r}·${rK}K">${r}</button>`;
   });
   bar.innerHTML=html;
 }
