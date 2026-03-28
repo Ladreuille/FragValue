@@ -352,6 +352,32 @@
     .psc-round-result{margin-left:auto;font-weight:600}
     .psc-round-result.w{color:var(--success)}.psc-round-result.l{color:var(--danger)}
     @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ── Highlights bloc ── */
+    .highlights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:20px}
+    .hl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+    .hl-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+    .hl-body{min-width:0}
+    .hl-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;font-family:var(--mono);margin-bottom:3px}
+    .hl-name{font-size:14px;font-weight:700;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .hl-val{font-family:var(--mono);font-size:12px;color:var(--text2);margin-top:1px}
+
+    /* ── Tableau équipes étendu ── */
+    .ms-cols{display:grid;grid-template-columns:1fr 80px 70px 70px 70px 80px 80px;align-items:center;padding:0 20px;border-bottom:1px solid rgba(37,42,56,.4)}
+    .ms-player-row{display:grid;grid-template-columns:1fr 80px 70px 70px 70px 80px 80px;align-items:center;padding:10px 20px;border-bottom:1px solid rgba(37,42,56,.35);transition:background .12s;cursor:pointer}
+    .ms-player-row:last-child{border-bottom:none}
+    .ms-player-row:hover{background:rgba(255,255,255,.02)}
+    @media(max-width:800px){.ms-player-row,.ms-cols{grid-template-columns:1fr 70px 65px 65px 70px}}
+
+    /* ── Graphique barres FV Rating ── */
+    .perf-chart{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-top:20px}
+    .perf-chart-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);margin-bottom:14px}
+    .perf-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+    .perf-bar-name{font-family:var(--mono);font-size:11px;color:var(--text2);width:110px;flex-shrink:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .perf-bar-track{flex:1;height:18px;background:var(--card);border-radius:4px;overflow:hidden;position:relative}
+    .perf-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;min-width:2px}
+    .perf-bar-val{font-family:var(--mono);font-size:11px;font-weight:700;width:36px;flex-shrink:0;text-align:left}
+    .perf-ref-line{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.15);pointer-events:none}
   </style>
 </head>
 <body>
@@ -389,8 +415,17 @@
     </button>
   </div>
 
+  <!-- HIGHLIGHTS DU MATCH -->
+  <div class="highlights-grid" id="highlightsBlock"></div>
+
   <!-- STATS PAR EQUIPE (style HLTV) -->
   <div id="matchStatsBlock"></div>
+
+  <!-- GRAPHIQUE PERFORMANCE -->
+  <div class="perf-chart" id="perfChart" style="display:none">
+    <div class="perf-chart-title">Performance — FV Rating</div>
+    <div id="perfBars"></div>
+  </div>
 
   <!-- STATS INDIVIDUELLES -->
   <div class="section-label" style="margin-top:28px">Analyse individuelle</div>
@@ -533,6 +568,32 @@ function showPlayerStats(name){
   const ctKills=playerKills.filter(k=>k.attackerTeam===2).length;
   const tKills=playerKills.filter(k=>k.attackerTeam===3).length;
 
+  // First kills
+  const firstKills = (()=>{
+    let count=0;
+    rounds.forEach((_,i)=>{
+      const r=i+1, rk=kills.filter(k=>k.round===r);
+      if(!rk.length)return;
+      const fk=rk.reduce((a,b)=>a.tick<=b.tick?a:b);
+      if(fk.attacker===name)count++;
+    });
+    return count;
+  })();
+
+  // Clutches (1vX) : rounds où le joueur a eu le dernier kill alors que seul côté adversaire
+  let clutches=0;
+  rounds.forEach((_,i)=>{
+    const r=i+1;
+    const rKills=kills.filter(k=>k.round===r);
+    const myKills=rKills.filter(k=>k.attacker===name);
+    if(myKills.length>=2){
+      // vérifie si le joueur a fait un kill après que ses teammates soient morts
+      const myTeam=playerKills.length>0?(playerKills.filter(k=>k.attackerTeam===2).length>=playerKills.filter(k=>k.attackerTeam===3).length?2:3):2;
+      const teamDeaths=rKills.filter(k=>k.victimTeam===myTeam&&k.victim!==name).length;
+      if(teamDeaths>=4&&myKills.length>=1)clutches++;
+    }
+  });
+
   // Stats par round
   const roundStats={};
   playerKills.forEach(k=>{if(!roundStats[k.round])roundStats[k.round]={k:0,hs:0,d:0};roundStats[k.round].k++;if(k.isHeadshot)roundStats[k.round].hs++;});
@@ -561,6 +622,9 @@ function showPlayerStats(name){
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--accent)">${playerKills.length}</div><div class="psc-stat-lbl">Kills</div></div>
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--danger)">${playerDeaths.length}</div><div class="psc-stat-lbl">Deaths</div></div>
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--gold)">${hsPct}%</div><div class="psc-stat-lbl">HS%</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--accent)">${Math.round(playerKills.length*80/(rounds.length||1))}</div><div class="psc-stat-lbl">ADR</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--success)">${firstKills}</div><div class="psc-stat-lbl">First kills</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--gold)">${clutches}</div><div class="psc-stat-lbl">Clutches</div></div>
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--success)">${ctKills}</div><div class="psc-stat-lbl">Kills CT</div></div>
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--gold)">${tKills}</div><div class="psc-stat-lbl">Kills T</div></div>
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--text2)">${wb}</div><div class="psc-stat-lbl">Wallbangs</div></div>
@@ -790,63 +854,148 @@ function calcFvRating(kills, deaths, assists, rounds) {
   return parseFloat((0.0073*kast*100 + 0.3591*kpr - 0.5329*dpr + 0.2372*(2.13*kpr+0.42*apr-0.41) + 0.0032*70 + 0.1587).toFixed(2));
 }
 
+function calcKAST(name, kills, rounds) {
+  // KAST : % de rounds où le joueur a eu un Kill, Assist, Survived ou was Traded
+  // Approximation : rounds avec kill ou round survived (pas mort)
+  const totalR = rounds.length || 1;
+  let kastRounds = 0;
+  rounds.forEach((rd, i) => {
+    const r = i + 1;
+    const hadKill  = kills.some(k => k.round === r && k.attacker === name);
+    const wasDead  = kills.some(k => k.round === r && k.victim   === name);
+    const survived = !wasDead;
+    if (hadKill || survived) kastRounds++;
+  });
+  return Math.round(kastRounds / totalR * 100);
+}
+
+function renderHighlights(kills, playerStats, rounds) {
+  const el = document.getElementById('highlightsBlock');
+  if (!el) return;
+  const totalR = rounds.length || 1;
+
+  // Calculs par joueur
+  const stats = playerStats.map(p => {
+    const pK = kills.filter(k => k.attacker === p.name);
+    const awpK = pK.filter(k => k.weapon && k.weapon.includes('awp')).length;
+    // First kill = premier kill du round (tick le plus bas par round)
+    let firstKills = 0;
+    const roundsWithKill = {};
+    pK.forEach(k => {
+      if (!roundsWithKill[k.round] || k.tick < roundsWithKill[k.round].tick)
+        roundsWithKill[k.round] = k;
+    });
+    firstKills = Object.values(roundsWithKill).filter(k => {
+      const roundKills = kills.filter(x => x.round === k.round);
+      const minTick = Math.min(...roundKills.map(x => x.tick));
+      return k.tick === minTick;
+    }).length;
+    const adr = Math.round(pK.length * 80 / totalR);
+    const fvr = calcFvRating(p.kills, p.deaths, 0, totalR);
+    return { name: p.name, kills: p.kills, adr, awpK, firstKills, fvr };
+  });
+
+  const most = (arr, key) => arr.reduce((a, b) => a[key] >= b[key] ? a : b, arr[0] || {});
+  const best = [
+    { label:'Most kills',     icon:'💀', bg:'rgba(240,107,107,.12)', p: most(stats,'kills'),     val: s => s.kills    },
+    { label:'Most damage',    icon:'💥', bg:'rgba(245,200,66,.12)',  p: most(stats,'adr'),       val: s => s.adr+' ADR'},
+    { label:'Most AWP kills', icon:'🎯', bg:'rgba(59,127,245,.12)',  p: most(stats,'awpK'),      val: s => s.awpK+' kills'},
+    { label:'Most 1st kills', icon:'⚡', bg:'rgba(45,212,160,.12)', p: most(stats,'firstKills'), val: s => s.firstKills+' rounds'},
+    { label:'Best FV Rating', icon:'⭐', bg:'rgba(167,110,245,.12)',p: most(stats,'fvr'),        val: s => s.fvr.toFixed(2)},
+  ];
+  el.innerHTML = best.filter(b => b.p && b.p.name).map(b =>
+    `<div class="hl-card">
+      <div class="hl-icon" style="background:${b.bg}">${b.icon}</div>
+      <div class="hl-body">
+        <div class="hl-label">${b.label}</div>
+        <div class="hl-name">${b.p.name}</div>
+        <div class="hl-val">${b.val(b.p)}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function renderPerfChart(playerStats, kills, rounds) {
+  const el = document.getElementById('perfChart');
+  const barsEl = document.getElementById('perfBars');
+  if (!el || !barsEl) return;
+  const totalR = rounds.length || 1;
+  const data = playerStats.map(p => ({
+    name: p.name,
+    fvr: calcFvRating(p.kills, p.deaths, 0, totalR),
+    color: getColor(p.name).solid,
+  })).sort((a, b) => b.fvr - a.fvr);
+  const maxFvr = Math.max(...data.map(d => d.fvr), 2);
+  const REF = 1.0; // ligne de référence "average"
+  barsEl.innerHTML = data.map(d => {
+    const pct = Math.min(100, (d.fvr / maxFvr) * 100);
+    const refPct = Math.min(100, (REF / maxFvr) * 100);
+    const cls = d.fvr >= 1.15 ? 'var(--success)' : d.fvr >= 0.9 ? 'var(--gold)' : 'var(--danger)';
+    return `<div class="perf-bar-row">
+      <div class="perf-bar-name">${d.name}</div>
+      <div class="perf-bar-track">
+        <div class="perf-bar-fill" style="width:${pct}%;background:${cls}"></div>
+        <div class="perf-ref-line" style="left:${refPct}%"></div>
+      </div>
+      <div class="perf-bar-val" style="color:${cls}">${d.fvr.toFixed(2)}</div>
+    </div>`;
+  }).join('');
+  el.style.display = 'block';
+}
+
 function renderMatchStats() {
   if (!demoData) return;
   const kills = demoData.kills || [];
   const allRounds = demoData.rounds || [];
   const players = demoData.playerStats || [];
   const sf = currentSideFilter;
+  const totalR = allRounds.length || 1;
 
-  // Rounds joués par side (pour ADR et FV Rating corrects)
-  const ctRounds = allRounds.filter(r=>r.winner===2||r.winner===3).length || 1;
-  const tRounds  = ctRounds; // symétrique sur une partie complète
-  const sideRounds = sf==='ct' ? ctRounds : sf==='t' ? tRounds : allRounds.length || 1;
+  // Rounds par side
+  const sideRounds = sf === 'ct' ? allRounds.filter((_,i)=>i<Math.ceil(totalR/2))
+                   : sf === 't'  ? allRounds.filter((_,i)=>i>=Math.ceil(totalR/2))
+                   : allRounds;
+  const numR = sideRounds.length || 1;
 
-  // Filtrer kills selon le side ATTAQUANT pour K, et VICTIME pour D
-  const sideKillsFor   = k => sf==='both' ? true : sf==='ct' ? k.attackerTeam===2 : k.attackerTeam===3;
-  const sideKillsAgainst = k => sf==='both' ? true : sf==='ct' ? k.victimTeam===2   : k.victimTeam===3;
+  // Filtres kills par side attaquant / victime
+  const sideKillsFor    = k => sf==='both'||( sf==='ct'?k.attackerTeam===2:k.attackerTeam===3);
+  const sideKillsAgainst= k => sf==='both'||( sf==='ct'?k.victimTeam===2  :k.victimTeam===3);
 
-  // Déterminer l'équipe principale d'un joueur via kills+deaths sur TOUTE la partie
-  // (plus robuste que kills seuls car certains joueurs ont peu de kills)
+  // Attribution équipe via kills+deaths combinés
   const getPlayerTeam = name => {
-    const asKillerCT = kills.filter(k=>k.attacker===name&&k.attackerTeam===2).length;
-    const asKillerT  = kills.filter(k=>k.attacker===name&&k.attackerTeam===3).length;
-    const asVictimCT = kills.filter(k=>k.victim===name&&k.victimTeam===2).length;
-    const asVictimT  = kills.filter(k=>k.victim===name&&k.victimTeam===3).length;
-    const scoreCT = asKillerCT + asVictimCT;
-    const scoreT  = asKillerT  + asVictimT;
-    // Tie-break : si égal, prendre le side avec le plus de rounds joués
-    return scoreCT >= scoreT ? 2 : 3;
+    const sCT = kills.filter(k=>(k.attacker===name&&k.attackerTeam===2)||(k.victim===name&&k.victimTeam===2)).length;
+    const sT  = kills.filter(k=>(k.attacker===name&&k.attackerTeam===3)||(k.victim===name&&k.victimTeam===3)).length;
+    return sCT >= sT ? 2 : 3;
   };
 
-  // Grouper les joueurs par équipe avec stats filtrées par side
+  // First kill par round (approximation : kill avec tick minimum du round)
+  const firstKillMap = {};
+  allRounds.forEach((_,i) => {
+    const r = i+1;
+    const rk = kills.filter(k=>k.round===r);
+    if (rk.length) {
+      const fk = rk.reduce((a,b) => a.tick<=b.tick ? a : b);
+      firstKillMap[r] = fk.attacker;
+    }
+  });
+
   const teamPlayers = {2: [], 3: []};
   players.forEach(p => {
     const team = getPlayerTeam(p.name);
-    // K = kills faits par ce joueur quand il jouait du bon côté
     const sKills  = kills.filter(k => k.attacker===p.name && sideKillsFor(k));
-    // D = morts de ce joueur quand il jouait du bon côté
     const sDeaths = kills.filter(k => k.victim===p.name   && sideKillsAgainst(k));
-    const hs      = sKills.filter(k => k.isHeadshot).length;
-    const hsPct   = sKills.length > 0 ? Math.round(hs/sKills.length*100) : 0;
-    // ADR approximatif : kills * 80 / rounds joués sur ce side
-    const adr     = sideRounds > 0 ? Math.round(sKills.length * 80 / sideRounds) : 0;
-    const fvr     = calcFvRating(sKills.length, sDeaths.length, 0, sideRounds);
+    const hsCount = sKills.filter(k => k.isHeadshot).length;
+    const hsPct   = sKills.length > 0 ? Math.round(hsCount/sKills.length*100) : 0;
+    const adr     = Math.round(sKills.length * 80 / numR);
+    const kast    = calcKAST(p.name, kills, sideRounds);
+    const fvr     = calcFvRating(sKills.length, sDeaths.length, 0, numR);
     const kd      = `${sKills.length}-${sDeaths.length}`;
     const kdNum   = sDeaths.length > 0 ? sKills.length/sDeaths.length : sKills.length;
-    teamPlayers[team].push({
-      name: p.name,
-      kd, kdNum,
-      kills: sKills.length,
-      deaths: sDeaths.length,
-      hsPct, adr,
-      fvr,
-      color: getColor(p.name).solid,
-    });
+    teamPlayers[team].push({ name:p.name, kd, kdNum, kills:sKills.length, deaths:sDeaths.length, hsCount, hsPct, adr, kast, fvr });
   });
 
-  const ctWins  = allRounds.filter(r=>r.winner===2).length;
-  const tWins   = allRounds.filter(r=>r.winner===3).length;
+  const ctWins = allRounds.filter(r=>r.winner===2).length;
+  const tWins  = allRounds.filter(r=>r.winner===3).length;
 
   function teamBlock(teamNum, label, color, score) {
     const tPlayers = (teamPlayers[teamNum]||[]).sort((a,b)=>b.fvr-a.fvr);
@@ -860,9 +1009,10 @@ function renderMatchStats() {
           ${p.name}
         </div>
         <div class="ms-val ${kdCls}">${p.kd}</div>
-        <div class="ms-val">${p.hsPct}%</div>
+        <div class="ms-val">${p.kills}(${p.hsCount})</div>
+        <div class="ms-val">${p.kast}%</div>
         <div class="ms-val">${p.adr}</div>
-        <div class="ms-val">-</div>
+        <div class="ms-val">${p.hsPct}%</div>
         <div class="ms-val rating ${fvrCls}">${p.fvr.toFixed(2)}</div>
       </div>`;
     }).join('');
@@ -875,9 +1025,10 @@ function renderMatchStats() {
       <div class="ms-cols ms-cols-header">
         <div class="ms-col ms-col-name">Joueur</div>
         <div class="ms-col">K-D</div>
-        <div class="ms-col">HS%</div>
-        <div class="ms-col">ADR</div>
+        <div class="ms-col">K(hs)</div>
         <div class="ms-col">KAST</div>
+        <div class="ms-col">ADR</div>
+        <div class="ms-col">HS%</div>
         <div class="ms-col" style="color:var(--success)">FV Rating</div>
       </div>
       ${rows}
@@ -886,6 +1037,12 @@ function renderMatchStats() {
 
   const el = document.getElementById('matchStatsBlock');
   if (el) el.innerHTML = teamBlock(2,'CT Side','#4A9EFF',ctWins) + teamBlock(3,'T Side','#F5C842',tWins);
+
+  // Highlights + graphique (une seule fois, pas sensible au side)
+  if (sf === 'both') {
+    renderHighlights(kills, players, allRounds);
+    renderPerfChart(players, kills, allRounds);
+  }
 }
 // renderTeams replaced by renderMatchStats
 function renderStats(){
