@@ -1428,17 +1428,39 @@ function rfBuildFrames(round){
   const roundData=demoData.rounds?.[round-1]||{};
   const roundEndTick=roundData.endTick||0;
 
+  // Tick de fin du round précédent (pour borner le round courant par ticks)
+  const prevRoundEndTick = round > 1 && demoData.rounds?.[round-2]?.endTick
+    ? demoData.rounds[round-2].endTick : 0;
+
   const roundPos={};
   Object.entries(positions).forEach(([name,pts])=>{
-    // Garder positions du round, à partir du freeze end
     const rpts=pts.filter(p=>{
-      if(p.round!==round)return false;
-      if(freezeEnd>0&&p.tick<freezeEnd)return false;
+      // Accepter round exact OU round=0 (parseTicks parfois ne remplit pas total_rounds_played)
+      // Dans ce cas on filtre par tick pour déterminer si c'est le bon round
+      const roundMatch = p.round === round;
+      const roundZeroInRange = p.round === 0
+        && (freezeEnd === 0 || p.tick >= freezeEnd)
+        && (roundEndTick === 0 || p.tick <= roundEndTick);
+      const tickInRange = p.round !== 0
+        && p.round === round
+        && (freezeEnd === 0 || p.tick >= freezeEnd);
+      if (!roundMatch && !roundZeroInRange) return false;
+      if (freezeEnd > 0 && p.tick < freezeEnd) return false;
+      if (roundEndTick > 0 && p.tick > roundEndTick) return false;
       return true;
     });
     if(rpts.length>0)roundPos[name]=rpts;
   });
 
+  // Debug : voir combien de joueurs ont des positions pour ce round
+  const posPlayers = Object.keys(roundPos);
+  const allPlayers = Object.keys(demoData.positions||{});
+  console.log(`[rfBuildFrames] Round ${round}: ${posPlayers.length}/${allPlayers.length} joueurs avec positions`);
+  if(posPlayers.length < allPlayers.length){
+    const missing = allPlayers.filter(n=>!posPlayers.includes(n));
+    const sample = (demoData.positions[missing[0]]||[]).slice(0,3).map(p=>`r${p.round}t${p.tick}`).join(',');
+    console.log(`[rfBuildFrames] Manquants: ${missing.join(',')} | sample[0]: ${sample}`);
+  }
   if(!Object.keys(roundPos).length&&!roundKills.length){rfFrames=[];return;}
 
   // minT = freeze end (début réel du round), maxT = endTick ou dernier tick connu
