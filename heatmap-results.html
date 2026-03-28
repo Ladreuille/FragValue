@@ -595,7 +595,8 @@ function showPlayerStats(name){
     </div>`;
   }).join('');
 
-  document.getElementById('playerStatsCard').innerHTML=`
+  const pscEl=document.getElementById('playerStatsCard');if(!pscEl)return;
+  pscEl.innerHTML=`
     <div class="psc-header">
       <div class="psc-dot" style="background:${color.solid}"></div>
       <div class="psc-name">${name}</div>
@@ -798,7 +799,8 @@ function updateLegend(){
   if(currentHeatmap==='utility')items=[{color:'rgba(245,200,66,.9)',label:'Flash'},{color:'rgba(45,212,160,.8)',label:'Smoke'},{color:'rgba(240,107,107,.85)',label:'HE'},{color:'rgba(237,160,32,.85)',label:'Molotov'}];
   else if(currentHeatmap==='duels')items=[{color:'#2DD4A0',label:'>65%'},{color:'#F5C842',label:'45-65%'},{color:'#F06B6B',label:'<45%'}];
   else{items=[...activePlayers].map(n=>({color:getColor(n).solid,label:n}));if(showCT)items.push({color:'#4A9EFF',label:'CT'});if(showT)items.push({color:'#F5C842',label:'T'});}
-  document.getElementById('mapLegend').innerHTML=items.map(i=>`<div class="legend-item"><div class="legend-dot" style="background:${i.color}"></div>${i.label}</div>`).join('');
+  const mlEl=document.getElementById('mapLegend');if(!mlEl)return;
+  mlEl.innerHTML=items.map(i=>`<div class="legend-item"><div class="legend-dot" style="background:${i.color}"></div>${i.label}</div>`).join('');
 }
 
 let currentSideFilter = 'both';
@@ -880,15 +882,15 @@ function renderHighlights(kills, playerStats, rounds) {
 
   const most = (arr, key) => arr.reduce((a, b) => a[key] >= b[key] ? a : b, arr[0] || {});
   const best = [
-    { label:'Most kills',     icon:'💀', bg:'rgba(240,107,107,.12)', p: most(stats,'kills'),     val: s => s.kills    },
-    { label:'Most damage',    icon:'💥', bg:'rgba(245,200,66,.12)',  p: most(stats,'adr'),       val: s => s.adr+' ADR'},
-    { label:'Most AWP kills', icon:'🎯', bg:'rgba(59,127,245,.12)',  p: most(stats,'awpK'),      val: s => s.awpK+' kills'},
-    { label:'Most 1st kills', icon:'⚡', bg:'rgba(45,212,160,.12)', p: most(stats,'firstKills'), val: s => s.firstKills+' rounds'},
-    { label:'Best FV Rating', icon:'⭐', bg:'rgba(167,110,245,.12)',p: most(stats,'fvr'),        val: s => s.fvr.toFixed(2)},
+    { label:'Most kills',     icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#F06B6B" stroke-width="1.5" width="18" height="18"><circle cx="10" cy="7" r="4"/><path d="M4 17c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke-linecap="round"/><line x1="7" y1="5" x2="13" y2="9" stroke-linecap="round"/></svg>`, bg:'rgba(240,107,107,.12)', p: most(stats,'kills'),     val: s => s.kills+' kills' },
+    { label:'Most damage',    icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#F5C842" stroke-width="1.5" width="18" height="18"><path d="M10 2l2 6h6l-5 3.5 2 6L10 14l-5 3.5 2-6L2 8h6z" stroke-linejoin="round"/></svg>`, bg:'rgba(245,200,66,.12)',  p: most(stats,'adr'),       val: s => s.adr+' ADR' },
+    { label:'Most AWP kills', icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#3B7FF5" stroke-width="1.5" width="18" height="18"><rect x="2" y="8" width="12" height="4" rx="1"/><path d="M14 10h4M5 8V6M5 14v-2" stroke-linecap="round"/><circle cx="5" cy="10" r="1.5" fill="#3B7FF5" stroke="none"/></svg>`, bg:'rgba(59,127,245,.12)',  p: most(stats,'awpK'),      val: s => s.awpK+' kills' },
+    { label:'Most 1st kills', icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#2DD4A0" stroke-width="1.5" width="18" height="18"><path d="M10 3v10M10 3l-3 3M10 3l3 3" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 17h10" stroke-linecap="round"/></svg>`, bg:'rgba(45,212,160,.12)', p: most(stats,'firstKills'), val: s => s.firstKills+' rounds' },
+    { label:'Best FV Rating', icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#A76EF5" stroke-width="1.5" width="18" height="18"><path d="M10 2l2.4 5h5.6l-4.5 3.3 1.7 5.5L10 13l-5.2 2.8 1.7-5.5L2 7h5.6z" stroke-linejoin="round"/></svg>`, bg:'rgba(167,110,245,.12)', p: most(stats,'fvr'),        val: s => s.fvr.toFixed(2) },
   ];
   el.innerHTML = best.filter(b => b.p && b.p.name).map(b =>
     `<div class="hl-card">
-      <div class="hl-icon" style="background:${b.bg}">${b.icon}</div>
+      <div class="hl-icon" style="background:${b.bg};display:flex;align-items:center;justify-content:center">${b.icon}</div>
       <div class="hl-body">
         <div class="hl-label">${b.label}</div>
         <div class="hl-name">${b.p.name}</div>
@@ -1020,11 +1022,14 @@ function renderMatchStats() {
         <div class="ms-val rating ${fvrCls}">${p.fvr.toFixed(2)}</div>
       </div>`;
     }).join('');
+    const avgFvr = tPlayers.length > 0
+      ? (tPlayers.reduce((s,p)=>s+p.fvr,0)/tPlayers.length).toFixed(2)
+      : '-';
     return `<div class="ms-team-block">
       <div class="ms-team-header">
         <div class="ms-team-dot" style="background:${color}"></div>
         <div class="ms-team-name">${label}</div>
-        <div class="ms-team-score" style="color:${color}">${score}</div>
+        <div class="ms-team-score" style="color:${color}" title="FV Rating moyen">⌀ ${avgFvr}</div>
       </div>
       <div class="ms-cols ms-cols-header">
         <div class="ms-col ms-col-name">Joueur</div>
@@ -1040,8 +1045,13 @@ function renderMatchStats() {
     </div>`;
   }
 
+  // Noms d'équipe : meilleur joueur par FV Rating
+  const ctBest = (teamPlayers[2]||[]).sort((a,b)=>b.fvr-a.fvr)[0]?.name || 'CT';
+  const tBest  = (teamPlayers[3]||[]).sort((a,b)=>b.fvr-a.fvr)[0]?.name || 'T';
+  const ctNames = 'Equipe_' + ctBest;
+  const tNames  = 'Equipe_' + tBest;
   const el = document.getElementById('matchStatsBlock');
-  if (el) el.innerHTML = teamBlock(2,'CT Side','#4A9EFF',ctWins) + teamBlock(3,'T Side','#F5C842',tWins);
+  if (el) el.innerHTML = teamBlock(2, ctNames, '#4A9EFF', ctWins) + teamBlock(3, tNames, '#F5C842', tWins);
 
   // Highlights + graphique (une seule fois, pas sensible au side)
   if (sf === 'both') {
