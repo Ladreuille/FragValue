@@ -662,11 +662,6 @@ window.addEventListener('load',()=>{
     if(target) activePlayers.add(target);
     renderMeta(); renderMatchStats(); renderPlayerList();
     loadMapImageThenDraw(); initRoundsBar();
-    // Activer le replay par défaut
-    setTimeout(() => {
-      const replayTab = document.getElementById('tabReplay');
-      switchHeatmap('replay', replayTab);
-    }, 500);
   }catch(e){console.error('heatmap-results init error:',e);}
 });
 
@@ -882,11 +877,34 @@ function renderHighlights(kills, playerStats, rounds) {
 
   const most = (arr, key) => arr.reduce((a, b) => a[key] >= b[key] ? a : b, arr[0] || {});
   const best = [
-    { label:'Most kills',     icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#F06B6B" stroke-width="1.5" width="18" height="18"><circle cx="10" cy="7" r="4"/><path d="M4 17c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke-linecap="round"/><line x1="7" y1="5" x2="13" y2="9" stroke-linecap="round"/></svg>`, bg:'rgba(240,107,107,.12)', p: most(stats,'kills'),     val: s => s.kills+' kills' },
-    { label:'Most damage',    icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#F5C842" stroke-width="1.5" width="18" height="18"><path d="M10 2l2 6h6l-5 3.5 2 6L10 14l-5 3.5 2-6L2 8h6z" stroke-linejoin="round"/></svg>`, bg:'rgba(245,200,66,.12)',  p: most(stats,'adr'),       val: s => s.adr+' ADR' },
-    { label:'Most AWP kills', icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#3B7FF5" stroke-width="1.5" width="18" height="18"><rect x="2" y="8" width="12" height="4" rx="1"/><path d="M14 10h4M5 8V6M5 14v-2" stroke-linecap="round"/><circle cx="5" cy="10" r="1.5" fill="#3B7FF5" stroke="none"/></svg>`, bg:'rgba(59,127,245,.12)',  p: most(stats,'awpK'),      val: s => s.awpK+' kills' },
-    { label:'Most 1st kills', icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#2DD4A0" stroke-width="1.5" width="18" height="18"><path d="M10 3v10M10 3l-3 3M10 3l3 3" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 17h10" stroke-linecap="round"/></svg>`, bg:'rgba(45,212,160,.12)', p: most(stats,'firstKills'), val: s => s.firstKills+' rounds' },
-    { label:'Best FV Rating', icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#A76EF5" stroke-width="1.5" width="18" height="18"><path d="M10 2l2.4 5h5.6l-4.5 3.3 1.7 5.5L10 13l-5.2 2.8 1.7-5.5L2 7h5.6z" stroke-linejoin="round"/></svg>`, bg:'rgba(167,110,245,.12)', p: most(stats,'fvr'),        val: s => s.fvr.toFixed(2) },
+    { label:'Most kills',
+      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#F06B6B" stroke-width="1.5" width="18" height="18">
+        <path d="M10 3a4 4 0 100 8 4 4 0 000-8z"/>
+        <path d="M8 9l-4 8h12l-4-8" stroke-linejoin="round"/>
+        <line x1="10" y1="11" x2="10" y2="17" stroke-linecap="round"/>
+      </svg>`, bg:'rgba(240,107,107,.12)', p: most(stats,'kills'), val: s => s.kills+' kills' },
+    { label:'Most damage',
+      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#F5C842" stroke-width="1.5" width="18" height="18">
+        <path d="M3 10h3l2-6 4 12 2-6h3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`, bg:'rgba(245,200,66,.12)', p: most(stats,'adr'), val: s => s.adr+' ADR' },
+    { label:'Most AWP kills',
+      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#3B7FF5" stroke-width="1.5" width="18" height="18">
+        <path d="M2 11h10l2-3 1 3h3" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="5" cy="11" r="2" fill="rgba(59,127,245,.3)"/>
+        <line x1="14" y1="8" x2="14" y2="5" stroke-linecap="round"/>
+      </svg>`, bg:'rgba(59,127,245,.12)', p: most(stats,'awpK'), val: s => s.awpK+' kills' },
+    { label:'Most 1st kills',
+      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#2DD4A0" stroke-width="1.5" width="18" height="18">
+        <polygon points="10,2 12,8 18,8 13,12 15,18 10,14 5,18 7,12 2,8 8,8" stroke-linejoin="round"/>
+        <line x1="10" y1="2" x2="10" y2="6" stroke="#2DD4A0" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>`, bg:'rgba(45,212,160,.12)', p: most(stats,'firstKills'), val: s => s.firstKills+' rounds' },
+    { label:'Best FV Rating',
+      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#A76EF5" stroke-width="1.5" width="18" height="18">
+        <rect x="3" y="12" width="3" height="6" rx="1" fill="rgba(167,110,245,.3)"/>
+        <rect x="8.5" y="7" width="3" height="11" rx="1" fill="rgba(167,110,245,.3)"/>
+        <rect x="14" y="3" width="3" height="15" rx="1" fill="rgba(167,110,245,.5)"/>
+        <polyline points="3,12 8.5,7 14,3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`, bg:'rgba(167,110,245,.12)', p: most(stats,'fvr'), val: s => s.fvr.toFixed(2) },
   ];
   el.innerHTML = best.filter(b => b.p && b.p.name).map(b =>
     `<div class="hl-card">
@@ -1050,8 +1068,23 @@ function renderMatchStats() {
   const tBest  = (teamPlayers[3]||[]).sort((a,b)=>b.fvr-a.fvr)[0]?.name || 'T';
   const ctNames = 'Equipe_' + ctBest;
   const tNames  = 'Equipe_' + tBest;
+  // Notification équipe gagnante
+  const winner = ctWins > tWins ? {name: ctNames, color: '#4A9EFF', wins: ctWins}
+               : tWins > ctWins ? {name: tNames,  color: '#F5C842', wins: tWins}
+               : null;
+  const winnerBanner = winner
+    ? `<div style="display:flex;align-items:center;gap:10px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);border-radius:10px;padding:12px 20px;margin-bottom:12px">
+        <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="var(--success)" stroke-width="1.5"><path d="M10 2l1.8 4.9H17l-4.1 3 1.6 4.9L10 12l-4.5 2.8 1.6-4.9L3 7h5.2z" stroke-linejoin="round"/></svg>
+        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--success)">VICTOIRE</span>
+        <span style="font-size:14px;font-weight:700;color:${winner.color}">${winner.name}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto">${ctWins} — ${tWins}</span>
+      </div>`
+    : `<div style="display:flex;align-items:center;gap:10px;background:rgba(59,127,245,.08);border:1px solid rgba(59,127,245,.2);border-radius:10px;padding:12px 20px;margin-bottom:12px">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent)">ÉGALITÉ</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto">${ctWins} — ${tWins}</span>
+      </div>`;
   const el = document.getElementById('matchStatsBlock');
-  if (el) el.innerHTML = teamBlock(2, ctNames, '#4A9EFF', ctWins) + teamBlock(3, tNames, '#F5C842', tWins);
+  if (el) el.innerHTML = winnerBanner + teamBlock(2, ctNames, '#4A9EFF', ctWins) + teamBlock(3, tNames, '#F5C842', tWins);
 
   // Highlights + graphique (une seule fois, pas sensible au side)
   if (sf === 'both') {
@@ -1234,7 +1267,7 @@ function drawReplayFrame(idx){
   Object.entries(frame.players).forEach(([name,p])=>{
     if(!p.alive)return;
     const{px,py}=w2c(p.x,p.y,mapName,W,H);if(!inBounds(px,py,W,H))return;
-    const color=getColor(name),isCT=p.team===2;
+    const color=getColor(name),isCT=p.team===3;
     ctx.beginPath();ctx.arc(px,py,11,0,Math.PI*2);ctx.fillStyle=`rgba(${color.rgb},.15)`;ctx.fill();
     ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fillStyle=color.solid;ctx.fill();
     ctx.strokeStyle=isCT?'#4A9EFF':'#F5C842';ctx.lineWidth=2.5;ctx.stroke();
@@ -1361,22 +1394,37 @@ function rfBuildFrames(round){
   const roundStartTicks=demoData.roundStartTicks||{};
   const freezeEnd=roundStartTicks[round]||0;
 
+  // Tick de fin de round depuis demoData.rounds (endTick)
+  const roundData=demoData.rounds?.[round-1]||{};
+  const roundEndTick=roundData.endTick||0;
+
   const roundPos={};
   Object.entries(positions).forEach(([name,pts])=>{
-    // Ne garder que les positions APRÈS le freeze time
-    const rpts=pts.filter(p=>p.round===round&&(freezeEnd===0||p.tick>=freezeEnd));
+    // Garder positions du round, à partir du freeze end
+    const rpts=pts.filter(p=>{
+      if(p.round!==round)return false;
+      if(freezeEnd>0&&p.tick<freezeEnd)return false;
+      return true;
+    });
     if(rpts.length>0)roundPos[name]=rpts;
   });
 
   if(!Object.keys(roundPos).length&&!roundKills.length){rfFrames=[];return;}
 
+  // minT = freeze end (début réel du round), maxT = endTick ou dernier tick connu
   let allTicks=[];
   Object.values(roundPos).forEach(pts=>pts.forEach(p=>allTicks.push(p.tick||0)));
   roundKills.forEach(k=>allTicks.push(k.tick||0));
-  const minT=Math.min(...allTicks), maxT=Math.max(...allTicks);
-  const span=Math.max(maxT-minT,1);
-  const durSec=span/128;
-  const N=Math.min(600,Math.max(80,Math.round(durSec*RF_FPS)));
+  if(!allTicks.length){rfFrames=[];return;}
+
+  const minT = freezeEnd>0 ? freezeEnd : Math.min(...allTicks);
+  const maxT = roundEndTick>minT ? roundEndTick : Math.max(...allTicks);
+  const span = Math.max(maxT-minT,1);
+  // CS2 tickrate = 64 (matchmaking) ou 128 (FACEIT) — on auto-détecte via densité
+  const tickRate = span > 0 && allTicks.length > 20 ? 128 : 64;
+  const durSec = span/tickRate;
+  // 15 fps × durée réelle, min 80 frames, max 900 (~60s à 15fps)
+  const N = Math.min(900, Math.max(80, Math.round(durSec*RF_FPS)));
 
   rfFrames=[];
   for(let f=0;f<=N;f++){
@@ -1440,7 +1488,7 @@ function rfDrawFrame(idx){
     if(rfHiddenPlayers.has(name))return;
     const{px,py}=w2c(p.x,p.y,rfMapName,W,H);
     if(!inBounds(px,py,W,H))return;
-    const color=getColor(name), isCT=p.team===2;
+    const color=getColor(name), isCT=p.team===3;
     rfCtx.beginPath();rfCtx.arc(px,py,12,0,Math.PI*2);rfCtx.fillStyle=`rgba(${color.rgb},.12)`;rfCtx.fill();
     rfCtx.beginPath();rfCtx.arc(px,py,6,0,Math.PI*2);rfCtx.fillStyle=color.solid;rfCtx.fill();
     rfCtx.strokeStyle=isCT?'#4A9EFF':'#F5C842';rfCtx.lineWidth=2.5;rfCtx.stroke();
