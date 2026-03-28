@@ -364,7 +364,7 @@
   </div>
 </nav>
 
-<div id="noData" class="no-data" style="display:none">
+<div id="noData" class="no-data" style="display:none!important">
   <div class="no-data-title">Aucune démo analysée</div>
   <p class="no-data-sub">Importe d'abord une démo depuis la page d'analyse.</p>
   <a href="demo.html" class="no-data-btn">Analyser une démo</a>
@@ -573,9 +573,9 @@ function showPlayerStats(name){
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:3px">${roundRows}</div>
     </div>`;
 
-  document.getElementById('playerStatsPanel').style.display='block';
+  const psp=document.getElementById('playerStatsPanel');if(psp)psp.style.display='block';
   // Scroll doux vers les stats
-  setTimeout(()=>document.getElementById('playerStatsPanel').scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+  setTimeout(()=>{const _psp=document.getElementById('playerStatsPanel');if(_psp)_psp.scrollIntoView({behavior:'smooth',block:'nearest'});},100);
 }
 
 // Décompresse les kills au format compact (champs courts) → format long
@@ -621,7 +621,7 @@ window.addEventListener('load',()=>{
       const replayTab = document.getElementById('tabReplay');
       switchHeatmap('replay', replayTab);
     }, 500);
-  }catch(e){console.error(e);document.getElementById('noData').style.display='block';}
+  }catch(e){console.error('heatmap-results init error:',e);}
 });
 
 function assignPlayerColors(){(demoData.playerStats||[]).forEach((p,i)=>{playerColorMap[p.name]=i%PLAYER_COLORS.length;});}
@@ -630,7 +630,7 @@ function togglePlayer(name){
   if(activePlayers.has(name)){
     activePlayers.delete(name);
     // Si on désélectionne le joueur affiché dans le panel → cacher le panel
-    if(currentStatsPlayer===name){currentStatsPlayer=null;document.getElementById('playerStatsPanel').style.display='none';}
+    if(currentStatsPlayer===name){currentStatsPlayer=null;const _p=document.getElementById('playerStatsPanel');if(_p)_p.style.display='none';}
   }else{
     if(activePlayers.size>=5)return;
     activePlayers.add(name);
@@ -659,8 +659,8 @@ function loadMapImageThenDraw(){
   if(floorToggleEl)floorToggleEl.classList.toggle('visible',!!(MAP_CONFIG[mapName]?.upper));
   const imgPath=getMapImgPath();
   const notice=document.getElementById('mapNotice');
-  if(!imgPath){mapImage=null;notice.textContent=`Radar non disponible pour ${mapName}`;renderHeatmap();return;}
-  notice.textContent='';
+  if(!imgPath){mapImage=null;if(notice)notice.textContent=`Radar non disponible pour ${mapName}`;renderHeatmap();return;}
+  if(notice)notice.textContent='';
   const img=new Image();
   img.onload=()=>{mapImage=img;canvas.width=img.width;canvas.height=img.height;renderHeatmap();};
   img.onerror=()=>{mapImage=null;notice.textContent=`Image introuvable : ${imgPath}`;renderHeatmap();};
@@ -883,7 +883,8 @@ function renderStats(){
   const pk=active.length>0?kills.filter(k=>active.includes(k.attacker)):kills;
   const hs=pk.filter(k=>k.isHeadshot).length;
   const gr=(demoData.grenades||[]).filter(g=>active.length===0||active.includes(g.thrower));
-  document.getElementById('statsGrid').innerHTML=[
+  const sgEl=document.getElementById('statsGrid');if(!sgEl)return;
+  sgEl.innerHTML=[
     {label:'Kills',val:pk.length,sub:active.length===1?active[0]:active.length+' joueurs',cls:'c-accent'},
     {label:'Headshot %',val:(pk.length>0?((hs/pk.length)*100).toFixed(0):0)+'%',sub:hs+' HS',cls:'c-good'},
     {label:'Wallbangs',val:pk.filter(k=>k.isWallbang).length,sub:'à travers murs',cls:'c-warn'},
@@ -891,6 +892,7 @@ function renderStats(){
     {label:'Rounds',val:(demoData.rounds||[]).length,sub:'joués',cls:'c-neutral'},
     {label:'Grenades',val:gr.length,sub:'lancées',cls:'c-accent'},
   ].map(s=>`<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-val ${s.cls}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
+  sgEl.innerHTML=sgEl.innerHTML;
 }
 function renderPlayerList(){
   const players=demoData.playerStats||[],target=demoData.meta?.targetPlayer,atMax=activePlayers.size>=5;
@@ -901,7 +903,8 @@ function renderPlayerList(){
   }).join('');
   if(playerListEl) playerListEl.innerHTML=playerListEl.innerHTML; // already set
   const phEl=document.querySelector('.panel-hint'); if(phEl) phEl.innerHTML=`Clic pour toggle · <span style="color:${atMax?'var(--danger)':'var(--accent)'}">${activePlayers.size}/5</span> actifs`;
-  document.getElementById('playersTable').innerHTML=players.map(p=>{
+  const ptEl=document.getElementById('playersTable');if(!ptEl)return;
+  ptEl.innerHTML=players.map(p=>{
     const kd=parseFloat(p.kd),c=getColor(p.name),isActive=activePlayers.has(p.name);
     const pKills2=kills.filter(k=>k.attacker===p.name);
     const wb=pKills2.filter(k=>k.isWallbang).length;
@@ -920,6 +923,7 @@ function renderPlayerList(){
       <td style="color:var(--accent)">${smk||'-'}</td>
     </tr>`;
   }).join('');
+  ptEl.innerHTML=ptEl.innerHTML;
 }
 
 function switchHeatmap(type,btn){
