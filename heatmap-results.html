@@ -1441,17 +1441,15 @@ function rfSelectRound(round,btn){
 
 function rfBuildFrames(round){
   const positions=demoData.positions||{}, kills=demoData.kills||[];
-  // round = freezeR (0-based), killsRound = freezeR+1 (1-based dans kills)
   const roundData=(demoData.rounds||[]).find(r=>(r.round??-1)===round)||{};
-  const killsR = roundData.killsRound ?? (round + 1);
-  const roundKills=kills.filter(k=>k.round===killsR);
-  const freezeEnd=roundData.startTick||0;
-  const roundEndTick=roundData.endTick||0;
+  const killsR      = roundData.killsRound ?? (round + 1);
+  const startTick   = roundData.startTick || 0;
+  const endTick     = roundData.endTick   || 0;
+  const roundKills  = kills.filter(k=>k.round===killsR);
 
   const roundPos={};
   Object.entries(positions).forEach(([name,pts])=>{
-    // positions.round = killsRound (1-based, incrémenté dans index.js)
-    // On filtre par killsR
+    // Filtrer par killsRound (assigné via tick absolu dans le parser)
     const rpts = pts.filter(p => p.round === killsR);
     if(rpts.length > 0) roundPos[name] = rpts;
   });
@@ -1467,39 +1465,23 @@ function rfBuildFrames(round){
   }
   if(!Object.keys(roundPos).length&&!roundKills.length){rfFrames=[];return;}
 
-  // Ticks positions (relatifs, 0-based) vs ticks kills (absolus)
-  // On détecte si les ticks sont relatifs (max < 10000) ou absolus (max > 10000)
+  // Maintenant les positions ET les kills utilisent des ticks absolus
+  // On utilise startTick/endTick du round pour délimiter la timeline
   const posTicks = [];
   Object.values(roundPos).forEach(pts=>pts.forEach(p=>posTicks.push(p.tick||0)));
   if(!posTicks.length && !roundKills.length){rfFrames=[];return;}
 
-  const posMaxTick = posTicks.length ? Math.max(...posTicks) : 0;
-  const killTicks = roundKills.map(k=>k.tick||0);
-  const killMaxTick = killTicks.length ? Math.max(...killTicks) : 0;
-
-  // Si les ticks positions sont relatifs (< 10000) et kills absolus (> 10000)
-  // on normalise les kills vers l'échelle des positions
-  let normalizedKills = roundKills;
-  const posRelative = posMaxTick < 10000 && killMaxTick > 10000;
-  if (posRelative) {
-    // Les kills ont des ticks absolus, les positions sont relatives
-    // On mappe les kills sur la même échelle via leur position relative dans le round
-    const roundStartAbs = freezeEnd > 0 ? freezeEnd : (demoData.rounds?.[round-1]?.endTick - 8192) || 0;
-    const roundDurAbs = roundEndTick > roundStartAbs ? roundEndTick - roundStartAbs : 8192;
-    normalizedKills = roundKills.map(k => ({
-      ...k,
-      tick: Math.round(((k.tick - roundStartAbs) / roundDurAbs) * posMaxTick)
-    }));
-  }
-
+  const normalizedKills = roundKills; // kills déjà en ticks absolus
   const allTicks = [...posTicks, ...normalizedKills.map(k=>k.tick||0)];
   if(!allTicks.length){rfFrames=[];return;}
 
-  const minT = Math.min(...allTicks);
-  const maxT = Math.max(...allTicks);
-  const span = Math.max(maxT-minT,1);
-  const durSec = span / 64; // ticks relatifs → 64 ticks/sec approximatif
-  const N = Math.min(900, Math.max(80, Math.round(durSec*RF_FPS)));
+  // minT = startTick du round (ou premier tick de position)
+  // maxT = endTick du round (ou dernier tick de position)
+  const minT = startTick > 0 ? startTick : Math.min(...allTicks);
+  const maxT = endTick > minT ? endTick : Math.max(...allTicks);
+  const span = Math.max(maxT - minT, 1);
+  const durSec = span / 128; // ticks absolus CS2 = 128 tick/sec (FACEIT)
+  const N = Math.min(900, Math.max(80, Math.round(durSec * RF_FPS)));
 
   // Seuil anti-traversée de mur : distance max entre 2 footsteps consécutifs
   // Au-delà, on téléporte directement (pas d'interpolation linéaire)
@@ -1536,7 +1518,7 @@ function rfBuildFrames(round){
       }
       frame.players[name]={x:px,y:py,team:prev.team,alive:true};
     });
-    normalizedKills.forEach(k=>{
+    roundKills.forEach(k=>{
       if((k.tick||0)<=tick){
         if(frame.players[k.victim])frame.players[k.victim].alive=false;
         frame.deaths.push({x:k.victimX,y:k.victimY});
@@ -1550,12 +1532,12 @@ function rfBuildFrames(round){
   document.getElementById('rfTimeTot').textContent=`${Math.floor(tot/60)}:${String(tot%60).padStart(2,'0')}`;
 
   // Kill chips
-  document.getElementById('rfKillChips').innerHTML=normalizedKills.slice(0,8).map(k=>
+  document.getElementById('rfKillChips').innerHTML=roundKills.slice(0,8).map(k=>
     `<div class="rfc ${k.isHeadshot?'hs':''}">${k.attacker}→${k.victim}${k.isHeadshot?' 💥':''}</div>`
   ).join('');
 
   // Kill markers
-  document.getElementById('rfKillMarks').innerHTML=normalizedKills.map(k=>{
+  document.getElementById('rfKillMarks').innerHTML=roundKills.map(k=>{
     const pct=Math.min(100,Math.max(0,((k.tick||0)-minT)/span*100));
     return `<div class="rf-kill-mark" style="left:${pct}%"></div>`;
   }).join('');
