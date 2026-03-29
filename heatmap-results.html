@@ -1468,22 +1468,26 @@ function rfBuildFrames(round){
   }
   if(!Object.keys(roundPos).length&&!roundKills.length){rfFrames=[];return;}
 
-  // Maintenant les positions ET les kills utilisent des ticks absolus
-  // On utilise startTick/endTick du round pour délimiter la timeline
   const posTicks = [];
   Object.values(roundPos).forEach(pts=>pts.forEach(p=>posTicks.push(p.tick||0)));
   if(!posTicks.length && !roundKills.length){rfFrames=[];return;}
 
-  const normalizedKills = roundKills; // kills déjà en ticks absolus
-  const allTicks = [...posTicks, ...normalizedKills.map(k=>k.tick||0)];
-  if(!allTicks.length){rfFrames=[];return;}
+  // minT = startTick du round (début réel après freeze)
+  const minT = startTick > 0 ? startTick : Math.min(...posTicks);
 
-  // minT = startTick du round (ou premier tick de position)
-  // maxT = endTick du round (ou dernier tick de position)
-  const minT = startTick > 0 ? startTick : Math.min(...allTicks);
-  const maxT = endTick > minT ? endTick : Math.max(...allTicks);
+  // maxT = tick du dernier kill du round (fin réelle du round)
+  // Si pas de kill, prendre le dernier tick de position avant le startTick suivant
+  const lastKillTick = roundKills.length > 0
+    ? Math.max(...roundKills.map(k=>k.tick||0))
+    : 0;
+  // Ajouter ~2sec après le dernier kill pour voir la mort (128 ticks = 1sec)
+  const postKillBuffer = 256; // ~2 secondes après le dernier kill
+  const maxT = lastKillTick > minT
+    ? lastKillTick + postKillBuffer
+    : (endTick > minT ? endTick : Math.max(...posTicks));
+
   const span = Math.max(maxT - minT, 1);
-  const durSec = span / 128; // ticks absolus CS2 = 128 tick/sec (FACEIT)
+  const durSec = span / 128;
   const N = Math.min(900, Math.max(80, Math.round(durSec * RF_FPS)));
 
   // Seuil anti-traversée de mur : distance max entre 2 footsteps consécutifs
