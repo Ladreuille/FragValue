@@ -1344,9 +1344,9 @@ const RF_FPS=24;
 function getFirstRealRound(){
   const rounds = demoData.rounds||[];
   for(let i=0;i<rounds.length;i++){
-    if(!rounds[i].isKnife) return rounds[i].round ?? (i+1);
+    if(!rounds[i].isKnife) return rounds[i].round ?? i;
   }
-  return rounds[0]?.round ?? 1;
+  return rounds[0]?.round ?? 0;
 }
 
 function openReplayFS(){
@@ -1392,18 +1392,19 @@ function initRfRoundsBar(){
   const target=demoData.meta?.targetPlayer;
   const bar=document.getElementById('rfRoundsBar');
   let html='';
-  let displayNum = 0;
+  let realNum = 0;
   rounds.forEach((rd,i)=>{
-    const r = rd.round ?? (i+1);
+    const freezeR = rd.round ?? i;
+    const killsR  = rd.killsRound ?? (freezeR + 1);
     if(rd.isKnife){
-      html+=`<button class="rnd2" id="rfRoundBtn${r}" onclick="rfSelectRound(${r},this)" title="Knife round" style="opacity:.35;font-size:8px">🔪</button>`;
+      html+=`<button class="rnd2" id="rfRoundBtn${freezeR}" onclick="rfSelectRound(${freezeR},this)" title="Knife round" style="opacity:.35;font-size:8px">🔪</button>`;
       return;
     }
-    displayNum++;
-    const rK=kills.filter(k=>k.round===r&&k.attacker===target).length;
-    if(displayNum===13) html+=`<div class="rnd2-sep"></div>`;
+    realNum++;
+    const rK=kills.filter(k=>k.round===killsR&&k.attacker===target).length;
+    if(realNum===13) html+=`<div class="rnd2-sep"></div>`;
     const rdWon = rd.winner===2||rd.winner===3;
-    html+=`<button class="rnd2 ${rdWon?'win':'loss'}" id="rfRoundBtn${r}" onclick="rfSelectRound(${r},this)" title="R${displayNum}·${rK}K">${displayNum}</button>`;
+    html+=`<button class="rnd2 ${rdWon?'win':'loss'}" id="rfRoundBtn${freezeR}" onclick="rfSelectRound(${freezeR},this)" title="R${realNum}·${rK}K">${realNum}</button>`;
   });
   bar.innerHTML=html;
 }
@@ -1438,18 +1439,18 @@ function rfSelectRound(round,btn){
 
 function rfBuildFrames(round){
   const positions=demoData.positions||{}, kills=demoData.kills||[];
-  const roundKills=kills.filter(k=>k.round===round);
-  // Trouver les données du round par son numéro (pas son index)
-  const roundData=(demoData.rounds||[]).find(r=>(r.round??0)===round)||{};
+  // round = freezeR (0-based), killsRound = freezeR+1 (1-based dans kills)
+  const roundData=(demoData.rounds||[]).find(r=>(r.round??-1)===round)||{};
+  const killsR = roundData.killsRound ?? (round + 1);
+  const roundKills=kills.filter(k=>k.round===killsR);
   const freezeEnd=roundData.startTick||0;
   const roundEndTick=roundData.endTick||0;
 
   const roundPos={};
   Object.entries(positions).forEach(([name,pts])=>{
-    // parseTicks retourne des ticks RELATIFS au round (0, 18, 34...)
-    // freezeEnd et roundEndTick sont des ticks ABSOLUS — pas comparables
-    // On filtre uniquement par numéro de round
-    const rpts = pts.filter(p => p.round === round);
+    // positions.round = killsRound (1-based, incrémenté dans index.js)
+    // On filtre par killsR
+    const rpts = pts.filter(p => p.round === killsR);
     if(rpts.length > 0) roundPos[name] = rpts;
   });
 
