@@ -1342,12 +1342,11 @@ let rfPlaying=false, rfTimer=null, rfSpeed=1, rfMapName='de_dust2';
 const RF_FPS=24;
 
 function getFirstRealRound(){
-  const kills = demoData.kills||[];
   const rounds = demoData.rounds||[];
   for(let i=0;i<rounds.length;i++){
-    if(!isKnifeRound(i+1, kills)) return i+1;
+    if(!rounds[i].isKnife) return rounds[i].round ?? (i+1);
   }
-  return 1;
+  return rounds[0]?.round ?? 1;
 }
 
 function openReplayFS(){
@@ -1388,32 +1387,22 @@ function closeReplayFS(){
   clearInterval(rfTimer); rfPlaying=false; rfSetPlayPause(false);
 }
 
-// Détecter le knife round : round où tous les kills sont au couteau
-function isKnifeRound(round, kills) {
-  const rKills = kills.filter(k => k.round === round);
-  if (rKills.length === 0) return false;
-  const knifeKills = rKills.filter(k => k.weapon && (k.weapon.includes('knife') || k.weapon.includes('bayonet')));
-  // Si >50% des kills sont au couteau c'est le knife round
-  return knifeKills.length / rKills.length > 0.5;
-}
-
 function initRfRoundsBar(){
   const rounds=demoData.rounds||[], kills=demoData.kills||[];
   const target=demoData.meta?.targetPlayer;
   const bar=document.getElementById('rfRoundsBar');
   let html='';
-  let displayNum = 0; // numéro affiché (skip le knife round)
+  let displayNum = 0;
   rounds.forEach((rd,i)=>{
-    const r=i+1;
-    // Skip le knife round (généralement round 1)
-    if(isKnifeRound(r, kills)){
-      html+=`<button class="rnd2" id="rfRoundBtn${r}" onclick="rfSelectRound(${r},this)" title="R${r} · Knife round" style="opacity:.4;font-size:8px">🔪</button>`;
+    const r = rd.round ?? (i+1);
+    if(rd.isKnife){
+      html+=`<button class="rnd2" id="rfRoundBtn${r}" onclick="rfSelectRound(${r},this)" title="Knife round" style="opacity:.35;font-size:8px">🔪</button>`;
       return;
     }
     displayNum++;
     const rK=kills.filter(k=>k.round===r&&k.attacker===target).length;
-    if(displayNum===13)html+=`<div class="rnd2-sep"></div>`; // séparateur mi-temps
-    const rdWon = rd.winner===2||rd.winner===3||rd.winner===1;
+    if(displayNum===13) html+=`<div class="rnd2-sep"></div>`;
+    const rdWon = rd.winner===2||rd.winner===3;
     html+=`<button class="rnd2 ${rdWon?'win':'loss'}" id="rfRoundBtn${r}" onclick="rfSelectRound(${r},this)" title="R${displayNum}·${rK}K">${displayNum}</button>`;
   });
   bar.innerHTML=html;
@@ -1450,11 +1439,9 @@ function rfSelectRound(round,btn){
 function rfBuildFrames(round){
   const positions=demoData.positions||{}, kills=demoData.kills||[];
   const roundKills=kills.filter(k=>k.round===round);
-  const roundStartTicks=demoData.roundStartTicks||{};
-  const freezeEnd=roundStartTicks[round]||0;
-
-  // Tick de fin de round depuis demoData.rounds (endTick)
-  const roundData=demoData.rounds?.[round-1]||{};
+  // Trouver les données du round par son numéro (pas son index)
+  const roundData=(demoData.rounds||[]).find(r=>(r.round??0)===round)||{};
+  const freezeEnd=roundData.startTick||0;
   const roundEndTick=roundData.endTick||0;
 
   const roundPos={};
