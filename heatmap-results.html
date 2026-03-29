@@ -1432,7 +1432,9 @@ function rfSelectRound(round,btn){
   clearInterval(rfTimer); rfPlaying=false; rfSetPlayPause(false);
   document.querySelectorAll('.rnd2').forEach(b=>b.classList.remove('sel'));
   if(btn)btn.classList.add('sel');
-  document.getElementById('rfRoundLabel').textContent=`Round ${round}`;
+  const rdData=(demoData.rounds||[]).find(r=>(r.round??-1)===round)||{};
+  const dispN = rdData.displayNum ?? (round+1);
+  document.getElementById('rfRoundLabel').textContent=rdData.isKnife?`Knife Round`:`Round ${dispN}`;
   rfBuildFrames(round);
   rfIdx=0; rfDrawFrame(0);
 }
