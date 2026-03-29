@@ -1401,7 +1401,7 @@ function initRfRoundsBar(){
       return;
     }
     realNum++;
-    const rK=kills.filter(k=>k.round===killsR&&k.attacker===target).length;
+    const rK=kills.filter(k=>k.tick>=rd.startTick&&(rd.endTick===0||k.tick<=rd.endTick)&&k.attacker===target).length;
     if(realNum===13) html+=`<div class="rnd2-sep"></div>`;
     const rdWon = rd.winner===2||rd.winner===3;
     html+=`<button class="rnd2 ${rdWon?'win':'loss'}" id="rfRoundBtn${freezeR}" onclick="rfSelectRound(${freezeR},this)" title="R${realNum}·${rK}K">${realNum}</button>`;
@@ -1464,10 +1464,9 @@ function rfBuildFrames(round){
   // Debug : voir combien de joueurs ont des positions pour ce round
   const posPlayers = Object.keys(roundPos);
   const allPlayers = Object.keys(demoData.positions||{});
-  console.log(`[rfBuildFrames] Round ${round}: ${posPlayers.length}/${allPlayers.length} joueurs, killsR=${killsR}, roundKills=${roundKills.length}, startTick=${startTick}, endTick=${endTick}`);
+  console.log(`[rfBuildFrames] Round ${round}: ${posPlayers.length}/${allPlayers.length} joueurs, roundKills=${roundKills.length}, startTick=${startTick}, endTick=${endTick}`);
   // Debug kills
-  const sampleKills = (demoData.kills||[]).slice(0,3).map(k=>`r${k.round}t${k.tick}`).join(',');
-  console.log(`[rfBuildFrames] Sample kills rounds: ${sampleKills}`);
+
   if(posPlayers.length < allPlayers.length){
     const missing = allPlayers.filter(n=>!posPlayers.includes(n));
     const sample = (demoData.positions[missing[0]]||[]).slice(0,3).map(p=>`r${p.round}t${p.tick}`).join(',');
