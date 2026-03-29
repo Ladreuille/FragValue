@@ -1442,15 +1442,22 @@ function rfSelectRound(round,btn){
 function rfBuildFrames(round){
   const positions=demoData.positions||{}, kills=demoData.kills||[];
   const roundData=(demoData.rounds||[]).find(r=>(r.round??-1)===round)||{};
-  const killsR      = roundData.killsRound ?? (round + 1);
-  const startTick   = roundData.startTick || 0;
-  const endTick     = roundData.endTick   || 0;
-  const roundKills  = kills.filter(k=>k.round===killsR);
+  const startTick = roundData.startTick || 0;
+  const endTick   = roundData.endTick   || 0;
 
+  // Filtrer kills par plage de ticks absolus (plus fiable que killsRound)
+  const roundKills = kills.filter(k => {
+    const t = k.tick || 0;
+    return t >= startTick && (endTick === 0 || t <= endTick);
+  });
+
+  // Filtrer positions par plage de ticks absolus
   const roundPos={};
   Object.entries(positions).forEach(([name,pts])=>{
-    // Filtrer par killsRound (assigné via tick absolu dans le parser)
-    const rpts = pts.filter(p => p.round === killsR);
+    const rpts = pts.filter(p => {
+      const t = p.tick || 0;
+      return t >= startTick && (endTick === 0 || t <= endTick);
+    });
     if(rpts.length > 0) roundPos[name] = rpts;
   });
 
@@ -1472,19 +1479,17 @@ function rfBuildFrames(round){
   Object.values(roundPos).forEach(pts=>pts.forEach(p=>posTicks.push(p.tick||0)));
   if(!posTicks.length && !roundKills.length){rfFrames=[];return;}
 
-  // minT = startTick du round (début réel après freeze)
   const minT = startTick > 0 ? startTick : Math.min(...posTicks);
 
-  // maxT = tick du dernier kill du round (fin réelle du round)
-  // Si pas de kill, prendre le dernier tick de position avant le startTick suivant
+  // maxT = dernier kill + 2sec (fin naturelle du round, avant freeze suivant)
   const lastKillTick = roundKills.length > 0
-    ? Math.max(...roundKills.map(k=>k.tick||0))
-    : 0;
-  // Ajouter ~2sec après le dernier kill pour voir la mort (128 ticks = 1sec)
-  const postKillBuffer = 256; // ~2 secondes après le dernier kill
+    ? Math.max(...roundKills.map(k=>k.tick||0)) : 0;
+  const postKillBuffer = 256; // ~2sec à 128tick/s
   const maxT = lastKillTick > minT
     ? lastKillTick + postKillBuffer
-    : (endTick > minT ? endTick : Math.max(...posTicks));
+    : Math.max(...posTicks, minT + 1);
+
+  console.log(`[rfBuildFrames] minT=${minT} maxT=${maxT} lastKill=${lastKillTick} kills=${roundKills.length} positions=${Object.keys(roundPos).length}`);
 
   const span = Math.max(maxT - minT, 1);
   const durSec = span / 128;
