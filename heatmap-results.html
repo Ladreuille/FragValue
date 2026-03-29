@@ -1457,7 +1457,10 @@ function rfBuildFrames(round){
   // Debug : voir combien de joueurs ont des positions pour ce round
   const posPlayers = Object.keys(roundPos);
   const allPlayers = Object.keys(demoData.positions||{});
-  console.log(`[rfBuildFrames] Round ${round}: ${posPlayers.length}/${allPlayers.length} joueurs avec positions`);
+  console.log(`[rfBuildFrames] Round ${round}: ${posPlayers.length}/${allPlayers.length} joueurs, killsR=${killsR}, roundKills=${roundKills.length}, startTick=${startTick}, endTick=${endTick}`);
+  // Debug kills
+  const sampleKills = (demoData.kills||[]).slice(0,3).map(k=>`r${k.round}t${k.tick}`).join(',');
+  console.log(`[rfBuildFrames] Sample kills rounds: ${sampleKills}`);
   if(posPlayers.length < allPlayers.length){
     const missing = allPlayers.filter(n=>!posPlayers.includes(n));
     const sample = (demoData.positions[missing[0]]||[]).slice(0,3).map(p=>`r${p.round}t${p.tick}`).join(',');
