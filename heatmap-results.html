@@ -1341,6 +1341,15 @@ let rfCanvas, rfCtx, rfMapImg=null, rfRound=null, rfFrames=[], rfIdx=0;
 let rfPlaying=false, rfTimer=null, rfSpeed=1, rfMapName='de_dust2';
 const RF_FPS=24;
 
+function getFirstRealRound(){
+  const kills = demoData.kills||[];
+  const rounds = demoData.rounds||[];
+  for(let i=0;i<rounds.length;i++){
+    if(!isKnifeRound(i+1, kills)) return i+1;
+  }
+  return 1;
+}
+
 function openReplayFS(){
   if(!demoData)return;
   rfMapName=(demoData.meta?.map||'de_dust2').toLowerCase().replace(/^.*\//,'').trim();
@@ -1358,14 +1367,18 @@ function openReplayFS(){
       rfMapImg=img;
       rfCanvas.width=img.width; rfCanvas.height=img.height;
       initRfRoundsBar();
-      rfSelectRound(1,document.getElementById('rfRoundBtn1'));
+      const firstReal = getFirstRealRound();
+    rfSelectRound(firstReal, document.getElementById('rfRoundBtn'+firstReal));
     };
-    img.onerror=()=>{ rfMapImg=null; initRfRoundsBar(); rfSelectRound(1,document.getElementById('rfRoundBtn1')); };
+    img.onerror=()=>{ rfMapImg=null; initRfRoundsBar();
+    const firstReal2 = getFirstRealRound();
+    rfSelectRound(firstReal2, document.getElementById('rfRoundBtn'+firstReal2)); };
     img.src=cfg.upper?cfg.upper.img:cfg.img;
   } else {
     rfCanvas.width=1024; rfCanvas.height=1024;
     initRfRoundsBar();
-    rfSelectRound(1,document.getElementById('rfRoundBtn1'));
+    const firstReal3 = getFirstRealRound();
+    rfSelectRound(firstReal3, document.getElementById('rfRoundBtn'+firstReal3));
   }
   initRfPlayerList();
 }
@@ -1375,17 +1388,33 @@ function closeReplayFS(){
   clearInterval(rfTimer); rfPlaying=false; rfSetPlayPause(false);
 }
 
+// Détecter le knife round : round où tous les kills sont au couteau
+function isKnifeRound(round, kills) {
+  const rKills = kills.filter(k => k.round === round);
+  if (rKills.length === 0) return false;
+  const knifeKills = rKills.filter(k => k.weapon && (k.weapon.includes('knife') || k.weapon.includes('bayonet')));
+  // Si >50% des kills sont au couteau c'est le knife round
+  return knifeKills.length / rKills.length > 0.5;
+}
+
 function initRfRoundsBar(){
   const rounds=demoData.rounds||[], kills=demoData.kills||[];
   const target=demoData.meta?.targetPlayer;
   const bar=document.getElementById('rfRoundsBar');
   let html='';
+  let displayNum = 0; // numéro affiché (skip le knife round)
   rounds.forEach((rd,i)=>{
     const r=i+1;
+    // Skip le knife round (généralement round 1)
+    if(isKnifeRound(r, kills)){
+      html+=`<button class="rnd2" id="rfRoundBtn${r}" onclick="rfSelectRound(${r},this)" title="R${r} · Knife round" style="opacity:.4;font-size:8px">🔪</button>`;
+      return;
+    }
+    displayNum++;
     const rK=kills.filter(k=>k.round===r&&k.attacker===target).length;
-    if(r===16)html+=`<div class="rnd2-sep"></div>`;
+    if(displayNum===13)html+=`<div class="rnd2-sep"></div>`; // séparateur mi-temps
     const rdWon = rd.winner===2||rd.winner===3||rd.winner===1;
-    html+=`<button class="rnd2 ${rdWon?'win':'loss'}" id="rfRoundBtn${r}" onclick="rfSelectRound(${r},this)" title="R${r}·${rK}K">${r}</button>`;
+    html+=`<button class="rnd2 ${rdWon?'win':'loss'}" id="rfRoundBtn${r}" onclick="rfSelectRound(${r},this)" title="R${displayNum}·${rK}K">${displayNum}</button>`;
   });
   bar.innerHTML=html;
 }
