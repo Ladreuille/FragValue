@@ -553,7 +553,8 @@ function showPlayerStats(name){
     </div>`;
   }).join('');
 
-  document.getElementById('playerStatsCard').innerHTML=`
+  const _psc=document.getElementById('playerStatsCard');if(!_psc)return;
+  _psc.innerHTML=`
     <div class="psc-header">
       <div class="psc-dot" style="background:${color.solid}"></div>
       <div class="psc-name">${name}</div>
@@ -630,9 +631,9 @@ function inBounds(px,py,W,H){return px>=0&&px<=W&&py>=0&&py<=H;}
 function getMapImgPath(){const cfg=MAP_CONFIG[demoData.meta?.map||'de_dust2'];if(!cfg)return null;if(cfg.upper)return currentFloor==='upper'?cfg.upper.img:cfg.lower.img;return cfg.img||null;}
 function loadMapImageThenDraw(){
   const mapName=demoData.meta?.map||'de_dust2';
-  document.getElementById('floorToggle').classList.toggle('visible',!!(MAP_CONFIG[mapName]?.upper));
+  const _ft=document.getElementById('floorToggle');if(_ft)_ft.classList.toggle('visible',!!(MAP_CONFIG[mapName]?.upper));
   const imgPath=getMapImgPath();
-  const notice=document.getElementById('mapNotice');
+  const notice=document.getElementById('mapNotice'); if(!notice&&!document.getElementById('heatmapCanvas'))return;
   if(!imgPath){mapImage=null;notice.textContent=`Radar non disponible pour ${mapName}`;renderHeatmap();return;}
   notice.textContent='';
   const img=new Image();
