@@ -1427,6 +1427,76 @@ function rfTogglePlayer(name,el){
   else{rfHiddenPlayers.add(name);el.classList.remove('active');}
 }
 
+// ── Effets visuels grenades et tirs ─────────────────────────────────────────
+function rfDrawEffects(tick, W, H) {
+  const grenades = demoData.grenades || [];
+  const shots    = demoData.shots    || [];
+
+  // Tirs actifs (flash de bouche) — visible 3 frames (~80ms)
+  const activeShotDur = 10; // ticks
+  shots.forEach(s => {
+    if (s.tick > tick || s.tick < tick - activeShotDur) return;
+    const {px,py} = w2c(s.x, s.y, rfMapName, W, H);
+    if (!inBounds(px,py,W,H)) return;
+    const alpha = 1 - (tick - s.tick) / activeShotDur;
+    // Flash de bouche : petit cercle jaune vif
+    rfCtx.beginPath();
+    rfCtx.arc(px, py, 5, 0, Math.PI*2);
+    rfCtx.fillStyle = `rgba(255,220,80,${alpha * 0.9})`;
+    rfCtx.fill();
+    rfCtx.beginPath();
+    rfCtx.arc(px, py, 3, 0, Math.PI*2);
+    rfCtx.fillStyle = `rgba(255,255,200,${alpha})`;
+    rfCtx.fill();
+  });
+
+  // Grenades actives
+  grenades.forEach(g => {
+    if (!g.detonTick || !g.endTick) return;
+    const isActive = tick >= g.detonTick && tick <= g.endTick;
+    if (!isActive) return;
+    const {px,py} = w2c(g.detonX||g.x, g.detonY||g.y, rfMapName, W, H);
+    if (!inBounds(px,py,W,H)) return;
+    const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
+    const type = g.type || '';
+
+    if (type.includes('smoke')) {
+      // Smoke : cercle gris qui grandit
+      const r = 8 + progress * 28;
+      const alpha = progress < 0.1 ? progress * 10 * 0.7 : progress > 0.85 ? (1-progress)*6.7*0.7 : 0.7;
+      rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
+      rfCtx.fillStyle=`rgba(180,180,180,${alpha})`; rfCtx.fill();
+      rfCtx.strokeStyle=`rgba(140,140,140,${alpha*0.6})`; rfCtx.lineWidth=1.5; rfCtx.stroke();
+    } else if (type.includes('flash')) {
+      // Flash : cercle blanc éclatant qui disparaît
+      const r = 6 + progress * 18;
+      const alpha = (1 - progress) * 0.9;
+      rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
+      rfCtx.fillStyle=`rgba(255,255,255,${alpha})`; rfCtx.fill();
+    } else if (type.includes('hegre')) {
+      // HE : explosion orange/rouge
+      const r = 4 + progress * 20;
+      const alpha = (1 - progress) * 0.85;
+      rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
+      rfCtx.fillStyle=`rgba(255,${Math.round(120*(1-progress))},0,${alpha})`; rfCtx.fill();
+    } else if (type.includes('molotov') || type.includes('incgren')) {
+      // Molotov : flammes oranges animées
+      const r = 10 + Math.sin(tick*0.3)*3;
+      const alpha = 0.75;
+      rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
+      rfCtx.fillStyle=`rgba(255,80,0,${alpha})`; rfCtx.fill();
+      rfCtx.beginPath(); rfCtx.arc(px,py,r*0.6,0,Math.PI*2);
+      rfCtx.fillStyle=`rgba(255,200,0,${alpha})`; rfCtx.fill();
+    } else if (type.includes('decoy')) {
+      // Decoy : point rouge clignotant
+      const blink = Math.sin(tick * 0.5) > 0 ? 0.9 : 0.4;
+      rfCtx.beginPath(); rfCtx.arc(px,py,5,0,Math.PI*2);
+      rfCtx.fillStyle=`rgba(255,50,50,${blink})`; rfCtx.fill();
+      rfCtx.strokeStyle='rgba(255,150,150,0.6)'; rfCtx.lineWidth=1.5; rfCtx.stroke();
+    }
+  });
+}
+
 function rfSelectRound(round,btn){
   rfRound=round;
   clearInterval(rfTimer); rfPlaying=false; rfSetPlayPause(false);
@@ -1584,6 +1654,9 @@ function rfDrawFrame(idx){
     rfCtx.fillStyle='#fff';rfCtx.font='bold 9px JetBrains Mono,monospace';rfCtx.textAlign='center';
     rfCtx.fillText(name.slice(0,8),px,py-11);
   });
+
+  // Effets grenades et tirs
+  rfDrawEffects(frame.tick, W, H);
 
   // Timeline
   const pct=rfFrames.length>1?(idx/(rfFrames.length-1))*100:0;
