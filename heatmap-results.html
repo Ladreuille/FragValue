@@ -1436,61 +1436,41 @@ function rfDrawEffects(frame, W, H) {
   const grenades = demoData.grenades || [];
   const shots    = demoData.shots    || [];
 
-  // Tirs : flash de bouche + trait court dans direction du tir
-  // Le trait dure ~1 frame (10 ticks) et pointe vers la victime si kill
-  const activeShotDur = 1; // 1 tick = ~8ms
-  // Construire map tick→kill pour avoir la direction
-  const killsByTick = {};
-  (demoData.kills||[]).forEach(k => { killsByTick[k.tick||0] = k; });
-
-  shots.forEach(s => {
-    if (!s.tick || (s.x === 0 && s.y === 0)) return;
-    if (s.tick > tick || s.tick < tick - activeShotDur) return;
-    const {px,py} = w2c(s.x, s.y, rfMapName, W, H);
-    if (!inBounds(px,py,W,H)) return;
-    const alpha = 1 - (tick - s.tick) / activeShotDur;
-
-    // Chercher s'il y a un kill proche de ce tir (même tireur, tick proche)
-    const nearKill = (demoData.kills||[]).find(k =>
-      k.attacker === s.shooter &&
-      Math.abs((k.tick||0) - s.tick) < 20 &&
-      k.attackerX !== 0
-    );
-
-    if (nearKill) {
-      // Trait vers la victime
-      const {px:vx,py:vy} = w2c(nearKill.victimX, nearKill.victimY, rfMapName, W, H);
-      const dx = vx-px, dy = vy-py;
-      const dist = Math.sqrt(dx*dx+dy*dy)||1;
-      const len = Math.min(40, dist); // max 40px
-      rfCtx.strokeStyle=`rgba(255,220,60,${alpha*0.8})`;
-      rfCtx.lineWidth=1.5;
-      rfCtx.beginPath();
-      rfCtx.moveTo(px, py);
-      rfCtx.lineTo(px+dx/dist*len, py+dy/dist*len);
-      rfCtx.stroke();
-    } else {
-      // Pas de kill — trait court aléatoire basé sur position suivante du joueur
-      // Pas de kill — chercher direction depuis position du joueur dans le frame
-      const playerState = frame.players[s.shooter];
-      if (playerState) {
-        const pts = (demoData.positions[s.shooter]||[]);
-        const nextPt = pts.find(p => p.tick > s.tick);
-        if (nextPt) {
-          const {px:nx,py:ny} = w2c(nextPt.x, nextPt.y, rfMapName, W, H);
-          const dx=nx-px, dy=ny-py, dist=Math.sqrt(dx*dx+dy*dy)||1;
-          if(dist > 2) {
-            rfCtx.strokeStyle=`rgba(255,220,60,${alpha*0.6})`;
-            rfCtx.lineWidth=1.2; rfCtx.setLineDash([]);
-            rfCtx.beginPath(); rfCtx.moveTo(px,py); rfCtx.lineTo(px+dx/dist*25,py+dy/dist*25); rfCtx.stroke();
-          }
-        }
-      }
-    }
+  // Traits de tir basés sur les kills (ticks absolus fiables)
+  // Pour chaque kill dans une fenêtre de ±8 ticks autour du tick actuel
+  const SHOT_DUR = 8; // durée du trait en ticks (~62ms)
+  (demoData.kills||[]).forEach(k => {
+    const kt = k.tick||0;
+    if(kt === 0 || kt > tick + SHOT_DUR || kt < tick - SHOT_DUR) return;
+    if(!k.attackerX && !k.attackerY) return;
+    const alpha = Math.max(0, 1 - Math.abs(tick - kt) / SHOT_DUR);
+    const {px:ax,py:ay} = w2c(k.attackerX, k.attackerY, rfMapName, W, H);
+    const {px:vx,py:vy} = w2c(k.victimX,   k.victimY,   rfMapName, W, H);
+    if(!inBounds(ax,ay,W,H)) return;
+    const dx=vx-ax, dy=vy-ay, dist=Math.sqrt(dx*dx+dy*dy)||1;
+    const len=Math.min(50,dist);
+    // Trait lumineux
+    rfCtx.strokeStyle=`rgba(255,220,50,${alpha*0.85})`;
+    rfCtx.lineWidth=1.5; rfCtx.setLineDash([]);
+    rfCtx.beginPath(); rfCtx.moveTo(ax,ay); rfCtx.lineTo(ax+dx/dist*len,ay+dy/dist*len); rfCtx.stroke();
     // Flash de bouche
-    rfCtx.beginPath(); rfCtx.arc(px,py,4,0,Math.PI*2);
-    rfCtx.fillStyle=`rgba(255,240,100,${alpha*0.9})`; rfCtx.fill();
+    rfCtx.beginPath(); rfCtx.arc(ax,ay,4,0,Math.PI*2);
+    rfCtx.fillStyle=`rgba(255,240,100,${alpha})`; rfCtx.fill();
   });
+
+  // Tirs sans kill (shots) — si ticks absolus disponibles
+  const shotsAbsolute = shots.length > 0 && (shots[0].tick||0) > 10000;
+  if(shotsAbsolute) {
+    shots.forEach(s => {
+      if(!s.tick||(s.x===0&&s.y===0)) return;
+      if(s.tick > tick+SHOT_DUR || s.tick < tick-SHOT_DUR) return;
+      const alpha = Math.max(0, 1 - Math.abs(tick-s.tick)/SHOT_DUR);
+      const{px,py}=w2c(s.x,s.y,rfMapName,W,H);
+      if(!inBounds(px,py,W,H)) return;
+      rfCtx.beginPath();rfCtx.arc(px,py,3,0,Math.PI*2);
+      rfCtx.fillStyle=`rgba(255,230,80,${alpha*0.8})`;rfCtx.fill();
+    });
+  }
 
   // Trajectoire + effet grenades
   grenades.forEach(g => {
