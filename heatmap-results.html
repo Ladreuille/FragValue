@@ -293,6 +293,26 @@
     @media(max-width:700px){.ms-player-row,.ms-cols{grid-template-columns:1fr 70px 65px 65px}}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
+    /* ── HUD joueurs ── */
+    .rf-player{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:all .12s;border:1px solid transparent;margin-bottom:2px}
+    .rf-player:hover{background:rgba(255,255,255,.04)}
+    .rf-player.active{background:rgba(59,127,245,.06);border-color:rgba(59,127,245,.15)}
+    .rf-player-top{display:flex;align-items:center;gap:6px}
+    .rf-player-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .rf-player-name{font-family:var(--mono);font-size:11px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rf-player-kd{font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0}
+    .rf-player.dead .rf-player-name{opacity:.35;text-decoration:line-through}
+    .rf-player-hud{display:flex;flex-direction:column;gap:2px;padding-left:14px}
+    .rf-hud-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+    .rf-hp-bar{width:100%;height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-bottom:1px}
+    .rf-hp-fill{height:100%;border-radius:2px;transition:width .1s}
+    .rf-hud-weapon{font-family:var(--mono);font-size:9px;color:var(--gold);font-weight:600;flex:1}
+    .rf-hud-ammo{font-family:var(--mono);font-size:9px;color:var(--text3)}
+    .rf-hud-money{font-family:var(--mono);font-size:9px;color:var(--success)}
+    .rf-hud-icon{font-size:9px;opacity:.8}
+    .rf-hud-armor{font-family:var(--mono);font-size:9px;color:#60A5FA}
+    .rf-hud-hp{font-family:var(--mono);font-size:9px;font-weight:700}
+
     /* ── Layout replay-only ── */
     .replay-outer{display:flex;flex-direction:column;gap:0}
     .replay-map-row{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:start;margin-bottom:0}
@@ -1413,12 +1433,78 @@ function initRfPlayerList(){
   const players=demoData.playerStats||[];
   document.getElementById('rfPlayerList').innerHTML=players.map(p=>{
     const c=getColor(p.name);
-    return `<div class="rf-player active" id="rfp-${p.name.replace(/\s/g,'_')}" onclick="rfTogglePlayer('${p.name.replace(/'/g,"\'")}',this)">
-      <div class="rf-player-dot" style="background:${c.solid}"></div>
-      <div class="rf-player-name">${p.name.slice(0,14)}</div>
-      <div class="rf-player-kd">${p.kd}</div>
+    const id=p.name.replace(/[^a-zA-Z0-9]/g,'_');
+    return `<div class="rf-player active" id="rfp-${id}" onclick="rfTogglePlayer('${p.name.replace(/'/g,"\'")}',this)">
+      <div class="rf-player-top">
+        <div class="rf-player-dot" style="background:${c.solid}"></div>
+        <div class="rf-player-name">${p.name.slice(0,13)}</div>
+        <div class="rf-player-kd" id="rfkd-${id}">${p.kd}</div>
+      </div>
+      <div class="rf-hp-bar"><div class="rf-hp-fill" id="rfhp-${id}" style="width:100%;background:${c.solid}"></div></div>
+      <div class="rf-player-hud" id="rfhud-${id}">
+        <div class="rf-hud-row">
+          <span class="rf-hud-hp" id="rfhpval-${id}" style="color:${c.solid}">100</span>
+          <span class="rf-hud-armor" id="rfarmor-${id}">🛡️0</span>
+          <span class="rf-hud-money" id="rfmoney-${id}">$0</span>
+        </div>
+        <div class="rf-hud-row">
+          <span class="rf-hud-weapon" id="rfweap-${id}">-</span>
+          <span class="rf-hud-ammo" id="rfammo-${id}"></span>
+        </div>
+      </div>
     </div>`;
   }).join('');
+}
+
+function updateRfPlayerHUD(frame){
+  const players=demoData.playerStats||[];
+  players.forEach(p=>{
+    const id=p.name.replace(/[^a-zA-Z0-9]/g,'_');
+    const state=frame.players[p.name];
+    const el=document.getElementById('rfp-'+id);
+    if(!el)return;
+
+    if(!state||!state.alive){
+      el.classList.add('dead');
+      const hpFill=document.getElementById('rfhp-'+id);
+      if(hpFill)hpFill.style.width='0%';
+      return;
+    }
+    el.classList.remove('dead');
+
+    // HP bar
+    const hp=state.hp||0;
+    const hpFill=document.getElementById('rfhp-'+id);
+    if(hpFill){
+      hpFill.style.width=hp+'%';
+      hpFill.style.background=hp>50?'var(--success)':hp>25?'var(--gold)':'var(--danger)';
+    }
+    const hpVal=document.getElementById('rfhpval-'+id);
+    if(hpVal)hpVal.textContent=hp;
+
+    // Armor
+    const armorEl=document.getElementById('rfarmor-'+id);
+    if(armorEl){
+      const armor=state.armor||0;
+      const helmet=state.helmet?'⛑️':'🛡️';
+      armorEl.textContent=`${helmet}${armor}`;
+      armorEl.style.color=armor>0?'#60A5FA':'rgba(255,255,255,.3)';
+    }
+
+    // Money
+    const moneyEl=document.getElementById('rfmoney-'+id);
+    if(moneyEl)moneyEl.textContent=state.money?`$${state.money}`:'';
+
+    // Weapon
+    const weapEl=document.getElementById('rfweap-'+id);
+    if(weapEl){
+      const w=(state.weapon||'').replace('weapon_','').replace('_',' ');
+      weapEl.textContent=w||'-';
+    }
+    // Ammo
+    const ammoEl=document.getElementById('rfammo-'+id);
+    if(ammoEl)ammoEl.textContent=state.ammo?`${state.ammo}✦`:'';
+  });
 }
 
 let rfHiddenPlayers=new Set();
@@ -1669,12 +1755,20 @@ function rfBuildFrames(round){
         px = prev.x + dx*t;
         py = prev.y + dy*t;
       }
-      frame.players[name]={x:px,y:py,team:prev.team,alive:true};
+      frame.players[name]={
+        x:px, y:py, team:prev.team, alive:true,
+        hp:    prev.hp    ?? 100,
+        armor: prev.armor ?? 0,
+        helmet:prev.helmet?? 0,
+        weapon:prev.weapon?? '',
+        ammo:  prev.ammo  ?? 0,
+        money: prev.money ?? 0,
+      };
     });
     roundKills.forEach(k=>{
       if((k.tick||0)<=tick){
         if(frame.players[k.victim])frame.players[k.victim].alive=false;
-        frame.deaths.push({x:k.victimX,y:k.victimY});
+        frame.deaths.push({x:k.victimX,y:k.victimY,ax:k.attackerX,ay:k.attackerY});
       }
     });
     rfFrames.push(frame);
@@ -1704,10 +1798,20 @@ function rfDrawFrame(idx){
   if(rfMapImg){rfCtx.drawImage(rfMapImg,0,0,W,H);rfCtx.fillStyle='rgba(10,12,18,.35)';rfCtx.fillRect(0,0,W,H);}
   else{rfCtx.fillStyle='#0A0C12';rfCtx.fillRect(0,0,W,H);}
 
-  // Croix morts
+  // Croix morts + traits de tir
   frame.deaths.forEach(d=>{
     const{px,py}=w2c(d.x,d.y,rfMapName,W,H);
     if(!inBounds(px,py,W,H))return;
+    // Trait de tir attaquant → victime
+    if(d.ax!==undefined){
+      const{px:ax,py:ay}=w2c(d.ax,d.ay,rfMapName,W,H);
+      if(inBounds(ax,ay,W,H)){
+        rfCtx.strokeStyle='rgba(255,200,60,.6)';rfCtx.lineWidth=1;
+        rfCtx.setLineDash([4,3]);
+        rfCtx.beginPath();rfCtx.moveTo(ax,ay);rfCtx.lineTo(px,py);rfCtx.stroke();
+        rfCtx.setLineDash([]);
+      }
+    }
     rfCtx.strokeStyle='rgba(240,107,107,.8)';rfCtx.lineWidth=2;
     rfCtx.beginPath();rfCtx.moveTo(px-5,py-5);rfCtx.lineTo(px+5,py+5);rfCtx.stroke();
     rfCtx.beginPath();rfCtx.moveTo(px+5,py-5);rfCtx.lineTo(px-5,py+5);rfCtx.stroke();
@@ -1737,11 +1841,8 @@ function rfDrawFrame(idx){
   const secs=Math.round((frame.tick-(rfFrames[0]?.tick||0))/128);
   document.getElementById('rfTimeCur').textContent=`${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;
 
-  // Marquer morts dans panel joueurs
-  Object.entries(frame.players).forEach(([name,p])=>{
-    const el=document.getElementById(`rfp-${name.replace(/\s/g,'_')}`);
-    if(el)el.classList.toggle('dead',!p.alive);
-  });
+  // Mettre à jour HUD
+  updateRfPlayerHUD(frame);
 }
 
 function rfSetPlayPause(playing){
