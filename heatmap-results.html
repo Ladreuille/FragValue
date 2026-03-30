@@ -1340,7 +1340,7 @@ function seekReplay(e){const rect=document.getElementById('replayTimeline').getB
 // ══ REPLAY FULLSCREEN ════════════════════════════════════════════════════════
 let rfCanvas, rfCtx, rfMapImg=null, rfRound=null, rfFrames=[], rfIdx=0;
 let rfPlaying=false, rfTimer=null, rfSpeed=1, rfMapName='de_dust2';
-const RF_FPS=24;
+const RF_FPS=30;
 
 function getFirstRealRound(){
   const rounds = demoData.rounds||[];
@@ -1436,12 +1436,15 @@ function rfDrawEffects(frame, W, H) {
   const grenades = demoData.grenades || [];
   const shots    = demoData.shots    || [];
 
-  // Traits de tir : visible UNIQUEMENT pendant 8 ticks autour du kill
+  // Traits de tir : uniquement si l'attaquant est vivant dans ce frame
   const SHOT_DUR = 8;
   (demoData.kills||[]).forEach(k => {
     const kt = k.tick||0;
     if(kt === 0 || tick < kt || tick > kt + SHOT_DUR) return;
     if(!k.attackerX && !k.attackerY) return;
+    // Vérifier que l'attaquant est vivant dans ce frame
+    const attackerState = frame.players[k.attacker];
+    if(attackerState && !attackerState.alive) return;
     const alpha = Math.max(0, 1 - (tick - kt) / SHOT_DUR);
     const {px:ax,py:ay} = w2c(k.attackerX, k.attackerY, rfMapName, W, H);
     const {px:vx,py:vy} = w2c(k.victimX,   k.victimY,   rfMapName, W, H);
@@ -1666,7 +1669,7 @@ function rfBuildFrames(round){
 
   const span = Math.max(maxT - minT, 1);
   const durSec = span / 128;
-  const N = Math.min(900, Math.max(80, Math.round(durSec * RF_FPS)));
+  const N = Math.min(1800, Math.max(80, Math.round(durSec * RF_FPS)));
 
   // Seuil anti-traversée de mur : distance max entre 2 footsteps consécutifs
   // Au-delà, on téléporte directement (pas d'interpolation linéaire)
