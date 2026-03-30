@@ -1432,21 +1432,23 @@ function rfDrawEffects(tick, W, H) {
   const grenades = demoData.grenades || [];
   const shots    = demoData.shots    || [];
 
-  // Tirs actifs (flash de bouche) — visible 3 frames (~80ms)
-  const activeShotDur = 10; // ticks
+  // Tirs actifs (flash de bouche)
+  const activeShotDur = 15; // ticks (~120ms)
   shots.forEach(s => {
+    if (!s.tick || s.x === 0 && s.y === 0) return;
     if (s.tick > tick || s.tick < tick - activeShotDur) return;
     const {px,py} = w2c(s.x, s.y, rfMapName, W, H);
     if (!inBounds(px,py,W,H)) return;
     const alpha = 1 - (tick - s.tick) / activeShotDur;
-    // Flash de bouche : petit cercle jaune vif
+    // Halo externe
     rfCtx.beginPath();
-    rfCtx.arc(px, py, 5, 0, Math.PI*2);
-    rfCtx.fillStyle = `rgba(255,220,80,${alpha * 0.9})`;
+    rfCtx.arc(px, py, 7, 0, Math.PI*2);
+    rfCtx.fillStyle = `rgba(255,220,80,${alpha * 0.35})`;
     rfCtx.fill();
+    // Flash central
     rfCtx.beginPath();
-    rfCtx.arc(px, py, 3, 0, Math.PI*2);
-    rfCtx.fillStyle = `rgba(255,255,200,${alpha})`;
+    rfCtx.arc(px, py, 3.5, 0, Math.PI*2);
+    rfCtx.fillStyle = `rgba(255,255,180,${alpha * 0.95})`;
     rfCtx.fill();
   });
 
@@ -1455,7 +1457,10 @@ function rfDrawEffects(tick, W, H) {
     if (!g.detonTick || !g.endTick) return;
     const isActive = tick >= g.detonTick && tick <= g.endTick;
     if (!isActive) return;
-    const {px,py} = w2c(g.detonX||g.x, g.detonY||g.y, rfMapName, W, H);
+    // Utiliser position d'explosion (detonX/Y) — si identique au lanceur = fallback
+    const gx = (g.detonX && g.detonX !== g.x) ? g.detonX : g.x;
+    const gy = (g.detonY && g.detonY !== g.y) ? g.detonY : g.y;
+    const {px,py} = w2c(gx, gy, rfMapName, W, H);
     if (!inBounds(px,py,W,H)) return;
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
