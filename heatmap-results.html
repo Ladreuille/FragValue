@@ -1242,6 +1242,34 @@ function rfBuildFrames(round){
   }).join('');
 }
 
+function rfDrawEffects(tick,W,H){
+  const shots = demoData.shots||[];
+
+  // Shots : flash de bouche + trait court vers victime
+  const shotDur = 12; // ~100ms à 128tick/s
+  shots.forEach(s=>{
+    if(!s.tick||(s.x===0&&s.y===0)) return;
+    if(s.tick>tick||s.tick<tick-shotDur) return;
+    const{px,py}=w2c(s.x,s.y,rfMapName,W,H);
+    if(!inBounds(px,py,W,H)) return;
+    const alpha=1-(tick-s.tick)/shotDur;
+    // Chercher kill correspondant (même tireur, tick proche)
+    const kill=(demoData.kills||[]).find(k=>k.attacker===s.shooter&&Math.abs((k.tick||0)-s.tick)<15);
+    if(kill&&kill.victimX){
+      const{px:vx,py:vy}=w2c(kill.victimX,kill.victimY,rfMapName,W,H);
+      const dx=vx-px,dy=vy-py,dist=Math.sqrt(dx*dx+dy*dy)||1;
+      const len=Math.min(35,dist);
+      rfCtx.strokeStyle=`rgba(255,210,60,${alpha*0.75})`;
+      rfCtx.lineWidth=1.5;rfCtx.setLineDash([]);
+      rfCtx.beginPath();rfCtx.moveTo(px,py);rfCtx.lineTo(px+dx/dist*len,py+dy/dist*len);rfCtx.stroke();
+    }
+    // Flash de bouche
+    rfCtx.beginPath();rfCtx.arc(px,py,4,0,Math.PI*2);
+    rfCtx.fillStyle=`rgba(255,240,100,${alpha*0.9})`;rfCtx.fill();
+    rfCtx.beginPath();rfCtx.arc(px,py,7,0,Math.PI*2);
+    rfCtx.fillStyle=`rgba(255,220,60,${alpha*0.2})`;rfCtx.fill();
+  });
+
 function rfDrawGrenades(tick,W,H){
   (demoData.grenades||[]).forEach(g=>{
     if(!g.detonTick||!g.endTick)return;
@@ -1296,6 +1324,9 @@ function rfDrawGrenades(tick,W,H){
   });
 }
 
+  rfDrawGrenades(tick,W,H);
+}
+
 function rfDrawFrame(idx){
   if(!rfFrames.length||!rfCtx)return;
   const frame=rfFrames[Math.min(idx,rfFrames.length-1)];
@@ -1341,7 +1372,7 @@ function rfDrawFrame(idx){
   });
 
   // Effets grenades
-  if(demoData.grenades) rfDrawGrenades(frame.tick,W,H);
+  rfDrawEffects(frame.tick,W,H);
 
   // Timeline
   const pct=rfFrames.length>1?(idx/(rfFrames.length-1))*100:0;
