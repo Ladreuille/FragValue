@@ -1436,24 +1436,21 @@ function rfDrawEffects(frame, W, H) {
   const grenades = demoData.grenades || [];
   const shots    = demoData.shots    || [];
 
-  // Traits de tir basés sur les kills (ticks absolus fiables)
-  // Pour chaque kill dans une fenêtre de ±8 ticks autour du tick actuel
-  const SHOT_DUR = 8; // durée du trait en ticks (~62ms)
+  // Traits de tir : visible UNIQUEMENT pendant 8 ticks autour du kill
+  const SHOT_DUR = 8;
   (demoData.kills||[]).forEach(k => {
     const kt = k.tick||0;
-    if(kt === 0 || kt > tick + SHOT_DUR || kt < tick - SHOT_DUR) return;
+    if(kt === 0 || tick < kt || tick > kt + SHOT_DUR) return;
     if(!k.attackerX && !k.attackerY) return;
-    const alpha = Math.max(0, 1 - Math.abs(tick - kt) / SHOT_DUR);
+    const alpha = Math.max(0, 1 - (tick - kt) / SHOT_DUR);
     const {px:ax,py:ay} = w2c(k.attackerX, k.attackerY, rfMapName, W, H);
     const {px:vx,py:vy} = w2c(k.victimX,   k.victimY,   rfMapName, W, H);
     if(!inBounds(ax,ay,W,H)) return;
     const dx=vx-ax, dy=vy-ay, dist=Math.sqrt(dx*dx+dy*dy)||1;
     const len=Math.min(50,dist);
-    // Trait lumineux
     rfCtx.strokeStyle=`rgba(255,220,50,${alpha*0.85})`;
     rfCtx.lineWidth=1.5; rfCtx.setLineDash([]);
     rfCtx.beginPath(); rfCtx.moveTo(ax,ay); rfCtx.lineTo(ax+dx/dist*len,ay+dy/dist*len); rfCtx.stroke();
-    // Flash de bouche
     rfCtx.beginPath(); rfCtx.arc(ax,ay,4,0,Math.PI*2);
     rfCtx.fillStyle=`rgba(255,240,100,${alpha})`; rfCtx.fill();
   });
