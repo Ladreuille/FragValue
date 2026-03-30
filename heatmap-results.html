@@ -1480,38 +1480,91 @@ function rfDrawEffects(tick, W, H) {
     const type = g.type || '';
 
     if (type.includes('smoke')) {
-      // Smoke : cercle gris qui grandit
-      const r = 8 + progress * 28;
-      const alpha = progress < 0.1 ? progress * 10 * 0.7 : progress > 0.85 ? (1-progress)*6.7*0.7 : 0.7;
+      // SMOKE : grand nuage gris semi-transparent qui grossit progressivement
+      const r = 12 + progress * 32; // 12 → 44px
+      const alpha = progress < 0.08 ? progress/0.08*0.82
+                  : progress > 0.88 ? (1-progress)/0.12*0.82 : 0.82;
+      // Couche extérieure diffuse
       rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(180,180,180,${alpha})`; rfCtx.fill();
-      rfCtx.strokeStyle=`rgba(140,140,140,${alpha*0.6})`; rfCtx.lineWidth=1.5; rfCtx.stroke();
+      rfCtx.fillStyle=`rgba(160,160,160,${alpha*0.45})`; rfCtx.fill();
+      // Couche centrale opaque
+      rfCtx.beginPath(); rfCtx.arc(px,py,r*0.7,0,Math.PI*2);
+      rfCtx.fillStyle=`rgba(200,200,200,${alpha*0.75})`; rfCtx.fill();
+      // Contour
+      rfCtx.strokeStyle=`rgba(120,120,120,${alpha*0.5})`; rfCtx.lineWidth=1.5; rfCtx.stroke();
+      // Label "SMK"
+      rfCtx.fillStyle=`rgba(255,255,255,${alpha*0.8})`; rfCtx.font='bold 8px JetBrains Mono,monospace'; rfCtx.textAlign='center';
+      rfCtx.fillText('SMK',px,py+3);
+
     } else if (type.includes('flash')) {
-      // Flash : cercle blanc éclatant qui disparaît
-      const r = 6 + progress * 18;
-      const alpha = (1 - progress) * 0.9;
+      // FLASH : étoile blanche éclatante + halo cyan
+      const r = 4 + (1-progress)*22;
+      const alpha = Math.pow(1-progress, 0.5) * 0.95;
+      // Halo cyan externe
+      rfCtx.beginPath(); rfCtx.arc(px,py,r*1.4,0,Math.PI*2);
+      rfCtx.fillStyle=`rgba(180,240,255,${alpha*0.3})`; rfCtx.fill();
+      // Cercle blanc central
       rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
       rfCtx.fillStyle=`rgba(255,255,255,${alpha})`; rfCtx.fill();
+      // Rayons
+      for(let a=0;a<8;a++){
+        const angle=a*Math.PI/4, len=r*0.8;
+        rfCtx.strokeStyle=`rgba(255,255,220,${alpha*0.7})`; rfCtx.lineWidth=1.5;
+        rfCtx.beginPath(); rfCtx.moveTo(px+Math.cos(angle)*r*0.3,py+Math.sin(angle)*r*0.3);
+        rfCtx.lineTo(px+Math.cos(angle)*(r+len),py+Math.sin(angle)*(r+len)); rfCtx.stroke();
+      }
+
     } else if (type.includes('hegre')) {
-      // HE : explosion orange/rouge
-      const r = 4 + progress * 20;
-      const alpha = (1 - progress) * 0.85;
+      // HE : explosion avec onde de choc
+      const r = 3 + progress*24;
+      const alpha = Math.pow(1-progress,0.6)*0.9;
+      // Onde de choc orange
+      rfCtx.beginPath(); rfCtx.arc(px,py,r*1.3,0,Math.PI*2);
+      rfCtx.strokeStyle=`rgba(255,140,0,${alpha*0.6})`; rfCtx.lineWidth=2; rfCtx.stroke();
+      // Boule de feu centrale rouge→orange
       rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(255,${Math.round(120*(1-progress))},0,${alpha})`; rfCtx.fill();
+      const hg = rfCtx.createRadialGradient(px,py,0,px,py,r);
+      hg.addColorStop(0,`rgba(255,255,100,${alpha})`);
+      hg.addColorStop(0.5,`rgba(255,100,0,${alpha})`);
+      hg.addColorStop(1,`rgba(200,0,0,${alpha*0.5})`);
+      rfCtx.fillStyle=hg; rfCtx.fill();
+      // Label "HE"
+      if(progress<0.5){rfCtx.fillStyle=`rgba(255,255,255,${alpha})`; rfCtx.font='bold 8px JetBrains Mono,monospace'; rfCtx.textAlign='center'; rfCtx.fillText('HE',px,py+3);}
+
     } else if (type.includes('molotov') || type.includes('incgren')) {
-      // Molotov : flammes oranges animées
-      const r = 10 + Math.sin(tick*0.3)*3;
-      const alpha = 0.75;
+      // MOLOTOV : zone de feu animée
+      const r = 14 + Math.sin(tick*0.15)*2;
+      const alpha = 0.85;
+      // Zone brûlante orange
       rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(255,80,0,${alpha})`; rfCtx.fill();
-      rfCtx.beginPath(); rfCtx.arc(px,py,r*0.6,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(255,200,0,${alpha})`; rfCtx.fill();
+      const mg = rfCtx.createRadialGradient(px,py,0,px,py,r);
+      mg.addColorStop(0,`rgba(255,220,0,${alpha})`);
+      mg.addColorStop(0.5,`rgba(255,80,0,${alpha*0.9})`);
+      mg.addColorStop(1,`rgba(180,20,0,${alpha*0.4})`);
+      rfCtx.fillStyle=mg; rfCtx.fill();
+      // Particules de feu animées
+      for(let f=0;f<6;f++){
+        const fa=f*Math.PI/3+tick*0.08, fr=r*0.5+Math.sin(tick*0.2+f)*r*0.3;
+        rfCtx.beginPath(); rfCtx.arc(px+Math.cos(fa)*fr*0.7, py+Math.sin(fa)*fr*0.7, 2.5,0,Math.PI*2);
+        rfCtx.fillStyle=`rgba(255,${150+Math.round(Math.sin(tick*0.3+f)*80)},0,0.9)`; rfCtx.fill();
+      }
+      // Label "MOLO"
+      rfCtx.fillStyle='rgba(255,255,200,0.9)'; rfCtx.font='bold 7px JetBrains Mono,monospace'; rfCtx.textAlign='center';
+      rfCtx.fillText('MOLO',px,py+3);
+
     } else if (type.includes('decoy')) {
-      // Decoy : point rouge clignotant
-      const blink = Math.sin(tick * 0.5) > 0 ? 0.9 : 0.4;
+      // DECOY : point rouge avec signal radar clignotant
+      const blink = (Math.sin(tick*0.4)>0);
       rfCtx.beginPath(); rfCtx.arc(px,py,5,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(255,50,50,${blink})`; rfCtx.fill();
-      rfCtx.strokeStyle='rgba(255,150,150,0.6)'; rfCtx.lineWidth=1.5; rfCtx.stroke();
+      rfCtx.fillStyle=`rgba(255,50,50,${blink?0.95:0.5})`; rfCtx.fill();
+      rfCtx.strokeStyle='rgba(255,120,120,0.7)'; rfCtx.lineWidth=1.5; rfCtx.stroke();
+      // Ondes radar
+      if(blink){
+        for(let w=1;w<=2;w++){
+          rfCtx.beginPath(); rfCtx.arc(px,py,5+w*6,0,Math.PI*2);
+          rfCtx.strokeStyle=`rgba(255,80,80,${0.4/w})`; rfCtx.lineWidth=1; rfCtx.stroke();
+        }
+      }
     }
   });
 }
