@@ -293,26 +293,6 @@
     @media(max-width:700px){.ms-player-row,.ms-cols{grid-template-columns:1fr 70px 65px 65px}}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-    /* ── HUD joueurs ── */
-    .rf-player{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:all .12s;border:1px solid transparent;margin-bottom:2px}
-    .rf-player:hover{background:rgba(255,255,255,.04)}
-    .rf-player.active{background:rgba(59,127,245,.06);border-color:rgba(59,127,245,.15)}
-    .rf-player-top{display:flex;align-items:center;gap:6px}
-    .rf-player-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-    .rf-player-name{font-family:var(--mono);font-size:11px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .rf-player-kd{font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0}
-    .rf-player.dead .rf-player-name{opacity:.35;text-decoration:line-through}
-    .rf-player-hud{display:flex;flex-direction:column;gap:2px;padding-left:14px}
-    .rf-hud-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-    .rf-hp-bar{width:100%;height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-bottom:1px}
-    .rf-hp-fill{height:100%;border-radius:2px;transition:width .1s}
-    .rf-hud-weapon{font-family:var(--mono);font-size:9px;color:var(--gold);font-weight:600;flex:1}
-    .rf-hud-ammo{font-family:var(--mono);font-size:9px;color:var(--text3)}
-    .rf-hud-money{font-family:var(--mono);font-size:9px;color:var(--success)}
-    .rf-hud-icon{font-size:9px;opacity:.8}
-    .rf-hud-armor{font-family:var(--mono);font-size:9px;color:#60A5FA}
-    .rf-hud-hp{font-family:var(--mono);font-size:9px;font-weight:700}
-
     /* ── Layout replay-only ── */
     .replay-outer{display:flex;flex-direction:column;gap:0}
     .replay-map-row{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:start;margin-bottom:0}
@@ -372,32 +352,6 @@
     .psc-round-result{margin-left:auto;font-weight:600}
     .psc-round-result.w{color:var(--success)}.psc-round-result.l{color:var(--danger)}
     @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-
-    /* ── Highlights bloc ── */
-    .highlights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:20px}
-    .hl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px}
-    .hl-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
-    .hl-body{min-width:0}
-    .hl-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;font-family:var(--mono);margin-bottom:3px}
-    .hl-name{font-size:14px;font-weight:700;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .hl-val{font-family:var(--mono);font-size:12px;color:var(--text2);margin-top:1px}
-
-    /* ── Tableau équipes étendu ── */
-    .ms-cols{display:grid;grid-template-columns:1fr 80px 65px 60px 70px 60px 60px 80px;align-items:center;padding:0 20px;border-bottom:1px solid rgba(37,42,56,.4)}
-    .ms-player-row{display:grid;grid-template-columns:1fr 80px 65px 60px 70px 60px 60px 80px;align-items:center;padding:10px 20px;border-bottom:1px solid rgba(37,42,56,.35);transition:background .12s;cursor:pointer}
-    .ms-player-row:last-child{border-bottom:none}
-    .ms-player-row:hover{background:rgba(255,255,255,.02)}
-    @media(max-width:900px){.ms-player-row,.ms-cols{grid-template-columns:1fr 70px 60px 55px 65px 55px}}
-
-    /* ── Graphique barres FV Rating ── */
-    .perf-chart{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-top:20px}
-    .perf-chart-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);margin-bottom:14px}
-    .perf-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
-    .perf-bar-name{font-family:var(--mono);font-size:11px;color:var(--text2);width:110px;flex-shrink:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .perf-bar-track{flex:1;height:18px;background:var(--card);border-radius:4px;overflow:hidden;position:relative}
-    .perf-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;min-width:2px}
-    .perf-bar-val{font-family:var(--mono);font-size:11px;font-weight:700;width:36px;flex-shrink:0;text-align:left}
-    .perf-ref-line{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.15);pointer-events:none}
   </style>
 </head>
 <body>
@@ -410,7 +364,7 @@
   </div>
 </nav>
 
-<div id="noData" class="no-data" style="display:none!important">
+<div id="noData" class="no-data" style="display:none">
   <div class="no-data-title">Aucune démo analysée</div>
   <p class="no-data-sub">Importe d'abord une démo depuis la page d'analyse.</p>
   <a href="demo.html" class="no-data-btn">Analyser une démo</a>
@@ -420,6 +374,8 @@
   <!-- Canvas caché pour compatibilité JS (rendu dans le fullscreen uniquement) -->
   <canvas id="heatmapCanvas" style="display:none" width="1024" height="1024"></canvas>
 
+  <!-- HEADER MATCH -->
+  <div class="match-header" id="matchHeader"></div>
 
   <!-- TOGGLE SIDE : Both / CT / T -->
   <div class="side-filter-bar">
@@ -435,18 +391,26 @@
     </button>
   </div>
 
-  <!-- HIGHLIGHTS DU MATCH -->
-  <div class="highlights-grid" id="highlightsBlock"></div>
-
   <!-- STATS PAR EQUIPE (style HLTV) -->
   <div id="matchStatsBlock"></div>
 
-  <!-- GRAPHIQUE PERFORMANCE -->
-  <div class="perf-chart" id="perfChart" style="display:none">
-    <div class="perf-chart-title">Performance — FV Rating</div>
-    <div id="perfBars"></div>
+  <!-- STATS INDIVIDUELLES -->
+  <div class="section-label" style="margin-top:28px">Analyse individuelle</div>
+  <div class="table-card">
+    <table>
+      <thead><tr>
+        <th style="width:20px"></th>
+        <th>Joueur</th>
+        <th>K-D</th>
+        <th>ADR</th>
+        <th>KAST</th>
+        <th style="color:var(--success);font-weight:700">FV Rating</th>
+        <th>HS%</th>
+        <th>WB</th>
+      </tr></thead>
+      <tbody id="playersTable"></tbody>
+    </table>
   </div>
-
 </div>
 
 <!-- REPLAY FULLSCREEN -->
@@ -511,8 +475,8 @@
         <div class="rf-tl-thumb" id="rfThumb" style="left:0%"></div>
       </div>
       <div class="rf-speeds">
-        <button class="rfs" onclick="rfSetSpeed(0.5,this)">0.5×</button>
-        <button class="rfs on" onclick="rfSetSpeed(1,this)">1×</button>
+        <button class="rfs on" onclick="rfSetSpeed(0.5,this)">0.5×</button>
+        <button class="rfs" onclick="rfSetSpeed(1,this)">1×</button>
         <button class="rfs" onclick="rfSetSpeed(2,this)">2×</button>
         <button class="rfs" onclick="rfSetSpeed(4,this)">4×</button>
       </div>
@@ -571,32 +535,6 @@ function showPlayerStats(name){
   const ctKills=playerKills.filter(k=>k.attackerTeam===2).length;
   const tKills=playerKills.filter(k=>k.attackerTeam===3).length;
 
-  // First kills
-  const firstKills = (()=>{
-    let count=0;
-    rounds.forEach((_,i)=>{
-      const r=i+1, rk=kills.filter(k=>k.round===r);
-      if(!rk.length)return;
-      const fk=rk.reduce((a,b)=>a.tick<=b.tick?a:b);
-      if(fk.attacker===name)count++;
-    });
-    return count;
-  })();
-
-  // Clutches (1vX) : rounds où le joueur a eu le dernier kill alors que seul côté adversaire
-  let clutches=0;
-  rounds.forEach((_,i)=>{
-    const r=i+1;
-    const rKills=kills.filter(k=>k.round===r);
-    const myKills=rKills.filter(k=>k.attacker===name);
-    if(myKills.length>=2){
-      // vérifie si le joueur a fait un kill après que ses teammates soient morts
-      const myTeam=playerKills.length>0?(playerKills.filter(k=>k.attackerTeam===2).length>=playerKills.filter(k=>k.attackerTeam===3).length?2:3):2;
-      const teamDeaths=rKills.filter(k=>k.victimTeam===myTeam&&k.victim!==name).length;
-      if(teamDeaths>=4&&myKills.length>=1)clutches++;
-    }
-  });
-
   // Stats par round
   const roundStats={};
   playerKills.forEach(k=>{if(!roundStats[k.round])roundStats[k.round]={k:0,hs:0,d:0};roundStats[k.round].k++;if(k.isHeadshot)roundStats[k.round].hs++;});
@@ -615,8 +553,7 @@ function showPlayerStats(name){
     </div>`;
   }).join('');
 
-  const pscEl=document.getElementById('playerStatsCard');if(!pscEl)return;
-  pscEl.innerHTML=`
+  document.getElementById('playerStatsCard').innerHTML=`
     <div class="psc-header">
       <div class="psc-dot" style="background:${color.solid}"></div>
       <div class="psc-name">${name}</div>
@@ -626,9 +563,6 @@ function showPlayerStats(name){
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--accent)">${playerKills.length}</div><div class="psc-stat-lbl">Kills</div></div>
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--danger)">${playerDeaths.length}</div><div class="psc-stat-lbl">Deaths</div></div>
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--gold)">${hsPct}%</div><div class="psc-stat-lbl">HS%</div></div>
-      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--accent)">${Math.round(playerKills.length*80/(rounds.length||1))}</div><div class="psc-stat-lbl">ADR</div></div>
-      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--success)">${firstKills}</div><div class="psc-stat-lbl">First kills</div></div>
-      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--gold)">${clutches}</div><div class="psc-stat-lbl">Clutches</div></div>
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--success)">${ctKills}</div><div class="psc-stat-lbl">Kills CT</div></div>
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--gold)">${tKills}</div><div class="psc-stat-lbl">Kills T</div></div>
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--text2)">${wb}</div><div class="psc-stat-lbl">Wallbangs</div></div>
@@ -639,32 +573,9 @@ function showPlayerStats(name){
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:3px">${roundRows}</div>
     </div>`;
 
-  const psp=document.getElementById('playerStatsPanel');if(psp)psp.style.display='block';
+  document.getElementById('playerStatsPanel').style.display='block';
   // Scroll doux vers les stats
-  setTimeout(()=>{const _psp=document.getElementById('playerStatsPanel');if(_psp)_psp.scrollIntoView({behavior:'smooth',block:'nearest'});},100);
-}
-
-// Décompresse les kills au format compact (champs courts) → format long
-function expandKills(kills){
-  if(!kills||!kills.length)return kills;
-  // Détecter si déjà au format long (présence de 'attacker')
-  if(kills[0].attacker!==undefined)return kills;
-  return kills.map(k=>({
-    round:       k.r  ?? 0,
-    tick:        k.t  ?? 0,
-    attacker:    k.a  || 'Unknown',
-    attackerTeam:k.at ?? 0,
-    attackerX:   k.ax ?? 0,
-    attackerY:   k.ay ?? 0,
-    victim:      k.v  || 'Unknown',
-    victimTeam:  k.vt ?? 0,
-    victimX:     k.vx ?? 0,
-    victimY:     k.vy ?? 0,
-    weapon:      k.w  || '',
-    isHeadshot:  !!k.h,
-    thruSmoke:   !!k.s,
-    isWallbang:  !!k.wb,
-  }));
+  setTimeout(()=>document.getElementById('playerStatsPanel').scrollIntoView({behavior:'smooth',block:'nearest'}),100);
 }
 
 window.addEventListener('load',()=>{
@@ -674,15 +585,18 @@ window.addEventListener('load',()=>{
   if(!raw){document.getElementById('noData').style.display='block';return;}
   try{
     demoData=JSON.parse(raw);
-    // Décompresser les kills si envoyés en format compact par le parser
-    if(demoData.kills) demoData.kills=expandKills(demoData.kills);
-    document.getElementById('noData').style.display='none';document.getElementById('mainContent').style.display='block';
+    document.getElementById('mainContent').style.display='block';
     assignPlayerColors();
     const target=demoData.meta?.targetPlayer;
     if(target) activePlayers.add(target);
     renderMeta(); renderMatchStats(); renderPlayerList();
     loadMapImageThenDraw(); initRoundsBar();
-  }catch(e){console.error('heatmap-results init error:',e);}
+    // Activer le replay par défaut
+    setTimeout(() => {
+      const replayTab = document.getElementById('tabReplay');
+      switchHeatmap('replay', replayTab);
+    }, 500);
+  }catch(e){console.error(e);document.getElementById('noData').style.display='block';}
 });
 
 function assignPlayerColors(){(demoData.playerStats||[]).forEach((p,i)=>{playerColorMap[p.name]=i%PLAYER_COLORS.length;});}
@@ -691,7 +605,7 @@ function togglePlayer(name){
   if(activePlayers.has(name)){
     activePlayers.delete(name);
     // Si on désélectionne le joueur affiché dans le panel → cacher le panel
-    if(currentStatsPlayer===name){currentStatsPlayer=null;const _p=document.getElementById('playerStatsPanel');if(_p)_p.style.display='none';}
+    if(currentStatsPlayer===name){currentStatsPlayer=null;document.getElementById('playerStatsPanel').style.display='none';}
   }else{
     if(activePlayers.size>=5)return;
     activePlayers.add(name);
@@ -702,9 +616,7 @@ function togglePlayer(name){
 }
 function selectNone(){activePlayers.clear();renderPlayerList();renderHeatmap();}
 function w2c(wx,wy,map,W,H){
-  // Normaliser le nom de map (enlever préfixes workshop, casse, espaces)
-  const normMap = (map||'').toLowerCase().replace(/^.*\//, '').trim();
-  const cfg=MAP_CONFIG[normMap]||MAP_CONFIG[map];
+  const cfg=MAP_CONFIG[map];
   if(!cfg)return{px:W/2,py:H/2};
   const c=cfg.upper?(currentFloor==='upper'?cfg.upper:cfg.lower):cfg;
   // Formule Valve : pixel = (world - origin) / scale
@@ -715,19 +627,14 @@ function w2c(wx,wy,map,W,H){
 }
 function inBounds(px,py,W,H){return px>=0&&px<=W&&py>=0&&py<=H;}
 
-function getMapImgPath(){
-  const rawMap=demoData.meta?.map||'de_dust2';
-  const normMap=rawMap.toLowerCase().replace(/^.*\//,'').trim();
-  const cfg=MAP_CONFIG[normMap]||MAP_CONFIG[rawMap];if(!cfg)return null;if(cfg.upper)return currentFloor==='upper'?cfg.upper.img:cfg.lower.img;return cfg.img||null;}
+function getMapImgPath(){const cfg=MAP_CONFIG[demoData.meta?.map||'de_dust2'];if(!cfg)return null;if(cfg.upper)return currentFloor==='upper'?cfg.upper.img:cfg.lower.img;return cfg.img||null;}
 function loadMapImageThenDraw(){
-  const rawMapName=demoData.meta?.map||'de_dust2';
-  const mapName=rawMapName.toLowerCase().replace(/^.*\//,'').trim();
-  const floorToggleEl=document.getElementById('floorToggle');
-  if(floorToggleEl)floorToggleEl.classList.toggle('visible',!!(MAP_CONFIG[mapName]?.upper));
+  const mapName=demoData.meta?.map||'de_dust2';
+  document.getElementById('floorToggle').classList.toggle('visible',!!(MAP_CONFIG[mapName]?.upper));
   const imgPath=getMapImgPath();
   const notice=document.getElementById('mapNotice');
-  if(!imgPath){mapImage=null;if(notice)notice.textContent=`Radar non disponible pour ${mapName}`;renderHeatmap();return;}
-  if(notice)notice.textContent='';
+  if(!imgPath){mapImage=null;notice.textContent=`Radar non disponible pour ${mapName}`;renderHeatmap();return;}
+  notice.textContent='';
   const img=new Image();
   img.onload=()=>{mapImage=img;canvas.width=img.width;canvas.height=img.height;renderHeatmap();};
   img.onerror=()=>{mapImage=null;notice.textContent=`Image introuvable : ${imgPath}`;renderHeatmap();};
@@ -820,8 +727,7 @@ function updateLegend(){
   if(currentHeatmap==='utility')items=[{color:'rgba(245,200,66,.9)',label:'Flash'},{color:'rgba(45,212,160,.8)',label:'Smoke'},{color:'rgba(240,107,107,.85)',label:'HE'},{color:'rgba(237,160,32,.85)',label:'Molotov'}];
   else if(currentHeatmap==='duels')items=[{color:'#2DD4A0',label:'>65%'},{color:'#F5C842',label:'45-65%'},{color:'#F06B6B',label:'<45%'}];
   else{items=[...activePlayers].map(n=>({color:getColor(n).solid,label:n}));if(showCT)items.push({color:'#4A9EFF',label:'CT'});if(showT)items.push({color:'#F5C842',label:'T'});}
-  const mlEl=document.getElementById('mapLegend');if(!mlEl)return;
-  mlEl.innerHTML=items.map(i=>`<div class="legend-item"><div class="legend-dot" style="background:${i.color}"></div>${i.label}</div>`).join('');
+  document.getElementById('mapLegend').innerHTML=items.map(i=>`<div class="legend-item"><div class="legend-dot" style="background:${i.color}"></div>${i.label}</div>`).join('');
 }
 
 let currentSideFilter = 'both';
@@ -834,9 +740,9 @@ function setSideFilter(side, btn) {
 }
 
 function renderMeta(){
+  const m=demoData.meta;
   const el=document.getElementById('matchHeader');
   if(!el)return;
-  const m=demoData.meta;
   const rounds=demoData.rounds||[];
   const ctWins=rounds.filter(r=>r.winner===2).length;
   const tWins=rounds.filter(r=>r.winner===3).length;
@@ -860,217 +766,51 @@ function calcFvRating(kills, deaths, assists, rounds) {
   return parseFloat((0.0073*kast*100 + 0.3591*kpr - 0.5329*dpr + 0.2372*(2.13*kpr+0.42*apr-0.41) + 0.0032*70 + 0.1587).toFixed(2));
 }
 
-function calcKAST(name, kills, rounds) {
-  // KAST : % de rounds où le joueur a eu un Kill, Assist, Survived ou was Traded
-  // Approximation : rounds avec kill ou round survived (pas mort)
-  const totalR = rounds.length || 1;
-  let kastRounds = 0;
-  rounds.forEach((rd, i) => {
-    const r = i + 1;
-    const hadKill  = kills.some(k => k.round === r && k.attacker === name);
-    const wasDead  = kills.some(k => k.round === r && k.victim   === name);
-    const survived = !wasDead;
-    if (hadKill || survived) kastRounds++;
-  });
-  return Math.round(kastRounds / totalR * 100);
-}
-
-function renderHighlights(kills, playerStats, rounds) {
-  const el = document.getElementById('highlightsBlock');
-  if (!el) return;
-  const totalR = rounds.length || 1;
-
-  // Calculs par joueur
-  const stats = playerStats.map(p => {
-    const pK = kills.filter(k => k.attacker === p.name);
-    const awpK = pK.filter(k => k.weapon && k.weapon.includes('awp')).length;
-    // First kill = premier kill du round (tick le plus bas par round)
-    let firstKills = 0;
-    const roundsWithKill = {};
-    pK.forEach(k => {
-      if (!roundsWithKill[k.round] || k.tick < roundsWithKill[k.round].tick)
-        roundsWithKill[k.round] = k;
-    });
-    firstKills = Object.values(roundsWithKill).filter(k => {
-      const roundKills = kills.filter(x => x.round === k.round);
-      const minTick = Math.min(...roundKills.map(x => x.tick));
-      return k.tick === minTick;
-    }).length;
-    const adr = Math.round(pK.length * 80 / totalR);
-    const fvr = calcFvRating(p.kills, p.deaths, 0, totalR);
-    return { name: p.name, kills: p.kills, adr, awpK, firstKills, fvr };
-  });
-
-  const most = (arr, key) => arr.reduce((a, b) => a[key] >= b[key] ? a : b, arr[0] || {});
-  const best = [
-    { label:'Most kills',
-      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#F06B6B" stroke-width="1.5" width="18" height="18">
-        <path d="M10 3a4 4 0 100 8 4 4 0 000-8z"/>
-        <path d="M8 9l-4 8h12l-4-8" stroke-linejoin="round"/>
-        <line x1="10" y1="11" x2="10" y2="17" stroke-linecap="round"/>
-      </svg>`, bg:'rgba(240,107,107,.12)', p: most(stats,'kills'), val: s => s.kills+' kills' },
-    { label:'Most damage',
-      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#F5C842" stroke-width="1.5" width="18" height="18">
-        <path d="M3 10h3l2-6 4 12 2-6h3" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>`, bg:'rgba(245,200,66,.12)', p: most(stats,'adr'), val: s => s.adr+' ADR' },
-    { label:'Most AWP kills',
-      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#3B7FF5" stroke-width="1.5" width="18" height="18">
-        <path d="M2 11h10l2-3 1 3h3" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="5" cy="11" r="2" fill="rgba(59,127,245,.3)"/>
-        <line x1="14" y1="8" x2="14" y2="5" stroke-linecap="round"/>
-      </svg>`, bg:'rgba(59,127,245,.12)', p: most(stats,'awpK'), val: s => s.awpK+' kills' },
-    { label:'Most 1st kills',
-      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#2DD4A0" stroke-width="1.5" width="18" height="18">
-        <polygon points="10,2 12,8 18,8 13,12 15,18 10,14 5,18 7,12 2,8 8,8" stroke-linejoin="round"/>
-        <line x1="10" y1="2" x2="10" y2="6" stroke="#2DD4A0" stroke-width="2.5" stroke-linecap="round"/>
-      </svg>`, bg:'rgba(45,212,160,.12)', p: most(stats,'firstKills'), val: s => s.firstKills+' rounds' },
-    { label:'Best FV Rating',
-      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#A76EF5" stroke-width="1.5" width="18" height="18">
-        <rect x="3" y="12" width="3" height="6" rx="1" fill="rgba(167,110,245,.3)"/>
-        <rect x="8.5" y="7" width="3" height="11" rx="1" fill="rgba(167,110,245,.3)"/>
-        <rect x="14" y="3" width="3" height="15" rx="1" fill="rgba(167,110,245,.5)"/>
-        <polyline points="3,12 8.5,7 14,3" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>`, bg:'rgba(167,110,245,.12)', p: most(stats,'fvr'), val: s => s.fvr.toFixed(2) },
-  ];
-  el.innerHTML = best.filter(b => b.p && b.p.name).map(b =>
-    `<div class="hl-card">
-      <div class="hl-icon" style="background:${b.bg};display:flex;align-items:center;justify-content:center">${b.icon}</div>
-      <div class="hl-body">
-        <div class="hl-label">${b.label}</div>
-        <div class="hl-name">${b.p.name}</div>
-        <div class="hl-val">${b.val(b.p)}</div>
-      </div>
-    </div>`
-  ).join('');
-}
-
-function renderPerfChart(playerStats, kills, rounds) {
-  const el = document.getElementById('perfChart');
-  const barsEl = document.getElementById('perfBars');
-  if (!el || !barsEl) return;
-  const totalR = rounds.length || 1;
-  const data = playerStats.map(p => ({
-    name: p.name,
-    fvr: calcFvRating(p.kills, p.deaths, 0, totalR),
-    color: getColor(p.name).solid,
-  })).sort((a, b) => b.fvr - a.fvr);
-  const maxFvr = Math.max(...data.map(d => d.fvr), 2);
-  const REF = 1.0; // ligne de référence "average"
-  barsEl.innerHTML = data.map(d => {
-    const pct = Math.min(100, (d.fvr / maxFvr) * 100);
-    const refPct = Math.min(100, (REF / maxFvr) * 100);
-    const cls = d.fvr >= 1.15 ? 'var(--success)' : d.fvr >= 0.9 ? 'var(--gold)' : 'var(--danger)';
-    return `<div class="perf-bar-row">
-      <div class="perf-bar-name">${d.name}</div>
-      <div class="perf-bar-track">
-        <div class="perf-bar-fill" style="width:${pct}%;background:${cls}"></div>
-        <div class="perf-ref-line" style="left:${refPct}%"></div>
-      </div>
-      <div class="perf-bar-val" style="color:${cls}">${d.fvr.toFixed(2)}</div>
-    </div>`;
-  }).join('');
-  el.style.display = 'block';
-}
-
 function renderMatchStats() {
   if (!demoData) return;
   const kills = demoData.kills || [];
-  const allRounds = demoData.rounds || [];
+  const rounds = (demoData.rounds||[]).length || 1;
   const players = demoData.playerStats || [];
   const sf = currentSideFilter;
-  const totalR = allRounds.length || 1;
 
-  // Rounds par side
-  const sideRounds = sf === 'ct' ? allRounds.filter((_,i)=>i<Math.ceil(totalR/2))
-                   : sf === 't'  ? allRounds.filter((_,i)=>i>=Math.ceil(totalR/2))
-                   : allRounds;
-  const numR = sideRounds.length || 1;
-
-  // Filtres kills par side attaquant / victime
-  const sideKillsFor    = k => sf==='both'||( sf==='ct'?k.attackerTeam===2:k.attackerTeam===3);
-  const sideKillsAgainst= k => sf==='both'||( sf==='ct'?k.victimTeam===2  :k.victimTeam===3);
-
-  // Attribution équipe : score CT vs T par joueur, puis partition stricte 5/5
-  const teamScores = players.map(p => {
-    const sCT = kills.filter(k=>(k.attacker===p.name&&k.attackerTeam===2)||(k.victim===p.name&&k.victimTeam===2)).length;
-    const sT  = kills.filter(k=>(k.attacker===p.name&&k.attackerTeam===3)||(k.victim===p.name&&k.victimTeam===3)).length;
-    return { name: p.name, ctScore: sCT, tScore: sT, diff: sCT - sT };
-  }).sort((a,b) => b.diff - a.diff); // plus CT en premier
-  const half = Math.ceil(teamScores.length / 2);
-  const ctSet = new Set(teamScores.slice(0, half).map(p => p.name));
-  const getPlayerTeam = name => ctSet.has(name) ? 2 : 3;
-
-  // First kill par round (approximation : kill avec tick minimum du round)
-  const firstKillMap = {};
-  allRounds.forEach((_,i) => {
-    const r = i+1;
-    const rk = kills.filter(k=>k.round===r);
-    if (rk.length) {
-      const fk = rk.reduce((a,b) => a.tick<=b.tick ? a : b);
-      firstKillMap[r] = fk.attacker;
-    }
+  // Filtrer kills selon le side
+  const filteredKills = kills.filter(k => {
+    if (sf === 'both') return true;
+    if (sf === 'ct')   return k.attackerTeam === 2;
+    if (sf === 't')    return k.attackerTeam === 3;
+    return true;
   });
 
+  // Grouper les joueurs par équipe
   const teamPlayers = {2: [], 3: []};
   players.forEach(p => {
-    const team = getPlayerTeam(p.name);
-    const sKills  = kills.filter(k => k.attacker===p.name && sideKillsFor(k));
-    const sDeaths = kills.filter(k => k.victim===p.name   && sideKillsAgainst(k));
-    const hsCount = sKills.filter(k => k.isHeadshot).length;
-    const hsPct   = sKills.length > 0 ? Math.round(hsCount/sKills.length*100) : 0;
-    const adr     = Math.round(sKills.length * 80 / numR);
-    const kast    = calcKAST(p.name, kills, sideRounds);
-    const fvr     = calcFvRating(sKills.length, sDeaths.length, 0, numR);
+    const pKills = kills.filter(k => k.attacker === p.name);
+    const team = pKills.length > 0
+      ? (pKills.filter(k=>k.attackerTeam===2).length >= pKills.filter(k=>k.attackerTeam===3).length ? 2 : 3)
+      : 2;
+    // Stats selon filtre side
+    const sKills  = filteredKills.filter(k => k.attacker === p.name);
+    const sDeaths = filteredKills.filter(k => k.victim   === p.name);
+    const hs      = sKills.filter(k => k.isHeadshot).length;
+    const hsPct   = sKills.length > 0 ? Math.round(hs/sKills.length*100) : 0;
+    // ADR approximé (ADR = kills * 80 + assists * 30) / rounds — proxy sans vraies données
+    const assists = kills.filter(k => false).length; // pas de données assists dans kills
+    const fvr     = calcFvRating(sKills.length, sDeaths.length, 0, rounds);
     const kd      = `${sKills.length}-${sDeaths.length}`;
     const kdNum   = sDeaths.length > 0 ? sKills.length/sDeaths.length : sKills.length;
-
-    // Opening K-D : premier duel de chaque round (kill avec tick minimum du round)
-    let opK = 0, opD = 0;
-    sideRounds.forEach((_, i) => {
-      const r = i + 1;
-      const rk = kills.filter(k => k.round === r);
-      if (!rk.length) return;
-      const fk = rk.reduce((a, b) => (a.tick||0) <= (b.tick||0) ? a : b);
-      if (fk.attacker === p.name) opK++;
-      else if (fk.victim === p.name) opD++;
+    teamPlayers[team].push({
+      name: p.name,
+      kd, kdNum,
+      kills: sKills.length,
+      deaths: sDeaths.length,
+      hsPct,
+      fvr,
+      color: getColor(p.name).solid,
     });
-    const opKdNum = opD > 0 ? opK / opD : opK;
-    const duelPct = (opK + opD) > 0 ? Math.round(opK / (opK + opD) * 100) : 0;
-
-    // Multi-kills : rounds avec 2+ kills
-    const mks = sideRounds.reduce((acc, _, i) => {
-      const r = i + 1;
-      return acc + (sKills.filter(k => k.round === r).length >= 2 ? 1 : 0);
-    }, 0);
-
-    teamPlayers[team].push({ name:p.name, kd, kdNum, kills:sKills.length, deaths:sDeaths.length, hsCount, hsPct, adr, kast, fvr, opK, opD, opKdNum, duelPct, mks });
   });
 
-  // CS2 demoparser2 : winner=2 = CT, winner=3 = T
-  // Mais certaines démos retournent winner=1 (CT) ou winner=2 (T)
-  // On détecte automatiquement le format
-  // Détecter le format winner
-  const winnerVals = [...new Set(allRounds.map(r=>r.winner).filter(w=>w>0))];
-  const useAlt = winnerVals.length > 0 && !winnerVals.includes(2) && !winnerVals.includes(3);
-  let ctWins = allRounds.filter(r => useAlt ? r.winner===1 : r.winner===2).length;
-  let tWins  = allRounds.filter(r => useAlt ? r.winner===2 : r.winner===3).length;
-
-  // Fallback : si winner=0 partout, déduire depuis les kills
-  // L'équipe qui a fait le dernier kill du round a probablement gagné
-  if (ctWins === 0 && tWins === 0 && kills.length > 0) {
-    allRounds.forEach((rd, i) => {
-      const r = i + 1;
-      const rKills = kills.filter(k => k.round === r);
-      if (!rKills.length) return;
-      // Dernier kill du round = tick max
-      const lastKill = rKills.reduce((a,b) => (a.tick||0)>=(b.tick||0)?a:b);
-      // CS2 : team_num CT=3, T=2 — l'attaquant du dernier kill a gagné
-      if (lastKill.attackerTeam === 3) ctWins++;      // CT gagne
-      else if (lastKill.attackerTeam === 2) tWins++;  // T gagne
-    });
-    console.log('[FragValue] Wins déduits des kills — CT:', ctWins, 'T:', tWins);
-  }
-  console.log('[FragValue] Rounds winner vals:', winnerVals, '| CT wins:', ctWins, '| T wins:', tWins);
+  const ctWins  = (demoData.rounds||[]).filter(r=>r.winner===2).length;
+  const tWins   = (demoData.rounds||[]).filter(r=>r.winner===3).length;
 
   function teamBlock(teamNum, label, color, score) {
     const tPlayers = (teamPlayers[teamNum]||[]).sort((a,b)=>b.fvr-a.fvr);
@@ -1084,11 +824,9 @@ function renderMatchStats() {
           ${p.name}
         </div>
         <div class="ms-val ${kdCls}">${p.kd}</div>
-        <div class="ms-val">${p.kast}%</div>
-        <div class="ms-val">${p.adr}</div>
-        <div class="ms-val ${p.opKdNum>=1?'good':p.opKdNum<1&&p.opK+p.opD>0?'bad':''}">${p.opK}-${p.opD}</div>
-        <div class="ms-val ${p.duelPct>=55?'good':p.duelPct<=44&&p.opK+p.opD>0?'bad':''}">${p.opK+p.opD>0?p.duelPct+'%':'-'}</div>
-        <div class="ms-val">${p.mks>0?p.mks:'-'}</div>
+        <div class="ms-val">${p.hsPct}%</div>
+        <div class="ms-val">-</div>
+        <div class="ms-val">-</div>
         <div class="ms-val rating ${fvrCls}">${p.fvr.toFixed(2)}</div>
       </div>`;
     }).join('');
@@ -1096,50 +834,22 @@ function renderMatchStats() {
       <div class="ms-team-header">
         <div class="ms-team-dot" style="background:${color}"></div>
         <div class="ms-team-name">${label}</div>
-        <div class="ms-team-score" style="color:${color}" title="Rounds gagnés">${score}</div>
+        <div class="ms-team-score" style="color:${color}">${score}</div>
       </div>
       <div class="ms-cols ms-cols-header">
         <div class="ms-col ms-col-name">Joueur</div>
         <div class="ms-col">K-D</div>
-        <div class="ms-col">KAST</div>
+        <div class="ms-col">HS%</div>
         <div class="ms-col">ADR</div>
-        <div class="ms-col" title="Opening K-D (premier duel du round)">Op. K-D</div>
-        <div class="ms-col" title="% duels gagnés (1v1 directs)">Duel%</div>
-        <div class="ms-col" title="Multi-kills (rounds avec 2+ kills)">MKs</div>
+        <div class="ms-col">KAST</div>
         <div class="ms-col" style="color:var(--success)">FV Rating</div>
       </div>
       ${rows}
     </div>`;
   }
 
-  // Noms d'équipe : meilleur joueur par FV Rating
-  const ctBest = (teamPlayers[2]||[]).sort((a,b)=>b.fvr-a.fvr)[0]?.name || 'CT';
-  const tBest  = (teamPlayers[3]||[]).sort((a,b)=>b.fvr-a.fvr)[0]?.name || 'T';
-  const ctNames = 'Equipe_' + ctBest;
-  const tNames  = 'Equipe_' + tBest;
-  // Notification équipe gagnante
-  const winner = ctWins > tWins ? {name: ctNames, color: '#4A9EFF', wins: ctWins}
-               : tWins > ctWins ? {name: tNames,  color: '#F5C842', wins: tWins}
-               : null;
-  const winnerBanner = winner
-    ? `<div style="display:flex;align-items:center;gap:10px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);border-radius:10px;padding:12px 20px;margin-bottom:12px">
-        <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="var(--success)" stroke-width="1.5"><path d="M10 2l1.8 4.9H17l-4.1 3 1.6 4.9L10 12l-4.5 2.8 1.6-4.9L3 7h5.2z" stroke-linejoin="round"/></svg>
-        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--success)">VICTOIRE</span>
-        <span style="font-size:14px;font-weight:700;color:${winner.color}">${winner.name}</span>
-        <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto">${ctWins} — ${tWins}</span>
-      </div>`
-    : `<div style="display:flex;align-items:center;gap:10px;background:rgba(59,127,245,.08);border:1px solid rgba(59,127,245,.2);border-radius:10px;padding:12px 20px;margin-bottom:12px">
-        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent)">ÉGALITÉ</span>
-        <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto">${ctWins} — ${tWins}</span>
-      </div>`;
   const el = document.getElementById('matchStatsBlock');
-  if (el) el.innerHTML = winnerBanner + teamBlock(2, ctNames, '#4A9EFF', ctWins) + teamBlock(3, tNames, '#F5C842', tWins);
-
-  // Highlights + graphique (une seule fois, pas sensible au side)
-  if (sf === 'both') {
-    renderHighlights(kills, players, allRounds);
-    renderPerfChart(players, kills, allRounds);
-  }
+  if (el) el.innerHTML = teamBlock(2,'CT Side','#4A9EFF',ctWins) + teamBlock(3,'T Side','#F5C842',tWins);
 }
 // renderTeams replaced by renderMatchStats
 function renderStats(){
@@ -1147,8 +857,7 @@ function renderStats(){
   const pk=active.length>0?kills.filter(k=>active.includes(k.attacker)):kills;
   const hs=pk.filter(k=>k.isHeadshot).length;
   const gr=(demoData.grenades||[]).filter(g=>active.length===0||active.includes(g.thrower));
-  const sgEl=document.getElementById('statsGrid');if(!sgEl)return;
-  sgEl.innerHTML=[
+  document.getElementById('statsGrid').innerHTML=[
     {label:'Kills',val:pk.length,sub:active.length===1?active[0]:active.length+' joueurs',cls:'c-accent'},
     {label:'Headshot %',val:(pk.length>0?((hs/pk.length)*100).toFixed(0):0)+'%',sub:hs+' HS',cls:'c-good'},
     {label:'Wallbangs',val:pk.filter(k=>k.isWallbang).length,sub:'à travers murs',cls:'c-warn'},
@@ -1156,7 +865,6 @@ function renderStats(){
     {label:'Rounds',val:(demoData.rounds||[]).length,sub:'joués',cls:'c-neutral'},
     {label:'Grenades',val:gr.length,sub:'lancées',cls:'c-accent'},
   ].map(s=>`<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-val ${s.cls}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
-  sgEl.innerHTML=sgEl.innerHTML;
 }
 function renderPlayerList(){
   const players=demoData.playerStats||[],target=demoData.meta?.targetPlayer,atMax=activePlayers.size>=5;
@@ -1167,6 +875,25 @@ function renderPlayerList(){
   }).join('');
   if(playerListEl) playerListEl.innerHTML=playerListEl.innerHTML; // already set
   const phEl=document.querySelector('.panel-hint'); if(phEl) phEl.innerHTML=`Clic pour toggle · <span style="color:${atMax?'var(--danger)':'var(--accent)'}">${activePlayers.size}/5</span> actifs`;
+  document.getElementById('playersTable').innerHTML=players.map(p=>{
+    const kd=parseFloat(p.kd),c=getColor(p.name),isActive=activePlayers.has(p.name);
+    const pKills2=kills.filter(k=>k.attacker===p.name);
+    const wb=pKills2.filter(k=>k.isWallbang).length;
+    const smk=pKills2.filter(k=>k.thruSmoke).length;
+    const hs2=pKills2.filter(k=>k.isHeadshot).length;
+    const hsPct2=pKills2.length>0?Math.round(hs2/pKills2.length*100):0;
+    const fvr=calcFvRating(p.kills,p.deaths,0,demoData.rounds?.length||1);
+    const fvrCls=fvr>=1.15?'td-good':fvr<0.9?'td-bad':'';
+    return `<tr style="${isActive?'background:rgba(255,255,255,.03)':''}" onclick="showPlayerStats('${p.name.replace(/'/g,"\'")}'); event.stopPropagation()">
+      <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.solid};opacity:${isActive?1:.3}"></span></td>
+      <td class="td-name" style="cursor:pointer">${p.name}${p.name===target?' <span style="color:var(--gold);font-size:10px">★</span>':''}</td>
+      <td class="${kd>=1.3?'td-good':kd<1?'td-bad':''}">${p.kills}-${p.deaths}</td>
+      <td>${hsPct2}%</td>
+      <td class="${fvrCls}" style="font-weight:700">${fvr.toFixed(2)}</td>
+      <td style="color:var(--gold)">${wb||'-'}</td>
+      <td style="color:var(--accent)">${smk||'-'}</td>
+    </tr>`;
+  }).join('');
 }
 
 function switchHeatmap(type,btn){
@@ -1316,7 +1043,7 @@ function drawReplayFrame(idx){
   Object.entries(frame.players).forEach(([name,p])=>{
     if(!p.alive)return;
     const{px,py}=w2c(p.x,p.y,mapName,W,H);if(!inBounds(px,py,W,H))return;
-    const color=getColor(name),isCT=p.team===3;
+    const color=getColor(name),isCT=p.team===2;
     ctx.beginPath();ctx.arc(px,py,11,0,Math.PI*2);ctx.fillStyle=`rgba(${color.rgb},.15)`;ctx.fill();
     ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fillStyle=color.solid;ctx.fill();
     ctx.strokeStyle=isCT?'#4A9EFF':'#F5C842';ctx.lineWidth=2.5;ctx.stroke();
@@ -1361,17 +1088,9 @@ let rfCanvas, rfCtx, rfMapImg=null, rfRound=null, rfFrames=[], rfIdx=0;
 let rfPlaying=false, rfTimer=null, rfSpeed=1, rfMapName='de_dust2';
 const RF_FPS=24;
 
-function getFirstRealRound(){
-  const rounds = demoData.rounds||[];
-  for(let i=0;i<rounds.length;i++){
-    if(!rounds[i].isKnife) return rounds[i].round ?? i;
-  }
-  return rounds[0]?.round ?? 0;
-}
-
 function openReplayFS(){
   if(!demoData)return;
-  rfMapName=(demoData.meta?.map||'de_dust2').toLowerCase().replace(/^.*\//,'').trim();
+  rfMapName=(demoData.meta?.map||'de_dust2').toLowerCase();
   document.getElementById('rfMapName').textContent=rfMapName;
   document.getElementById('replayFullscreen').classList.add('active');
 
@@ -1386,18 +1105,14 @@ function openReplayFS(){
       rfMapImg=img;
       rfCanvas.width=img.width; rfCanvas.height=img.height;
       initRfRoundsBar();
-      const firstReal = getFirstRealRound();
-    rfSelectRound(firstReal, document.getElementById('rfRoundBtn'+firstReal));
+      rfSelectRound(1,document.getElementById('rfRoundBtn1'));
     };
-    img.onerror=()=>{ rfMapImg=null; initRfRoundsBar();
-    const firstReal2 = getFirstRealRound();
-    rfSelectRound(firstReal2, document.getElementById('rfRoundBtn'+firstReal2)); };
+    img.onerror=()=>{ rfMapImg=null; initRfRoundsBar(); rfSelectRound(1,document.getElementById('rfRoundBtn1')); };
     img.src=cfg.upper?cfg.upper.img:cfg.img;
   } else {
     rfCanvas.width=1024; rfCanvas.height=1024;
     initRfRoundsBar();
-    const firstReal3 = getFirstRealRound();
-    rfSelectRound(firstReal3, document.getElementById('rfRoundBtn'+firstReal3));
+    rfSelectRound(1,document.getElementById('rfRoundBtn1'));
   }
   initRfPlayerList();
 }
@@ -1412,19 +1127,11 @@ function initRfRoundsBar(){
   const target=demoData.meta?.targetPlayer;
   const bar=document.getElementById('rfRoundsBar');
   let html='';
-  let realNum = 0;
   rounds.forEach((rd,i)=>{
-    const freezeR = rd.round ?? i;
-    const killsR  = rd.killsRound ?? (freezeR + 1);
-    if(rd.isKnife){
-      html+=`<button class="rnd2" id="rfRoundBtn${freezeR}" onclick="rfSelectRound(${freezeR},this)" title="Knife round" style="opacity:.35;font-size:8px">🔪</button>`;
-      return;
-    }
-    realNum++;
-    const rK=kills.filter(k=>k.tick>=rd.startTick&&(rd.endTick===0||k.tick<=rd.endTick)&&k.attacker===target).length;
-    if(realNum===13) html+=`<div class="rnd2-sep"></div>`;
-    const rdWon = rd.winner===2||rd.winner===3;
-    html+=`<button class="rnd2 ${rdWon?'win':'loss'}" id="rfRoundBtn${freezeR}" onclick="rfSelectRound(${freezeR},this)" title="R${realNum}·${rK}K">${realNum}</button>`;
+    const r=i+1;
+    const rK=kills.filter(k=>k.round===r&&k.attacker===target).length;
+    if(r===16)html+=`<div class="rnd2-sep"></div>`;
+    html+=`<button class="rnd2 ${rd.winner>0?'win':'loss'}" id="rfRoundBtn${r}" onclick="rfSelectRound(${r},this)" title="R${r}·${rK}K">${r}</button>`;
   });
   bar.innerHTML=html;
 }
@@ -1433,78 +1140,12 @@ function initRfPlayerList(){
   const players=demoData.playerStats||[];
   document.getElementById('rfPlayerList').innerHTML=players.map(p=>{
     const c=getColor(p.name);
-    const id=p.name.replace(/[^a-zA-Z0-9]/g,'_');
-    return `<div class="rf-player active" id="rfp-${id}" onclick="rfTogglePlayer('${p.name.replace(/'/g,"\'")}',this)">
-      <div class="rf-player-top">
-        <div class="rf-player-dot" style="background:${c.solid}"></div>
-        <div class="rf-player-name">${p.name.slice(0,13)}</div>
-        <div class="rf-player-kd" id="rfkd-${id}">${p.kd}</div>
-      </div>
-      <div class="rf-hp-bar"><div class="rf-hp-fill" id="rfhp-${id}" style="width:100%;background:${c.solid}"></div></div>
-      <div class="rf-player-hud" id="rfhud-${id}">
-        <div class="rf-hud-row">
-          <span class="rf-hud-hp" id="rfhpval-${id}" style="color:${c.solid}">100</span>
-          <span class="rf-hud-armor" id="rfarmor-${id}">🛡️0</span>
-          <span class="rf-hud-money" id="rfmoney-${id}">$0</span>
-        </div>
-        <div class="rf-hud-row">
-          <span class="rf-hud-weapon" id="rfweap-${id}">-</span>
-          <span class="rf-hud-ammo" id="rfammo-${id}"></span>
-        </div>
-      </div>
+    return `<div class="rf-player active" id="rfp-${p.name.replace(/\s/g,'_')}" onclick="rfTogglePlayer('${p.name.replace(/'/g,"\'")}',this)">
+      <div class="rf-player-dot" style="background:${c.solid}"></div>
+      <div class="rf-player-name">${p.name.slice(0,14)}</div>
+      <div class="rf-player-kd">${p.kd}</div>
     </div>`;
   }).join('');
-}
-
-function updateRfPlayerHUD(frame){
-  const players=demoData.playerStats||[];
-  players.forEach(p=>{
-    const id=p.name.replace(/[^a-zA-Z0-9]/g,'_');
-    const state=frame.players[p.name];
-    const el=document.getElementById('rfp-'+id);
-    if(!el)return;
-
-    if(!state||!state.alive){
-      el.classList.add('dead');
-      const hpFill=document.getElementById('rfhp-'+id);
-      if(hpFill)hpFill.style.width='0%';
-      return;
-    }
-    el.classList.remove('dead');
-
-    // HP bar
-    const hp=state.hp||0;
-    const hpFill=document.getElementById('rfhp-'+id);
-    if(hpFill){
-      hpFill.style.width=hp+'%';
-      hpFill.style.background=hp>50?'var(--success)':hp>25?'var(--gold)':'var(--danger)';
-    }
-    const hpVal=document.getElementById('rfhpval-'+id);
-    if(hpVal)hpVal.textContent=hp;
-
-    // Armor
-    const armorEl=document.getElementById('rfarmor-'+id);
-    if(armorEl){
-      const armor=state.armor||0;
-      const helmet=state.helmet?'⛑️':'🛡️';
-      armorEl.textContent=`${helmet}${armor}`;
-      armorEl.style.color=armor>0?'#60A5FA':'rgba(255,255,255,.3)';
-    }
-
-    // Money
-    const moneyEl=document.getElementById('rfmoney-'+id);
-    if(moneyEl)moneyEl.textContent=state.money?`$${state.money}`:'';
-
-    // Weapon
-    const weapEl=document.getElementById('rfweap-'+id);
-    if(weapEl){
-      const w=(state.weapon||'').replace('weapon_','').replace('_',' ');
-      weapEl.textContent=w||'-';
-    }
-    // Ammo
-    const ammoEl=document.getElementById('rfammo-'+id);
-    if(ammoEl)ammoEl.textContent=state.ammo?`${state.ammo}✦`:'';
-  });
 }
 
 let rfHiddenPlayers=new Set();
@@ -1513,270 +1154,54 @@ function rfTogglePlayer(name,el){
   else{rfHiddenPlayers.add(name);el.classList.remove('active');}
 }
 
-// ── Effets visuels grenades et tirs ─────────────────────────────────────────
-function rfDrawEffects(tick, W, H) {
-  const grenades = demoData.grenades || [];
-  const shots    = demoData.shots    || [];
-
-  // Tirs : flash de bouche + trait court dans direction du tir
-  // Le trait dure ~1 frame (10 ticks) et pointe vers la victime si kill
-  const activeShotDur = 10; // ~80ms
-  // Construire map tick→kill pour avoir la direction
-  const killsByTick = {};
-  (demoData.kills||[]).forEach(k => { killsByTick[k.tick||0] = k; });
-
-  shots.forEach(s => {
-    if (!s.tick || (s.x === 0 && s.y === 0)) return;
-    if (s.tick > tick || s.tick < tick - activeShotDur) return;
-    const {px,py} = w2c(s.x, s.y, rfMapName, W, H);
-    if (!inBounds(px,py,W,H)) return;
-    const alpha = 1 - (tick - s.tick) / activeShotDur;
-
-    // Chercher s'il y a un kill proche de ce tir (même tireur, tick proche)
-    const nearKill = (demoData.kills||[]).find(k =>
-      k.attacker === s.shooter &&
-      Math.abs((k.tick||0) - s.tick) < 20 &&
-      k.attackerX !== 0
-    );
-
-    if (nearKill) {
-      // Trait vers la victime
-      const {px:vx,py:vy} = w2c(nearKill.victimX, nearKill.victimY, rfMapName, W, H);
-      const dx = vx-px, dy = vy-py;
-      const dist = Math.sqrt(dx*dx+dy*dy)||1;
-      const len = Math.min(40, dist); // max 40px
-      rfCtx.strokeStyle=`rgba(255,220,60,${alpha*0.8})`;
-      rfCtx.lineWidth=1.5;
-      rfCtx.beginPath();
-      rfCtx.moveTo(px, py);
-      rfCtx.lineTo(px+dx/dist*len, py+dy/dist*len);
-      rfCtx.stroke();
-    } else {
-      // Pas de kill — trait court aléatoire basé sur position suivante du joueur
-      const playerPos = frame.players[s.shooter];
-      if (playerPos) {
-        // Chercher la prochaine position du joueur
-        const pts = (demoData.positions[s.shooter]||[]);
-        const nextPt = pts.find(p => p.tick > s.tick);
-        if (nextPt) {
-          const {px:nx,py:ny} = w2c(nextPt.x, nextPt.y, rfMapName, W, H);
-          const dx=nx-px, dy=ny-py, dist=Math.sqrt(dx*dx+dy*dy)||1;
-          if(dist > 2) {
-            rfCtx.strokeStyle=`rgba(255,220,60,${alpha*0.6})`;
-            rfCtx.lineWidth=1.2;
-            rfCtx.beginPath(); rfCtx.moveTo(px,py); rfCtx.lineTo(px+dx/dist*25,py+dy/dist*25); rfCtx.stroke();
-          }
-        }
-      }
-    }
-    // Flash de bouche
-    rfCtx.beginPath(); rfCtx.arc(px,py,4,0,Math.PI*2);
-    rfCtx.fillStyle=`rgba(255,240,100,${alpha*0.9})`; rfCtx.fill();
-  });
-
-  // Trajectoire + effet grenades
-  grenades.forEach(g => {
-    if (!g.tick || !g.detonTick) return;
-    const launchPos = w2c(g.x, g.y, rfMapName, W, H);
-    const detonPos  = w2c(g.detonX, g.detonY, rfMapName, W, H);
-
-    // Trajectoire : trait fin entre lanceur et point d'impact
-    // Visible pendant le vol (entre tick et detonTick)
-    if (tick >= g.tick && tick < g.detonTick && inBounds(launchPos.px,launchPos.py,W,H) && inBounds(detonPos.px,detonPos.py,W,H)) {
-      const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
-      // Point courant sur la trajectoire (interpolation linéaire)
-      const curX = launchPos.px + (detonPos.px - launchPos.px) * progress;
-      const curY = launchPos.py + (detonPos.py - launchPos.py) * progress;
-      // Trait de la trajectoire
-      rfCtx.setLineDash([3,3]);
-      rfCtx.strokeStyle = 'rgba(255,255,255,0.4)';
-      rfCtx.lineWidth = 1;
-      rfCtx.beginPath(); rfCtx.moveTo(launchPos.px, launchPos.py); rfCtx.lineTo(curX, curY); rfCtx.stroke();
-      rfCtx.setLineDash([]);
-      // Grenade en vol : petit point blanc
-      rfCtx.beginPath(); rfCtx.arc(curX, curY, 3, 0, Math.PI*2);
-      rfCtx.fillStyle = 'rgba(255,255,255,0.9)'; rfCtx.fill();
-    }
-
-    // Effet à l'impact
-    if (!g.endTick) return;
-    const isActive = tick >= g.detonTick && tick <= g.endTick;
-    if (!isActive) return;
-    const {px,py} = detonPos;
-    if (!inBounds(px,py,W,H)) return;
-    const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
-    const type = g.type || '';
-
-    if (type.includes('smoke')) {
-      // SMOKE : grand nuage gris semi-transparent qui grossit progressivement
-      const r = 12 + progress * 32; // 12 → 44px
-      const alpha = progress < 0.08 ? progress/0.08*0.82
-                  : progress > 0.88 ? (1-progress)/0.12*0.82 : 0.82;
-      // Couche extérieure diffuse
-      rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(160,160,160,${alpha*0.45})`; rfCtx.fill();
-      // Couche centrale opaque
-      rfCtx.beginPath(); rfCtx.arc(px,py,r*0.7,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(200,200,200,${alpha*0.75})`; rfCtx.fill();
-      // Contour
-      rfCtx.strokeStyle=`rgba(120,120,120,${alpha*0.5})`; rfCtx.lineWidth=1.5; rfCtx.stroke();
-      // Label "SMK"
-      rfCtx.fillStyle=`rgba(255,255,255,${alpha*0.8})`; rfCtx.font='bold 8px JetBrains Mono,monospace'; rfCtx.textAlign='center';
-      rfCtx.fillText('SMK',px,py+3);
-
-    } else if (type.includes('flash')) {
-      // FLASH : étoile blanche éclatante + halo cyan
-      const r = 4 + (1-progress)*22;
-      const alpha = Math.pow(1-progress, 0.5) * 0.95;
-      // Halo cyan externe
-      rfCtx.beginPath(); rfCtx.arc(px,py,r*1.4,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(180,240,255,${alpha*0.3})`; rfCtx.fill();
-      // Cercle blanc central
-      rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(255,255,255,${alpha})`; rfCtx.fill();
-      // Rayons
-      for(let a=0;a<8;a++){
-        const angle=a*Math.PI/4, len=r*0.8;
-        rfCtx.strokeStyle=`rgba(255,255,220,${alpha*0.7})`; rfCtx.lineWidth=1.5;
-        rfCtx.beginPath(); rfCtx.moveTo(px+Math.cos(angle)*r*0.3,py+Math.sin(angle)*r*0.3);
-        rfCtx.lineTo(px+Math.cos(angle)*(r+len),py+Math.sin(angle)*(r+len)); rfCtx.stroke();
-      }
-
-    } else if (type.includes('hegre')) {
-      // HE : explosion avec onde de choc
-      const r = 3 + progress*24;
-      const alpha = Math.pow(1-progress,0.6)*0.9;
-      // Onde de choc orange
-      rfCtx.beginPath(); rfCtx.arc(px,py,r*1.3,0,Math.PI*2);
-      rfCtx.strokeStyle=`rgba(255,140,0,${alpha*0.6})`; rfCtx.lineWidth=2; rfCtx.stroke();
-      // Boule de feu centrale rouge→orange
-      rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
-      const hg = rfCtx.createRadialGradient(px,py,0,px,py,r);
-      hg.addColorStop(0,`rgba(255,255,100,${alpha})`);
-      hg.addColorStop(0.5,`rgba(255,100,0,${alpha})`);
-      hg.addColorStop(1,`rgba(200,0,0,${alpha*0.5})`);
-      rfCtx.fillStyle=hg; rfCtx.fill();
-      // Label "HE"
-      if(progress<0.5){rfCtx.fillStyle=`rgba(255,255,255,${alpha})`; rfCtx.font='bold 8px JetBrains Mono,monospace'; rfCtx.textAlign='center'; rfCtx.fillText('HE',px,py+3);}
-
-    } else if (type.includes('molotov') || type.includes('incgren')) {
-      // MOLOTOV : zone de feu animée
-      const r = 14 + Math.sin(tick*0.15)*2;
-      const alpha = 0.85;
-      // Zone brûlante orange
-      rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
-      const mg = rfCtx.createRadialGradient(px,py,0,px,py,r);
-      mg.addColorStop(0,`rgba(255,220,0,${alpha})`);
-      mg.addColorStop(0.5,`rgba(255,80,0,${alpha*0.9})`);
-      mg.addColorStop(1,`rgba(180,20,0,${alpha*0.4})`);
-      rfCtx.fillStyle=mg; rfCtx.fill();
-      // Particules de feu animées
-      for(let f=0;f<6;f++){
-        const fa=f*Math.PI/3+tick*0.08, fr=r*0.5+Math.sin(tick*0.2+f)*r*0.3;
-        rfCtx.beginPath(); rfCtx.arc(px+Math.cos(fa)*fr*0.7, py+Math.sin(fa)*fr*0.7, 2.5,0,Math.PI*2);
-        rfCtx.fillStyle=`rgba(255,${150+Math.round(Math.sin(tick*0.3+f)*80)},0,0.9)`; rfCtx.fill();
-      }
-      // Label "MOLO"
-      rfCtx.fillStyle='rgba(255,255,200,0.9)'; rfCtx.font='bold 7px JetBrains Mono,monospace'; rfCtx.textAlign='center';
-      rfCtx.fillText('MOLO',px,py+3);
-
-    } else if (type.includes('decoy')) {
-      // DECOY : point rouge avec signal radar clignotant
-      const blink = (Math.sin(tick*0.4)>0);
-      rfCtx.beginPath(); rfCtx.arc(px,py,5,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(255,50,50,${blink?0.95:0.5})`; rfCtx.fill();
-      rfCtx.strokeStyle='rgba(255,120,120,0.7)'; rfCtx.lineWidth=1.5; rfCtx.stroke();
-      // Ondes radar
-      if(blink){
-        for(let w=1;w<=2;w++){
-          rfCtx.beginPath(); rfCtx.arc(px,py,5+w*6,0,Math.PI*2);
-          rfCtx.strokeStyle=`rgba(255,80,80,${0.4/w})`; rfCtx.lineWidth=1; rfCtx.stroke();
-        }
-      }
-    }
-  });
-}
-
 function rfSelectRound(round,btn){
   rfRound=round;
   clearInterval(rfTimer); rfPlaying=false; rfSetPlayPause(false);
   document.querySelectorAll('.rnd2').forEach(b=>b.classList.remove('sel'));
   if(btn)btn.classList.add('sel');
-  const rdData=(demoData.rounds||[]).find(r=>(r.round??-1)===round)||{};
-  const dispN = rdData.displayNum ?? (round+1);
-  document.getElementById('rfRoundLabel').textContent=rdData.isKnife?`Knife Round`:`Round ${dispN}`;
+  document.getElementById('rfRoundLabel').textContent=`Round ${round}`;
   rfBuildFrames(round);
   rfIdx=0; rfDrawFrame(0);
 }
 
 function rfBuildFrames(round){
   const positions=demoData.positions||{}, kills=demoData.kills||[];
-  const roundData=(demoData.rounds||[]).find(r=>(r.round??-1)===round)||{};
-  const startTick = roundData.startTick || 0;
-  const endTick   = roundData.endTick   || 0;
+  // Trouver les données du round (supporte ancien et nouveau format)
+  const roundData=(demoData.rounds||[]).find(r=>(r.round??-1)===round)||(demoData.rounds||[])[round]||{};
+  const killsR    = roundData.killsRound ?? (round + 1);
+  const startTick = roundData.startTick  || (demoData.roundStartTicks||{})[round] || 0;
+  const endTick   = roundData.endTick    || 0;
 
-  // Filtrer kills par plage de ticks absolus (plus fiable que killsRound)
+  // Kills : par tick absolu si disponible, sinon par killsRound
   const roundKills = kills.filter(k => {
-    const t = k.tick || 0;
-    return t >= startTick && (endTick === 0 || t <= endTick);
+    const t = k.tick||0;
+    if(startTick > 0 && t >= startTick && (endTick===0||t<=endTick+256)) return true;
+    return k.round===killsR || k.round===round;
   });
 
-  // Filtrer positions : par tick absolu OU par killsRound si ticks indisponibles
-  const killsR = roundData.killsRound ?? (round + 1);
+  // Positions : par tick absolu ou par killsRound
   const roundPos={};
   Object.entries(positions).forEach(([name,pts])=>{
-    let rpts = [];
-    if(startTick > 0) {
-      // Filtre principal : plage de ticks absolus
-      rpts = pts.filter(p => {
-        const t = p.tick || 0;
-        return t >= startTick && (endTick === 0 || t <= endTick);
-      });
-    }
-    // Fallback : filtre par numéro de round si aucune position trouvée par tick
-    if(rpts.length === 0) {
-      rpts = pts.filter(p => p.round === killsR);
-    }
-    if(rpts.length > 0) roundPos[name] = rpts;
+    let rpts = startTick > 0
+      ? pts.filter(p => { const t=p.tick||0; return t>=startTick&&(endTick===0||t<=endTick+256); })
+      : [];
+    if(rpts.length===0) rpts = pts.filter(p=>p.round===killsR||p.round===round);
+    if(rpts.length>0) roundPos[name]=rpts;
   });
 
-  // Debug : voir combien de joueurs ont des positions pour ce round
-  const posPlayers = Object.keys(roundPos);
-  const allPlayers = Object.keys(demoData.positions||{});
-  console.log(`[rfBuildFrames] Round ${round}: ${posPlayers.length}/${allPlayers.length} joueurs, roundKills=${roundKills.length}, startTick=${startTick}, endTick=${endTick}`);
-  // Debug kills
-
-  if(posPlayers.length < allPlayers.length){
-    const missing = allPlayers.filter(n=>!posPlayers.includes(n));
-    const sample = (demoData.positions[missing[0]]||[]).slice(0,3).map(p=>`r${p.round}t${p.tick}`).join(',');
-    console.log(`[rfBuildFrames] Manquants: ${missing.join(',')} | sample[0]: ${sample}`);
-  }
   if(!Object.keys(roundPos).length&&!roundKills.length){rfFrames=[];return;}
 
-  const posTicks = [];
-  Object.values(roundPos).forEach(pts=>pts.forEach(p=>posTicks.push(p.tick||0)));
-  if(!posTicks.length && !roundKills.length){rfFrames=[];return;}
+  let allTicks=[];
+  Object.values(roundPos).forEach(pts=>pts.forEach(p=>allTicks.push(p.tick||0)));
+  roundKills.forEach(k=>allTicks.push(k.tick||0));
+  if(!allTicks.length){rfFrames=[];return;}
 
-  const minT = startTick > 0 ? startTick : Math.min(...posTicks);
-
-  // maxT = dernier kill + 2sec (fin naturelle du round, avant freeze suivant)
-  const lastKillTick = roundKills.length > 0
-    ? Math.max(...roundKills.map(k=>k.tick||0)) : 0;
-  const postKillBuffer = 256; // ~2sec à 128tick/s
-  const maxT = lastKillTick > minT
-    ? lastKillTick + postKillBuffer
-    : Math.max(...posTicks, minT + 1);
-
-  console.log(`[rfBuildFrames] minT=${minT} maxT=${maxT} lastKill=${lastKillTick} kills=${roundKills.length} positions=${Object.keys(roundPos).length}`);
-
-  const span = Math.max(maxT - minT, 1);
-  const durSec = span / 128;
-  const N = Math.min(900, Math.max(80, Math.round(durSec * RF_FPS)));
-
-  // Seuil anti-traversée de mur : distance max entre 2 footsteps consécutifs
-  // Au-delà, on téléporte directement (pas d'interpolation linéaire)
-  // ~500 unités CS2 ≈ largeur d'un couloir étroit, valeur conservative
-  const MAX_INTERP_DIST = 500;
+  const minT = startTick>0 ? startTick : Math.min(...allTicks);
+  const lastKillTick = roundKills.length>0 ? Math.max(...roundKills.map(k=>k.tick||0)) : 0;
+  const maxT = lastKillTick>minT ? lastKillTick+256 : Math.max(...allTicks);
+  const span=Math.max(maxT-minT,1);
+  const durSec=span/128;
+  const N=Math.min(900,Math.max(80,Math.round(durSec*RF_FPS)));
 
   rfFrames=[];
   for(let f=0;f<=N;f++){
@@ -1790,31 +1215,12 @@ function rfBuildFrames(round){
       }
       const s=Math.max((next.tick||0)-(prev.tick||0),1);
       const t=Math.min(1,Math.max(0,(tick-(prev.tick||0))/s));
-
-      // Distance entre les deux footsteps
+      const MAX_DIST=500;
       const dx=next.x-prev.x, dy=next.y-prev.y;
       const dist=Math.sqrt(dx*dx+dy*dy);
-
-      let px, py;
-      if(dist > MAX_INTERP_DIST){
-        // Trop loin = probablement un saut à travers un mur (ex: mort→respawn, données manquantes)
-        // On reste sur prev jusqu'à la fin, puis on "saute" à next
-        px = t < 0.5 ? prev.x : next.x;
-        py = t < 0.5 ? prev.y : next.y;
-      } else {
-        // Interpolation normale
-        px = prev.x + dx*t;
-        py = prev.y + dy*t;
-      }
-      frame.players[name]={
-        x:px, y:py, team:prev.team, alive:true,
-        hp:    prev.hp    ?? 100,
-        armor: prev.armor ?? 0,
-        helmet:prev.helmet?? 0,
-        weapon:prev.weapon?? '',
-        ammo:  prev.ammo  ?? 0,
-        money: prev.money ?? 0,
-      };
+      const px=dist>MAX_DIST?(t<0.5?prev.x:next.x):prev.x+dx*t;
+      const py=dist>MAX_DIST?(t<0.5?prev.y:next.y):prev.y+dy*t;
+      frame.players[name]={x:px,y:py,team:prev.team,alive:true};
     });
     roundKills.forEach(k=>{
       if((k.tick||0)<=tick){
@@ -1825,20 +1231,69 @@ function rfBuildFrames(round){
     rfFrames.push(frame);
   }
 
-  // Timer
   const tot=Math.round(span/128);
   document.getElementById('rfTimeTot').textContent=`${Math.floor(tot/60)}:${String(tot%60).padStart(2,'0')}`;
-
-  // Kill chips
   document.getElementById('rfKillChips').innerHTML=roundKills.slice(0,8).map(k=>
     `<div class="rfc ${k.isHeadshot?'hs':''}">${k.attacker}→${k.victim}${k.isHeadshot?' 💥':''}</div>`
   ).join('');
-
-  // Kill markers
   document.getElementById('rfKillMarks').innerHTML=roundKills.map(k=>{
     const pct=Math.min(100,Math.max(0,((k.tick||0)-minT)/span*100));
     return `<div class="rf-kill-mark" style="left:${pct}%"></div>`;
   }).join('');
+}
+
+function rfDrawGrenades(tick,W,H){
+  (demoData.grenades||[]).forEach(g=>{
+    if(!g.detonTick||!g.endTick)return;
+    const launchPos=w2c(g.x,g.y,rfMapName,W,H);
+    const detonPos=w2c(g.detonX||g.x,g.detonY||g.y,rfMapName,W,H);
+    // En vol : trait pointillé + point
+    if(tick>=g.tick&&tick<g.detonTick){
+      const prog=(tick-g.tick)/Math.max(g.detonTick-g.tick,1);
+      const cx=launchPos.px+(detonPos.px-launchPos.px)*prog;
+      const cy=launchPos.py+(detonPos.py-launchPos.py)*prog;
+      if(inBounds(launchPos.px,launchPos.py,W,H)&&inBounds(detonPos.px,detonPos.py,W,H)){
+        rfCtx.setLineDash([3,3]);rfCtx.strokeStyle='rgba(255,255,255,.35)';rfCtx.lineWidth=1;
+        rfCtx.beginPath();rfCtx.moveTo(launchPos.px,launchPos.py);rfCtx.lineTo(cx,cy);rfCtx.stroke();
+        rfCtx.setLineDash([]);
+      }
+      rfCtx.beginPath();rfCtx.arc(cx,cy,3,0,Math.PI*2);
+      rfCtx.fillStyle='rgba(255,255,200,.9)';rfCtx.fill();
+    }
+    // Impact
+    if(tick<g.detonTick||tick>g.endTick)return;
+    const{px,py}=detonPos;
+    if(!inBounds(px,py,W,H))return;
+    const prog=(tick-g.detonTick)/Math.max(g.endTick-g.detonTick,1);
+    const type=g.type||'';
+    if(type.includes('smoke')){
+      const r=12+prog*30,a=prog<.1?prog*8:.8;
+      rfCtx.beginPath();rfCtx.arc(px,py,r,0,Math.PI*2);rfCtx.fillStyle=`rgba(160,160,160,${a*.5})`;rfCtx.fill();
+      rfCtx.beginPath();rfCtx.arc(px,py,r*.7,0,Math.PI*2);rfCtx.fillStyle=`rgba(200,200,200,${a*.75})`;rfCtx.fill();
+      rfCtx.fillStyle=`rgba(255,255,255,${a*.7})`;rfCtx.font='bold 8px monospace';rfCtx.textAlign='center';rfCtx.fillText('SMK',px,py+3);
+    }else if(type.includes('flash')){
+      const r=4+(1-prog)*20,a=Math.pow(1-prog,.5)*.9;
+      rfCtx.beginPath();rfCtx.arc(px,py,r,0,Math.PI*2);rfCtx.fillStyle=`rgba(255,255,255,${a})`;rfCtx.fill();
+      rfCtx.beginPath();rfCtx.arc(px,py,r*1.4,0,Math.PI*2);rfCtx.fillStyle=`rgba(180,240,255,${a*.3})`;rfCtx.fill();
+    }else if(type.includes('hegre')){
+      const r=3+prog*22,a=Math.pow(1-prog,.6)*.9;
+      rfCtx.beginPath();rfCtx.arc(px,py,r*1.3,0,Math.PI*2);rfCtx.strokeStyle=`rgba(255,140,0,${a*.6})`;rfCtx.lineWidth=2;rfCtx.stroke();
+      rfCtx.beginPath();rfCtx.arc(px,py,r,0,Math.PI*2);
+      const hg=rfCtx.createRadialGradient(px,py,0,px,py,r);
+      hg.addColorStop(0,`rgba(255,255,100,${a})`);hg.addColorStop(1,`rgba(200,0,0,${a*.4})`);
+      rfCtx.fillStyle=hg;rfCtx.fill();
+    }else if(type.includes('molotov')||type.includes('incgren')){
+      const r=12+Math.sin(tick*.15)*2;
+      const mg=rfCtx.createRadialGradient(px,py,0,px,py,r);
+      mg.addColorStop(0,'rgba(255,220,0,.9)');mg.addColorStop(.5,'rgba(255,80,0,.85)');mg.addColorStop(1,'rgba(180,20,0,.3)');
+      rfCtx.beginPath();rfCtx.arc(px,py,r,0,Math.PI*2);rfCtx.fillStyle=mg;rfCtx.fill();
+      rfCtx.fillStyle='rgba(255,255,180,.9)';rfCtx.font='bold 7px monospace';rfCtx.textAlign='center';rfCtx.fillText('MOLO',px,py+3);
+    }else if(type.includes('decoy')){
+      const blink=Math.sin(tick*.4)>0;
+      rfCtx.beginPath();rfCtx.arc(px,py,5,0,Math.PI*2);rfCtx.fillStyle=`rgba(255,50,50,${blink?.95:.5})`;rfCtx.fill();
+      if(blink){rfCtx.beginPath();rfCtx.arc(px,py,11,0,Math.PI*2);rfCtx.strokeStyle='rgba(255,80,80,.3)';rfCtx.lineWidth=1;rfCtx.stroke();}
+    }
+  });
 }
 
 function rfDrawFrame(idx){
@@ -1849,20 +1304,10 @@ function rfDrawFrame(idx){
   if(rfMapImg){rfCtx.drawImage(rfMapImg,0,0,W,H);rfCtx.fillStyle='rgba(10,12,18,.35)';rfCtx.fillRect(0,0,W,H);}
   else{rfCtx.fillStyle='#0A0C12';rfCtx.fillRect(0,0,W,H);}
 
-  // Croix morts + traits de tir
+  // Croix morts
   frame.deaths.forEach(d=>{
     const{px,py}=w2c(d.x,d.y,rfMapName,W,H);
     if(!inBounds(px,py,W,H))return;
-    // Trait de tir attaquant → victime
-    if(d.ax!==undefined){
-      const{px:ax,py:ay}=w2c(d.ax,d.ay,rfMapName,W,H);
-      if(inBounds(ax,ay,W,H)){
-        rfCtx.strokeStyle='rgba(255,200,60,.6)';rfCtx.lineWidth=1;
-        rfCtx.setLineDash([4,3]);
-        rfCtx.beginPath();rfCtx.moveTo(ax,ay);rfCtx.lineTo(px,py);rfCtx.stroke();
-        rfCtx.setLineDash([]);
-      }
-    }
     rfCtx.strokeStyle='rgba(240,107,107,.8)';rfCtx.lineWidth=2;
     rfCtx.beginPath();rfCtx.moveTo(px-5,py-5);rfCtx.lineTo(px+5,py+5);rfCtx.stroke();
     rfCtx.beginPath();rfCtx.moveTo(px+5,py-5);rfCtx.lineTo(px-5,py+5);rfCtx.stroke();
@@ -1874,7 +1319,7 @@ function rfDrawFrame(idx){
     if(rfHiddenPlayers.has(name))return;
     const{px,py}=w2c(p.x,p.y,rfMapName,W,H);
     if(!inBounds(px,py,W,H))return;
-    const color=getColor(name), isCT=p.team===3;
+    const color=getColor(name), isCT=p.team===2;
     rfCtx.beginPath();rfCtx.arc(px,py,12,0,Math.PI*2);rfCtx.fillStyle=`rgba(${color.rgb},.12)`;rfCtx.fill();
     rfCtx.beginPath();rfCtx.arc(px,py,6,0,Math.PI*2);rfCtx.fillStyle=color.solid;rfCtx.fill();
     rfCtx.strokeStyle=isCT?'#4A9EFF':'#F5C842';rfCtx.lineWidth=2.5;rfCtx.stroke();
@@ -1882,8 +1327,21 @@ function rfDrawFrame(idx){
     rfCtx.fillText(name.slice(0,8),px,py-11);
   });
 
-  // Effets grenades et tirs
-  rfDrawEffects(frame.tick, W, H);
+  // Traits de tir (kills uniquement — ligne attaquant→victime)
+  frame.deaths.forEach(d=>{
+    if(d.ax===undefined||d.ax===0&&d.ay===0)return;
+    const{px:ax,py:ay}=w2c(d.ax,d.ay,rfMapName,W,H);
+    const{px:vx,py:vy}=w2c(d.x,d.y,rfMapName,W,H);
+    if(!inBounds(ax,ay,W,H)||!inBounds(vx,vy,W,H))return;
+    rfCtx.strokeStyle='rgba(255,210,50,0.55)';
+    rfCtx.lineWidth=1;
+    rfCtx.setLineDash([4,3]);
+    rfCtx.beginPath();rfCtx.moveTo(ax,ay);rfCtx.lineTo(vx,vy);rfCtx.stroke();
+    rfCtx.setLineDash([]);
+  });
+
+  // Effets grenades
+  if(demoData.grenades) rfDrawGrenades(frame.tick,W,H);
 
   // Timeline
   const pct=rfFrames.length>1?(idx/(rfFrames.length-1))*100:0;
@@ -1892,8 +1350,11 @@ function rfDrawFrame(idx){
   const secs=Math.round((frame.tick-(rfFrames[0]?.tick||0))/128);
   document.getElementById('rfTimeCur').textContent=`${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;
 
-  // Mettre à jour HUD
-  updateRfPlayerHUD(frame);
+  // Marquer morts dans panel joueurs
+  Object.entries(frame.players).forEach(([name,p])=>{
+    const el=document.getElementById(`rfp-${name.replace(/\s/g,'_')}`);
+    if(el)el.classList.toggle('dead',!p.alive);
+  });
 }
 
 function rfSetPlayPause(playing){
