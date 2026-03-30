@@ -1431,13 +1431,14 @@ function rfTogglePlayer(name,el){
 }
 
 // ── Effets visuels grenades et tirs ─────────────────────────────────────────
-function rfDrawEffects(tick, W, H) {
+function rfDrawEffects(frame, W, H) {
+  const tick = frame.tick||0;
   const grenades = demoData.grenades || [];
   const shots    = demoData.shots    || [];
 
   // Tirs : flash de bouche + trait court dans direction du tir
   // Le trait dure ~1 frame (10 ticks) et pointe vers la victime si kill
-  const activeShotDur = 10; // ~80ms
+  const activeShotDur = 1; // 1 tick = ~8ms
   // Construire map tick→kill pour avoir la direction
   const killsByTick = {};
   (demoData.kills||[]).forEach(k => { killsByTick[k.tick||0] = k; });
@@ -1470,9 +1471,9 @@ function rfDrawEffects(tick, W, H) {
       rfCtx.stroke();
     } else {
       // Pas de kill — trait court aléatoire basé sur position suivante du joueur
-      const playerPos = frame.players[s.shooter];
-      if (playerPos) {
-        // Chercher la prochaine position du joueur
+      // Pas de kill — chercher direction depuis position du joueur dans le frame
+      const playerState = frame.players[s.shooter];
+      if (playerState) {
         const pts = (demoData.positions[s.shooter]||[]);
         const nextPt = pts.find(p => p.tick > s.tick);
         if (nextPt) {
@@ -1480,7 +1481,7 @@ function rfDrawEffects(tick, W, H) {
           const dx=nx-px, dy=ny-py, dist=Math.sqrt(dx*dx+dy*dy)||1;
           if(dist > 2) {
             rfCtx.strokeStyle=`rgba(255,220,60,${alpha*0.6})`;
-            rfCtx.lineWidth=1.2;
+            rfCtx.lineWidth=1.2; rfCtx.setLineDash([]);
             rfCtx.beginPath(); rfCtx.moveTo(px,py); rfCtx.lineTo(px+dx/dist*25,py+dy/dist*25); rfCtx.stroke();
           }
         }
@@ -1792,7 +1793,7 @@ function rfDrawFrame(idx){
   });
 
   // Effets grenades et tirs
-  rfDrawEffects(frame.tick, W, H);
+  rfDrawEffects(frame, W, H);
 
   // Timeline
   const pct=rfFrames.length>1?(idx/(rfFrames.length-1))*100:0;
