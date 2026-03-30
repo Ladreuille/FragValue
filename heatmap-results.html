@@ -1518,18 +1518,60 @@ function rfDrawEffects(tick, W, H) {
   const grenades = demoData.grenades || [];
   const shots    = demoData.shots    || [];
 
-  // Tirs actifs (flash de bouche)
-  const activeShotDur = 20;
+  // Tirs : flash de bouche + trait court dans direction du tir
+  // Le trait dure ~1 frame (10 ticks) et pointe vers la victime si kill
+  const activeShotDur = 10; // ~80ms
+  // Construire map tick→kill pour avoir la direction
+  const killsByTick = {};
+  (demoData.kills||[]).forEach(k => { killsByTick[k.tick||0] = k; });
+
   shots.forEach(s => {
     if (!s.tick || (s.x === 0 && s.y === 0)) return;
     if (s.tick > tick || s.tick < tick - activeShotDur) return;
     const {px,py} = w2c(s.x, s.y, rfMapName, W, H);
     if (!inBounds(px,py,W,H)) return;
     const alpha = 1 - (tick - s.tick) / activeShotDur;
-    rfCtx.beginPath(); rfCtx.arc(px,py,6,0,Math.PI*2);
-    rfCtx.fillStyle=`rgba(255,220,60,${alpha*0.3})`; rfCtx.fill();
-    rfCtx.beginPath(); rfCtx.arc(px,py,3,0,Math.PI*2);
-    rfCtx.fillStyle=`rgba(255,255,180,${alpha})`; rfCtx.fill();
+
+    // Chercher s'il y a un kill proche de ce tir (même tireur, tick proche)
+    const nearKill = (demoData.kills||[]).find(k =>
+      k.attacker === s.shooter &&
+      Math.abs((k.tick||0) - s.tick) < 20 &&
+      k.attackerX !== 0
+    );
+
+    if (nearKill) {
+      // Trait vers la victime
+      const {px:vx,py:vy} = w2c(nearKill.victimX, nearKill.victimY, rfMapName, W, H);
+      const dx = vx-px, dy = vy-py;
+      const dist = Math.sqrt(dx*dx+dy*dy)||1;
+      const len = Math.min(40, dist); // max 40px
+      rfCtx.strokeStyle=`rgba(255,220,60,${alpha*0.8})`;
+      rfCtx.lineWidth=1.5;
+      rfCtx.beginPath();
+      rfCtx.moveTo(px, py);
+      rfCtx.lineTo(px+dx/dist*len, py+dy/dist*len);
+      rfCtx.stroke();
+    } else {
+      // Pas de kill — trait court aléatoire basé sur position suivante du joueur
+      const playerPos = frame.players[s.shooter];
+      if (playerPos) {
+        // Chercher la prochaine position du joueur
+        const pts = (demoData.positions[s.shooter]||[]);
+        const nextPt = pts.find(p => p.tick > s.tick);
+        if (nextPt) {
+          const {px:nx,py:ny} = w2c(nextPt.x, nextPt.y, rfMapName, W, H);
+          const dx=nx-px, dy=ny-py, dist=Math.sqrt(dx*dx+dy*dy)||1;
+          if(dist > 2) {
+            rfCtx.strokeStyle=`rgba(255,220,60,${alpha*0.6})`;
+            rfCtx.lineWidth=1.2;
+            rfCtx.beginPath(); rfCtx.moveTo(px,py); rfCtx.lineTo(px+dx/dist*25,py+dy/dist*25); rfCtx.stroke();
+          }
+        }
+      }
+    }
+    // Flash de bouche
+    rfCtx.beginPath(); rfCtx.arc(px,py,4,0,Math.PI*2);
+    rfCtx.fillStyle=`rgba(255,240,100,${alpha*0.9})`; rfCtx.fill();
   });
 
   // Trajectoire + effet grenades
@@ -1679,13 +1721,22 @@ function rfBuildFrames(round){
     return t >= startTick && (endTick === 0 || t <= endTick);
   });
 
-  // Filtrer positions par plage de ticks absolus
+  // Filtrer positions : par tick absolu OU par killsRound si ticks indisponibles
+  const killsR = roundData.killsRound ?? (round + 1);
   const roundPos={};
   Object.entries(positions).forEach(([name,pts])=>{
-    const rpts = pts.filter(p => {
-      const t = p.tick || 0;
-      return t >= startTick && (endTick === 0 || t <= endTick);
-    });
+    let rpts = [];
+    if(startTick > 0) {
+      // Filtre principal : plage de ticks absolus
+      rpts = pts.filter(p => {
+        const t = p.tick || 0;
+        return t >= startTick && (endTick === 0 || t <= endTick);
+      });
+    }
+    // Fallback : filtre par numéro de round si aucune position trouvée par tick
+    if(rpts.length === 0) {
+      rpts = pts.filter(p => p.round === killsR);
+    }
     if(rpts.length > 0) roundPos[name] = rpts;
   });
 
