@@ -1345,12 +1345,20 @@ const RF_FPS=30;
 function getFirstRealRound(){
   const rounds = demoData.rounds||[];
   for(let i=0;i<rounds.length;i++){
-    if(!rounds[i].isKnife) return rounds[i].round ?? i;
+    const r = rounds[i];
+    console.log(`[getFirstRealRound] checking round ${r.round}, isKnife=${r.isKnife}`);
+    if(!r.isKnife) return r.round ?? i;
   }
   return rounds[0]?.round ?? 0;
 }
 
 function convertPositionTicks(){
+  // Forcer le premier round comme knife round si isKnife non défini
+  const rounds = demoData.rounds || [];
+  if(rounds.length > 0 && rounds[0].isKnife === undefined) {
+    rounds[0].isKnife = true;
+    console.log('[FragValue] Knife round forcé sur round 0');
+  }
   // Convertir positions ticks relatifs → absolus si nécessaire
   const pos = demoData.positions || {};
   const firstPts = Object.values(pos)[0];
