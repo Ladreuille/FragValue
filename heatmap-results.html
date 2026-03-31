@@ -1523,6 +1523,9 @@ function rfDrawEffects(frame, W, H) {
     if(st === 0 || (s.x===0 && s.y===0)) return;
     if(st < rdStart || st > rdEnd + 1000) return; // hors round
     if(tick < st || tick > st + SHOT_DUR) return;
+    // Vérifier que le tireur est vivant dans ce frame
+    const shooterState = frame.players[s.shooter];
+    if(!shooterState || !shooterState.alive) return;
     const alpha = 1 - (tick - st) / SHOT_DUR;
     const {px,py} = w2c(s.x, s.y, rfMapName, W, H);
     if(!inBounds(px,py,W,H)) return;
