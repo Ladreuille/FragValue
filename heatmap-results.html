@@ -1527,7 +1527,11 @@ function rfDrawEffects(frame, W, H) {
     const shooterState = frame.players[s.shooter];
     if(!shooterState || !shooterState.alive) return;
     const alpha = 1 - (tick - st) / SHOT_DUR;
-    const {px,py} = w2c(s.x, s.y, rfMapName, W, H);
+    // Utiliser position du joueur dans le frame (plus précis que s.x/s.y)
+    const _sp = frame.players[s.shooter];
+    const _sx = _sp ? _sp.x : s.x;
+    const _sy = _sp ? _sp.y : s.y;
+    const {px,py} = w2c(_sx, _sy, rfMapName, W, H);
     if(!inBounds(px,py,W,H)) return;
 
     // Chercher si ce tir correspond à un kill (trait vers victime)
