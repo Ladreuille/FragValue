@@ -1458,7 +1458,7 @@ function rfDrawEffects(frame, W, H) {
   // ── Traits de tir ────────────────────────────────────────────────────────
   // Construire shots absolus une fois par round si ticks relatifs
   if(!rfShotsConverted) {
-    const shotsRelative = shots.length > 0 && (shots[0].tick||0) < 10000;
+    const shotsRelative = shots.length > 0 && (shots[0].tick||0) < 2000; // relatif si < 2000 ticks
     if(shotsRelative) {
       // Pour chaque joueur, trouver l'offset entre ses positions absolues
       // et ses shots relatifs via le premier kill (tick absolu connu)
@@ -1489,27 +1489,49 @@ function rfDrawEffects(frame, W, H) {
 
   const SHOT_DUR = 5;
 
-  // Tous les tirs (kills + shots sans kill)
+  // Tous les tirs : flash + trait directionnel
   shots.forEach(s => {
     const st = s.absTick || s.tick || 0;
-    if(st === 0 || s.x===0 && s.y===0) return;
+    if(st === 0 || (s.x===0 && s.y===0)) return;
     if(tick < st || tick > st + SHOT_DUR) return;
     const alpha = 1 - (tick - st) / SHOT_DUR;
     const {px,py} = w2c(s.x, s.y, rfMapName, W, H);
     if(!inBounds(px,py,W,H)) return;
-    // Direction : prochaine position du joueur
-    const pts = (demoData.positions[s.shooter]||[]);
-    const nextPt = pts.find(p=>(p.tick||0) > st);
-    if(nextPt) {
-      const {px:nx,py:ny} = w2c(nextPt.x, nextPt.y, rfMapName, W, H);
-      const dx=nx-px, dy=ny-py, dist=Math.sqrt(dx*dx+dy*dy)||1;
-      if(dist > 2) {
-        rfCtx.strokeStyle=`rgba(255,220,50,${alpha*0.75})`;
-        rfCtx.lineWidth=1.5; rfCtx.setLineDash([]);
-        rfCtx.beginPath(); rfCtx.moveTo(px,py);
-        rfCtx.lineTo(px+dx/dist*28, py+dy/dist*28); rfCtx.stroke();
+
+    // Chercher si ce tir correspond à un kill (trait vers victime)
+    const nearKill = (demoData.kills||[]).find(k =>
+      k.attacker === s.shooter &&
+      Math.abs((k.tick||0) - st) < 30 &&
+      k.victimX !== 0
+    );
+
+    if(nearKill) {
+      const {px:vx,py:vy} = w2c(nearKill.victimX, nearKill.victimY, rfMapName, W, H);
+      const dx=vx-px, dy=vy-py, dist=Math.sqrt(dx*dx+dy*dy)||1;
+      rfCtx.strokeStyle=`rgba(255,220,50,${alpha*0.9})`;
+      rfCtx.lineWidth=1.5; rfCtx.setLineDash([]);
+      rfCtx.beginPath(); rfCtx.moveTo(px,py);
+      rfCtx.lineTo(px+dx/dist*Math.min(45,dist), py+dy/dist*Math.min(45,dist));
+      rfCtx.stroke();
+    } else {
+      // Tir sans kill : trait court dans la direction du regard
+      // On utilise la position précédente→suivante comme approximation
+      const pts = (demoData.positions[s.shooter]||[]);
+      const prevPt = [...pts].reverse().find(p=>(p.tick||0) <= st);
+      const nextPt = pts.find(p=>(p.tick||0) > st);
+      if(prevPt && nextPt) {
+        const {px:nx,py:ny} = w2c(nextPt.x, nextPt.y, rfMapName, W, H);
+        const {px:ppx,py:ppy} = w2c(prevPt.x, prevPt.y, rfMapName, W, H);
+        const dx=nx-ppx, dy=ny-ppy, dist=Math.sqrt(dx*dx+dy*dy)||1;
+        if(dist > 1) {
+          rfCtx.strokeStyle=`rgba(255,220,50,${alpha*0.6})`;
+          rfCtx.lineWidth=1.2; rfCtx.setLineDash([]);
+          rfCtx.beginPath(); rfCtx.moveTo(px,py);
+          rfCtx.lineTo(px+dx/dist*22, py+dy/dist*22); rfCtx.stroke();
+        }
       }
     }
+    // Flash de bouche
     rfCtx.beginPath(); rfCtx.arc(px,py,3,0,Math.PI*2);
     rfCtx.fillStyle=`rgba(255,240,120,${alpha})`; rfCtx.fill();
   });
