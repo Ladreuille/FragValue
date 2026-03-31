@@ -1595,14 +1595,15 @@ function rfDrawEffects(frame, W, H) {
     const detonPos  = w2c(g.detonX, g.detonY, rfMapName, W, H);
 
     // Ignorer si detonX/Y = position lanceur (détonation non trouvée)
-    const hasValidDeton = (g.detonX !== g.x || g.detonY !== g.y) && g.detonX !== 0;
+    const hasValidDeton = g.detonX !== 0 && (Math.abs(g.detonX - g.x) > 50 || Math.abs(g.detonY - g.y) > 50);
+    // Si pas de détonation distincte, afficher seulement en vol (pas l'effet)
     const effectPos = hasValidDeton ? detonPos : launchPos;
 
     // Trajectoire : trait fin entre lanceur et point d'impact
-    if (tick >= g.tick && tick < g.detonTick && hasValidDeton && inBounds(launchPos.px,launchPos.py,W,H) && inBounds(detonPos.px,detonPos.py,W,H)) {
+    if (tick >= g.tick && tick < g.detonTick && inBounds(launchPos.px,launchPos.py,W,H)) {
       const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
-      // Point courant sur la trajectoire (interpolation linéaire)
-      const curX = launchPos.px + (detonPos.px - launchPos.px) * progress;
+      const targetPos = hasValidDeton ? detonPos : launchPos;
+  const curX = launchPos.px + (detonPos.px - launchPos.px) * progress;
       const curY = launchPos.py + (detonPos.py - launchPos.py) * progress;
       // Trait de la trajectoire
       rfCtx.setLineDash([3,3]);
@@ -1615,11 +1616,11 @@ function rfDrawEffects(frame, W, H) {
       rfCtx.fillStyle = 'rgba(255,255,255,0.9)'; rfCtx.fill();
     }
 
-    // Effet à l'impact
-    if (!g.endTick) return;
+    // Effet à l'impact : seulement si détonation connue
+    if (!g.endTick || !hasValidDeton) return;
     const isActive = tick >= g.detonTick && tick <= g.endTick;
     if (!isActive) return;
-    const {px,py} = effectPos;
+    const {px,py} = detonPos;
     if (!inBounds(px,py,W,H)) return;
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
