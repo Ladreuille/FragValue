@@ -1361,9 +1361,8 @@ function convertPositionTicks(){
   const pos = demoData.positions || {};
   const firstPts = Object.values(pos)[0];
   if(!firstPts || firstPts[0]?.tick > 1000) return; // déjà absolus
-  const rounds = demoData.rounds || [];
   const stMap = {};
-  rounds.forEach(r => { stMap[r.round ?? 0] = r.startTick || 0; });
+  (demoData.rounds||[]).forEach(r => { stMap[r.round ?? 0] = r.startTick || 0; });
   Object.values(pos).forEach(pts => {
     pts.forEach(p => {
       const freezeR = (p.round || 1) - 1;
