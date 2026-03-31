@@ -1425,6 +1425,7 @@ function initRfPlayerList(){
 
 
 let rfHiddenPlayers=new Set();
+let rfShotsConverted=false;
 function rfTogglePlayer(name,el){
   if(rfHiddenPlayers.has(name)){rfHiddenPlayers.delete(name);el.classList.add('active');}
   else{rfHiddenPlayers.add(name);el.classList.remove('active');}
@@ -1436,44 +1437,75 @@ function rfDrawEffects(frame, W, H) {
   const grenades = demoData.grenades || [];
   const shots    = demoData.shots    || [];
 
-  // Flash de tir : trait lumineux court qui pop et disparaît à chaque kill
-  // Fenêtre stricte : uniquement pendant SHOT_DUR ticks après le kill
+  // ── Traits de tir ────────────────────────────────────────────────────────
+  // Convertir les shots en ticks absolus si nécessaire (lazy, une seule fois)
+  if(!rfShotsConverted && shots.length > 0 && (shots[0].tick||0) < 10000) {
+    const stRounds = Object.entries(demoData.roundStartTicks||{})
+      .map(([r,st])=>({r:Number(r),st:Number(st)}))
+      .filter(x=>x.st>0).sort((a,b)=>a.st-b.st);
+    shots.forEach(s => {
+      // Trouver le round correspondant via les kills proches
+      const nearKill = (demoData.kills||[]).find(k =>
+        k.attacker===s.shooter && Math.abs((k.tick||0) - s.tick) < 200
+      );
+      if(nearKill && stRounds.length) {
+        // Chercher le roundStartTick dont start <= nearKill.tick - s.tick
+        const offset = nearKill.tick - s.tick;
+        const best = stRounds.reduce((a,b)=>Math.abs(a.st-offset)<Math.abs(b.st-offset)?a:b);
+        s.tick = best.st + s.tick;
+      } else if(stRounds.length) {
+        // Fallback: dernier round dont startTick <= s.tick (approximatif)
+        s.tick = stRounds[stRounds.length-1].st + s.tick;
+      }
+    });
+    rfShotsConverted = true;
+  }
+
   const SHOT_DUR = 6; // ~94ms à 64 tick/s
+
+  // Tirs sans kill — trait court dans la direction du mouvement du joueur
+  shots.forEach(s => {
+    if(!s.tick||(s.x===0&&s.y===0)) return;
+    if(tick < s.tick || tick > s.tick + SHOT_DUR) return;
+    const alpha = 1 - (tick - s.tick) / SHOT_DUR;
+    const {px,py} = w2c(s.x, s.y, rfMapName, W, H);
+    if(!inBounds(px,py,W,H)) return;
+    // Direction : vers la prochaine position du joueur
+    const pts = (demoData.positions[s.shooter]||[]);
+    const nextPt = pts.find(p => p.tick > s.tick);
+    const prevPt = [...pts].reverse().find(p => p.tick <= s.tick);
+    if(nextPt && prevPt) {
+      const {px:nx,py:ny} = w2c(nextPt.x, nextPt.y, rfMapName, W, H);
+      const dx=nx-px, dy=ny-py, dist=Math.sqrt(dx*dx+dy*dy)||1;
+      if(dist > 1) {
+        rfCtx.strokeStyle=`rgba(255,220,50,${alpha*0.8})`;
+        rfCtx.lineWidth=1.5; rfCtx.setLineDash([]);
+        rfCtx.beginPath(); rfCtx.moveTo(px,py);
+        rfCtx.lineTo(px+dx/dist*30, py+dy/dist*30); rfCtx.stroke();
+      }
+    }
+    rfCtx.beginPath(); rfCtx.arc(px,py,3,0,Math.PI*2);
+    rfCtx.fillStyle=`rgba(255,240,120,${alpha})`; rfCtx.fill();
+  });
+
+  // Kills — trait pleine longueur vers la victime
   (demoData.kills||[]).forEach(k => {
     const kt = k.tick||0;
-    if(kt === 0 || tick < kt || tick > kt + SHOT_DUR) return;
+    if(kt===0 || tick < kt || tick > kt + SHOT_DUR) return;
     if(!k.attackerX && !k.attackerY) return;
-    const alpha = 1 - (tick - kt) / SHOT_DUR; // fade out rapide
+    const alpha = 1 - (tick - kt) / SHOT_DUR;
     const {px:ax,py:ay} = w2c(k.attackerX, k.attackerY, rfMapName, W, H);
     const {px:vx,py:vy} = w2c(k.victimX,   k.victimY,   rfMapName, W, H);
     if(!inBounds(ax,ay,W,H)) return;
     const dx=vx-ax, dy=vy-ay, dist=Math.sqrt(dx*dx+dy*dy)||1;
-    const len=Math.min(45,dist);
-    // Trait vers victime — pleine longueur si kill, sinon court
+    const len=Math.min(50,dist);
     rfCtx.strokeStyle=`rgba(255,220,50,${alpha*0.9})`;
     rfCtx.lineWidth=1.5; rfCtx.setLineDash([]);
-    rfCtx.beginPath();
-    rfCtx.moveTo(ax,ay);
-    rfCtx.lineTo(ax+dx/dist*len, ay+dy/dist*len);
-    rfCtx.stroke();
-    // Flash de bouche (petit point lumineux)
+    rfCtx.beginPath(); rfCtx.moveTo(ax,ay);
+    rfCtx.lineTo(ax+dx/dist*len, ay+dy/dist*len); rfCtx.stroke();
     rfCtx.beginPath(); rfCtx.arc(ax,ay,3.5,0,Math.PI*2);
     rfCtx.fillStyle=`rgba(255,240,120,${alpha})`; rfCtx.fill();
   });
-
-  // Tirs sans kill (shots) — si ticks absolus disponibles
-  const shotsAbsolute = shots.length > 0 && (shots[0].tick||0) > 10000;
-  if(shotsAbsolute) {
-    shots.forEach(s => {
-      if(!s.tick||(s.x===0&&s.y===0)) return;
-      if(s.tick > tick+SHOT_DUR || s.tick < tick-SHOT_DUR) return;
-      const alpha = Math.max(0, 1 - Math.abs(tick-s.tick)/SHOT_DUR);
-      const{px,py}=w2c(s.x,s.y,rfMapName,W,H);
-      if(!inBounds(px,py,W,H)) return;
-      rfCtx.beginPath();rfCtx.arc(px,py,3,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(255,230,80,${alpha*0.8})`;rfCtx.fill();
-    });
-  }
 
   // Trajectoire + effet grenades
   grenades.forEach(g => {
@@ -1599,6 +1631,7 @@ function rfDrawEffects(frame, W, H) {
 }
 
 function rfSelectRound(round,btn){
+  rfShotsConverted=false;
   rfRound=round;
   clearInterval(rfTimer); rfPlaying=false; rfSetPlayPause(false);
   document.querySelectorAll('.rnd2').forEach(b=>b.classList.remove('sel'));
