@@ -1436,23 +1436,29 @@ function rfDrawEffects(frame, W, H) {
   const grenades = demoData.grenades || [];
   const shots    = demoData.shots    || [];
 
-  // Traits de tir : fenêtre stricte [kt, kt+SHOT_DUR]
-  const SHOT_DUR = 8;
+  // Flash de tir : trait lumineux court qui pop et disparaît à chaque kill
+  // Fenêtre stricte : uniquement pendant SHOT_DUR ticks après le kill
+  const SHOT_DUR = 6; // ~94ms à 64 tick/s
   (demoData.kills||[]).forEach(k => {
     const kt = k.tick||0;
     if(kt === 0 || tick < kt || tick > kt + SHOT_DUR) return;
     if(!k.attackerX && !k.attackerY) return;
-    const alpha = Math.max(0, 1 - (tick - kt) / SHOT_DUR);
+    const alpha = 1 - (tick - kt) / SHOT_DUR; // fade out rapide
     const {px:ax,py:ay} = w2c(k.attackerX, k.attackerY, rfMapName, W, H);
     const {px:vx,py:vy} = w2c(k.victimX,   k.victimY,   rfMapName, W, H);
     if(!inBounds(ax,ay,W,H)) return;
     const dx=vx-ax, dy=vy-ay, dist=Math.sqrt(dx*dx+dy*dy)||1;
-    const len=Math.min(50,dist);
-    rfCtx.strokeStyle=`rgba(255,220,50,${alpha*0.85})`;
+    const len=Math.min(45,dist);
+    // Trait vers victime — pleine longueur si kill, sinon court
+    rfCtx.strokeStyle=`rgba(255,220,50,${alpha*0.9})`;
     rfCtx.lineWidth=1.5; rfCtx.setLineDash([]);
-    rfCtx.beginPath(); rfCtx.moveTo(ax,ay); rfCtx.lineTo(ax+dx/dist*len,ay+dy/dist*len); rfCtx.stroke();
-    rfCtx.beginPath(); rfCtx.arc(ax,ay,4,0,Math.PI*2);
-    rfCtx.fillStyle=`rgba(255,240,100,${alpha})`; rfCtx.fill();
+    rfCtx.beginPath();
+    rfCtx.moveTo(ax,ay);
+    rfCtx.lineTo(ax+dx/dist*len, ay+dy/dist*len);
+    rfCtx.stroke();
+    // Flash de bouche (petit point lumineux)
+    rfCtx.beginPath(); rfCtx.arc(ax,ay,3.5,0,Math.PI*2);
+    rfCtx.fillStyle=`rgba(255,240,120,${alpha})`; rfCtx.fill();
   });
 
   // Tirs sans kill (shots) — si ticks absolus disponibles
@@ -1710,7 +1716,7 @@ function rfBuildFrames(round){
     roundKills.forEach(k=>{
       if((k.tick||0)<=tick){
         if(frame.players[k.victim])frame.players[k.victim].alive=false;
-        frame.deaths.push({x:k.victimX,y:k.victimY,ax:k.attackerX,ay:k.attackerY});
+        frame.deaths.push({x:k.victimX,y:k.victimY});
       }
     });
     rfFrames.push(frame);
@@ -1741,19 +1747,10 @@ function rfDrawFrame(idx){
   else{rfCtx.fillStyle='#0A0C12';rfCtx.fillRect(0,0,W,H);}
 
   // Croix morts + traits de tir
+  // Croix de mort (permanentes une fois le joueur mort)
   frame.deaths.forEach(d=>{
     const{px,py}=w2c(d.x,d.y,rfMapName,W,H);
     if(!inBounds(px,py,W,H))return;
-    // Trait de tir attaquant → victime
-    if(d.ax!==undefined){
-      const{px:ax,py:ay}=w2c(d.ax,d.ay,rfMapName,W,H);
-      if(inBounds(ax,ay,W,H)){
-        rfCtx.strokeStyle='rgba(255,200,60,.6)';rfCtx.lineWidth=1;
-        rfCtx.setLineDash([4,3]);
-        rfCtx.beginPath();rfCtx.moveTo(ax,ay);rfCtx.lineTo(px,py);rfCtx.stroke();
-        rfCtx.setLineDash([]);
-      }
-    }
     rfCtx.strokeStyle='rgba(240,107,107,.8)';rfCtx.lineWidth=2;
     rfCtx.beginPath();rfCtx.moveTo(px-5,py-5);rfCtx.lineTo(px+5,py+5);rfCtx.stroke();
     rfCtx.beginPath();rfCtx.moveTo(px+5,py-5);rfCtx.lineTo(px-5,py+5);rfCtx.stroke();
