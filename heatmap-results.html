@@ -1364,7 +1364,15 @@ function convertPositionTicks(){
       p.tick = (stMap[freezeR] || 0) + (p.tick || 0);
     });
   });
+  // Compter la distribution des rounds AVANT conversion
+  const rdDist = {};
+  Object.values(pos).forEach(pts => pts.forEach(p => { rdDist[p.round]=(rdDist[p.round]||0)+1; }));
+  console.log('[FragValue] Distribution rounds avant conversion:', JSON.stringify(rdDist));
   console.log('[FragValue] Ticks positions convertis, sample:', firstPts[0]?.tick);
+  // Vérifier après conversion
+  const rdDist2 = {};
+  Object.values(pos).forEach(pts => pts.forEach(p => { rdDist2[p.round]=(rdDist2[p.round]||0)+1; }));
+  console.log('[FragValue] Distribution rounds après conversion:', JSON.stringify(rdDist2));
 }
 
 function openReplayFS(){
@@ -1488,6 +1496,14 @@ function rfDrawEffects(frame, W, H) {
   }
 
   const SHOT_DUR = 5;
+
+  // Debug shots (une fois)
+  if(!window._shotDebugDone && shots.length > 0) {
+    const r0shots = shots.filter(s => (s.absTick||s.tick||0) >= 5223 && (s.absTick||s.tick||0) <= 9431);
+    const validShots = shots.filter(s => s.x !== 0 || s.y !== 0);
+    console.log(`[Shots debug] total=${shots.length}, round0=${r0shots.length}, valid coords=${validShots.length}, sample absTick=${shots[0]?.absTick||shots[0]?.tick}, x=${shots[0]?.x}, y=${shots[0]?.y}`);
+    window._shotDebugDone = true;
+  }
 
   // Tous les tirs : flash + trait directionnel
   shots.forEach(s => {
