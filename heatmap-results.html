@@ -1723,21 +1723,11 @@ function rfBuildFrames(round){
   });
 
   // Filtrer positions : par tick absolu OU par killsRound si ticks indisponibles
-  const killsR = roundData.killsRound ?? (round + 1);
+  const killsR = round + 1; // round=freezeR, positions ont p.round=freezeR+1
   const roundPos={};
   Object.entries(positions).forEach(([name,pts])=>{
-    let rpts = [];
-    if(startTick > 0) {
-      // Filtre principal : plage de ticks absolus
-      rpts = pts.filter(p => {
-        const t = p.tick || 0;
-        return t >= startTick && (endTick === 0 || t <= endTick);
-      });
-    }
-    // Fallback : filtre par numéro de round si aucune position trouvée par tick
-    if(rpts.length === 0) {
-      rpts = pts.filter(p => p.round === killsR);
-    }
+    // Filtre par numéro de round (p.round = killsR = freezeR+1)
+    const rpts = pts.filter(p => p.round === killsR);
     if(rpts.length > 0) roundPos[name] = rpts;
   });
 
