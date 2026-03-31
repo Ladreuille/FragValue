@@ -1343,13 +1343,11 @@ let rfPlaying=false, rfTimer=null, rfSpeed=1, rfMapName='de_dust2';
 const RF_FPS=30;
 
 function getFirstRealRound(){
-  const rounds = demoData.rounds||[];
-  for(let i=0;i<rounds.length;i++){
-    const r = rounds[i];
-    console.log(`[getFirstRealRound] checking round ${r.round}, isKnife=${r.isKnife}`);
-    if(!r.isKnife) return r.round ?? i;
+  const _rnds = demoData.rounds||[];
+  for(let i=0;i<_rnds.length;i++){
+    if(!_rnds[i].isKnife) return _rnds[i].round ?? i;
   }
-  return rounds[0]?.round ?? 0;
+  return _rnds[0]?.round ?? 0;
 }
 
 function convertPositionTicks(){
