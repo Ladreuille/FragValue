@@ -309,19 +309,17 @@ async function startAnalysis() {
     await new Promise(r => setTimeout(r, 500));
     setStep(5, 100, 'Terminé !', 'Redirection...');
     bar.style.background = 'var(--success)';
-    // Tenter de stocker — si quota dépassé, retirer les positions (replay désactivé)
-    const fullData = JSON.stringify(data.data);
+    // Stocker avec fallback si trop lourd
+    const fullJson = JSON.stringify(data.data);
+    console.log('[FragValue] JSON size:', fullJson.length, 'bytes');
     try {
-      sessionStorage.setItem('demoData', fullData);
-    } catch(e) {
-      console.warn('sessionStorage quota exceeded, removing positions:', e.message);
-      const lite = {...data.data, positions: {}};
-      try {
-        sessionStorage.setItem('demoData', JSON.stringify(lite));
-        console.log('Stored lite version without positions');
-      } catch(e2) {
-        console.error('Storage failed even without positions:', e2.message);
-      }
+      sessionStorage.setItem('demoData', fullJson);
+      console.log('[FragValue] Stored OK, positions keys:', Object.keys(data.data.positions||{}).length);
+    } catch(quotaErr) {
+      console.warn('[FragValue] sessionStorage quota, on retire les positions:', quotaErr.message);
+      // Fallback : stocker sans positions si trop lourd
+      const slim = {...data.data, positions: {}};
+      sessionStorage.setItem('demoData', JSON.stringify(slim));
     }
     // Sauvegarde dans Supabase si connecté
     await saveDemoAnalysis(data.data);
