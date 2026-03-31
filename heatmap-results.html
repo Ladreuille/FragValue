@@ -1399,7 +1399,8 @@ function openReplayFS(){
       rfCanvas.width=img.width; rfCanvas.height=img.height;
       initRfRoundsBar();
       const firstReal = getFirstRealRound();
-    rfSelectRound(firstReal, document.getElementById('rfRoundBtn'+firstReal));
+      console.log('[openReplayFS] firstReal=', firstReal, 'rounds[0].isKnife=', (demoData.rounds||[])[0]?.isKnife);
+      rfSelectRound(firstReal, document.getElementById('rfRoundBtn'+firstReal));
     };
     img.onerror=()=>{ rfMapImg=null; initRfRoundsBar();
     const firstReal2 = getFirstRealRound();
