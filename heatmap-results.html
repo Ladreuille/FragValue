@@ -1350,8 +1350,26 @@ function getFirstRealRound(){
   return rounds[0]?.round ?? 0;
 }
 
+function convertPositionTicks(){
+  // Convertir positions ticks relatifs → absolus si nécessaire
+  const pos = demoData.positions || {};
+  const firstPts = Object.values(pos)[0];
+  if(!firstPts || firstPts[0]?.tick > 1000) return; // déjà absolus
+  const rounds = demoData.rounds || [];
+  const stMap = {};
+  rounds.forEach(r => { stMap[r.round ?? 0] = r.startTick || 0; });
+  Object.values(pos).forEach(pts => {
+    pts.forEach(p => {
+      const freezeR = (p.round || 1) - 1;
+      p.tick = (stMap[freezeR] || 0) + (p.tick || 0);
+    });
+  });
+  console.log('[FragValue] Ticks positions convertis, sample:', firstPts[0]?.tick);
+}
+
 function openReplayFS(){
   if(!demoData)return;
+  convertPositionTicks();
   rfMapName=(demoData.meta?.map||'de_dust2').toLowerCase().replace(/^.*\//,'').trim();
   document.getElementById('rfMapName').textContent=rfMapName;
   document.getElementById('replayFullscreen').classList.add('active');
