@@ -1708,13 +1708,15 @@ function rfBuildFrames(round){
 
   const minT = startTick > 0 ? startTick : Math.min(...posTicks);
 
-  // maxT = dernier kill + 2sec (fin naturelle du round, avant freeze suivant)
+  // maxT = dernier kill + buffer OU dernier tick de position (le plus grand)
   const lastKillTick = roundKills.length > 0
     ? Math.max(...roundKills.map(k=>k.tick||0)) : 0;
-  const postKillBuffer = 256; // ~2sec à 128tick/s
-  const maxT = lastKillTick > minT
-    ? lastKillTick + postKillBuffer
-    : Math.max(...posTicks, minT + 1);
+  const lastPosTick = posTicks.length > 0 ? Math.max(...posTicks) : 0;
+  const postKillBuffer = 128; // ~2sec à 64tick/s
+  const maxT = Math.max(
+    lastKillTick > minT ? lastKillTick + postKillBuffer : minT + 1,
+    lastPosTick
+  );
 
   console.log(`[rfBuildFrames] minT=${minT} maxT=${maxT} lastKill=${lastKillTick} kills=${roundKills.length} positions=${Object.keys(roundPos).length}`);
 
