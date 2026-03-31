@@ -1436,15 +1436,12 @@ function rfDrawEffects(frame, W, H) {
   const grenades = demoData.grenades || [];
   const shots    = demoData.shots    || [];
 
-  // Traits de tir : uniquement si l'attaquant est vivant dans ce frame
+  // Traits de tir : fenêtre stricte [kt, kt+SHOT_DUR]
   const SHOT_DUR = 8;
   (demoData.kills||[]).forEach(k => {
     const kt = k.tick||0;
     if(kt === 0 || tick < kt || tick > kt + SHOT_DUR) return;
     if(!k.attackerX && !k.attackerY) return;
-    // Vérifier que l'attaquant est vivant dans ce frame
-    const attackerState = frame.players[k.attacker];
-    if(attackerState && !attackerState.alive) return;
     const alpha = Math.max(0, 1 - (tick - kt) / SHOT_DUR);
     const {px:ax,py:ay} = w2c(k.attackerX, k.attackerY, rfMapName, W, H);
     const {px:vx,py:vy} = w2c(k.victimX,   k.victimY,   rfMapName, W, H);
@@ -1672,7 +1669,7 @@ function rfBuildFrames(round){
   console.log(`[rfBuildFrames] minT=${minT} maxT=${maxT} lastKill=${lastKillTick} kills=${roundKills.length} positions=${Object.keys(roundPos).length}`);
 
   const span = Math.max(maxT - minT, 1);
-  const durSec = span / 128;
+  const durSec = span / 64; // FACEIT CS2 = 64 tick/s
   const N = Math.min(1800, Math.max(80, Math.round(durSec * RF_FPS)));
 
   // Seuil anti-traversée de mur : distance max entre 2 footsteps consécutifs
@@ -1720,7 +1717,7 @@ function rfBuildFrames(round){
   }
 
   // Timer
-  const tot=Math.round(span/128);
+  const tot=Math.round(span/64);
   document.getElementById('rfTimeTot').textContent=`${Math.floor(tot/60)}:${String(tot%60).padStart(2,'0')}`;
 
   // Kill chips
