@@ -1466,7 +1466,7 @@ function rfDrawEffects(frame, W, H) {
   // ── Traits de tir ────────────────────────────────────────────────────────
   // Construire shots absolus une fois par round si ticks relatifs
   if(!rfShotsConverted) {
-    const shotsRelative = shots.length > 0 && (shots[0].tick||0) < 2000; // relatif si < 2000 ticks
+    const shotsRelative = shots.length > 0 && (shots[0].tick||0) < 5000; // relatif si < 5000 ticks
     if(shotsRelative) {
       // Pour chaque joueur, trouver l'offset entre ses positions absolues
       // et ses shots relatifs via le premier kill (tick absolu connu)
@@ -1505,10 +1505,13 @@ function rfDrawEffects(frame, W, H) {
     window._shotDebugDone = true;
   }
 
-  // Tous les tirs : flash + trait directionnel
+  // Tous les tirs : flash + trait directionnel (filtrés par round)
+  const rdData = (demoData.rounds||[]).find(r=>(r.round??-1)===rfRound)||{};
+  const rdStart = rdData.startTick||0, rdEnd = rdData.endTick||999999;
   shots.forEach(s => {
     const st = s.absTick || s.tick || 0;
     if(st === 0 || (s.x===0 && s.y===0)) return;
+    if(st < rdStart || st > rdEnd + 1000) return; // hors round
     if(tick < st || tick > st + SHOT_DUR) return;
     const alpha = 1 - (tick - st) / SHOT_DUR;
     const {px,py} = w2c(s.x, s.y, rfMapName, W, H);
@@ -1572,8 +1575,12 @@ function rfDrawEffects(frame, W, H) {
   });
 
   // Trajectoire + effet grenades
+  // Filtrer grenades du round courant
+  const _rd = (demoData.rounds||[]).find(r=>(r.round??-1)===rfRound)||{};
+  const _rStart = _rd.startTick||0, _rEnd = (_rd.endTick||999999) + 2000;
   grenades.forEach(g => {
     if (!g.tick || !g.detonTick) return;
+    if (g.tick < _rStart || g.tick > _rEnd) return;
     const launchPos = w2c(g.x, g.y, rfMapName, W, H);
     const detonPos  = w2c(g.detonX, g.detonY, rfMapName, W, H);
 
