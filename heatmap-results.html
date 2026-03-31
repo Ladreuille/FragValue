@@ -1604,19 +1604,23 @@ function rfDrawEffects(frame, W, H) {
 
     // Trajectoire : trait fin entre lanceur et point d'impact
     if (tick >= g.tick && tick < g.detonTick && inBounds(launchPos.px,launchPos.py,W,H)) {
-      const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
       const targetPos = hasValidDeton ? detonPos : launchPos;
-  const curX = launchPos.px + (detonPos.px - launchPos.px) * progress;
-      const curY = launchPos.py + (detonPos.py - launchPos.py) * progress;
-      // Trait de la trajectoire
-      rfCtx.setLineDash([3,3]);
-      rfCtx.strokeStyle = 'rgba(255,255,255,0.4)';
-      rfCtx.lineWidth = 1;
-      rfCtx.beginPath(); rfCtx.moveTo(launchPos.px, launchPos.py); rfCtx.lineTo(curX, curY); rfCtx.stroke();
-      rfCtx.setLineDash([]);
-      // Grenade en vol : petit point blanc
-      rfCtx.beginPath(); rfCtx.arc(curX, curY, 3, 0, Math.PI*2);
-      rfCtx.fillStyle = 'rgba(255,255,255,0.9)'; rfCtx.fill();
+      // Vérifier que la trajectoire n'est pas impossible (> 350px = mauvais matching)
+      const trajDx = targetPos.px - launchPos.px;
+      const trajDy = targetPos.py - launchPos.py;
+      const trajLen = Math.sqrt(trajDx*trajDx + trajDy*trajDy);
+      if(trajLen <= 350) {
+        const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
+        const curX = launchPos.px + trajDx * progress;
+        const curY = launchPos.py + trajDy * progress;
+        rfCtx.setLineDash([3,3]);
+        rfCtx.strokeStyle = 'rgba(255,255,255,0.4)';
+        rfCtx.lineWidth = 1;
+        rfCtx.beginPath(); rfCtx.moveTo(launchPos.px, launchPos.py); rfCtx.lineTo(curX, curY); rfCtx.stroke();
+        rfCtx.setLineDash([]);
+        rfCtx.beginPath(); rfCtx.arc(curX, curY, 3, 0, Math.PI*2);
+        rfCtx.fillStyle = 'rgba(255,255,255,0.9)'; rfCtx.fill();
+      }
     }
 
     // Effet à l'impact : seulement si détonation connue
@@ -1625,6 +1629,10 @@ function rfDrawEffects(frame, W, H) {
     if (!isActive) return;
     const {px,py} = detonPos;
     if (!inBounds(px,py,W,H)) return;
+    // Vérifier distance max lancer→explosion (~350px max sur minimap)
+    const impDx = detonPos.px - launchPos.px;
+    const impDy = detonPos.py - launchPos.py;
+    if(Math.sqrt(impDx*impDx + impDy*impDy) > 350) return;
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
 
