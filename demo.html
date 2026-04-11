@@ -1,232 +1,488 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FragValue — Analyse de démo</title>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--bg:#08090C;--surface:#0F1117;--card:#161920;--card2:#1C1F28;--border:#1F2433;--border2:#252B3B;--accent:#3B7FF5;--accent-dim:rgba(59,127,245,.12);--text:#EDF0F7;--text2:#8892A4;--text3:#4A5568;--success:#2DD4A0;--danger:#F06B6B;--font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace}
-    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
-    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:52px;background:rgba(8,9,12,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
-    .logo{font-size:16px;font-weight:700;letter-spacing:-.2px;text-decoration:none;color:var(--text)}
-    .logo-accent{color:var(--accent)}
-    .nav-links{display:flex;align-items:center;gap:4px}
-    .nav-link{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all .15s;font-weight:500}
-    .nav-link:hover{color:var(--text);background:var(--card)}
-    .nav-link.active{color:var(--text)}
-    .nav-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(59,127,245,.2);letter-spacing:.3px}
-    .page{max-width:760px;margin:0 auto;padding:48px 24px 80px}
-    .page-eyebrow{font-size:11px;font-weight:600;letter-spacing:1.2px;color:var(--accent);text-transform:uppercase;margin-bottom:14px;opacity:0;animation:fadeUp .3s .1s forwards}
-    .page-title{font-size:clamp(28px,4vw,44px);font-weight:700;letter-spacing:-1.2px;line-height:1.05;margin-bottom:12px;opacity:0;animation:fadeUp .3s .15s forwards}
-    .page-sub{font-size:14px;color:var(--text2);line-height:1.7;max-width:500px;margin-bottom:40px;opacity:0;animation:fadeUp .3s .2s forwards}
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FragValue · Analyser une démo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-    /* Upload zone */
-    .upload-zone{
-      border:1px dashed var(--border2);border-radius:12px;
-      padding:52px 40px;text-align:center;cursor:pointer;
-      transition:all .2s;background:var(--surface);
-      opacity:0;animation:fadeUp .3s .25s forwards;margin-bottom:20px;
-    }
-    .upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:var(--accent-dim)}
-    .upload-icon{width:44px;height:44px;margin:0 auto 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;transition:transform .2s}
-    .upload-zone:hover .upload-icon,.upload-zone.dragover .upload-icon{transform:translateY(-3px)}
-    .upload-icon svg{width:20px;height:20px;opacity:.6}
-    .upload-title{font-size:16px;font-weight:600;margin-bottom:6px}
-    .upload-sub{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6}
-    .upload-btn{background:var(--accent);color:#fff;padding:9px 20px;border-radius:7px;font-family:var(--font);font-size:13px;font-weight:600;border:none;cursor:pointer;transition:opacity .15s}
-    .upload-btn:hover{opacity:.9}
-    .upload-meta{display:flex;gap:20px;justify-content:center;margin-top:16px;flex-wrap:wrap}
-    .upload-meta-item{font-size:11px;color:var(--text3);font-family:var(--mono);display:flex;align-items:center;gap:5px}
-    .upload-meta-dot{width:4px;height:4px;border-radius:50%;background:var(--border2)}
-    #fileInput{display:none}
+:root{
+  --bg:      #080909;
+  --surface: #0f1010;
+  --border:  #1c1e1e;
+  --border2: #252727;
+  --text:    #e8eaea;
+  --text2:   #7a8080;
+  --text3:   #4a5050;
+  --accent:  #b8ff57;
+  --accent2: #7ddd1a;
+  --danger:  #ff4444;
+  --success: #2dd4a0;
+  --gold:    #f5c842;
+  --mono:    'Space Mono', monospace;
+  --display: 'Anton', sans-serif;
+  --radius:  6px;
+  --radius2: 12px;
+}
 
-    /* File selected */
-    .file-selected{display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:16px;align-items:center;gap:14px}
-    .file-selected.visible{display:flex}
-    .file-tag{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(59,127,245,.2);padding:6px 10px;border-radius:6px;flex-shrink:0}
-    .file-name{font-size:14px;font-weight:600;margin-bottom:2px}
-    .file-size{font-family:var(--mono);font-size:11px;color:var(--text3)}
-    .file-remove{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;margin-left:auto}
-    .file-remove:hover{border-color:var(--danger);color:var(--danger)}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--mono);font-size:14px;line-height:1.6;
+  overflow-x:hidden;min-height:100vh
+}
 
-    /* Sections */
-    .section-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;opacity:0;animation:fadeUp .3s forwards}
-    .section-label{font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;font-family:var(--mono);margin-bottom:12px}
-    .player-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:11px 14px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
-    .player-input:focus{border-color:var(--accent)}
-    .player-input::placeholder{color:var(--text3)}
-    .input-hint{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:8px}
+/* NOISE */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.4
+}
 
-    /* Options */
-    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    @media(max-width:500px){.options-grid{grid-template-columns:1fr}}
-    .option{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s}
-    .option:hover{border-color:var(--border2)}
-    .option.active{border-color:rgba(59,127,245,.35);background:var(--accent-dim)}
-    .option-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
-    .option.active .option-check{background:var(--accent);border-color:var(--accent)}
-    .option-check-inner{width:7px;height:7px;background:#fff;border-radius:1px;transform:scale(0);transition:transform .15s}
-    .option.active .option-check-inner{transform:scale(1)}
-    .option-label{font-size:13px;font-weight:500;margin-bottom:1px}
-    .option-desc{font-size:11px;color:var(--text3);font-family:var(--mono)}
+/* NAV — identique landing */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:56px;
+  background:rgba(8,9,9,.85);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px)
+}
+.nav-logo{
+  font-family:var(--display);font-size:20px;letter-spacing:.04em;
+  color:var(--text);text-decoration:none;display:flex;align-items:center;gap:8px
+}
+.nav-logo span{color:var(--accent)}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-links a{
+  color:var(--text2);text-decoration:none;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;transition:color .15s
+}
+.nav-links a:hover{color:var(--text)}
+.nav-links a.active{color:var(--text)}
+.nav-cta{
+  background:var(--accent);color:#000;
+  padding:8px 18px;border-radius:var(--radius);
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  text-decoration:none;letter-spacing:.06em;transition:all .15s
+}
+.nav-cta:hover{background:var(--accent2);transform:translateY(-1px)}
 
-    /* Submit */
-    .submit-btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s;opacity:0;animation:fadeUp .3s .35s forwards}
-    .submit-btn:hover{opacity:.9}
-    .submit-btn:disabled{background:var(--text3);cursor:not-allowed;opacity:.7}
+/* LAYOUT SPLIT */
+.layout{
+  display:grid;
+  grid-template-columns:1fr 460px;
+  min-height:100vh;
+  padding-top:56px;
+  position:relative;z-index:1
+}
 
-    /* Error */
-    .error-card{display:none;background:rgba(240,107,107,.06);border:1px solid rgba(240,107,107,.2);border-radius:8px;padding:12px 14px;margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--danger)}
+/* GAUCHE */
+.left{
+  padding:80px 72px;
+  display:flex;flex-direction:column;
+  justify-content:center;
+  border-right:1px solid var(--border);
+  position:relative;overflow:hidden
+}
+.left-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:56px 56px;opacity:.35;
+  mask-image:radial-gradient(ellipse 80% 80% at 20% 50%,black 0%,transparent 100%)
+}
+.left-glow{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 55% 60% at 5% 55%,rgba(184,255,87,.04) 0%,transparent 70%);
+  pointer-events:none
+}
+.left-inner{position:relative;z-index:1}
 
-    /* Progress */
-    #progressSection{display:none;margin-top:20px}
-    .progress-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px}
-    .progress-header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
-    .progress-spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-    .progress-title{font-size:14px;font-weight:600}
-    .progress-sub{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px}
-    .progress-track{height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-bottom:16px}
-    .progress-fill{height:100%;background:var(--accent);border-radius:1px;transition:width .4s ease;width:0%}
-    .progress-steps{display:flex;flex-direction:column;gap:7px}
-    .progress-step{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--text3);transition:color .2s}
-    .progress-step.done{color:var(--success)}
-    .progress-step.active{color:var(--text)}
-    .step-dot{width:6px;height:6px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .2s}
-    .progress-step.done .step-dot{background:var(--success)}
-    .progress-step.active .step-dot{background:var(--accent);animation:pulse 1s infinite}
+.left-tag{
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--accent);border:1px solid rgba(184,255,87,.2);
+  padding:5px 12px;border-radius:40px;display:inline-block;
+  margin-bottom:28px;
+  opacity:0;animation:fadeUp .5s .05s ease forwards
+}
+.left-title{
+  font-family:var(--display);
+  font-size:clamp(48px,5vw,72px);
+  line-height:.93;letter-spacing:.01em;margin-bottom:20px;
+  opacity:0;animation:fadeUp .5s .1s ease forwards
+}
+.left-title em{font-style:normal;-webkit-text-stroke:1px var(--text);color:transparent}
+.left-sub{
+  font-size:13px;color:var(--text2);line-height:1.85;
+  max-width:380px;margin-bottom:48px;
+  opacity:0;animation:fadeUp .5s .15s ease forwards
+}
+.feat-list{
+  display:flex;flex-direction:column;gap:11px;
+  opacity:0;animation:fadeUp .5s .2s ease forwards
+}
+.feat{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text2)}
+.feat-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.feat strong{color:var(--text)}
 
-    /* Info cards */
-    .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:40px;opacity:0;animation:fadeUp .3s .4s forwards}
-    .info-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px}
-    .info-num{font-size:24px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;color:var(--accent);margin-bottom:4px}
-    .info-label{font-size:12px;font-weight:600;margin-bottom:3px}
-    .info-desc{font-size:11px;color:var(--text3);line-height:1.5}
+/* DROITE */
+.right{
+  background:var(--surface);
+  border-left:1px solid var(--border);
+  padding:60px 40px;
+  display:flex;flex-direction:column;
+  justify-content:center;
+  gap:10px
+}
 
-    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-  </style>
+/* SECTION LABEL — identique landing */
+.section-label{
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text3);display:flex;align-items:center;gap:10px;
+  margin-bottom:4px
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* UPLOAD ZONE */
+#fileInput{display:none}
+.upload-zone{
+  border:1px dashed var(--border2);border-radius:var(--radius2);
+  padding:48px 28px;text-align:center;cursor:pointer;
+  background:var(--bg);transition:all .2s;
+  opacity:0;animation:fadeUp .5s .1s ease forwards
+}
+.upload-zone:hover,.upload-zone.dragover{
+  border-color:var(--accent);background:rgba(184,255,87,.03)
+}
+.upload-zone.ok{
+  border-style:solid;border-color:var(--success);
+  background:rgba(45,212,160,.04)
+}
+.upload-icon{
+  width:48px;height:48px;margin:0 auto 18px;
+  background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.15);
+  border-radius:var(--radius);display:flex;align-items:center;justify-content:center;
+  transition:transform .2s
+}
+.upload-zone:hover .upload-icon,.upload-zone.dragover .upload-icon{transform:translateY(-4px)}
+.upload-title{font-family:var(--display);font-size:24px;letter-spacing:.02em;margin-bottom:8px}
+.upload-sub{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:22px}
+.upload-btn{
+  background:var(--accent);color:#000;
+  padding:10px 24px;border-radius:var(--radius);
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  border:none;cursor:pointer;letter-spacing:.04em;transition:all .15s
+}
+.upload-btn:hover{background:var(--accent2);transform:translateY(-1px)}
+.upload-hints{
+  display:flex;gap:16px;justify-content:center;
+  margin-top:18px;flex-wrap:wrap
+}
+.upload-hints span{
+  font-size:10px;color:var(--text3);letter-spacing:.06em;
+  display:flex;align-items:center;gap:5px
+}
+
+/* FILE BAR */
+.file-bar{
+  display:none;align-items:center;gap:12px;
+  background:rgba(184,255,87,.04);border:1px solid rgba(184,255,87,.15);
+  border-radius:var(--radius);padding:12px 16px
+}
+.file-bar.show{display:flex}
+.file-bar-ico{
+  width:34px;height:34px;flex-shrink:0;
+  background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.2);
+  border-radius:var(--radius);display:flex;align-items:center;justify-content:center
+}
+.file-bar-info{flex:1;min-width:0}
+.file-bar-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-bar-size{font-size:10px;color:var(--text3);letter-spacing:.04em;margin-top:2px}
+.file-bar-rm{
+  font-size:10px;padding:4px 10px;border-radius:var(--radius);
+  border:1px solid var(--border2);background:transparent;
+  color:var(--text3);cursor:pointer;transition:all .15s;
+  flex-shrink:0;font-family:var(--mono)
+}
+.file-bar-rm:hover{border-color:var(--danger);color:var(--danger)}
+
+/* ERROR */
+.error-card{
+  display:none;
+  background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.18);
+  border-radius:var(--radius);padding:11px 14px;
+  font-size:11px;color:var(--danger);letter-spacing:.02em
+}
+
+/* SUBMIT */
+.submit-btn{
+  width:100%;padding:15px;
+  background:var(--accent);color:#000;
+  border:none;border-radius:var(--radius);
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  cursor:pointer;letter-spacing:.06em;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:all .15s;
+  opacity:0;animation:fadeUp .5s .2s ease forwards
+}
+.submit-btn:hover:not(:disabled){
+  background:var(--accent2);transform:translateY(-1px);
+  box-shadow:0 8px 24px rgba(184,255,87,.15)
+}
+.submit-btn:disabled{
+  background:var(--border2);color:var(--text3);
+  cursor:not-allowed;transform:none;box-shadow:none
+}
+
+/* PROGRESS */
+#progressSection{display:none}
+.progress-card{
+  background:var(--bg);border:1px solid var(--border2);
+  border-radius:var(--radius2);padding:24px;
+  position:relative;overflow:hidden
+}
+.progress-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  animation:shimmer 1.8s ease-in-out infinite
+}
+.progress-hd{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.progress-spin{
+  width:22px;height:22px;flex-shrink:0;
+  border:1.5px solid var(--border2);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .75s linear infinite
+}
+.progress-title{font-family:var(--display);font-size:18px;letter-spacing:.02em}
+.progress-sub{font-size:10px;color:var(--text3);letter-spacing:.06em;margin-top:3px}
+.progress-track{height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-bottom:18px}
+.progress-fill{height:100%;width:0%;background:var(--accent);border-radius:1px;transition:width .4s ease}
+.progress-steps{display:flex;flex-direction:column;gap:8px}
+.ps{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--text3);letter-spacing:.04em;transition:color .2s}
+.ps.done{color:var(--success)}
+.ps.active{color:var(--text)}
+.ps-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .2s}
+.ps.done .ps-dot{background:var(--success)}
+.ps.active .ps-dot{background:var(--accent);animation:pulse 1s infinite}
+
+/* STATS ROW — comme hero-stats de la landing */
+.stats-row{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+  opacity:0;animation:fadeUp .5s .3s ease forwards
+}
+.sc{
+  padding:16px 12px;text-align:center;
+  border-right:1px solid var(--border)
+}
+.sc:last-child{border-right:none}
+.sc-val{font-family:var(--display);font-size:24px;color:var(--accent);line-height:1}
+.sc-lbl{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-top:4px}
+
+/* RESULT PREVIEW */
+.result-preview{
+  margin-top:40px;padding-top:32px;
+  border-top:1px solid var(--border);
+  opacity:0;animation:fadeUp .5s .25s ease forwards
+}
+.rp-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+.rp-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.rp-card{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px 8px;text-align:center
+}
+.rp-val{font-family:var(--display);font-size:18px;color:var(--accent);line-height:1}
+.rp-key{font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+.rp-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.rp-bar-label{font-size:10px;color:var(--text2);width:44px;flex-shrink:0}
+.rp-bar-track{flex:1;height:3px;background:var(--border);border-radius:2px}
+.rp-bar-fill{height:100%;border-radius:2px;background:var(--accent)}
+.rp-bar-num{font-family:var(--display);font-size:13px;color:var(--accent);width:28px;text-align:right;flex-shrink:0}
+
+/* RESPONSIVE */
+@media(max-width:860px){
+  .layout{grid-template-columns:1fr}
+  .left{display:none}
+  .right{padding:40px 20px;min-height:calc(100vh - 56px)}
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+</style>
 </head>
 <body>
+
 <nav>
-  <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
+  <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
   <div class="nav-links">
-    <a href="index.html" class="nav-link">Scout</a>
-    <a href="compare.html" class="nav-link">Comparer</a>
-    <a href="demo.html" class="nav-link active">Démo</a>
-    <span class="nav-badge">BETA</span>
-    <div style="width:1px;height:18px;background:var(--border);margin:0 4px"></div>
-    <a href="login.html" class="nav-link" id="navLoginBtn">Connexion</a>
-    <a href="account.html" class="nav-link" id="navAccountBtn" style="display:none">Mon espace</a>
+    <a href="index.html">Accueil</a>
+    <a href="index.html#pricing">Tarifs</a>
+    <a href="demo.html" class="active">Analyse</a>
+    <a href="login.html" id="navLoginBtn">Connexion</a>
+    <a href="account.html" class="nav-cta" id="navAccountBtn" style="display:none">Mon espace</a>
   </div>
 </nav>
 
-<div class="page">
-  <div class="page-eyebrow">Analyse de démo</div>
-  <h1 class="page-title">Visualise ton jeu<br/>en profondeur.</h1>
-  <p class="page-sub">Importe un fichier .dem CS2 pour obtenir des heatmaps de positions, zones de duels, trajectoires de grenades et KPIs invisibles depuis FACEIT.</p>
+<div class="layout">
 
-  <!-- Upload -->
-  <div class="upload-zone" id="uploadZone">
-    <input type="file" id="fileInput" accept=".dem"/>
-    <div class="upload-icon">
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M10 13V7M7 10l3-3 3 3M4 15h12" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
-    <div class="upload-title">Dépose ta démo ici</div>
-    <p class="upload-sub">Fichier .dem exporté depuis CS2 ou FACEIT</p>
-    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Parcourir</button>
-    <div class="upload-meta">
-      <div class="upload-meta-item"><div class="upload-meta-dot"></div>Format .dem uniquement</div>
-      <div class="upload-meta-item"><div class="upload-meta-dot"></div>Max 500 MB</div>
-      <div class="upload-meta-item"><div class="upload-meta-dot"></div>~60 secondes</div>
-    </div>
-  </div>
-
-  <!-- File selected -->
-  <div class="file-selected" id="fileSelected">
-    <div class="file-tag">.DEM</div>
-    <div class="file-info" style="flex:1">
-      <div class="file-name" id="fileName"></div>
-      <div class="file-size" id="fileSize"></div>
-    </div>
-    <button class="file-remove" onclick="removeFile()">Supprimer</button>
-  </div>
-
-  <!-- Player input -->
-  <div class="section-card" style="animation-delay:.28s">
-    <div class="section-label">Joueur à analyser</div>
-    <input class="player-input" id="playerInput" type="text" placeholder="Pseudo Steam ou FACEIT dans la démo..." autocomplete="off" spellcheck="false"/>
-    <p class="input-hint">Laisse vide pour analyser tous les joueurs</p>
-  </div>
-
-  <!-- Options -->
-  <div class="section-card" style="animation-delay:.31s">
-    <div class="section-label">Analyses à générer</div>
-    <div class="options-grid" id="optionsGrid">
-      <div class="option active" onclick="this.classList.toggle('active')">
-        <div class="option-check"><div class="option-check-inner"></div></div>
-        <div><div class="option-label">Kill heatmap</div><div class="option-desc">Zones de kills et deaths</div></div>
-      </div>
-      <div class="option active" onclick="this.classList.toggle('active')">
-        <div class="option-check"><div class="option-check-inner"></div></div>
-        <div><div class="option-label">Movement map</div><div class="option-desc">Déplacements et zones</div></div>
-      </div>
-      <div class="option active" onclick="this.classList.toggle('active')">
-        <div class="option-check"><div class="option-check-inner"></div></div>
-        <div><div class="option-label">Duel win zones</div><div class="option-desc">% duels gagnés par zone</div></div>
-      </div>
-      <div class="option active" onclick="this.classList.toggle('active')">
-        <div class="option-check"><div class="option-check-inner"></div></div>
-        <div><div class="option-label">Utility map</div><div class="option-desc">Grenades, smokes, flashes</div></div>
-      </div>
-      <div class="option" onclick="this.classList.toggle('active')">
-        <div class="option-check"><div class="option-check-inner"></div></div>
-        <div><div class="option-label">Economy timeline</div><div class="option-desc">Armes et argent / round</div></div>
-      </div>
-      <div class="option" onclick="this.classList.toggle('active')">
-        <div class="option-check"><div class="option-check-inner"></div></div>
-        <div><div class="option-label">Round replay</div><div class="option-desc">Rejeu animé des rounds</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Submit -->
-  <button class="submit-btn" id="analyseBtn" onclick="startAnalysis()" disabled>Dépose d'abord ta démo</button>
-  <div class="error-card" id="errorCard"></div>
-
-  <!-- Progress -->
-  <div id="progressSection">
-    <div class="progress-card">
-      <div class="progress-header">
-        <div class="progress-spinner"></div>
-        <div>
-          <div class="progress-title" id="progressTitle">Analyse en cours...</div>
-          <div class="progress-sub" id="progressSub">Initialisation</div>
+  <!-- GAUCHE -->
+  <div class="left">
+    <div class="left-grid"></div>
+    <div class="left-glow"></div>
+    <div class="left-inner">
+      <div class="left-tag">Demo Analyzer</div>
+      <h1 class="left-title">Upload.<br><em>Analyse.</em><br>Progresse.</h1>
+      <p class="left-sub">Dépose ton fichier .dem FACEIT et reçois une analyse complète en moins de 2 minutes. Positions, kills, grenades et FV Rating.</p>
+      <div class="feat-list">
+        <div class="feat">
+          <div class="feat-dot"></div>
+          <span><strong>Heatmaps</strong> · Kills, morts et zones de duels</span>
+        </div>
+        <div class="feat">
+          <div class="feat-dot"></div>
+          <span><strong>2D Replay</strong> · Chaque round frame par frame</span>
+        </div>
+        <div class="feat">
+          <div class="feat-dot"></div>
+          <span><strong>FV Rating</strong> · Ton impact réel sur chaque round</span>
+        </div>
+        <div class="feat">
+          <div class="feat-dot"></div>
+          <span><strong>Utility Map</strong> · Trajectoires grenades et smokes</span>
+        </div>
+        <div class="feat">
+          <div class="feat-dot"></div>
+          <span><strong>Stats équipes</strong> · KAST, ADR, opening duels</span>
         </div>
       </div>
-      <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
-      <div class="progress-steps">
-        <div class="progress-step active"><div class="step-dot"></div>Lecture du fichier .dem</div>
-        <div class="progress-step"><div class="step-dot"></div>Extraction des ticks</div>
-        <div class="progress-step"><div class="step-dot"></div>Calcul des zones de duels</div>
-        <div class="progress-step"><div class="step-dot"></div>Génération des heatmaps</div>
-        <div class="progress-step"><div class="step-dot"></div>Calcul des KPIs</div>
-        <div class="progress-step"><div class="step-dot"></div>Finalisation</div>
+
+      <!-- MINI RÉSULTAT PREVIEW -->
+      <div class="result-preview">
+        <div class="rp-label">Exemple de résultat</div>
+        <div class="rp-row">
+          <div class="rp-card">
+            <div class="rp-val">1.42</div>
+            <div class="rp-key">FV Rating</div>
+          </div>
+          <div class="rp-card">
+            <div class="rp-val">74%</div>
+            <div class="rp-key">KAST</div>
+          </div>
+          <div class="rp-card">
+            <div class="rp-val">87</div>
+            <div class="rp-key">ADR</div>
+          </div>
+          <div class="rp-card">
+            <div class="rp-val">63%</div>
+            <div class="rp-key">Opening</div>
+          </div>
+        </div>
+        <div class="rp-bar-row">
+          <span class="rp-bar-label">CT side</span>
+          <div class="rp-bar-track"><div class="rp-bar-fill" style="width:71%"></div></div>
+          <span class="rp-bar-num">1.58</span>
+        </div>
+        <div class="rp-bar-row">
+          <span class="rp-bar-label">T side</span>
+          <div class="rp-bar-track"><div class="rp-bar-fill" style="width:52%;background:var(--gold)"></div></div>
+          <span class="rp-bar-num" style="color:var(--gold)">1.26</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Info cards -->
-  <div class="info-grid">
-    <div class="info-card"><div class="info-num">64</div><div class="info-label">Ticks/sec</div><div class="info-desc">Précision maximale des positions</div></div>
-    <div class="info-card"><div class="info-num">5</div><div class="info-label">Types d'analyse</div><div class="info-desc">Kills, mouvements, duels, utility, economy</div></div>
-    <div class="info-card"><div class="info-num">~60s</div><div class="info-label">Temps d'analyse</div><div class="info-desc">Pour une démo de 30 rounds</div></div>
-    <div class="info-card"><div class="info-num">0</div><div class="info-label">Stockage</div><div class="info-desc">Fichier supprimé après analyse</div></div>
+  <!-- DROITE -->
+  <div class="right">
+
+    <div class="section-label">Upload</div>
+
+    <input type="file" id="fileInput" accept=".dem"/>
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div class="upload-title">Dépose ta démo</div>
+      <div class="upload-sub">Glisse-dépose ton fichier .dem ici<br>ou clique pour parcourir</div>
+      <button class="upload-btn" onclick="document.getElementById('fileInput').click();event.stopPropagation()">
+        Choisir un fichier
+      </button>
+      <div class="upload-hints">
+        <span>
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 6 4 9 11 2"/></svg>
+          Format .dem
+        </span>
+        <span>
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 6 4 9 11 2"/></svg>
+          Max 500 MB
+        </span>
+        <span>
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 6 4 9 11 2"/></svg>
+          FACEIT CS2
+        </span>
+      </div>
+    </div>
+
+    <div class="file-bar" id="fileSelected">
+      <div class="file-bar-ico">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+      <div class="file-bar-info">
+        <div class="file-bar-name" id="fileName"></div>
+        <div class="file-bar-size" id="fileSize"></div>
+      </div>
+      <button class="file-bar-rm" onclick="removeFile()">Retirer</button>
+    </div>
+
+    <div class="error-card" id="errorCard"></div>
+
+    <button class="submit-btn" id="analyseBtn" disabled onclick="startAnalysis()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      Lancer l'analyse
+    </button>
+
+    <div id="progressSection">
+      <div class="progress-card">
+        <div class="progress-hd">
+          <div class="progress-spin"></div>
+          <div>
+            <div class="progress-title" id="progressTitle">Initialisation</div>
+            <div class="progress-sub" id="progressSub">Préparation...</div>
+          </div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
+        <div class="progress-steps">
+          <div class="ps" id="step0"><div class="ps-dot"></div>Envoi du fichier</div>
+          <div class="ps" id="step1"><div class="ps-dot"></div>Parsing CS2 · Extraction des ticks</div>
+          <div class="ps" id="step2"><div class="ps-dot"></div>Calcul des positions et zones</div>
+          <div class="ps" id="step3"><div class="ps-dot"></div>Génération des heatmaps</div>
+          <div class="ps" id="step4"><div class="ps-dot"></div>FV Rating · KPIs</div>
+          <div class="ps" id="step5"><div class="ps-dot"></div>Finalisation</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="sc"><div class="sc-val">134</div><div class="sc-lbl">Métriques</div></div>
+      <div class="sc"><div class="sc-val">&lt;2min</div><div class="sc-lbl">Analyse</div></div>
+      <div class="sc"><div class="sc-val">Free</div><div class="sc-lbl">Gratuit</div></div>
+    </div>
+
   </div>
 </div>
 
@@ -237,106 +493,100 @@ let selectedFile = null;
 const zone = document.getElementById('uploadZone');
 zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
 zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('dragover'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
-zone.addEventListener('click', e => { if(!e.target.classList.contains('upload-btn')) document.getElementById('fileInput').click(); });
-document.getElementById('fileInput').addEventListener('change', e => { if(e.target.files[0]) handleFile(e.target.files[0]); });
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+zone.addEventListener('click', e => {
+  if (!e.target.classList.contains('upload-btn'))
+    document.getElementById('fileInput').click();
+});
+document.getElementById('fileInput').addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
 
-function handleFile(file) {
+function handleFile(f) {
   hideError();
-  if (!file.name.endsWith('.dem')) { showError('Seuls les fichiers .dem sont acceptés.'); return; }
-  if (file.size > 500*1024*1024) { showError(`Fichier trop volumineux (${formatSize(file.size)}) — max 500 MB.`); return; }
-  selectedFile = file;
-  document.getElementById('fileName').textContent = file.name;
-  document.getElementById('fileSize').textContent = formatSize(file.size);
-  document.getElementById('fileSelected').classList.add('visible');
-  zone.style.borderColor = 'var(--success)';
-  zone.style.background  = 'rgba(45,212,160,.04)';
-  const btn = document.getElementById('analyseBtn');
-  btn.disabled = false;
-  btn.textContent = 'Lancer l\'analyse';
+  if (!f.name.endsWith('.dem')) { showError('Seuls les fichiers .dem sont acceptés.'); return; }
+  if (f.size > 500*1024*1024) { showError('Fichier trop volumineux (' + fmt(f.size) + ') · max 500 MB.'); return; }
+  selectedFile = f;
+  document.getElementById('fileName').textContent = f.name;
+  document.getElementById('fileSize').textContent = fmt(f.size);
+  document.getElementById('fileSelected').classList.add('show');
+  zone.classList.add('ok');
+  document.getElementById('analyseBtn').disabled = false;
 }
 
 function removeFile() {
   selectedFile = null;
   document.getElementById('fileInput').value = '';
-  document.getElementById('fileSelected').classList.remove('visible');
-  zone.style.borderColor = '';
-  zone.style.background  = '';
-  const btn = document.getElementById('analyseBtn');
-  btn.disabled = true;
-  btn.textContent = 'Dépose d\'abord ta démo';
+  document.getElementById('fileSelected').classList.remove('show');
+  zone.classList.remove('ok');
+  document.getElementById('analyseBtn').disabled = true;
   hideError();
 }
 
-function formatSize(b) {
+function fmt(b) {
   return b >= 1024*1024 ? (b/1024/1024).toFixed(1)+' MB' : (b/1024).toFixed(0)+' KB';
 }
 
 async function startAnalysis() {
   if (!selectedFile) return;
-  const player  = document.getElementById('playerInput').value.trim();
-  const options = [...document.querySelectorAll('.option.active')].map(el => el.querySelector('.option-label').textContent);
-  if (options.length === 0) { showError('Sélectionne au moins une analyse.'); return; }
-
   document.getElementById('analyseBtn').disabled = true;
-  document.getElementById('progressSection').style.display = 'block';
-  document.getElementById('progressSection').scrollIntoView({ behavior:'smooth' });
+  const prog = document.getElementById('progressSection');
+  prog.style.display = 'block';
+  prog.scrollIntoView({ behavior:'smooth', block:'nearest' });
 
-  const stepEls = document.querySelectorAll('.progress-step');
-  const bar     = document.getElementById('progressBar');
+  const steps = document.querySelectorAll('.ps');
+  const bar   = document.getElementById('progressBar');
 
-  function setStep(index, pct, title, sub) {
-    stepEls.forEach((el,i) => { el.classList.remove('active','done'); if(i<index) el.classList.add('done'); if(i===index) el.classList.add('active'); });
-    bar.style.width = pct+'%';
+  function go(i, pct, title, sub) {
+    steps.forEach((el, j) => {
+      el.classList.remove('active','done');
+      if (j < i) el.classList.add('done');
+      if (j === i) el.classList.add('active');
+    });
+    bar.style.width = pct + '%';
     document.getElementById('progressTitle').textContent = title;
     document.getElementById('progressSub').textContent   = sub;
   }
 
   try {
-    setStep(0, 10, 'Envoi du fichier...', selectedFile.name);
-    const formData = new FormData();
-    formData.append('demo', selectedFile);
-    if (player) formData.append('player', player);
-    formData.append('options', JSON.stringify(options));
+    go(0, 10, 'Envoi du fichier', selectedFile.name);
+    const fd = new FormData();
+    fd.append('demo', selectedFile);
+    fd.append('options', JSON.stringify(['Heatmaps','2D Replay','Utility Map','Stats équipes']));
 
-    setStep(1, 25, 'Parsing en cours...', 'Extraction des ticks et positions...');
-    const res = await fetch(PARSER_URL+'/parse', { method:'POST', body:formData });
-    setStep(2, 55, 'Calcul des zones...', 'Analyse par map...');
-    if (!res.ok) { const err = await res.json().catch(()=>({error:'Erreur serveur'})); throw new Error(err.error||'Erreur serveur'); }
-    setStep(3, 75, 'Génération des heatmaps...', 'Préparation des visualisations...');
+    go(1, 25, 'Parsing CS2', 'Extraction des ticks et positions...');
+    const res = await fetch(PARSER_URL + '/parse', { method:'POST', body:fd });
+    go(2, 55, 'Calcul des zones', 'Analyse par map...');
+    if (!res.ok) { const e = await res.json().catch(()=>({error:'Erreur serveur'})); throw new Error(e.error||'Erreur serveur'); }
+    go(3, 75, 'Génération des heatmaps', 'Préparation des visualisations...');
     const data = await res.json();
-    setStep(4, 90, 'Calcul des KPIs...', 'FV Rating, opening ratio...');
+    go(4, 90, 'FV Rating', 'Calcul des KPIs...');
     await new Promise(r => setTimeout(r, 500));
-    setStep(5, 100, 'Terminé !', 'Redirection...');
+    go(5, 100, 'Terminé', 'Redirection...');
     bar.style.background = 'var(--success)';
-    // Stocker avec fallback si trop lourd
-    const fullJson = JSON.stringify(data.data);
-    console.log('[FragValue] JSON size:', fullJson.length, 'bytes');
+
     try {
-      sessionStorage.setItem('demoData', fullJson);
-      console.log('[FragValue] Stored OK, positions keys:', Object.keys(data.data.positions||{}).length);
-    } catch(quotaErr) {
-      console.warn('[FragValue] sessionStorage quota, on retire les positions:', quotaErr.message);
-      // Fallback : stocker sans positions si trop lourd
-      const slim = {...data.data, positions: {}};
-      sessionStorage.setItem('demoData', JSON.stringify(slim));
+      sessionStorage.setItem('demoData', JSON.stringify(data.data));
+    } catch(e) {
+      sessionStorage.setItem('demoData', JSON.stringify({...data.data, positions:{}}));
     }
-    // Sauvegarde dans Supabase si connecté
     await saveDemoAnalysis(data.data);
-    await new Promise(r => setTimeout(r, 700));
+    await new Promise(r => setTimeout(r, 600));
     window.location.href = 'heatmap-results.html';
-  } catch (err) {
-    document.getElementById('progressSection').style.display = 'none';
+  } catch(err) {
+    prog.style.display = 'none';
     document.getElementById('analyseBtn').disabled = false;
-    document.getElementById('analyseBtn').textContent = "Lancer l'analyse";
     showError('Erreur : ' + err.message);
   }
 }
 
-function showError(msg) { const el=document.getElementById('errorCard'); el.textContent=msg; el.style.display='block'; }
-function hideError()    { document.getElementById('errorCard').style.display='none'; }
+function showError(m) { const e=document.getElementById('errorCard'); e.textContent=m; e.style.display='block'; }
+function hideError()  { document.getElementById('errorCard').style.display='none'; }
 
-// ── Auth nav ──────────────────────────────────────────────────────────────
+// Auth Supabase
 const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -348,22 +598,19 @@ _sb.auth.getSession().then(({ data }) => {
   }
 });
 
-// ── Sauvegarde démo dans Supabase ─────────────────────────────────────────
-async function saveDemoAnalysis(demoData) {
+async function saveDemoAnalysis(d) {
   try {
-    const { data: { session } } = await _sb.auth.getSession();
+    const { data:{ session } } = await _sb.auth.getSession();
     if (!session) return;
-    const meta = demoData?.meta || {};
+    const m = d?.meta || {};
     await _sb.from('demos').insert({
-      user_id:      session.user.id,
-      map:          meta.map          || null,
-      rounds:       meta.rounds       || null,
-      total_kills:  meta.totalKills   || null,
-      analysed_at:  new Date().toISOString(),
+      user_id:     session.user.id,
+      map:         m.map         || null,
+      rounds:      m.rounds      || null,
+      total_kills: m.totalKills  || null,
+      analysed_at: new Date().toISOString()
     });
-  } catch(e) {
-    console.warn('saveDemoAnalysis:', e.message);
-  }
+  } catch(e) { console.warn('saveDemoAnalysis:', e.message); }
 }
 </script>
 </body>
