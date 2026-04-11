@@ -1,870 +1,835 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8"/>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzA4MDkwRCIvPgogIDxyZWN0IHg9IjUiIHk9IjUiIHdpZHRoPSIzLjUiIGhlaWdodD0iMjAiIHJ4PSIxLjUiIGZpbGw9IiMzQjdGRjUiLz4KICA8cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iMTMiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHJlY3QgeD0iNSIgeT0iMTMuNSIgd2lkdGg9IjkiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHBhdGggZD0iTTE1LjUgOC41IEwyMC41IDIzLjUgTDI1LjUgOC41IiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIxNS41IiB5MT0iOC41IiB4Mj0iMjUuNSIgeTI9IjIzLjUiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzNCN0ZGNSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMyREQ0QTAiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgo8L3N2Zz4="/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FragValue : CS2 Talent Analytics</title>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --bg:#08090D;--surface:#0F1119;--card:#141720;--border:#1E2233;--border2:#252B3B;
-      --accent:#3B7FF5;--accent-dim:rgba(59,127,245,.10);
-      --text:#EDF0F7;--text2:#7A8499;--text3:#3D4459;
-      --success:#2DD4A0;--danger:#F06B6B;--gold:#F5C842;
-      --font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace;
-      --lvl1:#7A7A7A;--lvl2:#23C44E;--lvl3:#23C44E;
-      --lvl4:#F5C842;--lvl5:#F5C842;--lvl6:#F5C842;--lvl7:#EDA020;
-      --lvl8:#EDA020;--lvl9:#E05C2A;--lvl10:#D93535;
-    }
-    html{scroll-behavior:smooth}
-    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FragValue · Analyse CS2 Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-    /* NAV */
-    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:56px;background:rgba(8,9,13,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(30,34,51,.5)}
-    .logo{font-size:16px;font-weight:700;letter-spacing:-.3px;text-decoration:none;color:var(--text)}
-    .logo-accent{color:var(--accent)}
-    .nav-center{display:flex;align-items:center;gap:2px}
-    .nav-link{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 14px;border-radius:6px;transition:all .15s;font-weight:500}
-    .nav-link:hover{color:var(--text);background:rgba(255,255,255,.04)}
-    .nav-right{display:flex;align-items:center;gap:8px}
-    .nav-ghost{font-size:13px;font-weight:500;color:var(--text2);text-decoration:none;padding:7px 16px;border-radius:7px;border:1px solid var(--border2);transition:all .15s}
-    .nav-ghost:hover{color:var(--text)}
-    .nav-solid{font-size:13px;font-weight:600;color:#fff;background:var(--accent);text-decoration:none;padding:7px 16px;border-radius:7px;transition:opacity .15s;border:none;cursor:pointer}
-    .nav-solid:hover{opacity:.9}
+:root{
+  --bg:       #080909;
+  --surface:  #0f1010;
+  --border:   #1c1e1e;
+  --border2:  #252727;
+  --text:     #e8eaea;
+  --text2:    #7a8080;
+  --text3:    #4a5050;
+  --accent:   #b8ff57;
+  --accent2:  #7ddd1a;
+  --danger:   #ff4444;
+  --gold:     #f5c842;
+  --mono:     'Space Mono', monospace;
+  --display:  'Anton', sans-serif;
+  --radius:   6px;
+  --radius2:  12px;
+}
 
-    /* TOPBAR */
-    #topbar{display:none;align-items:center;gap:10px;padding:10px 40px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:56px;z-index:99}
-    #topbarInput{width:240px;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:8px 14px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
-    #topbarInput:focus{border-color:var(--accent)}
-    #topbarInput::placeholder{color:var(--text3)}
-    .topbar-btn{background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:7px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
-    .topbar-btn:hover{opacity:.9}
-    #topbarNick{font-family:var(--mono);font-size:13px;color:var(--text2)}
-    .tab-bar{display:none;align-items:center;gap:4px;padding:8px 40px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:calc(56px + 48px);z-index:98}
-    .tab-btn{font-size:13px;font-weight:500;padding:7px 16px;border-radius:7px;border:none;background:transparent;color:var(--text2);cursor:pointer;transition:all .15s}
-    .tab-btn:hover{color:var(--text);background:var(--card)}
-    .tab-btn.active{background:var(--card);color:var(--text);border:1px solid var(--border)}
-    .tab-new{font-size:9px;font-weight:700;background:var(--accent);color:#fff;padding:2px 5px;border-radius:3px;margin-left:4px;vertical-align:middle}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.6;overflow-x:hidden}
 
-    /* HERO */
-    .hero{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 40px;position:relative}
-    .hero-bg{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 80% 50% at 50% -5%,rgba(59,127,245,.13),transparent),radial-gradient(ellipse 40% 30% at 80% 60%,rgba(45,212,160,.04),transparent)}
-    .hero-grid{position:absolute;inset:0;z-index:0;background-image:linear-gradient(rgba(30,34,51,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(30,34,51,.25) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent)}
-    .hero-content{position:relative;z-index:1;max-width:700px}
-    .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;background:rgba(59,127,245,.08);border:1px solid rgba(59,127,245,.15);padding:5px 14px;border-radius:20px;margin-bottom:28px}
-    .hero-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
-    .hero-title{font-size:clamp(38px,6vw,72px);font-weight:700;letter-spacing:-2.5px;line-height:.97;margin-bottom:20px}
-    .hero-gradient{background:linear-gradient(135deg,var(--accent) 0%,#7BBFFF 50%,var(--success) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .hero-sub{font-size:16px;color:var(--text2);max-width:480px;line-height:1.7;margin:0 auto 28px}
-    .hero-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:32px}
-    .btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:13px 26px;border-radius:9px;font-size:14px;font-weight:600;text-decoration:none;border:none;cursor:pointer;transition:all .2s;box-shadow:0 0 32px rgba(59,127,245,.2)}
-    .btn-primary:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 0 48px rgba(59,127,245,.35)}
-    .btn-secondary{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);color:var(--text);padding:13px 26px;border-radius:9px;font-size:14px;font-weight:500;text-decoration:none;border:1px solid var(--border2);transition:all .2s}
-    .btn-secondary:hover{background:rgba(255,255,255,.07);transform:translateY(-1px)}
-    .hero-stats{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-    .hero-stat{padding:16px 28px;text-align:center;position:relative}
-    .hero-stat+.hero-stat::before{content:'';position:absolute;left:0;top:20%;height:60%;width:1px;background:var(--border)}
-    .hero-stat-val{font-size:20px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;line-height:1}
-    .hero-stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;font-family:var(--mono)}
-    #heroSearch{display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:480px;margin-top:28px}
-    .search-box{display:flex;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .15s}
-    .search-box:focus-within{border-color:var(--accent)}
-    #nickInput{flex:1;background:transparent;border:none;padding:13px 18px;font-family:var(--font);font-size:14px;color:var(--text);outline:none}
-    #nickInput::placeholder{color:var(--text3)}
-    #searchBtn{background:var(--accent);color:#fff;border:none;padding:13px 22px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}
-    #searchBtn:hover{opacity:.9}
-    #errorMsg{font-family:var(--mono);font-size:12px;color:var(--danger);display:none;margin-top:4px}
-    .back-link{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:var(--mono);transition:color .15s}
-    .back-link:hover{color:var(--text2)}
+/* ── NOISE TEXTURE ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.4
+}
 
-    /* FEATURES */
-    .section{padding:64px 40px;max-width:1080px;margin:0 auto}
-    .sec-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
-    .sec-title{font-size:clamp(24px,3.5vw,38px);font-weight:700;letter-spacing:-1px;margin-bottom:12px}
-    .sec-sub{font-size:15px;color:var(--text2);line-height:1.7;max-width:480px}
-    .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:44px}
-    @media(max-width:860px){.feat-grid{grid-template-columns:1fr}}
-    .feat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;display:flex;flex-direction:column;transition:border-color .2s,transform .2s;position:relative;overflow:hidden;text-decoration:none;color:inherit;cursor:pointer}
-    .feat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--fc,var(--accent)),transparent);opacity:0;transition:opacity .2s}
-    .feat-card:hover{border-color:var(--fc,var(--accent));transform:translateY(-3px)}
-    .feat-card:hover::after{opacity:1}
-    .feat-icon{width:44px;height:44px;border-radius:10px;background:rgba(59,127,245,.08);border:1px solid rgba(59,127,245,.15);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:18px}
-    .feat-tag{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--fc,var(--accent));margin-bottom:8px}
-    .feat-title{font-size:18px;font-weight:700;letter-spacing:-.4px;margin-bottom:10px}
-    .feat-desc{font-size:13px;color:var(--text2);line-height:1.65;flex:1;margin-bottom:18px}
-    .feat-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:20px}
-    .feat-pill{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--card);border:1px solid var(--border);color:var(--text3)}
-    .feat-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--fc,var(--accent));padding:10px 16px;border-radius:7px;background:rgba(59,127,245,.08);border:1px solid rgba(59,127,245,.15);width:fit-content;transition:opacity .15s}
-    .feat-btn:hover{opacity:.8}
-    .feat-btn svg{transition:transform .15s}
-    .feat-card:hover .feat-btn svg{transform:translateX(3px)}
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:56px;
+  background:rgba(8,9,9,.85);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px);
+}
+.nav-logo{
+  font-family:var(--display);font-size:20px;letter-spacing:.04em;
+  color:var(--text);text-decoration:none;display:flex;align-items:center;gap:8px
+}
+.nav-logo span{color:var(--accent)}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-links a{color:var(--text2);text-decoration:none;font-size:12px;letter-spacing:.08em;text-transform:uppercase;transition:color .15s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{
+  background:var(--accent);color:#000;
+  padding:8px 18px;border-radius:var(--radius);
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  text-decoration:none;letter-spacing:.06em;
+  transition:all .15s
+}
+.nav-cta:hover{background:var(--accent2);transform:translateY(-1px)}
 
-    /* HOW */
-    /* HOW IT WORKS tabs */
-    .how-tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:3px;width:fit-content;margin:32px 0 40px}
-    .how-tab{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;padding:9px 18px;border-radius:7px;cursor:pointer;color:var(--text2);border:none;background:transparent;transition:all .2s}
-    .how-tab:hover{color:var(--text)}
-    .how-tab.active{background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.2)}
-    .how-steps{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:0;align-items:start;margin-top:0}
-    @media(max-width:900px){.how-steps{grid-template-columns:1fr;gap:0}.how-step-arrow{transform:rotate(90deg);margin:8px auto;display:flex;justify-content:center}}
-    .how-step{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;transition:border-color .2s}
-    .how-step:hover{border-color:var(--border2)}
-    .how-step-arrow{display:flex;align-items:center;justify-content:center;padding:0 8px;padding-top:60px}
-    .how-step-icon{width:48px;height:48px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:var(--si,var(--accent));background:color-mix(in srgb,var(--si,var(--accent)) 10%,transparent);border:1px solid color-mix(in srgb,var(--si,var(--accent)) 20%,transparent)}
-    .how-step-num{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.5px;margin-bottom:8px}
-    .how-step-title{font-size:14px;font-weight:700;letter-spacing:-.3px;margin-bottom:8px}
-    .how-step-desc{font-size:12px;color:var(--text2);line-height:1.6}
+/* ── HERO ── */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  justify-content:center;align-items:flex-start;
+  padding:120px 80px 80px;
+  position:relative;overflow:hidden
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:60px 60px;
+  opacity:.4;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 50%,black 30%,transparent 100%)
+}
+.hero-glow{
+  position:absolute;top:-20%;left:-10%;
+  width:60%;height:80%;
+  background:radial-gradient(ellipse,rgba(184,255,87,.04) 0%,transparent 70%);
+  pointer-events:none
+}
+.hero-tag{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);border:1px solid rgba(184,255,87,.2);
+  padding:5px 12px;border-radius:40px;
+  margin-bottom:28px;display:inline-block;
+  animation:fadeUp .6s ease both
+}
+.hero h1{
+  font-family:var(--display);
+  font-size:clamp(52px,7vw,96px);
+  line-height:.95;letter-spacing:.01em;
+  margin-bottom:24px;
+  animation:fadeUp .6s .1s ease both
+}
+.hero h1 em{
+  font-style:normal;
+  -webkit-text-stroke:1px var(--text);
+  color:transparent
+}
+.hero-sub{
+  font-size:15px;line-height:1.7;color:var(--text2);
+  max-width:480px;margin-bottom:48px;
+  animation:fadeUp .6s .2s ease both
+}
+.hero-actions{
+  display:flex;gap:16px;align-items:center;
+  animation:fadeUp .6s .3s ease both
+}
+.btn-primary{
+  background:var(--accent);color:#000;
+  padding:14px 28px;border-radius:var(--radius);
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  text-decoration:none;letter-spacing:.04em;
+  display:flex;align-items:center;gap:8px;
+  transition:all .15s
+}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(184,255,87,.15)}
+.btn-secondary{
+  color:var(--text2);font-size:13px;text-decoration:none;
+  display:flex;align-items:center;gap:6px;letter-spacing:.04em;
+  transition:color .15s
+}
+.btn-secondary:hover{color:var(--text)}
+.hero-stats{
+  display:flex;gap:48px;margin-top:80px;
+  padding-top:48px;border-top:1px solid var(--border);
+  animation:fadeUp .6s .4s ease both
+}
+.hero-stat-val{
+  font-family:var(--display);font-size:40px;color:var(--accent);
+  line-height:1
+}
+.hero-stat-label{font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
 
-    /* FV SCORE */
-    .score-preview{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px;margin-top:44px}
-    @media(max-width:700px){.score-preview{grid-template-columns:1fr;padding:28px}}
-    .score-circle-wrap{width:148px;height:148px;position:relative;margin:0 auto 20px}
-    .score-circle-svg{width:100%;height:100%;transform:rotate(-90deg)}
-    .score-circle-bg{fill:none;stroke:var(--border);stroke-width:10}
-    .score-circle-fill{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-dasharray:408;stroke-dashoffset:90;transition:stroke-dashoffset .8s ease}
-    .score-circle-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-    .score-big{font-size:38px;font-weight:700;font-family:var(--mono);letter-spacing:-2px;line-height:1}
-    .score-max{font-size:12px;color:var(--text3);font-family:var(--mono)}
-    .score-label{font-size:14px;font-weight:600;color:var(--success);text-align:center}
-    .score-dims{display:flex;flex-direction:column;gap:10px;margin-top:22px}
-    .sdim{display:flex;align-items:center;gap:10px}
-    .sdim-label{font-size:12px;color:var(--text2);width:90px;flex-shrink:0}
-    .sdim-bar{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
-    .sdim-fill{height:100%;border-radius:2px}
-    .sdim-val{font-family:var(--mono);font-size:11px;color:var(--text2);width:36px;text-align:right}
-    .score-info-title{font-size:26px;font-weight:700;letter-spacing:-.8px;margin-bottom:12px}
-    .score-info-desc{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:24px}
-    .score-bullets{display:flex;flex-direction:column;gap:10px}
-    .sbullet{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text2)}
-    .sbullet-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+/* ── DEMO PREVIEW ── */
+.demo-preview{
+  position:absolute;right:-40px;top:50%;transform:translateY(-50%);
+  width:52%;
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:var(--radius2);
+  overflow:hidden;
+  box-shadow:0 32px 80px rgba(0,0,0,.6);
+  animation:fadeLeft .8s .2s ease both
+}
+.demo-topbar{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,.02)
+}
+.demo-dot{width:10px;height:10px;border-radius:50%;background:var(--border2)}
+.demo-dot:first-child{background:#ff5f57}.demo-dot:nth-child(2){background:#febc2e}.demo-dot:nth-child(3){background:#28c840}
+.demo-title{font-size:11px;color:var(--text3);letter-spacing:.06em;margin-left:8px}
+.demo-body{padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.demo-card{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px;
+}
+.demo-card-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.demo-card-val{font-family:var(--display);font-size:28px;color:var(--text)}
+.demo-card-val.green{color:var(--accent)}
+.demo-card-val.gold{color:var(--gold)}
+.demo-card-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.demo-map{
+  grid-column:1/-1;
+  height:140px;background:linear-gradient(135deg,#0a1a0a 0%,#0f1f0f 100%);
+  border-radius:var(--radius);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden
+}
+.demo-map-label{font-size:10px;color:var(--accent);letter-spacing:.1em}
+.demo-bar{
+  display:flex;align-items:center;gap:8px;margin-top:4px
+}
+.demo-bar-track{flex:1;height:3px;background:var(--border);border-radius:2px}
+.demo-bar-fill{height:100%;border-radius:2px;background:var(--accent)}
 
-    /* PLANS */
-    .plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:44px}
-    @media(max-width:700px){.plans-grid{grid-template-columns:1fr}}
-    .plan{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px}
-    .plan.featured{border-color:rgba(59,127,245,.3);background:rgba(59,127,245,.03)}
-    .plan-name{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
-    .plan-price{font-size:36px;font-weight:700;letter-spacing:-2px;font-family:var(--mono);margin-bottom:2px}
-    .plan-period{font-size:12px;color:var(--text3);margin-bottom:20px;font-family:var(--mono)}
-    .plan-feats{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
-    .plan-feat{font-size:13px;color:var(--text3);display:flex;align-items:center;gap:8px}
-    .plan-feat::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0}
-    .plan-feat.on::before{background:var(--success)}
-    .plan-feat.on{color:var(--text)}
-    .plan-btn{width:100%;padding:11px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .15s}
-    .plan-btn.cta{background:var(--accent);color:#fff;border-color:var(--accent)}
-    .plan-btn.cta:hover{opacity:.9}
+/* ── SECTIONS ── */
+section{padding:100px 80px;position:relative}
+.section-tag{
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:16px
+}
+.section-title{
+  font-family:var(--display);font-size:clamp(36px,4vw,56px);
+  line-height:1;letter-spacing:.01em;margin-bottom:16px
+}
+.section-sub{font-size:14px;color:var(--text2);max-width:520px;line-height:1.8}
 
-    /* DASHBOARD */
-    #dashboard{display:none;padding:28px 40px 80px;max-width:1200px;margin:0 auto}
-    .tab-panel{display:none}.tab-panel.active{display:block}
-    .panel-title{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;gap:10px;font-family:var(--mono)}
-    .panel-title::after{content:'';flex:1;height:1px;background:var(--border)}
-    .profile-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-    .profile-avatar-ph{width:56px;height:56px;border-radius:10px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;background-size:cover;background-position:center}
-    .profile-info{flex:1;min-width:0}
-    .profile-name{font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
-    .profile-badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-    .badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.2px}
-    .badge-lvl1,.badge-lvl2,.badge-lvl3{background:rgba(35,196,78,.1);color:#23C44E;border:1px solid rgba(35,196,78,.2)}
-    .badge-lvl4,.badge-lvl5,.badge-lvl6{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
-    .badge-lvl7,.badge-lvl8{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
-    .badge-lvl9{background:rgba(224,92,42,.1);color:#E05C2A;border:1px solid rgba(224,92,42,.2)}
-    .badge-lvl10{background:rgba(217,53,53,.1);color:#D93535;border:1px solid rgba(217,53,53,.2)}
-    .badge-fv-elite{background:rgba(45,212,160,.1);color:#2DD4A0;border:1px solid rgba(45,212,160,.2)}
-    .badge-fv-great{background:rgba(59,127,245,.1);color:#60A5FA;border:1px solid rgba(59,127,245,.2)}
-    .badge-fv-good{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
-    .badge-fv-avg{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
-    .badge-fv-low{background:rgba(240,107,107,.1);color:#F06B6B;border:1px solid rgba(240,107,107,.2)}
-    .badge-role,.badge-country{background:var(--card);color:var(--text3);border:1px solid var(--border)}
-    .badge-team{background:rgba(59,127,245,.08);color:#60A5FA;border:1px solid rgba(59,127,245,.15)}
-    .badge-challenger{background:linear-gradient(135deg,rgba(245,200,66,.15),rgba(237,160,32,.15));color:var(--gold);border:1px solid rgba(245,200,66,.3)}
-    .profile-elo-wrap{text-align:right;flex-shrink:0}
-    .profile-elo{font-size:32px;font-weight:700;letter-spacing:-1.5px;font-family:var(--mono);line-height:1}
-    .profile-elo-label{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
-    .recent-results{display:flex;gap:3px;margin-top:8px;justify-content:flex-end}
-    .result-dot{width:8px;height:8px;border-radius:2px}
-    .kpi-positive{color:var(--success)}.kpi-negative{color:var(--danger)}.kpi-neutral{color:var(--accent)}
-    .follow-btn{margin-top:8px;width:100%;font-family:var(--mono);font-size:11px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .15s}
-    .follow-btn:hover{border-color:var(--accent);color:var(--accent)}
-    .follow-btn.following{border-color:rgba(45,212,160,.3);color:var(--success);background:rgba(45,212,160,.06)}
-    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:20px}
-    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
-    .kpi-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:8px;font-family:var(--mono)}
-    .kpi-val{font-size:24px;font-weight:700;letter-spacing:-.8px;font-family:var(--mono);line-height:1}
-    .kpi-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
-    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
-    @media(max-width:700px){.charts-grid{grid-template-columns:1fr}}
-    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
-    .chart-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;font-family:var(--mono)}
-    .chart-wrap{position:relative;height:200px}
-    .side-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
-    .side-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
-    .side-header{display:flex;align-items:center;gap:8px;margin-bottom:14px}
-    .side-dot{width:7px;height:7px;border-radius:50%}
-    .side-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);color:var(--text2)}
-    .side-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .side-stat{text-align:center;background:var(--card);border-radius:6px;padding:10px 8px}
-    .side-stat-val{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.5px}
-    .side-stat-label{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
-    .score-card{display:grid;grid-template-columns:180px 1fr;gap:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;align-items:center}
-    @media(max-width:600px){.score-card{grid-template-columns:1fr}}
-    .score-donut-wrap{position:relative;width:140px;height:140px;margin:0 auto}
-    .score-donut-canvas{width:100%;height:100%}
-    .score-donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-    .score-donut-val{font-size:32px;font-weight:700;letter-spacing:-1.5px;font-family:var(--mono);line-height:1}
-    .score-donut-max{font-size:11px;color:var(--text3);font-family:var(--mono)}
-    .fvscore-label-badge{font-size:12px;font-weight:600;color:var(--success);text-align:center;margin-top:8px}
-    .fvscore-breakdown{display:flex;flex-direction:column;gap:8px}
-    .fvscore-dim-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-    .fvscore-dim-label{font-size:12px;color:var(--text2);font-family:var(--mono)}
-    .fvscore-dim-val{font-size:11px;color:var(--text3);font-family:var(--mono)}
-    .sublevel-bar-wrap{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:2px}
-    .sublevel-bar-label{font-size:10px;color:var(--text3);margin-top:6px;font-family:var(--mono)}
-    .match-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
-    .match-table{width:100%;border-collapse:collapse}
-    .match-table th{font-family:var(--mono);font-size:10px;color:var(--text3);padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;letter-spacing:.5px;font-weight:500;background:var(--card)}
-    .match-table td{padding:10px 14px;border-bottom:1px solid rgba(31,36,51,.5);color:var(--text2);font-family:var(--mono)}
-    .match-table tr:last-child td{border-bottom:none}
-    .match-table tr:hover td{background:rgba(255,255,255,.02)}
-    .td-map{color:var(--text);font-weight:500}.td-win{color:var(--success)}.td-loss{color:var(--danger)}
-    .td-kd-good{color:var(--success)}.td-kd-avg{color:var(--text)}.td-kd-bad{color:var(--danger)}
-    .map-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:20px}
-    .map-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;transition:border-color .15s}
-    .map-card:hover{border-color:var(--border2)}
-    .map-name{font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text)}
-    .map-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-    .map-stat{text-align:center;background:var(--card);border-radius:6px;padding:8px}
-    .map-stat-val{font-size:15px;font-weight:700;font-family:var(--mono)}
-    .map-stat-label{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
-    .map-winrate{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-    .map-wr-val{font-size:15px;font-weight:700;font-family:var(--mono)}
-    .map-wr-bar{height:2px;background:var(--border);border-radius:1px;margin-bottom:8px;overflow:hidden}
-    .map-wr-fill{height:100%;background:var(--accent);border-radius:1px}
-    .map-matches{font-size:10px;color:var(--text3);font-family:var(--mono)}
-    .mk-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
-    .mk-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}
-    .mk-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-    .mk-val{font-size:28px;font-weight:700;font-family:var(--mono);letter-spacing:-1px}
-    .mk-sub{font-size:10px;color:var(--text3);margin-top:4px}
-    .mk-2k{color:var(--text2)}.mk-3k{color:#60A5FA}.mk-4k{color:var(--gold)}.mk-5k{color:var(--danger)}
-    .clutch-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
-    .clutch-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}
-    .clutch-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-    .clutch-val{font-size:22px;font-weight:700;font-family:var(--mono)}
-    .clutch-rate{font-size:10px;color:var(--text3);margin-top:4px}
-    .demo-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;text-align:center;margin-bottom:20px}
-    .demo-panel-title{font-size:20px;font-weight:700;letter-spacing:-.4px;margin-bottom:8px}
-    .demo-panel-sub{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:24px;max-width:480px;margin-left:auto;margin-right:auto}
-    .demo-panel-btn{display:inline-block;background:var(--accent);color:#fff;padding:12px 28px;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;text-decoration:none;transition:opacity .15s}
-    .demo-panel-btn:hover{opacity:.9}
-    .demo-features{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:24px}
-    .demo-feature{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:left}
-    .demo-feature-code{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:500;margin-bottom:6px}
-    .demo-feature-title{font-size:12px;font-weight:600;margin-bottom:3px}
-    .demo-feature-desc{font-size:11px;color:var(--text3);line-height:1.5}
-    .utility-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:20px}
-    .util-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
-    .util-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600}
-    .util-val{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--text);letter-spacing:-.5px}
-    .util-sub{font-size:11px;color:var(--text3);margin-top:4px}
-    #loadingState{display:none;text-align:center;padding:80px 24px}
-    .loader{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
-    .loading-text{font-family:var(--mono);font-size:13px;color:var(--text3)}
-    .search-hint{font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:8px}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-    .fade-in{animation:fadeUp .3s ease forwards}
-    @media(max-width:768px){
-      #dashboard{padding:16px}nav{padding:0 16px}#topbar{padding:10px 16px}.tab-bar{padding:0 16px}
-      .kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}
-      .side-grid{grid-template-columns:1fr}.mk-grid,.clutch-grid{grid-template-columns:repeat(3,1fr)}
-      .score-card{grid-template-columns:1fr}.section{padding:56px 20px}nav{padding:0 20px}
-    }
+/* ── FEATURES ── */
+.features-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--border);margin-top:64px;
+  border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden
+}
+.feature-card{
+  background:var(--bg);padding:36px 32px;
+  transition:background .2s
+}
+.feature-card:hover{background:var(--surface)}
+.feature-icon{
+  width:40px;height:40px;border-radius:var(--radius);
+  background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.15);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;font-size:18px
+}
+.feature-title{font-family:var(--display);font-size:20px;margin-bottom:8px;letter-spacing:.02em}
+.feature-desc{font-size:12px;color:var(--text2);line-height:1.8}
+.feature-tag{
+  display:inline-block;margin-top:16px;
+  font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase
+}
 
-    /* ── Bloc auth sous features ── */
-    .auth-block{
-      max-width:1080px;margin:0 auto;padding:0 40px 64px;
-    }
-    .auth-block-inner{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:14px;padding:32px 40px;
-      display:flex;align-items:center;justify-content:space-between;gap:24px;
-      flex-wrap:wrap;position:relative;overflow:hidden;
-    }
-    .auth-block-inner::before{
-      content:'';position:absolute;inset:0;
-      background:radial-gradient(ellipse 50% 80% at 100% 50%,rgba(59,127,245,.05),transparent);
-      pointer-events:none;
-    }
-    .auth-block-left{position:relative;z-index:1}
-    .auth-block-label{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
-    .auth-block-title{font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
-    .auth-block-sub{font-size:13px;color:var(--text2);line-height:1.6}
-    .auth-block-pills{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-    .auth-block-pill{font-family:var(--mono);font-size:10px;color:var(--text3);background:var(--card);border:1px solid var(--border);padding:3px 8px;border-radius:4px}
-    .auth-block-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px;position:relative;z-index:1}
-    @media(max-width:640px){.auth-block-right{align-items:stretch;width:100%}}
-    .auth-block-btns{display:flex;gap:8px;flex-wrap:wrap}
-    @media(max-width:640px){.auth-block-btns{flex-direction:column}}
-    .auth-primary{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;border:none;cursor:pointer;transition:all .2s;box-shadow:0 0 24px rgba(59,127,245,.2);white-space:nowrap}
-    .auth-primary:hover{opacity:.9;transform:translateY(-1px)}
-    .auth-ghost{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--text2);padding:12px 22px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;border:1px solid var(--border2);transition:all .2s;white-space:nowrap}
-    .auth-ghost:hover{color:var(--text);border-color:var(--border2);transform:translateY(-1px)}
-    .auth-block-note{font-size:11px;color:var(--text3);font-family:var(--mono);text-align:right}
-    @media(max-width:640px){.auth-block-note{text-align:left}}
+/* ── HOW IT WORKS ── */
+.how-section{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:64px}
+.step{
+  padding:32px;border-right:1px solid var(--border);
+  position:relative
+}
+.step:last-child{border-right:none}
+.step-num{
+  font-family:var(--display);font-size:56px;color:var(--border2);
+  line-height:1;margin-bottom:20px
+}
+.step-title{font-family:var(--display);font-size:18px;margin-bottom:8px}
+.step-desc{font-size:12px;color:var(--text2);line-height:1.8}
+.step-arrow{
+  position:absolute;right:-12px;top:32px;
+  width:24px;height:24px;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:var(--text3);z-index:1
+}
+.step:last-child .step-arrow{display:none}
 
-    /* ── Sticky CTA bar ── */
-    #stickyCta{
-      position:fixed;bottom:0;left:0;right:0;z-index:150;
-      background:rgba(8,9,13,.92);backdrop-filter:blur(20px);
-      border-top:1px solid var(--border);
-      padding:12px 40px;
-      display:flex;align-items:center;justify-content:space-between;gap:16px;
-      transform:translateY(100%);transition:transform .35s cubic-bezier(.16,1,.3,1);
-    }
-    #stickyCta.visible{transform:translateY(0)}
-    .sticky-left{display:flex;align-items:center;gap:12px}
-    .sticky-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;flex-shrink:0}
-    .sticky-text{font-size:13px;color:var(--text2)}
-    .sticky-text strong{color:var(--text);font-weight:600}
-    .sticky-right{display:flex;align-items:center;gap:8px}
-    .sticky-close{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 8px;font-size:18px;line-height:1;transition:color .15s}
-    .sticky-close:hover{color:var(--text)}
-    @media(max-width:600px){
-      #stickyCta{padding:10px 16px;flex-wrap:wrap}
-      .sticky-text{font-size:12px}
-    }
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-  </style>
+/* ── METRICS ── */
+.metrics-section{overflow:hidden}
+.metrics-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:32px;
+  margin-top:64px;align-items:start
+}
+.metric-list{display:flex;flex-direction:column;gap:2px}
+.metric-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;
+  border-radius:var(--radius);
+  cursor:pointer;transition:all .15s
+}
+.metric-row:hover{background:var(--surface)}
+.metric-row.active{background:var(--surface);border-left:2px solid var(--accent)}
+.metric-row.active .metric-name{color:var(--text)}
+.metric-name{font-size:12px;color:var(--text2);transition:color .15s}
+.metric-val{font-family:var(--display);font-size:22px;color:var(--accent)}
+.metric-detail{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--radius2);padding:32px;
+  min-height:320px
+}
+.metric-detail-title{font-family:var(--display);font-size:28px;margin-bottom:12px}
+.metric-detail-desc{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:24px}
+.metric-formula{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;
+  font-size:12px;color:var(--accent);letter-spacing:.04em
+}
+
+/* ── PRO COMPARISON ── */
+.pro-section{border-top:1px solid var(--border)}
+.pro-table{
+  margin-top:64px;
+  border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden
+}
+.pro-table-head{
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;
+  padding:14px 24px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+  font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase
+}
+.pro-row{
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;
+  padding:16px 24px;border-bottom:1px solid var(--border);
+  align-items:center;transition:background .15s
+}
+.pro-row:last-child{border-bottom:none}
+.pro-row:hover{background:var(--surface)}
+.pro-name{display:flex;align-items:center;gap:10px}
+.pro-dot{width:8px;height:8px;border-radius:50%}
+.pro-tag{
+  font-size:9px;padding:2px 7px;border-radius:3px;
+  background:rgba(184,255,87,.1);color:var(--accent);
+  letter-spacing:.06em;margin-left:6px
+}
+.pro-val{font-family:var(--display);font-size:18px}
+.pro-val.accent{color:var(--accent)}
+.pro-val.muted{color:var(--text3)}
+
+/* ── PRICING ── */
+.pricing-section{background:var(--surface);border-top:1px solid var(--border)}
+.pricing-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+  margin-top:64px
+}
+.pricing-card{
+  border:1px solid var(--border2);border-radius:var(--radius2);
+  padding:32px;position:relative;transition:all .2s
+}
+.pricing-card:hover{border-color:var(--border2);transform:translateY(-4px)}
+.pricing-card.featured{
+  border-color:var(--accent);
+  background:linear-gradient(135deg,rgba(184,255,87,.04) 0%,transparent 60%)
+}
+.pricing-badge{
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:var(--accent);color:#000;
+  font-size:10px;font-weight:700;padding:4px 14px;
+  border-radius:40px;letter-spacing:.1em;white-space:nowrap
+}
+.pricing-name{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text2);margin-bottom:16px}
+.pricing-price{font-family:var(--display);font-size:48px;line-height:1;margin-bottom:4px}
+.pricing-price span{font-size:16px;color:var(--text2)}
+.pricing-period{font-size:11px;color:var(--text3);margin-bottom:28px}
+.pricing-divider{border:none;border-top:1px solid var(--border);margin:24px 0}
+.pricing-features{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.pricing-feature{
+  display:flex;align-items:center;gap:10px;
+  font-size:12px;color:var(--text2)
+}
+.pricing-feature::before{content:'→';color:var(--accent);font-size:10px}
+.pricing-feature.dim::before{content:'×';color:var(--text3)}
+.pricing-feature.dim{color:var(--text3)}
+.pricing-btn{
+  display:block;width:100%;text-align:center;
+  padding:12px;border-radius:var(--radius);
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  text-decoration:none;letter-spacing:.06em;
+  transition:all .15s;border:1px solid var(--border2);
+  color:var(--text2)
+}
+.pricing-btn:hover{border-color:var(--text3);color:var(--text)}
+.pricing-btn.featured{
+  background:var(--accent);color:#000;border:none
+}
+.pricing-btn.featured:hover{background:var(--accent2)}
+
+/* ── CTA FINAL ── */
+.cta-section{
+  padding:120px 80px;text-align:center;
+  border-top:1px solid var(--border);
+  position:relative;overflow:hidden
+}
+.cta-glow{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:600px;height:300px;
+  background:radial-gradient(ellipse,rgba(184,255,87,.06) 0%,transparent 70%);
+  pointer-events:none
+}
+.cta-section h2{
+  font-family:var(--display);font-size:clamp(40px,5vw,72px);
+  line-height:.95;margin-bottom:20px
+}
+.cta-section p{font-size:14px;color:var(--text2);max-width:400px;margin:0 auto 40px}
+
+/* ── FOOTER ── */
+footer{
+  border-top:1px solid var(--border);
+  padding:40px 80px;
+  display:flex;align-items:center;justify-content:space-between
+}
+.footer-logo{font-family:var(--display);font-size:16px;color:var(--text3)}
+.footer-logo span{color:var(--accent)}
+.footer-links{display:flex;gap:24px}
+.footer-links a{font-size:11px;color:var(--text3);text-decoration:none;letter-spacing:.06em;transition:color .15s}
+.footer-links a:hover{color:var(--text2)}
+.footer-copy{font-size:11px;color:var(--text3)}
+
+/* ── TICKER ── */
+.ticker{
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  background:var(--surface);overflow:hidden;height:36px;
+  display:flex;align-items:center
+}
+.ticker-track{
+  display:flex;white-space:nowrap;gap:0;
+  animation:ticker 30s linear infinite
+}
+.ticker-item{
+  display:flex;align-items:center;gap:8px;
+  padding:0 32px;font-size:10px;letter-spacing:.1em;color:var(--text3);
+  border-right:1px solid var(--border)
+}
+.ticker-item .dot{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes fadeLeft{
+  from{opacity:0;transform:translateY(-50%) translateX(40px)}
+  to{opacity:1;transform:translateY(-50%) translateX(0)}
+}
+@keyframes ticker{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+
+.fade-in{
+  opacity:0;transform:translateY(16px);
+  transition:opacity .6s ease,transform .6s ease
+}
+.fade-in.visible{opacity:1;transform:none}
+</style>
 </head>
 <body>
 
 <!-- NAV -->
 <nav>
-  <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
-  <div class="nav-center">
-    <a href="index.html" class="nav-link">Scout</a>
-    <a href="compare.html" class="nav-link">Comparer</a>
-    <a href="demo.html" class="nav-link">Démo</a>
+  <a href="/" class="nav-logo">Frag<span>Value</span></a>
+  <div class="nav-links">
+    <a href="#features">Fonctionnalités</a>
+    <a href="#metrics">Métriques</a>
+    <a href="#pricing">Tarifs</a>
+    <a href="/demo.html">Analyser</a>
   </div>
-  <div class="nav-right">
-    <a href="login.html" class="nav-ghost" id="navLoginBtn">Connexion</a>
-    <a href="dashboard.html" class="nav-solid" id="navAccountBtn" style="display:none">Mon espace</a>
-  </div>
+  <a href="/demo.html" class="nav-cta">Lancer l'analyse →</a>
 </nav>
 
-<!-- TOPBAR -->
-<div id="topbar">
-  <input id="topbarInput" type="text" placeholder="Rechercher un joueur..." autocomplete="off" spellcheck="false"/>
-  <button class="topbar-btn" onclick="newSearch()">Analyser</button>
-  <span id="topbarNick"></span>
+<!-- TICKER -->
+<div class="ticker" style="margin-top:56px">
+  <div class="ticker-track" id="tickerTrack">
+    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>ANALYSE DE DÉMO CS2</div>
+    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>FV RATING · IMPACT RÉEL</div>
+    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>2D REPLAY INTERACTIF</div>
+    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>COMPARAISON PRO</div>
+    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>HEATMAPS TACTIQUES</div>
+    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>STATS ROUND PAR ROUND</div>
+    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>ANALYSE DE DÉMO CS2</div>
+    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>FV RATING · IMPACT RÉEL</div>
+    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>2D REPLAY INTERACTIF</div>
+    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>COMPARAISON PRO</div>
+    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>HEATMAPS TACTIQUES</div>
+    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>STATS ROUND PAR ROUND</div>
+  </div>
 </div>
-<div class="tab-bar" id="tabBar">
-  <button class="tab-btn active" onclick="switchTab('stats',this)">Stats FACEIT</button>
-  <button class="tab-btn" onclick="switchTab('improvements',this)">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-    Amélioration
-  </button>
-  <button class="tab-btn" onclick="switchTab('demo',this)">Analyse démo <span class="tab-new">NEW</span></button>
-</div>
 
-<!-- LANDING -->
-<div id="landingPage">
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-tag">Analyse CS2 · Saison 8 FACEIT</div>
+  <h1>Tu joues bien.<br><em>La preuve,</em><br>c'est nous.</h1>
+  <p class="hero-sub">FragValue analyse tes démos CS2 et te dit exactement ce qui fait la différence entre toi et un joueur de niveau supérieur. Chiffres à l'appui.</p>
+  <div class="hero-actions">
+    <a href="/demo.html" class="btn-primary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+      Analyser ma démo
+    </a>
+    <a href="#features" class="btn-secondary">Voir les fonctionnalités →</a>
+  </div>
+  <div class="hero-stats">
+    <div>
+      <div class="hero-stat-val">134</div>
+      <div class="hero-stat-label">Métriques analysées</div>
+    </div>
+    <div>
+      <div class="hero-stat-val">2D</div>
+      <div class="hero-stat-label">Replay interactif</div>
+    </div>
+    <div>
+      <div class="hero-stat-val">PRO</div>
+      <div class="hero-stat-label">Référence comparative</div>
+    </div>
+  </div>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-bg"></div>
-    <div class="hero-grid"></div>
-    <div class="hero-content">
-      <div class="hero-eyebrow">
-        <span class="hero-dot"></span>CS2 Talent Analytics
+  <!-- DEMO PREVIEW -->
+  <div class="demo-preview">
+    <div class="demo-topbar">
+      <div class="demo-dot"></div><div class="demo-dot"></div><div class="demo-dot"></div>
+      <span class="demo-title">de_dust2 · 18 rounds · FLoBYque</span>
+    </div>
+    <div class="demo-body">
+      <div class="demo-card">
+        <div class="demo-card-label">FV Rating</div>
+        <div class="demo-card-val green">1.42</div>
+        <div class="demo-card-sub">Top 18% niveau 8</div>
       </div>
-      <h1 class="hero-title">Scout smarter.<br/><span class="hero-gradient">Play better.</span></h1>
-      <p class="hero-sub">FV Score, heatmaps de démo, comparaison multi-joueurs : tout ce dont tu as besoin pour recruter ou progresser.</p>
-      <div class="hero-cta" id="heroCta">
-        <button class="btn-primary" onclick="showScoutSearch()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          Analyser un joueur
-        </button>
-        <a href="compare.html" class="btn-secondary">Comparer des joueurs →</a>
+      <div class="demo-card">
+        <div class="demo-card-label">KAST</div>
+        <div class="demo-card-val">74%</div>
+        <div class="demo-card-sub">+6% vs. moyenne</div>
       </div>
-      <div class="hero-stats" id="heroStats">
-        <div class="hero-stat"><div class="hero-stat-val" style="color:var(--accent)">FV Score</div><div class="hero-stat-label">Score /100</div></div>
-        <div class="hero-stat"><div class="hero-stat-val" style="color:var(--success)">CT/T</div><div class="hero-stat-label">Split side</div></div>
-        <div class="hero-stat"><div class="hero-stat-val" style="color:var(--gold)">Démo</div><div class="hero-stat-label">Heatmaps</div></div>
-        <div class="hero-stat"><div class="hero-stat-val" style="color:#A78BFA">5v5</div><div class="hero-stat-label">Comparaison</div></div>
+      <div class="demo-card">
+        <div class="demo-card-label">ADR</div>
+        <div class="demo-card-val gold">87.3</div>
+        <div class="demo-card-sub">Référence pro : 82.1</div>
       </div>
-      <div id="heroSearch">
-        <div class="search-box">
-          <input id="nickInput" type="text" placeholder="Pseudo FACEIT... ex: s1mple" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')searchPlayer()"/>
-          <button id="searchBtn" onclick="searchPlayer()">Analyser</button>
+      <div class="demo-card">
+        <div class="demo-card-label">Opening duels</div>
+        <div class="demo-card-val">63%</div>
+        <div class="demo-card-sub">Win rate premier duel</div>
+      </div>
+      <div class="demo-map">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px">
+          <div class="demo-map-label">2D REPLAY · ROUND 7</div>
+          <div style="font-size:9px;color:var(--text3);margin-top:2px">Clic pour ouvrir le replay interactif</div>
         </div>
-        <div id="errorMsg"></div>
-        <button class="back-link" onclick="hideScoutSearch()">← Retour</button>
+        <div style="position:absolute;top:20px;right:20px;font-size:9px;color:var(--text3);border:1px solid var(--border);padding:4px 8px;border-radius:3px">de_dust2</div>
+        <!-- Fake map dots -->
+        <div style="position:absolute;width:8px;height:8px;border-radius:50%;background:#4A9EFF;top:45%;left:30%"></div>
+        <div style="position:absolute;width:8px;height:8px;border-radius:50%;background:#4A9EFF;top:55%;left:35%"></div>
+        <div style="position:absolute;width:8px;height:8px;border-radius:50%;background:#F5C842;top:40%;left:65%"></div>
+        <div style="position:absolute;width:8px;height:8px;border-radius:50%;background:#F5C842;top:60%;left:70%"></div>
+        <div style="position:absolute;width:6px;height:6px;border-radius:50%;background:var(--accent);top:50%;left:50%;box-shadow:0 0 8px var(--accent)"></div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- FEATURES -->
-  <section class="section">
-    <div class="sec-eyebrow">Fonctionnalités</div>
-    <div class="sec-title">Tout ce dont tu as besoin.</div>
-    <p class="sec-sub">FragValue centralise l'analyse FACEIT, la comparaison de joueurs et l'analyse de démo en un seul outil.</p>
-    <div class="feat-grid">
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-tag">Fonctionnalités</div>
+  <h2 class="section-title">Tout ce que FACEIT<br>ne te dit pas</h2>
+  <p class="section-sub">FragValue va là où les stats classiques s'arrêtent. Dans le détail de chaque round, chaque position, chaque décision.</p>
 
-      <div class="feat-card" style="--fc:#3B7FF5" onclick="showScoutSearch()">
-        <div class="feat-icon" style="background:rgba(59,127,245,.1);border-color:rgba(59,127,245,.2)">🔍</div>
-        <div class="feat-tag">Scout FACEIT</div>
-        <div class="feat-title">Analyse complète d'un joueur</div>
-        <div class="feat-desc">FV Score /100, FV Rating, KAST, CT/T split, historique 20 matchs et évaluation de recrutement.</div>
-        <div class="feat-pills"><span class="feat-pill">FV Score</span><span class="feat-pill">K/D · ADR</span><span class="feat-pill">CT/T</span><span class="feat-pill">Consistance</span></div>
-        <div class="feat-btn" style="color:#3B7FF5;background:rgba(59,127,245,.08);border-color:rgba(59,127,245,.15)">
-          Analyser un joueur <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </div>
-      </div>
-
-      <a class="feat-card" href="compare.html" style="--fc:#2DD4A0">
-        <div class="feat-icon" style="background:rgba(45,212,160,.1);border-color:rgba(45,212,160,.2)">⚡</div>
-        <div class="feat-tag" style="color:#2DD4A0">Comparaison</div>
-        <div class="feat-title">Compare 2 à 5 joueurs</div>
-        <div class="feat-desc">Spider chart, barres de comparaison, tableau complet côte à côte. Identifie le meilleur recrutement.</div>
-        <div class="feat-pills"><span class="feat-pill">Spider chart</span><span class="feat-pill">FV Score</span><span class="feat-pill">Multi-kills</span><span class="feat-pill">ELO</span></div>
-        <div class="feat-btn" style="color:#2DD4A0;background:rgba(45,212,160,.08);border-color:rgba(45,212,160,.15)">
-          Comparer maintenant <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </div>
-      </a>
-
-      <a class="feat-card" href="demo.html" style="--fc:#F5C842">
-        <div class="feat-icon" style="background:rgba(245,200,66,.1);border-color:rgba(245,200,66,.2)">🎬</div>
-        <div class="feat-tag" style="color:#F5C842">Analyse Démo · Beta</div>
-        <div class="feat-title">Visualise ton jeu</div>
-        <div class="feat-desc">Importe un .dem CS2 : heatmaps kills/deaths CT/T, zones de duels, déplacements et utility map.</div>
-        <div class="feat-pills"><span class="feat-pill">Heatmaps</span><span class="feat-pill">CT vs T</span><span class="feat-pill">Duel zones</span><span class="feat-pill">Utility</span></div>
-        <div class="feat-btn" style="color:#F5C842;background:rgba(245,200,66,.08);border-color:rgba(245,200,66,.15)">
-          Analyser une démo <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </div>
-      </a>
-
+  <div class="features-grid fade-in">
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
+          <rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/>
+        </svg></div>
+      <div class="feature-title">FV RATING</div>
+      <div class="feature-desc">Une métrique d'impact transparente et documentée. Basée sur les probabilités de victoire en temps réel, pas juste le scoreboard.</div>
+      <div class="feature-tag">→ Formule publique</div>
     </div>
-  </section>
-
-  <!-- HOW IT WORKS : Joueur vs Scout -->
-  <section class="section" style="padding-top:0">
-    <div class="sec-eyebrow">Comment ça marche</div>
-    <div class="sec-title">Une expérience pensée pour toi.</div>
-
-    <!-- Toggle Joueur / Scout -->
-    <div class="how-tabs">
-      <button class="how-tab active" id="tabPlayer" onclick="switchHow('player')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        Je suis joueur
-      </button>
-      <button class="how-tab" id="tabScout" onclick="switchHow('scout')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
-        Je suis scout / coach
-      </button>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg></div>
+      <div class="feature-title">2D REPLAY</div>
+      <div class="feature-desc">Rejoue chaque round avec les positions exactes, les tirs, les grenades et les kills. Round par round, frame par frame.</div>
+      <div class="feature-tag">→ 128 tick/s</div>
     </div>
-
-    <!-- Steps Joueur -->
-    <div class="how-steps" id="stepsPlayer">
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#3B7FF5">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-          </svg>
-        </div>
-        <div class="how-step-num">01</div>
-        <div class="how-step-title">Entre ton pseudo FACEIT</div>
-        <div class="how-step-desc">Tape ton pseudo exact : FragValue récupère tes 20 derniers matchs et ton historique complet en quelques secondes.</div>
-      </div>
-      <div class="how-step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#2DD4A0">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M3 3v18h18"/><path d="m7 16 4-4 4 4 5-5"/>
-          </svg>
-        </div>
-        <div class="how-step-num">02</div>
-        <div class="how-step-title">Identifie tes axes d'amélioration</div>
-        <div class="how-step-desc">FV Score /100, CT/T split, opening ratio, flash efficacy : tu vois exactement ce qui plombe ton niveau et ce sur quoi travailler en priorité.</div>
-      </div>
-      <div class="how-step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#F5C842">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01"/>
-          </svg>
-        </div>
-        <div class="how-step-num">03</div>
-        <div class="how-step-title">Visualise ta démo</div>
-        <div class="how-step-desc">Importe ton fichier .dem pour voir tes heatmaps de kills CT/T, tes zones de déplacement et les spots où tu perds tes duels.</div>
-      </div>
-      <div class="how-step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#A78BFA">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          </svg>
-        </div>
-        <div class="how-step-num">04</div>
-        <div class="how-step-title">Suis ta progression</div>
-        <div class="how-step-desc">Reviens analyser ton profil après tes sessions : vois ton FV Score évoluer et mesure concrètement tes progrès dans le temps.</div>
-      </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
+          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg></div>
+      <div class="feature-title">HEATMAPS</div>
+      <div class="feature-desc">Visualise tes zones de kills, de morts, et de duels. Identifie en un coup d'œil les positions que tu joues bien ou mal.</div>
+      <div class="feature-tag">→ Par side / par map</div>
     </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
+          <circle cx="12" cy="12" r="3"/><path d="M12 9V3M12 21v-6M9 12H3M21 12h-6"/><path d="m6.3 6.3 1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4"/>
+        </svg></div>
+      <div class="feature-title">DUELS D'OUVERTURE</div>
+      <div class="feature-desc">Le premier duel d'un round détermine souvent l'issue. Analyse ton win rate, tes positions, et tes armes préférées.</div>
+      <div class="feature-tag">→ Entry fragger stats</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
+          <path d="M3 3l18 18M10.5 6A7 7 0 1 0 18 13.5M15 3l3 3-1.5 1.5"/>
+        </svg></div>
+      <div class="feature-title">UTILITY USAGE</div>
+      <div class="feature-desc">Tes smokes, flashes et molotovs, visualisés sur la carte avec trajectoires et zones d'impact. Optimise ton utility game.</div>
+      <div class="feature-tag">→ Trajectoires complètes</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+        </svg></div>
+      <div class="feature-title">COMPARAISON PRO</div>
+      <div class="feature-desc">Tes stats comparées aux pros sur les mêmes maps et situations. Vois exactement l'écart et comment le combler.</div>
+      <div class="feature-tag">→ Base de données ESL/BLAST</div>
+    </div>
+  </div>
+</section>
 
-    <!-- Steps Scout -->
-    <div class="how-steps" id="stepsScout" style="display:none">
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#2DD4A0">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-        </div>
-        <div class="how-step-num">01</div>
-        <div class="how-step-title">Recherche un joueur</div>
-        <div class="how-step-desc">Entre n'importe quel pseudo FACEIT : FragValue génère une fiche complète avec FV Score, CT/T split, consistance sur 20 matchs.</div>
+<!-- HOW IT WORKS -->
+<section class="how-section">
+  <div class="section-tag">Comment ça marche</div>
+  <h2 class="section-title">De la démo<br>à l'insight</h2>
+  <div class="steps fade-in">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Upload ta démo</div>
+      <div class="step-desc">Télécharge ton fichier .dem directement depuis FACEIT. Jusqu'à 500 MB supportés.</div>
+      <div class="step-arrow">→</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Parsing CS2</div>
+      <div class="step-desc">Notre parser extrait 134 métriques par joueur : positions, kills, grenades, ticks absolus.</div>
+      <div class="step-arrow">→</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Analyse & Score</div>
+      <div class="step-desc">Calcul du FV Rating, heatmaps, duel zones et comparaison avec la base de données pro.</div>
+      <div class="step-arrow">→</div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-title">Insights actionnables</div>
+      <div class="step-desc">Des recommandations précises. Pas "améliore ton aim" mais "round 7, position A long, 0:23 restants."</div>
+    </div>
+  </div>
+</section>
+
+<!-- METRICS -->
+<section class="metrics-section" id="metrics">
+  <div class="section-tag">Métriques</div>
+  <h2 class="section-title">Des chiffres<br>qui ont du sens</h2>
+  <div class="metrics-grid fade-in">
+    <div class="metric-list">
+      <div class="metric-row active" onclick="setMetric(this,'FV Rating','Impact réel sur chaque round','Mesure comment tes actions affectent la probabilité de victoire en temps réel. Un entry frag en 5v5 qui ouvre un bombsite vaut 5x plus qu\'un exit frag.','FVR = Σ(ΔWinProb × RoundWeight) / Rounds')">
+        <span class="metric-name">FV Rating</span>
+        <span class="metric-val">1.42</span>
       </div>
-      <div class="how-step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <div class="metric-row" onclick="setMetric(this,'KAST','Contribution à chaque round','Pourcentage de rounds où tu as contribué : Kill, Assist, Survived ou Traded. Un indicateur de consistance bien plus fiable que le simple K/D.','KAST = Rounds(K+A+S+T) / Total Rounds × 100')">
+        <span class="metric-name">KAST</span>
+        <span class="metric-val">74%</span>
       </div>
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#3B7FF5">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-          </svg>
-        </div>
-        <div class="how-step-num">02</div>
-        <div class="how-step-title">Analyse sa fiche en détail</div>
-        <div class="how-step-desc">FV Score /100 décomposé en 4 dimensions : Performance, Consistance, Impact et Utilité. Tout ce qu'il faut pour évaluer un profil objectivement.</div>
+      <div class="metric-row" onclick="setMetric(this,'ADR','Average Damage per Round','Dommages moyens infligés par round. Révèle si tu crées de la valeur même sans finaliser, ou si tu farm des frags faciles sur économies.','ADR = Total Damage / Total Rounds')">
+        <span class="metric-name">ADR</span>
+        <span class="metric-val">87.3</span>
       </div>
-      <div class="how-step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <div class="metric-row" onclick="setMetric(this,'Opening Duel %','Win rate du premier contact','Le premier duel de chaque round , gagné ou perdu, influence directement l\'issue. Les pros gagnent 54-58% de leurs duels d\'ouverture.','OD% = Duels ouverture gagnés / Total duels ouverture × 100')">
+        <span class="metric-name">Opening Duel %</span>
+        <span class="metric-val">63%</span>
       </div>
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#F5C842">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-          </svg>
-        </div>
-        <div class="how-step-num">03</div>
-        <div class="how-step-title">Compare les candidats</div>
-        <div class="how-step-desc">Mets jusqu'à 5 joueurs côte à côte : spider chart, barres de comparaison, tableau complet. Identifie le meilleur profil pour ton équipe.</div>
-      </div>
-      <div class="how-step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-      <div class="how-step">
-        <div class="how-step-icon" style="--si:#F06B6B">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
-          </svg>
-        </div>
-        <div class="how-step-num">04</div>
-        <div class="how-step-title">Sauvegarde dans ta watchlist</div>
-        <div class="how-step-desc">Ajoute les profils intéressants à ta watchlist ou ton roster. Retrouve-les en un clic pour suivre leur évolution avant de recruter.</div>
+      <div class="metric-row" onclick="setMetric(this,'Multi-Kill Rounds','Rounds à 2+ kills','Rounds où tu réalises au moins 2 kills. Indicateur de ton impact dans les situations déséquilibrées . Clutch potential.','MKR = Rounds(kills ≥ 2) / Total Rounds × 100')">
+        <span class="metric-name">Multi-Kill Rounds</span>
+        <span class="metric-val">31%</span>
       </div>
     </div>
-  </section>
-
-  <!-- FV SCORE -->
-  <section class="section" style="padding-top:0">
-    <div class="sec-eyebrow">FV Score</div>
-    <div class="sec-title">Au-delà du simple K/D.</div>
-    <div class="score-preview">
-      <div style="text-align:center">
-        <div class="score-circle-wrap">
-          <svg class="score-circle-svg" viewBox="0 0 148 148">
-            <circle class="score-circle-bg" cx="74" cy="74" r="65"/>
-            <circle class="score-circle-fill" cx="74" cy="74" r="65"/>
-          </svg>
-          <div class="score-circle-inner">
-            <div class="score-big">78</div>
-            <div class="score-max">/ 100</div>
+    <div class="metric-detail" id="metricDetail">
+      <div class="metric-detail-title">FV Rating</div>
+      <div class="metric-detail-desc">Mesure comment tes actions affectent la probabilité de victoire en temps réel. Un entry frag en 5v5 qui ouvre un bombsite vaut 5x plus qu'un exit frag.</div>
+      <div class="metric-formula">FVR = Σ(ΔWinProb × RoundWeight) / Rounds</div>
+      <div style="margin-top:24px">
+        <div style="font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px">Distribution dans ton match</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-size:11px;color:var(--text2);width:60px">CT side</div>
+            <div style="flex:1;height:4px;background:var(--border);border-radius:2px"><div style="width:71%;height:100%;background:var(--accent);border-radius:2px"></div></div>
+            <div style="font-size:11px;color:var(--accent);font-family:var(--display)">1.58</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-size:11px;color:var(--text2);width:60px">T side</div>
+            <div style="flex:1;height:4px;background:var(--border);border-radius:2px"><div style="width:58%;height:100%;background:var(--gold);border-radius:2px"></div></div>
+            <div style="font-size:11px;color:var(--gold);font-family:var(--display)">1.26</div>
           </div>
         </div>
-        <div class="score-label">Élite+</div>
-        <div class="score-dims">
-          <div class="sdim"><div class="sdim-label">Performance</div><div class="sdim-bar"><div class="sdim-fill" style="width:100%;background:var(--accent)"></div></div><div class="sdim-val">35/35</div></div>
-          <div class="sdim"><div class="sdim-label">Consistance</div><div class="sdim-bar"><div class="sdim-fill" style="width:75%;background:var(--success)"></div></div><div class="sdim-val">21/28</div></div>
-          <div class="sdim"><div class="sdim-label">Impact</div><div class="sdim-bar"><div class="sdim-fill" style="width:68%;background:var(--gold)"></div></div><div class="sdim-val">17/25</div></div>
-          <div class="sdim"><div class="sdim-label">Utilité</div><div class="sdim-bar"><div class="sdim-fill" style="width:33%;background:#A78BFA"></div></div><div class="sdim-val">5/15</div></div>
-        </div>
-      </div>
-      <div>
-        <div class="score-info-title">Une métrique qui va plus loin.</div>
-        <div class="score-info-desc">Le FV Score combine 4 dimensions clés pour donner une évaluation complète et objective d'un joueur CS2. Inspiré du HLTV Rating 2.0, calibré sur les données FACEIT lvl10.</div>
-        <div class="score-bullets">
-          <div class="sbullet"><span class="sbullet-icon">🎯</span>Performance : FV Rating, ADR, K/D contextualisé par niveau ELO</div>
-          <div class="sbullet"><span class="sbullet-icon">📈</span>Consistance : coefficient de variation sur 20 matchs + trend haussier</div>
-          <div class="sbullet"><span class="sbullet-icon">💥</span>Impact : clutches, opening kills, multi-kills pondérés</div>
-          <div class="sbullet"><span class="sbullet-icon">🤝</span>Utilité : flash efficacy, utility damage, assists, saves intelligents</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- BLOC AUTH -->
-  <div class="auth-block" id="authBlock">
-    <div class="auth-block-inner">
-      <div class="auth-block-left">
-        <div class="auth-block-label">Gratuit pour commencer</div>
-        <div class="auth-block-title">Prêt à progresser ou recruter ?</div>
-        <div class="auth-block-sub">Crée ton compte en 30 secondes — aucune carte requise. Accède au FV Score, à l'analyse de démo et à la comparaison multi-joueurs.</div>
-        <div class="auth-block-pills">
-          <span class="auth-block-pill">FV Score /100</span>
-          <span class="auth-block-pill">Analyse démo</span>
-          <span class="auth-block-pill">Watchlist</span>
-          <span class="auth-block-pill">Comparaison 5v5</span>
-        </div>
-      </div>
-      <div class="auth-block-right">
-        <div class="auth-block-btns">
-          <a href="login.html?tab=register" class="auth-primary">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-            Créer un compte gratuit
-          </a>
-          <a href="login.html" class="auth-ghost">
-            Se connecter →
-          </a>
-        </div>
-        <div class="auth-block-note">Aucune carte · Gratuit pour toujours</div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- PLANS -->
-  <section class="section" style="padding-top:0">
-    <div class="sec-eyebrow">Tarifs</div>
-    <div class="sec-title">Commencer gratuitement.</div>
-    <div class="plans-grid">
-      <div class="plan">
-        <div class="plan-name">Free</div>
-        <div class="plan-price">0 €</div>
-        <div class="plan-period">pour toujours</div>
-        <div class="plan-feats">
-          <div class="plan-feat on">Recherche FACEIT illimitée</div>
-          <div class="plan-feat on">FV Score complet</div>
-          <div class="plan-feat on">Stats 20 matchs</div>
-          <div class="plan-feat">Watchlist 5 joueurs</div>
-          <div class="plan-feat">Analyse démo</div>
-        </div>
-        <button class="plan-btn" onclick="window.location.href='login.html'">Commencer</button>
-      </div>
-      <div class="plan featured">
-        <div class="plan-name">Pro</div>
-        <div class="plan-price">49 €</div>
-        <div class="plan-period">par mois</div>
-        <div class="plan-feats">
-          <div class="plan-feat on">Tout le plan Free</div>
-          <div class="plan-feat on">Watchlist illimitée</div>
-          <div class="plan-feat on">Historique complet</div>
-          <div class="plan-feat on">1 roster équipe</div>
-          <div class="plan-feat on">5 démos / mois</div>
-        </div>
-        <button class="plan-btn cta">Passer à Pro</button>
-      </div>
-      <div class="plan">
-        <div class="plan-name">Club</div>
-        <div class="plan-price">199 €</div>
-        <div class="plan-period">par mois</div>
-        <div class="plan-feats">
-          <div class="plan-feat on">Tout le plan Pro</div>
-          <div class="plan-feat on">5 utilisateurs</div>
-          <div class="plan-feat on">Rosters illimités</div>
-          <div class="plan-feat on">Démos illimitées</div>
-          <div class="plan-feat on">Export PDF</div>
-        </div>
-        <button class="plan-btn cta">Passer à Club</button>
-      </div>
+<!-- PRO COMPARISON -->
+<section class="pro-section" id="pro">
+  <div class="section-tag">Référence FACEIT</div>
+  <h2 class="section-title">Où tu te situes<br>sur FACEIT</h2>
+  <p class="section-sub">Stats FACEIT publiques des meilleurs joueurs du monde. Même plateforme, même système ELO. Vois exactement l'écart à combler.</p>
+  <div class="pro-table fade-in">
+    <div class="pro-table-head">
+      <div>Joueur</div>
+      <div>ELO FACEIT</div>
+      <div>K/D</div>
+      <div>ADR</div>
     </div>
-  </section>
-
-  <!-- FOOTER -->
-  <div style="border-top:1px solid var(--border);padding:36px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;max-width:1080px;margin:0 auto">
-    <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
-    <div style="display:flex;gap:20px">
-      <a href="compare.html" style="font-size:12px;color:var(--text3);text-decoration:none">Comparer</a>
-      <a href="demo.html" style="font-size:12px;color:var(--text3);text-decoration:none">Démo</a>
-      <a href="account.html" style="font-size:12px;color:var(--text3);text-decoration:none">Mon espace</a>
-    </div>
-    <div style="font-size:12px;color:var(--text3);font-family:var(--mono)">© 2026 FragValue</div>
-  </div>
-
-</div><!-- /landingPage -->
-
-<!-- STICKY CTA BAR -->
-<div id="stickyCta">
-  <div class="sticky-left">
-    <div class="sticky-dot"></div>
-    <div class="sticky-text"><strong>FragValue est gratuit.</strong> Analyse ton profil, progresse, recrute.</div>
-  </div>
-  <div class="sticky-right">
-    <a href="login.html?tab=register" class="auth-primary" style="padding:9px 18px;font-size:13px">
-      Créer un compte
-    </a>
-    <a href="login.html" class="auth-ghost" style="padding:9px 16px;font-size:13px">
-      Se connecter
-    </a>
-    <button class="sticky-close" onclick="dismissSticky()" aria-label="Fermer">×</button>
-  </div>
-</div>
-
-<!-- LOADING -->
-<div id="loadingState"><div class="loader"></div><div class="loading-text" id="loadingText">Chargement du profil...</div></div>
-
-<!-- DASHBOARD -->
-<div id="dashboard">
-  <div class="tab-panel active" id="panelStats">
-    <div class="profile-card fade-in">
-      <div class="profile-avatar-ph" id="profileAvatar">👤</div>
-      <div class="profile-info">
-        <div class="profile-name" id="profileName"></div>
-        <div class="profile-badges">
-          <span class="badge" id="levelBadge"></span>
-          <span class="badge" id="fvBadge"></span>
-          <span class="badge badge-role" id="profileRole"></span>
-          <span class="badge badge-country" id="profileCountry"></span>
-          <span class="badge badge-team" id="profileTeam" style="display:none"></span>
-        </div>
+    <div class="pro-row">
+      <div class="pro-name">
+        <div class="pro-dot" style="background:#f5c842"></div>
+        <span style="font-size:13px">ZywOo</span>
+        <span class="pro-tag">GOAT · ~4000 ELO</span>
       </div>
-      <div class="profile-elo-wrap">
-        <div class="profile-elo kpi-neutral" id="eloVal">-</div>
-        <div class="profile-elo-label">ELO FACEIT</div>
-        <div class="recent-results" id="resultsRow"></div>
-        <button class="follow-btn" id="followBtn" onclick="toggleWatchlist()" style="display:none">+ Suivre</button>
+      <div class="pro-val accent">4001</div>
+      <div class="pro-val">1.70</div>
+      <div class="pro-val">102</div>
+    </div>
+    <div class="pro-row">
+      <div class="pro-name">
+        <div class="pro-dot" style="background:#ff4444"></div>
+        <span style="font-size:13px">donk</span>
+        <span class="pro-tag">CHALLENGER · ~4700 ELO</span>
       </div>
+      <div class="pro-val accent">4752</div>
+      <div class="pro-val">1.65</div>
+      <div class="pro-val">98</div>
     </div>
-    <div class="panel-title">Évaluation recrutement</div>
-    <div class="score-card fade-in" id="scoreCard" style="display:none"></div>
-    <div class="panel-title">Stats clés</div>
-    <div class="kpi-grid fade-in" id="kpiGrid"></div>
-    <div class="panel-title">CT Side VS T Side</div>
-    <div class="side-grid fade-in" id="sideGrid"></div>
-    <div class="panel-title">Évolution</div>
-    <div class="charts-grid fade-in">
-      <div class="chart-card"><div class="chart-title">FV Rating : 20 derniers matchs</div><div class="chart-wrap"><canvas id="ratingChart"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">K/D ratio</div><div class="chart-wrap"><canvas id="kdChart"></canvas></div></div>
+    <div class="pro-row" style="background:rgba(184,255,87,.03);border-left:2px solid var(--accent)">
+      <div class="pro-name">
+        <div class="pro-dot" style="background:var(--accent)"></div>
+        <span style="font-size:13px">Toi (exemple)</span>
+        <span class="pro-tag">NIVEAU 8 · ~1400 ELO</span>
+      </div>
+      <div class="pro-val accent">1400</div>
+      <div class="pro-val">1.12</div>
+      <div class="pro-val">76</div>
     </div>
-    <div class="panel-title">Stats par carte</div>
-    <div class="map-grid fade-in" id="mapGrid"></div>
-    <div class="panel-title">Multi-kills</div>
-    <div class="mk-grid fade-in" id="mkGrid"></div>
-    <div class="panel-title">Clutches</div>
-    <div class="clutch-grid fade-in" id="clutchGrid"></div>
-    <div class="panel-title">Utility</div>
-    <div class="utility-grid fade-in" id="utilityGrid"></div>
-    <div class="panel-title">20 derniers matchs</div>
-    <div class="match-table-wrap fade-in">
-      <table class="match-table"><thead><tr><th>Date</th><th>Carte</th><th>Score</th><th>K</th><th>D</th><th>K/D</th><th>HS%</th><th>ADR</th><th>KAST</th><th>FV Rating</th></tr></thead><tbody id="matchBody"></tbody></table>
+    <div class="pro-row">
+      <div class="pro-name">
+        <div class="pro-dot" style="background:var(--text3)"></div>
+        <span style="font-size:13px;color:var(--text2)">Niveau 10 (seuil)</span>
+      </div>
+      <div class="pro-val muted">2001+</div>
+      <div class="pro-val muted">1.25+</div>
+      <div class="pro-val muted">80+</div>
+    </div>
+    <div class="pro-row">
+      <div class="pro-name">
+        <div class="pro-dot" style="background:var(--text3)"></div>
+        <span style="font-size:13px;color:var(--text2)">Niveau 8 (seuil)</span>
+      </div>
+      <div class="pro-val muted">1251</div>
+      <div class="pro-val muted">1.05+</div>
+      <div class="pro-val muted">68+</div>
     </div>
   </div>
-  <!-- PANEL AMÉLIORATION -->
-  <div class="tab-panel" id="panelImprovements">
-    <div class="panel-title">Dernier match</div>
-    <div id="improvementsPanel">
-      <div style="text-align:center;padding:48px 24px;color:var(--text3);font-family:var(--mono);font-size:13px">
-        Analyse en cours...
+  <div style="margin-top:16px;font-size:11px;color:var(--text3)">
+    * Stats publiques FACEIT — ELO et K/D moyens sur les derniers matchs. ADR estimé depuis les trackers publics (faceittracker.net).
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section" id="pricing">
+  <div class="section-tag">Tarifs</div>
+  <h2 class="section-title">Simple,<br>transparent</h2>
+  <div class="pricing-grid fade-in">
+    <div class="pricing-card">
+      <div class="pricing-name">Free</div>
+      <div class="pricing-price">0<span>€</span></div>
+      <div class="pricing-period">pour toujours</div>
+      <hr class="pricing-divider">
+      <div class="pricing-features">
+        <div class="pricing-feature">3 analyses / mois</div>
+        <div class="pricing-feature">Heatmaps basiques</div>
+        <div class="pricing-feature">FV Rating</div>
+        <div class="pricing-feature dim">2D Replay</div>
+        <div class="pricing-feature dim">Comparaison pro</div>
+        <div class="pricing-feature dim">Historique illimité</div>
       </div>
+      <a href="/demo.html" class="pricing-btn">Commencer →</a>
+    </div>
+    <div class="pricing-card featured">
+      <div class="pricing-badge">LE PLUS POPULAIRE</div>
+      <div class="pricing-name">Pro</div>
+      <div class="pricing-price">9<span>€/mois</span></div>
+      <div class="pricing-period">ou 79€/an · 2 mois offerts</div>
+      <hr class="pricing-divider">
+      <div class="pricing-features">
+        <div class="pricing-feature">Analyses illimitées</div>
+        <div class="pricing-feature">2D Replay complet</div>
+        <div class="pricing-feature">Toutes les heatmaps</div>
+        <div class="pricing-feature">Comparaison pro</div>
+        <div class="pricing-feature">Historique complet</div>
+        <div class="pricing-feature">Export PDF</div>
+      </div>
+      <a href="/demo.html" class="pricing-btn featured">Essayer Pro →</a>
+    </div>
+    <div class="pricing-card">
+      <div class="pricing-name">Team</div>
+      <div class="pricing-price">29<span>€/mois</span></div>
+      <div class="pricing-period">jusqu'à 10 joueurs</div>
+      <hr class="pricing-divider">
+      <div class="pricing-features">
+        <div class="pricing-feature">Tout Pro inclus</div>
+        <div class="pricing-feature">Dashboard équipe</div>
+        <div class="pricing-feature">Analyse tactique</div>
+        <div class="pricing-feature">Préparation veto</div>
+        <div class="pricing-feature">Coach access</div>
+        <div class="pricing-feature">API access</div>
+      </div>
+      <a href="#" class="pricing-btn">Contacter →</a>
     </div>
   </div>
+</section>
 
-  <div class="tab-panel" id="panelDemo">
-    <div class="demo-panel fade-in">
-      <div class="demo-panel-title">Analyse ta démo CS2</div>
-      <p class="demo-panel-sub">Importe un fichier .dem pour obtenir des heatmaps de positions, zones de duels, déplacements CT/T et KPIs avancés.</p>
-      <a href="demo.html" class="demo-panel-btn">Analyser une démo →</a>
-      <div class="demo-features">
-        <div class="demo-feature"><div class="demo-feature-code">01</div><div class="demo-feature-title">Kill heatmap</div><div class="demo-feature-desc">Zones de kills et deaths par side</div></div>
-        <div class="demo-feature"><div class="demo-feature-code">02</div><div class="demo-feature-title">Déplacements CT/T</div><div class="demo-feature-desc">Trajectoires et zones de présence</div></div>
-        <div class="demo-feature"><div class="demo-feature-code">03</div><div class="demo-feature-title">Duel zones</div><div class="demo-feature-desc">% de duels gagnés par zone</div></div>
-        <div class="demo-feature"><div class="demo-feature-code">04</div><div class="demo-feature-title">Utility map</div><div class="demo-feature-desc">Grenades, smokes, flashes</div></div>
-      </div>
-    </div>
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="section-tag">Prêt ?</div>
+  <h2>Analyse ta prochaine<br>démo maintenant</h2>
+  <p>Gratuit, sans inscription. Upload ton .dem et obtiens tes résultats en moins de 2 minutes.</p>
+  <a href="/demo.html" class="btn-primary" style="display:inline-flex;font-size:14px;padding:16px 32px">
+    Analyser ma démo →
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Frag<span>Value</span></div>
+  <div class="footer-links">
+    <a href="#features">Fonctionnalités</a>
+    <a href="#pricing">Tarifs</a>
+    <a href="#">Discord</a>
+    <a href="#">Twitter</a>
   </div>
-</div>
+  <div class="footer-copy">© 2026 FragValue</div>
+</footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const _sb = supabase.createClient(
-  'https://xmyruycvvkmcwysfygcq.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI'
-);
-_sb.auth.getSession().then(({ data }) => {
-  if (data.session) {
-    document.getElementById('navLoginBtn').style.display = 'none';
-    document.getElementById('navAccountBtn').style.display = '';
-  }
-});
-function switchHow(mode) {
-  document.getElementById('tabPlayer').classList.toggle('active', mode === 'player');
-  document.getElementById('tabScout').classList.toggle('active', mode === 'scout');
-  document.getElementById('stepsPlayer').style.display = mode === 'player' ? 'grid' : 'none';
-  document.getElementById('stepsScout').style.display  = mode === 'scout'  ? 'grid' : 'none';
+// Scroll animations
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible') })
+},{threshold:.1})
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el))
+
+// Metric switcher
+function setMetric(el, name, sub, desc, formula) {
+  document.querySelectorAll('.metric-row').forEach(r => r.classList.remove('active'))
+  el.classList.add('active')
+  document.getElementById('metricDetail').innerHTML = `
+    <div class="metric-detail-title">${name}</div>
+    <div style="font-size:11px;color:var(--text3);letter-spacing:.08em;margin-bottom:16px;text-transform:uppercase">${sub}</div>
+    <div class="metric-detail-desc">${desc}</div>
+    <div class="metric-formula">${formula}</div>
+  `
 }
-
-function showScoutSearch() {
-  document.getElementById('heroSearch').style.display = 'flex';
-  document.getElementById('heroCta').style.display = 'none';
-  document.getElementById('heroStats').style.display = 'none';
-  setTimeout(() => document.getElementById('nickInput').focus(), 50);
-}
-function hideScoutSearch() {
-  document.getElementById('heroSearch').style.display = 'none';
-  document.getElementById('heroCta').style.display = 'flex';
-  document.getElementById('heroStats').style.display = 'flex';
-}
-
-// ── Sticky CTA bar ────────────────────────────────────────────────────────
-let _stickyDismissed = false;
-let _stickyShown     = false;
-
-function dismissSticky() {
-  _stickyDismissed = true;
-  document.getElementById('stickyCta').classList.remove('visible');
-  sessionStorage.setItem('stickyClosed', '1');
-}
-
-// Afficher la sticky bar après 4 secondes si non connecté
-_sb.auth.getSession().then(({ data }) => {
-  if (data.session) {
-    // Connecté : cacher le bloc auth et la sticky bar
-    const ab = document.getElementById('authBlock');
-    if (ab) ab.style.display = 'none';
-    document.getElementById('stickyCta').style.display = 'none';
-    return;
-  }
-  // Non connecté : afficher après délai si pas déjà fermée
-  if (sessionStorage.getItem('stickyClosed')) return;
-  setTimeout(() => {
-    if (!_stickyDismissed) {
-      document.getElementById('stickyCta').classList.add('visible');
-      _stickyShown = true;
-    }
-  }, 4000);
-
-  // Aussi au scroll — afficher dès qu'on passe les features
-  window.addEventListener('scroll', () => {
-    if (_stickyShown || _stickyDismissed || sessionStorage.getItem('stickyClosed')) return;
-    if (window.scrollY > 400) {
-      document.getElementById('stickyCta').classList.add('visible');
-      _stickyShown = true;
-    }
-  }, { passive: true });
-});
 </script>
-<script src="app.js"></script>
 </body>
 </html>
