@@ -1,272 +1,289 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8"/>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzA4MDkwRCIvPgogIDxyZWN0IHg9IjUiIHk9IjUiIHdpZHRoPSIzLjUiIGhlaWdodD0iMjAiIHJ4PSIxLjUiIGZpbGw9IiMzQjdGRjUiLz4KICA8cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iMTMiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHJlY3QgeD0iNSIgeT0iMTMuNSIgd2lkdGg9IjkiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHBhdGggZD0iTTE1LjUgOC41IEwyMC41IDIzLjUgTDI1LjUgOC41IiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIxNS41IiB5MT0iOC41IiB4Mj0iMjUuNSIgeTI9IjIzLjUiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzNCN0ZGNSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMyREQ0QTAiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgo8L3N2Zz4="/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FragValue : Connexion</title>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --bg:#08090D;--surface:#0F1119;--card:#141720;--border:#1E2233;--border2:#252B3B;
-      --accent:#3B7FF5;--text:#EDF0F7;--text2:#7A8499;--text3:#3D4459;
-      --success:#2DD4A0;--danger:#F06B6B;
-      --font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace;
-    }
-    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:grid;grid-template-columns:1fr 1fr;-webkit-font-smoothing:antialiased}
-    @media(max-width:860px){body{grid-template-columns:1fr}}
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FragValue · Connexion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;
+  --border:#1c1e1e;--border2:#252727;
+  --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --danger:#ff4444;--success:#2dd4a0;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  --r:6px;--r2:12px
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
 
-    /* LEFT PANEL */
-    .left{
-      display:flex;flex-direction:column;justify-content:space-between;
-      padding:40px;background:var(--surface);border-right:1px solid var(--border);
-      position:relative;overflow:hidden;
-    }
-    @media(max-width:860px){.left{display:none}}
-    .left-bg{
-      position:absolute;inset:0;
-      background:radial-gradient(ellipse 70% 60% at 30% 20%, rgba(59,127,245,.1), transparent),
-                 radial-gradient(ellipse 50% 40% at 80% 80%, rgba(45,212,160,.06), transparent);
-      pointer-events:none;
-    }
-    .left-logo{font-size:17px;font-weight:700;text-decoration:none;color:var(--text);position:relative;z-index:1}
-    .left-logo span{color:var(--accent)}
-    .left-content{position:relative;z-index:1}
-    .left-eyebrow{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:20px;display:flex;align-items:center;gap:8px}
-    .left-eyebrow::before{content:'';width:20px;height:1px;background:var(--accent)}
-    .left-title{font-size:clamp(28px,3vw,40px);font-weight:700;letter-spacing:-1.2px;line-height:1.1;margin-bottom:16px}
-    .left-title span{background:linear-gradient(135deg,var(--accent),#7BBFFF 50%,var(--success));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .left-sub{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:36px;max-width:380px}
-    .features-list{display:flex;flex-direction:column;gap:12px}
-    .feature-item{display:flex;align-items:flex-start;gap:12px;font-size:13px;color:var(--text2)}
-    .feature-icon{font-size:16px;flex-shrink:0;margin-top:1px}
-    .feature-text strong{color:var(--text);font-weight:600}
-    .left-bottom{position:relative;z-index:1}
-    .testimonial{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:18px}
-    .testimonial-text{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px;font-style:italic}
-    .testimonial-author{display:flex;align-items:center;gap:10px}
-    .testimonial-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-dim,rgba(59,127,245,.1));border:1px solid rgba(59,127,245,.2);display:flex;align-items:center;justify-content:center;font-size:14px}
-    .testimonial-name{font-size:12px;font-weight:600}
-    .testimonial-meta{font-size:11px;color:var(--text3);font-family:var(--mono)}
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.88);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.nav-logo{font-family:var(--display);font-size:20px;letter-spacing:.04em;color:var(--text);text-decoration:none}
+.nav-logo span{color:var(--accent)}
+.nav-back{font-size:11px;color:var(--text2);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .15s}
+.nav-back:hover{color:var(--text)}
 
-    /* RIGHT PANEL */
-    .right{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px 24px;position:relative}
-    .right::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 80% 10%, rgba(59,127,245,.05), transparent);pointer-events:none;z-index:0}
-    .right-inner{width:100%;max-width:380px;position:relative;z-index:1}
-    .mobile-logo{display:none;font-size:17px;font-weight:700;text-decoration:none;color:var(--text);margin-bottom:32px}
-    .mobile-logo span{color:var(--accent)}
-    @media(max-width:860px){.mobile-logo{display:block}}
-    .auth-header{margin-bottom:28px}
-    .auth-title{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
-    .auth-sub{font-size:13px;color:var(--text2);line-height:1.6}
-    .tabs{display:flex;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:3px;margin-bottom:24px}
-    .tab{flex:1;font-size:13px;font-weight:500;padding:8px;text-align:center;cursor:pointer;border-radius:7px;color:var(--text2);transition:all .15s;border:none;background:transparent}
-    .tab.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
-    .msg{display:none;padding:11px 14px;border-radius:7px;font-size:12px;font-family:var(--mono);margin-bottom:16px}
-    .msg.error{background:rgba(240,107,107,.08);border:1px solid rgba(240,107,107,.2);color:var(--danger)}
-    .msg.success{background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);color:var(--success)}
-    .social-btn{
-      width:100%;display:flex;align-items:center;gap:12px;
-      padding:11px 16px;border-radius:8px;
-      font-family:var(--font);font-size:13px;font-weight:500;
-      cursor:pointer;transition:all .15s;margin-bottom:8px;
-      border:1px solid var(--border);background:var(--card);color:var(--text);
-    }
-    .social-btn:hover{border-color:var(--border2);transform:translateY(-1px)}
-    .social-icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
-    .g-icon{background:#fff;color:#222}
-    .divider{display:flex;align-items:center;gap:12px;margin:18px 0;font-size:11px;color:var(--text3);font-family:var(--mono)}
-    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
-    .form-group{margin-bottom:14px}
-    .form-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;display:block;font-family:var(--mono)}
-    .form-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:11px 14px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
-    .form-input::placeholder{color:var(--text3)}
-    .form-input:focus{border-color:var(--accent)}
-    .submit-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:13px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:4px;box-shadow:0 0 24px rgba(59,127,245,.2)}
-    .submit-btn:hover{opacity:.9;transform:translateY(-1px)}
-    .submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-    .form-footer{font-size:12px;color:var(--text3);text-align:center;margin-top:16px;font-family:var(--mono)}
-    .form-footer a{color:var(--accent);text-decoration:none}
-    .terms{font-size:11px;color:var(--text3);text-align:center;margin-top:20px;font-family:var(--mono);line-height:1.6}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    .right-inner{animation:fadeUp .3s ease}
-  </style>
+.wrapper{flex:1;display:flex;align-items:center;justify-content:center;padding:48px 24px;position:relative;z-index:1}
+
+.card{
+  width:100%;max-width:400px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);padding:40px 36px;
+}
+
+.card-title{font-family:var(--display);font-size:32px;letter-spacing:.02em;margin-bottom:6px}
+.card-sub{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:32px}
+
+/* TABS */
+.tabs{display:flex;gap:1px;background:var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:28px}
+.tab{flex:1;padding:9px;text-align:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;background:var(--card);color:var(--text2);border:none;font-family:var(--mono);transition:all .15s}
+.tab.active{background:var(--bg);color:var(--accent)}
+
+/* SOCIAL BUTTONS */
+.social-btn{
+  width:100%;display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-radius:var(--r);
+  border:1px solid var(--border2);background:var(--card);
+  color:var(--text);font-family:var(--mono);font-size:12px;
+  cursor:pointer;transition:all .15s;margin-bottom:8px;
+  letter-spacing:.02em
+}
+.social-btn:hover{border-color:var(--border);background:rgba(255,255,255,.04);transform:translateY(-1px)}
+.social-btn svg{flex-shrink:0}
+
+/* DIVIDER */
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0}
+.divider-line{flex:1;height:1px;background:var(--border)}
+.divider-text{font-size:10px;color:var(--text3);letter-spacing:.1em}
+
+/* FORM */
+.field{margin-bottom:14px}
+.field-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;display:block}
+.field-input{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:11px 14px;
+  font-family:var(--mono);font-size:12px;color:var(--text);
+  outline:none;transition:border-color .15s;letter-spacing:.02em
+}
+.field-input:focus{border-color:var(--accent)}
+.field-input::placeholder{color:var(--text3)}
+
+/* SUBMIT */
+.submit-btn{
+  width:100%;padding:13px;
+  background:var(--accent);color:#000;
+  border:none;border-radius:var(--r);
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  cursor:pointer;letter-spacing:.06em;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:6px
+}
+.submit-btn:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(184,255,87,.15)}
+.submit-btn:disabled{background:var(--border2);color:var(--text3);cursor:not-allowed;transform:none;box-shadow:none}
+
+/* MESSAGE */
+.msg{font-size:11px;padding:11px 14px;border-radius:var(--r);margin-top:14px;display:none;letter-spacing:.02em}
+.msg.success{background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);color:var(--success)}
+.msg.error{background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.2);color:var(--danger)}
+
+/* FACEIT BUTTON */
+.faceit-btn{
+  width:100%;display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-radius:var(--r);
+  border:1px solid rgba(255,85,0,.3);background:rgba(255,85,0,.08);
+  color:#ff5500;font-family:var(--mono);font-size:12px;
+  cursor:pointer;transition:all .15s;margin-bottom:8px;
+  letter-spacing:.02em
+}
+.faceit-btn:hover{border-color:rgba(255,85,0,.5);background:rgba(255,85,0,.12);transform:translateY(-1px)}
+
+.switch-link{text-align:center;font-size:11px;color:var(--text3);margin-top:20px}
+.switch-link a{color:var(--accent);text-decoration:none}
+.switch-link a:hover{text-decoration:underline}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card{opacity:0;animation:fadeUp .4s .05s ease forwards}
+</style>
 </head>
 <body>
 
-<!-- LEFT : Proposition de valeur -->
-<div class="left">
-  <div class="left-bg"></div>
-  <a href="index.html" class="left-logo">Frag<span>Value</span></a>
+<nav>
+  <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
+  <a href="index.html" class="nav-back">← Retour</a>
+</nav>
 
-  <div class="left-content">
-    <div class="left-eyebrow">CS2 Talent Analytics</div>
-    <div class="left-title">
-      Analyse ton jeu.<br/>
-      <span>Progresse vraiment.</span>
-    </div>
-    <p class="left-sub">FragValue t'aide à comprendre tes vraies forces et faiblesses : que tu veuilles progresser ou recruter le bon joueur.</p>
-    <div class="features-list">
-      <div class="feature-item">
-        <span class="feature-icon">🎯</span>
-        <div class="feature-text"><strong>FV Score /100</strong> une métrique composite qui va bien au-delà du K/D et de l'ELO</div>
-      </div>
-      <div class="feature-item">
-        <span class="feature-icon">📈</span>
-        <div class="feature-text"><strong>Points d'amélioration</strong> identifie exactement ce sur quoi travailler en priorité</div>
-      </div>
-      <div class="feature-item">
-        <span class="feature-icon">🎬</span>
-        <div class="feature-text"><strong>Heatmaps de démo</strong> visualise tes positions CT/T, zones de duels et utility</div>
-      </div>
-      <div class="feature-item">
-        <span class="feature-icon">⚡</span>
-        <div class="feature-text"><strong>Comparaison multi-joueurs</strong> spider chart et tableau complet côte à côte</div>
-      </div>
-    </div>
-  </div>
+<div class="wrapper">
+  <div class="card">
+    <div class="card-title">Connexion</div>
+    <p class="card-sub">Accède à ton historique de démos et tes stats de progression.</p>
 
-  <div class="left-bottom">
-    <div class="testimonial">
-      <div class="testimonial-text">"Enfin un outil qui me dit pourquoi je perds mes duels CT et comment corriger ça. Le FV Score est bien plus parlant que l'ELO seul."</div>
-      <div class="testimonial-author">
-        <div class="testimonial-avatar">🎮</div>
-        <div>
-          <div class="testimonial-name">GOVOU</div>
-          <div class="testimonial-meta">FACEIT Lvl 10 · 4911 ELO</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- RIGHT : Formulaire -->
-<div class="right">
-  <div class="right-inner">
-    <a href="index.html" class="mobile-logo">Frag<span>Value</span></a>
-
-    <div class="auth-header">
-      <div class="auth-title" id="authTitle">Connexion</div>
-      <p class="auth-sub" id="authSub">Accède à ton espace FragValue.</p>
-    </div>
-
+    <!-- TABS -->
     <div class="tabs">
-      <button class="tab active" onclick="setTab('login',this)">Connexion</button>
-      <button class="tab" onclick="setTab('register',this)">Inscription</button>
+      <button class="tab active" onclick="switchTab('login',this)">Se connecter</button>
+      <button class="tab" onclick="switchTab('signup',this)">Créer un compte</button>
     </div>
 
-    <div id="msgBox" class="msg"></div>
+    <!-- SOCIAL PROVIDERS -->
+    <button class="faceit-btn" onclick="loginFaceit()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/>
+      </svg>
+      Continuer avec FACEIT
+    </button>
 
     <button class="social-btn" onclick="loginGoogle()">
-      <span class="social-icon g-icon">G</span>
+      <svg width="18" height="18" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
       Continuer avec Google
     </button>
 
-    <div class="divider">ou par email</div>
+    <button class="social-btn" onclick="loginGithub()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+      </svg>
+      Continuer avec GitHub
+    </button>
 
-    <div class="form-group">
-      <label class="form-label">Email</label>
-      <input class="form-input" id="emailInput" type="email" placeholder="ton@email.com" autocomplete="email"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Mot de passe</label>
-      <input class="form-input" id="passwordInput" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitForm()"/>
-    </div>
-    <div class="form-group" id="confirmGroup" style="display:none">
-      <label class="form-label">Confirmer le mot de passe</label>
-      <input class="form-input" id="confirmInput" type="password" placeholder="••••••••"/>
+    <!-- DIVIDER -->
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-text">OU PAR EMAIL</div>
+      <div class="divider-line"></div>
     </div>
 
-    <button class="submit-btn" id="submitBtn" onclick="submitForm()">Se connecter</button>
+    <!-- EMAIL FORM -->
+    <div id="loginForm">
+      <div class="field">
+        <label class="field-label">Adresse email</label>
+        <input type="email" class="field-input" id="emailInput" placeholder="ton@email.com" autocomplete="email"/>
+      </div>
+      <div class="field" id="passwordField">
+        <label class="field-label">Mot de passe</label>
+        <input type="password" class="field-input" id="passwordInput" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <div class="field" id="passwordConfirmField" style="display:none">
+        <label class="field-label">Confirmer le mot de passe</label>
+        <input type="password" class="field-input" id="passwordConfirmInput" placeholder="••••••••"/>
+      </div>
 
-    <p class="form-footer" id="formLink">
-      Pas encore de compte ? <a href="#" onclick="setTab('register',null)">S'inscrire gratuitement</a>
-    </p>
-    <p class="terms">En t'inscrivant tu acceptes nos conditions d'utilisation.<br/>Gratuit pour commencer : aucune carte requise.</p>
+      <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <span id="submitLabel">Se connecter</span>
+      </button>
+
+      <div id="magicLinkRow" style="text-align:center;margin-top:12px">
+        <a href="#" onclick="sendMagicLink(event)" style="font-size:11px;color:var(--text3);text-decoration:none;letter-spacing:.04em;transition:color .15s" onmouseover="this.style.color='var(--text2)'" onmouseout="this.style.color='var(--text3)'">
+          Recevoir un lien magique par email →
+        </a>
+      </div>
+    </div>
+
+    <div class="msg" id="msgBox"></div>
+
+    <div class="switch-link" id="switchText">
+      Pas encore de compte ? <a href="#" onclick="switchTab('signup',null);return false">Créer un compte</a>
+    </div>
   </div>
 </div>
 
 <script>
-  const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-  let currentTab = 'login';
+const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  // Rediriger si déjà connecté
-  sb.auth.getSession().then(({ data }) => {
-    if (data.session) window.location.href = 'dashboard.html';
-  });
+// Rediriger si déjà connecté
+_sb.auth.getSession().then(({ data }) => {
+  if (data.session) window.location.href = 'account.html';
+});
 
-  // Pré-remplir l'onglet selon URL
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('tab') === 'register') setTimeout(() => setTab('register', null), 50);
+let mode = 'login';
 
-  function setTab(tab, btn) {
-    currentTab = tab;
-    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-    else document.querySelectorAll('.tab')[tab==='login'?0:1].classList.add('active');
-    const isLogin = tab === 'login';
-    document.getElementById('authTitle').textContent = isLogin ? 'Connexion' : 'Créer un compte';
-    document.getElementById('authSub').textContent   = isLogin
-      ? 'Bon retour sur FragValue.'
-      : 'Gratuit pour commencer : rejoins FragValue.';
-    document.getElementById('submitBtn').textContent = isLogin ? 'Se connecter' : 'Créer mon compte gratuit';
-    document.getElementById('confirmGroup').style.display = isLogin ? 'none' : 'block';
-    document.getElementById('formLink').innerHTML = isLogin
-      ? `Pas encore de compte ? <a href="#" onclick="setTab('register',null)">S'inscrire gratuitement</a>`
-      : `Déjà un compte ? <a href="#" onclick="setTab('login',null)">Se connecter</a>`;
-    hideMsg();
+function switchTab(m, btn) {
+  mode = m;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  else document.querySelectorAll('.tab')[m==='login'?0:1].classList.add('active');
+
+  const isSignup = m === 'signup';
+  document.getElementById('passwordConfirmField').style.display = isSignup ? '' : 'none';
+  document.getElementById('submitLabel').textContent = isSignup ? 'Créer mon compte' : 'Se connecter';
+  document.getElementById('magicLinkRow').style.display = isSignup ? 'none' : '';
+  document.getElementById('switchText').innerHTML = isSignup
+    ? 'Déjà un compte ? <a href="#" onclick="switchTab(\'login\',null);return false">Se connecter</a>'
+    : 'Pas encore de compte ? <a href="#" onclick="switchTab(\'signup\',null);return false">Créer un compte</a>';
+  hideMsg();
+}
+
+async function handleSubmit() {
+  const email = document.getElementById('emailInput').value.trim();
+  const pass  = document.getElementById('passwordInput').value;
+  if (!email) { showMsg('Saisis ton adresse email.', 'error'); return; }
+  if (!pass)  { showMsg('Saisis ton mot de passe.', 'error'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+
+  try {
+    if (mode === 'signup') {
+      const confirm = document.getElementById('passwordConfirmInput').value;
+      if (pass !== confirm) { showMsg('Les mots de passe ne correspondent pas.', 'error'); btn.disabled=false; return; }
+      const { error } = await _sb.auth.signUp({ email, password: pass });
+      if (error) throw error;
+      showMsg('Compte créé. Vérifie ta boite mail pour confirmer.', 'success');
+    } else {
+      const { error } = await _sb.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
+      window.location.href = 'account.html';
+    }
+  } catch(e) {
+    showMsg(e.message, 'error');
+  } finally {
+    btn.disabled = false;
   }
+}
 
-  async function loginGoogle() {
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: 'https://frag-value.vercel.app/onboarding.html' }
+async function sendMagicLink(e) {
+  e.preventDefault();
+  const email = document.getElementById('emailInput').value.trim();
+  if (!email) { showMsg('Saisis ton adresse email d\'abord.', 'error'); return; }
+  try {
+    const { error } = await _sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + '/account.html' } });
+    if (error) throw error;
+    showMsg('Lien envoyé. Vérifie ta boite mail.', 'success');
+  } catch(e) { showMsg(e.message, 'error'); }
+}
+
+function loginGoogle() {
+  _sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/account.html' } });
+}
+function loginGithub() {
+  _sb.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: window.location.origin + '/account.html' } });
+}
+function loginFaceit() {
+  // FACEIT OAuth via Supabase custom provider
+  _sb.auth.signInWithOAuth({ provider: 'faceit', options: { redirectTo: window.location.origin + '/account.html' } })
+    .catch(() => {
+      // Fallback si FACEIT pas configuré dans Supabase
+      showMsg('Connexion FACEIT bientôt disponible. Utilise Google ou email.', 'error');
     });
-    if (error) showMsg(error.message, 'error');
-  }
+}
 
-  async function submitForm() {
-    const email = document.getElementById('emailInput').value.trim();
-    const pwd   = document.getElementById('passwordInput').value;
-    const conf  = document.getElementById('confirmInput').value;
-    const btn   = document.getElementById('submitBtn');
-    if (!email || !pwd) { showMsg('Remplis tous les champs.', 'error'); return; }
-    if (currentTab === 'register' && pwd !== conf) { showMsg('Les mots de passe ne correspondent pas.', 'error'); return; }
-    if (pwd.length < 8) { showMsg('Mot de passe trop court (8 caractères min).', 'error'); return; }
-    btn.disabled = true; btn.textContent = 'Chargement...';
-    try {
-      if (currentTab === 'login') {
-        const { error } = await sb.auth.signInWithPassword({ email, password: pwd });
-        if (error) { showMsg(translateError(error.message), 'error'); return; }
-        window.location.href = 'dashboard.html';
-      } else {
-        const { data, error } = await sb.auth.signUp({
-          email, password: pwd,
-          options: { emailRedirectTo: 'https://frag-value.vercel.app/onboarding.html' }
-        });
-        if (error) { showMsg(translateError(error.message), 'error'); return; }
-        if (!data.session) {
-          showMsg('✓ Vérifie ta boîte mail pour confirmer ton compte !', 'success');
-        } else {
-          window.location.href = 'onboarding.html';
-        }
-      }
-    } catch { showMsg('Erreur inattendue. Réessaie.', 'error'); }
-    finally { btn.disabled = false; btn.textContent = currentTab==='login' ? 'Se connecter' : 'Créer mon compte gratuit'; }
-  }
+function showMsg(txt, type) {
+  const el = document.getElementById('msgBox');
+  el.textContent = txt; el.className = 'msg ' + type; el.style.display = 'block';
+}
+function hideMsg() { document.getElementById('msgBox').style.display = 'none'; }
 
-  function translateError(msg) {
-    if (msg.includes('Invalid login')) return 'Email ou mot de passe incorrect.';
-    if (msg.includes('already registered')) return 'Cet email est déjà utilisé.';
-    if (msg.includes('Password should')) return 'Mot de passe trop court (8 caractères min).';
-    return msg;
-  }
-  function showMsg(text, type) { const el=document.getElementById('msgBox'); el.textContent=text; el.className=`msg ${type}`; el.style.display='block'; }
-  function hideMsg() { document.getElementById('msgBox').style.display='none'; }
+// Enter key
+document.addEventListener('keydown', e => { if(e.key==='Enter') handleSubmit(); });
 </script>
 </body>
 </html>
