@@ -487,7 +487,8 @@ nav{
 </div>
 
 <script>
-const PARSER_URL = 'https://fragvalue-demo-parser-production.up.railway.app';
+// En production, passe par le proxy Vercel /api/parse. En local, appel direct au parser.
+const PARSER_URL = window.location.hostname === 'localhost' ? 'https://fragvalue-demo-parser-production.up.railway.app' : '';
 let selectedFile = null;
 
 const zone = document.getElementById('uploadZone');
