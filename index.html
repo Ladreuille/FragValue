@@ -772,7 +772,7 @@ footer{
         <div class="pricing-feature">Historique complet</div>
         <div class="pricing-feature">Export PDF</div>
       </div>
-      <a href="/demo.html" class="pricing-btn featured">Essayer Pro →</a>
+      <button class="pricing-btn featured" onclick="startCheckout('pro_monthly')">Essayer Pro →</button>
     </div>
     <div class="pricing-card">
       <div class="pricing-name">Team</div>
@@ -787,7 +787,7 @@ footer{
         <div class="pricing-feature">Coach access</div>
         <div class="pricing-feature">API access</div>
       </div>
-      <a href="#" class="pricing-btn">Contacter →</a>
+      <button class="pricing-btn" onclick="startCheckout('team_monthly')">Essayer Team →</button>
     </div>
   </div>
 </section>
@@ -845,6 +845,29 @@ _sb.auth.getSession().then(({ data }) => {
     document.getElementById('navAccountBtn').style.display = '';
   }
 });
+
+async function startCheckout(plan) {
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) {
+    window.location.href = 'login.html';
+    return;
+  }
+  try {
+    const res = await fetch('/api/stripe-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan, token: session.access_token }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert(data.error || 'Erreur lors de la creation du checkout.');
+    }
+  } catch (err) {
+    alert('Erreur reseau. Reessaye.');
+  }
+}
 </script>
 </body>
 </html>
