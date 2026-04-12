@@ -578,7 +578,11 @@ async function startAnalysis() {
     fd.append('demo', selectedFile);
     fd.append('options', JSON.stringify(['Heatmaps','2D Replay','Utility Map','Stats équipes']));
 
-    const res = await fetch(PARSER_URL + '/parse', { method:'POST', body:fd });
+    // Timeout 3 minutes
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3 * 60 * 1000);
+    const res = await fetch(PARSER_URL + '/parse', { method:'POST', body:fd, signal: controller.signal });
+    clearTimeout(timeout);
 
     // Fetch terminé — annuler les timers et finir proprement
     timers.forEach(t => clearTimeout(t));
@@ -605,7 +609,10 @@ async function startAnalysis() {
     timers.forEach(t => clearTimeout(t));
     prog.style.display = 'none';
     document.getElementById('analyseBtn').disabled = false;
-    showError('Erreur : ' + err.message);
+    const msg = err.name === 'AbortError'
+      ? 'Délai dépassé (3 min). Le fichier est peut-être trop lourd ou le serveur est surchargé. Réessaie dans quelques minutes.'
+      : 'Erreur : ' + err.message;
+    showError(msg);
   }
 }
 
