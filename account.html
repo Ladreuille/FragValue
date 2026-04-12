@@ -18,151 +18,90 @@
   --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
   --r:6px;--r2:12px
 }
+html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;-webkit-font-smoothing:antialiased}
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
 
-/* NAV */
-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.88);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
 .nav-logo{font-family:var(--display);font-size:20px;letter-spacing:.04em;color:var(--text);text-decoration:none}
 .nav-logo span{color:var(--accent)}
-.nav-right{display:flex;align-items:center;gap:24px}
-.nav-link{font-size:12px;color:var(--text2);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .15s;cursor:pointer;border:none;background:none;font-family:var(--mono)}
-.nav-link:hover{color:var(--text)}
-.nav-cta{background:var(--accent);color:#000;padding:8px 18px;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.06em;transition:all .15s;border:none;cursor:pointer}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-cta{background:var(--accent);color:#000;padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;transition:all .15s;border:none;cursor:pointer;display:flex;align-items:center;gap:6px}
 .nav-cta:hover{background:var(--accent2)}
+.nav-out{font-size:11px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border:none;background:none;font-family:var(--mono);transition:color .15s;padding:7px 12px;border-radius:var(--r);border:1px solid var(--border)}
+.nav-out:hover{border-color:var(--danger);color:var(--danger)}
 
-/* PAGE */
-.page{max-width:1000px;margin:0 auto;padding:48px 32px 100px;position:relative;z-index:1}
+.page{max-width:1100px;margin:0 auto;padding:36px 32px 100px;position:relative;z-index:1}
+
+/* PROFILE BAR */
+.profile-bar{display:flex;align-items:center;gap:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:20px 28px;margin-bottom:24px;opacity:0;animation:up .4s .05s ease forwards}
+.avatar{width:52px;height:52px;border-radius:50%;background:rgba(184,255,87,.08);border:1.5px solid rgba(184,255,87,.2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:22px;color:var(--accent);flex-shrink:0}
+.profile-text{flex:1}
+.profile-name{font-family:var(--display);font-size:22px;letter-spacing:.02em;line-height:1;margin-bottom:4px}
+.profile-meta{font-size:10px;color:var(--text3);letter-spacing:.05em}
+.plan-badge{font-size:9px;padding:4px 10px;border-radius:40px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);color:var(--accent);letter-spacing:.12em}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:24px;opacity:0;animation:up .4s .1s ease forwards}
+.kpi{background:var(--surface);padding:18px 16px;text-align:center;transition:background .15s}
+.kpi:hover{background:var(--card)}
+.kpi-val{font-family:var(--display);font-size:28px;line-height:1;margin-bottom:4px}
+.kpi-val.g{color:var(--accent)}.kpi-val.go{color:var(--gold)}.kpi-val.s{color:var(--success)}
+.kpi-lbl{font-size:9px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase}
+.kpi-sub{font-size:9px;margin-top:3px;letter-spacing:.04em}
+.kpi-sub.up{color:var(--success)}.kpi-sub.dn{color:var(--danger)}.kpi-sub.ne{color:var(--text3)}
+
+/* MAIN GRID */
+.main-grid{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start;opacity:0;animation:up .4s .15s ease forwards}
+@media(max-width:860px){.main-grid{grid-template-columns:1fr}}
 
 /* SECTION LABEL */
-.sl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.sl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .sl::after{content:'';flex:1;height:1px;background:var(--border)}
 
-/* PROFILE HEADER */
-.profile-header{
-  display:flex;align-items:center;gap:24px;
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r2);padding:28px 32px;
-  margin-bottom:32px;
-  opacity:0;animation:up .4s .05s ease forwards
-}
-.avatar{
-  width:64px;height:64px;border-radius:50%;
-  background:var(--card);border:2px solid var(--border2);
-  display:flex;align-items:center;justify-content:center;
-  font-family:var(--display);font-size:28px;color:var(--accent);
-  flex-shrink:0
-}
-.profile-info{flex:1}
-.profile-email{font-size:11px;color:var(--text3);letter-spacing:.06em;margin-bottom:4px}
-.profile-name{font-family:var(--display);font-size:28px;letter-spacing:.02em;line-height:1}
-.profile-since{font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:.04em}
-.profile-badge{
-  font-size:10px;padding:4px 12px;border-radius:40px;
-  background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.2);
-  color:var(--accent);letter-spacing:.08em
-}
-.logout-btn{
-  font-size:11px;padding:8px 16px;border-radius:var(--r);
-  border:1px solid var(--border2);background:transparent;
-  color:var(--text3);cursor:pointer;transition:all .15s;
-  font-family:var(--mono);letter-spacing:.04em;flex-shrink:0
-}
-.logout-btn:hover{border-color:var(--danger);color:var(--danger)}
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:16px}
+.card:last-child{margin-bottom:0}
 
-/* STATS GLOBALES */
-.global-stats{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
-  background:var(--border);border:1px solid var(--border);
-  border-radius:var(--r);overflow:hidden;margin-bottom:32px;
-  opacity:0;animation:up .4s .1s ease forwards
-}
-.gs-cell{background:var(--surface);padding:20px 16px;text-align:center}
-.gs-val{font-family:var(--display);font-size:32px;color:var(--accent);line-height:1}
-.gs-lbl{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-top:5px}
-.gs-sub{font-size:10px;color:var(--text2);margin-top:3px}
+/* CHART */
+.chart-wrap{position:relative;height:110px;margin-top:16px}
+.chart-wrap canvas{width:100%!important;height:100%!important}
+.chart-empty{display:flex;align-items:center;justify-content:center;height:110px;font-size:11px;color:var(--text3)}
 
-/* PROGRESSION */
-.progression{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r2);padding:24px;margin-bottom:32px;
-  opacity:0;animation:up .4s .15s ease forwards
-}
-.prog-chart{height:80px;display:flex;align-items:flex-end;gap:4px;margin-top:16px}
-.prog-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
-.prog-bar{
-  width:100%;border-radius:3px 3px 0 0;
-  background:var(--accent);opacity:.7;
-  transition:opacity .15s;cursor:pointer;min-height:4px
-}
-.prog-bar:hover{opacity:1}
-.prog-bar-lbl{font-size:8px;color:var(--text3);letter-spacing:.04em}
+/* HISTORY */
+.history-table{width:100%;border-collapse:collapse}
+.history-table th{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.history-table td{padding:10px 12px;border-bottom:1px solid rgba(28,30,30,.8);font-size:11px;vertical-align:middle;transition:background .12s}
+.history-table tr:last-child td{border-bottom:none}
+.history-table tr:hover td{background:rgba(255,255,255,.02)}
+.map-tag{font-size:10px;padding:3px 8px;border-radius:3px;background:var(--card);border:1px solid var(--border2);color:var(--text2);letter-spacing:.04em;white-space:nowrap}
+.rp{font-family:var(--display);font-size:15px}
+.rp.gd{color:var(--success)}.rp.av{color:var(--gold)}.rp.bd{color:var(--danger)}.rp.no{color:var(--text3)}
+.td-d{color:var(--text3);font-size:10px;white-space:nowrap}
 
-/* HISTORIQUE */
-.history{opacity:0;animation:up .4s .2s ease forwards}
-.demo-row{
-  display:flex;align-items:center;gap:16px;
-  padding:16px 20px;
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r);margin-bottom:8px;
-  transition:all .15s;cursor:pointer
-}
-.demo-row:hover{border-color:var(--border2);background:rgba(255,255,255,.02)}
-.demo-map-badge{
-  font-family:var(--display);font-size:11px;
-  padding:4px 10px;border-radius:3px;
-  background:var(--card);border:1px solid var(--border2);
-  color:var(--text2);letter-spacing:.04em;flex-shrink:0;min-width:90px;text-align:center
-}
-.demo-info{flex:1}
-.demo-rounds{font-size:13px;font-weight:700;margin-bottom:2px}
-.demo-date{font-size:10px;color:var(--text3);letter-spacing:.04em}
-.demo-stats{display:flex;gap:20px;align-items:center}
-.demo-stat{text-align:center}
-.demo-stat-val{font-family:var(--display);font-size:18px;color:var(--text);line-height:1}
-.demo-stat-val.accent{color:var(--accent)}
-.demo-stat-lbl{font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
-.demo-arrow{color:var(--text3);flex-shrink:0}
+/* MAPS */
+.map-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.map-row:last-child{border-bottom:none}
+.map-nm{font-size:11px;color:var(--text2);min-width:68px;letter-spacing:.04em}
+.map-tr{flex:1;height:3px;background:var(--card);border-radius:2px}
+.map-fl{height:100%;border-radius:2px;background:var(--accent)}
+.map-ct{font-family:var(--display);font-size:13px;color:var(--accent);min-width:28px;text-align:right}
+.map-cn{font-size:9px;color:var(--text3);min-width:22px;text-align:right}
 
-/* EMPTY STATE */
-.empty{
-  text-align:center;padding:60px 24px;
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r2)
-}
-.empty-icon{font-size:32px;margin-bottom:16px;opacity:.4}
-.empty-title{font-family:var(--display);font-size:20px;margin-bottom:8px}
-.empty-sub{font-size:12px;color:var(--text2);margin-bottom:24px;line-height:1.7}
-.empty-btn{
-  display:inline-flex;align-items:center;gap:8px;
-  background:var(--accent);color:#000;
-  padding:12px 24px;border-radius:var(--r);
-  font-family:var(--mono);font-size:12px;font-weight:700;
-  text-decoration:none;letter-spacing:.04em;transition:all .15s
-}
-.empty-btn:hover{background:var(--accent2);transform:translateY(-1px)}
+/* MINI STATS */
+.ms{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.ms:last-child{border-bottom:none}
+.ms-l{font-size:11px;color:var(--text2)}
+.ms-v{font-family:var(--display);font-size:18px}
+.ms-v.g{color:var(--accent)}.ms-v.s{color:var(--success)}
 
-/* NEW ANALYSIS BTN */
-.new-analysis-btn{
-  display:inline-flex;align-items:center;gap:8px;
-  background:var(--accent);color:#000;
-  padding:10px 20px;border-radius:var(--r);
-  font-family:var(--mono);font-size:11px;font-weight:700;
-  text-decoration:none;letter-spacing:.04em;transition:all .15s;
-  margin-left:auto;flex-shrink:0
-}
-.new-analysis-btn:hover{background:var(--accent2);transform:translateY(-1px)}
+/* EMPTY */
+.empty-inner{text-align:center;padding:32px 20px}
+.empty-inner p{font-size:11px;color:var(--text3);margin-bottom:20px;line-height:1.7}
+.empty-link{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#000;padding:10px 20px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.04em;transition:all .15s}
+.empty-link:hover{background:var(--accent2);transform:translateY(-1px)}
 
-/* SKELETON LOADER */
-.skel{
-  background:linear-gradient(90deg,var(--card) 25%,var(--border) 50%,var(--card) 75%);
-  background-size:200% 100%;
-  animation:skel 1.2s infinite;
-  border-radius:4px
-}
-@keyframes skel{0%{background-position:200%}100%{background-position:-200%}}
-
-@keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -170,60 +109,75 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 <nav>
   <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
   <div class="nav-right">
-    <a href="demo.html" class="nav-link">Nouvelle démo</a>
-    <button class="nav-link logout-btn" onclick="logout()">Déconnexion</button>
+    <a href="demo.html" class="nav-cta">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Nouvelle démo
+    </a>
+    <button class="nav-out" onclick="logout()">Déconnexion</button>
   </div>
 </nav>
 
 <div class="page">
 
   <!-- PROFILE -->
-  <div class="profile-header" id="profileHeader">
+  <div class="profile-bar">
     <div class="avatar" id="avatarEl">?</div>
-    <div class="profile-info">
-      <div class="profile-email" id="profileEmail">Chargement...</div>
-      <div class="profile-name" id="profileName">Mon espace</div>
-      <div class="profile-since" id="profileSince"></div>
+    <div class="profile-text">
+      <div class="profile-name" id="profileName">Chargement...</div>
+      <div class="profile-meta" id="profileMeta"></div>
     </div>
-    <div class="profile-badge" id="planBadge">FREE</div>
-    <button class="logout-btn" onclick="logout()">Déconnexion</button>
+    <div class="plan-badge">FREE</div>
+    <button class="nav-out" onclick="logout()">Déconnexion</button>
   </div>
 
-  <!-- STATS GLOBALES -->
-  <div class="sl">Stats globales</div>
-  <div class="global-stats" id="globalStats">
-    <div class="gs-cell"><div class="gs-val" id="statDemos">0</div><div class="gs-lbl">Démos analysées</div></div>
-    <div class="gs-cell"><div class="gs-val" id="statRating" style="color:var(--accent)">0.00</div><div class="gs-lbl">FV Rating moyen</div><div class="gs-sub">Toutes démos</div></div>
-    <div class="gs-cell"><div class="gs-val" id="statKills">0</div><div class="gs-lbl">Kills totaux</div></div>
-    <div class="gs-cell"><div class="gs-val" id="statMaps">0</div><div class="gs-lbl">Maps jouées</div></div>
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-val g" id="k1">—</div><div class="kpi-lbl">Démos analysées</div></div>
+    <div class="kpi"><div class="kpi-val g" id="k2">—</div><div class="kpi-lbl">FV Rating moyen</div><div class="kpi-sub ne" id="k2t"></div></div>
+    <div class="kpi"><div class="kpi-val" id="k3">—</div><div class="kpi-lbl">Rounds joués</div></div>
+    <div class="kpi"><div class="kpi-val go" id="k4">—</div><div class="kpi-lbl">Kills totaux</div></div>
+    <div class="kpi"><div class="kpi-val s" id="k5">—</div><div class="kpi-lbl">Maps jouées</div></div>
   </div>
 
-  <!-- PROGRESSION FV RATING -->
-  <div class="sl">Progression FV Rating</div>
-  <div class="progression" id="progressionSection">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:11px;color:var(--text2);letter-spacing:.04em">Évolution sur tes dernières démos</div>
+  <!-- GRID -->
+  <div class="main-grid">
+
+    <!-- LEFT -->
+    <div>
+      <div class="sl">Progression FV Rating <span id="demoCountLbl" style="font-size:9px;color:var(--text3);letter-spacing:.04em;margin-left:4px"></span></div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+          <div style="font-size:11px;color:var(--text2)">10 dernières démos</div>
+          <div id="trendVal" style="font-family:var(--display);font-size:18px"></div>
+        </div>
+        <div class="chart-wrap" id="chartWrap">
+          <canvas id="rChart"></canvas>
+          <div class="chart-empty" id="chartEmpty" style="display:none">Analyse tes premières démos pour voir ta courbe</div>
+        </div>
       </div>
-      <div id="ratingTrend" style="font-family:var(--display);font-size:22px;color:var(--accent)"></div>
-    </div>
-    <div class="prog-chart" id="progChart">
-      <div style="width:100%;display:flex;align-items:center;justify-content:center;height:80px">
-        <div style="font-size:11px;color:var(--text3)">Analyse tes premières démos pour voir ta progression</div>
+
+      <div class="sl">Historique</div>
+      <div class="card" id="histCard">
+        <div style="text-align:center;padding:20px;font-size:11px;color:var(--text3)">Chargement...</div>
       </div>
     </div>
-  </div>
 
-  <!-- HISTORIQUE -->
-  <div class="sl">
-    Historique des démos
-    <a href="demo.html" class="new-analysis-btn">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" fill="none"/></svg>
-      Nouvelle analyse
-    </a>
-  </div>
-  <div class="history" id="historySection">
-    <!-- rempli par JS -->
+    <!-- RIGHT -->
+    <div>
+      <div class="sl">Par map</div>
+      <div class="card" id="mapsCard">
+        <div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Chargement...</div>
+      </div>
+
+      <div class="sl" style="margin-top:16px">Stats clés</div>
+      <div class="card">
+        <div class="ms"><span class="ms-l">Meilleur FV Rating</span><span class="ms-v g" id="msBest">—</span></div>
+        <div class="ms"><span class="ms-l">Pire FV Rating</span><span class="ms-v" id="msWorst">—</span></div>
+        <div class="ms"><span class="ms-l">Map favorite</span><span class="ms-v" id="msFav" style="font-size:14px">—</span></div>
+        <div class="ms"><span class="ms-l">Kills moyen / démo</span><span class="ms-v s" id="msKPM">—</span></div>
+        <div class="ms"><span class="ms-l">Rounds / démo</span><span class="ms-v" id="msRPD">—</span></div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -234,137 +188,187 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 async function init() {
-  const { data: { session } } = await _sb.auth.getSession();
+  const { data:{ session } } = await _sb.auth.getSession();
   if (!session) { window.location.href = 'login.html'; return; }
 
-  const user = session.user;
-  const email = user.email || '';
-  const initial = email.charAt(0).toUpperCase();
-  const name = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0];
-  const since = new Date(user.created_at).toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
+  const u = session.user;
+  const email = u.email || '';
+  const name  = u.user_metadata?.full_name || u.user_metadata?.name || email.split('@')[0];
+  const since = new Date(u.created_at).toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
 
-  document.getElementById('avatarEl').textContent      = initial;
-  document.getElementById('profileEmail').textContent  = email;
-  document.getElementById('profileName').textContent   = name;
-  document.getElementById('profileSince').textContent  = 'Membre depuis ' + since;
+  document.getElementById('avatarEl').textContent   = email.charAt(0).toUpperCase();
+  document.getElementById('profileName').textContent = name;
+  document.getElementById('profileMeta').textContent = email + ' · Membre depuis ' + since;
 
-  // Charger les démos depuis Supabase
-  const { data: demos, error } = await _sb.from('demos')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('analysed_at', { ascending: false })
-    .limit(50);
-
-  if (error) { console.warn('Erreur chargement démos:', error.message); }
-
+  const { data: demos } = await _sb.from('demos')
+    .select('*').eq('user_id', u.id)
+    .order('analysed_at', { ascending:false }).limit(100);
   const list = demos || [];
-  renderStats(list);
-  renderProgression(list);
+
+  renderKPIs(list);
+  renderChart(list);
   renderHistory(list);
+  renderMaps(list);
+  renderMiniStats(list);
 }
 
-function renderStats(demos) {
-  const total = demos.length;
-  const maps  = [...new Set(demos.map(d => d.map).filter(Boolean))].length;
-  const totalKills = demos.reduce((s, d) => s + (d.total_kills || 0), 0);
-
-  // FV Rating moyen — stocké si disponible, sinon 0
-  const ratings = demos.map(d => d.fv_rating).filter(r => r > 0);
-  const avgRating = ratings.length ? (ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(2) : '—';
-
-  document.getElementById('statDemos').textContent  = total;
-  document.getElementById('statRating').textContent = avgRating;
-  document.getElementById('statKills').textContent  = totalKills;
-  document.getElementById('statMaps').textContent   = maps;
+function fmtD(d) {
+  return new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
+}
+function fmtFull(d) {
+  return new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})
+    + ' · ' + new Date(d).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
 }
 
-function renderProgression(demos) {
-  const chart = document.getElementById('progChart');
-  const last10 = demos.slice(0,10).reverse();
-  if (last10.length === 0) return;
+function renderKPIs(list) {
+  const totalR  = list.reduce((s,d)=>s+(d.rounds||0),0);
+  const totalK  = list.reduce((s,d)=>s+(d.total_kills||0),0);
+  const maps    = [...new Set(list.map(d=>d.map).filter(Boolean))].length;
+  const ratings = list.map(d=>d.fv_rating).filter(r=>r>0);
+  const avg     = ratings.length ? (ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(2) : '—';
 
-  const ratings = last10.map(d => d.fv_rating || 1.0);
-  const maxR = Math.max(...ratings, 2);
-  const minR = Math.min(...ratings, 0.5);
+  document.getElementById('k1').textContent = list.length;
+  document.getElementById('k2').textContent = avg;
+  document.getElementById('k3').textContent = totalR;
+  document.getElementById('k4').textContent = totalK;
+  document.getElementById('k5').textContent = maps;
+  document.getElementById('demoCountLbl').textContent = list.length ? list.length + ' démos' : '';
 
-  chart.innerHTML = last10.map((d, i) => {
-    const r = d.fv_rating || 1.0;
-    const pct = Math.max(5, ((r - minR) / (maxR - minR + 0.001)) * 100);
-    const date = new Date(d.analysed_at).toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit'});
-    return `
-      <div class="prog-bar-wrap">
-        <div class="prog-bar" style="height:${pct}%;opacity:${0.5 + i/last10.length*0.5}" title="FV Rating: ${r.toFixed(2)} · ${date}"></div>
-        <div class="prog-bar-lbl">${date}</div>
-      </div>`;
-  }).join('');
-
-  // Tendance
-  if (ratings.length >= 2) {
-    const diff = ratings[ratings.length-1] - ratings[0];
-    const trend = diff > 0 ? `+${diff.toFixed(2)} ↑` : `${diff.toFixed(2)} ↓`;
-    const color = diff > 0 ? 'var(--success)' : 'var(--danger)';
-    document.getElementById('ratingTrend').textContent = trend;
-    document.getElementById('ratingTrend').style.color = color;
+  if (ratings.length >= 4) {
+    const h = Math.floor(ratings.length/2);
+    const recent = ratings.slice(0,h).reduce((a,b)=>a+b,0)/h;
+    const older  = ratings.slice(h).reduce((a,b)=>a+b,0)/h;
+    const d = recent - older;
+    const el = document.getElementById('k2t');
+    el.textContent = (d>=0?'+':'')+d.toFixed(2)+(d>=0?' ↑':' ↓');
+    el.className = 'kpi-sub '+(d>=0?'up':'dn');
   }
 }
 
-function renderHistory(demos) {
-  const el = document.getElementById('historySection');
-
-  if (demos.length === 0) {
-    el.innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="color:var(--text3);margin:0 auto;display:block">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-          </svg>
-        </div>
-        <div class="empty-title">Aucune démo analysée</div>
-        <p class="empty-sub">Upload ta première démo FACEIT pour voir tes stats apparaître ici.</p>
-        <a href="demo.html" class="empty-btn">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          Analyser une démo
-        </a>
-      </div>`;
+function renderChart(list) {
+  const last10 = list.filter(d=>d.fv_rating>0).slice(0,10).reverse();
+  if (last10.length < 2) {
+    document.getElementById('rChart').style.display='none';
+    document.getElementById('chartEmpty').style.display='flex';
     return;
   }
 
-  el.innerHTML = demos.map(d => {
-    const map   = d.map || 'Inconnue';
-    const date  = new Date(d.analysed_at).toLocaleDateString('fr-FR', {day:'2-digit',month:'short',year:'numeric'});
-    const time  = new Date(d.analysed_at).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
-    const kills = d.total_kills || '—';
-    const rounds= d.rounds || '—';
-    const rating= d.fv_rating ? d.fv_rating.toFixed(2) : '—';
+  const first = last10[0].fv_rating, last = last10[last10.length-1].fv_rating;
+  const diff  = last - first;
+  const tv    = document.getElementById('trendVal');
+  tv.textContent = (diff>=0?'+':'')+diff.toFixed(2);
+  tv.style.color = diff>=0?'var(--success)':'var(--danger)';
 
-    return `
-      <div class="demo-row" onclick="window.location.href='demo.html'">
-        <div class="demo-map-badge">${map.replace('de_','')}</div>
-        <div class="demo-info">
-          <div class="demo-rounds">${rounds} rounds</div>
-          <div class="demo-date">${date} · ${time}</div>
-        </div>
-        <div class="demo-stats">
-          <div class="demo-stat">
-            <div class="demo-stat-val accent">${rating}</div>
-            <div class="demo-stat-lbl">FV Rating</div>
-          </div>
-          <div class="demo-stat">
-            <div class="demo-stat-val">${kills}</div>
-            <div class="demo-stat-lbl">Kills</div>
-          </div>
-        </div>
-        <svg class="demo-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>`;
-  }).join('');
+  const canvas = document.getElementById('rChart');
+  const ctx    = canvas.getContext('2d');
+
+  requestAnimationFrame(() => {
+    const W = canvas.parentElement.offsetWidth;
+    const H = 110;
+    canvas.width  = W * devicePixelRatio;
+    canvas.height = H * devicePixelRatio;
+    canvas.style.width  = W+'px';
+    canvas.style.height = H+'px';
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+
+    const vals   = last10.map(d=>d.fv_rating);
+    const minV   = Math.min(...vals)*0.93;
+    const maxV   = Math.max(...vals)*1.07;
+    const range  = maxV-minV||1;
+    const p      = {t:8,r:8,b:22,l:8};
+    const cW     = W-p.l-p.r, cH = H-p.t-p.b;
+    const px = i => p.l+(i/(vals.length-1))*cW;
+    const py = v => p.t+(1-(v-minV)/range)*cH;
+
+    // Grid
+    ctx.strokeStyle='rgba(28,30,30,.6)';ctx.lineWidth=1;
+    [0,.5,1].forEach(t=>{
+      const y=p.t+t*cH;
+      ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(p.l+cW,y);ctx.stroke();
+    });
+
+    // Area
+    const grad=ctx.createLinearGradient(0,p.t,0,p.t+cH);
+    grad.addColorStop(0,'rgba(184,255,87,.18)');
+    grad.addColorStop(1,'rgba(184,255,87,0)');
+    ctx.beginPath();
+    ctx.moveTo(px(0),py(vals[0]));
+    vals.forEach((v,i)=>{ if(i>0)ctx.lineTo(px(i),py(v)); });
+    ctx.lineTo(px(vals.length-1),p.t+cH);
+    ctx.lineTo(px(0),p.t+cH);
+    ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+
+    // Line
+    ctx.beginPath();ctx.strokeStyle='#b8ff57';ctx.lineWidth=1.5;
+    ctx.lineJoin='round';ctx.lineCap='round';
+    vals.forEach((v,i)=>i===0?ctx.moveTo(px(i),py(v)):ctx.lineTo(px(i),py(v)));
+    ctx.stroke();
+
+    // Points + labels
+    ctx.font=`8px 'Space Mono'`;ctx.textAlign='center';
+    vals.forEach((v,i)=>{
+      ctx.beginPath();ctx.arc(px(i),py(v),3,0,Math.PI*2);
+      ctx.fillStyle='#b8ff57';ctx.fill();
+      ctx.fillStyle='#4a5050';
+      ctx.fillText(fmtD(last10[i].analysed_at),px(i),H-5);
+    });
+  });
 }
 
-async function logout() {
-  await _sb.auth.signOut();
-  window.location.href = 'index.html';
+function renderHistory(list) {
+  const el = document.getElementById('histCard');
+  if (!list.length) {
+    el.innerHTML=`<div class="empty-inner"><p>Aucune démo analysée pour l'instant.<br>Upload ta première démo pour commencer.</p><a href="demo.html" class="empty-link"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Analyser une démo</a></div>`;
+    return;
+  }
+  const rc = r => !r?'no':r>=1.15?'gd':r>=0.9?'av':'bd';
+  el.innerHTML=`<table class="history-table">
+    <thead><tr><th>Map</th><th>Date</th><th>Rounds</th><th>Kills</th><th>FV Rating</th></tr></thead>
+    <tbody>${list.slice(0,25).map(d=>`<tr>
+      <td><span class="map-tag">${(d.map||'?').replace('de_','')}</span></td>
+      <td class="td-d">${fmtFull(d.analysed_at)}</td>
+      <td style="color:var(--text2)">${d.rounds||'—'}</td>
+      <td style="font-family:var(--display);font-size:14px">${d.total_kills||'—'}</td>
+      <td><span class="rp ${rc(d.fv_rating)}">${d.fv_rating?d.fv_rating.toFixed(2):'—'}</span></td>
+    </tr>`).join('')}</tbody>
+  </table>${list.length>25?`<div style="text-align:center;padding:12px 0;font-size:10px;color:var(--text3)">+${list.length-25} démos supplémentaires</div>`:''}`;
 }
 
+function renderMaps(list) {
+  const el=document.getElementById('mapsCard');
+  const byMap={};
+  list.forEach(d=>{ if(!d.map)return; const m=d.map.replace('de_',''); if(!byMap[m])byMap[m]=0; byMap[m]++; });
+  const sorted=Object.entries(byMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  if(!sorted.length){el.innerHTML='<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Aucune donnée</div>';return;}
+  const max=sorted[0][1];
+  el.innerHTML=sorted.map(([m,c])=>`
+    <div class="map-row">
+      <span class="map-nm">${m}</span>
+      <div class="map-tr"><div class="map-fl" style="width:${(c/max)*100}%"></div></div>
+      <span class="map-cn">${c}x</span>
+    </div>`).join('');
+}
+
+function renderMiniStats(list) {
+  const ratings=list.map(d=>d.fv_rating).filter(r=>r>0);
+  const best=ratings.length?Math.max(...ratings).toFixed(2):'—';
+  const worst=ratings.length?Math.min(...ratings).toFixed(2):'—';
+  const byMap={};
+  list.forEach(d=>{if(d.map){const m=d.map.replace('de_','');byMap[m]=(byMap[m]||0)+1;}});
+  const fav=Object.entries(byMap).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
+  const totalK=list.reduce((s,d)=>s+(d.total_kills||0),0);
+  const avgK=list.length?(totalK/list.length).toFixed(1):'—';
+  const totalR=list.reduce((s,d)=>s+(d.rounds||0),0);
+  const avgR=list.length?(totalR/list.length).toFixed(1):'—';
+
+  document.getElementById('msBest').textContent=best;
+  document.getElementById('msWorst').textContent=worst;
+  document.getElementById('msFav').textContent=fav;
+  document.getElementById('msKPM').textContent=avgK;
+  document.getElementById('msRPD').textContent=avgR;
+}
+
+async function logout(){await _sb.auth.signOut();window.location.href='index.html';}
 init();
 </script>
 </body>
