@@ -643,13 +643,17 @@ async function saveDemoAnalysis(d) {
     const { data:{ session } } = await _sb.auth.getSession();
     if (!session) return;
     const m = d?.meta || {};
-    await _sb.from('demos').insert({
+    const { data: inserted, error } = await _sb.from('demos').insert({
       user_id:     session.user.id,
       map:         m.map         || null,
       rounds:      m.rounds      || null,
       total_kills: m.totalKills  || null,
       analysed_at: new Date().toISOString()
-    });
+    }).select('id').single();
+    if (!error && inserted?.id) {
+      // Stocker l'id pour mettre à jour le FV Rating depuis heatmap-results.html
+      sessionStorage.setItem('lastDemoId', inserted.id);
+    }
   } catch(e) { console.warn('saveDemoAnalysis:', e.message); }
 }
 </script>
