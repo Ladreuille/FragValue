@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FragValue · Résultats démo</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzA4MDkwRCIvPgogIDxyZWN0IHg9IjUiIHk9IjUiIHdpZHRoPSIzLjUiIGhlaWdodD0iMjAiIHJ4PSIxLjUiIGZpbGw9IiMzQjdGRjUiLz4KICA8cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iMTMiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHJlY3QgeD0iNSIgeT0iMTMuNSIgd2lkdGg9IjkiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHBhdGggZD0iTTE1LjUgOC41IEwyMC41IDIzLjUgTDI1LjUgOC41IiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIxNS41IiB5MT0iOC41IiB4Mj0iMjUuNSIgeTI9IjIzLjUiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzNCN0ZGNSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMyREQ0QTAiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgo8L3N2Zz4="/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -667,6 +668,8 @@ window.addEventListener('load',()=>{
     if(target) activePlayers.add(target);
     renderMeta(); renderMatchStats(); renderPlayerList();
     loadMapImageThenDraw(); initRoundsBar();
+    // Mettre à jour le FV Rating dans Supabase
+    saveRatingToSupabase();
   }catch(e){console.error('heatmap-results init error:',e);}
 });
 
@@ -1942,6 +1945,44 @@ function rfSkipFwd(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false
 function rfStepBack(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);rfIdx=Math.max(0,rfIdx-5);rfDrawFrame(rfIdx);}
 function rfStepFwd(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);rfIdx=Math.min(rfFrames.length-1,rfIdx+5);rfDrawFrame(rfIdx);}
 function rfSeek(e){const rect=document.getElementById('rfTimeline').getBoundingClientRect();const pct=Math.min(1,Math.max(0,(e.clientX-rect.left)/rect.width));rfIdx=Math.round(pct*(rfFrames.length-1));rfDrawFrame(rfIdx);}
+
+// ── Sauvegarde FV Rating dans Supabase ───────────────────────────
+const _sbUrl  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const _sbAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+
+async function saveRatingToSupabase() {
+  try {
+    const demoId = sessionStorage.getItem('lastDemoId');
+    if (!demoId) return;
+    if (typeof supabase === 'undefined') return;
+    const _sb = supabase.createClient(_sbUrl, _sbAnon);
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) return;
+
+    // Calculer le FV Rating du targetPlayer ou de la moyenne
+    const players = demoData?.playerStats || [];
+    const allRounds = demoData?.rounds || [];
+    const numR = allRounds.filter(r => !r.isKnife).length || 1;
+    const kills = demoData?.kills || [];
+
+    // Prendre le meilleur joueur ou le target
+    const target = demoData?.meta?.targetPlayer;
+    let fvr = null;
+    if (typeof calcFvRating === 'function') {
+      const p = target
+        ? players.find(pl => pl.name === target)
+        : players.sort((a,b) => b.kills - a.kills)[0];
+      if (p) {
+        fvr = parseFloat(calcFvRating(p.kills, p.deaths, 0, numR).toFixed(2));
+      }
+    }
+
+    if (fvr !== null) {
+      await _sb.from('demos').update({ fv_rating: fvr }).eq('id', demoId).eq('user_id', session.user.id);
+      console.log('[FragValue] FV Rating sauvegardé:', fvr);
+    }
+  } catch(e) { console.warn('saveRatingToSupabase:', e.message); }
+}
 </script>
 </body>
 </html>
