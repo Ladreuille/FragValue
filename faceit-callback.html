@@ -3,123 +3,155 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FragValue — Connexion FACEIT</title>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <title>FragValue · Connexion FACEIT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    :root{--bg:#0C0E13;--surface:#131620;--border:#252A38;--accent:#3B7FF5;--text:#EDF0F7;--text2:#8892A4;--success:#2DD4A0;--danger:#F06B6B;--font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace}
-    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:36px;text-align:center;max-width:400px;width:90%}
-    .spinner{width:36px;height:36px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 20px}
-    .title{font-size:18px;font-weight:700;margin-bottom:8px;letter-spacing:-.3px}
-    .sub{font-size:13px;color:var(--text2);font-family:var(--mono);line-height:1.6}
-    .error-msg{font-size:12px;color:var(--danger);font-family:var(--mono);margin-top:12px;padding:10px;background:rgba(240,107,107,.08);border:1px solid rgba(240,107,107,.2);border-radius:6px}
-    .success-icon{width:48px;height:48px;background:rgba(45,212,160,.1);border:1px solid rgba(45,212,160,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:20px}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080909;--surface:#0f1010;--card:#131414;
+      --border:#1c1e1e;--border2:#252727;
+      --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+      --accent:#b8ff57;--danger:#ff4444;--success:#2dd4a0;
+      --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+      --r:6px;--r2:12px
+    }
+    body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:40px 36px;text-align:center;max-width:420px;width:90%;position:relative;z-index:1}
+    .spinner{width:36px;height:36px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 20px}
+    .title{font-family:var(--display);font-size:24px;letter-spacing:.02em;margin-bottom:8px}
+    .sub{font-size:12px;color:var(--text2);line-height:1.7}
+    .error-msg{font-size:11px;color:var(--danger);margin-top:14px;padding:11px 14px;background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.2);border-radius:var(--r)}
+    .success-icon{width:48px;height:48px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+    .success-icon svg{width:24px;height:24px;color:var(--success)}
+    .faceit-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,85,0,.08);border:1px solid rgba(255,85,0,.2);color:#ff5500;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:700;margin-top:10px}
+    .link-btn{display:inline-block;background:var(--accent);color:#000;padding:10px 22px;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em;margin-top:16px;border:none;cursor:pointer}
     @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
 <div class="card" id="card">
   <div class="spinner" id="spinner"></div>
-  <div class="title" id="title">Connexion FACEIT...</div>
-  <p class="sub" id="sub">Récupération de ton profil</p>
+  <div class="title" id="title">Connexion FACEIT</div>
+  <p class="sub" id="sub">Recuperation de ton profil...</p>
 </div>
 
 <script>
-  const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
-  const { createClient } = supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  async function handleCallback() {
-    // Récupère le code depuis l'URL
-    const params = new URLSearchParams(window.location.search);
-    const code   = params.get('code');
+async function handleCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
 
-    console.log('URL params:', window.location.search);
-    console.log('Code:', code);
+  if (!code) {
+    showError('Aucun code FACEIT recu. Reessaye depuis la page de connexion.');
+    return;
+  }
 
-    if (!code) {
-      // Pas encore de code - peut-être que FACEIT redirige via POST
-      // On attend un peu et on re-vérifie
-      showStatus('En attente de la redirection FACEIT...');
+  const codeVerifier = sessionStorage.getItem('faceit_code_verifier');
+
+  // Step 1: Exchange code for FACEIT profile
+  updateStatus('Echange du token FACEIT...');
+  let faceitData;
+  try {
+    const res = await fetch('/api/faceit-auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code,
+        redirect_uri: window.location.origin + '/faceit-callback.html',
+        code_verifier: codeVerifier || '',
+      }),
+    });
+    faceitData = await res.json();
+    if (!res.ok || !faceitData.success) {
+      showError(faceitData.error || 'Echange de token echoue.');
       return;
     }
-
-    const codeVerifier = sessionStorage.getItem('faceit_code_verifier');
-    console.log('Code verifier:', codeVerifier ? 'present' : 'missing');
-
-    // Vérifie session Supabase
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) {
-      window.location.href = `login.html`;
-      return;
-    }
-
-    try {
-      showStatus('Échange du token...');
-
-      const res = await fetch('/api/faceit-auth', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code,
-          redirect_uri:  'https://frag-value.vercel.app/faceit-callback.html',
-          code_verifier: codeVerifier || '',
-        }),
-      });
-
-      const data = await res.json();
-      console.log('Auth response:', data);
-
-      if (!res.ok || !data.success) {
-        showError(data.error || 'Échange de token échoué.');
-        return;
-      }
-
-      // Sauvegarde dans Supabase
-      await sb.from('profiles').update({
-        faceit_nickname: data.nickname,
-        faceit_id:       data.playerId,
-        updated_at:      new Date().toISOString(),
-      }).eq('id', session.user.id);
-
-      sessionStorage.removeItem('faceit_code_verifier');
-
-      // Succès
-      document.getElementById('card').innerHTML = `
-        <div class="success-icon">✓</div>
-        <div class="title" style="color:var(--success)">Compte lié !</div>
-        <p class="sub">${data.nickname}${data.level ? ' · Level ' + data.level : ''}${data.elo ? ' · ' + data.elo + ' ELO' : ''}</p>
-        <p class="sub" style="margin-top:8px;color:var(--text2)">Redirection...</p>`;
-
-      setTimeout(() => {
-        window.location.href = `index.html?analyse=${encodeURIComponent(data.nickname)}`;
-      }, 1500);
-
-    } catch(err) {
-      console.error(err);
-      showError('Erreur : ' + err.message);
-    }
+  } catch (err) {
+    showError('Erreur reseau : ' + err.message);
+    return;
   }
 
-  function showStatus(msg) {
-    document.getElementById('sub').textContent = msg;
-  }
+  sessionStorage.removeItem('faceit_code_verifier');
 
-  function showError(msg) {
-    document.getElementById('spinner').style.display = 'none';
-    document.getElementById('title').textContent = 'Erreur';
-    document.getElementById('sub').textContent   = 'Retour à l\'onboarding dans 3s...';
-    const e = document.createElement('div');
-    e.className = 'error-msg';
-    e.textContent = msg;
-    document.getElementById('card').appendChild(e);
-    setTimeout(() => { window.location.href = 'onboarding.html'; }, 3000);
-  }
+  // Step 2: Check if user has a Supabase session
+  updateStatus('Liaison du compte...');
+  const { data: { session } } = await sb.auth.getSession();
 
-  handleCallback();
+  if (session) {
+    // User is logged in: link FACEIT to their profile
+    await linkFaceitToProfile(session.user.id, faceitData);
+    showSuccess(faceitData);
+  } else {
+    // User is NOT logged in: store FACEIT data, redirect to login
+    sessionStorage.setItem('pending_faceit_link', JSON.stringify(faceitData));
+    document.getElementById('card').innerHTML = `
+      <div class="title">Compte FACEIT verifie</div>
+      <div class="faceit-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>
+        ${faceitData.nickname}${faceitData.level ? ' · Lvl ' + faceitData.level : ''}
+      </div>
+      <p class="sub" style="margin-top:16px">Connecte-toi ou cree un compte pour lier ton profil FACEIT.</p>
+      <a href="login.html" class="link-btn">Se connecter</a>
+    `;
+  }
+}
+
+async function linkFaceitToProfile(userId, data) {
+  try {
+    await sb.from('profiles').upsert({
+      id: userId,
+      faceit_nickname: data.nickname,
+      faceit_id: data.playerId,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' });
+  } catch (e) {
+    console.warn('Profile link error:', e.message);
+  }
+}
+
+function showSuccess(data) {
+  document.getElementById('card').innerHTML = `
+    <div class="success-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="title" style="color:var(--success)">Compte lie</div>
+    <div class="faceit-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>
+      ${data.nickname}${data.level ? ' · Lvl ' + data.level : ''}${data.elo ? ' · ' + data.elo + ' ELO' : ''}
+    </div>
+    <p class="sub" style="margin-top:12px">Redirection...</p>
+  `;
+  setTimeout(() => { window.location.href = 'account.html'; }, 1500);
+}
+
+function updateStatus(msg) {
+  document.getElementById('sub').textContent = msg;
+}
+
+function showError(msg) {
+  document.getElementById('spinner').style.display = 'none';
+  document.getElementById('title').textContent = 'Erreur';
+  document.getElementById('title').style.color = 'var(--danger)';
+  document.getElementById('sub').innerHTML = '';
+  const e = document.createElement('div');
+  e.className = 'error-msg';
+  e.textContent = msg;
+  document.getElementById('card').appendChild(e);
+  const btn = document.createElement('a');
+  btn.href = 'login.html';
+  btn.className = 'link-btn';
+  btn.textContent = 'Retour';
+  btn.style.display = 'inline-block';
+  btn.style.marginTop = '16px';
+  document.getElementById('card').appendChild(btn);
+}
+
+handleCallback();
 </script>
 </body>
 </html>

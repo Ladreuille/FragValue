@@ -99,8 +99,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   cursor:pointer;transition:all .15s;margin-bottom:8px;
   letter-spacing:.02em
 }
-.faceit-btn:hover:not(:disabled){border-color:rgba(255,85,0,.5);background:rgba(255,85,0,.12);transform:translateY(-1px)}
-.faceit-soon{opacity:.45;cursor:not-allowed !important}
+.faceit-btn:hover{border-color:rgba(255,85,0,.5);background:rgba(255,85,0,.12);transform:translateY(-1px)}
 
 .switch-link{text-align:center;font-size:11px;color:var(--text3);margin-top:20px}
 .switch-link a{color:var(--accent);text-decoration:none}
@@ -129,12 +128,11 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     </div>
 
     <!-- SOCIAL PROVIDERS -->
-    <button class="faceit-btn faceit-soon" disabled title="Bientôt disponible">
+    <button class="faceit-btn" onclick="loginFaceit()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/>
       </svg>
       Continuer avec FACEIT
-      <span style="margin-left:auto;font-size:9px;opacity:.6;letter-spacing:.08em">BIENTÔT</span>
     </button>
 
     <button class="social-btn" onclick="loginGoogle()">
@@ -194,10 +192,38 @@ const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// Rediriger si déjà connecté
-_sb.auth.getSession().then(({ data }) => {
-  if (data.session) window.location.href = 'account.html';
+// Rediriger si déjà connecté + lier FACEIT en attente
+_sb.auth.getSession().then(async ({ data }) => {
+  if (data.session) {
+    await linkPendingFaceit(data.session.user.id);
+    window.location.href = 'account.html';
+  }
 });
+
+// Auto-link FACEIT si pending après login via onAuthStateChange
+_sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    await linkPendingFaceit(session.user.id);
+  }
+});
+
+async function linkPendingFaceit(userId) {
+  const raw = sessionStorage.getItem('pending_faceit_link');
+  if (!raw) return;
+  try {
+    const faceit = JSON.parse(raw);
+    await _sb.from('profiles').upsert({
+      id: userId,
+      faceit_nickname: faceit.nickname,
+      faceit_id: faceit.playerId,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' });
+    sessionStorage.removeItem('pending_faceit_link');
+    console.log('[FragValue] FACEIT lie:', faceit.nickname);
+  } catch (e) {
+    console.warn('Auto-link FACEIT error:', e.message);
+  }
+}
 
 let mode = 'login';
 
@@ -266,6 +292,37 @@ function showMsg(txt, type) {
   el.textContent = txt; el.className = 'msg ' + type; el.style.display = 'block';
 }
 function hideMsg() { document.getElementById('msgBox').style.display = 'none'; }
+
+// ── FACEIT OAuth PKCE ──────────────────────────────────────────
+async function loginFaceit() {
+  const FACEIT_CLIENT_ID = 'f18c7a0e-7b4e-4b8f-b4a7-5e0e6a4e2a1f';
+  const REDIRECT_URI = window.location.origin + '/faceit-callback.html';
+
+  // Generate PKCE code verifier + challenge
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  const codeVerifier = btoa(String.fromCharCode(...array))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(codeVerifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+  sessionStorage.setItem('faceit_code_verifier', codeVerifier);
+
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: FACEIT_CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    scope: 'openid profile email',
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+  });
+
+  window.location.href = 'https://accounts.faceit.com/accounts?' + params.toString();
+}
 
 // Enter key
 document.addEventListener('keydown', e => { if(e.key==='Enter') handleSubmit(); });
