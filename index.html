@@ -430,7 +430,10 @@ footer{
     <a href="#pricing">Tarifs</a>
     <a href="/demo.html">Analyser</a>
   </div>
-  <a href="/demo.html" class="nav-cta">Lancer l'analyse →</a>
+  <div id="navAuth">
+    <a href="/login.html" class="nav-cta" id="navLoginBtn">Se connecter</a>
+    <a href="/account.html" class="nav-cta" id="navAccountBtn" style="display:none">Mon espace</a>
+  </div>
 </nav>
 
 <!-- TICKER -->
@@ -830,6 +833,18 @@ function setMetric(el, name, sub, desc, formula) {
     <div class="metric-formula">${formula}</div>
   `
 }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const _sbUrl  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const _sbAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const _sb = supabase.createClient(_sbUrl, _sbAnon);
+_sb.auth.getSession().then(({ data }) => {
+  if (data.session) {
+    document.getElementById('navLoginBtn').style.display  = 'none';
+    document.getElementById('navAccountBtn').style.display = '';
+  }
+});
 </script>
 </body>
 </html>
