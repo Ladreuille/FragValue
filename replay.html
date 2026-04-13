@@ -604,7 +604,7 @@ function initRoundsBar() {
     realNum++;
     const rK = kills.filter(k => k.tick >= rd.startTick && (rd.endTick === 0 || k.tick <= rd.endTick) && k.attacker === target).length;
     if (realNum === 13) html += `<div class="rnd-sep"></div>`;
-    const winCls = rd.winner === 2 ? 'ct-win' : rd.winner === 3 ? 't-win' : '';
+    const winCls = rd.winner === 3 ? 'ct-win' : rd.winner === 2 ? 't-win' : '';
     html += `<button class="rnd ${winCls}" id="rndBtn${freezeR}" onclick="selectRound(${freezeR},this)" title="R${realNum} · ${rK}K">${realNum}</button>`;
   });
   bar.innerHTML = html;
@@ -612,12 +612,39 @@ function initRoundsBar() {
 
 // ══ TEAM PANELS ══════════════════════════════════════════════════════════════
 function initTeamPanels() {
-  const players = demoData.playerStats || [];
-  const kills = demoData.kills || [];
+  // Initial render using first kill data; refreshTeamPanels() re-sorts per round
+  refreshTeamPanels();
+  updateScores();
+}
 
-  // Determine team for each player from first kill data
+// Re-sort players into CT/T panels based on current round's position data
+function refreshTeamPanels() {
+  const players = demoData.playerStats || [];
+  const positions = demoData.positions || {};
+  const kills = demoData.kills || [];
   const playerTeams = {};
+
+  // 1. Try from current frame data (most accurate for the selected round)
+  if (frames.length > 0) {
+    const frame = frames[0];
+    Object.entries(frame.players).forEach(([name, p]) => {
+      if (p.team) playerTeams[name] = p.team;
+    });
+  }
+
+  // 2. Fallback: try from position data for the current round
+  if (Object.keys(playerTeams).length < 2) {
+    const rd = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
+    const killsR = rd.killsRound ?? ((currentRound ?? 0) + 1);
+    Object.entries(positions).forEach(([name, pts]) => {
+      const rPt = pts.find(p => p.round === killsR || p.round === currentRound);
+      if (rPt && rPt.team) playerTeams[name] = rPt.team;
+    });
+  }
+
+  // 3. Last fallback: first kill data
   players.forEach(p => {
+    if (playerTeams[p.name]) return;
     const asAttacker = kills.find(k => k.attacker === p.name);
     const asVictim = kills.find(k => k.victim === p.name);
     if (asAttacker) playerTeams[p.name] = asAttacker.attackerTeam;
@@ -628,14 +655,12 @@ function initTeamPanels() {
   const ctPlayers = players.filter(p => playerTeams[p.name] === 3);
   const tPlayers = players.filter(p => playerTeams[p.name] === 2 || playerTeams[p.name] === 0);
 
-  // Store for later use
   window._playerTeams = playerTeams;
   window._ctNames = ctPlayers.map(p => p.name);
   window._tNames = tPlayers.map(p => p.name);
 
   renderTeamPlayers('ctPlayers', ctPlayers);
   renderTeamPlayers('tPlayers', tPlayers);
-  updateScores();
 }
 
 function renderTeamPlayers(containerId, players) {
@@ -809,6 +834,7 @@ function selectRound(round, btn) {
   document.getElementById('tbRoundLabel').textContent = rdData.isKnife ? 'Knife Round' : `Round ${dispN}`;
   updateScores();
   buildFrames(round);
+  refreshTeamPanels();
   frameIdx = 0;
   drawFrame(0);
 }
@@ -1023,6 +1049,39 @@ function drawFrame(idx) {
     ctx.fillText(label, cx, cy - 14);
   });
 
+  // Bomb planted indicator
+  const bombPlants = demoData.bombPlants || [];
+  const rdBomb = bombPlants.find(b => {
+    const bRound = b.round || 0;
+    const killsR = ((demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {}).killsRound ?? ((currentRound ?? 0) + 1);
+    return (bRound === killsR || bRound === currentRound) && b.tick <= frame.tick;
+  });
+  if (rdBomb && rdBomb.x !== 0) {
+    const bombPos = w2c(rdBomb.x, rdBomb.y, mapName);
+    const bx = bombPos.x * scaleX, by = bombPos.y * scaleY;
+    if (inBounds(bx, by)) {
+      const pulse = 0.5 + Math.sin(frame.tick * 0.15) * 0.3;
+      // Outer pulse ring
+      ctx.beginPath(); ctx.arc(bx, by, 16 + pulse * 6, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,60,40,${0.3 + pulse * 0.2})`; ctx.lineWidth = 1.5; ctx.stroke();
+      // Inner glow
+      ctx.beginPath(); ctx.arc(bx, by, 10, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,60,40,.25)'; ctx.fill();
+      // Bomb circle
+      ctx.beginPath(); ctx.arc(bx, by, 7, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff3c28'; ctx.fill();
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke();
+      // C4 text
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 7px "Space Mono",monospace'; ctx.textAlign = 'center';
+      ctx.fillText('C4', bx, by + 2.5);
+      // Label above
+      ctx.fillStyle = 'rgba(0,0,0,.7)';
+      ctx.fillRect(bx - 22, by - 22, 44, 11);
+      ctx.fillStyle = '#ff3c28'; ctx.font = 'bold 8px "Space Mono",monospace';
+      ctx.fillText('PLANTED', bx, by - 13);
+    }
+  }
+
   // Effects (grenades + shots)
   drawEffects(frame, W, H);
 
@@ -1102,11 +1161,18 @@ function drawEffects(frame, W, H) {
     shotsConverted = true;
   }
 
-  const SHOT_DUR = 5;
+  const SHOT_DUR = 6;
+  const KILL_DUR = 12;
   const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
   const rdStart = rdData.startTick || 0, rdEnd = rdData.endTick || 999999;
 
-  // Shot tracers
+  // Pre-index kills by attacker+tick for fast lookup
+  const killMap = {};
+  (demoData.kills || []).forEach(k => {
+    if (k.tick && k.victimX) killMap[k.attacker + ':' + (k.tick || 0)] = k;
+  });
+
+  // Shot tracers (dashed yellow lines for normal shots)
   shots.forEach(s => {
     const st = s.absTick || s.tick || 0;
     if (st === 0 || (s.x === 0 && s.y === 0)) return;
@@ -1114,52 +1180,66 @@ function drawEffects(frame, W, H) {
     if (tick < st || tick > st + SHOT_DUR) return;
     const shooterState = frame.players[s.shooter];
     if (!shooterState || !shooterState.alive) return;
-    const alpha = 1 - (tick - st) / SHOT_DUR;
-    const _sp = frame.players[s.shooter];
-    const _sx = _sp ? _sp.x : s.x;
-    const _sy = _sp ? _sp.y : s.y;
+    const alpha = Math.max(0, 1 - (tick - st) / SHOT_DUR);
+    const _sx = shooterState.x || s.x;
+    const _sy = shooterState.y || s.y;
     const _raw = w2c(_sx, _sy);
     const sx = _raw.x * scaleX, sy = _raw.y * scaleY;
     if (!inBounds(sx, sy)) return;
 
-    const nearKill = (demoData.kills || []).find(k =>
-      k.attacker === s.shooter && Math.abs((k.tick || 0) - st) < 30 && k.victimX !== 0
+    // Check if this shot is a killing shot
+    const nearKill = Object.values(killMap).find(k =>
+      k.attacker === s.shooter && Math.abs((k.tick || 0) - st) < 30
     );
 
     if (nearKill) {
-      const _vp = w2c(nearKill.victimX, nearKill.victimY);
-      const vpx = _vp.x * scaleX, vpy = _vp.y * scaleY;
-      const dx = vpx - sx, dy = vpy - sy, dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      ctx.strokeStyle = `rgba(255,220,50,${alpha * 0.9})`;
-      ctx.lineWidth = 1.5; ctx.setLineDash([]);
+      // Don't draw normal tracer for kill shots, kill tracers handle them
+    } else {
+      // Non-kill shot: short dashed yellow line from shooter
+      // Direction: toward cursor or random consistent direction from tick
+      const angle = (st * 1.618 + s.x * 0.01) % (Math.PI * 2);
+      const len = 25;
+      ctx.strokeStyle = `rgba(255,220,80,${alpha * 0.7})`;
+      ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]);
       ctx.beginPath(); ctx.moveTo(sx, sy);
-      ctx.lineTo(sx + dx / dist * Math.min(45, dist), sy + dy / dist * Math.min(45, dist));
-      ctx.stroke();
+      ctx.lineTo(sx + Math.cos(angle) * len, sy + Math.sin(angle) * len);
+      ctx.stroke(); ctx.setLineDash([]);
     }
     // Muzzle flash
-    ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,240,120,${alpha})`; ctx.fill();
+    ctx.beginPath(); ctx.arc(sx, sy, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,240,120,${alpha * 0.9})`; ctx.fill();
   });
 
-  // Kill tracers
-  const SHOT_DUR_K = 5;
+  // Kill tracers (solid RED line from attacker to victim)
   (demoData.kills || []).forEach(k => {
     const kt = k.tick || 0;
-    if (kt === 0 || tick < kt || tick > kt + SHOT_DUR_K) return;
+    if (kt === 0 || tick < kt || tick > kt + KILL_DUR) return;
+    if (kt < rdStart || kt > rdEnd + 1000) return;
     if (!k.attackerX && !k.attackerY) return;
-    const alpha = 1 - (tick - kt) / SHOT_DUR_K;
+    const alpha = Math.max(0, 1 - (tick - kt) / KILL_DUR);
     const _ap = w2c(k.attackerX, k.attackerY);
     const _vp = w2c(k.victimX, k.victimY);
     const apx = _ap.x * scaleX, apy = _ap.y * scaleY;
     const vpx = _vp.x * scaleX, vpy = _vp.y * scaleY;
-    if (!inBounds(apx, apy)) return;
-    const dx = vpx - apx, dy = vpy - apy, dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    ctx.strokeStyle = `rgba(255,220,50,${alpha * 0.9})`;
+    if (!inBounds(apx, apy) && !inBounds(vpx, vpy)) return;
+    // Full line from attacker to victim in RED
+    ctx.strokeStyle = `rgba(255,60,60,${alpha * 0.9})`;
     ctx.lineWidth = 2; ctx.setLineDash([]);
-    ctx.beginPath(); ctx.moveTo(apx, apy);
-    ctx.lineTo(apx + dx / dist * Math.min(50, dist), apy + dy / dist * Math.min(50, dist)); ctx.stroke();
-    ctx.beginPath(); ctx.arc(apx, apy, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,240,120,${alpha})`; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(apx, apy); ctx.lineTo(vpx, vpy); ctx.stroke();
+    // Kill X at victim position
+    const xSize = 5;
+    ctx.strokeStyle = `rgba(255,40,40,${alpha})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(vpx - xSize, vpy - xSize); ctx.lineTo(vpx + xSize, vpy + xSize); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(vpx + xSize, vpy - xSize); ctx.lineTo(vpx - xSize, vpy + xSize); ctx.stroke();
+    // Muzzle flash at attacker
+    ctx.beginPath(); ctx.arc(apx, apy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,100,80,${alpha})`; ctx.fill();
+    // Headshot indicator
+    if (k.isHeadshot) {
+      ctx.beginPath(); ctx.arc(vpx, vpy, 8, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,40,40,${alpha * 0.6})`; ctx.lineWidth = 1.5; ctx.stroke();
+    }
   });
 
   // Grenades
