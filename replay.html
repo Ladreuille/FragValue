@@ -27,10 +27,10 @@
 
     /* ── Top bar ───────────────────────────────────────────────── */
     .topbar{
-      height:48px;flex-shrink:0;
+      height:44px;flex-shrink:0;
       display:flex;align-items:center;justify-content:space-between;
       padding:0 16px;
-      background:rgba(8,9,9,.95);
+      background:linear-gradient(180deg, rgba(15,16,16,.98) 0%, rgba(8,9,9,.96) 100%);
       border-bottom:1px solid var(--border);
       z-index:10;
     }
@@ -108,9 +108,10 @@
 
     /* ── Canvas area ───────────────────────────────────────────── */
     .canvas-area{
-      position:relative;background:#0A0C12;
+      position:relative;background:#080a10;
       display:flex;align-items:center;justify-content:center;
       overflow:hidden;
+      box-shadow:inset 0 0 40px rgba(0,0,0,.3);
     }
     #replayCanvas{max-width:100%;max-height:100%;display:block}
 
@@ -172,7 +173,7 @@
     /* ── Bottom bar: rounds + timeline + controls ──────────────── */
     .bottombar{
       flex-shrink:0;
-      background:rgba(8,9,9,.97);
+      background:linear-gradient(180deg, rgba(15,16,16,.98) 0%, rgba(8,9,9,.99) 100%);
       border-top:1px solid var(--border);
       padding:8px 16px 10px;
       display:flex;flex-direction:column;gap:6px;
@@ -1000,24 +1001,35 @@ function drawFrame(idx) {
   // Map background
   if (mapImg) {
     ctx.drawImage(mapImg, 0, 0, W, H);
-    ctx.fillStyle = 'rgba(10,12,18,.35)';
+    ctx.fillStyle = 'rgba(8,10,16,.40)';
     ctx.fillRect(0, 0, W, H);
   } else {
     ctx.fillStyle = '#0A0C12';
     ctx.fillRect(0, 0, W, H);
   }
 
+  // Vignette (subtle darkening around edges)
+  const vig = ctx.createRadialGradient(W/2, H/2, W*0.32, W/2, H/2, W*0.72);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,.35)');
+  ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+
   // Movement trails
   if (showTrail) drawTrails(frame, W, H);
 
-  // Death crosses
+  // Death markers (skull X with glow)
   frame.deaths.forEach(d => {
     const pos = w2c(d.x, d.y);
-    const cx = pos.x * scaleX, cy = pos.y * scaleY;
-    if (!inBounds(cx, cy)) return;
-    ctx.strokeStyle = 'rgba(240,107,107,.9)'; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(cx - 7, cy - 7); ctx.lineTo(cx + 7, cy + 7); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx + 7, cy - 7); ctx.lineTo(cx - 7, cy + 7); ctx.stroke();
+    const dx = pos.x * scaleX, dy = pos.y * scaleY;
+    if (!inBounds(dx, dy)) return;
+    // Soft red glow behind
+    ctx.beginPath(); ctx.arc(dx, dy, 12, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,50,50,.12)'; ctx.fill();
+    // X mark
+    ctx.strokeStyle = 'rgba(255,80,80,.85)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(dx - 6, dy - 6); ctx.lineTo(dx + 6, dy + 6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(dx + 6, dy - 6); ctx.lineTo(dx - 6, dy + 6); ctx.stroke();
+    ctx.lineCap = 'butt';
   });
 
   // Players (directional arrow showing view angle)
@@ -1028,49 +1040,69 @@ function drawFrame(idx) {
     if (!inBounds(cx, cy)) return;
     const color = getColor(name), isCT = p.team === 3;
     const teamColor = isCT ? '#4A9EFF' : '#F5C842';
-
-    // Convert yaw to canvas angle: CS2 yaw 0=east, 90=north; canvas 0=right, positive=clockwise
+    const teamRGB = isCT ? '74,158,255' : '245,200,66';
     const yawRad = -(p.yaw || 0) * Math.PI / 180;
 
-    // Outer glow
-    ctx.beginPath(); ctx.arc(cx, cy, 16, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${color.rgb},.15)`; ctx.fill();
+    // Soft outer glow (team-tinted)
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 20);
+    glow.addColorStop(0, `rgba(${teamRGB},.18)`);
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2); ctx.fill();
 
-    // View cone (subtle wedge showing field of view)
-    const coneLen = 22, coneAngle = 0.35;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
+    // View cone
+    const coneLen = 28, coneAngle = 0.32;
+    const coneGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, coneLen);
+    coneGrad.addColorStop(0, `rgba(${teamRGB},.22)`);
+    coneGrad.addColorStop(1, `rgba(${teamRGB},0)`);
+    ctx.beginPath(); ctx.moveTo(cx, cy);
     ctx.lineTo(cx + Math.cos(yawRad - coneAngle) * coneLen, cy + Math.sin(yawRad - coneAngle) * coneLen);
-    ctx.lineTo(cx + Math.cos(yawRad + coneAngle) * coneLen, cy + Math.sin(yawRad + coneAngle) * coneLen);
+    ctx.arc(cx, cy, coneLen, yawRad - coneAngle, yawRad + coneAngle);
     ctx.closePath();
-    ctx.fillStyle = `rgba(${color.rgb},.2)`; ctx.fill();
+    ctx.fillStyle = coneGrad; ctx.fill();
 
-    // Team-colored circle base
+    // Drop shadow under player
+    ctx.beginPath(); ctx.arc(cx + 1, cy + 1, 9, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fill();
+
+    // Team-colored circle base with border
     ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2);
     ctx.fillStyle = teamColor; ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1.2; ctx.stroke();
 
-    // Directional arrow triangle inside circle
-    const arrowLen = 10, arrowW = 5;
+    // Directional arrow triangle
+    const arrowLen = 11, arrowW = 5.5;
     const tipX = cx + Math.cos(yawRad) * arrowLen;
     const tipY = cy + Math.sin(yawRad) * arrowLen;
-    const backAngle = yawRad + Math.PI;
-    const lX = cx + Math.cos(backAngle - 0.5) * arrowW;
-    const lY = cy + Math.sin(backAngle - 0.5) * arrowW;
-    const rX = cx + Math.cos(backAngle + 0.5) * arrowW;
-    const rY = cy + Math.sin(backAngle + 0.5) * arrowW;
-    ctx.beginPath();
-    ctx.moveTo(tipX, tipY); ctx.lineTo(lX, lY); ctx.lineTo(rX, rY); ctx.closePath();
+    const bA = yawRad + Math.PI;
+    const lX = cx + Math.cos(bA - 0.5) * arrowW;
+    const lY = cy + Math.sin(bA - 0.5) * arrowW;
+    const rX = cx + Math.cos(bA + 0.5) * arrowW;
+    const rY = cy + Math.sin(bA + 0.5) * arrowW;
+    ctx.beginPath(); ctx.moveTo(tipX, tipY); ctx.lineTo(lX, lY); ctx.lineTo(rX, rY); ctx.closePath();
     ctx.fillStyle = color.solid; ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 0.8; ctx.stroke();
 
-    // Name with background
+    // Name label with pill background
     ctx.font = 'bold 9px "Space Mono",monospace'; ctx.textAlign = 'center';
     const label = name.slice(0, 10);
     const tw = ctx.measureText(label).width;
-    ctx.fillStyle = 'rgba(0,0,0,.7)';
-    ctx.fillRect(cx - tw / 2 - 3, cy - 24, tw + 6, 13);
+    const lx = cx - tw / 2 - 5, ly = cy - 26, lw = tw + 10, lh = 14;
+    // Rounded rect background
+    const lr = 3;
+    ctx.beginPath();
+    ctx.moveTo(lx + lr, ly); ctx.lineTo(lx + lw - lr, ly);
+    ctx.quadraticCurveTo(lx + lw, ly, lx + lw, ly + lr);
+    ctx.lineTo(lx + lw, ly + lh - lr);
+    ctx.quadraticCurveTo(lx + lw, ly + lh, lx + lw - lr, ly + lh);
+    ctx.lineTo(lx + lr, ly + lh);
+    ctx.quadraticCurveTo(lx, ly + lh, lx, ly + lh - lr);
+    ctx.lineTo(lx, ly + lr);
+    ctx.quadraticCurveTo(lx, ly, lx + lr, ly);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.fillText(label, cx, cy - 14);
+    ctx.fillText(label, cx, cy - 15);
   });
 
   // Bomb planted indicator
@@ -1085,12 +1117,17 @@ function drawFrame(idx) {
     const bx = bombPos.x * scaleX, by = bombPos.y * scaleY;
     if (inBounds(bx, by)) {
       const pulse = 0.5 + Math.sin(frame.tick * 0.15) * 0.3;
-      // Outer pulse ring
-      ctx.beginPath(); ctx.arc(bx, by, 16 + pulse * 6, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255,60,40,${0.3 + pulse * 0.2})`; ctx.lineWidth = 1.5; ctx.stroke();
+      // Outer pulse rings
+      ctx.beginPath(); ctx.arc(bx, by, 18 + pulse * 8, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,60,40,${0.15 + pulse * 0.1})`; ctx.lineWidth = 1; ctx.stroke();
+      ctx.beginPath(); ctx.arc(bx, by, 13 + pulse * 4, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,60,40,${0.25 + pulse * 0.15})`; ctx.lineWidth = 1.5; ctx.stroke();
       // Inner glow
-      ctx.beginPath(); ctx.arc(bx, by, 10, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,60,40,.25)'; ctx.fill();
+      const bGlow = ctx.createRadialGradient(bx, by, 0, bx, by, 12);
+      bGlow.addColorStop(0, 'rgba(255,60,40,.35)');
+      bGlow.addColorStop(1, 'rgba(255,60,40,0)');
+      ctx.fillStyle = bGlow;
+      ctx.beginPath(); ctx.arc(bx, by, 12, 0, Math.PI * 2); ctx.fill();
       // Bomb circle
       ctx.beginPath(); ctx.arc(bx, by, 7, 0, Math.PI * 2);
       ctx.fillStyle = '#ff3c28'; ctx.fill();
@@ -1098,16 +1135,19 @@ function drawFrame(idx) {
       // C4 text
       ctx.fillStyle = '#fff'; ctx.font = 'bold 7px "Space Mono",monospace'; ctx.textAlign = 'center';
       ctx.fillText('C4', bx, by + 2.5);
-      // Label above
-      ctx.fillStyle = 'rgba(0,0,0,.7)';
-      ctx.fillRect(bx - 22, by - 22, 44, 11);
+      // Label
+      ctx.fillStyle = 'rgba(0,0,0,.75)';
+      ctx.fillRect(bx - 24, by - 23, 48, 12);
       ctx.fillStyle = '#ff3c28'; ctx.font = 'bold 8px "Space Mono",monospace';
-      ctx.fillText('PLANTED', bx, by - 13);
+      ctx.fillText('PLANTED', bx, by - 14);
     }
   }
 
   // Effects (grenades + shots)
   drawEffects(frame, W, H);
+
+  // ── Canvas Scoreboard (top center of map) ────────────────────────────────
+  drawScoreboard(frame, W, H);
 
   // Timeline UI
   const pct = frames.length > 1 ? (idx / (frames.length - 1)) * 100 : 0;
@@ -1121,6 +1161,105 @@ function drawFrame(idx) {
 
   // Update team panel player states
   updatePlayerStates(frame);
+}
+
+// ══ CANVAS SCOREBOARD ═══════════════════════════════════════════════════════
+function drawScoreboard(frame, W, H) {
+  const rounds = demoData.rounds || [];
+  let ctScore = 0, tScore = 0;
+  rounds.forEach(rd => {
+    if (rd.isKnife) return;
+    if (currentRound !== null && (rd.round ?? 0) > currentRound) return;
+    if (rd.winner === 2) tScore++;
+    else if (rd.winner === 3) ctScore++;
+  });
+
+  const secs = Math.round((frame.tick - (frames[0]?.tick || 0)) / 64);
+  const timeStr = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+  const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
+  const dispN = rdData.displayNum ?? ((currentRound ?? 0) + 1);
+  const roundStr = rdData.isKnife ? 'KNIFE' : `ROUND ${dispN}`;
+
+  const cx = W / 2;
+  const y = 8;
+  const totalW = 220, totalH = 44;
+  const bx = cx - totalW / 2, by = y;
+
+  ctx.save();
+
+  // Background panel with rounded corners
+  const r = 8;
+  ctx.beginPath();
+  ctx.moveTo(bx + r, by); ctx.lineTo(bx + totalW - r, by);
+  ctx.quadraticCurveTo(bx + totalW, by, bx + totalW, by + r);
+  ctx.lineTo(bx + totalW, by + totalH - r);
+  ctx.quadraticCurveTo(bx + totalW, by + totalH, bx + totalW - r, by + totalH);
+  ctx.lineTo(bx + r, by + totalH);
+  ctx.quadraticCurveTo(bx, by + totalH, bx, by + totalH - r);
+  ctx.lineTo(bx, by + r);
+  ctx.quadraticCurveTo(bx, by, bx + r, by);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(10,12,16,.88)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 1; ctx.stroke();
+
+  // CT side accent bar (left)
+  ctx.fillStyle = '#4A9EFF';
+  ctx.beginPath();
+  ctx.moveTo(bx + r, by); ctx.lineTo(bx + 3 + r, by);
+  ctx.lineTo(bx + 3 + r, by + totalH);
+  ctx.lineTo(bx + r, by + totalH);
+  ctx.quadraticCurveTo(bx, by + totalH, bx, by + totalH - r);
+  ctx.lineTo(bx, by + r);
+  ctx.quadraticCurveTo(bx, by, bx + r, by);
+  ctx.closePath(); ctx.fill();
+
+  // T side accent bar (right)
+  ctx.fillStyle = '#F5C842';
+  ctx.beginPath();
+  ctx.moveTo(bx + totalW - r - 3, by); ctx.lineTo(bx + totalW - r, by);
+  ctx.quadraticCurveTo(bx + totalW, by, bx + totalW, by + r);
+  ctx.lineTo(bx + totalW, by + totalH - r);
+  ctx.quadraticCurveTo(bx + totalW, by + totalH, bx + totalW - r, by + totalH);
+  ctx.lineTo(bx + totalW - r - 3, by + totalH);
+  ctx.closePath(); ctx.fill();
+
+  // CT label
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.font = 'bold 11px "Space Mono",monospace';
+  ctx.fillStyle = '#4A9EFF';
+  ctx.fillText('CT', bx + 10, by + 16);
+
+  // CT score
+  ctx.font = '28px "Anton",sans-serif';
+  ctx.fillStyle = '#4A9EFF';
+  ctx.textAlign = 'right';
+  ctx.fillText(String(ctScore), cx - 12, by + 26);
+
+  // Separator
+  ctx.font = 'bold 14px "Space Mono",monospace';
+  ctx.fillStyle = 'rgba(255,255,255,.3)';
+  ctx.textAlign = 'center';
+  ctx.fillText(':', cx, by + 22);
+
+  // T score
+  ctx.font = '28px "Anton",sans-serif';
+  ctx.fillStyle = '#F5C842';
+  ctx.textAlign = 'left';
+  ctx.fillText(String(tScore), cx + 12, by + 26);
+
+  // T label
+  ctx.font = 'bold 11px "Space Mono",monospace';
+  ctx.fillStyle = '#F5C842';
+  ctx.textAlign = 'right';
+  ctx.fillText('T', bx + totalW - 10, by + 16);
+
+  // Round + time (bottom row)
+  ctx.textAlign = 'center';
+  ctx.font = '600 8px "Space Mono",monospace';
+  ctx.fillStyle = 'rgba(255,255,255,.45)';
+  ctx.fillText(roundStr + '  ' + timeStr, cx, by + 39);
+
+  ctx.restore();
 }
 
 // ══ MOVEMENT TRAILS ══════════════════════════════════════════════════════════
@@ -1138,18 +1277,19 @@ function drawTrails(frame, W, H) {
     const trail = pts.filter(pt => (pt.tick || 0) >= tick - TRAIL_TICKS && (pt.tick || 0) <= tick);
     if (trail.length < 2) return;
 
-    ctx.beginPath();
-    const first = w2c(trail[0].x, trail[0].y);
-    ctx.moveTo(first.x * scaleX, first.y * scaleY);
+    // Fading trail: draw segments with decreasing opacity
     for (let i = 1; i < trail.length; i++) {
-      const pt = w2c(trail[i].x, trail[i].y);
-      ctx.lineTo(pt.x * scaleX, pt.y * scaleY);
+      const age = (tick - (trail[i].tick || 0)) / TRAIL_TICKS;
+      const alpha = Math.max(0, 0.4 * (1 - age));
+      const prev = w2c(trail[i-1].x, trail[i-1].y);
+      const cur = w2c(trail[i].x, trail[i].y);
+      ctx.beginPath();
+      ctx.moveTo(prev.x * scaleX, prev.y * scaleY);
+      ctx.lineTo(cur.x * scaleX, cur.y * scaleY);
+      ctx.strokeStyle = `rgba(${color.rgb},${alpha.toFixed(2)})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
     }
-    ctx.strokeStyle = `rgba(${color.rgb},.35)`;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 3]);
-    ctx.stroke();
-    ctx.setLineDash([]);
   });
 }
 
