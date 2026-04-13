@@ -446,13 +446,12 @@ function getColor(name) {
   return idx !== undefined ? PLAYER_COLORS[idx] : NEUTRAL_COLOR;
 }
 function w2c(worldX, worldY, mn) {
-  const W = canvas.width, H = canvas.height;
   const normMap = (mn || mapName || '').toLowerCase().replace(/^.*\//, '').trim();
   const cfg = MAP_CONFIG[normMap];
-  if (!cfg) return { x: W / 2, y: H / 2 };
+  if (!cfg) return { x: 512, y: 512 };
   const c = cfg.upper ? (currentFloor === 'upper' ? cfg.upper : cfg.lower) : cfg;
-  const x = ((worldX - c.posX) / c.scale / 1024) * W;
-  const y = ((c.posY - worldY) / c.scale / 1024) * H;
+  const x = (worldX - c.posX) / c.scale;
+  const y = (c.posY - worldY) / c.scale;
   return { x, y };
 }
 function inBounds(x, y) { return x >= 0 && x <= canvas.width && y >= 0 && y <= canvas.height; }
@@ -712,10 +711,8 @@ function updatePlayerStates(frame) {
 
     // Money
     const moneyEl = row.querySelector('[data-field="money"]');
-    if (moneyEl) {
-      const money = state?.money ?? 0;
-      moneyEl.textContent = money > 0 ? '$' + money : '';
-    }
+    const money = state?.money ?? 0;
+    if (moneyEl) moneyEl.textContent = (money > 0) ? '$' + money : '';
 
     // Gear row
     const gearEl = row.querySelector('[data-field="gear"]');
@@ -866,7 +863,18 @@ function drawFrame(idx) {
   if (!frames.length || !ctx) return;
   const frame = frames[Math.min(idx, frames.length - 1)];
   const W = canvas.width, H = canvas.height;
+  const scaleX = W / 1024;
+  const scaleY = H / 1024;
   ctx.clearRect(0, 0, W, H);
+
+  // Debug log on first frame
+  if (frameIdx === 0) {
+    const firstP = Object.values(frame.players)[0];
+    if (firstP) {
+      const testPos = w2c(firstP.x, firstP.y, mapName);
+      console.log('w2c test raw:', testPos, 'canvas:', W, H, 'scaled:', testPos.x * scaleX, testPos.y * scaleY);
+    }
+  }
 
   // Map background
   if (mapImg) {
@@ -883,31 +891,33 @@ function drawFrame(idx) {
 
   // Death crosses
   frame.deaths.forEach(d => {
-    const { x, y } = w2c(d.x, d.y);
-    if (!inBounds(x, y)) return;
+    const pos = w2c(d.x, d.y);
+    const cx = pos.x * scaleX, cy = pos.y * scaleY;
+    if (!inBounds(cx, cy)) return;
     ctx.strokeStyle = 'rgba(240,107,107,.8)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 5, cy - 5); ctx.lineTo(cx + 5, cy + 5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 5, cy - 5); ctx.lineTo(cx - 5, cy + 5); ctx.stroke();
   });
 
   // Players
   Object.entries(frame.players).forEach(([name, p]) => {
     if (!p.alive || hiddenPlayers.has(name)) return;
-    const { x, y } = w2c(p.x, p.y);
-    if (!inBounds(x, y)) return;
+    const pos = w2c(p.x, p.y, mapName);
+    const cx = pos.x * scaleX, cy = pos.y * scaleY;
+    if (!inBounds(cx, cy)) return;
     const color = getColor(name), isCT = p.team === 3;
 
     // Outer glow
-    ctx.beginPath(); ctx.arc(x, y, 13, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(${color.rgb},.12)`; ctx.fill();
     // Dot
-    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2);
     ctx.fillStyle = color.solid; ctx.fill();
     // Team ring
     ctx.strokeStyle = isCT ? '#4A9EFF' : '#F5C842'; ctx.lineWidth = 2.5; ctx.stroke();
     // Name
     ctx.fillStyle = '#fff'; ctx.font = 'bold 9px "Space Mono",monospace'; ctx.textAlign = 'center';
-    ctx.fillText(name.slice(0, 10), x, y - 13);
+    ctx.fillText(name.slice(0, 10), cx, cy - 13);
   });
 
   // Effects (grenades + shots)
@@ -930,8 +940,10 @@ function drawFrame(idx) {
 // ══ MOVEMENT TRAILS ══════════════════════════════════════════════════════════
 function drawTrails(frame, W, H) {
   const tick = frame.tick || 0;
-  const TRAIL_TICKS = 400; // how far back to draw
+  const TRAIL_TICKS = 400;
   const positions = demoData.positions || {};
+  const scaleX = W / 1024;
+  const scaleY = H / 1024;
 
   Object.entries(frame.players).forEach(([name, p]) => {
     if (!p.alive || hiddenPlayers.has(name)) return;
@@ -942,10 +954,10 @@ function drawTrails(frame, W, H) {
 
     ctx.beginPath();
     const first = w2c(trail[0].x, trail[0].y);
-    ctx.moveTo(first.x, first.y);
+    ctx.moveTo(first.x * scaleX, first.y * scaleY);
     for (let i = 1; i < trail.length; i++) {
       const pt = w2c(trail[i].x, trail[i].y);
-      ctx.lineTo(pt.x, pt.y);
+      ctx.lineTo(pt.x * scaleX, pt.y * scaleY);
     }
     ctx.strokeStyle = `rgba(${color.rgb},.35)`;
     ctx.lineWidth = 2;
@@ -960,6 +972,8 @@ function drawEffects(frame, W, H) {
   const tick = frame.tick || 0;
   const grenades = demoData.grenades || [];
   const shots = demoData.shots || [];
+  const scaleX = W / 1024;
+  const scaleY = H / 1024;
 
   // Convert shot ticks (once per round)
   if (!shotsConverted) {
@@ -1001,7 +1015,8 @@ function drawEffects(frame, W, H) {
     const _sp = frame.players[s.shooter];
     const _sx = _sp ? _sp.x : s.x;
     const _sy = _sp ? _sp.y : s.y;
-    const { x: sx, y: sy } = w2c(_sx, _sy);
+    const _raw = w2c(_sx, _sy);
+    const sx = _raw.x * scaleX, sy = _raw.y * scaleY;
     if (!inBounds(sx, sy)) return;
 
     const nearKill = (demoData.kills || []).find(k =>
@@ -1009,8 +1024,9 @@ function drawEffects(frame, W, H) {
     );
 
     if (nearKill) {
-      const vp = w2c(nearKill.victimX, nearKill.victimY);
-      const dx = vp.x - sx, dy = vp.y - sy, dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const _vp = w2c(nearKill.victimX, nearKill.victimY);
+      const vpx = _vp.x * scaleX, vpy = _vp.y * scaleY;
+      const dx = vpx - sx, dy = vpy - sy, dist = Math.sqrt(dx * dx + dy * dy) || 1;
       ctx.strokeStyle = `rgba(255,220,50,${alpha * 0.9})`;
       ctx.lineWidth = 1.5; ctx.setLineDash([]);
       ctx.beginPath(); ctx.moveTo(sx, sy);
@@ -1029,15 +1045,17 @@ function drawEffects(frame, W, H) {
     if (kt === 0 || tick < kt || tick > kt + SHOT_DUR_K) return;
     if (!k.attackerX && !k.attackerY) return;
     const alpha = 1 - (tick - kt) / SHOT_DUR_K;
-    const ap = w2c(k.attackerX, k.attackerY);
-    const vp = w2c(k.victimX, k.victimY);
-    if (!inBounds(ap.x, ap.y)) return;
-    const dx = vp.x - ap.x, dy = vp.y - ap.y, dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    const _ap = w2c(k.attackerX, k.attackerY);
+    const _vp = w2c(k.victimX, k.victimY);
+    const apx = _ap.x * scaleX, apy = _ap.y * scaleY;
+    const vpx = _vp.x * scaleX, vpy = _vp.y * scaleY;
+    if (!inBounds(apx, apy)) return;
+    const dx = vpx - apx, dy = vpy - apy, dist = Math.sqrt(dx * dx + dy * dy) || 1;
     ctx.strokeStyle = `rgba(255,220,50,${alpha * 0.9})`;
     ctx.lineWidth = 2; ctx.setLineDash([]);
-    ctx.beginPath(); ctx.moveTo(ap.x, ap.y);
-    ctx.lineTo(ap.x + dx / dist * Math.min(50, dist), ap.y + dy / dist * Math.min(50, dist)); ctx.stroke();
-    ctx.beginPath(); ctx.arc(ap.x, ap.y, 3.5, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.moveTo(apx, apy);
+    ctx.lineTo(apx + dx / dist * Math.min(50, dist), apy + dy / dist * Math.min(50, dist)); ctx.stroke();
+    ctx.beginPath(); ctx.arc(apx, apy, 3.5, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(255,240,120,${alpha})`; ctx.fill();
   });
 
@@ -1047,23 +1065,26 @@ function drawEffects(frame, W, H) {
   grenades.forEach(g => {
     if (!g.tick || !g.detonTick) return;
     if (g.tick < _rStart || g.tick > _rEnd) return;
-    const launchPos = w2c(g.x, g.y);
-    const detonPos = w2c(g.detonX, g.detonY);
+    const _lp = w2c(g.x, g.y);
+    const _dp = w2c(g.detonX, g.detonY);
+    const lx = _lp.x * scaleX, ly = _lp.y * scaleY;
+    const dx2 = _dp.x * scaleX, dy2 = _dp.y * scaleY;
     const hasValidDeton = g.detonX !== 0 && (Math.abs(g.detonX - g.x) > 50 || Math.abs(g.detonY - g.y) > 50);
 
     // Trajectory
-    if (tick >= g.tick && tick < g.detonTick && inBounds(launchPos.x, launchPos.y)) {
-      const targetPos = hasValidDeton ? detonPos : launchPos;
-      const trajDx = targetPos.x - launchPos.x;
-      const trajDy = targetPos.y - launchPos.y;
+    if (tick >= g.tick && tick < g.detonTick && inBounds(lx, ly)) {
+      const tx = hasValidDeton ? dx2 : lx;
+      const ty = hasValidDeton ? dy2 : ly;
+      const trajDx = tx - lx;
+      const trajDy = ty - ly;
       const trajLen = Math.sqrt(trajDx * trajDx + trajDy * trajDy);
       if (trajLen <= 350) {
         const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
-        const curX = launchPos.x + trajDx * progress;
-        const curY = launchPos.y + trajDy * progress;
+        const curX = lx + trajDx * progress;
+        const curY = ly + trajDy * progress;
         ctx.setLineDash([3, 3]);
         ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(launchPos.x, launchPos.y); ctx.lineTo(curX, curY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(curX, curY); ctx.stroke();
         ctx.setLineDash([]);
         ctx.beginPath(); ctx.arc(curX, curY, 3, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
@@ -1074,10 +1095,10 @@ function drawEffects(frame, W, H) {
     if (!g.endTick || !hasValidDeton) return;
     const isActive = tick >= g.detonTick && tick <= g.endTick;
     if (!isActive) return;
-    const { x: px, y: py } = detonPos;
+    const px = dx2, py = dy2;
     if (!inBounds(px, py)) return;
-    const impDx = detonPos.x - launchPos.x;
-    const impDy = detonPos.y - launchPos.y;
+    const impDx = dx2 - lx;
+    const impDy = dy2 - ly;
     if (Math.sqrt(impDx * impDx + impDy * impDy) > 350) return;
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
