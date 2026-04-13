@@ -1,6 +1,12 @@
-// api/faceit-auth.js — FragValue
-// Échange le code OAuth FACEIT contre un token et récupère le profil
-// Le Client Secret ne quitte jamais le serveur
+// api/faceit-auth.js - FragValue
+// Echange le code OAuth FACEIT contre un token, recupere le profil,
+// et cree/connecte automatiquement le compte Supabase
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 export default async function handler(req, res) {
   // CORS
@@ -71,20 +77,46 @@ export default async function handler(req, res) {
         );
         if (statsRes.ok) faceitStats = await statsRes.json();
       } catch(e) {
-        // Stats non critiques — on continue sans
+        // Stats non critiques - on continue sans
       }
     }
 
-    // ── Retourne les données utiles ────────────────────────────────────────
+    // -- Auto-login Supabase : creer le compte si besoin + generer un token --
+    let sessionToken = null;
+    const faceitEmail = profile.email;
+
+    if (faceitEmail) {
+      try {
+        // Creer l'utilisateur s'il n'existe pas (ignore l'erreur si deja existant)
+        await supabaseAdmin.auth.admin.createUser({
+          email: faceitEmail,
+          email_confirm: true,
+          user_metadata: { faceit_nickname: profile.nickname },
+        });
+      } catch (_) {}
+
+      try {
+        const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'magiclink',
+          email: faceitEmail,
+        });
+        sessionToken = linkData?.properties?.hashed_token || null;
+      } catch (e) {
+        console.warn('generateLink error:', e.message);
+      }
+    }
+
+    // -- Retourne les donnees utiles + token de session --
     return res.status(200).json({
       success:  true,
       nickname: profile.nickname,
       playerId: profile.guid || profile.sub,
-      email:    profile.email,
+      email:    faceitEmail,
       country:  profile.country,
       avatar:   profile.picture,
       elo:      faceitStats?.games?.cs2?.faceit_elo || null,
       level:    faceitStats?.games?.cs2?.skill_level || null,
+      sessionToken,
     });
 
   } catch (err) {

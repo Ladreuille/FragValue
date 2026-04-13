@@ -85,16 +85,38 @@ async function handleCallback() {
 
   sessionStorage.removeItem('faceit_code_verifier');
 
-  // Step 2: Check if user has a Supabase session
-  updateStatus('Liaison du compte...');
-  const { data: { session } } = await sb.auth.getSession();
+  // Step 2: Auto-login Supabase via session token
+  updateStatus('Connexion automatique...');
+
+  let session = null;
+
+  // Si l'API a retourne un sessionToken, on s'authentifie avec
+  if (faceitData.sessionToken) {
+    try {
+      const { error: verifyError } = await sb.auth.verifyOtp({
+        token_hash: faceitData.sessionToken,
+        type: 'magiclink',
+      });
+      if (!verifyError) {
+        const { data } = await sb.auth.getSession();
+        session = data?.session || null;
+      }
+    } catch (e) {
+      console.warn('Auto-login OTP error:', e.message);
+    }
+  }
+
+  // Fallback : session existante
+  if (!session) {
+    const { data } = await sb.auth.getSession();
+    session = data?.session || null;
+  }
 
   if (session) {
-    // User is logged in: link FACEIT to their profile
     await linkFaceitToProfile(session.user.id, faceitData);
     showSuccess(faceitData);
   } else {
-    // User is NOT logged in: store FACEIT data, redirect to login
+    // Dernier recours : stocker les donnees FACEIT en attente
     sessionStorage.setItem('pending_faceit_link', JSON.stringify(faceitData));
     document.getElementById('card').innerHTML = `
       <div class="title">Compte FACEIT verifie</div>
