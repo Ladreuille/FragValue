@@ -296,55 +296,43 @@ function showMsg(txt, type) {
 }
 function hideMsg() { document.getElementById('msgBox').style.display = 'none'; }
 
-// ── FACEIT OAuth PKCE ──────────────────────────────────────────
+// // FACEIT OAuth PKCE
 async function loginFaceit() {
-  const btn = document.querySelector('.faceit-btn');
-  btn.disabled = true;
-  btn.style.opacity = '0.5';
-
-  // Fetch the public FACEIT Client ID from server env
-  let FACEIT_CLIENT_ID;
   try {
-    const cfgRes = await fetch('/api/faceit-config');
-    const cfg = await cfgRes.json();
-    if (!cfgRes.ok || !cfg.client_id) {
-      showMsg(cfg.error || 'FACEIT non disponible.', 'error');
-      btn.disabled = false; btn.style.opacity = '';
-      return;
-    }
-    FACEIT_CLIENT_ID = cfg.client_id;
-  } catch (e) {
-    showMsg('Impossible de contacter le serveur FACEIT.', 'error');
-    btn.disabled = false; btn.style.opacity = '';
-    return;
+    let clientId = '0c7eba57-0db4-49b8-9595-6064477f3a15';
+    try {
+      const res = await fetch('/api/faceit-config');
+      const cfg = await res.json();
+      if (cfg.client_id) clientId = cfg.client_id;
+    } catch (_) {}
+
+    const redirectUri = 'https://frag-value.vercel.app/faceit-callback.html';
+
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    const codeVerifier = btoa(String.fromCharCode(...array))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
+    const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+    sessionStorage.setItem('faceit_code_verifier', codeVerifier);
+    sessionStorage.setItem('faceit_redirect_uri', redirectUri);
+
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: 'openid profile email',
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256',
+    });
+
+    window.location.href = 'https://accounts.faceit.com/accounts?' + params.toString();
+  } catch (err) {
+    console.error('FACEIT login error:', err);
   }
-
-  const REDIRECT_URI = window.location.origin + '/faceit-callback.html';
-
-  // Generate PKCE code verifier + challenge
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  const codeVerifier = btoa(String.fromCharCode(...array))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-  const encoder = new TextEncoder();
-  const data = encoder.encode(codeVerifier);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-  sessionStorage.setItem('faceit_code_verifier', codeVerifier);
-
-  const params = new URLSearchParams({
-    response_type: 'code',
-    client_id: FACEIT_CLIENT_ID,
-    redirect_uri: REDIRECT_URI,
-    scope: 'openid profile email',
-    code_challenge: codeChallenge,
-    code_challenge_method: 'S256',
-  });
-
-  window.location.href = 'https://accounts.faceit.com/accounts?' + params.toString();
 }
 
 // Enter key

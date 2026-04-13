@@ -137,33 +137,34 @@
     .tp-team-name{font-family:var(--mono);font-size:12px;font-weight:700;flex:1;letter-spacing:-.2px}
     .tp-team-score{font-family:var(--display);font-size:22px;line-height:1}
     .tp-players{flex:1;overflow-y:auto;padding:6px 8px}
-    .tp-player{
+
+    /* Player row (scl.gg style) */
+    .player-row{
       display:flex;flex-direction:column;gap:0;
       padding:6px 10px;border-radius:6px;
       cursor:pointer;transition:all .12s;
       border:1px solid transparent;margin-bottom:1px;
     }
-    .tp-player:hover{background:rgba(255,255,255,.03)}
-    .tp-player.active{background:rgba(184,255,87,.04);border-color:rgba(184,255,87,.12)}
-    .tp-player.dead{opacity:.35}
-    .tp-player.dead .tp-name{text-decoration:line-through;color:var(--text3)}
-    .tp-row1{display:flex;align-items:center;gap:6px}
-    .tp-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-    .tp-name{font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
-    .tp-hp{font-size:10px;font-weight:700;min-width:28px;text-align:right;font-family:var(--mono)}
-    .tp-health-bar{
+    .player-row:hover{background:rgba(255,255,255,.03)}
+    .player-row.active{background:rgba(184,255,87,.04);border-color:rgba(184,255,87,.12)}
+    .player-row.dead{opacity:.35}
+    .player-row.dead .player-name{text-decoration:line-through;color:var(--text3)}
+    .player-row-top{display:flex;align-items:center;gap:6px}
+    .player-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+    .player-name{font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+    .player-kills{
+      font-family:var(--mono);font-size:10px;font-weight:700;
+      min-width:16px;text-align:right;flex-shrink:0;
+    }
+    .player-money{font-size:9px;font-family:var(--mono);color:var(--text3);margin-top:1px}
+    .player-hp-bar{
       width:100%;height:3px;background:var(--border);border-radius:2px;
       overflow:hidden;margin:3px 0 2px;
     }
-    .tp-health-fill{height:100%;border-radius:2px;transition:width .3s}
-    .tp-row2{display:flex;align-items:center;gap:3px;min-height:14px}
-    .tp-equip-icon{display:flex;align-items:center;justify-content:center;flex-shrink:0}
-    .tp-equip-icon.off{opacity:.2}
-    .tp-weapon-name{font-size:7px;font-family:var(--mono);color:var(--text3);letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:68px}
-    .tp-kills-badge{
-      font-family:var(--mono);font-size:10px;font-weight:700;
-      margin-left:auto;min-width:16px;text-align:right;flex-shrink:0;
-    }
+    .player-hp-fill{height:100%;border-radius:2px;transition:width .3s}
+    .player-gear{display:flex;align-items:center;gap:3px;min-height:14px}
+    .player-gear .icon{display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .player-gear .icon.off{opacity:.2}
 
     /* ── Bottom bar: rounds + timeline + controls ──────────────── */
     .bottombar{
@@ -412,6 +413,7 @@ const MAP_CONFIG = {
   },
   'de_ancient':  { img:'maps/de_ancient_radar_psd.png',  posX:-2953, posY:2164, scale:5.0 },
   'de_overpass': { img:'maps/de_overpass_radar_psd.png', posX:-4831, posY:1781, scale:5.2 },
+  'de_vertigo':  { img:'maps/de_vertigo_radar_psd.png', posX:-3168, posY:1762, scale:4.0  },
 };
 
 const PLAYER_COLORS = [
@@ -443,17 +445,17 @@ function getColor(name) {
   const idx = playerColorMap[name];
   return idx !== undefined ? PLAYER_COLORS[idx] : NEUTRAL_COLOR;
 }
-function w2c(wx, wy) {
+function w2c(worldX, worldY, mn) {
   const W = canvas.width, H = canvas.height;
-  const normMap = (mapName || '').toLowerCase().replace(/^.*\//, '').trim();
-  const cfg = MAP_CONFIG[normMap] || MAP_CONFIG[mapName];
-  if (!cfg) return { px: W / 2, py: H / 2 };
+  const normMap = (mn || mapName || '').toLowerCase().replace(/^.*\//, '').trim();
+  const cfg = MAP_CONFIG[normMap];
+  if (!cfg) return { x: W / 2, y: H / 2 };
   const c = cfg.upper ? (currentFloor === 'upper' ? cfg.upper : cfg.lower) : cfg;
-  const rawPx = (wx - c.posX) / c.scale;
-  const rawPy = (c.posY - wy) / c.scale;
-  return { px: (rawPx / 1024) * W, py: (rawPy / 1024) * H };
+  const x = ((worldX - c.posX) / c.scale / 1024) * W;
+  const y = ((c.posY - worldY) / c.scale / 1024) * H;
+  return { x, y };
 }
-function inBounds(px, py) { return px >= 0 && px <= canvas.width && py >= 0 && py <= canvas.height; }
+function inBounds(x, y) { return x >= 0 && x <= canvas.width && y >= 0 && y <= canvas.height; }
 
 function expandKills(kills) {
   if (!kills || !kills.length) return kills;
@@ -591,16 +593,15 @@ function renderTeamPlayers(containerId, players) {
   const hpColor = isCT ? '#5b8dd9' : '#e8a838';
   el.innerHTML = players.map(p => {
     const c = getColor(p.name);
-    const id = p.name.replace(/[^a-zA-Z0-9]/g, '_');
-    return `<div class="tp-player active" id="tp-${id}" onclick="togglePlayer('${p.name.replace(/'/g, "\\'")}')">
-      <div class="tp-row1">
-        <div class="tp-dot" style="background:${c.solid}"></div>
-        <div class="tp-name">${p.name.substring(0, 16)}</div>
-        <div class="tp-hp" id="hpv-${id}" style="color:${hpColor}">100</div>
+    return `<div class="player-row active" data-name="${p.name}" onclick="togglePlayer('${p.name.replace(/'/g, "\\'")}')">
+      <div class="player-row-top">
+        <div class="player-dot" style="background:${c.solid}"></div>
+        <div class="player-name">${p.name.substring(0, 16)}</div>
+        <div class="player-kills" data-field="kills" style="color:${hpColor}"></div>
       </div>
-      <div class="tp-health-bar"><div class="tp-health-fill" id="hp-${id}" style="width:100%;background:${hpColor}"></div></div>
-      <div class="tp-row2" id="eq-${id}"></div>
-      <div style="display:none" id="rk-container-${id}"><span class="tp-kills-badge" id="rk-${id}" style="color:${c.solid}"></span></div>
+      <div class="player-hp-bar"><div class="player-hp-fill" data-field="hp" style="width:100%;background:${hpColor}"></div></div>
+      <div class="player-money" data-field="money"></div>
+      <div class="player-gear" data-field="gear"></div>
     </div>`;
   }).join('');
 }
@@ -623,67 +624,55 @@ function updateScores() {
   document.getElementById('tScore').textContent = tScore;
 }
 
-// Weapon SVG icons by category (scl.gg style silhouettes)
-const WEAPON_SVGS = {
-  rifle: '<svg width="20" height="10" viewBox="0 0 20 10"><path d="M1 6h3l1-2h6l1 1h5l2-1v2h-2l-1 1H6L5 8H1z" fill="CL"/></svg>',
-  pistol: '<svg width="14" height="10" viewBox="0 0 14 10"><path d="M2 4h6l1 1h2l1-1v2h-1l-1 1H8L7 8H4V7H2z" fill="CL"/></svg>',
-  smg: '<svg width="18" height="10" viewBox="0 0 18 10"><path d="M1 5h4l1-1h5l1 1h3l1-1v2h-1l-1 1H6L5 8H1z" fill="CL"/></svg>',
-  sniper: '<svg width="22" height="10" viewBox="0 0 22 10"><path d="M0 5h5l1-2h8l1 1h4l2-1v2h-2l-1 1H7L6 7H0z" fill="CL"/></svg>',
-  shotgun: '<svg width="20" height="10" viewBox="0 0 20 10"><path d="M1 5h4l1-1h7l1 1h3v2h-3l-1 1H6L5 8H1z" fill="CL"/></svg>',
-  knife: '<svg width="12" height="10" viewBox="0 0 12 10"><path d="M2 3l8-1v2l-2 3H4L2 5z" fill="CL"/></svg>',
-  grenade: '<svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="6" r="3.5" fill="CL"/><rect x="4" y="1" width="2" height="3" rx="1" fill="CL"/></svg>',
-  other: '<svg width="16" height="10" viewBox="0 0 16 10"><rect x="1" y="3" width="14" height="5" rx="2" fill="CL"/></svg>',
+// Weapon SVG icons (scl.gg style per-weapon silhouettes)
+const WEAPON_ICONS = {
+  ak47:           '<svg width="20" height="10" viewBox="0 0 20 10"><path d="M1 6h3l1-2h6l1 1h5l2-1v2h-2l-1 1H6L5 8H1z" fill="CL"/></svg>',
+  m4a1:           '<svg width="20" height="10" viewBox="0 0 20 10"><path d="M1 5h2l1-1h7l1 1h5l2-1v2h-2l-1 1H5L4 8H1z" fill="CL"/></svg>',
+  m4a4:           '<svg width="20" height="10" viewBox="0 0 20 10"><path d="M1 5h2l1-1h7l1 1h5l2-1v2h-2l-1 1H5L4 8H1z" fill="CL"/></svg>',
+  awp:            '<svg width="22" height="10" viewBox="0 0 22 10"><path d="M0 5h5l1-2h8l1 1h4l2-1v2h-2l-1 1H7L6 7H0z" fill="CL"/></svg>',
+  ssg08:          '<svg width="22" height="10" viewBox="0 0 22 10"><path d="M0 5h4l1-2h9l1 1h4l2-1v2h-2l-1 1H6L5 7H0z" fill="CL"/></svg>',
+  deagle:         '<svg width="14" height="10" viewBox="0 0 14 10"><path d="M2 4h6l1 1h2l1-1v2h-1l-1 1H8L7 8H4V7H2z" fill="CL"/></svg>',
+  usp_silencer:   '<svg width="16" height="10" viewBox="0 0 16 10"><path d="M1 4h8l1 1h2l1-1v2h-1l-1 1H9L8 8H4V7H1z" fill="CL"/></svg>',
+  usp:            '<svg width="14" height="10" viewBox="0 0 14 10"><path d="M2 4h6l1 1h2l1-1v2h-1l-1 1H8L7 8H4V7H2z" fill="CL"/></svg>',
+  p250:           '<svg width="14" height="10" viewBox="0 0 14 10"><path d="M2 4h6l1 1h2l1-1v2h-1l-1 1H8L7 8H4V7H2z" fill="CL"/></svg>',
+  glock:          '<svg width="14" height="10" viewBox="0 0 14 10"><path d="M3 4h5l1 1h2l1-1v2h-1l-1 1H8L7 8H5V7H3z" fill="CL"/></svg>',
+  mp9:            '<svg width="18" height="10" viewBox="0 0 18 10"><path d="M1 5h4l1-1h5l1 1h3l1-1v2h-1l-1 1H6L5 8H1z" fill="CL"/></svg>',
+  mac10:          '<svg width="16" height="10" viewBox="0 0 16 10"><path d="M1 5h3l1-1h4l1 1h3l1-1v2h-1l-1 1H5L4 8H1z" fill="CL"/></svg>',
+  knife:          '<svg width="12" height="10" viewBox="0 0 12 10"><path d="M2 3l8-1v2l-2 3H4L2 5z" fill="CL"/></svg>',
+  default:        '<svg width="16" height="10" viewBox="0 0 16 10"><rect x="1" y="3" width="14" height="5" rx="2" fill="CL"/></svg>',
 };
-const WEAPON_CATS = {
-  ak47:'rifle',m4a1:'rifle',m4a1_silencer:'rifle',galil:'rifle',famas:'rifle',aug:'rifle',sg556:'rifle',
-  awp:'sniper',ssg08:'sniper',scar20:'sniper',g3sg1:'sniper',
-  mp9:'smg',mac10:'smg',mp7:'smg',ump45:'smg',p90:'smg',mp5sd:'smg',bizon:'smg',
-  deagle:'pistol',glock:'pistol',usp_silencer:'pistol',p250:'pistol',fiveseven:'pistol',tec9:'pistol',elite:'pistol',cz75_auto:'pistol',revolver:'pistol',hkp2000:'pistol',
-  nova:'shotgun',xm1014:'shotgun',mag7:'shotgun',sawedoff:'shotgun',
-  knife:'knife',knife_t:'knife',bayonet:'knife',
-  hegrenade:'grenade',flashbang:'grenade',smokegrenade:'grenade',molotov:'grenade',incgrenade:'grenade',decoy:'grenade',
-  c4:'other',taser:'other',
+
+// Map weapon names to icon keys
+const WEAPON_KEY_MAP = {
+  ak47:'ak47', m4a1:'m4a1', m4a1_silencer:'m4a1', m4a4:'m4a4',
+  galil:'ak47', famas:'m4a1', aug:'m4a1', sg556:'ak47',
+  awp:'awp', ssg08:'ssg08', scar20:'awp', g3sg1:'awp',
+  mp9:'mp9', mac10:'mac10', mp7:'mp9', ump45:'mp9', p90:'mp9', mp5sd:'mp9', bizon:'mp9',
+  deagle:'deagle', glock:'glock', usp_silencer:'usp_silencer', hkp2000:'usp',
+  p250:'p250', fiveseven:'p250', tec9:'glock', elite:'deagle', cz75_auto:'p250', revolver:'deagle',
+  nova:'default', xm1014:'default', mag7:'default', sawedoff:'default',
+  knife:'knife', knife_t:'knife', bayonet:'knife',
+  hegrenade:'default', flashbang:'default', smokegrenade:'default', molotov:'default', incgrenade:'default', decoy:'default',
+  c4:'default', taser:'default',
 };
-function getWeaponSvg(weaponName, color) {
+
+function getWeaponIcon(weaponName, color) {
   if (!weaponName) return '';
   const clean = weaponName.replace('weapon_', '').toLowerCase();
-  const cat = WEAPON_CATS[clean] || 'other';
-  return (WEAPON_SVGS[cat] || WEAPON_SVGS.other).replace(/CL/g, color);
+  const key = WEAPON_KEY_MAP[clean] || 'default';
+  return (WEAPON_ICONS[key] || WEAPON_ICONS.default).replace(/CL/g, color);
 }
-
-function renderEquipment(state, team, kills) {
-  const color = team === 'CT' ? '#5b8dd9' : '#e8a838';
-  const dim = '#2a2c2c';
-  let html = '';
-
-  // Weapon icon + label
-  if (state.weapon) {
-    html += '<span class="tp-equip-icon">' + getWeaponSvg(state.weapon, color) + '</span>';
-    html += '<span class="tp-weapon-name">' + (state.weapon || '').replace('weapon_','') + '</span>';
-  } else {
-    html += '<span class="tp-equip-icon off">' + WEAPON_SVGS.other.replace(/CL/g, dim) + '</span>';
-  }
-
-  // Helmet icon (arc shape)
-  const hOn = state.hasHelmet;
-  html += '<span class="tp-equip-icon' + (hOn ? '' : ' off') + '"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 8a4 4 0 018 0" fill="none" stroke="' + (hOn ? '#e8eaea' : dim) + '" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
-
-  // Armor icon (shield)
-  const aOn = state.armor && state.armor > 0;
-  html += '<span class="tp-equip-icon' + (aOn ? '' : ' off') + '"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1L1 3v3c0 2.2 1.8 3 4 4 2.2-1 4-1.8 4-4V3L5 1z" fill="' + (aOn ? color : dim) + '"/></svg></span>';
-
-  // Defuse kit (CT only)
-  if (team === 'CT') {
-    const dOn = state.hasDefuser;
-    html += '<span class="tp-equip-icon' + (dOn ? '' : ' off') + '"><svg width="10" height="10" viewBox="0 0 10 10"><line x1="5" y1="1" x2="5" y2="9" stroke="' + (dOn ? '#b8ff57' : dim) + '" stroke-width="1.5"/><line x1="1" y1="5" x2="9" y2="5" stroke="' + (dOn ? '#b8ff57' : dim) + '" stroke-width="1.5"/></svg></span>';
-  }
-
-  // Round kills badge
-  if (kills > 0) {
-    html += '<span class="tp-kills-badge" style="color:' + color + '">' + kills + '</span>';
-  }
-
-  return html;
+function getHelmetIcon(active) {
+  const c = active ? '#e8eaea' : '#2a2c2c';
+  return '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 8a4 4 0 018 0" fill="none" stroke="' + c + '" stroke-width="1.8" stroke-linecap="round"/></svg>';
+}
+function getArmorIcon(active, color) {
+  const c = active ? color : '#2a2c2c';
+  return '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1L1 3v3c0 2.2 1.8 3 4 4 2.2-1 4-1.8 4-4V3L5 1z" fill="' + c + '"/></svg>';
+}
+function getDefuseIcon(active) {
+  const c = active ? '#b8ff57' : '#2a2c2c';
+  return '<svg width="10" height="10" viewBox="0 0 10 10"><line x1="5" y1="1" x2="5" y2="9" stroke="' + c + '" stroke-width="1.5"/><line x1="1" y1="5" x2="9" y2="5" stroke="' + c + '" stroke-width="1.5"/></svg>';
 }
 
 function updatePlayerStates(frame) {
@@ -693,35 +682,60 @@ function updatePlayerStates(frame) {
   const startTick = roundData.startTick || 0;
   const endTick = roundData.endTick || 999999;
 
-  // Round kills for this player
   const roundKills = kills.filter(k => {
     const t = k.tick || 0;
     return t >= startTick && t <= endTick;
   });
 
   (demoData.playerStats || []).forEach(p => {
-    const id = p.name.replace(/[^a-zA-Z0-9]/g, '_');
-    const el = document.getElementById('tp-' + id);
-    const hpEl = document.getElementById('hp-' + id);
-    if (!el) return;
+    const escaped = CSS.escape(p.name);
+    const row = document.querySelector(`.player-row[data-name="${escaped}"]`);
+    if (!row) return;
 
     const state = frame.players[p.name];
     const alive = state ? state.alive : true;
     const hp = alive ? (state?.hp ?? 100) : 0;
-    el.classList.toggle('dead', !alive);
-    if (hpEl) hpEl.style.width = (alive ? Math.max(hp, 0) : 0) + '%';
+    const team = state?.team === 3 ? 'CT' : 'T';
+    const color = team === 'CT' ? '#5b8dd9' : '#e8a838';
 
-    const hpvEl = document.getElementById('hpv-' + id);
-    if (hpvEl) hpvEl.textContent = alive ? hp : 0;
+    row.classList.toggle('dead', !alive);
+    row.classList.toggle('active', !hiddenPlayers.has(p.name));
 
-    // Count kills this round
+    // HP bar
+    const hpFill = row.querySelector('[data-field="hp"]');
+    if (hpFill) hpFill.style.width = (alive ? Math.max(hp, 0) : 0) + '%';
+
+    // Kill count
     const killCount = roundKills.filter(k => k.attacker === p.name).length;
+    const killsEl = row.querySelector('[data-field="kills"]');
+    if (killsEl) killsEl.textContent = killCount > 0 ? killCount + 'K' : '';
 
-    // Equipment row with weapon, armor, helmet, defuse, kills badge
-    const eqEl = document.getElementById('eq-' + id);
-    if (eqEl) {
-      const team = state?.team === 3 ? 'CT' : 'T';
-      eqEl.innerHTML = renderEquipment(state || {}, team, killCount);
+    // Money
+    const moneyEl = row.querySelector('[data-field="money"]');
+    if (moneyEl) {
+      const money = state?.money ?? 0;
+      moneyEl.textContent = money > 0 ? '$' + money : '';
+    }
+
+    // Gear row
+    const gearEl = row.querySelector('[data-field="gear"]');
+    if (gearEl) {
+      let html = '';
+      // Weapon
+      if (state?.weapon) {
+        html += '<span class="icon">' + getWeaponIcon(state.weapon, color) + '</span>';
+      } else {
+        html += '<span class="icon off">' + (WEAPON_ICONS.default).replace(/CL/g, '#2a2c2c') + '</span>';
+      }
+      // Helmet
+      html += '<span class="icon' + (state?.hasHelmet ? '' : ' off') + '">' + getHelmetIcon(!!state?.hasHelmet) + '</span>';
+      // Armor
+      html += '<span class="icon' + ((state?.armor ?? 0) > 0 ? '' : ' off') + '">' + getArmorIcon((state?.armor ?? 0) > 0, color) + '</span>';
+      // Defuse kit (CT only)
+      if (team === 'CT') {
+        html += '<span class="icon' + (state?.hasDefuser ? '' : ' off') + '">' + getDefuseIcon(!!state?.hasDefuser) + '</span>';
+      }
+      gearEl.innerHTML = html;
     }
   });
 }
@@ -729,8 +743,8 @@ function updatePlayerStates(frame) {
 function togglePlayer(name) {
   if (hiddenPlayers.has(name)) hiddenPlayers.delete(name);
   else hiddenPlayers.add(name);
-  const id = name.replace(/[^a-zA-Z0-9]/g, '_');
-  const el = document.getElementById('tp-' + id);
+  const escaped = CSS.escape(name);
+  const el = document.querySelector(`.player-row[data-name="${escaped}"]`);
   if (el) el.classList.toggle('active', !hiddenPlayers.has(name));
 }
 
@@ -869,31 +883,31 @@ function drawFrame(idx) {
 
   // Death crosses
   frame.deaths.forEach(d => {
-    const { px, py } = w2c(d.x, d.y);
-    if (!inBounds(px, py)) return;
+    const { x, y } = w2c(d.x, d.y);
+    if (!inBounds(x, y)) return;
     ctx.strokeStyle = 'rgba(240,107,107,.8)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(px - 5, py - 5); ctx.lineTo(px + 5, py + 5); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(px + 5, py - 5); ctx.lineTo(px - 5, py + 5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5); ctx.stroke();
   });
 
   // Players
   Object.entries(frame.players).forEach(([name, p]) => {
     if (!p.alive || hiddenPlayers.has(name)) return;
-    const { px, py } = w2c(p.x, p.y);
-    if (!inBounds(px, py)) return;
+    const { x, y } = w2c(p.x, p.y);
+    if (!inBounds(x, y)) return;
     const color = getColor(name), isCT = p.team === 3;
 
     // Outer glow
-    ctx.beginPath(); ctx.arc(px, py, 13, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(x, y, 13, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(${color.rgb},.12)`; ctx.fill();
     // Dot
-    ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2);
     ctx.fillStyle = color.solid; ctx.fill();
     // Team ring
     ctx.strokeStyle = isCT ? '#4A9EFF' : '#F5C842'; ctx.lineWidth = 2.5; ctx.stroke();
     // Name
     ctx.fillStyle = '#fff'; ctx.font = 'bold 9px "Space Mono",monospace'; ctx.textAlign = 'center';
-    ctx.fillText(name.slice(0, 10), px, py - 13);
+    ctx.fillText(name.slice(0, 10), x, y - 13);
   });
 
   // Effects (grenades + shots)
@@ -928,10 +942,10 @@ function drawTrails(frame, W, H) {
 
     ctx.beginPath();
     const first = w2c(trail[0].x, trail[0].y);
-    ctx.moveTo(first.px, first.py);
+    ctx.moveTo(first.x, first.y);
     for (let i = 1; i < trail.length; i++) {
       const pt = w2c(trail[i].x, trail[i].y);
-      ctx.lineTo(pt.px, pt.py);
+      ctx.lineTo(pt.x, pt.y);
     }
     ctx.strokeStyle = `rgba(${color.rgb},.35)`;
     ctx.lineWidth = 2;
@@ -987,8 +1001,8 @@ function drawEffects(frame, W, H) {
     const _sp = frame.players[s.shooter];
     const _sx = _sp ? _sp.x : s.x;
     const _sy = _sp ? _sp.y : s.y;
-    const { px, py } = w2c(_sx, _sy);
-    if (!inBounds(px, py)) return;
+    const { x: sx, y: sy } = w2c(_sx, _sy);
+    if (!inBounds(sx, sy)) return;
 
     const nearKill = (demoData.kills || []).find(k =>
       k.attacker === s.shooter && Math.abs((k.tick || 0) - st) < 30 && k.victimX !== 0
@@ -996,15 +1010,15 @@ function drawEffects(frame, W, H) {
 
     if (nearKill) {
       const vp = w2c(nearKill.victimX, nearKill.victimY);
-      const dx = vp.px - px, dy = vp.py - py, dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const dx = vp.x - sx, dy = vp.y - sy, dist = Math.sqrt(dx * dx + dy * dy) || 1;
       ctx.strokeStyle = `rgba(255,220,50,${alpha * 0.9})`;
       ctx.lineWidth = 1.5; ctx.setLineDash([]);
-      ctx.beginPath(); ctx.moveTo(px, py);
-      ctx.lineTo(px + dx / dist * Math.min(45, dist), py + dy / dist * Math.min(45, dist));
+      ctx.beginPath(); ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + dx / dist * Math.min(45, dist), sy + dy / dist * Math.min(45, dist));
       ctx.stroke();
     }
     // Muzzle flash
-    ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(255,240,120,${alpha})`; ctx.fill();
   });
 
@@ -1017,13 +1031,13 @@ function drawEffects(frame, W, H) {
     const alpha = 1 - (tick - kt) / SHOT_DUR_K;
     const ap = w2c(k.attackerX, k.attackerY);
     const vp = w2c(k.victimX, k.victimY);
-    if (!inBounds(ap.px, ap.py)) return;
-    const dx = vp.px - ap.px, dy = vp.py - ap.py, dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    if (!inBounds(ap.x, ap.y)) return;
+    const dx = vp.x - ap.x, dy = vp.y - ap.y, dist = Math.sqrt(dx * dx + dy * dy) || 1;
     ctx.strokeStyle = `rgba(255,220,50,${alpha * 0.9})`;
     ctx.lineWidth = 2; ctx.setLineDash([]);
-    ctx.beginPath(); ctx.moveTo(ap.px, ap.py);
-    ctx.lineTo(ap.px + dx / dist * Math.min(50, dist), ap.py + dy / dist * Math.min(50, dist)); ctx.stroke();
-    ctx.beginPath(); ctx.arc(ap.px, ap.py, 3.5, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.moveTo(ap.x, ap.y);
+    ctx.lineTo(ap.x + dx / dist * Math.min(50, dist), ap.y + dy / dist * Math.min(50, dist)); ctx.stroke();
+    ctx.beginPath(); ctx.arc(ap.x, ap.y, 3.5, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(255,240,120,${alpha})`; ctx.fill();
   });
 
@@ -1038,18 +1052,18 @@ function drawEffects(frame, W, H) {
     const hasValidDeton = g.detonX !== 0 && (Math.abs(g.detonX - g.x) > 50 || Math.abs(g.detonY - g.y) > 50);
 
     // Trajectory
-    if (tick >= g.tick && tick < g.detonTick && inBounds(launchPos.px, launchPos.py)) {
+    if (tick >= g.tick && tick < g.detonTick && inBounds(launchPos.x, launchPos.y)) {
       const targetPos = hasValidDeton ? detonPos : launchPos;
-      const trajDx = targetPos.px - launchPos.px;
-      const trajDy = targetPos.py - launchPos.py;
+      const trajDx = targetPos.x - launchPos.x;
+      const trajDy = targetPos.y - launchPos.y;
       const trajLen = Math.sqrt(trajDx * trajDx + trajDy * trajDy);
       if (trajLen <= 350) {
         const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
-        const curX = launchPos.px + trajDx * progress;
-        const curY = launchPos.py + trajDy * progress;
+        const curX = launchPos.x + trajDx * progress;
+        const curY = launchPos.y + trajDy * progress;
         ctx.setLineDash([3, 3]);
         ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(launchPos.px, launchPos.py); ctx.lineTo(curX, curY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(launchPos.x, launchPos.y); ctx.lineTo(curX, curY); ctx.stroke();
         ctx.setLineDash([]);
         ctx.beginPath(); ctx.arc(curX, curY, 3, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
@@ -1060,10 +1074,10 @@ function drawEffects(frame, W, H) {
     if (!g.endTick || !hasValidDeton) return;
     const isActive = tick >= g.detonTick && tick <= g.endTick;
     if (!isActive) return;
-    const { px, py } = detonPos;
+    const { x: px, y: py } = detonPos;
     if (!inBounds(px, py)) return;
-    const impDx = detonPos.px - launchPos.px;
-    const impDy = detonPos.py - launchPos.py;
+    const impDx = detonPos.x - launchPos.x;
+    const impDy = detonPos.y - launchPos.y;
     if (Math.sqrt(impDx * impDx + impDy * impDy) > 350) return;
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';

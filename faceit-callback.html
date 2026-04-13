@@ -45,6 +45,12 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 async function handleCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
+  const errorParam = params.get('error');
+
+  if (errorParam) {
+    showError('Erreur FACEIT : ' + (params.get('error_description') || errorParam));
+    return;
+  }
 
   if (!code) {
     showError('Aucun code FACEIT recu. Reessaye depuis la page de connexion.');
@@ -52,6 +58,7 @@ async function handleCallback() {
   }
 
   const codeVerifier = sessionStorage.getItem('faceit_code_verifier');
+  const redirectUri = 'https://frag-value.vercel.app/faceit-callback.html';
 
   // Step 1: Exchange code for FACEIT profile
   updateStatus('Echange du token FACEIT...');
@@ -62,7 +69,7 @@ async function handleCallback() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         code,
-        redirect_uri: window.location.origin + '/faceit-callback.html',
+        redirect_uri: redirectUri,
         code_verifier: codeVerifier || '',
       }),
     });

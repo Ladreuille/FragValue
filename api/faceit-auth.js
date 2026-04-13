@@ -10,7 +10,8 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { code, redirect_uri, code_verifier } = req.body;
+  const { code, code_verifier } = req.body;
+  const redirect_uri = 'https://frag-value.vercel.app/faceit-callback.html';
   if (!code) return res.status(400).json({ error: 'Code manquant' });
 
   const CLIENT_ID     = process.env.FACEIT_CLIENT_ID;
@@ -32,7 +33,7 @@ export default async function handler(req, res) {
       body: new URLSearchParams({
         grant_type:    'authorization_code',
         code,
-        redirect_uri:  redirect_uri || 'https://frag-value.vercel.app/faceit-callback.html',
+        redirect_uri,
         client_id:     CLIENT_ID,
         ...(code_verifier ? { code_verifier } : {}),
       }).toString(),
