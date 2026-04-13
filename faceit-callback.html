@@ -100,7 +100,7 @@ async function handleCallback() {
       <div class="title">Compte FACEIT verifie</div>
       <div class="faceit-badge">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>
-        ${faceitData.nickname}${faceitData.level ? ' · Lvl ' + faceitData.level : ''}
+        ${faceitData.nickname}${faceitData.level ? ' . Lvl ' + faceitData.level : ''}
       </div>
       <p class="sub" style="margin-top:16px">Connecte-toi ou cree un compte pour lier ton profil FACEIT.</p>
       <a href="login.html" class="link-btn">Se connecter</a>
@@ -132,11 +132,16 @@ function showSuccess(data) {
     <div class="title" style="color:var(--success)">Compte lie</div>
     <div class="faceit-badge">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>
-      ${data.nickname}${data.level ? ' · Lvl ' + data.level : ''}${data.elo ? ' · ' + data.elo + ' ELO' : ''}
+      ${data.nickname}${data.level ? ' . Lvl ' + data.level : ''}${data.elo ? ' . ' + data.elo + ' ELO' : ''}
     </div>
     <p class="sub" style="margin-top:12px">Redirection...</p>
   `;
-  setTimeout(() => { window.location.href = 'account.html'; }, 1500);
+  if (window.opener && !window.opener.closed) {
+    window.opener.postMessage({ type: 'FACEIT_AUTH_SUCCESS' }, 'https://frag-value.vercel.app');
+    setTimeout(() => window.close(), 300);
+  } else {
+    setTimeout(() => { window.location.href = '/account.html'; }, 1500);
+  }
 }
 
 function updateStatus(msg) {

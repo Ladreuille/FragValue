@@ -143,11 +143,11 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
   <!-- KPIs -->
   <div class="kpi-row" id="kpiRow">
-    <div class="kpi"><div class="kpi-val g" id="k1">—</div><div class="kpi-lbl">Demos analysees</div></div>
-    <div class="kpi"><div class="kpi-val g" id="k2">—</div><div class="kpi-lbl">FV Rating moyen</div><div class="kpi-sub ne" id="k2t"></div></div>
-    <div class="kpi"><div class="kpi-val" id="k3">—</div><div class="kpi-lbl">Rounds joues</div></div>
-    <div class="kpi"><div class="kpi-val go" id="k4">—</div><div class="kpi-lbl">Kills totaux</div></div>
-    <div class="kpi"><div class="kpi-val s" id="k5">—</div><div class="kpi-lbl">Maps jouees</div></div>
+    <div class="kpi"><div class="kpi-val g" id="k1">-</div><div class="kpi-lbl">Demos analysees</div></div>
+    <div class="kpi"><div class="kpi-val g" id="k2">-</div><div class="kpi-lbl">FV Rating moyen</div><div class="kpi-sub ne" id="k2t"></div></div>
+    <div class="kpi"><div class="kpi-val" id="k3">-</div><div class="kpi-lbl">Rounds joues</div></div>
+    <div class="kpi"><div class="kpi-val go" id="k4">-</div><div class="kpi-lbl">Kills totaux</div></div>
+    <div class="kpi"><div class="kpi-val s" id="k5">-</div><div class="kpi-lbl">Maps jouees</div></div>
   </div>
 
   <!-- GRID -->
@@ -182,11 +182,11 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
       <div class="sl" style="margin-top:16px">Stats clés</div>
       <div class="card">
-        <div class="ms"><span class="ms-l">Meilleur FV Rating</span><span class="ms-v g" id="msBest">—</span></div>
-        <div class="ms"><span class="ms-l">Pire FV Rating</span><span class="ms-v" id="msWorst">—</span></div>
-        <div class="ms"><span class="ms-l">Map favorite</span><span class="ms-v" id="msFav" style="font-size:14px">—</span></div>
-        <div class="ms"><span class="ms-l">Kills moyen / démo</span><span class="ms-v s" id="msKPM">—</span></div>
-        <div class="ms"><span class="ms-l">Rounds / démo</span><span class="ms-v" id="msRPD">—</span></div>
+        <div class="ms"><span class="ms-l">Meilleur FV Rating</span><span class="ms-v g" id="msBest">-</span></div>
+        <div class="ms"><span class="ms-l">Pire FV Rating</span><span class="ms-v" id="msWorst">-</span></div>
+        <div class="ms"><span class="ms-l">Map favorite</span><span class="ms-v" id="msFav" style="font-size:14px">-</span></div>
+        <div class="ms"><span class="ms-l">Kills moyen / démo</span><span class="ms-v s" id="msKPM">-</span></div>
+        <div class="ms"><span class="ms-l">Rounds / démo</span><span class="ms-v" id="msRPD">-</span></div>
       </div>
     </div>
   </div>
@@ -339,7 +339,7 @@ function renderKPIs(list) {
   const totalK  = list.reduce((s,d)=>s+(d.total_kills||0),0);
   const maps    = [...new Set(list.map(d=>d.map).filter(Boolean))].length;
   const ratings = list.map(d=>d.fv_rating).filter(r=>r>0);
-  const avg     = ratings.length ? (ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(2) : '—';
+  const avg     = ratings.length ? (ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(2) : '-';
 
   document.getElementById('k1').textContent = list.length;
   document.getElementById('k2').textContent = avg;
@@ -441,9 +441,9 @@ function renderHistory(list) {
     <tbody>${list.slice(0,25).map(d=>`<tr>
       <td><span class="map-tag">${(d.map||'?').replace('de_','')}</span></td>
       <td class="td-d">${fmtFull(d.analysed_at)}</td>
-      <td style="color:var(--text2)">${d.rounds||'—'}</td>
-      <td style="font-family:var(--display);font-size:14px">${d.total_kills||'—'}</td>
-      <td><span class="rp ${rc(d.fv_rating)}">${d.fv_rating?d.fv_rating.toFixed(2):'—'}</span></td>
+      <td style="color:var(--text2)">${d.rounds||'-'}</td>
+      <td style="font-family:var(--display);font-size:14px">${d.total_kills||'-'}</td>
+      <td><span class="rp ${rc(d.fv_rating)}">${d.fv_rating?d.fv_rating.toFixed(2):'-'}</span></td>
     </tr>`).join('')}</tbody>
   </table>${list.length>25?`<div style="text-align:center;padding:12px 0;font-size:10px;color:var(--text3)">+${list.length-25} démos supplémentaires</div>`:''}`;
 }
@@ -465,15 +465,15 @@ function renderMaps(list) {
 
 function renderMiniStats(list) {
   const ratings=list.map(d=>d.fv_rating).filter(r=>r>0);
-  const best=ratings.length?Math.max(...ratings).toFixed(2):'—';
-  const worst=ratings.length?Math.min(...ratings).toFixed(2):'—';
+  const best=ratings.length?Math.max(...ratings).toFixed(2):'-';
+  const worst=ratings.length?Math.min(...ratings).toFixed(2):'-';
   const byMap={};
   list.forEach(d=>{if(d.map){const m=d.map.replace('de_','');byMap[m]=(byMap[m]||0)+1;}});
-  const fav=Object.entries(byMap).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
+  const fav=Object.entries(byMap).sort((a,b)=>b[1]-a[1])[0]?.[0]||'-';
   const totalK=list.reduce((s,d)=>s+(d.total_kills||0),0);
-  const avgK=list.length?(totalK/list.length).toFixed(1):'—';
+  const avgK=list.length?(totalK/list.length).toFixed(1):'-';
   const totalR=list.reduce((s,d)=>s+(d.rounds||0),0);
-  const avgR=list.length?(totalR/list.length).toFixed(1):'—';
+  const avgR=list.length?(totalR/list.length).toFixed(1):'-';
 
   document.getElementById('msBest').textContent=best;
   document.getElementById('msWorst').textContent=worst;

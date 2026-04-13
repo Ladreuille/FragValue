@@ -296,14 +296,14 @@ function showMsg(txt, type) {
 }
 function hideMsg() { document.getElementById('msgBox').style.display = 'none'; }
 
-// // FACEIT OAuth PKCE
+// FACEIT OAuth PKCE via popup
 async function loginFaceit() {
   try {
     let clientId = '141a2533-b3b9-45e7-8c98-8cb683871f74';
     try {
       const res = await fetch('/api/faceit-config');
       const cfg = await res.json();
-      if (cfg.client_id) clientId = cfg.client_id;
+      if (cfg.clientId || cfg.client_id) clientId = cfg.clientId || cfg.client_id;
     } catch (_) {}
 
     const redirectUri = 'https://frag-value.vercel.app/faceit-callback.html';
@@ -327,10 +327,37 @@ async function loginFaceit() {
       scope: 'openid profile email',
       code_challenge: codeChallenge,
       code_challenge_method: 'S256',
-      redirect_popup: 'false',
     });
 
-    window.location.href = 'https://accounts.faceit.com/accounts?' + params.toString();
+    const authUrl = 'https://accounts.faceit.com/accounts?' + params.toString();
+
+    const w = 500, h = 700;
+    const left = Math.round(screen.width / 2 - w / 2);
+    const top = Math.round(screen.height / 2 - h / 2);
+    const popup = window.open(authUrl, 'faceit_auth', 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
+
+    if (!popup) {
+      window.location.href = authUrl;
+      return;
+    }
+
+    const handler = async (event) => {
+      if (event.origin !== 'https://frag-value.vercel.app') return;
+      if (!event.data || event.data.type !== 'FACEIT_AUTH_SUCCESS') return;
+      window.removeEventListener('message', handler);
+      clearInterval(checkClosed);
+      popup.close();
+      window.location.href = '/account.html';
+    };
+    window.addEventListener('message', handler);
+
+    const checkClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkClosed);
+        window.removeEventListener('message', handler);
+      }
+    }, 500);
+
   } catch (err) {
     console.error('FACEIT login error:', err);
   }

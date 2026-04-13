@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FragValue · Analyse Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;
+  --border:#1c1e1e;--border2:#252727;
+  --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --danger:#ff4444;--success:#2dd4a0;--gold:#f5c842;
+  --ct:#5b8dd9;--t:#e8a838;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  --r:6px;--r2:12px
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.nav-logo{font-family:var(--display);font-size:20px;letter-spacing:.04em;color:var(--text);text-decoration:none}
+.nav-logo span{color:var(--accent)}
+.nav-right{display:flex;align-items:center;gap:14px}
+.nav-link{font-size:11px;color:var(--text3);text-decoration:none;letter-spacing:.06em;transition:color .15s}
+.nav-link:hover{color:var(--text)}
+.nav-cta{background:var(--accent);color:#000;padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;transition:all .15s}
+.nav-cta:hover{background:var(--accent2)}
+
+.page{max-width:1200px;margin:0 auto;padding:32px 24px 100px;position:relative;z-index:1}
+.header{display:flex;align-items:center;gap:16px;margin-bottom:32px}
+.btn-back{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);text-decoration:none;letter-spacing:.04em;padding:8px 14px;border:1px solid var(--border);border-radius:var(--r);transition:all .15s}
+.btn-back:hover{border-color:var(--accent);color:var(--accent)}
+.page-title{font-family:var(--display);font-size:48px;letter-spacing:.02em;line-height:1}
+.pro-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);color:var(--accent);padding:4px 12px;border-radius:40px;font-size:10px;font-weight:700;letter-spacing:.1em;margin-left:12px;vertical-align:middle}
+
+.sl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:10px;margin:32px 0 16px}
+.sl::after{content:'';flex:1;height:1px;background:var(--border)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:24px;margin-bottom:16px}
+
+/* Minimaps grid */
+.minimaps{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.minimap-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:12px;text-align:center}
+.minimap-card canvas{width:200px;height:200px;border-radius:4px;background:#0a0a0a}
+.minimap-name{font-size:11px;color:var(--text2);margin-top:8px;letter-spacing:.04em}
+.minimap-team{font-size:9px;letter-spacing:.08em;margin-top:2px}
+.minimap-team.ct{color:var(--ct)}
+.minimap-team.t{color:var(--t)}
+
+/* Duels table */
+.duels-table{width:100%;border-collapse:collapse}
+.duels-table th{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 12px;text-align:left;border-bottom:2px solid var(--border)}
+.duels-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:11px}
+.duels-table tr:hover td{background:rgba(255,255,255,.015)}
+.wr-bar{display:inline-block;height:4px;border-radius:2px;vertical-align:middle;margin-left:6px}
+
+/* Performance chart */
+.perf-canvas-wrap{position:relative;width:100%;height:200px}
+.perf-canvas-wrap canvas{width:100%;height:100%}
+
+/* Clutch cards */
+.clutch-list{display:grid;gap:10px}
+.clutch-card{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:14px 18px}
+.clutch-round{font-family:var(--display);font-size:22px;color:var(--accent);min-width:50px}
+.clutch-info{flex:1}
+.clutch-player{font-size:12px;font-weight:700;margin-bottom:2px}
+.clutch-detail{font-size:10px;color:var(--text3);letter-spacing:.04em}
+.clutch-result{font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px}
+.clutch-result.win{background:rgba(45,212,160,.1);color:var(--success)}
+.clutch-result.loss{background:rgba(255,68,68,.1);color:var(--danger)}
+
+/* Overlay */
+.pro-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}
+.pro-overlay-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:40px 32px;max-width:440px;width:90%;text-align:center}
+.pro-overlay-title{font-family:var(--display);font-size:24px;letter-spacing:.02em;margin-bottom:12px}
+.pro-overlay-sub{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:22px}
+.pro-overlay-btn{display:inline-block;background:var(--accent);color:#000;padding:10px 24px;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em}
+
+/* Empty */
+.empty-msg{text-align:center;padding:32px;font-size:11px;color:var(--text3)}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
+  <div class="nav-right">
+    <a href="demo.html" class="nav-link">Analyser</a>
+    <a href="account.html" class="nav-cta">Mon espace</a>
+  </div>
+</nav>
+
+<!-- Pro overlay (hidden by default) -->
+<div class="pro-overlay" id="proOverlay" style="display:none">
+  <div class="pro-overlay-box">
+    <div class="pro-overlay-title">Analyse Pro</div>
+    <div class="pro-tag" style="margin:0 auto 16px;display:inline-flex">PRO</div>
+    <p class="pro-overlay-sub">
+      L'analyse avancee est reservee aux abonnes Pro et Team.<br>
+      Positionnement individuel, duels, clutchs et performance par round.
+    </p>
+    <a href="index.html#pricing" class="pro-overlay-btn">Passer a Pro</a>
+    <div style="margin-top:14px"><a href="heatmap-results.html" style="color:var(--text3);font-size:11px;text-decoration:none">Retour aux resultats</a></div>
+  </div>
+</div>
+
+<div class="page" id="mainPage" style="display:none">
+  <div class="header">
+    <a href="heatmap-results.html" class="btn-back">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Retour
+    </a>
+    <div>
+      <span class="page-title">ANALYSE PRO</span>
+      <span class="pro-tag">PRO</span>
+    </div>
+  </div>
+
+  <!-- POSITIONNEMENT PAR JOUEUR -->
+  <div class="sl">Positionnement par joueur</div>
+  <div class="card">
+    <div class="minimaps" id="minimapsGrid"></div>
+  </div>
+
+  <!-- DUELS -->
+  <div class="sl">Duels directs</div>
+  <div class="card" id="duelsCard">
+    <div class="empty-msg">Chargement...</div>
+  </div>
+
+  <!-- PERFORMANCE PAR ROUND -->
+  <div class="sl">Performance par round</div>
+  <div class="card">
+    <div class="perf-canvas-wrap">
+      <canvas id="perfCanvas"></canvas>
+    </div>
+  </div>
+
+  <!-- CLUTCHS -->
+  <div class="sl">Clutchs</div>
+  <div class="card" id="clutchCard">
+    <div class="empty-msg">Chargement...</div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── MAP CONFIG (same as replay.html) ──
+const MAP_CONFIG = {
+  'de_dust2':   { img:'maps/de_dust2_radar_psd.png',   posX:-2476, posY:3239,  scale:4.4  },
+  'de_mirage':  { img:'maps/de_mirage_radar_psd.png',  posX:-3230, posY:1713,  scale:5.0  },
+  'de_inferno': { img:'maps/de_inferno_radar_psd.png', posX:-2087, posY:3870,  scale:4.9  },
+  'de_anubis':  { img:'maps/de_anubis_radar_psd.png',  posX:-2796, posY:3328,  scale:5.22 },
+  'de_nuke': {
+    upper: { img:'maps/nuke/de_nuke_radar_psd.png',       posX:-3453, posY:2887, scale:7.0 },
+    lower: { img:'maps/nuke/de_nuke_lower_radar_psd.png', posX:-3453, posY:2887, scale:7.0 },
+  },
+  'de_ancient':  { img:'maps/de_ancient_radar_psd.png',  posX:-2953, posY:2164, scale:5.0 },
+  'de_overpass': { img:'maps/de_overpass_radar_psd.png', posX:-4831, posY:1781, scale:5.2 },
+  'de_vertigo':  { img:'maps/de_vertigo_radar_psd.png', posX:-3168, posY:1762, scale:4.0  },
+};
+
+let demoData = null;
+let mapName = 'de_dust2';
+
+function w2c(worldX, worldY, size) {
+  const cfg = MAP_CONFIG[mapName];
+  if (!cfg) return { x: size/2, y: size/2 };
+  const c = cfg.upper ? cfg.upper : cfg;
+  const fullX = (worldX - c.posX) / c.scale;
+  const fullY = (c.posY - worldY) / c.scale;
+  const ratio = size / 1024;
+  return { x: fullX * ratio, y: fullY * ratio };
+}
+
+function expandPositions(pos) {
+  if (!pos || typeof pos !== 'object') return pos;
+  const sample = Object.values(pos)[0];
+  if (!sample || !sample.length) return pos;
+  if (sample[0].tick !== undefined) return pos;
+  if (sample[0].k === undefined) return pos;
+  Object.keys(pos).forEach(name => {
+    pos[name] = pos[name].map(p => ({
+      x: p.x, y: p.y,
+      team: p.t ?? 0,
+      round: p.r ?? 0,
+      tick: p.k ?? 0,
+      hp: p.h ?? 100,
+    }));
+  });
+  return pos;
+}
+
+function expandKills(kills) {
+  if (!kills || !kills.length) return kills;
+  if (kills[0].attacker !== undefined) return kills;
+  return kills.map(k => ({
+    round: k.r ?? 0, tick: k.t ?? 0,
+    attacker: k.a || 'Unknown', attackerTeam: k.at ?? 0,
+    victim: k.v || 'Unknown', victimTeam: k.vt ?? 0,
+    weapon: k.w || '', isHeadshot: !!k.h,
+  }));
+}
+
+// ── PRO GATING ──
+async function checkAccess() {
+  try {
+    const { data:{ session } } = await _sb.auth.getSession();
+    if (!session) return false;
+    const res = await fetch('/api/check-subscription', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+    });
+    if (res.ok) {
+      const d = await res.json();
+      if (d.plan === 'pro' || d.plan === 'team') return true;
+    }
+    return false;
+  } catch (_) { return true; }
+}
+
+// ── INIT ──
+async function init() {
+  const hasAccess = await checkAccess();
+  if (!hasAccess) {
+    document.getElementById('proOverlay').style.display = 'flex';
+    return;
+  }
+
+  const raw = sessionStorage.getItem('demoData');
+  if (!raw) {
+    document.getElementById('mainPage').innerHTML = '<div class="empty-msg" style="padding:60px">Aucune donnee. Analyse une demo d\'abord.</div>';
+    document.getElementById('mainPage').style.display = 'block';
+    return;
+  }
+
+  demoData = JSON.parse(raw);
+  if (demoData.positions) demoData.positions = expandPositions(demoData.positions);
+  if (demoData.kills) demoData.kills = expandKills(demoData.kills);
+  mapName = (demoData.meta?.map || 'de_dust2').toLowerCase().replace(/^.*\//, '').trim();
+
+  document.getElementById('mainPage').style.display = 'block';
+
+  renderMinimaps();
+  renderDuels();
+  renderPerformance();
+  renderClutchs();
+}
+
+// ── SECTION 1: MINIMAPS ──
+function renderMinimaps() {
+  const positions = demoData.positions || {};
+  const grid = document.getElementById('minimapsGrid');
+  const players = Object.keys(positions);
+
+  if (!players.length) {
+    grid.innerHTML = '<div class="empty-msg">Aucune position disponible</div>';
+    return;
+  }
+
+  const mapImgSrc = MAP_CONFIG[mapName]?.img || MAP_CONFIG[mapName]?.upper?.img || '';
+
+  players.forEach(name => {
+    const pts = positions[name];
+    if (!pts || !pts.length) return;
+
+    const team = pts[0].team;
+    const teamLabel = team === 3 ? 'CT' : team === 2 ? 'T' : '?';
+    const teamClass = team === 3 ? 'ct' : 't';
+
+    const card = document.createElement('div');
+    card.className = 'minimap-card';
+
+    const cvs = document.createElement('canvas');
+    cvs.width = 200; cvs.height = 200;
+    card.appendChild(cvs);
+
+    const lbl = document.createElement('div');
+    lbl.className = 'minimap-name';
+    lbl.textContent = name;
+    card.appendChild(lbl);
+
+    const tl = document.createElement('div');
+    tl.className = 'minimap-team ' + teamClass;
+    tl.textContent = teamLabel;
+    card.appendChild(tl);
+
+    grid.appendChild(card);
+
+    // Draw
+    const ctx = cvs.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, 200, 200);
+      ctx.globalAlpha = 0.7;
+      const color = team === 3 ? '#5b8dd9' : '#e8a838';
+      pts.forEach(p => {
+        const { x, y } = w2c(p.x, p.y, 200);
+        if (x >= 0 && x <= 200 && y >= 0 && y <= 200) {
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+      ctx.globalAlpha = 1;
+    };
+    img.onerror = () => {
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, 200, 200);
+      const color = team === 3 ? '#5b8dd9' : '#e8a838';
+      pts.forEach(p => {
+        const { x, y } = w2c(p.x, p.y, 200);
+        if (x >= 0 && x <= 200 && y >= 0 && y <= 200) {
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    };
+    if (mapImgSrc) img.src = mapImgSrc;
+    else img.onerror();
+  });
+}
+
+// ── SECTION 2: DUELS ──
+function renderDuels() {
+  const kills = demoData.kills || [];
+  const card = document.getElementById('duelsCard');
+
+  const duels = {};
+  kills.forEach(k => {
+    if (k.attacker === 'Unknown' || k.victim === 'Unknown') return;
+    const pair = [k.attacker, k.victim].sort().join(' vs ');
+    if (!duels[pair]) duels[pair] = { p1: k.attacker, p2: k.victim, p1k: 0, p2k: 0 };
+    const d = duels[pair];
+    // Normalize: sorted order means p1 < p2 alphabetically
+    const sorted = [k.attacker, k.victim].sort();
+    if (k.attacker === sorted[0]) d.p1k++;
+    else d.p2k++;
+    d.p1 = sorted[0];
+    d.p2 = sorted[1];
+  });
+
+  const entries = Object.values(duels).filter(d => (d.p1k + d.p2k) >= 2).sort((a, b) => (b.p1k + b.p2k) - (a.p1k + a.p2k));
+
+  if (!entries.length) {
+    card.innerHTML = '<div class="empty-msg">Pas assez de confrontations directes (minimum 2)</div>';
+    return;
+  }
+
+  let html = '<table class="duels-table"><thead><tr><th>Joueur 1</th><th>Joueur 2</th><th>Kills</th><th>Deaths</th><th>Win rate</th></tr></thead><tbody>';
+  entries.forEach(d => {
+    const total = d.p1k + d.p2k;
+    const wr = total > 0 ? Math.round((d.p1k / total) * 100) : 50;
+    const wrColor = wr >= 60 ? 'var(--success)' : wr >= 40 ? 'var(--gold)' : 'var(--danger)';
+    html += '<tr>';
+    html += '<td>' + d.p1 + '</td>';
+    html += '<td>' + d.p2 + '</td>';
+    html += '<td style="font-family:var(--display);font-size:14px">' + d.p1k + '</td>';
+    html += '<td style="font-family:var(--display);font-size:14px">' + d.p2k + '</td>';
+    html += '<td><span style="color:' + wrColor + ';font-weight:700">' + wr + '%</span><span class="wr-bar" style="width:' + wr + 'px;background:' + wrColor + '"></span></td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  card.innerHTML = html;
+}
+
+// ── SECTION 3: PERFORMANCE PAR ROUND ──
+function renderPerformance() {
+  const kills = demoData.kills || [];
+  const rounds = demoData.rounds || [];
+  const target = demoData.meta?.targetPlayer;
+  const stats = demoData.playerStats || [];
+  const mainPlayer = target || (stats.length ? stats.sort((a, b) => b.kills - a.kills)[0]?.name : null);
+
+  const canvas = document.getElementById('perfCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const numRounds = rounds.filter(r => !r.isKnife).length || 1;
+  const killsByRound = {};
+  kills.forEach(k => {
+    if (k.attacker === mainPlayer) {
+      killsByRound[k.round] = (killsByRound[k.round] || 0) + 1;
+    }
+  });
+
+  const W = canvas.parentElement.offsetWidth;
+  const H = 200;
+  canvas.width = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  const pad = { t: 24, r: 8, b: 28, l: 8 };
+  const cW = W - pad.l - pad.r;
+  const cH = H - pad.t - pad.b;
+  const maxK = Math.max(5, ...Object.values(killsByRound));
+  const barW = Math.max(4, Math.min(20, (cW / numRounds) - 2));
+
+  // Title
+  ctx.font = "700 10px 'Space Mono'";
+  ctx.fillStyle = '#4a5050';
+  ctx.textAlign = 'left';
+  ctx.fillText(mainPlayer ? mainPlayer : 'Joueur principal', pad.l, 14);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(28,30,30,.6)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= maxK; i++) {
+    const y = pad.t + cH - (i / maxK) * cH;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
+  }
+
+  // Bars
+  for (let r = 1; r <= numRounds; r++) {
+    const k = killsByRound[r] || 0;
+    const x = pad.l + ((r - 0.5) / numRounds) * cW;
+    const barH = (k / maxK) * cH;
+    const y = pad.t + cH - barH;
+
+    ctx.fillStyle = k >= 2 ? '#b8ff57' : k === 1 ? '#e8a838' : '#333';
+    ctx.beginPath();
+    ctx.roundRect(x - barW / 2, y, barW, barH, [2, 2, 0, 0]);
+    ctx.fill();
+
+    // Kill count label
+    if (k > 0) {
+      ctx.font = "700 10px 'Space Mono'";
+      ctx.fillStyle = '#e8eaea';
+      ctx.textAlign = 'center';
+      ctx.fillText(k, x, y - 4);
+    }
+
+    // Round number
+    if (numRounds <= 30 || r % 2 === 1) {
+      ctx.font = "8px 'Space Mono'";
+      ctx.fillStyle = '#4a5050';
+      ctx.textAlign = 'center';
+      ctx.fillText(r, x, H - 8);
+    }
+  }
+}
+
+// ── SECTION 4: CLUTCHS ──
+function renderClutchs() {
+  const kills = demoData.kills || [];
+  const rounds = demoData.rounds || [];
+  const card = document.getElementById('clutchCard');
+
+  // Group kills by round and player
+  const roundKills = {};
+  kills.forEach(k => {
+    if (k.attacker === 'Unknown') return;
+    const key = k.round + ':' + k.attacker;
+    if (!roundKills[key]) roundKills[key] = { player: k.attacker, round: k.round, kills: 0, team: k.attackerTeam };
+    roundKills[key].kills++;
+  });
+
+  // Clutch = 3+ kills in a single round by one player
+  const clutchs = Object.values(roundKills)
+    .filter(c => c.kills >= 3)
+    .sort((a, b) => b.kills - a.kills || a.round - b.round);
+
+  if (!clutchs.length) {
+    card.innerHTML = '<div class="empty-msg">Aucun clutch detecte (3+ kills dans un round)</div>';
+    return;
+  }
+
+  let html = '<div class="clutch-list">';
+  clutchs.forEach(c => {
+    const rndData = rounds.find(r => r.round === c.round);
+    const won = rndData ? rndData.winner === c.team : null;
+    const resultClass = won === true ? 'win' : won === false ? 'loss' : '';
+    const resultText = won === true ? 'Victoire' : won === false ? 'Defaite' : '?';
+
+    html += '<div class="clutch-card">';
+    html += '<div class="clutch-round">R' + c.round + '</div>';
+    html += '<div class="clutch-info">';
+    html += '<div class="clutch-player">' + c.player + '</div>';
+    html += '<div class="clutch-detail">' + c.kills + ' kills' + (c.team === 3 ? ' (CT)' : c.team === 2 ? ' (T)' : '') + '</div>';
+    html += '</div>';
+    html += '<span class="clutch-result ' + resultClass + '">' + resultText + '</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  card.innerHTML = html;
+}
+
+init();
+</script>
+</body>
+</html>

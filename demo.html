@@ -43,7 +43,7 @@ body::before{
   pointer-events:none;z-index:0;opacity:.4
 }
 
-/* NAV — identique landing */
+/* NAV  - identique landing */
 nav{
   position:fixed;top:0;left:0;right:0;z-index:100;
   display:flex;align-items:center;justify-content:space-between;
@@ -141,7 +141,7 @@ nav{
   gap:8px
 }
 
-/* SECTION LABEL — identique landing */
+/* SECTION LABEL  - identique landing */
 .section-label{
   font-size:10px;letter-spacing:.16em;text-transform:uppercase;
   color:var(--text3);display:flex;align-items:center;gap:10px;
@@ -270,7 +270,7 @@ nav{
 .ps.done .ps-dot{background:var(--success)}
 .ps.active .ps-dot{background:var(--accent);animation:pulse 1s infinite}
 
-/* STATS ROW — comme hero-stats de la landing */
+/* STATS ROW  - comme hero-stats de la landing */
 .stats-row{
   display:grid;grid-template-columns:repeat(3,1fr);
   border:1px solid var(--border);border-radius:var(--radius);
@@ -652,7 +652,7 @@ async function startAnalysis() {
     const res = await fetch(PARSER_URL + '/parse', { method:'POST', body:fd, signal: controller.signal });
     clearTimeout(timeout);
 
-    // Fetch terminé — annuler les timers et finir proprement
+    // Fetch terminé  - annuler les timers et finir proprement
     timers.forEach(t => clearTimeout(t));
 
     if (!res.ok) { const e = await res.json().catch(()=>({error:'Erreur serveur'})); throw new Error(e.error||'Erreur serveur'); }

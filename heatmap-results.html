@@ -427,6 +427,10 @@
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       Partager
     </button>
+    <button onclick="window.location.href='analysis.html'" style="background:#b8ff57;color:#000;font-family:'Space Mono',monospace;font-size:12px;padding:7px 14px;border:none;cursor:pointer;font-weight:700;border-radius:6px;margin-left:8px;display:inline-flex;align-items:center;gap:6px">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      ANALYSE PRO
+    </button>
   </div>
 
   <!-- HIGHLIGHTS DU MATCH -->
@@ -437,7 +441,7 @@
 
   <!-- GRAPHIQUE PERFORMANCE -->
   <div class="perf-chart" id="perfChart" style="display:none">
-    <div class="perf-chart-title">Performance — FV Rating</div>
+    <div class="perf-chart-title">Performance  - FV Rating</div>
     <div id="perfBars"></div>
   </div>
 
@@ -1060,11 +1064,11 @@ function renderMatchStats() {
       if (!rKills.length) return;
       // Dernier kill du round = tick max
       const lastKill = rKills.reduce((a,b) => (a.tick||0)>=(b.tick||0)?a:b);
-      // CS2 : team_num CT=3, T=2 — l'attaquant du dernier kill a gagné
+      // CS2 : team_num CT=3, T=2  - l'attaquant du dernier kill a gagné
       if (lastKill.attackerTeam === 3) ctWins++;      // CT gagne
       else if (lastKill.attackerTeam === 2) tWins++;  // T gagne
     });
-    console.log('[FragValue] Wins déduits des kills — CT:', ctWins, 'T:', tWins);
+    console.log('[FragValue] Wins déduits des kills  - CT:', ctWins, 'T:', tWins);
   }
   console.log('[FragValue] Rounds winner vals:', winnerVals, '| CT wins:', ctWins, '| T wins:', tWins);
 
@@ -1122,11 +1126,11 @@ function renderMatchStats() {
         <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="var(--success)" stroke-width="1.5"><path d="M10 2l1.8 4.9H17l-4.1 3 1.6 4.9L10 12l-4.5 2.8 1.6-4.9L3 7h5.2z" stroke-linejoin="round"/></svg>
         <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--success)">VICTOIRE</span>
         <span style="font-size:14px;font-weight:700;color:${winner.color}">${winner.name}</span>
-        <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto">${ctWins} — ${tWins}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto">${ctWins}  - ${tWins}</span>
       </div>`
     : `<div style="display:flex;align-items:center;gap:10px;background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.2);border-radius:10px;padding:12px 20px;margin-bottom:12px">
         <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent)">ÉGALITÉ</span>
-        <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto">${ctWins} — ${tWins}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto">${ctWins}  - ${tWins}</span>
       </div>`;
   const el = document.getElementById('matchStatsBlock');
   if (el) el.innerHTML = winnerBanner + teamBlock(2, ctNames, '#4A9EFF', ctWins) + teamBlock(3, tNames, '#F5C842', tWins);
@@ -1302,7 +1306,7 @@ function drawReplayFrame(idx){
   else{ctx.fillStyle='#0A0C12';ctx.fillRect(0,0,W,H);}
   ctx.fillStyle='rgba(12,14,19,.85)';ctx.fillRect(8,8,180,26);
   ctx.fillStyle='#EDF0F7';ctx.font='500 11px JetBrains Mono,monospace';ctx.textAlign='left';
-  ctx.fillText(`REPLAY — Round ${replayRound}`,14,25);
+  ctx.fillText(`REPLAY  - Round ${replayRound}`,14,25);
   frame.deaths.forEach(d=>{
     const{px,py}=w2c(d.x,d.y,mapName,W,H);if(!inBounds(px,py,W,H))return;
     ctx.strokeStyle='rgba(240,107,107,.7)';ctx.lineWidth=2;
@@ -1587,7 +1591,7 @@ function rfDrawEffects(frame, W, H) {
     rfCtx.fillStyle=`rgba(255,240,120,${alpha})`; rfCtx.fill();
   });
 
-  // Kills — trait vers la victime (priorité visuelle)
+  // Kills  - trait vers la victime (priorité visuelle)
   const SHOT_DUR_K = 5;
   (demoData.kills||[]).forEach(k => {
     const kt = k.tick||0;
