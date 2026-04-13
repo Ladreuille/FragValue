@@ -469,12 +469,40 @@ function expandKills(kills) {
   }));
 }
 
+// ══ EXPAND COMPACT POSITIONS ═════════════════════════════════════════════════
+// Parser sends positions with compact field names to fit sessionStorage 5MB limit
+// t=team, r=round, k=tick, h=hp, w=weapon, a=armor, he=hasHelmet, d=hasDefuser, m=money
+function expandPositions(pos) {
+  if (!pos || typeof pos !== 'object') return pos;
+  const sample = Object.values(pos)[0];
+  if (!sample || !sample.length) return pos;
+  // Detect compact format: has 'k' (tick) field instead of 'tick'
+  if (sample[0].tick !== undefined) return pos; // already expanded
+  if (sample[0].k === undefined) return pos; // unknown format
+  Object.keys(pos).forEach(name => {
+    pos[name] = pos[name].map(p => ({
+      x: p.x, y: p.y,
+      team: p.t ?? 0,
+      round: p.r ?? 0,
+      tick: p.k ?? 0,
+      hp: p.h ?? 100,
+      weapon: p.w || null,
+      armor: p.a ?? 0,
+      hasHelmet: !!p.he,
+      hasDefuser: !!p.d,
+      money: p.m ?? 0,
+    }));
+  });
+  return pos;
+}
+
 // ══ INIT ═════════════════════════════════════════════════════════════════════
 window.addEventListener('load', () => {
   const raw = sessionStorage.getItem('demoData');
   if (!raw) { document.getElementById('noData').style.display = 'flex'; return; }
   try {
     demoData = JSON.parse(raw);
+    if (demoData.positions) demoData.positions = expandPositions(demoData.positions);
     if (demoData.kills) demoData.kills = expandKills(demoData.kills);
     document.getElementById('appShell').style.display = 'flex';
     assignColors();

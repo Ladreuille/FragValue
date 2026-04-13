@@ -601,7 +601,23 @@ async function startAnalysis() {
     try {
       sessionStorage.setItem('demoData', JSON.stringify(data.data));
     } catch(e) {
-      sessionStorage.setItem('demoData', JSON.stringify({...data.data, positions:{}}));
+      console.warn('sessionStorage full, stripping equipment fields from positions...');
+      // Strip equipment fields to reduce size, keep only x,y,t,r,k,h (or full names)
+      const stripped = {...data.data};
+      if (stripped.positions && typeof stripped.positions === 'object') {
+        Object.keys(stripped.positions).forEach(name => {
+          stripped.positions[name] = stripped.positions[name].map(p => ({
+            x: p.x, y: p.y,
+            t: p.t ?? p.team, r: p.r ?? p.round, k: p.k ?? p.tick, h: p.h ?? p.hp,
+          }));
+        });
+      }
+      try {
+        sessionStorage.setItem('demoData', JSON.stringify(stripped));
+      } catch(e2) {
+        console.warn('Still too large, dropping positions entirely');
+        sessionStorage.setItem('demoData', JSON.stringify({...data.data, positions:{}}));
+      }
     }
     await saveDemoAnalysis(data.data);
 
