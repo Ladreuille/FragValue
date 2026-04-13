@@ -35,7 +35,9 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
 /* PROFILE BAR */
 .profile-bar{display:flex;align-items:center;gap:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:20px 28px;margin-bottom:24px;opacity:0;animation:up .4s .05s ease forwards}
-.avatar{width:52px;height:52px;border-radius:50%;background:rgba(184,255,87,.08);border:1.5px solid rgba(184,255,87,.2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:22px;color:var(--accent);flex-shrink:0}
+.avatar{width:52px;height:52px;border-radius:50%;background:rgba(184,255,87,.08);border:1.5px solid rgba(184,255,87,.2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:22px;color:var(--accent);flex-shrink:0;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.faceit-elo-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:4px 10px;border-radius:40px;background:rgba(255,85,0,.08);border:1px solid rgba(255,85,0,.18);color:#ff5500;letter-spacing:.06em;margin-left:8px}
 .profile-text{flex:1}
 .profile-name{font-family:var(--display);font-size:22px;letter-spacing:.02em;line-height:1;margin-bottom:4px}
 .profile-meta{font-size:10px;color:var(--text3);letter-spacing:.05em}
@@ -131,12 +133,12 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   </div>
 
   <!-- KPIs -->
-  <div class="kpi-row">
-    <div class="kpi"><div class="kpi-val g" id="k1">—</div><div class="kpi-lbl">Démos analysées</div></div>
+  <div class="kpi-row" id="kpiRow">
+    <div class="kpi"><div class="kpi-val g" id="k1">—</div><div class="kpi-lbl">Demos analysees</div></div>
     <div class="kpi"><div class="kpi-val g" id="k2">—</div><div class="kpi-lbl">FV Rating moyen</div><div class="kpi-sub ne" id="k2t"></div></div>
-    <div class="kpi"><div class="kpi-val" id="k3">—</div><div class="kpi-lbl">Rounds joués</div></div>
+    <div class="kpi"><div class="kpi-val" id="k3">—</div><div class="kpi-lbl">Rounds joues</div></div>
     <div class="kpi"><div class="kpi-val go" id="k4">—</div><div class="kpi-lbl">Kills totaux</div></div>
-    <div class="kpi"><div class="kpi-val s" id="k5">—</div><div class="kpi-lbl">Maps jouées</div></div>
+    <div class="kpi"><div class="kpi-val s" id="k5">—</div><div class="kpi-lbl">Maps jouees</div></div>
   </div>
 
   <!-- GRID -->
@@ -193,12 +195,51 @@ async function init() {
 
   const u = session.user;
   const email = u.email || '';
-  const name  = u.user_metadata?.full_name || u.user_metadata?.name || email.split('@')[0];
   const since = new Date(u.created_at).toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
 
-  document.getElementById('avatarEl').textContent   = email.charAt(0).toUpperCase();
-  document.getElementById('profileName').textContent = name;
-  document.getElementById('profileMeta').textContent = email + ' · Membre depuis ' + since;
+  // Query profiles table for FACEIT data
+  const { data: profile } = await _sb.from('profiles').select('faceit_nickname, faceit_id, faceit_avatar, faceit_elo, faceit_level').eq('id', u.id).single();
+  const faceitNick = profile?.faceit_nickname;
+  const displayName = faceitNick || u.user_metadata?.full_name || u.user_metadata?.name || email.split('@')[0];
+
+  // Avatar: FACEIT image or initial letter
+  const avatarEl = document.getElementById('avatarEl');
+  if (profile?.faceit_avatar) {
+    avatarEl.innerHTML = '<img src="' + profile.faceit_avatar + '" alt="' + displayName + '"/>';
+  } else {
+    avatarEl.textContent = displayName.charAt(0).toUpperCase();
+  }
+
+  document.getElementById('profileName').textContent = displayName;
+  document.getElementById('profileMeta').textContent = (faceitNick ? 'FACEIT · ' + faceitNick + ' · ' : email + ' · ') + 'Membre depuis ' + since;
+
+  // Fetch live FACEIT ELO if nickname exists
+  let faceitElo = profile?.faceit_elo || null;
+  let faceitLevel = profile?.faceit_level || null;
+  if (faceitNick) {
+    try {
+      const fRes = await fetch('/api/faceit-profile?nickname=' + encodeURIComponent(faceitNick));
+      if (fRes.ok) {
+        const fData = await fRes.json();
+        faceitElo = fData.elo || faceitElo;
+        faceitLevel = fData.level || faceitLevel;
+        // Update avatar if newer
+        if (fData.avatar && !profile?.faceit_avatar) {
+          avatarEl.innerHTML = '<img src="' + fData.avatar + '" alt="' + displayName + '"/>';
+        }
+      }
+    } catch (e) { /* non critique */ }
+  }
+
+  // Add FACEIT ELO KPI if available
+  if (faceitElo) {
+    const kpiRow = document.getElementById('kpiRow');
+    kpiRow.style.gridTemplateColumns = 'repeat(6, 1fr)';
+    const eloKpi = document.createElement('div');
+    eloKpi.className = 'kpi';
+    eloKpi.innerHTML = '<div class="kpi-val" style="color:#ff5500">' + faceitElo + '</div><div class="kpi-lbl">FACEIT ELO</div>' + (faceitLevel ? '<div class="kpi-sub" style="color:#ff5500">Lvl ' + faceitLevel + '</div>' : '');
+    kpiRow.appendChild(eloKpi);
+  }
 
   const { data: demos } = await _sb.from('demos')
     .select('*').eq('user_id', u.id)

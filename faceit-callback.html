@@ -107,6 +107,9 @@ async function linkFaceitToProfile(userId, data) {
       id: userId,
       faceit_nickname: data.nickname,
       faceit_id: data.playerId,
+      faceit_avatar: data.avatar || null,
+      faceit_elo: data.elo || null,
+      faceit_level: data.level || null,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'id' });
   } catch (e) {

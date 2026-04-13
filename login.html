@@ -216,6 +216,9 @@ async function linkPendingFaceit(userId) {
       id: userId,
       faceit_nickname: faceit.nickname,
       faceit_id: faceit.playerId,
+      faceit_avatar: faceit.avatar || null,
+      faceit_elo: faceit.elo || null,
+      faceit_level: faceit.level || null,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'id' });
     sessionStorage.removeItem('pending_faceit_link');
@@ -295,7 +298,27 @@ function hideMsg() { document.getElementById('msgBox').style.display = 'none'; }
 
 // ── FACEIT OAuth PKCE ──────────────────────────────────────────
 async function loginFaceit() {
-  const FACEIT_CLIENT_ID = 'f18c7a0e-7b4e-4b8f-b4a7-5e0e6a4e2a1f';
+  const btn = document.querySelector('.faceit-btn');
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+
+  // Fetch the public FACEIT Client ID from server env
+  let FACEIT_CLIENT_ID;
+  try {
+    const cfgRes = await fetch('/api/faceit-config');
+    const cfg = await cfgRes.json();
+    if (!cfgRes.ok || !cfg.client_id) {
+      showMsg(cfg.error || 'FACEIT non disponible.', 'error');
+      btn.disabled = false; btn.style.opacity = '';
+      return;
+    }
+    FACEIT_CLIENT_ID = cfg.client_id;
+  } catch (e) {
+    showMsg('Impossible de contacter le serveur FACEIT.', 'error');
+    btn.disabled = false; btn.style.opacity = '';
+    return;
+  }
+
   const REDIRECT_URI = window.location.origin + '/faceit-callback.html';
 
   // Generate PKCE code verifier + challenge

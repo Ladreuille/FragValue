@@ -487,9 +487,12 @@ nav{
 </div>
 
 <script>
-// En production, passe par le proxy Vercel /api/parse. En local, appel direct au parser.
-const PARSER_URL = window.location.hostname === 'localhost' ? 'https://fragvalue-demo-parser-production.up.railway.app' : '';
+// Upload direct vers Railway (les fichiers .dem font 100-500 MB, trop gros pour le proxy Vercel qui est limite a 4.5 MB)
+const PARSER_URL = 'https://fragvalue-demo-parser-production.up.railway.app';
 let selectedFile = null;
+
+// Pre-warm le serveur Railway des le chargement de la page (evite le cold start)
+fetch(PARSER_URL + '/ping', { method: 'GET', mode: 'cors' }).catch(() => {});
 
 const zone = document.getElementById('uploadZone');
 zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
@@ -575,12 +578,6 @@ async function startAnalysis() {
 
   try {
     go(0, 3, 'Connexion au serveur', 'Initialisation...');
-
-    // Ping pour réveiller le serveur avant l'upload
-    try {
-      await fetch(PARSER_URL + '/ping', { method:'GET', mode:'cors' });
-    } catch(e) { /* ignoré si offline, l'upload tentera quand même */ }
-
     go(0, 6, 'Envoi du fichier', selectedFile.name);
     const fd = new FormData();
     fd.append('demo', selectedFile);

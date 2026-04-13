@@ -4,14 +4,6 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-const PLANS = {
-  pro_monthly:  process.env.STRIPE_PRICE_PRO_MONTHLY,
-  pro_yearly:   process.env.STRIPE_PRICE_PRO_YEARLY,
-  team_monthly: process.env.STRIPE_PRICE_TEAM_MONTHLY,
-};
-
 export default async function handler(req, res) {
   // CORS
   const allowedOrigins = ['https://frag-value.vercel.app', 'http://localhost:3456'];
@@ -24,9 +16,28 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Validate env vars before doing anything
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(503).json({ error: 'Stripe non configure. Ajoute STRIPE_SECRET_KEY dans les variables Vercel.' });
+  }
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    return res.status(503).json({ error: 'Supabase non configure. Ajoute SUPABASE_URL et SUPABASE_SERVICE_KEY dans les variables Vercel.' });
+  }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+  const PLANS = {
+    pro_monthly:  process.env.STRIPE_PRICE_PRO_MONTHLY,
+    pro_yearly:   process.env.STRIPE_PRICE_PRO_YEARLY,
+    team_monthly: process.env.STRIPE_PRICE_TEAM_MONTHLY,
+  };
+
   const { plan, token } = req.body;
-  if (!plan || !PLANS[plan]) {
+  if (!plan || !(plan in PLANS)) {
     return res.status(400).json({ error: 'Plan invalide. Valeurs: pro_monthly, pro_yearly, team_monthly' });
+  }
+  if (!PLANS[plan]) {
+    return res.status(503).json({ error: `Prix Stripe non configure pour "${plan}". Ajoute STRIPE_PRICE_* dans les variables Vercel.` });
   }
 
   // Verify Supabase session
