@@ -6,6 +6,7 @@
   <title>FragValue · 2D Demo Replay</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzA4MDkwRCIvPgogIDxyZWN0IHg9IjUiIHk9IjUiIHdpZHRoPSIzLjUiIGhlaWdodD0iMjAiIHJ4PSIxLjUiIGZpbGw9IiMzQjdGRjUiLz4KICA8cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iMTMiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHJlY3QgeD0iNSIgeT0iMTMuNSIgd2lkdGg9IjkiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHBhdGggZD0iTTE1LjUgOC41IEwyMC41IDIzLjUgTDI1LjUgOC41IiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIxNS41IiB5MT0iOC41IiB4Mj0iMjUuNSIgeTI9IjIzLjUiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzNCN0ZGNSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMyREQ0QTAiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgo8L3N2Zz4="/>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -274,6 +275,20 @@
 </head>
 <body>
 
+<!-- Free user overlay (hidden by default, shown via JS if plan=free) -->
+<div id="proOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center">
+  <div style="background:#0f1010;border:1px solid #1c1e1e;border-radius:12px;padding:40px 32px;max-width:440px;width:90%;text-align:center">
+    <div style="font-family:'Anton',sans-serif;font-size:24px;letter-spacing:.02em;margin-bottom:8px;color:#e8eaea">2D Replay</div>
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);color:#b8ff57;padding:4px 12px;border-radius:40px;font-size:10px;font-weight:700;letter-spacing:.1em;margin-bottom:16px">PRO</div>
+    <p style="font-size:11px;color:#7a8080;line-height:1.7;margin-bottom:22px;font-family:'Space Mono',monospace">
+      Le 2D Replay complet est reserve aux abonnes Pro et Team.<br>
+      Rejoue chaque round, analyse les positions et les tirs frame par frame.
+    </p>
+    <a href="index.html#pricing" style="display:inline-block;background:#b8ff57;color:#000;padding:10px 24px;border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">Passer a Pro</a>
+    <div style="margin-top:14px"><a href="heatmap-results.html" style="color:#4a5050;font-size:11px;font-family:'Space Mono',monospace;text-decoration:none">Retour aux resultats</a></div>
+  </div>
+</div>
+
 <!-- No data fallback -->
 <div class="no-data" id="noData" style="display:none">
   <div class="no-data-title">Aucune donnee de replay</div>
@@ -501,8 +516,41 @@ function expandPositions(pos) {
   return pos;
 }
 
+// ══ PRO GATING ═══════════════════════════════════════════════════════════════
+async function checkReplayAccess() {
+  try {
+    if (typeof supabase === 'undefined') return true;
+    const _sb = supabase.createClient(
+      'https://xmyruycvvkmcwysfygcq.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI'
+    );
+    const { data:{ session } } = await _sb.auth.getSession();
+    if (!session) return false; // non connecte = pas d'acces replay
+    const subRes = await fetch('/api/check-subscription', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+    });
+    if (subRes.ok) {
+      const d = await subRes.json();
+      if (d.plan === 'pro' || d.plan === 'team') return true;
+    }
+    return false;
+  } catch (_) { return true; }
+}
+
 // ══ INIT ═════════════════════════════════════════════════════════════════════
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
+  // Check plan gating
+  const hasAccess = await checkReplayAccess();
+  if (!hasAccess) {
+    const ov = document.getElementById('proOverlay');
+    if (ov) ov.style.display = 'flex';
+    return;
+  }
+
   const raw = sessionStorage.getItem('demoData');
   if (!raw) { document.getElementById('noData').style.display = 'flex'; return; }
   try {

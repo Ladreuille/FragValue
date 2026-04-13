@@ -1,0 +1,97 @@
+// api/share-demo.js
+// Cree un lien de partage public pour une demo analysee
+import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', 'https://frag-value.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // GET: recuperer une demo partagee
+  if (req.method === 'GET') {
+    const { id } = req.query;
+    if (!id) return res.status(400).json({ error: 'ID manquant' });
+
+    const { data, error } = await supabase
+      .from('shared_demos')
+      .select('*, demos(*)')
+      .eq('share_id', id)
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: 'Demo non trouvee' });
+
+    // Verifier expiration
+    if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      return res.status(410).json({ error: 'Lien expire' });
+    }
+
+    return res.status(200).json({
+      share_id: data.share_id,
+      demo: data.demos,
+      created_at: data.created_at,
+    });
+  }
+
+  // POST: creer un lien de partage
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'Non authentifie' });
+
+  try {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) return res.status(401).json({ error: 'Token invalide' });
+
+    const { demo_id } = req.body;
+    if (!demo_id) return res.status(400).json({ error: 'demo_id manquant' });
+
+    // Verifier que la demo appartient a l'utilisateur
+    const { data: demo } = await supabase
+      .from('demos')
+      .select('id')
+      .eq('id', demo_id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!demo) return res.status(404).json({ error: 'Demo non trouvee' });
+
+    // Verifier si un lien existe deja
+    const { data: existing } = await supabase
+      .from('shared_demos')
+      .select('share_id')
+      .eq('demo_id', demo_id)
+      .single();
+
+    if (existing) {
+      return res.status(200).json({ share_id: existing.share_id });
+    }
+
+    // Creer le lien
+    const shareId = crypto.randomBytes(8).toString('hex');
+    const { error: insertError } = await supabase
+      .from('shared_demos')
+      .insert({
+        share_id: shareId,
+        demo_id: demo_id,
+        user_id: user.id,
+      });
+
+    if (insertError) {
+      console.error('share insert error:', insertError);
+      return res.status(500).json({ error: 'Erreur creation du lien' });
+    }
+
+    return res.status(200).json({ share_id: shareId });
+  } catch (err) {
+    console.error('share-demo error:', err);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}

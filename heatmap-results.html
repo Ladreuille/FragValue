@@ -419,6 +419,14 @@
       <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
       Voir la 2D Demo
     </button>
+    <button class="export-btn" onclick="exportPDF()" style="width:auto;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;margin-top:0;margin-left:8px">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Export PDF
+    </button>
+    <button class="export-btn" onclick="shareDemo()" style="width:auto;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;margin-top:0;margin-left:4px">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Partager
+    </button>
   </div>
 
   <!-- HIGHLIGHTS DU MATCH -->
@@ -1190,7 +1198,7 @@ function renderSideStats(){
   document.getElementById('sideStatsBar').style.display=activePlayers.size>0?'grid':'none';
 }
 function exportHeatmap(){const link=document.createElement('a');link.download=`fragvalue-${currentHeatmap}-${[...activePlayers].join('-')||'all'}.png`;link.href=canvas.toDataURL('image/png');link.click();}
-function goCompare(){const p=demoData.playerStats||[];if(p.length<2)return alert('Pas assez de joueurs.');window.location.href=`compare.html?${p.slice(0,5).map(x=>`p=${encodeURIComponent(x.name)}`).join('&')}`;}
+function goCompare(){const p=demoData.playerStats||[];if(p.length<2){showShareStatus('Pas assez de joueurs pour comparer.');return;}window.location.href=`compare.html?${p.slice(0,5).map(x=>`p=${encodeURIComponent(x.name)}`).join('&')}`;}
 
 // ══ REPLAY ════════════════════════════════════════════════════════════════════
 function initRoundsBar(){
@@ -1950,6 +1958,112 @@ function rfSeek(e){const rect=document.getElementById('rfTimeline').getBoundingC
 const _sbUrl  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const _sbAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
 
+// ── Export PDF ───────────────────────────────────────────────────
+function exportPDF() {
+  const highlights = document.getElementById('highlightsBlock');
+  const statsBlock = document.getElementById('matchStatsBlock');
+  const perfChart = document.getElementById('perfChart');
+  const meta = demoData?.meta || {};
+
+  const win = window.open('', '_blank');
+  if (!win) return;
+
+  const mapName = (meta.map || '').replace('de_', '');
+  const date = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+    <title>FragValue Report · ${mapName}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{background:#fff;color:#111;font-family:'Space Mono',monospace;padding:40px;max-width:900px;margin:0 auto}
+      .header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:16px;margin-bottom:28px}
+      .header h1{font-family:'Anton',sans-serif;font-size:28px;letter-spacing:.02em}
+      .header .meta{font-size:10px;color:#666;text-align:right;line-height:1.8}
+      h2{font-family:'Anton',sans-serif;font-size:18px;margin:24px 0 12px;letter-spacing:.02em}
+      .block{margin-bottom:24px}
+      table{width:100%;border-collapse:collapse;font-size:11px}
+      th{text-align:left;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#888;padding:8px 6px;border-bottom:2px solid #ddd}
+      td{padding:8px 6px;border-bottom:1px solid #eee}
+      .accent{color:#4a8c00}
+      @media print{body{padding:20px}}
+    </style>
+  </head><body>
+    <div class="header">
+      <h1>FragValue Report</h1>
+      <div class="meta">${mapName ? mapName.toUpperCase() : 'DEMO'}<br>${date}<br>${meta.rounds || '?'} rounds</div>
+    </div>
+    <div class="block">
+      <h2>Highlights</h2>
+      ${highlights ? highlights.innerHTML : ''}
+    </div>
+    <div class="block">
+      <h2>Stats equipe</h2>
+      ${statsBlock ? statsBlock.innerHTML : ''}
+    </div>
+    ${perfChart && perfChart.style.display !== 'none' ? '<div class="block"><h2>Performance FV Rating</h2>' + perfChart.innerHTML + '</div>' : ''}
+    <div style="margin-top:40px;text-align:center;font-size:9px;color:#aaa;border-top:1px solid #ddd;padding-top:12px">
+      Genere par FragValue · frag-value.vercel.app · ${date}
+    </div>
+  </body></html>`);
+  win.document.close();
+  setTimeout(() => { win.print(); }, 400);
+}
+
+// ── Partager la demo ─────────────────────────────────────────────
+async function shareDemo() {
+  const demoId = sessionStorage.getItem('lastDemoId');
+  if (!demoId) {
+    showShareStatus('Aucune demo sauvegardee. Analyse une demo d\'abord.');
+    return;
+  }
+  try {
+    if (typeof supabase === 'undefined') return;
+    const _sbShare = supabase.createClient(_sbUrl, _sbAnon);
+    const { data:{ session } } = await _sbShare.auth.getSession();
+    if (!session) {
+      showShareStatus('Connecte toi pour partager une demo.');
+      return;
+    }
+    const res = await fetch('/api/share-demo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+      body: JSON.stringify({ demo_id: demoId }),
+    });
+    const result = await res.json();
+    if (res.ok && result.share_id) {
+      const url = window.location.origin + '/share/' + result.share_id;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url);
+        showShareStatus('Lien copie : ' + url);
+      } else {
+        showShareStatus(url);
+      }
+    } else {
+      showShareStatus(result.error || 'Erreur lors du partage.');
+    }
+  } catch (e) {
+    showShareStatus('Erreur : ' + e.message);
+  }
+}
+
+function showShareStatus(msg) {
+  let el = document.getElementById('shareStatus');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'shareStatus';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f1010;border:1px solid #252727;color:#e8eaea;font-family:"Space Mono",monospace;font-size:11px;padding:12px 20px;border-radius:8px;z-index:9999;max-width:90%;word-break:break-all';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+// ── Sauvegarde FV Rating dans Supabase ───────────────────────────
 async function saveRatingToSupabase() {
   try {
     const demoId = sessionStorage.getItem('lastDemoId');

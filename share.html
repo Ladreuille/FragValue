@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FragValue · Demo partagee</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;
+  --border:#1c1e1e;--border2:#252727;
+  --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --danger:#ff4444;--success:#2dd4a0;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  --r:6px;--r2:12px
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.nav-logo{font-family:var(--display);font-size:20px;letter-spacing:.04em;color:var(--text);text-decoration:none}
+.nav-logo span{color:var(--accent)}
+.page{max-width:800px;margin:0 auto;padding:40px 24px 80px;position:relative;z-index:1}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:28px 24px;margin-bottom:16px}
+.card-title{font-family:var(--display);font-size:22px;letter-spacing:.02em;margin-bottom:4px}
+.card-sub{font-size:10px;color:var(--text3);letter-spacing:.06em;margin-bottom:20px}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+.kpi{background:var(--surface);padding:16px 12px;text-align:center}
+.kpi-val{font-family:var(--display);font-size:24px;line-height:1;margin-bottom:4px;color:var(--accent)}
+.kpi-lbl{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+.share-tag{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:var(--text3);letter-spacing:.06em;margin-bottom:16px}
+.share-tag svg{color:var(--accent)}
+.map-tag{display:inline-block;font-size:11px;padding:4px 10px;border-radius:4px;background:var(--card);border:1px solid var(--border2);color:var(--text2);letter-spacing:.04em}
+.cta-box{text-align:center;margin-top:32px;padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2)}
+.cta-box p{font-size:11px;color:var(--text2);margin-bottom:16px;line-height:1.7}
+.cta-btn{display:inline-block;background:var(--accent);color:#000;padding:10px 24px;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em}
+.loading{text-align:center;padding:60px 20px}
+.loading .spinner{width:32px;height:32px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
+.error-box{text-align:center;padding:40px 20px;color:var(--danger)}
+.error-box .title{font-family:var(--display);font-size:20px;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
+</nav>
+
+<div class="page">
+  <div id="content">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div style="font-size:11px;color:var(--text3)">Chargement de la demo...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadSharedDemo() {
+  const content = document.getElementById('content');
+  const path = window.location.pathname;
+  const shareId = path.split('/share/')[1] || path.split('/').pop();
+
+  if (!shareId || shareId === 'share.html') {
+    content.innerHTML = '<div class="error-box"><div class="title">Lien invalide</div><p style="font-size:11px;color:var(--text3)">Ce lien de partage n\'est pas valide.</p></div>';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/share-demo?id=' + encodeURIComponent(shareId));
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      if (res.status === 410) {
+        content.innerHTML = '<div class="error-box"><div class="title">Lien expire</div><p style="font-size:11px;color:var(--text3)">Ce lien de partage a expire.</p></div>';
+      } else {
+        content.innerHTML = '<div class="error-box"><div class="title">Demo introuvable</div><p style="font-size:11px;color:var(--text3)">' + (err.error || 'Cette demo n\'existe pas ou a ete supprimee.') + '</p></div>';
+      }
+      return;
+    }
+
+    const data = await res.json();
+    const demo = data.demo || {};
+    const mapName = (demo.map || '').replace('de_', '');
+    const date = demo.analysed_at ? new Date(demo.analysed_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }) : '';
+    const fvr = demo.fv_rating ? demo.fv_rating.toFixed(2) : null;
+
+    content.innerHTML = `
+      <div class="share-tag">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Demo partagee
+      </div>
+
+      <div class="card">
+        <div class="card-title">${mapName ? mapName.toUpperCase() : 'DEMO'}</div>
+        <div class="card-sub">${date}${demo.rounds ? ' · ' + demo.rounds + ' rounds' : ''}</div>
+
+        <div class="kpi-row">
+          <div class="kpi">
+            <div class="kpi-val">${mapName ? '<span class="map-tag">' + mapName + '</span>' : '?'}</div>
+            <div class="kpi-lbl">Map</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-val">${demo.rounds || '?'}</div>
+            <div class="kpi-lbl">Rounds</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-val">${demo.total_kills || '?'}</div>
+            <div class="kpi-lbl">Kills</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-val" style="color:${fvr && fvr >= 1.15 ? 'var(--success)' : fvr && fvr >= 0.9 ? 'var(--accent)' : fvr ? 'var(--danger)' : 'var(--text3)'}">${fvr || '?'}</div>
+            <div class="kpi-lbl">FV Rating</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-box">
+        <p>Analyse tes propres demos CS2 et obtiens ton FV Rating,<br>tes heatmaps et ton 2D Replay personnalise.</p>
+        <a href="demo.html" class="cta-btn">Analyser ma demo</a>
+      </div>
+    `;
+  } catch (e) {
+    content.innerHTML = '<div class="error-box"><div class="title">Erreur</div><p style="font-size:11px;color:var(--text3)">' + e.message + '</p></div>';
+  }
+}
+
+loadSharedDemo();
+</script>
+</body>
+</html>

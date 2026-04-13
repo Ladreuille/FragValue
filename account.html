@@ -134,7 +134,10 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
       <div id="faceitLinkZone"></div>
     </div>
     <div id="faceitBadgeZone"></div>
-    <div class="plan-badge">FREE</div>
+    <div class="plan-badge" id="planBadge">FREE</div>
+    <button class="nav-out" style="font-size:10px;padding:6px 10px;margin-right:4px" onclick="refreshProfile()" id="refreshBtn" title="Actualiser">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    </button>
     <button class="nav-out" onclick="logout()">Déconnexion</button>
   </div>
 
@@ -274,6 +277,32 @@ async function init() {
   if (!faceitNickname) {
     document.getElementById('faceitLinkZone').innerHTML = '<a href="login.html?link_faceit=1" class="btn-link-faceit"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>Lier mon compte FACEIT</a>';
   }
+
+  // Fetch plan from API
+  try {
+    const subRes = await fetch('/api/check-subscription', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+    });
+    if (subRes.ok) {
+      const subData = await subRes.json();
+      const planEl = document.getElementById('planBadge');
+      const pn = (subData.plan || 'free').toUpperCase();
+      planEl.textContent = pn;
+      if (pn === 'PRO') {
+        planEl.style.background = 'rgba(184,255,87,.12)';
+        planEl.style.borderColor = 'rgba(184,255,87,.3)';
+        planEl.style.color = '#b8ff57';
+      } else if (pn === 'TEAM') {
+        planEl.style.background = 'rgba(45,212,160,.1)';
+        planEl.style.borderColor = 'rgba(45,212,160,.25)';
+        planEl.style.color = '#2dd4a0';
+      }
+    }
+  } catch (_) {}
 
   // Add FACEIT ELO KPI if available (accent color #b8ff57)
   if (faceitElo) {
@@ -451,6 +480,15 @@ function renderMiniStats(list) {
   document.getElementById('msFav').textContent=fav;
   document.getElementById('msKPM').textContent=avgK;
   document.getElementById('msRPD').textContent=avgR;
+}
+
+async function refreshProfile() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  btn.style.opacity = '.5';
+  try { await init(); } catch (_) {}
+  btn.disabled = false;
+  btn.style.opacity = '1';
 }
 
 async function logout(){await _sb.auth.signOut();window.location.href='index.html';}
