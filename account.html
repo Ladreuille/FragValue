@@ -35,12 +35,15 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
 /* PROFILE BAR */
 .profile-bar{display:flex;align-items:center;gap:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:20px 28px;margin-bottom:24px;opacity:0;animation:up .4s .05s ease forwards}
-.avatar{width:52px;height:52px;border-radius:50%;background:rgba(184,255,87,.08);border:1.5px solid rgba(184,255,87,.2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:22px;color:var(--accent);flex-shrink:0;overflow:hidden}
+.avatar{width:64px;height:64px;border-radius:50%;background:rgba(184,255,87,.08);border:1.5px solid rgba(184,255,87,.2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:26px;color:var(--accent);flex-shrink:0;overflow:hidden}
 .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.faceit-elo-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:4px 10px;border-radius:40px;background:rgba(255,85,0,.08);border:1px solid rgba(255,85,0,.18);color:#ff5500;letter-spacing:.06em;margin-left:8px}
+.faceit-level-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:4px 10px;border-radius:40px;background:rgba(255,85,0,.08);border:1px solid rgba(255,85,0,.18);color:#ff5500;letter-spacing:.06em}
 .profile-text{flex:1}
 .profile-name{font-family:var(--display);font-size:22px;letter-spacing:.02em;line-height:1;margin-bottom:4px}
+.profile-subtitle{font-size:10px;color:var(--text2);letter-spacing:.05em;margin-bottom:2px}
 .profile-meta{font-size:10px;color:var(--text3);letter-spacing:.05em}
+.btn-link-faceit{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#000;padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.04em;border:none;cursor:pointer;transition:all .15s;margin-top:8px}
+.btn-link-faceit:hover{background:var(--accent2)}
 .plan-badge{font-size:9px;padding:4px 10px;border-radius:40px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);color:var(--accent);letter-spacing:.12em}
 
 /* KPI ROW */
@@ -126,8 +129,11 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <div class="avatar" id="avatarEl">?</div>
     <div class="profile-text">
       <div class="profile-name" id="profileName">Chargement...</div>
+      <div class="profile-subtitle" id="profileSub"></div>
       <div class="profile-meta" id="profileMeta"></div>
+      <div id="faceitLinkZone"></div>
     </div>
+    <div id="faceitBadgeZone"></div>
     <div class="plan-badge">FREE</div>
     <button class="nav-out" onclick="logout()">Déconnexion</button>
   </div>
@@ -202,7 +208,7 @@ async function init() {
   const faceitNick = profile?.faceit_nickname;
   const displayName = faceitNick || u.user_metadata?.full_name || u.user_metadata?.name || email.split('@')[0];
 
-  // Avatar: FACEIT image or initial letter
+  // Avatar: FACEIT image (64px) or initial letter
   const avatarEl = document.getElementById('avatarEl');
   if (profile?.faceit_avatar) {
     avatarEl.innerHTML = '<img src="' + profile.faceit_avatar + '" alt="' + displayName + '"/>';
@@ -210,12 +216,10 @@ async function init() {
     avatarEl.textContent = displayName.charAt(0).toUpperCase();
   }
 
-  document.getElementById('profileName').textContent = displayName;
-  document.getElementById('profileMeta').textContent = (faceitNick ? 'FACEIT · ' + faceitNick + ' · ' : email + ' · ') + 'Membre depuis ' + since;
-
   // Fetch live FACEIT ELO if nickname exists
   let faceitElo = profile?.faceit_elo || null;
   let faceitLevel = profile?.faceit_level || null;
+  let faceitAvatar = profile?.faceit_avatar || null;
   if (faceitNick) {
     try {
       const fRes = await fetch('/api/faceit-profile?nickname=' + encodeURIComponent(faceitNick));
@@ -223,21 +227,46 @@ async function init() {
         const fData = await fRes.json();
         faceitElo = fData.elo || faceitElo;
         faceitLevel = fData.level || faceitLevel;
-        // Update avatar if newer
-        if (fData.avatar && !profile?.faceit_avatar) {
+        if (fData.avatar) {
+          faceitAvatar = fData.avatar;
           avatarEl.innerHTML = '<img src="' + fData.avatar + '" alt="' + displayName + '"/>';
         }
       }
     } catch (e) { /* non critique */ }
   }
 
-  // Add FACEIT ELO KPI if available
+  // Profile name: FACEIT nickname in Anton, or fallback
+  document.getElementById('profileName').textContent = displayName;
+
+  // Subtitle: "Niveau X FACEIT" if linked, else empty
+  const subEl = document.getElementById('profileSub');
+  if (faceitNick && faceitLevel) {
+    subEl.textContent = 'Niveau ' + faceitLevel + ' FACEIT';
+  }
+
+  // Meta line
+  document.getElementById('profileMeta').textContent = (faceitNick ? email + ' · ' : email + ' · ') + 'Membre depuis ' + since;
+
+  // Level badge SVG + label
+  const badgeZone = document.getElementById('faceitBadgeZone');
+  if (faceitNick && faceitLevel) {
+    const lvlColors = {1:'#eee',2:'#1ce400',3:'#1ce400',4:'#ffc800',5:'#ffc800',6:'#ffc800',7:'#ff6309',8:'#ff6309',9:'#fe1f00',10:'#fe1f00'};
+    const lvlC = lvlColors[faceitLevel] || '#ff5500';
+    badgeZone.innerHTML = '<div class="faceit-level-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="' + lvlC + '"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5zm0 2.18l7 3.89v7.86l-7 3.89-7-3.89V8.07l7-3.89z"/><text x="12" y="16" text-anchor="middle" font-size="8" font-weight="bold" fill="' + lvlC + '" font-family="Space Mono,monospace">' + faceitLevel + '</text></svg>Lvl ' + faceitLevel + '</div>';
+  }
+
+  // "Lier mon compte FACEIT" button if no FACEIT linked
+  if (!faceitNick) {
+    document.getElementById('faceitLinkZone').innerHTML = '<a href="login.html?action=faceit" class="btn-link-faceit"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>Lier mon compte FACEIT</a>';
+  }
+
+  // Add FACEIT ELO KPI if available (accent color #b8ff57)
   if (faceitElo) {
     const kpiRow = document.getElementById('kpiRow');
     kpiRow.style.gridTemplateColumns = 'repeat(6, 1fr)';
     const eloKpi = document.createElement('div');
     eloKpi.className = 'kpi';
-    eloKpi.innerHTML = '<div class="kpi-val" style="color:#ff5500">' + faceitElo + '</div><div class="kpi-lbl">FACEIT ELO</div>' + (faceitLevel ? '<div class="kpi-sub" style="color:#ff5500">Lvl ' + faceitLevel + '</div>' : '');
+    eloKpi.innerHTML = '<div class="kpi-val g">' + faceitElo + '</div><div class="kpi-lbl">FACEIT ELO</div>' + (faceitLevel ? '<div class="kpi-sub" style="color:var(--accent)">Niveau ' + faceitLevel + '</div>' : '');
     kpiRow.appendChild(eloKpi);
   }
 

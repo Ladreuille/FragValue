@@ -152,10 +152,13 @@
     .tp-name{font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .tp-stats-row{display:flex;gap:6px;font-size:9px;color:var(--text3)}
     .tp-health-bar{
-      width:100%;height:3px;background:var(--border);border-radius:2px;
+      width:100%;height:4px;background:var(--border);border-radius:2px;
       overflow:hidden;margin-top:2px;
     }
     .tp-health-fill{height:100%;border-radius:2px;transition:width .3s}
+    .tp-hp{font-size:9px;font-weight:700;margin-left:auto;min-width:24px;text-align:right}
+    .tp-equip{display:flex;align-items:center;gap:3px;margin-top:1px}
+    .tp-equip svg{width:12px;height:12px;opacity:.5}
     .tp-kills-badge{
       font-family:var(--mono);font-size:10px;font-weight:700;
       min-width:20px;text-align:center;flex-shrink:0;
@@ -583,17 +586,23 @@ function initTeamPanels() {
 
 function renderTeamPlayers(containerId, players) {
   const el = document.getElementById(containerId);
+  const isCT = containerId === 'ctPlayers';
+  const hpColor = isCT ? '#5b8dd9' : '#e8a838';
   el.innerHTML = players.map(p => {
     const c = getColor(p.name);
     const id = p.name.replace(/[^a-zA-Z0-9]/g, '_');
     return `<div class="tp-player active" id="tp-${id}" onclick="togglePlayer('${p.name.replace(/'/g, "\\'")}')">
       <div class="tp-dot" style="background:${c.solid}"></div>
       <div class="tp-info">
-        <div class="tp-name">${p.name.substring(0, 16)}</div>
+        <div style="display:flex;align-items:center">
+          <div class="tp-name">${p.name.substring(0, 16)}</div>
+          <div class="tp-hp" id="hpv-${id}" style="color:${hpColor}">100</div>
+        </div>
         <div class="tp-stats-row">
           <span>K/D ${p.kd}</span>
         </div>
-        <div class="tp-health-bar"><div class="tp-health-fill" id="hp-${id}" style="width:100%;background:${c.solid}"></div></div>
+        <div class="tp-health-bar"><div class="tp-health-fill" id="hp-${id}" style="width:100%;background:${hpColor}"></div></div>
+        <div class="tp-equip" id="eq-${id}"></div>
       </div>
       <div class="tp-kills-badge" id="rk-${id}" style="color:${c.solid}">0</div>
     </div>`;
@@ -640,8 +649,23 @@ function updatePlayerStates(frame) {
 
     const state = frame.players[p.name];
     const alive = state ? state.alive : true;
+    const hp = alive ? (state?.hp ?? 100) : 0;
     el.classList.toggle('dead', !alive);
-    if (hpEl) hpEl.style.width = alive ? '100%' : '0%';
+    if (hpEl) hpEl.style.width = (alive ? Math.max(hp, 0) : 0) + '%';
+
+    const hpvEl = document.getElementById('hpv-' + id);
+    if (hpvEl) hpvEl.textContent = alive ? hp : 0;
+
+    // Equipment icons (when data available from parser)
+    const eqEl = document.getElementById('eq-' + id);
+    if (eqEl && state) {
+      let icons = '';
+      if (state.weapon) icons += `<svg viewBox="0 0 24 24" fill="currentColor" title="${state.weapon}"><path d="M7 15h10l-1-2H8l-1 2zm1-4h8V9H8v2zm-3 8h14l1-2H4l1 2zM4 7h16V5H4v2z"/></svg>`;
+      if (state.armor) icons += `<svg viewBox="0 0 24 24" fill="currentColor" title="Armor"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/></svg>`;
+      if (state.helmet) icons += `<svg viewBox="0 0 24 24" fill="currentColor" title="Helmet"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c3.87 0 7 3.13 7 7h-2a5 5 0 00-10 0H5c0-3.87 3.13-7 7-7z"/></svg>`;
+      if (state.defuser) icons += `<svg viewBox="0 0 24 24" fill="currentColor" title="Kit" style="color:var(--ct)"><path d="M19.8 18.4L14 10.67V6.5l1.35-1.69c.26-.33.03-.81-.39-.81H9.04c-.42 0-.65.48-.39.81L10 6.5v4.17L4.2 18.4c-.49.66-.02 1.6.8 1.6h14c.82 0 1.29-.94.8-1.6z"/></svg>`;
+      eqEl.innerHTML = icons;
+    }
 
     // Count kills this round
     if (rkEl) {

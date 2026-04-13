@@ -846,6 +846,20 @@ _sb.auth.getSession().then(({ data }) => {
   }
 });
 
+function showCheckoutError(msg) {
+  let banner = document.getElementById('checkout-error-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'checkout-error-banner';
+    banner.style.cssText = 'position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:9999;background:#1a0000;border:1px solid #ff4444;color:#ff6666;font-family:var(--mono);font-size:12px;padding:12px 24px;border-radius:6px;max-width:480px;text-align:center;animation:up .3s ease';
+    document.body.appendChild(banner);
+  }
+  banner.textContent = msg;
+  banner.style.display = 'block';
+  clearTimeout(banner._timer);
+  banner._timer = setTimeout(() => { banner.style.display = 'none'; }, 5000);
+}
+
 async function startCheckout(plan) {
   const { data: { session } } = await _sb.auth.getSession();
   if (!session) {
@@ -862,10 +876,10 @@ async function startCheckout(plan) {
     if (data.url) {
       window.location.href = data.url;
     } else {
-      alert(data.error || 'Erreur lors de la creation du checkout.');
+      showCheckoutError(data.error || 'Erreur lors de la creation du checkout.');
     }
   } catch (err) {
-    alert('Erreur reseau. Reessaye.');
+    showCheckoutError('Erreur reseau. Reessaye.');
   }
 }
 </script>

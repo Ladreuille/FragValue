@@ -16,12 +16,16 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Validate env vars before doing anything
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return res.status(503).json({ error: 'Stripe non configure. Ajoute STRIPE_SECRET_KEY dans les variables Vercel.' });
-  }
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-    return res.status(503).json({ error: 'Supabase non configure. Ajoute SUPABASE_URL et SUPABASE_SERVICE_KEY dans les variables Vercel.' });
+  // Validate env vars before doing anything — detailed missing list
+  const missing = [];
+  if (!process.env.STRIPE_SECRET_KEY) missing.push('STRIPE_SECRET_KEY');
+  if (!process.env.STRIPE_PRICE_PRO_MONTHLY) missing.push('STRIPE_PRICE_PRO_MONTHLY');
+  if (!process.env.STRIPE_PRICE_PRO_YEARLY) missing.push('STRIPE_PRICE_PRO_YEARLY');
+  if (!process.env.STRIPE_PRICE_TEAM_MONTHLY) missing.push('STRIPE_PRICE_TEAM_MONTHLY');
+  if (!process.env.SUPABASE_URL) missing.push('SUPABASE_URL');
+  if (!process.env.SUPABASE_SERVICE_KEY) missing.push('SUPABASE_SERVICE_KEY');
+  if (missing.length > 0) {
+    return res.status(503).json({ error: 'Variables manquantes : ' + missing.join(', ') });
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -75,7 +79,7 @@ export default async function handler(req, res) {
       mode: 'subscription',
       line_items: [{ price: PLANS[plan], quantity: 1 }],
       success_url: `${req.headers.origin || 'https://frag-value.vercel.app'}/account.html?checkout=success`,
-      cancel_url: `${req.headers.origin || 'https://frag-value.vercel.app'}/account.html?checkout=cancel`,
+      cancel_url: `${req.headers.origin || 'https://frag-value.vercel.app'}/#tarifs`,
       metadata: {
         supabase_user_id: user.id,
         plan,

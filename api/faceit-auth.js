@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       body: new URLSearchParams({
         grant_type:    'authorization_code',
         code,
-        redirect_uri:  redirect_uri || 'https://frag-value.vercel.app/onboarding.html',
+        redirect_uri:  redirect_uri || 'https://frag-value.vercel.app/faceit-callback.html',
         client_id:     CLIENT_ID,
         ...(code_verifier ? { code_verifier } : {}),
       }).toString(),

@@ -8,10 +8,11 @@ export default function handler(req, res) {
 
   return res.status(200).json({
     ok: true,
-    stripe: !!process.env.STRIPE_SECRET_KEY,
+    stripe_key: !!process.env.STRIPE_SECRET_KEY,
     pro_monthly: !!process.env.STRIPE_PRICE_PRO_MONTHLY,
     pro_yearly: !!process.env.STRIPE_PRICE_PRO_YEARLY,
-    team: !!process.env.STRIPE_PRICE_TEAM_MONTHLY,
-    supabase: !!process.env.SUPABASE_URL,
+    team_monthly: !!process.env.STRIPE_PRICE_TEAM_MONTHLY,
+    supabase_url: !!process.env.SUPABASE_URL,
+    supabase_key: !!process.env.SUPABASE_SERVICE_KEY,
   });
 }
