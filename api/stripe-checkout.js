@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   const missing = [];
   if (!process.env.STRIPE_SECRET_KEY) missing.push('STRIPE_SECRET_KEY');
   if (!process.env.STRIPE_PRICE_PRO_MONTHLY) missing.push('STRIPE_PRICE_PRO_MONTHLY');
-  if (!process.env.STRIPE_PRICE_PRO_YEARLY) missing.push('STRIPE_PRICE_PRO_YEARLY');
+  if (!process.env.STRIPE_PRICE_PRO_ANNUEL) missing.push('STRIPE_PRICE_PRO_ANNUEL');
   if (!process.env.STRIPE_PRICE_TEAM_MONTHLY) missing.push('STRIPE_PRICE_TEAM_MONTHLY');
   if (missing.length > 0) return res.status(503).json({ error: 'Variables manquantes : ' + missing.join(', ') });
 
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
     const PLANS = {
       pro_monthly: process.env.STRIPE_PRICE_PRO_MONTHLY,
-      pro_yearly: process.env.STRIPE_PRICE_PRO_YEARLY,
+      pro_yearly: process.env.STRIPE_PRICE_PRO_ANNUEL,
       team_monthly: process.env.STRIPE_PRICE_TEAM_MONTHLY,
     };
 

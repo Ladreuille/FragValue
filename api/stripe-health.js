@@ -11,7 +11,7 @@ export default function handler(req, res) {
     ok: true,
     stripe_key: !!process.env.STRIPE_SECRET_KEY,
     pro_monthly: !!process.env.STRIPE_PRICE_PRO_MONTHLY,
-    pro_yearly: !!process.env.STRIPE_PRICE_PRO_YEARLY,
+    pro_yearly: !!process.env.STRIPE_PRICE_PRO_ANNUEL,
     team_monthly: !!process.env.STRIPE_PRICE_TEAM_MONTHLY,
     supabase_url: !!process.env.SUPABASE_URL,
     supabase_key: !!process.env.SUPABASE_SERVICE_KEY,
