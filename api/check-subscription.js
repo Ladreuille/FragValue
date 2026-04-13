@@ -25,6 +25,13 @@ export default async function handler(req, res) {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) return res.status(401).json({ error: 'Token invalide' });
 
+    // Admin bypass : acces Team permanent
+    const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
+
+    if (user && ADMIN_EMAILS.includes(user.email)) {
+      return res.status(200).json({ plan: 'team', status: 'active', isAdmin: true });
+    }
+
     // Recuperer le profil
     const { data: profile } = await supabase
       .from('profiles')

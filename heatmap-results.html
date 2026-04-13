@@ -390,9 +390,10 @@
 <nav>
   <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
   <div>
-    <a href="demo.html" class="nav-link">Nouvelle démo</a>
+    <a href="demo.html" class="nav-link">Nouvelle demo</a>
     <a href="compare.html" class="nav-link">Comparer</a>
-    <a href="index.html" class="nav-link">Scout</a>
+    <a href="login.html" class="nav-link" id="navLoginBtn">Connexion</a>
+    <a href="account.html" class="nav-cta" id="navAccountBtn" style="display:none">Mon espace</a>
   </div>
 </nav>
 
@@ -1962,56 +1963,219 @@ function rfSeek(e){const rect=document.getElementById('rfTimeline').getBoundingC
 const _sbUrl  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const _sbAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
 
-// ── Export PDF ───────────────────────────────────────────────────
+// ── Export PDF Pro ────────────────────────────────────────────────
 function exportPDF() {
-  const highlights = document.getElementById('highlightsBlock');
-  const statsBlock = document.getElementById('matchStatsBlock');
-  const perfChart = document.getElementById('perfChart');
   const meta = demoData?.meta || {};
-
-  const win = window.open('', '_blank');
-  if (!win) return;
-
+  const kills = demoData?.kills || [];
+  const rounds = (demoData?.rounds || []).filter(r => !r.isKnife);
+  const playerStats = demoData?.playerStats || [];
+  const totalR = rounds.length || 1;
   const mapName = (meta.map || '').replace('de_', '');
   const date = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
 
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
-    <title>FragValue Report · ${mapName}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
-    <style>
-      *{box-sizing:border-box;margin:0;padding:0}
-      body{background:#fff;color:#111;font-family:'Space Mono',monospace;padding:40px;max-width:900px;margin:0 auto}
-      .header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:16px;margin-bottom:28px}
-      .header h1{font-family:'Anton',sans-serif;font-size:28px;letter-spacing:.02em}
-      .header .meta{font-size:10px;color:#666;text-align:right;line-height:1.8}
-      h2{font-family:'Anton',sans-serif;font-size:18px;margin:24px 0 12px;letter-spacing:.02em}
-      .block{margin-bottom:24px}
-      table{width:100%;border-collapse:collapse;font-size:11px}
-      th{text-align:left;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#888;padding:8px 6px;border-bottom:2px solid #ddd}
-      td{padding:8px 6px;border-bottom:1px solid #eee}
-      .accent{color:#4a8c00}
-      @media print{body{padding:20px}}
-    </style>
-  </head><body>
-    <div class="header">
-      <h1>FragValue Report</h1>
-      <div class="meta">${mapName ? mapName.toUpperCase() : 'DEMO'}<br>${date}<br>${meta.rounds || '?'} rounds</div>
-    </div>
-    <div class="block">
-      <h2>Highlights</h2>
-      ${highlights ? highlights.innerHTML : ''}
-    </div>
-    <div class="block">
-      <h2>Stats equipe</h2>
-      ${statsBlock ? statsBlock.innerHTML : ''}
-    </div>
-    ${perfChart && perfChart.style.display !== 'none' ? '<div class="block"><h2>Performance FV Rating</h2>' + perfChart.innerHTML + '</div>' : ''}
-    <div style="margin-top:40px;text-align:center;font-size:9px;color:#aaa;border-top:1px solid #ddd;padding-top:12px">
-      Genere par FragValue · frag-value.vercel.app · ${date}
-    </div>
-  </body></html>`);
-  win.document.close();
-  setTimeout(() => { win.print(); }, 400);
+  // Compute per-player extended stats
+  const extended = playerStats.map(p => {
+    const pK = kills.filter(k => k.attacker === p.name);
+    const pD = kills.filter(k => k.victim === p.name);
+    const hsCount = pK.filter(k => k.isHeadshot).length;
+    const hsPct = pK.length > 0 ? Math.round(hsCount / pK.length * 100) : 0;
+    const adr = Math.round(pK.length * 80 / totalR);
+    const fvr = calcFvRating(p.kills, p.deaths, 0, totalR);
+    const kast = calcKAST(p.name, kills, rounds);
+    const kd = p.kills - p.deaths;
+    // First kills: kills with the minimum tick in each round
+    let firstKills = 0;
+    for (let r = 1; r <= totalR; r++) {
+      const roundK = kills.filter(k => k.round === r);
+      if (!roundK.length) continue;
+      const minTick = Math.min(...roundK.map(k => k.tick));
+      const first = roundK.find(k => k.tick === minTick);
+      if (first && first.attacker === p.name) firstKills++;
+    }
+    // Determine team from kills
+    let team = 0;
+    const asAttacker = kills.find(k => k.attacker === p.name);
+    if (asAttacker) team = asAttacker.attackerTeam;
+    return { name: p.name, kills: p.kills, deaths: p.deaths, kd, hsPct, adr, fvr, kast, firstKills, team };
+  });
+
+  // Team split
+  const ctPlayers = extended.filter(p => p.team === 3).sort((a, b) => b.fvr - a.fvr);
+  const tPlayers = extended.filter(p => p.team === 2).sort((a, b) => b.fvr - a.fvr);
+
+  // Win counts
+  let ctWins = 0, tWins = 0;
+  rounds.forEach((r, i) => { if (r.winner === 3) ctWins++; else if (r.winner === 2) tWins++; });
+
+  const winnerTeam = ctWins >= tWins ? 'CT' : 'T';
+  const loserTeam = winnerTeam === 'CT' ? 'T' : 'CT';
+  const winnerPlayers = winnerTeam === 'CT' ? ctPlayers : tPlayers;
+  const loserPlayers = winnerTeam === 'CT' ? tPlayers : ctPlayers;
+  const winScore = Math.max(ctWins, tWins);
+  const loseScore = Math.min(ctWins, tWins);
+
+  // Highlights
+  const all = extended.sort((a, b) => b.fvr - a.fvr);
+  const bestKills = [...extended].sort((a, b) => b.kills - a.kills)[0] || {};
+  const bestRating = all[0] || {};
+  const bestKAST = [...extended].sort((a, b) => b.kast - a.kast)[0] || {};
+  const bestFirstKill = [...extended].sort((a, b) => b.firstKills - a.firstKills)[0] || {};
+  const bestHS = [...extended].sort((a, b) => b.hsPct - a.hsPct)[0] || {};
+  const bestADR = [...extended].sort((a, b) => b.adr - a.adr)[0] || {};
+  const worstRating = [...extended].sort((a, b) => a.fvr - b.fvr)[0] || {};
+
+  const avgADR_winner = winnerPlayers.length ? Math.round(winnerPlayers.reduce((s, p) => s + p.adr, 0) / winnerPlayers.length) : 0;
+  const avgADR_loser = loserPlayers.length ? Math.round(loserPlayers.reduce((s, p) => s + p.adr, 0) / loserPlayers.length) : 0;
+  const teamAvgRating = winnerPlayers.length ? (winnerPlayers.reduce((s, p) => s + p.fvr, 0) / winnerPlayers.length).toFixed(2) : '0';
+  const ratingAbovePct = teamAvgRating > 0 ? Math.round(((bestRating.fvr - parseFloat(teamAvgRating)) / parseFloat(teamAvgRating)) * 100) : 0;
+
+  // First kill win rate
+  const fkRounds = [];
+  for (let r = 1; r <= totalR; r++) {
+    const roundK = kills.filter(k => k.round === r);
+    if (!roundK.length) continue;
+    const minTick = Math.min(...roundK.map(k => k.tick));
+    const first = roundK.find(k => k.tick === minTick);
+    if (first && first.attacker === bestFirstKill.name) fkRounds.push(r);
+  }
+  const fkWinCount = fkRounds.filter(r => {
+    const rd = rounds[r - 1];
+    return rd && rd.winner === bestFirstKill.team;
+  }).length;
+  const fkWinPct = fkRounds.length > 0 ? Math.round(fkWinCount / fkRounds.length * 100) : 0;
+
+  function fvrClass(v) { return v >= 1.0 ? 'good' : v >= 0.7 ? 'avg' : 'bad'; }
+  function fvrLabel(v) { if (v >= 1.5) return 'Exceptionnel'; if (v >= 1.2) return 'Tres bon'; if (v >= 1.0) return 'Bon'; if (v >= 0.8) return 'Moyen'; return 'A ameliorer'; }
+
+  function teamTable(players) {
+    if (!players.length) return '';
+    const best = players[0];
+    return '<table><thead><tr><th>Joueur</th><th>K</th><th>D</th><th>K-D</th><th>KAST%</th><th>ADR</th><th>HS%</th><th>FV Rating</th></tr></thead><tbody>' +
+      players.map(p => {
+        const bold = p.name === best.name ? 'font-weight:700;' : '';
+        return '<tr style="' + bold + '"><td>' + p.name + '</td><td>' + p.kills + '</td><td>' + p.deaths + '</td><td>' + (p.kd >= 0 ? '+' : '') + p.kd + '</td><td>' + p.kast + '%</td><td>' + p.adr + '</td><td>' + p.hsPct + '%</td><td class="' + fvrClass(p.fvr) + '">' + p.fvr.toFixed(2) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  // Rating ranking
+  const ranked = [...extended].sort((a, b) => b.fvr - a.fvr);
+  const maxFvr = ranked.length ? ranked[0].fvr : 1;
+
+  const pw = window.open('', '_blank');
+  if (!pw) return;
+
+  pw.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"/>' +
+    '<title>FragValue Report - ' + mapName.toUpperCase() + '</title>' +
+    '<style>' +
+    '* { margin: 0; padding: 0; box-sizing: border-box; }' +
+    'body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 12px; }' +
+    '.page { padding: 32px 40px; page-break-after: always; }' +
+    '.page:last-child { page-break-after: auto; }' +
+    'h1 { font-size: 36px; font-weight: 900; letter-spacing: -1px; }' +
+    'h2 { font-size: 16px; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 6px; margin: 24px 0 12px; }' +
+    'h3 { font-size: 13px; font-weight: 700; margin: 16px 0 8px; }' +
+    'table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }' +
+    'th { background: #000; color: #fff; padding: 6px 8px; font-size: 10px; text-transform: uppercase; text-align: left; }' +
+    'td { padding: 6px 8px; border-bottom: 1px solid #eee; }' +
+    'tr:nth-child(even) td { background: #f9f9f9; }' +
+    '.score { font-size: 28px; font-weight: 900; margin: 12px 0; }' +
+    '.highlight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }' +
+    '.highlight-item { padding: 10px 14px; background: #f5f5f5; }' +
+    '.highlight-label { font-size: 10px; text-transform: uppercase; color: #666; }' +
+    '.highlight-value { font-size: 14px; font-weight: 700; margin-top: 2px; }' +
+    '.analysis-block { background: #f9f9f9; border-left: 4px solid #000; padding: 16px; margin: 8px 0; line-height: 1.6; font-size: 12px; }' +
+    '.bar-wrap { background: #eee; height: 6px; border-radius: 3px; display: inline-block; width: 80px; vertical-align: middle; }' +
+    '.bar-fill { background: #000; height: 6px; border-radius: 3px; }' +
+    '.good { color: #16a34a; font-weight: 700; }' +
+    '.avg { color: #d97706; font-weight: 700; }' +
+    '.bad { color: #dc2626; font-weight: 700; }' +
+    '.footer { text-align: right; font-size: 10px; color: #999; margin-top: 24px; padding-top: 8px; border-top: 1px solid #eee; }' +
+    '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
+    '</style></head><body>' +
+
+    // PAGE 1: Header + Highlights + Stats
+    '<div class="page">' +
+    '<h1>FragValue</h1>' +
+    '<hr style="border:none;height:2px;background:#000;margin:8px 0 16px"/>' +
+    '<div style="font-size:48px;font-weight:900;letter-spacing:-2px">' + mapName.toUpperCase() + '</div>' +
+    '<div style="font-size:13px;color:#444;margin:4px 0 8px">' + date + ' / ' + totalR + ' rounds</div>' +
+    '<div class="score">' +
+    (winnerTeam === 'CT' ? '<u>CT</u>' : 'CT') + ' [' + ctWins + '] - [' + tWins + '] ' +
+    (winnerTeam === 'T' ? '<u>T</u>' : 'T') +
+    '</div>' +
+
+    '<h2>Highlights</h2>' +
+    '<div class="highlight-grid">' +
+    '<div class="highlight-item"><div class="highlight-label">Most kills</div><div class="highlight-value">' + bestKills.name + ' (' + bestKills.kills + ' kills)</div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Most damage</div><div class="highlight-value">' + bestADR.name + ' (' + bestADR.adr + ' ADR)</div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Best FV Rating</div><div class="highlight-value">' + bestRating.name + ' (' + bestRating.fvr.toFixed(2) + ')</div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Most 1st kills</div><div class="highlight-value">' + bestFirstKill.name + ' (' + bestFirstKill.firstKills + ' rounds)</div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Best KAST</div><div class="highlight-value">' + bestKAST.name + ' (' + bestKAST.kast + '%)</div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Best HS%</div><div class="highlight-value">' + bestHS.name + ' (' + bestHS.hsPct + '%)</div></div>' +
+    '</div>' +
+
+    '<h2>Stats equipes</h2>' +
+    '<h3>' + winnerTeam + ' (Victoire)</h3>' +
+    teamTable(winnerPlayers) +
+    '<h3>' + loserTeam + '</h3>' +
+    teamTable(loserPlayers) +
+
+    '<div class="footer">Rapport genere par FragValue / frag-value.vercel.app / ' + date + '</div>' +
+    '</div>' +
+
+    // PAGE 2: Analysis + Ranking
+    '<div class="page">' +
+    '<h2>Analyse de la performance</h2>' +
+    '<div class="analysis-block">' +
+    bestRating.name + ' a domine cette partie avec un FV Rating de ' + bestRating.fvr.toFixed(2) + ', ' +
+    'soit ' + Math.abs(ratingAbovePct) + '% ' + (ratingAbovePct >= 0 ? 'au-dessus' : 'en-dessous') + ' de la moyenne de son equipe (' + teamAvgRating + ').' +
+    '</div>' +
+
+    '<h3>Points forts</h3>' +
+    '<div class="analysis-block">' +
+    '<strong>Duels d\'ouverture :</strong> ' + bestFirstKill.name + ' a remporte ' + bestFirstKill.firstKills + ' premiers frags, ' +
+    'donnant un avantage numerique a son equipe dans ' + fkWinPct + '% des rounds concernes. ' +
+    'Un taux superieur a 50% est considere comme un indicateur de victoire dans les donnees professionnelles CS2.' +
+    '</div>' +
+    '<div class="analysis-block">' +
+    '<strong>Consistance :</strong> ' + bestKAST.name + ' affiche un KAST de ' + bestKAST.kast + '%, ' +
+    (bestKAST.kast >= 70 ? 'au-dessus' : 'en-dessous') + ' de la reference professionnelle de 70%. ' +
+    'Le KAST mesure la proportion de rounds ou un joueur a eu un Kill, une Assist, a Survecu ou a ete Trade.' +
+    '</div>' +
+    '<div class="analysis-block">' +
+    '<strong>Impact offensif :</strong> ' + winnerTeam + ' a maintenu un ADR moyen de ' + avgADR_winner + ' contre ' + avgADR_loser + ' pour ' + loserTeam + ', ' +
+    'soit un ecart de ' + Math.abs(avgADR_winner - avgADR_loser) + ' points refletant une pression constante sur les positions adverses.' +
+    '</div>' +
+
+    '<h3>Points d\'amelioration</h3>' +
+    '<div class="analysis-block">' +
+    worstRating.name + ' (FV Rating ' + worstRating.fvr.toFixed(2) + ') gagnerait a ameliorer son positionnement et ses prises d\'info. ' +
+    'Un K/D de ' + worstRating.kills + '/' + worstRating.deaths + ' sur ' + totalR + ' rounds indique des engagements defavorables a corriger.' +
+    '</div>' +
+
+    '<h3>Conclusion</h3>' +
+    '<div class="analysis-block">' +
+    'Victoire ' + winnerTeam + ' ' + winScore + '-' + loseScore + ' portee par la performance de ' + bestRating.name + '. ' +
+    'L\'ecart d\'ADR (' + Math.abs(avgADR_winner - avgADR_loser) + ' points) et le controle des duels d\'ouverture ont ete les facteurs decisifs de cette partie.' +
+    '</div>' +
+
+    '<h2>Classement FV Rating</h2>' +
+    '<table><thead><tr><th>#</th><th>Joueur</th><th>FV Rating</th><th>Barre</th><th>Evaluation</th></tr></thead><tbody>' +
+    ranked.map((p, i) => {
+      const pct = maxFvr > 0 ? Math.round((p.fvr / maxFvr) * 100) : 0;
+      return '<tr><td>' + (i + 1) + '</td><td>' + p.name + '</td><td class="' + fvrClass(p.fvr) + '">' + p.fvr.toFixed(2) + '</td>' +
+        '<td><div class="bar-wrap"><div class="bar-fill" style="width:' + pct + '%"></div></div></td>' +
+        '<td>' + fvrLabel(p.fvr) + '</td></tr>';
+    }).join('') +
+    '</tbody></table>' +
+
+    '<div class="footer">Rapport genere par FragValue / frag-value.vercel.app / ' + date + '</div>' +
+    '</div>' +
+
+    '</body></html>');
+
+  pw.document.close();
+  setTimeout(() => { pw.print(); }, 400);
 }
 
 // ── Partager la demo ─────────────────────────────────────────────
@@ -2101,6 +2265,24 @@ async function saveRatingToSupabase() {
     }
   } catch(e) { console.warn('saveRatingToSupabase:', e.message); }
 }
+
+// ── Nav auth toggle ──────────────────────────────────────────────
+(function initNavAuth() {
+  if (typeof supabase === 'undefined') return;
+  const _sbNav = supabase.createClient(_sbUrl, _sbAnon);
+  _sbNav.auth.getSession().then(({ data: { session } }) => {
+    const loginBtn = document.getElementById('navLoginBtn');
+    const accountBtn = document.getElementById('navAccountBtn');
+    if (!loginBtn || !accountBtn) return;
+    if (session) {
+      loginBtn.style.display = 'none';
+      accountBtn.style.display = '';
+    } else {
+      loginBtn.style.display = '';
+      accountBtn.style.display = 'none';
+    }
+  });
+})();
 </script>
 </body>
 </html>

@@ -89,7 +89,8 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
   <div class="nav-right">
     <a href="demo.html" class="nav-link">Analyser</a>
-    <a href="account.html" class="nav-cta">Mon espace</a>
+    <a href="login.html" class="nav-link" id="navLoginBtn">Connexion</a>
+    <a href="account.html" class="nav-cta" id="navAccountBtn" style="display:none">Mon espace</a>
   </div>
 </nav>
 
@@ -499,6 +500,20 @@ function renderClutchs() {
 }
 
 init();
+
+// Nav auth toggle
+_sb.auth.getSession().then(({ data: { session } }) => {
+  const loginBtn = document.getElementById('navLoginBtn');
+  const accountBtn = document.getElementById('navAccountBtn');
+  if (!loginBtn || !accountBtn) return;
+  if (session) {
+    loginBtn.style.display = 'none';
+    accountBtn.style.display = '';
+  } else {
+    loginBtn.style.display = '';
+    accountBtn.style.display = 'none';
+  }
+});
 </script>
 </body>
 </html>
