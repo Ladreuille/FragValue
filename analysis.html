@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>FragValue · Analyse Pro</title>
+<title>FragValue - Analyse Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -21,6 +21,7 @@
 body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;-webkit-font-smoothing:antialiased}
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
 
+/* NAV */
 nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
 .nav-logo{font-family:var(--display);font-size:20px;letter-spacing:.04em;color:var(--text);text-decoration:none}
 .nav-logo span{color:var(--accent)}
@@ -30,57 +31,158 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .nav-cta{background:var(--accent);color:#000;padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;transition:all .15s}
 .nav-cta:hover{background:var(--accent2)}
 
-.page{max-width:1200px;margin:0 auto;padding:32px 24px 100px;position:relative;z-index:1}
-.header{display:flex;align-items:center;gap:16px;margin-bottom:32px}
+/* LAYOUT */
+.page{max-width:1280px;margin:0 auto;padding:32px 24px 120px;position:relative;z-index:1}
+.header{display:flex;align-items:center;gap:16px;margin-bottom:8px}
 .btn-back{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);text-decoration:none;letter-spacing:.04em;padding:8px 14px;border:1px solid var(--border);border-radius:var(--r);transition:all .15s}
 .btn-back:hover{border-color:var(--accent);color:var(--accent)}
 .page-title{font-family:var(--display);font-size:48px;letter-spacing:.02em;line-height:1}
 .pro-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);color:var(--accent);padding:4px 12px;border-radius:40px;font-size:10px;font-weight:700;letter-spacing:.1em;margin-left:12px;vertical-align:middle}
 
-.sl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:10px;margin:32px 0 16px}
+/* SECTION LABEL */
+.sl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:10px;margin:36px 0 14px}
 .sl::after{content:'';flex:1;height:1px;background:var(--border)}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:24px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:24px;margin-bottom:8px}
 
-/* Minimaps grid */
-.minimaps{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
-.minimap-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:12px;text-align:center}
-.minimap-card canvas{width:200px;height:200px;border-radius:4px;background:#0a0a0a}
-.minimap-name{font-size:11px;color:var(--text2);margin-top:8px;letter-spacing:.04em}
-.minimap-team{font-size:9px;letter-spacing:.08em;margin-top:2px}
-.minimap-team.ct{color:var(--ct)}
-.minimap-team.t{color:var(--t)}
+/* SCORE BANNER */
+.score-banner{display:flex;align-items:center;justify-content:center;gap:0;background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden}
+.score-side{flex:1;padding:28px 24px;text-align:center}
+.score-side.winner{background:rgba(184,255,87,.03)}
+.score-team-label{font-size:9px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px}
+.score-team-label.ct{color:var(--ct)}
+.score-team-label.t{color:var(--t)}
+.score-players{font-size:9px;color:var(--text3);letter-spacing:.02em;line-height:1.6;margin-bottom:12px;min-height:68px}
+.score-num{font-family:var(--display);font-size:64px;line-height:1}
+.score-num.ct{color:var(--ct)}
+.score-num.t{color:var(--t)}
+.score-num.winner-num{color:var(--accent)}
+.score-center{padding:0 20px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.score-colon{font-family:var(--display);font-size:32px;color:var(--text3)}
+.score-map{font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
 
-/* Duels table */
+/* ROUND TIMELINE */
+.round-tl{display:flex;gap:2px;margin-top:16px;align-items:end}
+.round-tl-r{flex:1;height:24px;border-radius:3px;position:relative;transition:opacity .15s;min-width:0}
+.round-tl-r:hover{opacity:.75}
+.round-tl-r.ct-win{background:var(--ct)}
+.round-tl-r.t-win{background:var(--t)}
+.round-tl-r.no-data{background:var(--border)}
+.round-tl-r .rn{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-size:7px;color:var(--text3);white-space:nowrap}
+.round-tl-half{margin-left:6px;padding-left:6px;border-left:2px solid var(--accent)}
+.round-tl-fb{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
+.kpi-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:16px;text-align:center}
+.kpi-value{font-family:var(--display);font-size:28px;line-height:1;margin-bottom:4px}
+.kpi-label{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+
+/* STATS TABLE */
+.stat-table{width:100%;border-collapse:collapse}
+.stat-table th{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 6px;text-align:center;border-bottom:2px solid var(--border);white-space:nowrap}
+.stat-table th:first-child{text-align:left;padding-left:12px}
+.stat-table td{padding:10px 6px;border-bottom:1px solid var(--border);text-align:center;font-size:11px}
+.stat-table td:first-child{text-align:left;padding-left:12px}
+.stat-table tr:hover td{background:rgba(255,255,255,.015)}
+.stat-table .team-divider td{padding:0;height:6px;border-bottom:2px solid var(--border2);background:none}
+.stat-table .team-divider:hover td{background:none}
+.stat-table .player-cell{display:flex;align-items:center;gap:8px}
+.stat-table .team-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.stat-table .player-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+.stat-table .mvp-star{color:var(--gold);font-size:12px;margin-left:4px}
+.stat-table .fvr-cell{display:flex;align-items:center;justify-content:center;gap:6px}
+.fvr-bar{height:4px;border-radius:2px;min-width:2px}
+.fvr-badge{font-size:8px;font-weight:700;letter-spacing:.06em;padding:2px 6px;border-radius:3px;white-space:nowrap}
+.diff-pos{color:var(--success)}
+.diff-neg{color:var(--danger)}
+
+/* OPENING TABLE */
+.open-table{width:100%;border-collapse:collapse}
+.open-table th{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 8px;text-align:center;border-bottom:2px solid var(--border);white-space:nowrap}
+.open-table th:first-child{text-align:left}
+.open-table td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:center;font-size:11px}
+.open-table td:first-child{text-align:left;font-weight:700}
+.open-table tr:hover td{background:rgba(255,255,255,.015)}
+.open-insight{margin-top:16px;padding:14px 18px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);font-size:11px;color:var(--text2);line-height:1.7}
+.open-insight strong{color:var(--text)}
+
+/* DUELS TABLE */
 .duels-table{width:100%;border-collapse:collapse}
-.duels-table th{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 12px;text-align:left;border-bottom:2px solid var(--border)}
-.duels-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:11px}
+.duels-table th{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 10px;text-align:left;border-bottom:2px solid var(--border)}
+.duels-table td{padding:10px 10px;border-bottom:1px solid var(--border);font-size:11px}
 .duels-table tr:hover td{background:rgba(255,255,255,.015)}
-.wr-bar{display:inline-block;height:4px;border-radius:2px;vertical-align:middle;margin-left:6px}
+.duel-bar-wrap{display:flex;align-items:center;gap:6px;min-width:120px}
+.duel-bar-bg{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.duel-bar-fill{height:100%;border-radius:3px}
+.duel-pct{font-size:10px;font-weight:700;min-width:32px;text-align:right}
 
-/* Performance chart */
-.perf-canvas-wrap{position:relative;width:100%;height:200px}
-.perf-canvas-wrap canvas{width:100%;height:100%}
+/* MINIMAPS */
+.minimaps{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.minimap-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:14px;text-align:center;position:relative}
+.minimap-card canvas{width:240px;height:240px;border-radius:4px;background:#0a0a0a;display:block;margin:0 auto}
+.minimap-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.minimap-name{font-size:12px;font-weight:700;letter-spacing:.02em}
+.minimap-meta{font-size:9px;letter-spacing:.06em}
+.minimap-meta.ct{color:var(--ct)}
+.minimap-meta.t{color:var(--t)}
 
-/* Clutch cards */
-.clutch-list{display:grid;gap:10px}
-.clutch-card{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:14px 18px}
-.clutch-round{font-family:var(--display);font-size:22px;color:var(--accent);min-width:50px}
-.clutch-info{flex:1}
-.clutch-player{font-size:12px;font-weight:700;margin-bottom:2px}
-.clutch-detail{font-size:10px;color:var(--text3);letter-spacing:.04em}
-.clutch-result{font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px}
-.clutch-result.win{background:rgba(45,212,160,.1);color:var(--success)}
-.clutch-result.loss{background:rgba(255,68,68,.1);color:var(--danger)}
+/* PERF CHART */
+.player-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px}
+.player-tab{padding:6px 12px;font-size:10px;font-family:var(--mono);letter-spacing:.04em;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);cursor:pointer;color:var(--text2);transition:all .15s}
+.player-tab:hover{border-color:var(--text3);color:var(--text)}
+.player-tab.active{border-color:var(--accent);color:var(--accent);background:rgba(184,255,87,.05)}
+.perf-wrap{position:relative;width:100%;height:220px}
+.perf-wrap canvas{width:100%;height:100%}
+.perf-legend{display:flex;gap:16px;margin-top:10px;justify-content:center}
+.perf-legend-item{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3)}
+.perf-legend-dot{width:8px;height:8px;border-radius:2px}
 
-/* Overlay */
+/* MOMENTS CLES */
+.moments-grid{display:grid;gap:10px}
+.moment-card{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:14px 18px;transition:border-color .15s}
+.moment-card:hover{border-color:var(--text3)}
+.moment-round{font-family:var(--display);font-size:22px;color:var(--text2);min-width:48px}
+.moment-badge{font-size:9px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:3px;margin-right:8px;white-space:nowrap}
+.moment-badge.ace{background:rgba(184,255,87,.12);color:var(--accent);border:1px solid rgba(184,255,87,.25)}
+.moment-badge.quad{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.2)}
+.moment-badge.triple{background:rgba(91,141,217,.1);color:var(--ct);border:1px solid rgba(91,141,217,.2)}
+.moment-info{flex:1}
+.moment-player{font-size:12px;font-weight:700;margin-bottom:2px}
+.moment-detail{font-size:10px;color:var(--text3);letter-spacing:.02em}
+.moment-result{font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;white-space:nowrap}
+.moment-result.win{background:rgba(45,212,160,.1);color:var(--success)}
+.moment-result.loss{background:rgba(255,68,68,.08);color:var(--danger)}
+
+/* COACH BILAN */
+.coach-card{padding:28px 24px}
+.coach-block{margin-bottom:22px}
+.coach-block:last-child{margin-bottom:0}
+.coach-label{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.coach-label::before{content:'';width:3px;height:12px;background:var(--accent);border-radius:2px}
+.coach-text{font-size:11px;color:var(--text2);line-height:1.8}
+.coach-text strong{color:var(--text);font-weight:700}
+.coach-bullet{margin:6px 0;padding-left:14px;position:relative}
+.coach-bullet::before{content:'';position:absolute;left:0;top:7px;width:4px;height:4px;background:var(--text3);border-radius:50%}
+
+/* PRO OVERLAY */
 .pro-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}
 .pro-overlay-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:40px 32px;max-width:440px;width:90%;text-align:center}
 .pro-overlay-title{font-family:var(--display);font-size:24px;letter-spacing:.02em;margin-bottom:12px}
 .pro-overlay-sub{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:22px}
 .pro-overlay-btn{display:inline-block;background:var(--accent);color:#000;padding:10px 24px;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em}
 
-/* Empty */
 .empty-msg{text-align:center;padding:32px;font-size:11px;color:var(--text3)}
+
+@media(max-width:768px){
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .minimaps{grid-template-columns:1fr 1fr}
+  .score-banner{flex-direction:column;gap:0}
+  .score-center{padding:8px 0;flex-direction:row;gap:8px}
+  .score-num{font-size:44px}
+  .stat-table{font-size:10px}
+  .stat-table td,.stat-table th{padding:8px 4px}
+  .page-title{font-size:32px}
+}
 </style>
 </head>
 <body>
@@ -94,14 +196,14 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   </div>
 </nav>
 
-<!-- Pro overlay (hidden by default) -->
+<!-- Pro overlay -->
 <div class="pro-overlay" id="proOverlay" style="display:none">
   <div class="pro-overlay-box">
     <div class="pro-overlay-title">Analyse Pro</div>
     <div class="pro-tag" style="margin:0 auto 16px;display:inline-flex">PRO</div>
     <p class="pro-overlay-sub">
       L'analyse avancee est reservee aux abonnes Pro et Team.<br>
-      Positionnement individuel, duels, clutchs et performance par round.
+      Rapport tactique complet, ouverture de rounds, positionnement et bilan de coach.
     </p>
     <a href="index.html#pricing" class="pro-overlay-btn">Passer a Pro</a>
     <div style="margin-top:14px"><a href="heatmap-results.html" style="color:var(--text3);font-size:11px;text-decoration:none">Retour aux resultats</a></div>
@@ -120,31 +222,55 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     </div>
   </div>
 
-  <!-- POSITIONNEMENT PAR JOUEUR -->
-  <div class="sl">Positionnement par joueur</div>
+  <!-- 1. VUE D'ENSEMBLE -->
+  <div class="sl">Vue d'ensemble</div>
+  <div class="score-banner" id="scoreBanner"></div>
+  <div class="round-tl" id="roundTimeline"></div>
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <!-- 2. CLASSEMENT & STATS -->
+  <div class="sl">Classement et statistiques</div>
+  <div class="card" style="padding:0;overflow-x:auto">
+    <table class="stat-table" id="statsTable"></table>
+  </div>
+
+  <!-- 3. OUVERTURE DE ROUND -->
+  <div class="sl">Ouverture de round</div>
+  <div class="card" id="openingCard"><div class="empty-msg">Chargement...</div></div>
+
+  <!-- 4. CONFRONTATIONS DIRECTES -->
+  <div class="sl">Confrontations directes</div>
+  <div class="card" id="duelsCard"><div class="empty-msg">Chargement...</div></div>
+
+  <!-- 5. POSITIONNEMENT -->
+  <div class="sl">Positionnement</div>
   <div class="card">
     <div class="minimaps" id="minimapsGrid"></div>
   </div>
 
-  <!-- DUELS -->
-  <div class="sl">Duels directs</div>
-  <div class="card" id="duelsCard">
-    <div class="empty-msg">Chargement...</div>
-  </div>
-
-  <!-- PERFORMANCE PAR ROUND -->
+  <!-- 6. PERFORMANCE PAR ROUND -->
   <div class="sl">Performance par round</div>
   <div class="card">
-    <div class="perf-canvas-wrap">
+    <div class="player-tabs" id="playerTabs"></div>
+    <div class="perf-wrap">
       <canvas id="perfCanvas"></canvas>
+    </div>
+    <div class="perf-legend">
+      <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--accent)"></div>Multi-kill</div>
+      <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--t)"></div>1 kill</div>
+      <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--border2)"></div>0 kill</div>
+      <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--success);width:6px;height:6px;border-radius:50%"></div>Round gagne</div>
+      <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--danger);width:6px;height:6px;border-radius:50%"></div>Round perdu</div>
     </div>
   </div>
 
-  <!-- CLUTCHS -->
-  <div class="sl">Clutchs</div>
-  <div class="card" id="clutchCard">
-    <div class="empty-msg">Chargement...</div>
-  </div>
+  <!-- 7. MOMENTS CLES -->
+  <div class="sl">Moments cles</div>
+  <div class="card" id="momentsCard"><div class="empty-msg">Chargement...</div></div>
+
+  <!-- 8. BILAN TACTIQUE -->
+  <div class="sl">Bilan tactique</div>
+  <div class="card coach-card" id="coachCard"><div class="empty-msg">Chargement...</div></div>
 </div>
 
 <script>
@@ -152,7 +278,9 @@ const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// ── MAP CONFIG (same as replay.html) ──
+// =====================================================================
+// MAP CONFIG
+// =====================================================================
 const MAP_CONFIG = {
   'de_dust2':   { img:'maps/de_dust2_radar_psd.png',   posX:-2476, posY:3239,  scale:4.4  },
   'de_mirage':  { img:'maps/de_mirage_radar_psd.png',  posX:-3230, posY:1713,  scale:5.0  },
@@ -169,15 +297,19 @@ const MAP_CONFIG = {
 
 let demoData = null;
 let mapName = 'de_dust2';
+let currentPerfPlayer = null;
 
-function w2c(worldX, worldY, size) {
+// =====================================================================
+// HELPERS
+// =====================================================================
+function w2c(wx, wy, size) {
   const cfg = MAP_CONFIG[mapName];
-  if (!cfg) return { x: size/2, y: size/2 };
+  if (!cfg) return { x: size / 2, y: size / 2 };
   const c = cfg.upper ? cfg.upper : cfg;
-  const fullX = (worldX - c.posX) / c.scale;
-  const fullY = (c.posY - worldY) / c.scale;
-  const ratio = size / 1024;
-  return { x: fullX * ratio, y: fullY * ratio };
+  return {
+    x: ((wx - c.posX) / c.scale) * (size / 1024),
+    y: ((c.posY - wy) / c.scale) * (size / 1024),
+  };
 }
 
 function expandPositions(pos) {
@@ -187,13 +319,7 @@ function expandPositions(pos) {
   if (sample[0].tick !== undefined) return pos;
   if (sample[0].k === undefined) return pos;
   Object.keys(pos).forEach(name => {
-    pos[name] = pos[name].map(p => ({
-      x: p.x, y: p.y,
-      team: p.t ?? 0,
-      round: p.r ?? 0,
-      tick: p.k ?? 0,
-      hp: p.h ?? 100,
-    }));
+    pos[name] = pos[name].map(p => ({ x:p.x, y:p.y, team:p.t??0, round:p.r??0, tick:p.k??0, hp:p.h??100 }));
   });
   return pos;
 }
@@ -202,24 +328,107 @@ function expandKills(kills) {
   if (!kills || !kills.length) return kills;
   if (kills[0].attacker !== undefined) return kills;
   return kills.map(k => ({
-    round: k.r ?? 0, tick: k.t ?? 0,
-    attacker: k.a || 'Unknown', attackerTeam: k.at ?? 0,
-    victim: k.v || 'Unknown', victimTeam: k.vt ?? 0,
-    weapon: k.w || '', isHeadshot: !!k.h,
+    round:k.r??0, tick:k.t??0,
+    attacker:k.a||'Unknown', attackerTeam:k.at??0,
+    victim:k.v||'Unknown', victimTeam:k.vt??0,
+    weapon:k.w||'', isHeadshot:!!k.h,
+    thruSmoke:!!k.s, isWallbang:!!k.wb,
   }));
 }
 
-// ── PRO GATING ──
+function cleanWeapon(w) {
+  return (w || '').replace('weapon_', '').replace('_', ' ');
+}
+
+// FV Rating
+function calcFvRating(kills, deaths, assists, rounds) {
+  if (!rounds) return 0;
+  const kpr = kills / rounds;
+  const dpr = deaths / rounds;
+  const apr = (assists || 0) / rounds;
+  const kast = Math.min(0.92, Math.max(0.50,
+    0.0073 * 75 + 0.3591 * kpr - 0.5329 * dpr +
+    0.2372 * (2.13 * kpr + 0.42 * apr - 0.41) +
+    0.0032 * 70 + 0.1587
+  ));
+  return parseFloat((
+    0.0073 * kast * 100 + 0.3591 * kpr - 0.5329 * dpr +
+    0.2372 * (2.13 * kpr + 0.42 * apr - 0.41) +
+    0.0032 * 70 + 0.1587
+  ).toFixed(2));
+}
+
+function fvrColor(r) {
+  if (r >= 1.20) return 'var(--accent)';
+  if (r >= 1.05) return 'var(--success)';
+  if (r >= 0.90) return 'var(--gold)';
+  return 'var(--danger)';
+}
+
+function fvrLabel(r) {
+  if (r >= 1.30) return 'Elite';
+  if (r >= 1.20) return 'Excellent';
+  if (r >= 1.05) return 'Bon';
+  if (r >= 0.90) return 'Correct';
+  if (r >= 0.75) return 'Insuffisant';
+  return 'Faible';
+}
+
+function fvrBadgeBg(r) {
+  if (r >= 1.20) return 'rgba(184,255,87,.12)';
+  if (r >= 1.05) return 'rgba(45,212,160,.1)';
+  if (r >= 0.90) return 'rgba(245,200,66,.1)';
+  return 'rgba(255,68,68,.08)';
+}
+
+// Team identification
+function getTeamRosters(kills) {
+  const pTeam = {};
+  for (const k of kills) {
+    if (k.round <= 3) {
+      if (k.attacker !== 'Unknown' && !pTeam[k.attacker]) pTeam[k.attacker] = k.attackerTeam;
+      if (k.victim !== 'Unknown' && !pTeam[k.victim]) pTeam[k.victim] = k.victimTeam;
+    }
+  }
+  // fill from all kills if incomplete
+  if (Object.keys(pTeam).length < 8) {
+    for (const k of kills) {
+      if (k.attacker !== 'Unknown' && !pTeam[k.attacker]) pTeam[k.attacker] = k.attackerTeam;
+      if (k.victim !== 'Unknown' && !pTeam[k.victim]) pTeam[k.victim] = k.victimTeam;
+    }
+  }
+  const team2 = Object.entries(pTeam).filter(([_,t]) => t === 2).map(([n]) => n);
+  const team3 = Object.entries(pTeam).filter(([_,t]) => t === 3).map(([n]) => n);
+  return { team2, team3, playerTeam: pTeam };
+}
+
+// KAST
+function calcKAST(playerName, kills, rounds) {
+  const totalR = rounds.filter(r => !r.isKnife).length || 1;
+  let kastCount = 0;
+  for (let i = 1; i <= totalR; i++) {
+    const hadKill = kills.some(k => k.round === i && k.attacker === playerName);
+    const died = kills.some(k => k.round === i && k.victim === playerName);
+    const traded = died && kills.some(k => {
+      if (k.round !== i || k.attacker === playerName) return false;
+      const deathTick = kills.find(d => d.round === i && d.victim === playerName)?.tick || 0;
+      return k.tick > deathTick && k.tick - deathTick <= 320 && k.attackerTeam !== k.victimTeam;
+    });
+    if (hadKill || !died || traded) kastCount++;
+  }
+  return Math.round((kastCount / totalR) * 100);
+}
+
+// =====================================================================
+// PRO GATING
+// =====================================================================
 async function checkAccess() {
   try {
-    const { data:{ session } } = await _sb.auth.getSession();
+    const { data: { session } } = await _sb.auth.getSession();
     if (!session) return false;
     const res = await fetch('/api/check-subscription', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + session.access_token,
-      },
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + session.access_token },
     });
     if (res.ok) {
       const d = await res.json();
@@ -229,7 +438,91 @@ async function checkAccess() {
   } catch (_) { return true; }
 }
 
-// ── INIT ──
+// =====================================================================
+// COMPUTED STATS
+// =====================================================================
+function computeAllStats(kills, rounds, playerStats) {
+  const totalRounds = rounds.filter(r => !r.isKnife).length || 1;
+  const { team2, team3, playerTeam } = getTeamRosters(kills);
+  const allPlayers = [...new Set([...team2, ...team3])];
+
+  // If playerStats has players not in kills, add them
+  (playerStats || []).forEach(ps => {
+    if (!allPlayers.includes(ps.name)) allPlayers.push(ps.name);
+    if (!playerTeam[ps.name]) playerTeam[ps.name] = team2.length <= team3.length ? 2 : 3;
+  });
+
+  const stats = allPlayers.map(name => {
+    const k = kills.filter(x => x.attacker === name).length;
+    const d = kills.filter(x => x.victim === name).length;
+    const hs = kills.filter(x => x.attacker === name && x.isHeadshot).length;
+    const hsPct = k > 0 ? Math.round((hs / k) * 100) : 0;
+    const adr = Math.round((k * 80) / totalRounds);
+    const kast = calcKAST(name, kills, rounds);
+    const fvr = calcFvRating(k, d, 0, totalRounds);
+
+    // Opening duels
+    let fk = 0, fd = 0;
+    for (let r = 1; r <= totalRounds; r++) {
+      const roundK = kills.filter(x => x.round === r).sort((a, b) => a.tick - b.tick);
+      if (roundK.length) {
+        if (roundK[0].attacker === name) fk++;
+        if (roundK[0].victim === name) fd++;
+      }
+    }
+
+    // Multi-kills
+    const multiKills = { three: 0, four: 0, ace: 0 };
+    for (let r = 1; r <= totalRounds; r++) {
+      const rk = kills.filter(x => x.round === r && x.attacker === name).length;
+      if (rk >= 5) multiKills.ace++;
+      else if (rk >= 4) multiKills.four++;
+      else if (rk >= 3) multiKills.three++;
+    }
+
+    // Weapons
+    const weapons = {};
+    kills.filter(x => x.attacker === name).forEach(x => {
+      const w = cleanWeapon(x.weapon);
+      weapons[w] = (weapons[w] || 0) + 1;
+    });
+    const topWeapon = Object.entries(weapons).sort((a, b) => b[1] - a[1])[0];
+
+    return {
+      name, team: playerTeam[name] || 0,
+      kills: k, deaths: d, diff: k - d,
+      hs, hsPct, adr, kast, fvr,
+      fk, fd, fkDiff: fk - fd,
+      multiKills, topWeapon: topWeapon ? topWeapon[0] : '-',
+    };
+  });
+
+  // Sort each team by FV Rating
+  const team2Stats = stats.filter(s => s.team === 2).sort((a, b) => b.fvr - a.fvr);
+  const team3Stats = stats.filter(s => s.team === 3).sort((a, b) => b.fvr - a.fvr);
+
+  // Scores
+  const team2Score = rounds.filter(r => !r.isKnife && r.winner === 2).length;
+  const team3Score = rounds.filter(r => !r.isKnife && r.winner === 3).length;
+  const winner = team2Score > team3Score ? 2 : team3Score > team2Score ? 3 : 0;
+
+  // First bloods
+  const firstBloods = [];
+  for (let r = 1; r <= totalRounds; r++) {
+    const roundK = kills.filter(x => x.round === r).sort((a, b) => a.tick - b.tick);
+    if (roundK.length) {
+      const fb = roundK[0];
+      const rndWinner = rounds.find(x => x.round === r || x.displayNum === r)?.winner || 0;
+      firstBloods.push({ round: r, attacker: fb.attacker, attackerTeam: fb.attackerTeam, victim: fb.victim, roundWon: rndWinner === fb.attackerTeam });
+    }
+  }
+
+  return { stats, team2Stats, team3Stats, team2Score, team3Score, winner, totalRounds, firstBloods, team2, team3, playerTeam };
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
 async function init() {
   const hasAccess = await checkAccess();
   if (!hasAccess) {
@@ -239,7 +532,7 @@ async function init() {
 
   const raw = sessionStorage.getItem('demoData');
   if (!raw) {
-    document.getElementById('mainPage').innerHTML = '<div class="empty-msg" style="padding:60px">Aucune donnee. Analyse une demo d\'abord.</div>';
+    document.getElementById('mainPage').innerHTML = '<div class="empty-msg" style="padding:60px">Aucune donnee disponible. Analyse une demo depuis la page principale.</div>';
     document.getElementById('mainPage').style.display = 'block';
     return;
   }
@@ -249,256 +542,757 @@ async function init() {
   if (demoData.kills) demoData.kills = expandKills(demoData.kills);
   mapName = (demoData.meta?.map || 'de_dust2').toLowerCase().replace(/^.*\//, '').trim();
 
+  const kills = demoData.kills || [];
+  const rounds = demoData.rounds || [];
+  const computed = computeAllStats(kills, rounds, demoData.playerStats);
+
   document.getElementById('mainPage').style.display = 'block';
 
-  renderMinimaps();
-  renderDuels();
-  renderPerformance();
-  renderClutchs();
+  renderOverview(computed, rounds);
+  renderStatsTable(computed);
+  renderOpenings(computed);
+  renderDuels(kills, computed);
+  renderMinimaps(computed);
+  renderPerformance(kills, rounds, computed);
+  renderMoments(kills, rounds, computed);
+  renderCoachBilan(computed, kills, rounds);
 }
 
-// ── SECTION 1: MINIMAPS ──
-function renderMinimaps() {
-  const positions = demoData.positions || {};
-  const grid = document.getElementById('minimapsGrid');
-  const players = Object.keys(positions);
+// =====================================================================
+// 1. VUE D'ENSEMBLE
+// =====================================================================
+function renderOverview(c, rounds) {
+  const mapLabel = mapName.replace('de_', '').toUpperCase();
 
-  if (!players.length) {
-    grid.innerHTML = '<div class="empty-msg">Aucune position disponible</div>';
+  // Score banner
+  const winnerSide = c.winner;
+  document.getElementById('scoreBanner').innerHTML = `
+    <div class="score-side ${winnerSide === 3 ? 'winner' : ''}">
+      <div class="score-team-label ct">CT Side</div>
+      <div class="score-players">${c.team3.join('<br>')}</div>
+      <div class="score-num ${winnerSide === 3 ? 'winner-num' : 'ct'}">${c.team3Score}</div>
+    </div>
+    <div class="score-center">
+      <div class="score-map">${mapLabel}</div>
+      <div class="score-colon">:</div>
+    </div>
+    <div class="score-side ${winnerSide === 2 ? 'winner' : ''}">
+      <div class="score-team-label t">T Side</div>
+      <div class="score-players">${c.team2.join('<br>')}</div>
+      <div class="score-num ${winnerSide === 2 ? 'winner-num' : 't'}">${c.team2Score}</div>
+    </div>
+  `;
+
+  // Round timeline
+  const tl = document.getElementById('roundTimeline');
+  const nonKnife = rounds.filter(r => !r.isKnife);
+  const halfPoint = 12;
+
+  nonKnife.forEach((r, i) => {
+    const rNum = r.displayNum || r.round || (i + 1);
+    const div = document.createElement('div');
+    div.className = 'round-tl-r ' + (r.winner === 3 ? 'ct-win' : r.winner === 2 ? 't-win' : 'no-data');
+    if (i === halfPoint) div.classList.add('round-tl-half');
+    div.title = 'Round ' + rNum + ' - ' + (r.winner === 3 ? 'CT' : r.winner === 2 ? 'T' : '?');
+
+    // First blood indicator
+    const fb = c.firstBloods.find(f => f.round === rNum);
+    if (fb) {
+      const dot = document.createElement('div');
+      dot.className = 'round-tl-fb';
+      dot.style.background = fb.attackerTeam === 3 ? 'var(--ct)' : 'var(--t)';
+      dot.title = 'FB: ' + fb.attacker;
+      div.appendChild(dot);
+    }
+
+    if (nonKnife.length <= 30 && (i % 2 === 0 || nonKnife.length <= 15)) {
+      const lbl = document.createElement('span');
+      lbl.className = 'rn';
+      lbl.textContent = rNum;
+      div.appendChild(lbl);
+    }
+    tl.appendChild(div);
+  });
+
+  // KPIs
+  const totalK = c.stats.reduce((s, p) => s + p.kills, 0);
+  const fbTeam2 = c.firstBloods.filter(f => f.attackerTeam === 2).length;
+  const fbTeam3 = c.firstBloods.filter(f => f.attackerTeam === 3).length;
+  const fbWinnerPct = c.firstBloods.length > 0
+    ? Math.round((c.firstBloods.filter(f => f.roundWon).length / c.firstBloods.length) * 100)
+    : 0;
+  const mvp = [...c.stats].sort((a, b) => b.fvr - a.fvr)[0];
+
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-value">${c.totalRounds}</div>
+      <div class="kpi-label">Rounds joues</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">${totalK}</div>
+      <div class="kpi-label">Kills totaux</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color:var(--accent)">${fbWinnerPct}%</div>
+      <div class="kpi-label">Conversion 1er kill</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color:${fvrColor(mvp?.fvr || 0)}">${mvp?.fvr?.toFixed(2) || '-'}</div>
+      <div class="kpi-label">MVP - ${mvp?.name || '-'}</div>
+    </div>
+  `;
+}
+
+// =====================================================================
+// 2. CLASSEMENT & STATS TABLE
+// =====================================================================
+function renderStatsTable(c) {
+  const table = document.getElementById('statsTable');
+  const winnerStats = c.winner === 3 ? c.team3Stats : c.team2Stats;
+  const loserStats = c.winner === 3 ? c.team2Stats : c.team3Stats;
+  const winnerTeam = c.winner || 3;
+  const loserTeam = winnerTeam === 3 ? 2 : 3;
+  const mvpName = [...c.stats].sort((a, b) => b.fvr - a.fvr)[0]?.name;
+
+  let html = `<thead><tr>
+    <th style="min-width:150px">Joueur</th>
+    <th>K</th><th>D</th><th>+/-</th>
+    <th>HS%</th><th>ADR</th><th>KAST</th>
+    <th>FK</th><th>FD</th>
+    <th style="min-width:140px">FV Rating</th>
+  </tr></thead><tbody>`;
+
+  function playerRow(p) {
+    const teamColor = p.team === 3 ? 'var(--ct)' : 'var(--t)';
+    const diffStr = p.diff > 0 ? '+' + p.diff : p.diff;
+    const diffClass = p.diff > 0 ? 'diff-pos' : p.diff < 0 ? 'diff-neg' : '';
+    const isMvp = p.name === mvpName;
+    const kastColor = p.kast >= 75 ? 'var(--success)' : p.kast >= 65 ? 'var(--text)' : p.kast >= 55 ? 'var(--gold)' : 'var(--danger)';
+    const barW = Math.min(60, Math.max(8, p.fvr * 40));
+
+    html += `<tr>
+      <td><div class="player-cell">
+        <span class="team-dot" style="background:${teamColor}"></span>
+        <span class="player-name">${p.name}</span>
+        ${isMvp ? '<span class="mvp-star">*</span>' : ''}
+      </div></td>
+      <td style="font-weight:700">${p.kills}</td>
+      <td>${p.deaths}</td>
+      <td class="${diffClass}" style="font-weight:700">${diffStr}</td>
+      <td>${p.hsPct}%</td>
+      <td>${p.adr}</td>
+      <td style="color:${kastColor}">${p.kast}%</td>
+      <td style="color:var(--success)">${p.fk}</td>
+      <td style="color:var(--danger)">${p.fd}</td>
+      <td><div class="fvr-cell">
+        <span style="font-weight:700;color:${fvrColor(p.fvr)}">${p.fvr.toFixed(2)}</span>
+        <span class="fvr-bar" style="width:${barW}px;background:${fvrColor(p.fvr)}"></span>
+      </div></td>
+    </tr>`;
+  }
+
+  winnerStats.forEach(playerRow);
+  html += '<tr class="team-divider"><td colspan="10"></td></tr>';
+  loserStats.forEach(playerRow);
+
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+// =====================================================================
+// 3. OUVERTURE DE ROUND
+// =====================================================================
+function renderOpenings(c) {
+  const card = document.getElementById('openingCard');
+  const playersWithFB = c.stats.filter(p => p.fk > 0 || p.fd > 0).sort((a, b) => b.fk - a.fk);
+
+  if (!playersWithFB.length) {
+    card.innerHTML = '<div class="empty-msg">Pas de donnees d\'ouverture disponibles</div>';
     return;
   }
 
-  const mapImgSrc = MAP_CONFIG[mapName]?.img || MAP_CONFIG[mapName]?.upper?.img || '';
+  let html = `<table class="open-table"><thead><tr>
+    <th style="min-width:140px">Joueur</th>
+    <th>FK</th><th>FD</th><th>+/-</th><th>FK %</th><th>Conversion</th>
+  </tr></thead><tbody>`;
 
-  players.forEach(name => {
-    const pts = positions[name];
-    if (!pts || !pts.length) return;
+  playersWithFB.forEach(p => {
+    const total = p.fk + p.fd;
+    const fkPct = total > 0 ? Math.round((p.fk / total) * 100) : 0;
+    const fkPctColor = fkPct >= 60 ? 'var(--success)' : fkPct >= 40 ? 'var(--text)' : 'var(--danger)';
+    const diffStr = p.fkDiff > 0 ? '+' + p.fkDiff : p.fkDiff;
+    const diffClass = p.fkDiff > 0 ? 'diff-pos' : p.fkDiff < 0 ? 'diff-neg' : '';
 
-    const team = pts[0].team;
-    const teamLabel = team === 3 ? 'CT' : team === 2 ? 'T' : '?';
-    const teamClass = team === 3 ? 'ct' : 't';
+    // Conversion: rounds where this player got FK and team won
+    const fbRounds = c.firstBloods.filter(f => f.attacker === p.name);
+    const fbWon = fbRounds.filter(f => f.roundWon).length;
+    const convPct = fbRounds.length > 0 ? Math.round((fbWon / fbRounds.length) * 100) : 0;
+    const convColor = convPct >= 70 ? 'var(--success)' : convPct >= 50 ? 'var(--text)' : 'var(--danger)';
 
-    const card = document.createElement('div');
-    card.className = 'minimap-card';
-
-    const cvs = document.createElement('canvas');
-    cvs.width = 200; cvs.height = 200;
-    card.appendChild(cvs);
-
-    const lbl = document.createElement('div');
-    lbl.className = 'minimap-name';
-    lbl.textContent = name;
-    card.appendChild(lbl);
-
-    const tl = document.createElement('div');
-    tl.className = 'minimap-team ' + teamClass;
-    tl.textContent = teamLabel;
-    card.appendChild(tl);
-
-    grid.appendChild(card);
-
-    // Draw
-    const ctx = cvs.getContext('2d');
-    const img = new Image();
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0, 200, 200);
-      ctx.globalAlpha = 0.7;
-      const color = team === 3 ? '#5b8dd9' : '#e8a838';
-      pts.forEach(p => {
-        const { x, y } = w2c(p.x, p.y, 200);
-        if (x >= 0 && x <= 200 && y >= 0 && y <= 200) {
-          ctx.fillStyle = color;
-          ctx.beginPath();
-          ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      });
-      ctx.globalAlpha = 1;
-    };
-    img.onerror = () => {
-      ctx.fillStyle = '#0a0a0a';
-      ctx.fillRect(0, 0, 200, 200);
-      const color = team === 3 ? '#5b8dd9' : '#e8a838';
-      pts.forEach(p => {
-        const { x, y } = w2c(p.x, p.y, 200);
-        if (x >= 0 && x <= 200 && y >= 0 && y <= 200) {
-          ctx.fillStyle = color;
-          ctx.beginPath();
-          ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      });
-    };
-    if (mapImgSrc) img.src = mapImgSrc;
-    else img.onerror();
+    html += `<tr>
+      <td>${p.name}</td>
+      <td style="color:var(--success);font-weight:700">${p.fk}</td>
+      <td style="color:var(--danger)">${p.fd}</td>
+      <td class="${diffClass}" style="font-weight:700">${diffStr}</td>
+      <td style="color:${fkPctColor};font-weight:700">${fkPct}%</td>
+      <td style="color:${convColor}">${convPct}% (${fbWon}/${fbRounds.length})</td>
+    </tr>`;
   });
+  html += '</tbody></table>';
+
+  // Insight box
+  const team2FB = c.firstBloods.filter(f => f.attackerTeam === 2).length;
+  const team3FB = c.firstBloods.filter(f => f.attackerTeam === 3).length;
+  const dominantTeam = team3FB >= team2FB ? 'CT' : 'T';
+  const dominantPct = Math.round((Math.max(team2FB, team3FB) / c.firstBloods.length) * 100);
+  const globalConv = c.firstBloods.length > 0
+    ? Math.round((c.firstBloods.filter(f => f.roundWon).length / c.firstBloods.length) * 100)
+    : 0;
+
+  const bestOpener = [...playersWithFB].sort((a, b) => b.fk - a.fk)[0];
+
+  html += `<div class="open-insight">
+    Le side <strong>${dominantTeam}</strong> a domine les ouvertures avec <strong>${dominantPct}%</strong> des first bloods.
+    Quand une equipe prend le premier kill, elle convertit le round dans <strong>${globalConv}%</strong> des cas.
+    <strong>${bestOpener.name}</strong> est le meilleur ouvreur avec ${bestOpener.fk} first kills sur ${c.totalRounds} rounds.
+  </div>`;
+
+  card.innerHTML = html;
 }
 
-// ── SECTION 2: DUELS ──
-function renderDuels() {
-  const kills = demoData.kills || [];
+// =====================================================================
+// 4. CONFRONTATIONS DIRECTES
+// =====================================================================
+function renderDuels(kills, c) {
   const card = document.getElementById('duelsCard');
-
   const duels = {};
+
   kills.forEach(k => {
     if (k.attacker === 'Unknown' || k.victim === 'Unknown') return;
-    const pair = [k.attacker, k.victim].sort().join(' vs ');
-    if (!duels[pair]) duels[pair] = { p1: k.attacker, p2: k.victim, p1k: 0, p2k: 0 };
-    const d = duels[pair];
-    // Normalize: sorted order means p1 < p2 alphabetically
+    if ((c.playerTeam[k.attacker] || 0) === (c.playerTeam[k.victim] || 0)) return;
     const sorted = [k.attacker, k.victim].sort();
+    const pair = sorted.join(' vs ');
+    if (!duels[pair]) duels[pair] = { p1: sorted[0], p2: sorted[1], p1k: 0, p2k: 0, weapons: [] };
+    const d = duels[pair];
     if (k.attacker === sorted[0]) d.p1k++;
     else d.p2k++;
-    d.p1 = sorted[0];
-    d.p2 = sorted[1];
+    d.weapons.push(cleanWeapon(k.weapon));
   });
 
   const entries = Object.values(duels).filter(d => (d.p1k + d.p2k) >= 2).sort((a, b) => (b.p1k + b.p2k) - (a.p1k + a.p2k));
 
   if (!entries.length) {
-    card.innerHTML = '<div class="empty-msg">Pas assez de confrontations directes (minimum 2)</div>';
+    card.innerHTML = '<div class="empty-msg">Pas assez de confrontations directes (minimum 2 rencontres)</div>';
     return;
   }
 
-  let html = '<table class="duels-table"><thead><tr><th>Joueur 1</th><th>Joueur 2</th><th>Kills</th><th>Deaths</th><th>Win rate</th></tr></thead><tbody>';
-  entries.forEach(d => {
+  let html = `<table class="duels-table"><thead><tr>
+    <th>Joueur A</th><th>Score</th><th>Joueur B</th><th>Avantage</th><th>Rencontres</th>
+  </tr></thead><tbody>`;
+
+  entries.slice(0, 15).forEach(d => {
     const total = d.p1k + d.p2k;
-    const wr = total > 0 ? Math.round((d.p1k / total) * 100) : 50;
-    const wrColor = wr >= 60 ? 'var(--success)' : wr >= 40 ? 'var(--gold)' : 'var(--danger)';
-    html += '<tr>';
-    html += '<td>' + d.p1 + '</td>';
-    html += '<td>' + d.p2 + '</td>';
-    html += '<td style="font-family:var(--display);font-size:14px">' + d.p1k + '</td>';
-    html += '<td style="font-family:var(--display);font-size:14px">' + d.p2k + '</td>';
-    html += '<td><span style="color:' + wrColor + ';font-weight:700">' + wr + '%</span><span class="wr-bar" style="width:' + wr + 'px;background:' + wrColor + '"></span></td>';
-    html += '</tr>';
+    const wr = Math.round((d.p1k / total) * 100);
+    const barColor = wr >= 60 ? 'var(--success)' : wr >= 40 ? 'var(--gold)' : 'var(--danger)';
+    const advantagePlayer = wr >= 55 ? d.p1 : wr <= 45 ? d.p2 : '-';
+    const t1 = c.playerTeam[d.p1] || 0;
+    const t2 = c.playerTeam[d.p2] || 0;
+
+    html += `<tr>
+      <td style="font-weight:700;color:${t1 === 3 ? 'var(--ct)' : 'var(--t)'}">${d.p1}</td>
+      <td style="text-align:center">
+        <span style="font-family:var(--display);font-size:16px">${d.p1k}</span>
+        <span style="color:var(--text3);margin:0 4px">-</span>
+        <span style="font-family:var(--display);font-size:16px">${d.p2k}</span>
+      </td>
+      <td style="font-weight:700;color:${t2 === 3 ? 'var(--ct)' : 'var(--t)'}">${d.p2}</td>
+      <td>
+        <div class="duel-bar-wrap">
+          <div class="duel-bar-bg"><div class="duel-bar-fill" style="width:${wr}%;background:${barColor}"></div></div>
+          <span class="duel-pct" style="color:${barColor}">${wr}%</span>
+        </div>
+      </td>
+      <td style="color:var(--text3)">${total}</td>
+    </tr>`;
   });
+
   html += '</tbody></table>';
   card.innerHTML = html;
 }
 
-// ── SECTION 3: PERFORMANCE PAR ROUND ──
-function renderPerformance() {
-  const kills = demoData.kills || [];
-  const rounds = demoData.rounds || [];
-  const target = demoData.meta?.targetPlayer;
-  const stats = demoData.playerStats || [];
-  const mainPlayer = target || (stats.length ? stats.sort((a, b) => b.kills - a.kills)[0]?.name : null);
+// =====================================================================
+// 5. POSITIONNEMENT
+// =====================================================================
+function renderMinimaps(c) {
+  const positions = demoData.positions || {};
+  const grid = document.getElementById('minimapsGrid');
+  const players = Object.keys(positions);
 
+  if (!players.length) {
+    grid.innerHTML = '<div class="empty-msg">Aucune donnee de position disponible</div>';
+    return;
+  }
+
+  const mapImgSrc = MAP_CONFIG[mapName]?.img || MAP_CONFIG[mapName]?.upper?.img || '';
+  const cvSize = 240;
+
+  // Sort: CT first, then T
+  const sorted = [...players].sort((a, b) => {
+    const ta = c.playerTeam[a] || 0;
+    const tb = c.playerTeam[b] || 0;
+    if (ta !== tb) return tb - ta; // CT (3) first
+    return a.localeCompare(b);
+  });
+
+  sorted.forEach(name => {
+    const pts = positions[name];
+    if (!pts || !pts.length) return;
+
+    const team = c.playerTeam[name] || pts[0].team || 0;
+    const teamLabel = team === 3 ? 'CT' : team === 2 ? 'T' : '?';
+    const teamClass = team === 3 ? 'ct' : 't';
+    const pKills = (demoData.kills || []).filter(k => k.attacker === name).length;
+
+    const card = document.createElement('div');
+    card.className = 'minimap-card';
+
+    // Header
+    const hdr = document.createElement('div');
+    hdr.className = 'minimap-header';
+    hdr.innerHTML = `<span class="minimap-name">${name}</span><span class="minimap-meta ${teamClass}">${teamLabel} - ${pKills} kills</span>`;
+    card.appendChild(hdr);
+
+    const cvs = document.createElement('canvas');
+    cvs.width = cvSize; cvs.height = cvSize;
+    card.appendChild(cvs);
+    grid.appendChild(card);
+
+    // Draw heatmap
+    const ctx = cvs.getContext('2d');
+    const img = new Image();
+
+    function drawHeatmap(withBg) {
+      if (withBg) ctx.drawImage(img, 0, 0, cvSize, cvSize);
+      else { ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, 0, cvSize, cvSize); }
+
+      const color = team === 3 ? [91, 141, 217] : [232, 168, 56];
+
+      // Density heatmap: draw larger semi-transparent circles
+      ctx.globalCompositeOperation = 'lighter';
+      pts.forEach(p => {
+        const { x, y } = w2c(p.x, p.y, cvSize);
+        if (x < 0 || x > cvSize || y < 0 || y > cvSize) return;
+        const grad = ctx.createRadialGradient(x, y, 0, x, y, 6);
+        grad.addColorStop(0, `rgba(${color[0]},${color[1]},${color[2]},0.12)`);
+        grad.addColorStop(1, `rgba(${color[0]},${color[1]},${color[2]},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Sharp dots on top
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 0.6;
+      pts.forEach(p => {
+        const { x, y } = w2c(p.x, p.y, cvSize);
+        if (x < 0 || x > cvSize || y < 0 || y > cvSize) return;
+        ctx.fillStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+
+      // Death positions (red X marks)
+      const deaths = (demoData.kills || []).filter(k => k.victim === name);
+      deaths.forEach(dk => {
+        // Find victim position from kill coordinates if available
+        const vx = dk.victimX || dk.vx;
+        const vy = dk.victimY || dk.vy;
+        if (!vx && !vy) return;
+        const { x, y } = w2c(vx, vy, cvSize);
+        if (x < 0 || x > cvSize || y < 0 || y > cvSize) return;
+        ctx.strokeStyle = 'rgba(255,68,68,0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x - 3, y - 3); ctx.lineTo(x + 3, y + 3);
+        ctx.moveTo(x + 3, y - 3); ctx.lineTo(x - 3, y + 3);
+        ctx.stroke();
+      });
+    }
+
+    img.onload = () => drawHeatmap(true);
+    img.onerror = () => drawHeatmap(false);
+    if (mapImgSrc) img.src = mapImgSrc;
+    else drawHeatmap(false);
+  });
+}
+
+// =====================================================================
+// 6. PERFORMANCE PAR ROUND
+// =====================================================================
+function renderPerformance(kills, rounds, c) {
+  const allPlayers = c.stats.sort((a, b) => b.fvr - a.fvr);
+  const target = demoData.meta?.targetPlayer || allPlayers[0]?.name;
+  currentPerfPlayer = target;
+
+  // Player tabs
+  const tabsEl = document.getElementById('playerTabs');
+  allPlayers.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'player-tab' + (p.name === target ? ' active' : '');
+    btn.textContent = p.name;
+    btn.onclick = () => {
+      currentPerfPlayer = p.name;
+      tabsEl.querySelectorAll('.player-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      drawPerfChart(kills, rounds, c);
+    };
+    tabsEl.appendChild(btn);
+  });
+
+  drawPerfChart(kills, rounds, c);
+}
+
+function drawPerfChart(kills, rounds, c) {
   const canvas = document.getElementById('perfCanvas');
   const ctx = canvas.getContext('2d');
+  const name = currentPerfPlayer;
 
-  const numRounds = rounds.filter(r => !r.isKnife).length || 1;
+  const nonKnife = rounds.filter(r => !r.isKnife);
+  const numRounds = nonKnife.length || 1;
+
   const killsByRound = {};
   kills.forEach(k => {
-    if (k.attacker === mainPlayer) {
-      killsByRound[k.round] = (killsByRound[k.round] || 0) + 1;
-    }
+    if (k.attacker === name) killsByRound[k.round] = (killsByRound[k.round] || 0) + 1;
   });
 
   const W = canvas.parentElement.offsetWidth;
-  const H = 200;
+  const H = 220;
   canvas.width = W * devicePixelRatio;
   canvas.height = H * devicePixelRatio;
   canvas.style.width = W + 'px';
   canvas.style.height = H + 'px';
   ctx.scale(devicePixelRatio, devicePixelRatio);
 
-  const pad = { t: 24, r: 8, b: 28, l: 8 };
+  // Clear
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = { t: 28, r: 8, b: 36, l: 8 };
   const cW = W - pad.l - pad.r;
   const cH = H - pad.t - pad.b;
   const maxK = Math.max(5, ...Object.values(killsByRound));
-  const barW = Math.max(4, Math.min(20, (cW / numRounds) - 2));
+  const barW = Math.max(4, Math.min(22, (cW / numRounds) - 3));
 
-  // Title
+  // Player label
   ctx.font = "700 10px 'Space Mono'";
-  ctx.fillStyle = '#4a5050';
+  ctx.fillStyle = '#7a8080';
   ctx.textAlign = 'left';
-  ctx.fillText(mainPlayer ? mainPlayer : 'Joueur principal', pad.l, 14);
+  ctx.fillText(name, pad.l, 16);
 
-  // Grid lines
-  ctx.strokeStyle = 'rgba(28,30,30,.6)';
-  ctx.lineWidth = 1;
+  // Player FVR
+  const pStat = c.stats.find(s => s.name === name);
+  if (pStat) {
+    ctx.textAlign = 'right';
+    ctx.fillStyle = fvrColor(pStat.fvr);
+    ctx.fillText('FV ' + pStat.fvr.toFixed(2) + ' - ' + fvrLabel(pStat.fvr), W - pad.r, 16);
+  }
+
+  // Grid
+  ctx.strokeStyle = 'rgba(28,30,30,.5)';
+  ctx.lineWidth = 0.5;
   for (let i = 0; i <= maxK; i++) {
     const y = pad.t + cH - (i / maxK) * cH;
     ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
   }
 
-  // Bars
-  for (let r = 1; r <= numRounds; r++) {
-    const k = killsByRound[r] || 0;
-    const x = pad.l + ((r - 0.5) / numRounds) * cW;
+  // Bars + round indicators
+  for (let i = 0; i < numRounds; i++) {
+    const rnd = nonKnife[i];
+    const rNum = rnd?.displayNum || rnd?.round || (i + 1);
+    const k = killsByRound[rNum] || 0;
+    const x = pad.l + ((i + 0.5) / numRounds) * cW;
     const barH = (k / maxK) * cH;
     const y = pad.t + cH - barH;
 
-    ctx.fillStyle = k >= 2 ? '#b8ff57' : k === 1 ? '#e8a838' : '#333';
-    ctx.beginPath();
-    ctx.roundRect(x - barW / 2, y, barW, barH, [2, 2, 0, 0]);
-    ctx.fill();
+    // Bar color
+    let color;
+    if (k >= 3) color = '#b8ff57';
+    else if (k === 2) color = '#7ddd1a';
+    else if (k === 1) color = '#e8a838';
+    else color = '#252727';
 
-    // Kill count label
+    // Draw bar
+    ctx.fillStyle = color;
     if (k > 0) {
-      ctx.font = "700 10px 'Space Mono'";
-      ctx.fillStyle = '#e8eaea';
-      ctx.textAlign = 'center';
-      ctx.fillText(k, x, y - 4);
+      ctx.beginPath();
+      ctx.roundRect(x - barW / 2, y, barW, barH, [3, 3, 0, 0]);
+      ctx.fill();
+    } else {
+      ctx.fillRect(x - barW / 2, pad.t + cH - 2, barW, 2);
     }
 
+    // Kill count
+    if (k > 0) {
+      ctx.font = "700 9px 'Space Mono'";
+      ctx.fillStyle = '#e8eaea';
+      ctx.textAlign = 'center';
+      ctx.fillText(k, x, y - 5);
+    }
+
+    // Round outcome dot
+    const pTeam = c.playerTeam[name] || 0;
+    // Determine if player's team won this round
+    // First half: player team is pTeam. Second half (after round 12): teams swap
+    const effectiveTeam = i < 12 ? pTeam : (pTeam === 2 ? 3 : pTeam === 3 ? 2 : 0);
+    const won = rnd && rnd.winner === effectiveTeam;
+    const dotY = H - 14;
+    ctx.fillStyle = rnd ? (won ? 'rgba(45,212,160,0.7)' : 'rgba(255,68,68,0.5)') : '#252727';
+    ctx.beginPath();
+    ctx.arc(x, dotY, 3, 0, Math.PI * 2);
+    ctx.fill();
+
     // Round number
-    if (numRounds <= 30 || r % 2 === 1) {
-      ctx.font = "8px 'Space Mono'";
+    if (numRounds <= 30 && (numRounds <= 15 || i % 2 === 0)) {
+      ctx.font = "7px 'Space Mono'";
       ctx.fillStyle = '#4a5050';
       ctx.textAlign = 'center';
-      ctx.fillText(r, x, H - 8);
+      ctx.fillText(rNum, x, H - 2);
     }
   }
 }
 
-// ── SECTION 4: CLUTCHS ──
-function renderClutchs() {
-  const kills = demoData.kills || [];
-  const rounds = demoData.rounds || [];
-  const card = document.getElementById('clutchCard');
+// =====================================================================
+// 7. MOMENTS CLES
+// =====================================================================
+function renderMoments(kills, rounds, c) {
+  const card = document.getElementById('momentsCard');
+  const totalR = rounds.filter(r => !r.isKnife).length || 1;
 
-  // Group kills by round and player
-  const roundKills = {};
-  kills.forEach(k => {
-    if (k.attacker === 'Unknown') return;
-    const key = k.round + ':' + k.attacker;
-    if (!roundKills[key]) roundKills[key] = { player: k.attacker, round: k.round, kills: 0, team: k.attackerTeam };
-    roundKills[key].kills++;
-  });
+  // Multi-kills per round per player
+  const moments = [];
+  for (let r = 1; r <= totalR; r++) {
+    const roundKills = kills.filter(k => k.round === r);
+    const byPlayer = {};
+    roundKills.forEach(k => {
+      if (k.attacker === 'Unknown') return;
+      if (!byPlayer[k.attacker]) byPlayer[k.attacker] = { kills: [], team: k.attackerTeam };
+      byPlayer[k.attacker].kills.push(k);
+    });
 
-  // Clutch = 3+ kills in a single round by one player
-  const clutchs = Object.values(roundKills)
-    .filter(c => c.kills >= 3)
-    .sort((a, b) => b.kills - a.kills || a.round - b.round);
+    Object.entries(byPlayer).forEach(([player, data]) => {
+      if (data.kills.length >= 3) {
+        const weapons = [...new Set(data.kills.map(k => cleanWeapon(k.weapon)))];
+        const hs = data.kills.filter(k => k.isHeadshot).length;
+        const rndData = rounds.find(x => x.round === r || x.displayNum === r);
+        const effectiveTeam = r <= 12 ? data.team : (data.team === 2 ? 3 : data.team === 3 ? 2 : 0);
+        const won = rndData ? rndData.winner === effectiveTeam : null;
 
-  if (!clutchs.length) {
-    card.innerHTML = '<div class="empty-msg">Aucun clutch detecte (3+ kills dans un round)</div>';
+        moments.push({
+          round: r, player, killCount: data.kills.length,
+          weapons, hs, team: data.team, won,
+        });
+      }
+    });
+  }
+
+  moments.sort((a, b) => b.killCount - a.killCount || a.round - b.round);
+
+  if (!moments.length) {
+    card.innerHTML = '<div class="empty-msg">Aucun multi-kill detecte (3+ kills dans un round)</div>';
     return;
   }
 
-  let html = '<div class="clutch-list">';
-  clutchs.forEach(c => {
-    const rndData = rounds.find(r => r.round === c.round);
-    const won = rndData ? rndData.winner === c.team : null;
-    const resultClass = won === true ? 'win' : won === false ? 'loss' : '';
-    const resultText = won === true ? 'Victoire' : won === false ? 'Defaite' : '?';
+  let html = '<div class="moments-grid">';
+  moments.forEach(m => {
+    const badge = m.killCount >= 5 ? 'ace' : m.killCount >= 4 ? 'quad' : 'triple';
+    const badgeText = m.killCount >= 5 ? 'ACE' : m.killCount >= 4 ? '4K' : '3K';
+    const resultClass = m.won === true ? 'win' : m.won === false ? 'loss' : '';
+    const resultText = m.won === true ? 'Victoire' : m.won === false ? 'Defaite' : '?';
 
-    html += '<div class="clutch-card">';
-    html += '<div class="clutch-round">R' + c.round + '</div>';
-    html += '<div class="clutch-info">';
-    html += '<div class="clutch-player">' + c.player + '</div>';
-    html += '<div class="clutch-detail">' + c.kills + ' kills' + (c.team === 3 ? ' (CT)' : c.team === 2 ? ' (T)' : '') + '</div>';
-    html += '</div>';
-    html += '<span class="clutch-result ' + resultClass + '">' + resultText + '</span>';
-    html += '</div>';
+    html += `<div class="moment-card">
+      <div class="moment-round">R${m.round}</div>
+      <span class="moment-badge ${badge}">${badgeText}</span>
+      <div class="moment-info">
+        <div class="moment-player" style="color:${m.team === 3 ? 'var(--ct)' : 'var(--t)'}">${m.player}</div>
+        <div class="moment-detail">${m.killCount} kills (${m.hs} HS) - ${m.weapons.join(', ')}</div>
+      </div>
+      <span class="moment-result ${resultClass}">${resultText}</span>
+    </div>`;
   });
   html += '</div>';
   card.innerHTML = html;
 }
 
+// =====================================================================
+// 8. BILAN TACTIQUE
+// =====================================================================
+function renderCoachBilan(c, kills, rounds) {
+  const card = document.getElementById('coachCard');
+  const mvp = [...c.stats].sort((a, b) => b.fvr - a.fvr)[0];
+  const lowest = [...c.stats].sort((a, b) => a.fvr - b.fvr)[0];
+  const totalR = c.totalRounds;
+  const winnerLabel = c.winner === 3 ? 'CT' : c.winner === 2 ? 'T' : '-';
+
+  // Dynamique
+  let streaks = [];
+  let cur = { team: 0, count: 0, start: 0 };
+  const nonKnife = rounds.filter(r => !r.isKnife);
+  nonKnife.forEach((r, i) => {
+    if (r.winner === cur.team) {
+      cur.count++;
+    } else {
+      if (cur.count >= 3) streaks.push({ ...cur });
+      cur = { team: r.winner, count: 1, start: i + 1 };
+    }
+  });
+  if (cur.count >= 3) streaks.push({ ...cur });
+  const longestStreak = streaks.sort((a, b) => b.count - a.count)[0];
+
+  // Opening analysis
+  const team2FB = c.firstBloods.filter(f => f.attackerTeam === 2).length;
+  const team3FB = c.firstBloods.filter(f => f.attackerTeam === 3).length;
+  const fbConv = c.firstBloods.length > 0
+    ? Math.round((c.firstBloods.filter(f => f.roundWon).length / c.firstBloods.length) * 100) : 0;
+
+  // Trading
+  let tradedDeaths = 0;
+  let totalDeaths = 0;
+  kills.forEach(k => {
+    if (k.victim === 'Unknown') return;
+    totalDeaths++;
+    const traded = kills.some(tk =>
+      tk.round === k.round && tk.attacker !== 'Unknown' &&
+      tk.victim === k.attacker &&
+      tk.tick > k.tick && tk.tick - k.tick <= 320 &&
+      (c.playerTeam[tk.attacker] || 0) === (c.playerTeam[k.victim] || 0)
+    );
+    if (traded) tradedDeaths++;
+  });
+  const tradePct = totalDeaths > 0 ? Math.round((tradedDeaths / totalDeaths) * 100) : 0;
+
+  // High/low consistency players
+  const highKast = c.stats.filter(p => p.kast >= 75).sort((a, b) => b.kast - a.kast);
+  const lowKast = c.stats.filter(p => p.kast < 60).sort((a, b) => a.kast - b.kast);
+
+  // Multi-kill concentration
+  const allMK = c.stats.filter(p => (p.multiKills.three + p.multiKills.four + p.multiKills.ace) > 0);
+
+  // Build coaching text
+  let html = '';
+
+  // Dynamique du match
+  html += `<div class="coach-block">
+    <div class="coach-label">Dynamique du match</div>
+    <div class="coach-text">
+      Le side <strong>${winnerLabel}</strong> remporte le match <strong>${c.team3Score} - ${c.team2Score}</strong> sur ${mapName.replace('de_', '').toUpperCase()}.`;
+
+  if (longestStreak) {
+    const streakTeam = longestStreak.team === 3 ? 'CT' : 'T';
+    html += ` La plus longue serie de victoires consecutives est de <strong>${longestStreak.count} rounds</strong> pour le side ${streakTeam} (a partir du round ${longestStreak.start}).`;
+  }
+
+  const halfScore3 = nonKnife.slice(0, 12).filter(r => r.winner === 3).length;
+  const halfScore2 = nonKnife.slice(0, 12).filter(r => r.winner === 2).length;
+  html += ` Score a la mi-temps : <strong>${halfScore3} - ${halfScore2}</strong> (CT - T).`;
+  html += `</div></div>`;
+
+  // MVP
+  html += `<div class="coach-block">
+    <div class="coach-label">Joueur cle</div>
+    <div class="coach-text">
+      <strong>${mvp.name}</strong> termine MVP avec un FV Rating de <strong>${mvp.fvr.toFixed(2)}</strong> (${fvrLabel(mvp.fvr)}).`;
+
+  if (mvp.fk >= 3) html += ` Il est implique dans ${mvp.fk} opening duels, creant des avantages numeriques en debut de round.`;
+  if (mvp.kast >= 75) html += ` Son KAST de ${mvp.kast}% montre une presence constante a chaque round.`;
+  if (mvp.hsPct >= 55) html += ` Sa precision est remarquable avec ${mvp.hsPct}% de headshots.`;
+  html += `</div></div>`;
+
+  // Ouvertures
+  html += `<div class="coach-block">
+    <div class="coach-label">Analyse des ouvertures</div>
+    <div class="coach-text">
+      Le side CT obtient <strong>${team3FB}</strong> first bloods contre <strong>${team2FB}</strong> pour le side T.
+      Le taux de conversion global apres un premier kill est de <strong>${fbConv}%</strong>.`;
+
+  if (fbConv >= 70) html += ` C'est un taux excellent - l'equipe qui ouvre le round controle bien les suites de round.`;
+  else if (fbConv >= 55) html += ` Un taux correct, mais il y a des rounds perdus malgre l'avantage initial. Il faut mieux capitaliser apres le first blood.`;
+  else html += ` Ce taux est trop bas. Les equipes ne convertissent pas assez apres avoir pris l'avantage. Il faut revoir le jeu post-opening.`;
+  html += `</div></div>`;
+
+  // Trading et consistance
+  html += `<div class="coach-block">
+    <div class="coach-label">Trading et consistance</div>
+    <div class="coach-text">
+      Le taux de trade global est de <strong>${tradePct}%</strong>.`;
+
+  if (tradePct >= 30) html += ` Les joueurs se tradent correctement, limitant les situations de desavantage numerique.`;
+  else if (tradePct >= 15) html += ` Le trading est moyen. Trop de morts ne sont pas tradees, ce qui laisse l'adversaire en avantage numerique gratuitement.`;
+  else html += ` Le trading est insuffisant. Les joueurs meurent isoles sans que leurs coequipiers puissent reagir. C'est un point critique a travailler.`;
+
+  if (highKast.length) {
+    html += `<div class="coach-bullet"><strong>${highKast[0].name}</strong> est le joueur le plus constant avec un KAST de ${highKast[0].kast}%. Il contribue a chaque round par un kill, une survie ou un trade.</div>`;
+  }
+  if (lowKast.length) {
+    html += `<div class="coach-bullet"><strong>${lowKast[0].name}</strong> a le KAST le plus bas (${lowKast[0].kast}%). Ce joueur disparait trop souvent du jeu et doit trouver des positions ou il peut avoir plus d'impact.</div>`;
+  }
+  html += `</div></div>`;
+
+  // Points a travailler
+  html += `<div class="coach-block">
+    <div class="coach-label">Points a travailler</div>
+    <div class="coach-text">`;
+
+  const weakOpeners = c.stats.filter(p => p.fd > p.fk && p.fd >= 3);
+  if (weakOpeners.length) {
+    html += `<div class="coach-bullet">${weakOpeners.map(p => '<strong>' + p.name + '</strong>').join(', ')} ${weakOpeners.length > 1 ? 'perdent' : 'perd'} trop d'opening duels. Il faut revoir le positionnement en debut de round ou eviter les peeks risques.</div>`;
+  }
+
+  const adrGap = mvp.adr - lowest.adr;
+  if (adrGap > 40) {
+    html += `<div class="coach-bullet">L'ecart d'ADR entre <strong>${mvp.name}</strong> (${mvp.adr}) et <strong>${lowest.name}</strong> (${lowest.adr}) est de ${adrGap} points. L'equipe depend trop d'un seul joueur pour faire du damage.</div>`;
+  }
+
+  if (tradePct < 20) {
+    html += `<div class="coach-bullet">Le taux de trade de ${tradePct}% est critique. Il faut systematiquement jouer en binome pour pouvoir trader chaque mort.</div>`;
+  }
+
+  const lowHsPlayers = c.stats.filter(p => p.kills >= 5 && p.hsPct < 30);
+  if (lowHsPlayers.length) {
+    html += `<div class="coach-bullet">${lowHsPlayers.map(p => '<strong>' + p.name + '</strong>').join(', ')} ${lowHsPlayers.length > 1 ? 'ont' : 'a'} un taux de headshots inferieur a 30%. Travailler le crosshair placement et le pre-aim sur les angles classiques.</div>`;
+  }
+
+  html += `</div></div>`;
+
+  // Conclusion
+  html += `<div class="coach-block">
+    <div class="coach-label">Conclusion</div>
+    <div class="coach-text">`;
+
+  if (Math.abs(c.team3Score - c.team2Score) <= 3) {
+    html += `Match serre (${c.team3Score} - ${c.team2Score}). Les details font la difference dans ce type de match : ouvertures de round, trades, et utilisation des utilitaires.`;
+  } else if (Math.abs(c.team3Score - c.team2Score) >= 8) {
+    html += `Match domine par le side ${winnerLabel}. L'equipe perdante doit revoir ses fondamentaux : positionnement, communication et discipline de jeu.`;
+  } else {
+    html += `Match equilibre dans l'ensemble, avec des phases de domination des deux cotes.`;
+  }
+
+  if (allMK.length) {
+    const totalMK = allMK.reduce((s, p) => s + p.multiKills.three + p.multiKills.four + p.multiKills.ace, 0);
+    html += ` ${totalMK} multi-kills ont ete realises dans ce match, montrant des pics d'impact individuel.`;
+  }
+
+  html += ` Pour progresser, l'accent doit etre mis sur le jeu d'equipe, le trading systematique et la conversion des avantages numeriques.`;
+  html += `</div></div>`;
+
+  card.innerHTML = html;
+}
+
+// =====================================================================
+// LAUNCH
+// =====================================================================
 init();
 
 // Nav auth toggle
@@ -506,13 +1300,8 @@ _sb.auth.getSession().then(({ data: { session } }) => {
   const loginBtn = document.getElementById('navLoginBtn');
   const accountBtn = document.getElementById('navAccountBtn');
   if (!loginBtn || !accountBtn) return;
-  if (session) {
-    loginBtn.style.display = 'none';
-    accountBtn.style.display = '';
-  } else {
-    loginBtn.style.display = '';
-    accountBtn.style.display = 'none';
-  }
+  if (session) { loginBtn.style.display = 'none'; accountBtn.style.display = ''; }
+  else { loginBtn.style.display = ''; accountBtn.style.display = 'none'; }
 });
 </script>
 </body>
