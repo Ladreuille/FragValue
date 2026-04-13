@@ -1,5 +1,6 @@
 // api/stripe-health.js — FragValue
 // Health check : verifie que toutes les variables Stripe et Supabase sont configurees
+// v2 : force redeploy pour prise en compte des env vars
 
 export default function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

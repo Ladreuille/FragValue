@@ -196,6 +196,16 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 async function init() {
+  // Checkout success banner
+  if (new URLSearchParams(window.location.search).get('checkout') === 'success') {
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#0a2200;border-bottom:2px solid #b8ff57;color:#b8ff57;font-family:"Space Mono",monospace;font-size:13px;padding:14px;text-align:center;z-index:9999;';
+    banner.textContent = 'Abonnement active. Bienvenue dans FragValue Pro.';
+    document.body.appendChild(banner);
+    setTimeout(() => banner.remove(), 5000);
+    history.replaceState({}, '', '/account.html');
+  }
+
   const { data:{ session } } = await _sb.auth.getSession();
   if (!session) { window.location.href = 'login.html'; return; }
 
@@ -203,32 +213,37 @@ async function init() {
   const email = u.email || '';
   const since = new Date(u.created_at).toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
 
-  // Query profiles table for FACEIT data
-  const { data: profile } = await _sb.from('profiles').select('faceit_nickname, faceit_id, faceit_avatar, faceit_elo, faceit_level').eq('id', u.id).single();
-  const faceitNick = profile?.faceit_nickname;
-  const displayName = faceitNick || u.user_metadata?.full_name || u.user_metadata?.name || email.split('@')[0];
+  // Query profiles table with select('*') to avoid 400 on missing columns
+  const { data: profile, error: profileError } = await _sb.from('profiles').select('*').eq('id', u.id).single();
+  if (profileError && profileError.code !== 'PGRST116') console.warn('Profile error:', profileError.message);
+
+  const faceitNickname = profile?.faceit_nickname || null;
+  const faceitAvatar = profile?.faceit_avatar || null;
+  const faceitEloStored = profile?.faceit_elo || null;
+  const faceitLevelStored = profile?.faceit_level || null;
+  const stripeCustomerId = profile?.stripe_customer_id || null;
+
+  const displayName = faceitNickname || u.user_metadata?.full_name || u.user_metadata?.name || email.split('@')[0];
 
   // Avatar: FACEIT image (64px) or initial letter
   const avatarEl = document.getElementById('avatarEl');
-  if (profile?.faceit_avatar) {
-    avatarEl.innerHTML = '<img src="' + profile.faceit_avatar + '" alt="' + displayName + '"/>';
+  if (faceitAvatar) {
+    avatarEl.innerHTML = '<img src="' + faceitAvatar + '" alt="' + displayName + '"/>';
   } else {
     avatarEl.textContent = displayName.charAt(0).toUpperCase();
   }
 
-  // Fetch live FACEIT ELO if nickname exists
-  let faceitElo = profile?.faceit_elo || null;
-  let faceitLevel = profile?.faceit_level || null;
-  let faceitAvatar = profile?.faceit_avatar || null;
-  if (faceitNick) {
+  // Fetch live FACEIT ELO only if nickname exists
+  let faceitElo = faceitEloStored;
+  let faceitLevel = faceitLevelStored;
+  if (faceitNickname) {
     try {
-      const fRes = await fetch('/api/faceit-profile?nickname=' + encodeURIComponent(faceitNick));
+      const fRes = await fetch('/api/faceit-profile?nickname=' + encodeURIComponent(faceitNickname));
       if (fRes.ok) {
         const fData = await fRes.json();
         faceitElo = fData.elo || faceitElo;
         faceitLevel = fData.level || faceitLevel;
         if (fData.avatar) {
-          faceitAvatar = fData.avatar;
           avatarEl.innerHTML = '<img src="' + fData.avatar + '" alt="' + displayName + '"/>';
         }
       }
@@ -240,24 +255,24 @@ async function init() {
 
   // Subtitle: "Niveau X FACEIT" if linked, else empty
   const subEl = document.getElementById('profileSub');
-  if (faceitNick && faceitLevel) {
+  if (faceitNickname && faceitLevel) {
     subEl.textContent = 'Niveau ' + faceitLevel + ' FACEIT';
   }
 
   // Meta line
-  document.getElementById('profileMeta').textContent = (faceitNick ? email + ' · ' : email + ' · ') + 'Membre depuis ' + since;
+  document.getElementById('profileMeta').textContent = email + ' · Membre depuis ' + since;
 
   // Level badge SVG + label
   const badgeZone = document.getElementById('faceitBadgeZone');
-  if (faceitNick && faceitLevel) {
+  if (faceitNickname && faceitLevel) {
     const lvlColors = {1:'#eee',2:'#1ce400',3:'#1ce400',4:'#ffc800',5:'#ffc800',6:'#ffc800',7:'#ff6309',8:'#ff6309',9:'#fe1f00',10:'#fe1f00'};
     const lvlC = lvlColors[faceitLevel] || '#ff5500';
     badgeZone.innerHTML = '<div class="faceit-level-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="' + lvlC + '"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5zm0 2.18l7 3.89v7.86l-7 3.89-7-3.89V8.07l7-3.89z"/><text x="12" y="16" text-anchor="middle" font-size="8" font-weight="bold" fill="' + lvlC + '" font-family="Space Mono,monospace">' + faceitLevel + '</text></svg>Lvl ' + faceitLevel + '</div>';
   }
 
   // "Lier mon compte FACEIT" button if no FACEIT linked
-  if (!faceitNick) {
-    document.getElementById('faceitLinkZone').innerHTML = '<a href="login.html?action=faceit" class="btn-link-faceit"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>Lier mon compte FACEIT</a>';
+  if (!faceitNickname) {
+    document.getElementById('faceitLinkZone').innerHTML = '<a href="login.html?link_faceit=1" class="btn-link-faceit"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>Lier mon compte FACEIT</a>';
   }
 
   // Add FACEIT ELO KPI if available (accent color #b8ff57)
