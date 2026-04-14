@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FragValue · Résultats démo</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzA4MDkwRCIvPgogIDxyZWN0IHg9IjUiIHk9IjUiIHdpZHRoPSIzLjUiIGhlaWdodD0iMjAiIHJ4PSIxLjUiIGZpbGw9IiMzQjdGRjUiLz4KICA8cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iMTMiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHJlY3QgeD0iNSIgeT0iMTMuNSIgd2lkdGg9IjkiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHBhdGggZD0iTTE1LjUgOC41IEwyMC41IDIzLjUgTDI1LjUgOC41IiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIxNS41IiB5MT0iOC41IiB4Mj0iMjUuNSIgeTI9IjIzLjUiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzNCN0ZGNSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMyREQ0QTAiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgo8L3N2Zz4="/>
+  <link rel="icon" type="image/svg+xml" href="fragvalue_icon.svg"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <style>
@@ -2002,26 +2002,222 @@ const _sbUrl  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const _sbAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
 
 // ── Export PDF Pro ────────────────────────────────────────────────
-function exportPDF() {
+// Shared visual assets for PDFs
+const FV_LOGO_SVG = '<svg viewBox="240 30 200 200" xmlns="http://www.w3.org/2000/svg" style="width:46px;height:46px"><rect x="240" y="30" width="200" height="200" rx="20" fill="#0d0f0d"/><rect x="240" y="30" width="200" height="5" rx="20" fill="#b8ff57"/><text text-anchor="middle" x="342" y="168" style="font-family:Arial Black,sans-serif;font-size:110px;font-weight:900"><tspan fill="#e8eaea">F</tspan><tspan fill="#b8ff57" dx="-4">V</tspan></text><text x="342" y="210" fill="#555" text-anchor="middle" style="font-family:monospace;font-size:11px">FRAGVALUE</text></svg>';
+
+function exportPDF() { showPdfChoiceModal(); }
+
+// Modal : choisir entre rapport complet ou analyse individuelle
+function showPdfChoiceModal() {
+  const players = (demoData?.playerStats || []).map(p => p.name);
+  if (!players.length) { alert('Aucune donnée de joueur disponible.'); return; }
+
+  const old = document.getElementById('pdfChoiceOverlay');
+  if (old) old.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'pdfChoiceOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(8,9,9,.85);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:"Space Mono",monospace';
+
+  overlay.innerHTML =
+    '<div style="background:#0f1010;border:1px solid #252727;border-radius:12px;padding:32px;max-width:520px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.6)">' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">' +
+      '<div style="width:36px;height:36px;border-radius:8px;background:#0d0f0d;border-top:3px solid #b8ff57;display:flex;align-items:center;justify-content:center;font-family:Anton,\'Arial Black\',sans-serif;font-size:18px;font-weight:900">' +
+      '<span style="color:#e8eaea">F</span><span style="color:#b8ff57;margin-left:-3px">V</span></div>' +
+      '<div style="color:#e8eaea;font-size:16px;font-weight:700;letter-spacing:.5px">EXPORT PDF</div>' +
+    '</div>' +
+    '<div style="color:#7a8080;font-size:11px;margin-bottom:20px;padding-left:48px">Choisis le type de rapport à générer</div>' +
+
+    '<label id="pdfFullOpt" style="display:block;background:#131414;border:1px solid #b8ff57;border-radius:8px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .15s">' +
+      '<input type="radio" name="pdfType" value="full" checked style="accent-color:#b8ff57;margin-right:10px">' +
+      '<span style="color:#e8eaea;font-size:13px;font-weight:700">Rapport complet de la partie</span>' +
+      '<div style="color:#7a8080;font-size:10px;margin-top:4px;margin-left:24px">Vue d\'ensemble : scoreboard, highlights, heatmap, analyse tactique</div>' +
+    '</label>' +
+
+    '<label id="pdfPlayerOpt" style="display:block;background:#131414;border:1px solid #1c1e1e;border-radius:8px;padding:14px 16px;margin-bottom:16px;cursor:pointer;transition:all .15s">' +
+      '<input type="radio" name="pdfType" value="player" style="accent-color:#b8ff57;margin-right:10px">' +
+      '<span style="color:#e8eaea;font-size:13px;font-weight:700">Analyse individuelle d\'un joueur</span>' +
+      '<div style="color:#7a8080;font-size:10px;margin-top:4px;margin-left:24px">Rapport personnalisé : duels, impact, heatmap, conseils de coaching</div>' +
+      '<select id="pdfPlayerSelect" style="margin-top:10px;margin-left:24px;background:#0f1010;border:1px solid #252727;color:#e8eaea;padding:8px 12px;border-radius:6px;font-family:inherit;font-size:12px;width:calc(100% - 24px);cursor:pointer">' +
+        players.map(n => '<option value="' + n.replace(/"/g, '&quot;') + '">' + n + '</option>').join('') +
+      '</select>' +
+    '</label>' +
+
+    '<div style="display:flex;gap:10px;justify-content:flex-end">' +
+      '<button id="pdfCancelBtn" style="background:transparent;border:1px solid #252727;color:#7a8080;padding:10px 18px;border-radius:6px;font-family:inherit;font-size:11px;cursor:pointer;text-transform:uppercase;letter-spacing:.5px">Annuler</button>' +
+      '<button id="pdfGenerateBtn" style="background:#b8ff57;border:none;color:#080909;padding:10px 22px;border-radius:6px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.5px">Générer le PDF</button>' +
+    '</div>' +
+    '</div>';
+
+  document.body.appendChild(overlay);
+
+  // Highlight selected card
+  const updateBorders = () => {
+    const selected = overlay.querySelector('input[name="pdfType"]:checked').value;
+    document.getElementById('pdfFullOpt').style.borderColor = selected === 'full' ? '#b8ff57' : '#1c1e1e';
+    document.getElementById('pdfPlayerOpt').style.borderColor = selected === 'player' ? '#b8ff57' : '#1c1e1e';
+  };
+  overlay.querySelectorAll('input[name="pdfType"]').forEach(r => r.addEventListener('change', updateBorders));
+
+  document.getElementById('pdfCancelBtn').onclick = () => overlay.remove();
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  document.getElementById('pdfGenerateBtn').onclick = () => {
+    const kind = overlay.querySelector('input[name="pdfType"]:checked').value;
+    const player = document.getElementById('pdfPlayerSelect').value;
+    overlay.remove();
+    if (kind === 'full') exportFullMatchPDF();
+    else exportPlayerPDF(player);
+  };
+}
+
+// Capture la heatmap en dataURL (tous joueurs ou un seul)
+function captureHeatmapDataURL(playerFilter) {
+  try {
+    if (!canvas || !ctx || !demoData) return '';
+    const savedPlayers = new Set(activePlayers);
+    const savedMode = currentHeatmap;
+    const savedCT = showCT, savedT = showT;
+    activePlayers.clear();
+    if (playerFilter) {
+      activePlayers.add(playerFilter);
+    } else {
+      (demoData.playerStats || []).forEach(p => activePlayers.add(p.name));
+    }
+    currentHeatmap = 'kills';
+    showCT = true; showT = true;
+    renderHeatmap();
+    const dataUrl = canvas.toDataURL('image/png');
+    activePlayers.clear();
+    savedPlayers.forEach(p => activePlayers.add(p));
+    currentHeatmap = savedMode;
+    showCT = savedCT;
+    showT = savedT;
+    renderHeatmap();
+    return dataUrl;
+  } catch (e) {
+    console.error('captureHeatmapDataURL error', e);
+    return '';
+  }
+}
+
+// Styles PDF partagés entre rapport complet et analyse individuelle
+function pdfStyles() {
+  return [
+    '*{margin:0;padding:0;box-sizing:border-box}',
+    'body{font-family:"Helvetica Neue",Arial,sans-serif;color:#1a1c1c;background:#fff;font-size:12px;line-height:1.55}',
+    '.page{padding:40px 48px 60px;page-break-after:always;position:relative;min-height:100vh}',
+    '.page:last-child{page-break-after:auto}',
+    '.brand-bar{position:absolute;top:0;left:0;right:0;height:6px;background:#b8ff57}',
+    '.brand-header{display:flex;align-items:center;gap:14px;margin-top:16px;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid #e4e6e6}',
+    '.brand-header .title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#5a6060}',
+    '.brand-header .subtitle{font-size:10px;color:#8a9090;margin-top:2px}',
+    '.brand-footer{position:absolute;bottom:22px;left:48px;right:48px;padding-top:10px;border-top:1px solid #e4e6e6;display:flex;justify-content:space-between;align-items:center;font-size:9px;color:#8a9090;letter-spacing:1px;text-transform:uppercase}',
+    '.brand-footer .accent{color:#6bbf1f;font-weight:700}',
+    'h1{font-family:"Arial Black",Arial,sans-serif;font-size:42px;font-weight:900;letter-spacing:-1.5px;line-height:1}',
+    'h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#1a1c1c;margin:22px 0 12px;padding-left:12px;border-left:4px solid #b8ff57}',
+    'h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#5a6060;margin:16px 0 8px}',
+    'table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:11px}',
+    'th{background:#0d0f0d;color:#b8ff57;padding:8px 10px;font-size:9px;text-transform:uppercase;letter-spacing:1px;text-align:left;font-weight:700}',
+    'td{padding:9px 10px;border-bottom:1px solid #ececec;color:#2a2c2c}',
+    'tr:nth-child(even) td{background:#fafafa}',
+    '.highlight-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px}',
+    '.highlight-item{padding:14px 16px;background:#fafafa;border:1px solid #ececec;border-left:4px solid #b8ff57}',
+    '.highlight-label{font-size:8px;text-transform:uppercase;letter-spacing:1.2px;color:#8a9090;font-weight:700}',
+    '.highlight-value{font-size:14px;font-weight:700;margin-top:4px;color:#1a1c1c;line-height:1.35}',
+    '.highlight-value .accent{color:#6bbf1f}',
+    '.analysis-block{background:#fafafa;border-left:4px solid #b8ff57;padding:15px 18px;margin:8px 0;line-height:1.65;font-size:11.5px;color:#2a2c2c}',
+    '.good{color:#2a8f1c;font-weight:700}',
+    '.avg{color:#c97000;font-weight:700}',
+    '.bad{color:#b11e1e;font-weight:700}',
+    '.rating-chart{margin:14px 0;padding:18px 20px;background:#fafafa;border:1px solid #ececec}',
+    '.rating-chart .legend{font-size:9px;color:#8a9090;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}',
+    '.rating-row{display:flex;align-items:center;gap:14px;padding:6px 0;font-size:11px}',
+    '.rating-row .rank{width:24px;color:#8a9090;font-weight:700;font-size:10px}',
+    '.rating-row .name{width:130px;font-weight:700;color:#1a1c1c}',
+    '.rating-row .val{width:48px;text-align:right;font-weight:700;font-family:monospace}',
+    '.rating-row .bar{flex:1;height:10px;background:#ececec;position:relative;border-radius:5px;overflow:hidden}',
+    '.rating-row .bar-inner{height:10px;background:linear-gradient(90deg,#b8ff57,#6bbf1f);border-radius:5px}',
+    '.rating-row .label{width:96px;text-align:right;font-size:9px;color:#8a9090;text-transform:uppercase;letter-spacing:.5px}',
+    '.cover{display:flex;flex-direction:column;justify-content:space-between;min-height:92vh;background:linear-gradient(180deg,#080909 0%,#0d0f0d 100%);color:#e8eaea;padding:60px 56px 46px;position:relative;margin:-40px -48px -60px}',
+    '.cover .cover-brand{display:flex;align-items:center;gap:16px}',
+    '.cover .cover-brand .tag{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#8a9090;font-family:monospace}',
+    '.cover .cover-tag{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#b8ff57;font-family:monospace;margin-top:120px}',
+    '.cover .cover-title{font-family:"Arial Black",sans-serif;font-size:90px;font-weight:900;letter-spacing:-4px;line-height:.9;margin:10px 0 24px;color:#e8eaea}',
+    '.cover .cover-title .accent{color:#b8ff57}',
+    '.cover .cover-meta{font-size:12px;color:#8a9090;letter-spacing:1px;text-transform:uppercase;font-family:monospace}',
+    '.cover .cover-meta strong{color:#e8eaea}',
+    '.cover .cover-score{margin-top:34px;font-family:"Arial Black",sans-serif;font-size:64px;letter-spacing:-3px;line-height:1}',
+    '.cover .cover-score .win{color:#b8ff57}',
+    '.cover .cover-score .lose{color:#5a6060}',
+    '.cover .cover-score .sep{color:#5a6060;margin:0 14px}',
+    '.cover .cover-footer{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#5a6060;font-family:monospace;display:flex;justify-content:space-between;margin-top:30px}',
+    '.cover .cover-footer .accent{color:#b8ff57}',
+    '.heatmap-wrap{text-align:center;margin:16px 0}',
+    '.heatmap-wrap img{max-width:100%;max-height:560px;border:1px solid #ececec}',
+    '.heatmap-caption{font-size:9px;color:#8a9090;text-transform:uppercase;letter-spacing:1.5px;margin-top:8px}',
+    '.kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin:14px 0 20px}',
+    '.kpi{background:#fafafa;border:1px solid #ececec;border-left:4px solid #b8ff57;padding:12px 14px}',
+    '.kpi .lbl{font-size:8px;text-transform:uppercase;letter-spacing:1.2px;color:#8a9090;font-weight:700}',
+    '.kpi .val{font-size:22px;font-weight:900;color:#1a1c1c;margin-top:4px;font-family:"Arial Black",sans-serif;line-height:1.1}',
+    '.kpi .sub{font-size:9px;color:#8a9090;margin-top:3px}',
+    '.kpi-3{grid-template-columns:1fr 1fr 1fr}',
+    '.round-chart{margin:12px 0 18px;padding:16px 18px;background:#fafafa;border:1px solid #ececec}',
+    '.round-chart .legend{font-size:9px;color:#8a9090;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}',
+    '.round-bars{display:flex;align-items:flex-end;gap:2px;height:100px;border-bottom:1px solid #ccc;padding-bottom:2px}',
+    '.round-bars .rb{flex:1;background:#b8ff57;border-radius:2px 2px 0 0;min-height:2px;position:relative}',
+    '.round-bars .rb.win{background:#6bbf1f}',
+    '.round-bars .rb.loss{background:#c9cdcd}',
+    '.round-labels{display:flex;gap:2px;font-size:7px;color:#8a9090;margin-top:4px;text-align:center;font-family:monospace}',
+    '.round-labels .rl{flex:1}',
+    '.advice-list{margin:10px 0 0 18px;color:#2a2c2c;font-size:11.5px;line-height:1.7}',
+    '.advice-list li{margin-bottom:6px}',
+    '.strength-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}',
+    '.strength-box{padding:14px 16px;background:#f4fde4;border:1px solid #d6f0a2;border-left:4px solid #6bbf1f}',
+    '.weakness-box{padding:14px 16px;background:#fff4f2;border:1px solid #f8ccc2;border-left:4px solid #d94a3a}',
+    '.strength-box .label,.weakness-box .label{font-size:8px;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:6px;display:block}',
+    '.strength-box .label{color:#2a8f1c}',
+    '.weakness-box .label{color:#b11e1e}',
+    '.strength-box .val,.weakness-box .val{font-size:12px;font-weight:700;color:#1a1c1c;margin-top:4px}',
+    '.weapon-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0 16px}',
+    '.weapon-item{padding:12px;background:#fafafa;border:1px solid #ececec;text-align:center}',
+    '.weapon-item .w-name{font-size:9px;color:#8a9090;text-transform:uppercase;letter-spacing:1px}',
+    '.weapon-item .w-val{font-size:20px;font-weight:900;color:#1a1c1c;font-family:"Arial Black",sans-serif;margin-top:4px}',
+    '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{page-break-after:always}.cover{min-height:100vh}}'
+  ].join('');
+}
+
+function pdfBrandHeader(subtitle) {
+  return '<div class="brand-bar"></div>' +
+    '<div class="brand-header">' + FV_LOGO_SVG +
+    '<div><div class="title">FragValue Analytics</div>' +
+    '<div class="subtitle">' + subtitle + '</div></div>' +
+    '</div>';
+}
+
+function pdfBrandFooter(pageNum, pageTotal) {
+  const d = new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'short',year:'numeric'});
+  return '<div class="brand-footer"><span>Rapport généré par <span class="accent">FragValue</span> · frag-value.vercel.app</span><span>' + d + ' · Page ' + pageNum + '/' + pageTotal + '</span></div>';
+}
+
+// Rapport complet de la partie (5 pages)
+function exportFullMatchPDF() {
   const meta = demoData?.meta || {};
   const kills = demoData?.kills || [];
   const rounds = (demoData?.rounds || []).filter(r => !r.isKnife);
   const playerStats = demoData?.playerStats || [];
   const totalR = rounds.length || 1;
   const mapName = (meta.map || '').replace('de_', '');
-  const date = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+  const date = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
 
   // Compute per-player extended stats
   const extended = playerStats.map(p => {
     const pK = kills.filter(k => k.attacker === p.name);
-    const pD = kills.filter(k => k.victim === p.name);
     const hsCount = pK.filter(k => k.isHeadshot).length;
     const hsPct = pK.length > 0 ? Math.round(hsCount / pK.length * 100) : 0;
     const adr = Math.round(pK.length * 80 / totalR);
     const fvr = calcFvRating(p.kills, p.deaths, 0, totalR);
     const kast = calcKAST(p.name, kills, rounds);
     const kd = p.kills - p.deaths;
-    // First kills: kills with the minimum tick in each round
     let firstKills = 0;
     for (let r = 1; r <= totalR; r++) {
       const roundK = kills.filter(k => k.round === r);
@@ -2030,20 +2226,17 @@ function exportPDF() {
       const first = roundK.find(k => k.tick === minTick);
       if (first && first.attacker === p.name) firstKills++;
     }
-    // Determine team from kills
     let team = 0;
     const asAttacker = kills.find(k => k.attacker === p.name);
     if (asAttacker) team = asAttacker.attackerTeam;
     return { name: p.name, kills: p.kills, deaths: p.deaths, kd, hsPct, adr, fvr, kast, firstKills, team };
   });
 
-  // Team split
   const ctPlayers = extended.filter(p => p.team === 3).sort((a, b) => b.fvr - a.fvr);
   const tPlayers = extended.filter(p => p.team === 2).sort((a, b) => b.fvr - a.fvr);
 
-  // Win counts
   let ctWins = 0, tWins = 0;
-  rounds.forEach((r, i) => { if (r.winner === 3) ctWins++; else if (r.winner === 2) tWins++; });
+  rounds.forEach((r) => { if (r.winner === 3) ctWins++; else if (r.winner === 2) tWins++; });
 
   const winnerTeam = ctWins >= tWins ? 'CT' : 'T';
   const loserTeam = winnerTeam === 'CT' ? 'T' : 'CT';
@@ -2052,8 +2245,7 @@ function exportPDF() {
   const winScore = Math.max(ctWins, tWins);
   const loseScore = Math.min(ctWins, tWins);
 
-  // Highlights
-  const all = extended.sort((a, b) => b.fvr - a.fvr);
+  const all = [...extended].sort((a, b) => b.fvr - a.fvr);
   const bestKills = [...extended].sort((a, b) => b.kills - a.kills)[0] || {};
   const bestRating = all[0] || {};
   const bestKAST = [...extended].sort((a, b) => b.kast - a.kast)[0] || {};
@@ -2065,9 +2257,8 @@ function exportPDF() {
   const avgADR_winner = winnerPlayers.length ? Math.round(winnerPlayers.reduce((s, p) => s + p.adr, 0) / winnerPlayers.length) : 0;
   const avgADR_loser = loserPlayers.length ? Math.round(loserPlayers.reduce((s, p) => s + p.adr, 0) / loserPlayers.length) : 0;
   const teamAvgRating = winnerPlayers.length ? (winnerPlayers.reduce((s, p) => s + p.fvr, 0) / winnerPlayers.length).toFixed(2) : '0';
-  const ratingAbovePct = teamAvgRating > 0 ? Math.round(((bestRating.fvr - parseFloat(teamAvgRating)) / parseFloat(teamAvgRating)) * 100) : 0;
+  const ratingAbovePct = parseFloat(teamAvgRating) > 0 ? Math.round(((bestRating.fvr - parseFloat(teamAvgRating)) / parseFloat(teamAvgRating)) * 100) : 0;
 
-  // First kill win rate
   const fkRounds = [];
   for (let r = 1; r <= totalR; r++) {
     const roundK = kills.filter(k => k.round === r);
@@ -2083,7 +2274,7 @@ function exportPDF() {
   const fkWinPct = fkRounds.length > 0 ? Math.round(fkWinCount / fkRounds.length * 100) : 0;
 
   function fvrClass(v) { return v >= 1.0 ? 'good' : v >= 0.7 ? 'avg' : 'bad'; }
-  function fvrLabel(v) { if (v >= 1.5) return 'Exceptionnel'; if (v >= 1.2) return 'Tres bon'; if (v >= 1.0) return 'Bon'; if (v >= 0.8) return 'Moyen'; return 'A ameliorer'; }
+  function fvrLabel(v) { if (v >= 1.5) return 'Exceptionnel'; if (v >= 1.2) return 'Très bon'; if (v >= 1.0) return 'Bon'; if (v >= 0.8) return 'Moyen'; return 'À améliorer'; }
 
   function teamTable(players) {
     if (!players.length) return '';
@@ -2095,125 +2286,469 @@ function exportPDF() {
       }).join('') + '</tbody></table>';
   }
 
-  // Rating ranking
   const ranked = [...extended].sort((a, b) => b.fvr - a.fvr);
   const maxFvr = ranked.length ? ranked[0].fvr : 1;
+
+  // Capture heatmap AVANT d'ouvrir la fenêtre print
+  const heatmapUrl = captureHeatmapDataURL(null);
 
   const pw = window.open('', '_blank');
   if (!pw) return;
 
-  pw.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"/>' +
-    '<title>FragValue Report - ' + mapName.toUpperCase() + '</title>' +
-    '<style>' +
-    '* { margin: 0; padding: 0; box-sizing: border-box; }' +
-    'body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 12px; }' +
-    '.page { padding: 32px 40px; page-break-after: always; }' +
-    '.page:last-child { page-break-after: auto; }' +
-    'h1 { font-size: 36px; font-weight: 900; letter-spacing: -1px; }' +
-    'h2 { font-size: 16px; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 6px; margin: 24px 0 12px; }' +
-    'h3 { font-size: 13px; font-weight: 700; margin: 16px 0 8px; }' +
-    'table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }' +
-    'th { background: #000; color: #fff; padding: 6px 8px; font-size: 10px; text-transform: uppercase; text-align: left; }' +
-    'td { padding: 6px 8px; border-bottom: 1px solid #eee; }' +
-    'tr:nth-child(even) td { background: #f9f9f9; }' +
-    '.score { font-size: 28px; font-weight: 900; margin: 12px 0; }' +
-    '.highlight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }' +
-    '.highlight-item { padding: 10px 14px; background: #f5f5f5; }' +
-    '.highlight-label { font-size: 10px; text-transform: uppercase; color: #666; }' +
-    '.highlight-value { font-size: 14px; font-weight: 700; margin-top: 2px; }' +
-    '.analysis-block { background: #f9f9f9; border-left: 4px solid #000; padding: 16px; margin: 8px 0; line-height: 1.6; font-size: 12px; }' +
-    '.bar-wrap { background: #eee; height: 6px; border-radius: 3px; display: inline-block; width: 80px; vertical-align: middle; }' +
-    '.bar-fill { background: #000; height: 6px; border-radius: 3px; }' +
-    '.good { color: #16a34a; font-weight: 700; }' +
-    '.avg { color: #d97706; font-weight: 700; }' +
-    '.bad { color: #dc2626; font-weight: 700; }' +
-    '.footer { text-align: right; font-size: 10px; color: #999; margin-top: 24px; padding-top: 8px; border-top: 1px solid #eee; }' +
-    '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
-    '</style></head><body>' +
+  const coverLogo = FV_LOGO_SVG.replace('width:46px;height:46px', 'width:68px;height:68px');
 
-    // PAGE 1: Header + Highlights + Stats
+  const html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/>' +
+    '<title>FragValue - Rapport ' + mapName.toUpperCase() + '</title>' +
+    '<style>' + pdfStyles() + '</style></head><body>' +
+
+    // PAGE 1: COVER
     '<div class="page">' +
-    '<h1>FragValue</h1>' +
-    '<hr style="border:none;height:2px;background:#000;margin:8px 0 16px"/>' +
-    '<div style="font-size:48px;font-weight:900;letter-spacing:-2px">' + mapName.toUpperCase() + '</div>' +
-    '<div style="font-size:13px;color:#444;margin:4px 0 8px">' + date + ' / ' + totalR + ' rounds</div>' +
-    '<div class="score">' +
-    (winnerTeam === 'CT' ? '<u>CT</u>' : 'CT') + ' [' + ctWins + '] - [' + tWins + '] ' +
-    (winnerTeam === 'T' ? '<u>T</u>' : 'T') +
+    '<div class="cover">' +
+    '<div>' +
+    '<div class="cover-brand">' + coverLogo +
+    '<div><div style="font-family:Arial Black,sans-serif;font-size:24px;font-weight:900;letter-spacing:-0.5px;color:#e8eaea">FragValue</div><div class="tag">Match Analytics · CS2</div></div>' +
+    '</div>' +
+    '<div class="cover-tag">Rapport de match</div>' +
+    '<div class="cover-title">' + mapName.toUpperCase() + '</div>' +
+    '<div class="cover-meta"><strong>' + totalR + ' ROUNDS</strong> · ' + date + '</div>' +
+    '<div class="cover-score">' +
+    '<span class="' + (winnerTeam === 'CT' ? 'win' : 'lose') + '">CT ' + ctWins + '</span>' +
+    '<span class="sep">—</span>' +
+    '<span class="' + (winnerTeam === 'T' ? 'win' : 'lose') + '">' + tWins + ' T</span>' +
+    '</div>' +
+    '<div style="margin-top:20px;font-size:13px;color:#b8ff57;letter-spacing:2px;text-transform:uppercase;font-family:monospace">Victoire ' + winnerTeam + ' · ' + winScore + '-' + loseScore + '</div>' +
+    '</div>' +
+    '<div class="cover-footer"><span>FragValue Pro Analytics</span><span class="accent">frag-value.vercel.app</span></div>' +
+    '</div>' +
     '</div>' +
 
-    '<h2>Highlights</h2>' +
+    // PAGE 2: HIGHLIGHTS + FV RATING CHART
+    '<div class="page">' +
+    pdfBrandHeader('Highlights de la partie · ' + mapName.toUpperCase()) +
+    '<h2>Moments clés</h2>' +
     '<div class="highlight-grid">' +
-    '<div class="highlight-item"><div class="highlight-label">Most kills</div><div class="highlight-value">' + bestKills.name + ' (' + bestKills.kills + ' kills)</div></div>' +
-    '<div class="highlight-item"><div class="highlight-label">Most damage</div><div class="highlight-value">' + bestADR.name + ' (' + bestADR.adr + ' ADR)</div></div>' +
-    '<div class="highlight-item"><div class="highlight-label">Best FV Rating</div><div class="highlight-value">' + bestRating.name + ' (' + bestRating.fvr.toFixed(2) + ')</div></div>' +
-    '<div class="highlight-item"><div class="highlight-label">Most 1st kills</div><div class="highlight-value">' + bestFirstKill.name + ' (' + bestFirstKill.firstKills + ' rounds)</div></div>' +
-    '<div class="highlight-item"><div class="highlight-label">Best KAST</div><div class="highlight-value">' + bestKAST.name + ' (' + bestKAST.kast + '%)</div></div>' +
-    '<div class="highlight-item"><div class="highlight-label">Best HS%</div><div class="highlight-value">' + bestHS.name + ' (' + bestHS.hsPct + '%)</div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Kills max</div><div class="highlight-value">' + bestKills.name + '<br/><span class="accent">' + bestKills.kills + ' frags</span></div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Dégâts max</div><div class="highlight-value">' + bestADR.name + '<br/><span class="accent">' + bestADR.adr + ' ADR</span></div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Meilleur FV Rating</div><div class="highlight-value">' + bestRating.name + '<br/><span class="accent">' + bestRating.fvr.toFixed(2) + '</span></div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Duels d\'ouverture</div><div class="highlight-value">' + bestFirstKill.name + '<br/><span class="accent">' + bestFirstKill.firstKills + ' ouvertures</span></div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Meilleur KAST</div><div class="highlight-value">' + bestKAST.name + '<br/><span class="accent">' + bestKAST.kast + '%</span></div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Meilleur HS%</div><div class="highlight-value">' + bestHS.name + '<br/><span class="accent">' + bestHS.hsPct + '%</span></div></div>' +
     '</div>' +
 
-    '<h2>Stats equipes</h2>' +
-    '<h3>' + winnerTeam + ' (Victoire)</h3>' +
-    teamTable(winnerPlayers) +
-    '<h3>' + loserTeam + '</h3>' +
-    teamTable(loserPlayers) +
-
-    '<div class="footer">Rapport genere par FragValue / frag-value.vercel.app / ' + date + '</div>' +
+    '<h2>Classement FV Rating</h2>' +
+    '<div class="rating-chart">' +
+    '<div class="legend">Rating synthétique · 10 joueurs · 1.00 = joueur moyen</div>' +
+    ranked.map((p, i) => {
+      const pct = maxFvr > 0 ? Math.round((p.fvr / maxFvr) * 100) : 0;
+      return '<div class="rating-row">' +
+        '<span class="rank">#' + (i+1) + '</span>' +
+        '<span class="name">' + p.name + '</span>' +
+        '<div class="bar"><div class="bar-inner" style="width:' + pct + '%"></div></div>' +
+        '<span class="val ' + fvrClass(p.fvr) + '">' + p.fvr.toFixed(2) + '</span>' +
+        '<span class="label">' + fvrLabel(p.fvr) + '</span>' +
+        '</div>';
+    }).join('') +
+    '</div>' +
+    pdfBrandFooter(2, 5) +
     '</div>' +
 
-    // PAGE 2: Analysis + Ranking
+    // PAGE 3: TEAM STATS (page dédiée)
     '<div class="page">' +
+    pdfBrandHeader('Statistiques équipes · détail des 10 joueurs') +
+    '<h2>' + winnerTeam + ' · Victoire ' + winScore + '</h2>' +
+    teamTable(winnerPlayers) +
+    '<h2>' + loserTeam + ' · Défaite ' + loseScore + '</h2>' +
+    teamTable(loserPlayers) +
+    '<div style="margin-top:16px;padding:14px 18px;background:#fafafa;border-left:4px solid #b8ff57;font-size:10.5px;line-height:1.65;color:#5a6060">' +
+    '<strong style="color:#1a1c1c">Légende : </strong>' +
+    '<strong>K/D</strong> différentiel kills/morts · <strong>KAST%</strong> rounds avec Kill, Assist, Survived ou Traded · <strong>ADR</strong> dégâts moyens par round · <strong>FV Rating</strong> score composite de performance (référence 1.00 = joueur moyen).' +
+    '</div>' +
+    pdfBrandFooter(3, 5) +
+    '</div>' +
+
+    // PAGE 4: HEATMAP DES DUELS
+    '<div class="page">' +
+    pdfBrandHeader('Heatmap des duels · ' + mapName.toUpperCase()) +
+    '<h2>Zones d\'engagement</h2>' +
+    '<div class="heatmap-wrap">' +
+    (heatmapUrl ? '<img src="' + heatmapUrl + '" alt="Heatmap kills"/>' : '<div style="padding:80px;color:#8a9090;font-size:11px">Heatmap indisponible</div>') +
+    '<div class="heatmap-caption">Chaque point représente un duel remporté · couleurs par joueur · bordure bleue = CT, jaune = T</div>' +
+    '</div>' +
+    '<div class="analysis-block">' +
+    '<strong>Lecture tactique :</strong> les zones denses révèlent les axes de confrontation majeurs. Une concentration marquée sur un spot indique soit une rotation défensive forte du CT, soit une stratégie d\'exécution répétée côté T. Les points isolés signalent des repicks tardifs ou des rotations individuelles.' +
+    '</div>' +
+    pdfBrandFooter(4, 5) +
+    '</div>' +
+
+    // PAGE 5: ANALYSE TACTIQUE
+    '<div class="page">' +
+    pdfBrandHeader('Analyse tactique de la partie') +
     '<h2>Analyse de la performance</h2>' +
     '<div class="analysis-block">' +
-    bestRating.name + ' a domine cette partie avec un FV Rating de ' + bestRating.fvr.toFixed(2) + ', ' +
-    'soit ' + Math.abs(ratingAbovePct) + '% ' + (ratingAbovePct >= 0 ? 'au-dessus' : 'en-dessous') + ' de la moyenne de son equipe (' + teamAvgRating + ').' +
+    bestRating.name + ' a dominé cette partie avec un FV Rating de ' + bestRating.fvr.toFixed(2) + ', ' +
+    'soit ' + Math.abs(ratingAbovePct) + '% ' + (ratingAbovePct >= 0 ? 'au-dessus' : 'en-dessous') + ' de la moyenne de son équipe (' + teamAvgRating + ').' +
     '</div>' +
 
     '<h3>Points forts</h3>' +
     '<div class="analysis-block">' +
-    '<strong>Duels d\'ouverture :</strong> ' + bestFirstKill.name + ' a remporte ' + bestFirstKill.firstKills + ' premiers frags, ' +
-    'donnant un avantage numerique a son equipe dans ' + fkWinPct + '% des rounds concernes. ' +
-    'Un taux superieur a 50% est considere comme un indicateur de victoire dans les donnees professionnelles CS2.' +
+    '<strong>Duels d\'ouverture :</strong> ' + bestFirstKill.name + ' a remporté ' + bestFirstKill.firstKills + ' premiers frags, ' +
+    'donnant un avantage numérique à son équipe dans ' + fkWinPct + '% des rounds concernés. ' +
+    'Un taux supérieur à 50% est considéré comme un indicateur de victoire dans les données professionnelles CS2.' +
     '</div>' +
     '<div class="analysis-block">' +
-    '<strong>Consistance :</strong> ' + bestKAST.name + ' affiche un KAST de ' + bestKAST.kast + '%, ' +
-    (bestKAST.kast >= 70 ? 'au-dessus' : 'en-dessous') + ' de la reference professionnelle de 70%. ' +
-    'Le KAST mesure la proportion de rounds ou un joueur a eu un Kill, une Assist, a Survecu ou a ete Trade.' +
+    '<strong>Constance :</strong> ' + bestKAST.name + ' affiche un KAST de ' + bestKAST.kast + '%, ' +
+    (bestKAST.kast >= 70 ? 'au-dessus' : 'en-dessous') + ' de la référence professionnelle de 70%. ' +
+    'Le KAST mesure la proportion de rounds où un joueur a eu un Kill, une Assist, a Survécu ou a été Tradé.' +
     '</div>' +
     '<div class="analysis-block">' +
     '<strong>Impact offensif :</strong> ' + winnerTeam + ' a maintenu un ADR moyen de ' + avgADR_winner + ' contre ' + avgADR_loser + ' pour ' + loserTeam + ', ' +
-    'soit un ecart de ' + Math.abs(avgADR_winner - avgADR_loser) + ' points refletant une pression constante sur les positions adverses.' +
+    'soit un écart de ' + Math.abs(avgADR_winner - avgADR_loser) + ' points reflétant une pression constante sur les positions adverses.' +
     '</div>' +
 
-    '<h3>Points d\'amelioration</h3>' +
+    '<h3>Points d\'amélioration</h3>' +
     '<div class="analysis-block">' +
-    worstRating.name + ' (FV Rating ' + worstRating.fvr.toFixed(2) + ') gagnerait a ameliorer son positionnement et ses prises d\'info. ' +
-    'Un K/D de ' + worstRating.kills + '/' + worstRating.deaths + ' sur ' + totalR + ' rounds indique des engagements defavorables a corriger.' +
+    worstRating.name + ' (FV Rating ' + worstRating.fvr.toFixed(2) + ') gagnerait à améliorer son positionnement et ses prises d\'info. ' +
+    'Un K/D de ' + worstRating.kills + '/' + worstRating.deaths + ' sur ' + totalR + ' rounds indique des engagements défavorables à corriger.' +
     '</div>' +
 
     '<h3>Conclusion</h3>' +
     '<div class="analysis-block">' +
-    'Victoire ' + winnerTeam + ' ' + winScore + '-' + loseScore + ' portee par la performance de ' + bestRating.name + '. ' +
-    'L\'ecart d\'ADR (' + Math.abs(avgADR_winner - avgADR_loser) + ' points) et le controle des duels d\'ouverture ont ete les facteurs decisifs de cette partie.' +
+    'Victoire ' + winnerTeam + ' ' + winScore + '-' + loseScore + ' portée par la performance de ' + bestRating.name + '. ' +
+    'L\'écart d\'ADR (' + Math.abs(avgADR_winner - avgADR_loser) + ' points) et le contrôle des duels d\'ouverture ont été les facteurs décisifs de cette partie.' +
+    '</div>' +
+    pdfBrandFooter(5, 5) +
     '</div>' +
 
-    '<h2>Classement FV Rating</h2>' +
-    '<table><thead><tr><th>#</th><th>Joueur</th><th>FV Rating</th><th>Barre</th><th>Evaluation</th></tr></thead><tbody>' +
-    ranked.map((p, i) => {
-      const pct = maxFvr > 0 ? Math.round((p.fvr / maxFvr) * 100) : 0;
-      return '<tr><td>' + (i + 1) + '</td><td>' + p.name + '</td><td class="' + fvrClass(p.fvr) + '">' + p.fvr.toFixed(2) + '</td>' +
-        '<td><div class="bar-wrap"><div class="bar-fill" style="width:' + pct + '%"></div></div></td>' +
-        '<td>' + fvrLabel(p.fvr) + '</td></tr>';
-    }).join('') +
-    '</tbody></table>' +
+    '</body></html>';
 
-    '<div class="footer">Rapport genere par FragValue / frag-value.vercel.app / ' + date + '</div>' +
-    '</div>' +
-
-    '</body></html>');
-
+  pw.document.write(html);
   pw.document.close();
-  setTimeout(() => { pw.print(); }, 400);
+  setTimeout(() => { pw.print(); }, 500);
+}
+
+// Analyse individuelle d'un joueur (6 pages)
+function exportPlayerPDF(playerName) {
+  const meta = demoData?.meta || {};
+  const kills = demoData?.kills || [];
+  const rounds = (demoData?.rounds || []).filter(r => !r.isKnife);
+  const playerStats = demoData?.playerStats || [];
+  const grenades = demoData?.grenades || [];
+  const totalR = rounds.length || 1;
+  const mapName = (meta.map || '').replace('de_', '');
+  const date = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
+
+  const player = playerStats.find(p => p.name === playerName);
+  if (!player) { alert('Joueur introuvable'); return; }
+
+  // Core player metrics
+  const pKills = kills.filter(k => k.attacker === playerName);
+  const pDeaths = kills.filter(k => k.victim === playerName);
+  const hsCount = pKills.filter(k => k.isHeadshot).length;
+  const hsPct = pKills.length > 0 ? Math.round(hsCount / pKills.length * 100) : 0;
+  const wallbangs = pKills.filter(k => k.isWallbang).length;
+  const thruSmoke = pKills.filter(k => k.thruSmoke).length;
+  const adr = Math.round(pKills.length * 80 / totalR);
+  const fvr = calcFvRating(player.kills, player.deaths, 0, totalR);
+  const kast = calcKAST(playerName, kills, rounds);
+  const kd = player.kills - player.deaths;
+  const kdRatio = player.deaths > 0 ? (player.kills / player.deaths).toFixed(2) : player.kills.toFixed(2);
+
+  // Team detection
+  let team = 0;
+  const asAttacker = kills.find(k => k.attacker === playerName);
+  if (asAttacker) team = asAttacker.attackerTeam;
+  const teamLabel = team === 2 ? 'T' : team === 3 ? 'CT' : '?';
+
+  // Opening duels
+  let openingWon = 0, openingLost = 0;
+  for (let r = 1; r <= totalR; r++) {
+    const roundK = kills.filter(k => k.round === r);
+    if (!roundK.length) continue;
+    const minTick = Math.min(...roundK.map(k => k.tick));
+    const first = roundK.find(k => k.tick === minTick);
+    if (!first) continue;
+    if (first.attacker === playerName) openingWon++;
+    if (first.victim === playerName) openingLost++;
+  }
+  const openingTotal = openingWon + openingLost;
+  const openingPct = openingTotal > 0 ? Math.round(openingWon / openingTotal * 100) : 0;
+
+  // Multi-kills
+  const multiKills = { 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (let r = 1; r <= totalR; r++) {
+    const rK = pKills.filter(k => k.round === r).length;
+    if (rK >= 2 && rK <= 5) multiKills[rK] = (multiKills[rK] || 0) + 1;
+  }
+
+  // Per-round kills for chart
+  const roundKills = [];
+  let maxPerRound = 0;
+  for (let r = 1; r <= totalR; r++) {
+    const rk = pKills.filter(k => k.round === r).length;
+    const rd = rounds[r - 1];
+    const won = rd && rd.winner === team;
+    roundKills.push({ round: r, kills: rk, won });
+    if (rk > maxPerRound) maxPerRound = rk;
+  }
+  const maxRK = Math.max(maxPerRound, 1);
+
+  // Weapon breakdown
+  const weaponMap = {};
+  pKills.forEach(k => {
+    const w = (k.weapon || 'inconnu').replace(/^weapon_/, '');
+    weaponMap[w] = (weaponMap[w] || 0) + 1;
+  });
+  const topWeapons = Object.entries(weaponMap).sort((a,b) => b[1]-a[1]).slice(0, 4);
+
+  // Grenades
+  const playerGrenades = grenades.filter(g => g.thrower === playerName || g.throwerName === playerName);
+  const gByType = {};
+  playerGrenades.forEach(g => {
+    const raw = (g.type || g.weapon || 'other').toString();
+    const t = raw.replace(/^weapon_/, '').replace('grenade','');
+    gByType[t] = (gByType[t] || 0) + 1;
+  });
+
+  // Team average rating (only teammates)
+  const teamPlayers = playerStats.filter(p => {
+    const kk = kills.find(k => k.attacker === p.name);
+    return kk && kk.attackerTeam === team;
+  });
+  const teamAvgFvr = teamPlayers.length ? teamPlayers.reduce((s, p) => s + calcFvRating(p.kills, p.deaths, 0, totalR), 0) / teamPlayers.length : 0;
+  const fvrDeltaPct = Math.round((fvr - teamAvgFvr) / Math.max(teamAvgFvr, 0.01) * 100);
+
+  // Rank in team across all key metrics
+  const allMetrics = playerStats.map(p => {
+    const pk2 = kills.filter(k => k.attacker === p.name);
+    return {
+      name: p.name,
+      hs: pk2.length ? Math.round(pk2.filter(k => k.isHeadshot).length / pk2.length * 100) : 0,
+      adr: Math.round(pk2.length * 80 / totalR),
+      fvr: calcFvRating(p.kills, p.deaths, 0, totalR),
+      kast: calcKAST(p.name, kills, rounds),
+    };
+  });
+  const rankIn = (key) => {
+    const sorted = [...allMetrics].sort((a,b) => b[key] - a[key]);
+    return sorted.findIndex(x => x.name === playerName) + 1;
+  };
+  const strengths = [], weaknesses = [];
+  const metricsData = [
+    { key: 'fvr', label: 'FV Rating', val: fvr.toFixed(2) },
+    { key: 'hs', label: 'Headshot %', val: hsPct + '%' },
+    { key: 'adr', label: 'ADR', val: String(adr) },
+    { key: 'kast', label: 'KAST', val: kast + '%' },
+  ];
+  metricsData.forEach(m => {
+    const rk = rankIn(m.key);
+    if (rk <= 3) strengths.push({ label: m.label, val: m.val, rank: rk });
+    else if (rk >= 8) weaknesses.push({ label: m.label, val: m.val, rank: rk });
+  });
+
+  // Coaching tips (personalized)
+  const tips = [];
+  if (hsPct < 35 && pKills.length > 3) tips.push('Travaille le crosshair placement à hauteur de tête : positionne ton viseur au niveau "tête" avant chaque angle, pas au sol.');
+  if (kast < 60) tips.push('Positionnement de trade à améliorer : reste à portée visuelle d\'un coéquipier pour que ta mort soit systématiquement vengée (trade kill).');
+  if (openingPct < 40 && openingTotal > 3) tips.push('Trop d\'engagements perdus en ouverture : privilégie les duels avec de l\'info préalable (utilitaire ou son) plutôt que les peeks à l\'aveugle.');
+  if (adr < 70) tips.push('ADR faible : multiplie les angles favorables (1 smoke + 1 flash = 2 duels maîtrisés) plutôt que des solo pushes risqués.');
+  if (playerGrenades.length / totalR < 1.5) tips.push('Utilitaire sous-exploité : vise au moins 2 grenades/round (1 flash + 1 smoke ou molotov) pour créer des espaces et soutenir ton équipe.');
+  if (fvr < 0.8) tips.push('Rating global à améliorer : revois les replays de tes morts pour identifier les erreurs récurrentes de timing et de positionnement.');
+  if (wallbangs === 0 && pKills.length > 5) tips.push('Apprends les wallbangs standards de la map : certains angles (portes, cisailles, boîtes en bois) permettent de prépicker à travers les murs.');
+  if (tips.length === 0) tips.push('Performance équilibrée sur tous les fondamentaux — continue sur cette voie et travaille les micro-détails (timings de rotation, économie d\'équipe, lecture son).');
+
+  // Capture personal heatmap
+  const heatmapUrl = captureHeatmapDataURL(playerName);
+
+  const pw = window.open('', '_blank');
+  if (!pw) return;
+
+  const coverLogo = FV_LOGO_SVG.replace('width:46px;height:46px', 'width:68px;height:68px');
+  const fvrColor = fvr >= 1 ? '#b8ff57' : fvr >= 0.7 ? '#f5c842' : '#f06b6b';
+
+  const html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/>' +
+    '<title>FragValue - ' + playerName + ' · ' + mapName.toUpperCase() + '</title>' +
+    '<style>' + pdfStyles() + '</style></head><body>' +
+
+    // PAGE 1: COVER
+    '<div class="page">' +
+    '<div class="cover">' +
+    '<div>' +
+    '<div class="cover-brand">' + coverLogo +
+    '<div><div style="font-family:Arial Black,sans-serif;font-size:24px;font-weight:900;letter-spacing:-0.5px;color:#e8eaea">FragValue</div><div class="tag">Player Analytics · CS2</div></div>' +
+    '</div>' +
+    '<div class="cover-tag">Analyse individuelle</div>' +
+    '<div class="cover-title" style="font-size:64px;letter-spacing:-3px">' + playerName.toUpperCase() + '</div>' +
+    '<div style="font-family:Arial Black,sans-serif;font-size:28px;color:#b8ff57;letter-spacing:-1px;margin-top:-4px">' + mapName.toUpperCase() + ' <span style="color:#5a6060">·</span> ' + teamLabel + '</div>' +
+    '<div class="cover-meta" style="margin-top:18px"><strong>' + totalR + ' ROUNDS</strong> · ' + date + '</div>' +
+    '<div style="margin-top:36px;display:flex;gap:28px">' +
+    '<div><div style="font-size:9px;color:#8a9090;letter-spacing:2px;text-transform:uppercase">FV Rating</div><div style="font-family:Arial Black,sans-serif;font-size:42px;color:' + fvrColor + ';letter-spacing:-1px">' + fvr.toFixed(2) + '</div></div>' +
+    '<div><div style="font-size:9px;color:#8a9090;letter-spacing:2px;text-transform:uppercase">K / D</div><div style="font-family:Arial Black,sans-serif;font-size:42px;color:#e8eaea;letter-spacing:-1px">' + player.kills + '<span style="color:#5a6060"> / </span>' + player.deaths + '</div></div>' +
+    '<div><div style="font-size:9px;color:#8a9090;letter-spacing:2px;text-transform:uppercase">KAST</div><div style="font-family:Arial Black,sans-serif;font-size:42px;color:#e8eaea;letter-spacing:-1px">' + kast + '<span style="font-size:22px;color:#5a6060">%</span></div></div>' +
+    '</div>' +
+    '</div>' +
+    '<div class="cover-footer"><span>FragValue Pro Analytics · Rapport personnel</span><span class="accent">frag-value.vercel.app</span></div>' +
+    '</div>' +
+    '</div>' +
+
+    // PAGE 2: PERFORMANCE GLOBALE
+    '<div class="page">' +
+    pdfBrandHeader(playerName + ' · performance globale') +
+    '<h2>Vue d\'ensemble</h2>' +
+    '<div class="kpi-grid">' +
+    '<div class="kpi"><div class="lbl">Kills</div><div class="val">' + player.kills + '</div><div class="sub">' + (player.kills / totalR).toFixed(2) + ' / round</div></div>' +
+    '<div class="kpi"><div class="lbl">Deaths</div><div class="val">' + player.deaths + '</div><div class="sub">' + (player.deaths / totalR).toFixed(2) + ' / round</div></div>' +
+    '<div class="kpi"><div class="lbl">K/D Ratio</div><div class="val">' + kdRatio + '</div><div class="sub">' + (kd >= 0 ? '+' : '') + kd + ' diff</div></div>' +
+    '<div class="kpi"><div class="lbl">ADR</div><div class="val">' + adr + '</div><div class="sub">dégâts / round</div></div>' +
+    '<div class="kpi"><div class="lbl">Headshot %</div><div class="val">' + hsPct + '%</div><div class="sub">' + hsCount + ' / ' + pKills.length + '</div></div>' +
+    '<div class="kpi"><div class="lbl">KAST</div><div class="val">' + kast + '%</div><div class="sub">constance</div></div>' +
+    '<div class="kpi"><div class="lbl">FV Rating</div><div class="val ' + (fvr >= 1 ? 'good' : fvr >= 0.7 ? 'avg' : 'bad') + '">' + fvr.toFixed(2) + '</div><div class="sub">' + (fvrDeltaPct >= 0 ? '+' : '') + fvrDeltaPct + '% vs équipe</div></div>' +
+    '<div class="kpi"><div class="lbl">Opening</div><div class="val">' + openingWon + '<span style="font-size:14px;color:#8a9090">/' + openingTotal + '</span></div><div class="sub">' + openingPct + '% succès</div></div>' +
+    '</div>' +
+
+    '<h2>Performance round par round</h2>' +
+    '<div class="round-chart">' +
+    '<div class="legend">Kills par round · vert foncé = round gagné · gris = round perdu</div>' +
+    '<div class="round-bars">' +
+    roundKills.map(rk => '<div class="rb ' + (rk.won ? 'win' : 'loss') + '" style="height:' + Math.max(2, (rk.kills / maxRK) * 100) + '%"></div>').join('') +
+    '</div>' +
+    '<div class="round-labels">' +
+    roundKills.map(rk => '<div class="rl">' + rk.round + '</div>').join('') +
+    '</div>' +
+    '</div>' +
+
+    '<h3>Multi-kills</h3>' +
+    '<div class="weapon-grid">' +
+    '<div class="weapon-item"><div class="w-name">2K</div><div class="w-val">' + (multiKills[2] || 0) + '</div></div>' +
+    '<div class="weapon-item"><div class="w-name">3K</div><div class="w-val">' + (multiKills[3] || 0) + '</div></div>' +
+    '<div class="weapon-item"><div class="w-name">4K</div><div class="w-val">' + (multiKills[4] || 0) + '</div></div>' +
+    '<div class="weapon-item"><div class="w-name">ACE (5K)</div><div class="w-val" style="color:' + ((multiKills[5]||0) > 0 ? '#6bbf1f' : '#1a1c1c') + '">' + (multiKills[5] || 0) + '</div></div>' +
+    '</div>' +
+    pdfBrandFooter(2, 6) +
+    '</div>' +
+
+    // PAGE 3: DUELS & COMBAT
+    '<div class="page">' +
+    pdfBrandHeader(playerName + ' · duels et combats') +
+    '<h2>Duels d\'ouverture</h2>' +
+    '<div class="kpi-grid kpi-3">' +
+    '<div class="kpi"><div class="lbl">Ouvertures gagnées</div><div class="val good">' + openingWon + '</div><div class="sub">premiers frags du round</div></div>' +
+    '<div class="kpi"><div class="lbl">Ouvertures perdues</div><div class="val bad">' + openingLost + '</div><div class="sub">premières morts du round</div></div>' +
+    '<div class="kpi"><div class="lbl">Taux de succès</div><div class="val ' + (openingPct >= 55 ? 'good' : openingPct >= 45 ? 'avg' : 'bad') + '">' + openingPct + '%</div><div class="sub">sur ' + openingTotal + ' duels</div></div>' +
+    '</div>' +
+
+    '<div class="analysis-block">' +
+    '<strong>Lecture : </strong>' +
+    (openingPct >= 55 ? 'Excellent entry fragger. Ton taux de succès en duel d\'ouverture dépasse la référence pro de 55%. Tu apportes un avantage numérique régulier à ton équipe dès le début du round.'
+     : openingPct >= 45 ? 'Taux de duels d\'ouverture correct mais perfectible. Travaille le prefire et le crosshair placement sur les angles clés pour passer au-dessus de 55%.'
+     : 'Duels d\'ouverture défavorables. Évite les engagements en premier et joue davantage les rotations de soutien ou les positions en retrait jusqu\'à ce que l\'info soit sécurisée.') +
+    '</div>' +
+
+    '<h2>Répartition des armes</h2>' +
+    '<div class="weapon-grid">' +
+    topWeapons.map(w => '<div class="weapon-item"><div class="w-name">' + w[0] + '</div><div class="w-val">' + w[1] + '</div></div>').join('') +
+    (topWeapons.length < 4 ? Array(4 - topWeapons.length).fill('<div class="weapon-item"><div class="w-name">—</div><div class="w-val" style="color:#ccc">0</div></div>').join('') : '') +
+    '</div>' +
+
+    '<h3>Kills spéciaux</h3>' +
+    '<div class="highlight-grid">' +
+    '<div class="highlight-item"><div class="highlight-label">Headshots</div><div class="highlight-value">' + hsCount + ' / ' + pKills.length + '<br/><span class="accent">' + hsPct + '%</span></div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Wallbangs</div><div class="highlight-value">' + wallbangs + '<br/><span class="accent">kills à travers murs</span></div></div>' +
+    '<div class="highlight-item"><div class="highlight-label">Kills thru smoke</div><div class="highlight-value">' + thruSmoke + '<br/><span class="accent">lecture son</span></div></div>' +
+    '</div>' +
+
+    pdfBrandFooter(3, 6) +
+    '</div>' +
+
+    // PAGE 4: UTILITAIRE & HEATMAP
+    '<div class="page">' +
+    pdfBrandHeader(playerName + ' · utilitaire et positionnement') +
+    '<h2>Utilitaire lancé</h2>' +
+    '<div class="weapon-grid">' +
+    '<div class="weapon-item"><div class="w-name">Flash</div><div class="w-val">' + (gByType.flashbang || gByType.flash || 0) + '</div></div>' +
+    '<div class="weapon-item"><div class="w-name">Smoke</div><div class="w-val">' + (gByType.smoke || 0) + '</div></div>' +
+    '<div class="weapon-item"><div class="w-name">HE</div><div class="w-val">' + (gByType.he || gByType.hegrenade || 0) + '</div></div>' +
+    '<div class="weapon-item"><div class="w-name">Molotov/Inc</div><div class="w-val">' + ((gByType.molotov || 0) + (gByType.incgrenade || 0) + (gByType.inc || 0)) + '</div></div>' +
+    '</div>' +
+    '<div class="analysis-block">' +
+    '<strong>Total utilitaire :</strong> ' + playerGrenades.length + ' grenades sur ' + totalR + ' rounds (' + (playerGrenades.length / totalR).toFixed(1) + '/round). ' +
+    (playerGrenades.length / totalR >= 2 ? 'Bonne exploitation de l\'utilitaire, standard professionnel respecté.' : 'Sous-exploitation de l\'utilitaire : la référence pro est de 2 grenades par round minimum pour créer des espaces et préparer des duels favorables.') +
+    '</div>' +
+
+    '<h2>Heatmap personnelle des duels</h2>' +
+    '<div class="heatmap-wrap">' +
+    (heatmapUrl ? '<img src="' + heatmapUrl + '" alt="Heatmap personnelle" style="max-height:440px"/>' : '<div style="padding:60px;color:#8a9090;font-size:11px">Heatmap indisponible</div>') +
+    '<div class="heatmap-caption">Positions des kills de ' + playerName + ' · bordure ' + (team === 3 ? 'bleue (CT)' : 'jaune (T)') + '</div>' +
+    '</div>' +
+
+    pdfBrandFooter(4, 6) +
+    '</div>' +
+
+    // PAGE 5: BILAN & AXES DE PROGRESSION
+    '<div class="page">' +
+    pdfBrandHeader(playerName + ' · bilan et axes de progression') +
+    '<h2>Forces et axes à travailler</h2>' +
+    '<div class="strength-grid">' +
+    '<div class="strength-box"><span class="label">Points forts · top 3 de la partie</span>' +
+    (strengths.length ? strengths.map(s => '<div class="val">' + s.label + ' : <span class="good">' + s.val + '</span> <span style="font-size:10px;color:#8a9090">(classé #' + s.rank + ')</span></div>').join('') : '<div class="val" style="color:#8a9090;font-size:11px">Aucune métrique dans le top 3</div>') +
+    '</div>' +
+    '<div class="weakness-box"><span class="label">À améliorer · bottom 3 de la partie</span>' +
+    (weaknesses.length ? weaknesses.map(w => '<div class="val">' + w.label + ' : <span class="bad">' + w.val + '</span> <span style="font-size:10px;color:#8a9090">(classé #' + w.rank + ')</span></div>').join('') : '<div class="val" style="color:#8a9090;font-size:11px">Aucune métrique en bas de classement</div>') +
+    '</div>' +
+    '</div>' +
+
+    '<h2>Comparaison avec l\'équipe</h2>' +
+    '<div class="analysis-block">' +
+    (fvrDeltaPct >= 10 ? '<strong>Joueur phare :</strong> ton FV Rating est ' + Math.abs(fvrDeltaPct) + '% au-dessus de la moyenne de ton équipe. Tu as porté la performance collective lors de cette partie.'
+     : fvrDeltaPct >= -10 ? '<strong>Contribution équilibrée :</strong> ton rating est dans la moyenne de l\'équipe (écart ' + (fvrDeltaPct >= 0 ? '+' : '') + fvrDeltaPct + '%). Performance cohérente avec le niveau collectif.'
+     : '<strong>Sous-performance relative :</strong> ton rating est ' + Math.abs(fvrDeltaPct) + '% en-dessous de la moyenne équipe. Les axes listés ci-dessous sont prioritaires pour retrouver le niveau du collectif.') +
+    '</div>' +
+
+    '<h2>Conseils personnalisés</h2>' +
+    '<div class="analysis-block">' +
+    '<strong>Plan d\'entraînement recommandé :</strong>' +
+    '<ul class="advice-list">' +
+    tips.map(t => '<li>' + t + '</li>').join('') +
+    '</ul>' +
+    '</div>' +
+
+    pdfBrandFooter(5, 6) +
+    '</div>' +
+
+    // PAGE 6: SYNTHÈSE
+    '<div class="page">' +
+    pdfBrandHeader(playerName + ' · synthèse du rapport') +
+    '<h2>Synthèse finale</h2>' +
+    '<div class="analysis-block" style="font-size:12.5px">' +
+    '<strong>' + playerName + '</strong> a disputé ' + totalR + ' rounds sur ' + mapName.toUpperCase() + ' côté <strong>' + teamLabel + '</strong>. ' +
+    'Avec <strong>' + player.kills + ' kills</strong>, <strong>' + player.deaths + ' morts</strong> et un FV Rating de <strong>' + fvr.toFixed(2) + '</strong>, ' +
+    (fvr >= 1.2 ? 'sa performance est très solide et tire l\'équipe vers le haut.'
+     : fvr >= 1.0 ? 'sa contribution est positive et constante sur l\'ensemble de la partie.'
+     : fvr >= 0.8 ? 'sa performance est correcte mais peut progresser sur plusieurs fondamentaux identifiés ci-dessus.'
+     : 'sa performance reste à améliorer sur les points clés identifiés dans ce rapport.') +
+    '</div>' +
+    '<div class="analysis-block">' +
+    '<strong>Résumé chiffré :</strong><br/>' +
+    '· <strong>' + hsPct + '% de headshots</strong> sur ' + pKills.length + ' kills (' + (hsPct >= 50 ? 'aim précis' : 'précision à travailler') + ')<br/>' +
+    '· <strong>' + kast + '% de KAST</strong> (' + (kast >= 70 ? 'constance professionnelle' : 'manque de présence sur certains rounds') + ')<br/>' +
+    '· <strong>' + adr + ' ADR</strong> (' + (adr >= 80 ? 'impact offensif élevé' : 'pression à renforcer') + ')<br/>' +
+    '· <strong>' + openingPct + '% en ouverture</strong> sur ' + openingTotal + ' duels (' + (openingPct >= 55 ? 'entry fragger fiable' : 'rôle de soutien à privilégier') + ')<br/>' +
+    '· <strong>' + playerGrenades.length + ' grenades lancées</strong> (' + (playerGrenades.length/totalR).toFixed(1) + '/round)' +
+    '</div>' +
+
+    '<div style="margin-top:36px;padding:26px;background:#0d0f0d;color:#e8eaea;text-align:center;border-top:4px solid #b8ff57">' +
+    '<div style="font-size:10px;color:#b8ff57;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px">Rapport généré par</div>' +
+    '<div style="font-family:Arial Black,sans-serif;font-size:30px;font-weight:900;letter-spacing:-1px"><span style="color:#e8eaea">FRAG</span><span style="color:#b8ff57">VALUE</span></div>' +
+    '<div style="font-size:9px;color:#5a6060;letter-spacing:2px;text-transform:uppercase;margin-top:8px">frag-value.vercel.app · CS2 Pro Analytics</div>' +
+    '</div>' +
+
+    pdfBrandFooter(6, 6) +
+    '</div>' +
+
+    '</body></html>';
+
+  pw.document.write(html);
+  pw.document.close();
+  setTimeout(() => { pw.print(); }, 500);
 }
 
 // ── Partager la demo ─────────────────────────────────────────────
