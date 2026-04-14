@@ -1401,6 +1401,39 @@ function drawFrame(idx) {
   // Effects (grenades + shots)
   drawEffects(frame, W, H);
 
+  // ── DIAGNOSTIC OVERLAY (temporary) ──
+  {
+    const firstName = Object.keys(frame.players)[0];
+    const rp = (currentRoundPos && firstName) ? (currentRoundPos[firstName] || []) : [];
+    const tickNow = frame.tick || 0;
+    const TRAIL_TICKS = 400;
+    const trailPts = rp.filter(pt => {
+      const t = pt.tick || 0;
+      return t >= tickNow - TRAIL_TICKS && t <= tickNow;
+    });
+    const f0 = rp[0], fl = rp[rp.length - 1];
+    const t0 = trailPts[0], tl = trailPts[trailPts.length - 1];
+    const minTf = frames[0]?.tick || 0;
+    const maxTf = frames[frames.length - 1]?.tick || 0;
+    const lines = [
+      `round=${currentRound} frame=${frameIdx}/${frames.length - 1}`,
+      `tick=${Math.round(tickNow)} [min=${Math.round(minTf)} max=${Math.round(maxTf)}]`,
+      `sample=${firstName || 'NONE'} roundPts=${rp.length}`,
+      `rp first=${f0 ? f0.tick : '-'} last=${fl ? fl.tick : '-'}`,
+      `trailPts=${trailPts.length} range=[${t0 ? t0.tick : '-'}..${tl ? tl.tick : '-'}]`,
+    ];
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.78)';
+    ctx.fillRect(6, H - 88, 360, 82);
+    ctx.strokeStyle = 'rgba(184,255,87,.5)'; ctx.lineWidth = 1;
+    ctx.strokeRect(6, H - 88, 360, 82);
+    ctx.font = '11px "Space Mono",monospace';
+    ctx.fillStyle = '#b8ff57';
+    ctx.textAlign = 'left';
+    lines.forEach((l, i) => ctx.fillText(l, 12, H - 72 + i * 15));
+    ctx.restore();
+  }
+
   // ── Canvas Scoreboard (top center of map) ────────────────────────────────
   drawScoreboard(frame, W, H);
 
