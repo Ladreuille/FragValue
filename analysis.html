@@ -341,7 +341,6 @@ function detectKnifeRounds() {
   const kills = demoData.kills || [];
   if (!rounds.length) return;
   rounds.forEach((rd, i) => {
-    if (rd.isKnife !== undefined) return;
     const roundNum = rd.round ?? i;
     const killsR = rd.killsRound ?? (roundNum + 1);
     const startT = rd.startTick || 0;
@@ -349,12 +348,11 @@ function detectKnifeRounds() {
     let rKills = [];
     if (startT > 0 && endT > 0) rKills = kills.filter(k => (k.tick || 0) >= startT && (k.tick || 0) <= endT);
     if (!rKills.length) rKills = kills.filter(k => k.round === killsR || k.round === roundNum);
-    if (!rKills.length) { rd.isKnife = (i === 0); return; }
-    const allKnife = rKills.every(k => {
+    if (!rKills.length) { rd.isKnife = false; return; }
+    rd.isKnife = rKills.every(k => {
       const w = (k.weapon || '').toLowerCase();
-      return w.includes('knife') || w.includes('bayonet') || w.includes('melee') || w.includes('fists') || w === '';
+      return w.includes('knife') || w.includes('bayonet') || w.includes('melee') || w.includes('fists');
     });
-    rd.isKnife = allKnife;
   });
 }
 

@@ -597,42 +597,43 @@ function detectKnifeRounds() {
   const kills = demoData.kills || [];
   if (!rounds.length) return;
 
+  // Toujours recalculer - le parser force round 0 = knife
+  // ce qui est faux si le demo n'a pas de knife round
   rounds.forEach((rd, i) => {
-    // Si le parser a deja detecte, on garde
-    if (rd.isKnife !== undefined) return;
-
     const roundNum = rd.round ?? i;
     const killsR = rd.killsRound ?? (roundNum + 1);
     const startT = rd.startTick || 0;
     const endT = rd.endTick || (rounds[i + 1]?.startTick || 0);
 
-    // Trouver les kills de ce round (par tick range ou par round number)
+    // Trouver les kills de ce round par tick range
     let rKills = [];
     if (startT > 0 && endT > 0) {
       rKills = kills.filter(k => (k.tick || 0) >= startT && (k.tick || 0) <= endT);
     }
+    // Fallback par round number
     if (!rKills.length) {
       rKills = kills.filter(k => k.round === killsR || k.round === roundNum);
     }
 
     if (rKills.length === 0) {
-      // Pas de kills : si c'est le premier round et court, probablement knife
-      rd.isKnife = (i === 0);
+      // Pas de kills : pas assez de donnees pour confirmer knife.
+      // Par defaut on considere que c'est un round normal (evite de
+      // cacher le pistol round par erreur)
+      rd.isKnife = false;
       return;
     }
 
-    // Verifier si tous les kills sont avec un couteau
+    // Verifier si TOUS les kills sont avec un couteau
     const allKnife = rKills.every(k => {
       const w = (k.weapon || '').toLowerCase();
-      return w.includes('knife') || w.includes('bayonet') || w.includes('melee') || w.includes('fists') || w === '';
+      return w.includes('knife') || w.includes('bayonet') || w.includes('melee') || w.includes('fists');
     });
 
     rd.isKnife = allKnife;
   });
 
-  // Log
-  const knifeRounds = rounds.filter(r => r.isKnife);
-  console.log('[Replay] Knife rounds detectes:', knifeRounds.length, knifeRounds.map(r => r.round));
+  const knifeCount = rounds.filter(r => r.isKnife).length;
+  console.log('[Replay] Knife rounds detectes:', knifeCount, '/', rounds.length);
 }
 
 function convertPositionTicks() {
