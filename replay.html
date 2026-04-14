@@ -810,16 +810,53 @@ function updateScores() {
 }
 
 // Weapon icon via real SVG files in /icons/
-// Maps CS2 weapon names to SVG file names
+// @laihoe/demoparser2 active_weapon_name returns a MIX of:
+//   - internal classnames: knife, knife_t, bayonet, c4, ...
+//   - display names: "AK-47", "USP-S", "M4A1-S", "Desert Eagle", ...
+// This map handles both formats, normalized via normalizeWeaponName().
 const WEAPON_FILE_MAP = {
-  ak47:'ak47', m4a1:'m4a1', m4a1_silencer:'m4a1_silencer', m4a1_silencer_off:'m4a1_silencer_off',
-  m4a4:'m4a1', galil:'galilar', galilar:'galilar', famas:'famas',
-  aug:'aug', sg556:'sg556', awp:'awp', ssg08:'ssg08', scar20:'scar20', g3sg1:'g3sg1',
-  mp9:'mp9', mac10:'mac10', mp7:'mp7', ump45:'ump45', p90:'p90', mp5sd:'mp5sd', bizon:'bizon',
-  deagle:'deagle', glock:'glock', usp_silencer:'usp_silencer', usp_silencer_off:'usp_silencer_off',
-  hkp2000:'hkp2000', p2000:'p2000', p250:'p250', fiveseven:'fiveseven',
-  tec9:'tec9', elite:'elite', cz75a:'cz75a', cz75_auto:'cz75a', revolver:'revolver',
-  nova:'nova', xm1014:'xm1014', mag7:'mag7', sawedoff:'sawedoff', m249:'m249', negev:'negev',
+  // Rifles
+  ak47:'ak47', 'ak-47':'ak47',
+  m4a1:'m4a1', m4a4:'m4a1', 'm4a4':'m4a1',
+  m4a1_silencer:'m4a1_silencer', 'm4a1-s':'m4a1_silencer',
+  m4a1_silencer_off:'m4a1_silencer_off',
+  galil:'galilar', galilar:'galilar', 'galil ar':'galilar', 'galilar':'galilar',
+  famas:'famas',
+  aug:'aug',
+  sg556:'sg556', 'sg 553':'sg556', 'sg553':'sg556',
+  // Snipers
+  awp:'awp',
+  ssg08:'ssg08', 'ssg 08':'ssg08', 'ssg-08':'ssg08',
+  scar20:'scar20', 'scar-20':'scar20',
+  g3sg1:'g3sg1',
+  // SMGs
+  mp9:'mp9',
+  mac10:'mac10', 'mac-10':'mac10',
+  mp7:'mp7',
+  ump45:'ump45', 'ump-45':'ump45',
+  p90:'p90',
+  mp5sd:'mp5sd', 'mp5-sd':'mp5sd',
+  bizon:'bizon', 'pp-bizon':'bizon',
+  // Pistols
+  deagle:'deagle', 'desert eagle':'deagle',
+  glock:'glock', 'glock-18':'glock',
+  usp_silencer:'usp_silencer', 'usp-s':'usp_silencer',
+  usp_silencer_off:'usp_silencer_off',
+  hkp2000:'hkp2000', p2000:'p2000',
+  p250:'p250',
+  fiveseven:'fiveseven', 'five-seven':'fiveseven', 'fiveseven':'fiveseven',
+  tec9:'tec9', 'tec-9':'tec9',
+  elite:'elite', 'dual berettas':'elite',
+  cz75a:'cz75a', cz75_auto:'cz75a', 'cz75-auto':'cz75a',
+  revolver:'revolver', 'r8 revolver':'revolver',
+  // Heavy
+  nova:'nova',
+  xm1014:'xm1014',
+  mag7:'mag7', 'mag-7':'mag7',
+  sawedoff:'sawedoff', 'sawed-off':'sawedoff',
+  m249:'m249',
+  negev:'negev',
+  // Knives
   knife:'knife', knife_t:'knife_t', bayonet:'bayonet',
   knife_karambit:'knife_karambit', knife_butterfly:'knife_butterfly', knife_flip:'knife_flip',
   knife_m9_bayonet:'knife_m9_bayonet', knife_gut:'knife_gut', knife_falchion:'knife_falchion',
@@ -829,14 +866,30 @@ const WEAPON_FILE_MAP = {
   knife_css:'knife_css', knife_cord:'knife_cord', knife_canis:'knife_canis',
   knife_outdoor:'knife_outdoor', knife_push:'knife_push', knife_twinblade:'knife_twinblade',
   knife_gypsy_jackknife:'knife_gypsy_jackknife',
-  hegrenade:'hegrenade', flashbang:'flashbang', smokegrenade:'smokegrenade',
-  molotov:'molotov', incgrenade:'incgrenade', decoy:'decoy',
-  c4:'c4', planted_c4:'planted_c4', taser:'taser',
+  // Grenades
+  hegrenade:'hegrenade', 'he grenade':'hegrenade', 'he':'hegrenade',
+  flashbang:'flashbang',
+  smokegrenade:'smokegrenade', 'smoke grenade':'smokegrenade', 'smoke':'smokegrenade',
+  molotov:'molotov',
+  incgrenade:'incgrenade', 'incendiary grenade':'incgrenade', 'incendiary':'incgrenade',
+  decoy:'decoy', 'decoy grenade':'decoy',
+  // Utility
+  c4:'c4', planted_c4:'planted_c4',
+  taser:'taser', 'zeus x27':'taser', 'zeus':'taser',
 };
+
+// Normalize CS2 weapon name (classname OR display name) to a map key
+function normalizeWeaponName(raw) {
+  if (!raw) return '';
+  return String(raw)
+    .replace(/^weapon_/i, '')
+    .toLowerCase()
+    .trim();
+}
 
 function weaponIconImg(weaponName, height) {
   if (!weaponName) return '';
-  const clean = weaponName.replace('weapon_', '').toLowerCase();
+  const clean = normalizeWeaponName(weaponName);
   const file = WEAPON_FILE_MAP[clean] || null;
   if (!file) return '<span style="font-size:9px;color:var(--text3)">' + clean + '</span>';
   const h = height || 14;
@@ -850,9 +903,9 @@ const WEAPON_ICONS_INLINE = {
 
 function getWeaponIcon(weaponName, color) {
   if (!weaponName) return '';
-  const clean = weaponName.replace('weapon_', '').toLowerCase();
+  const clean = normalizeWeaponName(weaponName);
   const file = WEAPON_FILE_MAP[clean];
-  if (file) return '<img src="icons/' + file + '.svg" alt="' + clean + '" width="auto" height="14" loading="lazy">';
+  if (file) return '<img src="icons/' + file + '.svg" alt="' + clean + '" height="14" loading="lazy">';
   return WEAPON_ICONS_INLINE.default.replace(/CL/g, color);
 }
 function getHelmetIcon(active) {
