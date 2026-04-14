@@ -1111,10 +1111,17 @@ function buildFrames(round) {
 
   const span = Math.max(maxT - minT, 1);
   const durSec = span / 64;
-  const N = Math.min(1800, Math.max(80, Math.round(durSec * FPS)));
+  // N = durSec * FPS gives real-time playback. The old clamp at 1800 frames
+  // capped wall-clock playback at 60s, which compressed any round longer than
+  // 60s into 60s of wall time → 1.5x–2x constant speedup that felt worst at
+  // round start when players sprint out of spawn. Raise to 7200 (= 4 minutes
+  // at 30fps) so every realistic round plays at true 1x.
+  const N = Math.min(7200, Math.max(80, Math.round(durSec * FPS)));
   const MAX_INTERP_DIST = 500;
+  const playbackSpeed = (durSec * FPS) / N;
 
-  console.log('[buildFrames] minT:', minT, 'maxT:', maxT, 'span:', span, 'N:', N, 'durSec:', durSec.toFixed(1));
+  console.log('[buildFrames] minT:', minT, 'maxT:', maxT, 'span:', span, 'N:', N,
+    'durSec:', durSec.toFixed(1), 'playback:', playbackSpeed.toFixed(2) + 'x');
   const rangeSample = Object.entries(perPlayerRange).slice(0, 3).map(([n, r]) => `${n}:[${r.first}-${r.last}]/${r.count}`).join(' ');
   console.log('[buildFrames] player ranges:', rangeSample);
 
