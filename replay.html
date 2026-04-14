@@ -1388,6 +1388,9 @@ function drawFrame(idx) {
   // Effects (grenades + shots)
   drawEffects(frame, W, H);
 
+  // Killfeed (top-right of the map)
+  drawKillfeed(frame, W, H);
+
   // ── DIAGNOSTIC OVERLAY (temporary) ──
   {
     const firstName = Object.keys(frame.players)[0];
@@ -1444,7 +1447,8 @@ function drawFrame(idx) {
   }
 
   // ── Canvas Scoreboard (top center of map) ────────────────────────────────
-  drawScoreboard(frame, W, H);
+  // Disabled: redundant with the right sidebar team panels; hid per user request.
+  // drawScoreboard(frame, W, H);
 
   // Timeline UI
   const pct = frames.length > 1 ? (idx / (frames.length - 1)) * 100 : 0;
@@ -1458,6 +1462,158 @@ function drawFrame(idx) {
 
   // Update team panel player states
   updatePlayerStates(frame);
+}
+
+// ══ CANVAS KILLFEED ═════════════════════════════════════════════════════════
+// Icon cache for canvas drawing: lazily loads SVG as HTMLImageElement so
+// ctx.drawImage can render it. Once loaded, triggers a redraw so the icon
+// appears on the next frame.
+const _canvasIconCache = {};
+function getIconImageForCanvas(weaponName) {
+  if (!weaponName) return null;
+  const clean = normalizeWeaponName(weaponName);
+  const file = WEAPON_FILE_MAP[clean];
+  if (!file) return null;
+  const cached = _canvasIconCache[file];
+  if (cached) return cached.loaded ? cached.img : null;
+  const entry = { img: null, loaded: false };
+  const img = new Image();
+  img.onload  = () => { entry.img = img; entry.loaded = true; if (typeof drawFrame === 'function') drawFrame(frameIdx); };
+  img.onerror = () => { entry.loaded = false; };
+  img.src = 'icons/' + file + '.svg';
+  _canvasIconCache[file] = entry;
+  return null;
+}
+
+function drawKillfeed(frame, W, H) {
+  const tick = frame.tick || 0;
+  const kills = demoData.kills || [];
+  const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
+  const rdStart = rdData.startTick || 0;
+
+  // Kills from the current round, up to the current tick, last 6 only.
+  const recent = kills
+    .filter(k => {
+      const kt = k.tick || 0;
+      if (kt <= 0) return false;
+      if (kt < rdStart) return false;
+      return kt <= tick;
+    })
+    .slice(-6);
+
+  if (recent.length === 0) return;
+
+  ctx.save();
+  const rowH = 22;
+  const padX = 9;
+  const gap  = 7;
+  const iconW = 22, iconH = 14;
+  const margin = 10;
+  const baseFont = 'bold 11px "Space Mono",monospace';
+
+  recent.forEach((k, i) => {
+    const age = tick - (k.tick || 0);
+    // Fade in over 8 ticks, hold for ~500, fade out over 96.
+    let alpha = 1;
+    if (age < 8) alpha = age / 8;
+    else if (age > 500) alpha = Math.max(0, 1 - (age - 500) / 96);
+    if (alpha <= 0) return;
+
+    const attTeam = k.attackerTeam === 3 ? 'CT' : 'T';
+    const vicTeam = k.victimTeam === 3 ? 'CT' : 'T';
+    const attRGB = attTeam === 'CT' ? '74,158,255' : '245,200,66';
+    const vicRGB = vicTeam === 'CT' ? '74,158,255' : '245,200,66';
+
+    ctx.font = baseFont;
+    ctx.textBaseline = 'middle';
+    const attW = ctx.measureText(k.attacker || 'Unknown').width;
+    const vicW = ctx.measureText(k.victim || 'Unknown').width;
+    const hsW  = k.isHeadshot ? 12 : 0;
+    const wbW  = k.isWallbang  ? 18 : 0;
+    const smkW = k.thruSmoke   ? 14 : 0;
+    const rowW = padX * 2 + attW + gap + iconW + gap + hsW + wbW + smkW + vicW;
+    const bx = W - margin - rowW;
+    const by = margin + i * (rowH + 4);
+
+    // Background pill
+    const r = 4;
+    ctx.beginPath();
+    ctx.moveTo(bx + r, by);
+    ctx.lineTo(bx + rowW - r, by);
+    ctx.quadraticCurveTo(bx + rowW, by, bx + rowW, by + r);
+    ctx.lineTo(bx + rowW, by + rowH - r);
+    ctx.quadraticCurveTo(bx + rowW, by + rowH, bx + rowW - r, by + rowH);
+    ctx.lineTo(bx + r, by + rowH);
+    ctx.quadraticCurveTo(bx, by + rowH, bx, by + rowH - r);
+    ctx.lineTo(bx, by + r);
+    ctx.quadraticCurveTo(bx, by, bx + r, by);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(10,12,16,${0.86 * alpha})`;
+    ctx.fill();
+    ctx.strokeStyle = `rgba(184,255,87,${0.18 * alpha})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    let x = bx + padX;
+    const cy = by + rowH / 2;
+
+    // Attacker name
+    ctx.textAlign = 'left';
+    ctx.fillStyle = `rgba(${attRGB},${alpha})`;
+    ctx.font = baseFont;
+    ctx.fillText(k.attacker || 'Unknown', x, cy + 0.5);
+    x += attW + gap;
+
+    // Weapon icon
+    const iconImg = getIconImageForCanvas(k.weapon);
+    if (iconImg) {
+      const oldAlpha = ctx.globalAlpha;
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(iconImg, x, by + (rowH - iconH) / 2, iconW, iconH);
+      ctx.globalAlpha = oldAlpha;
+    } else {
+      ctx.fillStyle = `rgba(255,255,255,${alpha * 0.7})`;
+      ctx.font = '9px "Space Mono",monospace';
+      ctx.fillText((k.weapon || '').replace(/^weapon_/, '').slice(0, 5), x, cy + 0.5);
+      ctx.font = baseFont;
+    }
+    x += iconW + gap;
+
+    // Headshot marker
+    if (k.isHeadshot) {
+      ctx.fillStyle = `rgba(255,60,60,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(x + 4, cy, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = `rgba(255,255,255,${alpha * 0.9})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      x += hsW;
+    }
+    // Wallbang marker
+    if (k.isWallbang) {
+      ctx.fillStyle = `rgba(255,255,255,${alpha * 0.85})`;
+      ctx.font = 'bold 8px "Space Mono",monospace';
+      ctx.fillText('WB', x, cy + 0.5);
+      ctx.font = baseFont;
+      x += wbW;
+    }
+    // Smoke marker
+    if (k.thruSmoke) {
+      ctx.fillStyle = `rgba(200,200,200,${alpha * 0.85})`;
+      ctx.font = 'bold 8px "Space Mono",monospace';
+      ctx.fillText('SMK', x, cy + 0.5);
+      ctx.font = baseFont;
+      x += smkW;
+    }
+
+    // Victim name
+    ctx.fillStyle = `rgba(${vicRGB},${alpha * 0.92})`;
+    ctx.font = baseFont;
+    ctx.fillText(k.victim || 'Unknown', x, cy + 0.5);
+  });
+
+  ctx.restore();
 }
 
 // ══ CANVAS SCOREBOARD ═══════════════════════════════════════════════════════
@@ -1636,7 +1792,7 @@ function drawEffects(frame, W, H) {
     shotsConverted = true;
   }
 
-  const SHOT_DUR = 6;
+  const SHOT_DUR = 10;
   const KILL_DUR = 12;
   const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
   const rdStart = rdData.startTick || 0, rdEnd = rdData.endTick || 999999;
@@ -1670,19 +1826,42 @@ function drawEffects(frame, W, H) {
     if (nearKill) {
       // Don't draw normal tracer for kill shots, kill tracers handle them
     } else {
-      // Non-kill shot: dashed yellow line in the player's aiming direction
+      // Non-kill shot: thick bright tracer in the player's aiming direction.
+      // Layered: dark outline, bright core, solid bullet dot at the tip.
       const yawDeg = shooterState.yaw || 0;
       const angle = -(yawDeg) * Math.PI / 180;
-      const len = 35;
-      ctx.strokeStyle = `rgba(255,220,80,${alpha * 0.75})`;
-      ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
-      ctx.beginPath(); ctx.moveTo(sx, sy);
-      ctx.lineTo(sx + Math.cos(angle) * len, sy + Math.sin(angle) * len);
-      ctx.stroke(); ctx.setLineDash([]);
+      const len = 55;
+      const tipX = sx + Math.cos(angle) * len;
+      const tipY = sy + Math.sin(angle) * len;
+
+      // Dark outline for contrast on bright map areas
+      ctx.strokeStyle = `rgba(30,20,0,${alpha * 0.9})`;
+      ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(tipX, tipY); ctx.stroke();
+
+      // Bright yellow core
+      ctx.strokeStyle = `rgba(255,230,90,${alpha})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(tipX, tipY); ctx.stroke();
+
+      // Hot white inner line
+      ctx.strokeStyle = `rgba(255,255,220,${alpha * 0.95})`;
+      ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(tipX, tipY); ctx.stroke();
+      ctx.lineCap = 'butt';
+
+      // Bullet dot at the tip
+      ctx.beginPath(); ctx.arc(tipX, tipY, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,230,${alpha})`; ctx.fill();
     }
-    // Muzzle flash
-    ctx.beginPath(); ctx.arc(sx, sy, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,240,120,${alpha * 0.9})`; ctx.fill();
+    // Muzzle flash (bigger, brighter)
+    const mfR = 5 + (1 - alpha) * 3;
+    ctx.beginPath(); ctx.arc(sx, sy, mfR * 1.6, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,200,40,${alpha * 0.35})`; ctx.fill();
+    ctx.beginPath(); ctx.arc(sx, sy, mfR, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,240,120,${alpha})`; ctx.fill();
+    ctx.beginPath(); ctx.arc(sx, sy, mfR * 0.45, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,230,${alpha})`; ctx.fill();
   });
 
   // Kill tracers (solid RED line from attacker to victim)
