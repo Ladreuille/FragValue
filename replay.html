@@ -167,10 +167,12 @@
       overflow:hidden;margin:4px 0 3px;
     }
     .player-hp-fill{height:100%;border-radius:2px;transition:width .3s}
-    .player-gear{display:flex;align-items:center;gap:5px;min-height:14px;margin-top:3px;padding:1px 0;flex-wrap:wrap}
-    .player-gear .icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0}
-    .player-gear .icon svg,.player-gear .icon img{display:block}
-    .player-gear .icon.off{opacity:.45}
+    .player-gear{display:flex;align-items:center;gap:6px;min-height:16px;margin-top:4px;padding:2px 0;flex-wrap:wrap}
+    .player-gear .icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0;height:14px}
+    .player-gear .icon svg{display:block;height:14px;width:auto}
+    .player-gear .icon img{display:block;height:14px;width:auto;max-width:48px;filter:brightness(1.2) invert(0)}
+    .player-gear .icon.off{opacity:.4}
+    .player-gear .icon.off img{filter:brightness(.6) grayscale(1)}
 
     /* ── Bottom bar: rounds + timeline + controls ──────────────── */
     .bottombar{
@@ -850,7 +852,7 @@ function getWeaponIcon(weaponName, color) {
   if (!weaponName) return '';
   const clean = weaponName.replace('weapon_', '').toLowerCase();
   const file = WEAPON_FILE_MAP[clean];
-  if (file) return '<img src="icons/' + file + '.svg" height="12" style="vertical-align:middle;filter:brightness(0.9)" loading="lazy">';
+  if (file) return '<img src="icons/' + file + '.svg" alt="' + clean + '" width="auto" height="14" loading="lazy">';
   return WEAPON_ICONS_INLINE.default.replace(/CL/g, color);
 }
 function getHelmetIcon(active) {
@@ -866,13 +868,17 @@ function getDefuseIcon(active) {
   return '<svg width="10" height="10" viewBox="0 0 10 10"><line x1="5" y1="1" x2="5" y2="9" stroke="' + c + '" stroke-width="1.5"/><line x1="1" y1="5" x2="9" y2="5" stroke="' + c + '" stroke-width="1.5"/></svg>';
 }
 
+let _gearDebugLogged = false;
 function updatePlayerStates(frame) {
   if (!frame) return;
 
-  (demoData.playerStats || []).forEach(p => {
+  (demoData.playerStats || []).forEach((p, pIdx) => {
     const escaped = CSS.escape(p.name);
     const row = document.querySelector(`.player-row[data-name="${escaped}"]`);
-    if (!row) return;
+    if (!row) {
+      if (!_gearDebugLogged && pIdx === 0) console.warn('[updatePlayerStates] no row for', p.name);
+      return;
+    }
 
     const state = frame.players[p.name];
     const alive = state ? state.alive : true;
@@ -901,7 +907,7 @@ function updatePlayerStates(frame) {
     const gear = row.querySelector('.player-gear');
     if (!gear) { console.warn('player-gear not found for', p.name); return; }
 
-    const offCol = '#5a5d5d'; // brighter than #2a2c2c so icons stay visible when data absent
+    const offCol = '#5a5d5d';
     let html = '';
     // Weapon
     if (state?.weapon) {
@@ -919,6 +925,14 @@ function updatePlayerStates(frame) {
       html += '<span class="icon' + (state?.hasDefuser ? '' : ' off') + '">' + getDefuseIcon(!!state?.hasDefuser) + '</span>';
     }
     gear.innerHTML = html;
+
+    if (!_gearDebugLogged && pIdx === 0) {
+      console.log('[updatePlayerStates] sample player:', p.name,
+        'state:', state ? { w: state.weapon, hp: state.hp, a: state.armor, he: state.hasHelmet, d: state.hasDefuser, m: state.money } : 'NO STATE',
+        'gear.innerHTML length:', gear.innerHTML.length,
+        'children:', gear.children.length);
+      _gearDebugLogged = true;
+    }
   });
 }
 
@@ -933,6 +947,7 @@ function togglePlayer(name) {
 // ══ ROUND SELECTION ══════════════════════════════════════════════════════════
 function selectRound(round, btn) {
   shotsConverted = false;
+  _gearDebugLogged = false;
   currentRound = round;
   clearInterval(timer); playing = false; setPlayPause(false);
   document.querySelectorAll('.rnd').forEach(b => b.classList.remove('sel'));
@@ -1002,6 +1017,12 @@ function buildFrames(round) {
 
   if (!Object.keys(roundPos).length && !roundKills.length) { frames = []; return; }
 
+  // Per-player tick range: pts[0].tick and pts[last].tick for each player
+  const perPlayerRange = {};
+  Object.entries(roundPos).forEach(([name, pts]) => {
+    if (pts.length) perPlayerRange[name] = { first: pts[0].tick || 0, last: pts[pts.length - 1].tick || 0, count: pts.length };
+  });
+
   const posTicks = [];
   Object.values(roundPos).forEach(pts => pts.forEach(p => posTicks.push(p.tick || 0)));
   if (!posTicks.length && !roundKills.length) { frames = []; return; }
@@ -1009,9 +1030,7 @@ function buildFrames(round) {
   // Use position tick range when fallback was used (ticks may not align with round boundaries)
   const posMin = posTicks.length ? Math.min(...posTicks) : 0;
   const posMax = posTicks.length ? Math.max(...posTicks) : 0;
-  // Start at first actual position data: if minT were startTick (earlier than posMin),
-  // the interpolation loop never brackets early frame ticks and dots freeze at pts[0]
-  // until frame.tick catches up with posMin. Use posMin so every frame has live data.
+  // Start at first actual position data across ALL players to avoid frozen frames
   const minT = usedFallback ? posMin : (posMin > 0 ? posMin : (startTick > 0 ? startTick : 0));
   const lastKillTick = roundKills.length > 0 ? Math.max(...roundKills.map(k => k.tick || 0)) : 0;
   const postKillBuffer = 128;
@@ -1019,9 +1038,9 @@ function buildFrames(round) {
   if (usedFallback) {
     maxT = posMax > posMin ? posMax : posMin + 1;
   } else {
-    maxT = lastKillTick > minT
-      ? lastKillTick + postKillBuffer
-      : (endTick > minT ? endTick : (posMax > minT ? posMax : minT + 1));
+    // Always include posMax so every player's last sample is reachable
+    const killEnd = lastKillTick > 0 ? lastKillTick + postKillBuffer : 0;
+    maxT = Math.max(killEnd, endTick || 0, posMax || 0, minT + 1);
   }
 
   const span = Math.max(maxT - minT, 1);
@@ -1029,22 +1048,42 @@ function buildFrames(round) {
   const N = Math.min(1800, Math.max(80, Math.round(durSec * FPS)));
   const MAX_INTERP_DIST = 500;
 
+  console.log('[buildFrames] minT:', minT, 'maxT:', maxT, 'span:', span, 'N:', N, 'durSec:', durSec.toFixed(1));
+  const rangeSample = Object.entries(perPlayerRange).slice(0, 3).map(([n, r]) => `${n}:[${r.first}-${r.last}]/${r.count}`).join(' ');
+  console.log('[buildFrames] player ranges:', rangeSample);
+
   frames = [];
   for (let f = 0; f <= N; f++) {
     const progress = f / N, tick = minT + progress * span;
     const frame = { tick, players: {}, deaths: [] };
     Object.entries(roundPos).forEach(([name, pts]) => {
       if (!pts.length) return;
-      let prev = pts[0], next = pts[pts.length - 1];
-      for (let i = 0; i < pts.length - 1; i++) {
-        if ((pts[i].tick || 0) <= tick && (pts[i + 1].tick || 0) >= tick) { prev = pts[i]; next = pts[i + 1]; break; }
+
+      // Proper clamping: if outside sample range, freeze at nearest endpoint (no teleport)
+      let prev, next;
+      const firstTick = pts[0].tick || 0;
+      const lastTick = pts[pts.length - 1].tick || 0;
+      if (tick <= firstTick) {
+        prev = next = pts[0];
+      } else if (tick >= lastTick) {
+        prev = next = pts[pts.length - 1];
+      } else {
+        // Linear search for bracket (pts sorted by tick)
+        prev = pts[0]; next = pts[pts.length - 1];
+        for (let i = 0; i < pts.length - 1; i++) {
+          if ((pts[i].tick || 0) <= tick && (pts[i + 1].tick || 0) >= tick) {
+            prev = pts[i]; next = pts[i + 1]; break;
+          }
+        }
       }
+
       const s = Math.max((next.tick || 0) - (prev.tick || 0), 1);
       const t = Math.min(1, Math.max(0, (tick - (prev.tick || 0)) / s));
       const dx = next.x - prev.x, dy = next.y - prev.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       let px, py;
       if (dist > MAX_INTERP_DIST) {
+        // Teleport / respawn / large gap: snap to whichever endpoint is closer in time
         px = t < 0.5 ? prev.x : next.x;
         py = t < 0.5 ? prev.y : next.y;
       } else {
@@ -1070,6 +1109,16 @@ function buildFrames(round) {
       }
     });
     frames.push(frame);
+  }
+
+  // Dump first/middle/last frame positions for a sample player to verify interpolation
+  const samplePlayer = Object.keys(roundPos)[0];
+  if (samplePlayer && frames.length > 10) {
+    const snap = (i) => {
+      const p = frames[i].players[samplePlayer];
+      return p ? `f${i}(tick=${Math.round(frames[i].tick)}): x=${Math.round(p.x)} y=${Math.round(p.y)} w=${p.weapon || 'null'}` : `f${i}:NO`;
+    };
+    console.log(`[buildFrames] ${samplePlayer} samples:`, snap(0), '|', snap(Math.floor(frames.length/4)), '|', snap(Math.floor(frames.length/2)), '|', snap(frames.length-1));
   }
 
   // Update timer total
