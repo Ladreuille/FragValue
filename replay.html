@@ -67,7 +67,7 @@
     .tb-logo span{color:var(--accent)}
 
     /* ── Main area: sidebar left + canvas + sidebar right ────── */
-    .main{flex:1;display:grid;grid-template-columns:220px 1fr 240px;min-height:0;overflow:hidden}
+    .main{flex:1;display:grid;grid-template-columns:220px 1fr 280px;min-height:0;overflow:hidden}
 
     /* ── Left sidebar: shortcuts ────────────────────────────────── */
     .sidebar-left{
@@ -167,11 +167,10 @@
       overflow:hidden;margin:4px 0 3px;
     }
     .player-hp-fill{height:100%;border-radius:2px;transition:width .3s}
-    .player-gear{display:flex;align-items:center;gap:5px;min-height:14px;margin-top:3px;padding:1px 0}
+    .player-gear{display:flex;align-items:center;gap:5px;min-height:14px;margin-top:3px;padding:1px 0;flex-wrap:wrap}
     .player-gear .icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0}
     .player-gear .icon svg,.player-gear .icon img{display:block}
     .player-gear .icon.off{opacity:.45}
-    .player-kills{font-size:10px;font-family:var(--mono);color:var(--text3);font-weight:600;margin-right:4px}
 
     /* ── Bottom bar: rounds + timeline + controls ──────────────── */
     .bottombar{
@@ -1010,7 +1009,10 @@ function buildFrames(round) {
   // Use position tick range when fallback was used (ticks may not align with round boundaries)
   const posMin = posTicks.length ? Math.min(...posTicks) : 0;
   const posMax = posTicks.length ? Math.max(...posTicks) : 0;
-  const minT = usedFallback ? posMin : (startTick > 0 ? startTick : posMin);
+  // Start at first actual position data: if minT were startTick (earlier than posMin),
+  // the interpolation loop never brackets early frame ticks and dots freeze at pts[0]
+  // until frame.tick catches up with posMin. Use posMin so every frame has live data.
+  const minT = usedFallback ? posMin : (posMin > 0 ? posMin : (startTick > 0 ? startTick : 0));
   const lastKillTick = roundKills.length > 0 ? Math.max(...roundKills.map(k => k.tick || 0)) : 0;
   const postKillBuffer = 128;
   let maxT;
