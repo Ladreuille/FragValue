@@ -577,6 +577,7 @@ window.addEventListener('load', async () => {
 
     detectKnifeRounds();
     convertPositionTicks();
+    recalcRoundBoundaries();
     loadMapImage(() => {
       initRoundsBar();
       initTeamPanels();
@@ -695,6 +696,45 @@ function getFirstRealRound() {
     if (!rnds[i].isKnife) return rnds[i].round ?? i;
   }
   return rnds[0]?.round ?? 0;
+}
+
+// Compute buyStart (start of buy phase) and gameplayEnd (last kill + buffer)
+// for each round. The parser's startTick = freeze_end(N) and endTick = freeze_end(N+1)-1,
+// which means endTick overlaps the NEXT round's buy phase. We recompute proper
+// per-round boundaries so the replay shows the current round's own buy phase
+// at the start and stops before the next round's buy phase.
+function recalcRoundBoundaries() {
+  const rounds = demoData.rounds || [];
+  const kills = demoData.kills || [];
+  const BUY_PHASE_TICKS = 20 * 64; // 20 seconds of buy/freeze time
+  const POST_ROUND_BUFFER = 256;   // ~4s after last kill for round-end replay
+
+  // First pass: compute gameplayEnd from kills of this round
+  rounds.forEach((rd, i) => {
+    const st = rd.startTick || 0;
+    const et = rd.endTick || (rounds[i + 1]?.startTick || 0) || (st + 115 * 64);
+    const rdKills = kills.filter(k => {
+      const t = k.tick || 0;
+      return t >= st && t <= et;
+    });
+    const lastKillT = rdKills.length > 0 ? Math.max(...rdKills.map(k => k.tick || 0)) : 0;
+    rd.gameplayEnd = lastKillT > 0
+      ? lastKillT + POST_ROUND_BUFFER
+      : (rd.endTick || (st + 90 * 64));
+  });
+
+  // Second pass: compute buyStart using prev round's gameplayEnd
+  rounds.forEach((rd, i) => {
+    const st = rd.startTick || 0;
+    const prev = rounds[i - 1];
+    if (prev) {
+      rd.buyStart = Math.max((prev.gameplayEnd || 0) + 1, st - BUY_PHASE_TICKS);
+    } else {
+      rd.buyStart = Math.max(0, st - BUY_PHASE_TICKS);
+    }
+  });
+
+  console.log('[Replay] Boundaries recalculated for', rounds.length, 'rounds');
 }
 
 // ══ ROUNDS BAR ═══════════════════════════════════════════════════════════════
@@ -1019,8 +1059,10 @@ function selectRound(round, btn) {
 function buildFrames(round) {
   const positions = demoData.positions || {}, kills = demoData.kills || [];
   const roundData = (demoData.rounds || []).find(r => (r.round ?? -1) === round) || {};
-  const startTick = roundData.startTick || 0;
-  const endTick = roundData.endTick || 0;
+  // Use recomputed buyStart/gameplayEnd so replay covers this round's OWN buy phase
+  // at the start and stops before the next round's buy phase.
+  const startTick = roundData.buyStart ?? (roundData.startTick || 0);
+  const endTick = roundData.gameplayEnd ?? (roundData.endTick || 0);
   const killsR = roundData.killsRound ?? (round + 1);
 
   console.log('[buildFrames] round:', round, 'killsR:', killsR, 'ticks:', startTick, '-', endTick, 'posPlayers:', Object.keys(positions).length);
@@ -1487,11 +1529,20 @@ function drawTrails(frame, W, H) {
   const scaleX = W / 1024;
   const scaleY = H / 1024;
 
+  // Clamp trails to current round boundaries to prevent ghost trails from
+  // previous/next round bleeding into the replay window.
+  const rd = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
+  const rdStart = rd.buyStart ?? (rd.startTick || 0);
+  const rdEnd = rd.gameplayEnd ?? (rd.endTick || Number.MAX_SAFE_INTEGER);
+
   Object.entries(frame.players).forEach(([name, p]) => {
     if (!p.alive || hiddenPlayers.has(name)) return;
     const color = getColor(name);
     const pts = positions[name] || [];
-    const trail = pts.filter(pt => (pt.tick || 0) >= tick - TRAIL_TICKS && (pt.tick || 0) <= tick);
+    const trail = pts.filter(pt => {
+      const t = pt.tick || 0;
+      return t >= tick - TRAIL_TICKS && t <= tick && t >= rdStart && t <= rdEnd;
+    });
     if (trail.length < 2) return;
 
     // Fading trail: draw segments with decreasing opacity
