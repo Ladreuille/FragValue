@@ -651,53 +651,23 @@ function detectKnifeRounds() {
 }
 
 function convertPositionTicks() {
-  const rounds = demoData.rounds || [];
+  // The parser emits ABSOLUTE ticks (row.tick from parseTicks, counted from
+  // the start of the demo including warmup). Earlier parser versions emitted
+  // per-round relative ticks; the legacy "< 1000 ⇒ relative" conversion below
+  // is ACTIVELY HARMFUL against the current parser, because small absolute
+  // ticks (warmup samples like 31, 63, 95, ...) get rewritten to
+  // startTick + originalTick, which collides with legitimate knife-round
+  // samples already at those absolute ticks. After sort the array contains
+  // duplicate ticks with wildly different (x, y), and the buildFrames bracket
+  // search picks two "adjacent" samples from different game phases, producing
+  // 3000+ unit jumps → players frozen at spawn while trails zigzag (reported
+  // replay bug at round 0).
+  //
+  // Fix: don't rewrite ticks. Just sort defensively in case any upstream
+  // step leaves the array out of order.
   const pos = demoData.positions || {};
-  const firstPts = Object.values(pos)[0];
-  if (!firstPts || !firstPts.length) return;
-  const stMap = {};
-  rounds.forEach(r => { stMap[r.round ?? 0] = r.startTick || 0; });
-
-  // Step 1: convert relative ticks (< 1000) to absolute
-  let converted = 0;
-  Object.values(pos).forEach(pts => {
-    pts.forEach(p => {
-      if ((p.tick || 0) > 1000) return;
-      const freezeR = (p.round || 1) - 1;
-      p.tick = (stMap[freezeR] || 0) + (p.tick || 0);
-      converted++;
-    });
-  });
-  console.log(`[Replay] ${converted} positions converties en ticks absolus`);
-
-  // Step 1b: resort each player's samples by absolute tick. The parser sorted
-  // by the original compact 'k' field before any conversion, but if some
-  // samples had relative ticks and others had absolute ticks, the Step 1
-  // mutation can leave the array out of order — which breaks the bracket
-  // search in buildFrames and causes trails to zigzag across the map.
   Object.values(pos).forEach(pts => pts.sort((a, b) => (a.tick || 0) - (b.tick || 0)));
-
-  // Step 2: detect tick offset between positions and round boundaries
-  // parseTicks and parseEvent can use different tick bases in demoparser2
-  if (converted === 0 && rounds.length > 1) {
-    const testRound = rounds.find(r => !r.isKnife && r.startTick > 0);
-    if (testRound) {
-      const testKillsR = testRound.killsRound ?? ((testRound.round ?? 0) + 1);
-      const roundPts = [];
-      Object.values(pos).forEach(pts => {
-        pts.forEach(p => { if (p.round === testKillsR || p.round === testRound.round) roundPts.push(p); });
-      });
-      if (roundPts.length > 0) {
-        const posMinTick = Math.min(...roundPts.map(p => p.tick || 0));
-        const offset = testRound.startTick - posMinTick;
-        console.log(`[Replay] Tick offset check: posMin=${posMinTick}, roundStart=${testRound.startTick}, offset=${offset}`);
-        if (Math.abs(offset) > 500) {
-          console.log(`[Replay] Applying tick offset ${offset} to all positions`);
-          Object.values(pos).forEach(pts => pts.forEach(p => { p.tick = (p.tick || 0) + offset; }));
-        }
-      }
-    }
-  }
+  console.log('[Replay] Positions assumed absolute, sorted defensively');
 }
 
 function getFirstRealRound() {
