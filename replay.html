@@ -572,6 +572,7 @@ window.addEventListener('load', async () => {
     const hasFloors = !!MAP_CONFIG[mapName]?.upper;
     document.getElementById('floorToggle').classList.toggle('visible', hasFloors);
 
+    detectKnifeRounds();
     convertPositionTicks();
     loadMapImage(() => {
       initRoundsBar();
@@ -591,11 +592,51 @@ function loadMapImage(cb) {
   img.src = cfg.upper ? cfg.upper.img : cfg.img;
 }
 
+function detectKnifeRounds() {
+  const rounds = demoData.rounds || [];
+  const kills = demoData.kills || [];
+  if (!rounds.length) return;
+
+  rounds.forEach((rd, i) => {
+    // Si le parser a deja detecte, on garde
+    if (rd.isKnife !== undefined) return;
+
+    const roundNum = rd.round ?? i;
+    const killsR = rd.killsRound ?? (roundNum + 1);
+    const startT = rd.startTick || 0;
+    const endT = rd.endTick || (rounds[i + 1]?.startTick || 0);
+
+    // Trouver les kills de ce round (par tick range ou par round number)
+    let rKills = [];
+    if (startT > 0 && endT > 0) {
+      rKills = kills.filter(k => (k.tick || 0) >= startT && (k.tick || 0) <= endT);
+    }
+    if (!rKills.length) {
+      rKills = kills.filter(k => k.round === killsR || k.round === roundNum);
+    }
+
+    if (rKills.length === 0) {
+      // Pas de kills : si c'est le premier round et court, probablement knife
+      rd.isKnife = (i === 0);
+      return;
+    }
+
+    // Verifier si tous les kills sont avec un couteau
+    const allKnife = rKills.every(k => {
+      const w = (k.weapon || '').toLowerCase();
+      return w.includes('knife') || w.includes('bayonet') || w.includes('melee') || w.includes('fists') || w === '';
+    });
+
+    rd.isKnife = allKnife;
+  });
+
+  // Log
+  const knifeRounds = rounds.filter(r => r.isKnife);
+  console.log('[Replay] Knife rounds detectes:', knifeRounds.length, knifeRounds.map(r => r.round));
+}
+
 function convertPositionTicks() {
   const rounds = demoData.rounds || [];
-  if (rounds.length > 0 && rounds[0].isKnife === undefined) {
-    rounds[0].isKnife = true;
-  }
   const pos = demoData.positions || {};
   const firstPts = Object.values(pos)[0];
   if (!firstPts || !firstPts.length) return;

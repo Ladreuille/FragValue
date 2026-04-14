@@ -1380,13 +1380,31 @@ function getFirstRealRound(){
   return _rnds[0]?.round ?? 0;
 }
 
-function convertPositionTicks(){
-  // Forcer le premier round comme knife round si isKnife non défini
+function detectKnifeRounds(){
   const rounds = demoData.rounds || [];
-  if(rounds.length > 0 && rounds[0].isKnife === undefined) {
-    rounds[0].isKnife = true;
-    console.log('[FragValue] Knife round forcé sur round 0');
-  }
+  const kills = demoData.kills || [];
+  if(!rounds.length) return;
+  rounds.forEach((rd, i) => {
+    if(rd.isKnife !== undefined) return;
+    const roundNum = rd.round ?? i;
+    const killsR = rd.killsRound ?? (roundNum + 1);
+    const startT = rd.startTick || 0;
+    const endT = rd.endTick || (rounds[i+1]?.startTick || 0);
+    let rKills = [];
+    if(startT > 0 && endT > 0) rKills = kills.filter(k => (k.tick||0) >= startT && (k.tick||0) <= endT);
+    if(!rKills.length) rKills = kills.filter(k => k.round === killsR || k.round === roundNum);
+    if(!rKills.length){ rd.isKnife = (i === 0); return; }
+    const allKnife = rKills.every(k => {
+      const w = (k.weapon||'').toLowerCase();
+      return w.includes('knife') || w.includes('bayonet') || w.includes('melee') || w.includes('fists') || w === '';
+    });
+    rd.isKnife = allKnife;
+  });
+  console.log('[FragValue] Knife rounds:', rounds.filter(r=>r.isKnife).length);
+}
+
+function convertPositionTicks(){
+  const rounds = demoData.rounds || [];
   // Convertir positions ticks relatifs → absolus si nécessaire
   const pos = demoData.positions || {};
   const firstPts = Object.values(pos)[0];
@@ -1417,6 +1435,7 @@ function convertPositionTicks(){
 
 function openReplayFS(){
   if(!demoData)return;
+  detectKnifeRounds();
   convertPositionTicks();
   rfMapName=(demoData.meta?.map||'de_dust2').toLowerCase().replace(/^.*\//,'').trim();
   document.getElementById('rfMapName').textContent=rfMapName;
