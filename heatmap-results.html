@@ -1392,11 +1392,22 @@ function detectKnifeRounds(){
     let rKills = [];
     if(startT > 0 && endT > 0) rKills = kills.filter(k => (k.tick||0) >= startT && (k.tick||0) <= endT);
     if(!rKills.length) rKills = kills.filter(k => k.round === killsR || k.round === roundNum);
-    if(!rKills.length){ rd.isKnife = false; return; }
+    if(!rKills.length){
+      // Garder le flag du parser si present, sinon round 0 = knife (FACEIT)
+      if(rd.isKnife === undefined || rd.isKnife === null) rd.isKnife = (i === 0);
+      return;
+    }
     rd.isKnife = rKills.every(k => {
       const w = (k.weapon||'').toLowerCase();
       return w.includes('knife') || w.includes('bayonet') || w.includes('melee') || w.includes('fists');
     });
+  });
+  // Recalculer displayNum : seuls les rounds non-knife sont numerotes
+  let realNum = 0;
+  rounds.forEach(rd => {
+    if(rd.isKnife){ rd.displayNum = 0; return; }
+    realNum++;
+    rd.displayNum = realNum;
   });
   console.log('[FragValue] Knife rounds:', rounds.filter(r=>r.isKnife).length);
 }
@@ -1481,7 +1492,7 @@ function initRfRoundsBar(){
     const freezeR = rd.round ?? i;
     const killsR  = rd.killsRound ?? (freezeR + 1);
     if(rd.isKnife){
-      html+=`<button class="rnd2" id="rfRoundBtn${freezeR}" onclick="rfSelectRound(${freezeR},this)" title="Knife round" style="opacity:.35;font-size:8px">🔪</button>`;
+      html+=`<button class="rnd2" id="rfRoundBtn${freezeR}" onclick="rfSelectRound(${freezeR},this)" title="Knife round" style="opacity:.35;font-size:8px">K</button>`;
       return;
     }
     realNum++;

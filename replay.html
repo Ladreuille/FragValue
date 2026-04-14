@@ -597,8 +597,6 @@ function detectKnifeRounds() {
   const kills = demoData.kills || [];
   if (!rounds.length) return;
 
-  // Toujours recalculer - le parser force round 0 = knife
-  // ce qui est faux si le demo n'a pas de knife round
   rounds.forEach((rd, i) => {
     const roundNum = rd.round ?? i;
     const killsR = rd.killsRound ?? (roundNum + 1);
@@ -616,10 +614,11 @@ function detectKnifeRounds() {
     }
 
     if (rKills.length === 0) {
-      // Pas de kills : pas assez de donnees pour confirmer knife.
-      // Par defaut on considere que c'est un round normal (evite de
-      // cacher le pistol round par erreur)
-      rd.isKnife = false;
+      // Pas de kills : garder le flag du parser si present,
+      // sinon round 0 (premier round) = knife par defaut (FACEIT standard)
+      if (rd.isKnife === undefined || rd.isKnife === null) {
+        rd.isKnife = (i === 0);
+      }
       return;
     }
 
@@ -630,6 +629,14 @@ function detectKnifeRounds() {
     });
 
     rd.isKnife = allKnife;
+  });
+
+  // Recalculer displayNum : seuls les rounds non-knife sont numerotes
+  let realNum = 0;
+  rounds.forEach(rd => {
+    if (rd.isKnife) { rd.displayNum = 0; return; }
+    realNum++;
+    rd.displayNum = realNum;
   });
 
   const knifeCount = rounds.filter(r => r.isKnife).length;
