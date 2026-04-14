@@ -167,9 +167,11 @@
       overflow:hidden;margin:4px 0 3px;
     }
     .player-hp-fill{height:100%;border-radius:2px;transition:width .3s}
-    .player-gear{display:flex;align-items:center;gap:4px;min-height:16px;margin-top:1px}
-    .player-gear .icon{display:flex;align-items:center;justify-content:center;flex-shrink:0}
-    .player-gear .icon.off{opacity:.15}
+    .player-gear{display:flex;align-items:center;gap:5px;min-height:14px;margin-top:3px;padding:1px 0}
+    .player-gear .icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0}
+    .player-gear .icon svg,.player-gear .icon img{display:block}
+    .player-gear .icon.off{opacity:.45}
+    .player-kills{font-size:10px;font-family:var(--mono);color:var(--text3);font-weight:600;margin-right:4px}
 
     /* ── Bottom bar: rounds + timeline + controls ──────────────── */
     .bottombar{
@@ -774,11 +776,13 @@ function renderTeamPlayers(containerId, players) {
   const hpColor = isCT ? '#4A9EFF' : '#F5C842';
   el.innerHTML = players.map(p => {
     const c = getColor(p.name);
-    return `<div class="player-row active" data-name="${p.name}" onclick="togglePlayer('${p.name.replace(/'/g, "\\'")}')">
+    const safeName = p.name.replace(/'/g, "\\'");
+    return `<div class="player-row active" data-name="${p.name}" data-alive="true" onclick="togglePlayer('${safeName}')">
       <div class="player-row-top">
-        <div class="player-dot" style="background:${c.solid};color:${c.solid}"></div>
-        <div class="player-name">${p.name.substring(0, 14)}</div>
-        <div class="player-money" data-field="money"></div>
+        <span class="player-dot" style="background:${c.solid};color:${c.solid}"></span>
+        <span class="player-name">${p.name.substring(0, 14)}</span>
+        <span class="player-kills" data-field="kills"></span>
+        <span class="player-money" data-field="money"></span>
       </div>
       <div class="player-hp-bar"><div class="player-hp-fill" data-field="hp" style="width:100%;background:${hpColor}"></div></div>
       <div class="player-gear" data-field="gear"></div>
@@ -791,11 +795,11 @@ function updateScores() {
   const rounds = demoData.rounds || [];
   let ctScore = 0, tScore = 0;
 
-  // Count wins up to current round
+  // Count wins strictly BEFORE current round (current round not yet decided)
   rounds.forEach(rd => {
     if (rd.isKnife) return;
     const freezeR = rd.round ?? 0;
-    if (currentRound !== null && freezeR > currentRound) return;
+    if (currentRound !== null && freezeR >= currentRound) return;
     if (rd.winner === 2) tScore++; // team 2 = T wins
     else if (rd.winner === 3) ctScore++; // team 3 = CT wins
   });
@@ -865,10 +869,6 @@ function getDefuseIcon(active) {
 
 function updatePlayerStates(frame) {
   if (!frame) return;
-  const kills = demoData.kills || [];
-  const roundData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
-  const startTick = roundData.startTick || 0;
-  const endTick = roundData.endTick || 999999;
 
   (demoData.playerStats || []).forEach(p => {
     const escaped = CSS.escape(p.name);
@@ -878,9 +878,10 @@ function updatePlayerStates(frame) {
     const state = frame.players[p.name];
     const alive = state ? state.alive : true;
     const hp = alive ? (state?.hp ?? 100) : 0;
-    const team = state?.team === 3 ? 'CT' : 'T';
+    const team = state?.team === 3 ? 'CT' : (state?.team === 2 ? 'T' : (window._ctNames && window._ctNames.includes(p.name) ? 'CT' : 'T'));
     const color = team === 'CT' ? '#4A9EFF' : '#F5C842';
 
+    row.setAttribute('data-alive', alive ? 'true' : 'false');
     row.classList.toggle('dead', !alive);
     row.classList.toggle('active', !hiddenPlayers.has(p.name));
 
@@ -888,7 +889,6 @@ function updatePlayerStates(frame) {
     const hpFill = row.querySelector('[data-field="hp"]');
     if (hpFill) {
       hpFill.style.width = (alive ? Math.max(hp, 0) : 0) + '%';
-      // Color shifts to red when low HP
       if (hp < 25 && alive) hpFill.style.background = '#ff4444';
       else hpFill.style.background = color;
     }
@@ -898,26 +898,28 @@ function updatePlayerStates(frame) {
     const money = state?.money ?? 0;
     if (moneyEl) moneyEl.textContent = (money > 0) ? '$' + money : '';
 
-    // Gear row
-    const gearEl = row.querySelector('[data-field="gear"]');
-    if (gearEl) {
-      let html = '';
-      // Weapon
-      if (state?.weapon) {
-        html += '<span class="icon">' + getWeaponIcon(state.weapon, color) + '</span>';
-      } else {
-        html += '<span class="icon off">' + WEAPON_ICONS_INLINE.default.replace(/CL/g, '#2a2c2c') + '</span>';
-      }
-      // Helmet
-      html += '<span class="icon' + (state?.hasHelmet ? '' : ' off') + '">' + getHelmetIcon(!!state?.hasHelmet) + '</span>';
-      // Armor
-      html += '<span class="icon' + ((state?.armor ?? 0) > 0 ? '' : ' off') + '">' + getArmorIcon((state?.armor ?? 0) > 0, color) + '</span>';
-      // Defuse kit (CT only)
-      if (team === 'CT') {
-        html += '<span class="icon' + (state?.hasDefuser ? '' : ' off') + '">' + getDefuseIcon(!!state?.hasDefuser) + '</span>';
-      }
-      gearEl.innerHTML = html;
+    // Gear row (weapon, helmet, armor, defuse)
+    const gear = row.querySelector('.player-gear');
+    if (!gear) { console.warn('player-gear not found for', p.name); return; }
+
+    const offCol = '#5a5d5d'; // brighter than #2a2c2c so icons stay visible when data absent
+    let html = '';
+    // Weapon
+    if (state?.weapon) {
+      html += '<span class="icon">' + getWeaponIcon(state.weapon, color) + '</span>';
+    } else {
+      html += '<span class="icon off">' + WEAPON_ICONS_INLINE.default.replace(/CL/g, offCol) + '</span>';
     }
+    // Helmet
+    html += '<span class="icon' + (state?.hasHelmet ? '' : ' off') + '">' + getHelmetIcon(!!state?.hasHelmet) + '</span>';
+    // Armor
+    const hasArmor = (state?.armor ?? 0) > 0;
+    html += '<span class="icon' + (hasArmor ? '' : ' off') + '">' + getArmorIcon(hasArmor, color) + '</span>';
+    // Defuse kit (CT only)
+    if (team === 'CT') {
+      html += '<span class="icon' + (state?.hasDefuser ? '' : ' off') + '">' + getDefuseIcon(!!state?.hasDefuser) + '</span>';
+    }
+    gear.innerHTML = html;
   });
 }
 
@@ -1279,7 +1281,8 @@ function drawScoreboard(frame, W, H) {
   let ctScore = 0, tScore = 0;
   rounds.forEach(rd => {
     if (rd.isKnife) return;
-    if (currentRound !== null && (rd.round ?? 0) > currentRound) return;
+    // Strictly BEFORE current round: round in progress is not yet decided
+    if (currentRound !== null && (rd.round ?? 0) >= currentRound) return;
     if (rd.winner === 2) tScore++;
     else if (rd.winner === 3) ctScore++;
   });
