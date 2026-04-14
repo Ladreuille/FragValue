@@ -670,6 +670,13 @@ function convertPositionTicks() {
   });
   console.log(`[Replay] ${converted} positions converties en ticks absolus`);
 
+  // Step 1b: resort each player's samples by absolute tick. The parser sorted
+  // by the original compact 'k' field before any conversion, but if some
+  // samples had relative ticks and others had absolute ticks, the Step 1
+  // mutation can leave the array out of order — which breaks the bracket
+  // search in buildFrames and causes trails to zigzag across the map.
+  Object.values(pos).forEach(pts => pts.sort((a, b) => (a.tick || 0) - (b.tick || 0)));
+
   // Step 2: detect tick offset between positions and round boundaries
   // parseTicks and parseEvent can use different tick bases in demoparser2
   if (converted === 0 && rounds.length > 1) {
