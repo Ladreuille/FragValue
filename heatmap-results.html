@@ -633,6 +633,16 @@ function showPlayerStats(name){
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--text2)">${wb}</div><div class="psc-stat-lbl">Wallbangs</div></div>
       <div class="psc-stat"><div class="psc-stat-val" style="color:var(--text2)">${smk}</div><div class="psc-stat-lbl">Thru smoke</div></div>
     </div>
+    <div class="psc-weapons-label" style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin:12px 0 6px">Top armes</div>
+    <div class="psc-weapons" style="display:flex;gap:8px;flex-wrap:wrap">${(()=>{
+      const wMap={};playerKills.forEach(k=>{const w=(k.weapon||'').replace('weapon_','').toLowerCase();if(w)wMap[w]=(wMap[w]||0)+1;});
+      return Object.entries(wMap).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([w,ct])=>{
+        const file={ak47:'ak47',m4a1:'m4a1',m4a1_silencer:'m4a1_silencer',awp:'awp',deagle:'deagle',glock:'glock',usp_silencer:'usp_silencer',hkp2000:'hkp2000',p250:'p250',famas:'famas',galilar:'galilar',galil:'galilar',aug:'aug',sg556:'sg556',ssg08:'ssg08',scar20:'scar20',g3sg1:'g3sg1',mp9:'mp9',mac10:'mac10',mp7:'mp7',ump45:'ump45',p90:'p90',mp5sd:'mp5sd',bizon:'bizon',fiveseven:'fiveseven',tec9:'tec9',elite:'elite',cz75a:'cz75a',revolver:'revolver',nova:'nova',xm1014:'xm1014',mag7:'mag7',sawedoff:'sawedoff',m249:'m249',negev:'negev',knife:'knife',knife_t:'knife_t',hegrenade:'hegrenade',flashbang:'flashbang',smokegrenade:'smokegrenade',molotov:'molotov',incgrenade:'incgrenade',c4:'c4',taser:'taser'}[w];
+        const icon=file?'<img src="icons/'+file+'.svg" height="16" style="vertical-align:middle;opacity:.85">':'';
+        return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;font-size:10px">'+icon+'<span style="color:var(--text2)">'+ct+'</span></span>';
+      }).join('');
+    })()}
+    </div>
     <div class="psc-rounds">
       <div class="psc-rounds-title">Détail par round</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:3px">${roundRows}</div>
@@ -818,7 +828,7 @@ function drawUtility(mapName,W,H){
 
 function updateLegend(){
   let items=[];
-  if(currentHeatmap==='utility')items=[{color:'rgba(245,200,66,.9)',label:'Flash'},{color:'rgba(45,212,160,.8)',label:'Smoke'},{color:'rgba(240,107,107,.85)',label:'HE'},{color:'rgba(237,160,32,.85)',label:'Molotov'}];
+  if(currentHeatmap==='utility')items=[{color:'rgba(245,200,66,.9)',label:'<img src="icons/flashbang.svg" height="14" style="vertical-align:middle;opacity:.7"> Flash'},{color:'rgba(45,212,160,.8)',label:'<img src="icons/smokegrenade.svg" height="14" style="vertical-align:middle;opacity:.7"> Smoke'},{color:'rgba(240,107,107,.85)',label:'<img src="icons/hegrenade.svg" height="14" style="vertical-align:middle;opacity:.7"> HE'},{color:'rgba(237,160,32,.85)',label:'<img src="icons/molotov.svg" height="14" style="vertical-align:middle;opacity:.7"> Molotov'}];
   else if(currentHeatmap==='duels')items=[{color:'#2DD4A0',label:'>65%'},{color:'#F5C842',label:'45-65%'},{color:'#F06B6B',label:'<45%'}];
   else{items=[...activePlayers].map(n=>({color:getColor(n).solid,label:n}));if(showCT)items.push({color:'#4A9EFF',label:'CT'});if(showT)items.push({color:'#F5C842',label:'T'});}
   const mlEl=document.getElementById('mapLegend');if(!mlEl)return;

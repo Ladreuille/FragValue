@@ -340,6 +340,32 @@ function cleanWeapon(w) {
   return (w || '').replace('weapon_', '').replace('_', ' ');
 }
 
+// Weapon SVG icon mapping (matches filenames in /icons/)
+const WEAPON_FILE_MAP = {
+  ak47:'ak47', m4a1:'m4a1', m4a1_silencer:'m4a1_silencer', m4a4:'m4a1',
+  galil:'galilar', galilar:'galilar', famas:'famas', aug:'aug', sg556:'sg556',
+  awp:'awp', ssg08:'ssg08', scar20:'scar20', g3sg1:'g3sg1',
+  mp9:'mp9', mac10:'mac10', mp7:'mp7', ump45:'ump45', p90:'p90', mp5sd:'mp5sd', bizon:'bizon',
+  deagle:'deagle', glock:'glock', usp_silencer:'usp_silencer', hkp2000:'hkp2000',
+  p2000:'p2000', p250:'p250', fiveseven:'fiveseven', tec9:'tec9',
+  elite:'elite', cz75a:'cz75a', cz75_auto:'cz75a', revolver:'revolver',
+  nova:'nova', xm1014:'xm1014', mag7:'mag7', sawedoff:'sawedoff', m249:'m249', negev:'negev',
+  knife:'knife', knife_t:'knife_t', bayonet:'bayonet',
+  knife_karambit:'knife_karambit', knife_butterfly:'knife_butterfly', knife_flip:'knife_flip',
+  knife_m9_bayonet:'knife_m9_bayonet', knife_gut:'knife_gut',
+  hegrenade:'hegrenade', flashbang:'flashbang', smokegrenade:'smokegrenade',
+  molotov:'molotov', incgrenade:'incgrenade', decoy:'decoy',
+  c4:'c4', taser:'taser',
+};
+
+function weaponIcon(weaponName, h) {
+  if (!weaponName) return '';
+  const clean = weaponName.replace('weapon_', '').replace(/\s/g, '_').toLowerCase();
+  const file = WEAPON_FILE_MAP[clean];
+  if (!file) return '<span style="font-size:9px;color:var(--text3)">' + cleanWeapon(weaponName) + '</span>';
+  return '<img src="icons/' + file + '.svg" alt="' + clean + '" height="' + (h || 14) + '" style="vertical-align:middle;opacity:.85" loading="lazy">';
+}
+
 // FV Rating
 function calcFvRating(kills, deaths, assists, rounds) {
   if (!rounds) return 0;
@@ -480,10 +506,10 @@ function computeAllStats(kills, rounds, playerStats) {
       else if (rk >= 3) multiKills.three++;
     }
 
-    // Weapons
+    // Weapons (raw names for icon mapping)
     const weapons = {};
     kills.filter(x => x.attacker === name).forEach(x => {
-      const w = cleanWeapon(x.weapon);
+      const w = (x.weapon || '').replace('weapon_', '').toLowerCase();
       weapons[w] = (weapons[w] || 0) + 1;
     });
     const topWeapon = Object.entries(weapons).sort((a, b) => b[1] - a[1])[0];
@@ -659,6 +685,7 @@ function renderStatsTable(c) {
     <th>K</th><th>D</th><th>+/-</th>
     <th>HS%</th><th>ADR</th><th>KAST</th>
     <th>FK</th><th>FD</th>
+    <th>Arme</th>
     <th style="min-width:140px">FV Rating</th>
   </tr></thead><tbody>`;
 
@@ -684,6 +711,7 @@ function renderStatsTable(c) {
       <td style="color:${kastColor}">${p.kast}%</td>
       <td style="color:var(--success)">${p.fk}</td>
       <td style="color:var(--danger)">${p.fd}</td>
+      <td>${weaponIcon(p.topWeapon, 16)}</td>
       <td><div class="fvr-cell">
         <span style="font-weight:700;color:${fvrColor(p.fvr)}">${p.fvr.toFixed(2)}</span>
         <span class="fvr-bar" style="width:${barW}px;background:${fvrColor(p.fvr)}"></span>
@@ -692,7 +720,7 @@ function renderStatsTable(c) {
   }
 
   winnerStats.forEach(playerRow);
-  html += '<tr class="team-divider"><td colspan="10"></td></tr>';
+  html += '<tr class="team-divider"><td colspan="11"></td></tr>';
   loserStats.forEach(playerRow);
 
   html += '</tbody>';
@@ -1084,7 +1112,7 @@ function renderMoments(kills, rounds, c) {
 
     Object.entries(byPlayer).forEach(([player, data]) => {
       if (data.kills.length >= 3) {
-        const weapons = [...new Set(data.kills.map(k => cleanWeapon(k.weapon)))];
+        const weapons = [...new Set(data.kills.map(k => k.weapon))];
         const hs = data.kills.filter(k => k.isHeadshot).length;
         const rndData = rounds.find(x => x.round === r || x.displayNum === r);
         const effectiveTeam = r <= 12 ? data.team : (data.team === 2 ? 3 : data.team === 3 ? 2 : 0);
@@ -1117,7 +1145,7 @@ function renderMoments(kills, rounds, c) {
       <span class="moment-badge ${badge}">${badgeText}</span>
       <div class="moment-info">
         <div class="moment-player" style="color:${m.team === 3 ? 'var(--ct)' : 'var(--t)'}">${m.player}</div>
-        <div class="moment-detail">${m.killCount} kills (${m.hs} HS) - ${m.weapons.join(', ')}</div>
+        <div class="moment-detail">${m.killCount} kills (${m.hs} HS) ${m.weapons.map(w => weaponIcon(w, 14)).join(' ')}</div>
       </div>
       <span class="moment-result ${resultClass}">${resultText}</span>
     </div>`;

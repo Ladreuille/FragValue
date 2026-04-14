@@ -243,10 +243,13 @@
     /* Kill chips */
     .kill-chips{display:flex;gap:4px;flex-wrap:wrap;min-height:14px}
     .kc{
-      font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:4px;
+      display:inline-flex;align-items:center;gap:4px;
+      font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:4px;
       background:rgba(240,107,107,.08);color:var(--danger);
-      border:1px solid rgba(240,107,107,.14);
+      border:1px solid rgba(240,107,107,.14);white-space:nowrap;
     }
+    .kc img{height:12px;flex-shrink:0}
+    .kc-name{max-width:80px;overflow:hidden;text-overflow:ellipsis}
     .kc.hs{background:rgba(245,200,66,.08);color:var(--gold);border-color:rgba(245,200,66,.14)}
 
     /* ── No data ────────────────────────────────────────────────── */
@@ -752,43 +755,51 @@ function updateScores() {
   document.getElementById('tScore').textContent = tScore;
 }
 
-// Weapon SVG icons (scl.gg style per-weapon silhouettes)
-const WEAPON_ICONS = {
-  ak47:           '<svg width="20" height="10" viewBox="0 0 20 10"><path d="M1 6h3l1-2h6l1 1h5l2-1v2h-2l-1 1H6L5 8H1z" fill="CL"/></svg>',
-  m4a1:           '<svg width="20" height="10" viewBox="0 0 20 10"><path d="M1 5h2l1-1h7l1 1h5l2-1v2h-2l-1 1H5L4 8H1z" fill="CL"/></svg>',
-  m4a4:           '<svg width="20" height="10" viewBox="0 0 20 10"><path d="M1 5h2l1-1h7l1 1h5l2-1v2h-2l-1 1H5L4 8H1z" fill="CL"/></svg>',
-  awp:            '<svg width="22" height="10" viewBox="0 0 22 10"><path d="M0 5h5l1-2h8l1 1h4l2-1v2h-2l-1 1H7L6 7H0z" fill="CL"/></svg>',
-  ssg08:          '<svg width="22" height="10" viewBox="0 0 22 10"><path d="M0 5h4l1-2h9l1 1h4l2-1v2h-2l-1 1H6L5 7H0z" fill="CL"/></svg>',
-  deagle:         '<svg width="14" height="10" viewBox="0 0 14 10"><path d="M2 4h6l1 1h2l1-1v2h-1l-1 1H8L7 8H4V7H2z" fill="CL"/></svg>',
-  usp_silencer:   '<svg width="16" height="10" viewBox="0 0 16 10"><path d="M1 4h8l1 1h2l1-1v2h-1l-1 1H9L8 8H4V7H1z" fill="CL"/></svg>',
-  usp:            '<svg width="14" height="10" viewBox="0 0 14 10"><path d="M2 4h6l1 1h2l1-1v2h-1l-1 1H8L7 8H4V7H2z" fill="CL"/></svg>',
-  p250:           '<svg width="14" height="10" viewBox="0 0 14 10"><path d="M2 4h6l1 1h2l1-1v2h-1l-1 1H8L7 8H4V7H2z" fill="CL"/></svg>',
-  glock:          '<svg width="14" height="10" viewBox="0 0 14 10"><path d="M3 4h5l1 1h2l1-1v2h-1l-1 1H8L7 8H5V7H3z" fill="CL"/></svg>',
-  mp9:            '<svg width="18" height="10" viewBox="0 0 18 10"><path d="M1 5h4l1-1h5l1 1h3l1-1v2h-1l-1 1H6L5 8H1z" fill="CL"/></svg>',
-  mac10:          '<svg width="16" height="10" viewBox="0 0 16 10"><path d="M1 5h3l1-1h4l1 1h3l1-1v2h-1l-1 1H5L4 8H1z" fill="CL"/></svg>',
-  knife:          '<svg width="12" height="10" viewBox="0 0 12 10"><path d="M2 3l8-1v2l-2 3H4L2 5z" fill="CL"/></svg>',
-  default:        '<svg width="16" height="10" viewBox="0 0 16 10"><rect x="1" y="3" width="14" height="5" rx="2" fill="CL"/></svg>',
+// Weapon icon via real SVG files in /icons/
+// Maps CS2 weapon names to SVG file names
+const WEAPON_FILE_MAP = {
+  ak47:'ak47', m4a1:'m4a1', m4a1_silencer:'m4a1_silencer', m4a1_silencer_off:'m4a1_silencer_off',
+  m4a4:'m4a1', galil:'galilar', galilar:'galilar', famas:'famas',
+  aug:'aug', sg556:'sg556', awp:'awp', ssg08:'ssg08', scar20:'scar20', g3sg1:'g3sg1',
+  mp9:'mp9', mac10:'mac10', mp7:'mp7', ump45:'ump45', p90:'p90', mp5sd:'mp5sd', bizon:'bizon',
+  deagle:'deagle', glock:'glock', usp_silencer:'usp_silencer', usp_silencer_off:'usp_silencer_off',
+  hkp2000:'hkp2000', p2000:'p2000', p250:'p250', fiveseven:'fiveseven',
+  tec9:'tec9', elite:'elite', cz75a:'cz75a', cz75_auto:'cz75a', revolver:'revolver',
+  nova:'nova', xm1014:'xm1014', mag7:'mag7', sawedoff:'sawedoff', m249:'m249', negev:'negev',
+  knife:'knife', knife_t:'knife_t', bayonet:'bayonet',
+  knife_karambit:'knife_karambit', knife_butterfly:'knife_butterfly', knife_flip:'knife_flip',
+  knife_m9_bayonet:'knife_m9_bayonet', knife_gut:'knife_gut', knife_falchion:'knife_falchion',
+  knife_bowie:'knife_bowie', knife_ursus:'knife_ursus', knife_stiletto:'knife_stiletto',
+  knife_kukri:'knife_kukri', knife_skeleton:'knife_skeleton', knife_tactical:'knife_tactical',
+  knife_survival_bowie:'knife_survival_bowie', knife_widowmaker:'knife_widowmaker',
+  knife_css:'knife_css', knife_cord:'knife_cord', knife_canis:'knife_canis',
+  knife_outdoor:'knife_outdoor', knife_push:'knife_push', knife_twinblade:'knife_twinblade',
+  knife_gypsy_jackknife:'knife_gypsy_jackknife',
+  hegrenade:'hegrenade', flashbang:'flashbang', smokegrenade:'smokegrenade',
+  molotov:'molotov', incgrenade:'incgrenade', decoy:'decoy',
+  c4:'c4', planted_c4:'planted_c4', taser:'taser',
 };
 
-// Map weapon names to icon keys
-const WEAPON_KEY_MAP = {
-  ak47:'ak47', m4a1:'m4a1', m4a1_silencer:'m4a1', m4a4:'m4a4',
-  galil:'ak47', famas:'m4a1', aug:'m4a1', sg556:'ak47',
-  awp:'awp', ssg08:'ssg08', scar20:'awp', g3sg1:'awp',
-  mp9:'mp9', mac10:'mac10', mp7:'mp9', ump45:'mp9', p90:'mp9', mp5sd:'mp9', bizon:'mp9',
-  deagle:'deagle', glock:'glock', usp_silencer:'usp_silencer', hkp2000:'usp',
-  p250:'p250', fiveseven:'p250', tec9:'glock', elite:'deagle', cz75_auto:'p250', revolver:'deagle',
-  nova:'default', xm1014:'default', mag7:'default', sawedoff:'default',
-  knife:'knife', knife_t:'knife', bayonet:'knife',
-  hegrenade:'default', flashbang:'default', smokegrenade:'default', molotov:'default', incgrenade:'default', decoy:'default',
-  c4:'default', taser:'default',
+function weaponIconImg(weaponName, height) {
+  if (!weaponName) return '';
+  const clean = weaponName.replace('weapon_', '').toLowerCase();
+  const file = WEAPON_FILE_MAP[clean] || null;
+  if (!file) return '<span style="font-size:9px;color:var(--text3)">' + clean + '</span>';
+  const h = height || 14;
+  return '<img src="icons/' + file + '.svg" alt="' + clean + '" height="' + h + '" style="vertical-align:middle;opacity:.85;filter:brightness(0.9)" loading="lazy">';
+}
+
+// Backward-compatible inline SVGs for gear row (fast render, no network)
+const WEAPON_ICONS_INLINE = {
+  default: '<svg width="16" height="10" viewBox="0 0 16 10"><rect x="1" y="3" width="14" height="5" rx="2" fill="CL"/></svg>',
 };
 
 function getWeaponIcon(weaponName, color) {
   if (!weaponName) return '';
   const clean = weaponName.replace('weapon_', '').toLowerCase();
-  const key = WEAPON_KEY_MAP[clean] || 'default';
-  return (WEAPON_ICONS[key] || WEAPON_ICONS.default).replace(/CL/g, color);
+  const file = WEAPON_FILE_MAP[clean];
+  if (file) return '<img src="icons/' + file + '.svg" height="12" style="vertical-align:middle;filter:brightness(0.9)" loading="lazy">';
+  return WEAPON_ICONS_INLINE.default.replace(/CL/g, color);
 }
 function getHelmetIcon(active) {
   const c = active ? '#e8eaea' : '#2a2c2c';
@@ -846,7 +857,7 @@ function updatePlayerStates(frame) {
       if (state?.weapon) {
         html += '<span class="icon">' + getWeaponIcon(state.weapon, color) + '</span>';
       } else {
-        html += '<span class="icon off">' + (WEAPON_ICONS.default).replace(/CL/g, '#2a2c2c') + '</span>';
+        html += '<span class="icon off">' + WEAPON_ICONS_INLINE.default.replace(/CL/g, '#2a2c2c') + '</span>';
       }
       // Helmet
       html += '<span class="icon' + (state?.hasHelmet ? '' : ' off') + '">' + getHelmetIcon(!!state?.hasHelmet) + '</span>';
@@ -1012,10 +1023,12 @@ function buildFrames(round) {
   const tot = Math.round(span / 64);
   document.getElementById('timeTot').textContent = `${Math.floor(tot / 60)}:${String(tot % 60).padStart(2, '0')}`;
 
-  // Kill chips
-  document.getElementById('killChips').innerHTML = roundKills.slice(0, 8).map(k =>
-    `<div class="kc ${k.isHeadshot ? 'hs' : ''}">${k.attacker} > ${k.victim}${k.isHeadshot ? ' HS' : ''}</div>`
-  ).join('');
+  // Kill chips with weapon icons
+  document.getElementById('killChips').innerHTML = roundKills.slice(0, 8).map(k => {
+    const wIcon = weaponIconImg(k.weapon, 12);
+    const hsTag = k.isHeadshot ? ' <span style="color:var(--gold);font-weight:700">HS</span>' : '';
+    return `<div class="kc ${k.isHeadshot ? 'hs' : ''}"><span class="kc-name">${k.attacker}</span> ${wIcon} <span class="kc-name">${k.victim}</span>${hsTag}</div>`;
+  }).join('');
 
   // Kill markers on timeline
   document.getElementById('killMarks').innerHTML = roundKills.map(k => {
