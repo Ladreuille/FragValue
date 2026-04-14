@@ -698,18 +698,18 @@ function getFirstRealRound() {
   return rnds[0]?.round ?? 0;
 }
 
-// Compute buyStart (start of buy phase) and gameplayEnd (last kill + buffer)
-// for each round. The parser's startTick = freeze_end(N) and endTick = freeze_end(N+1)-1,
-// which means endTick overlaps the NEXT round's buy phase. We recompute proper
-// per-round boundaries so the replay shows the current round's own buy phase
-// at the start and stops before the next round's buy phase.
+// Compute gameplayEnd (last kill + small buffer) for each round.
+// Parser's endTick = freeze_end(N+1) - 1 extends into the NEXT round's walk-back
+// and buy phase, which caused alive players to be seen returning to spawn at
+// the end of each round. We clip maxT to lastKill + buffer so the replay stops
+// right after the decisive kill. Lower bound stays at rd.startTick = freeze_end(N),
+// which naturally excludes the previous round's walk-back samples (their tick
+// is < freeze_end(N)).
 function recalcRoundBoundaries() {
   const rounds = demoData.rounds || [];
   const kills = demoData.kills || [];
-  const BUY_PHASE_TICKS = 20 * 64; // 20 seconds of buy/freeze time
-  const POST_ROUND_BUFFER = 256;   // ~4s after last kill for round-end replay
+  const POST_ROUND_BUFFER = 128; // ~2s after last kill
 
-  // First pass: compute gameplayEnd from kills of this round
   rounds.forEach((rd, i) => {
     const st = rd.startTick || 0;
     const et = rd.endTick || (rounds[i + 1]?.startTick || 0) || (st + 115 * 64);
@@ -721,17 +721,6 @@ function recalcRoundBoundaries() {
     rd.gameplayEnd = lastKillT > 0
       ? lastKillT + POST_ROUND_BUFFER
       : (rd.endTick || (st + 90 * 64));
-  });
-
-  // Second pass: compute buyStart using prev round's gameplayEnd
-  rounds.forEach((rd, i) => {
-    const st = rd.startTick || 0;
-    const prev = rounds[i - 1];
-    if (prev) {
-      rd.buyStart = Math.max((prev.gameplayEnd || 0) + 1, st - BUY_PHASE_TICKS);
-    } else {
-      rd.buyStart = Math.max(0, st - BUY_PHASE_TICKS);
-    }
   });
 
   console.log('[Replay] Boundaries recalculated for', rounds.length, 'rounds');
@@ -1059,9 +1048,11 @@ function selectRound(round, btn) {
 function buildFrames(round) {
   const positions = demoData.positions || {}, kills = demoData.kills || [];
   const roundData = (demoData.rounds || []).find(r => (r.round ?? -1) === round) || {};
-  // Use recomputed buyStart/gameplayEnd so replay covers this round's OWN buy phase
-  // at the start and stops before the next round's buy phase.
-  const startTick = roundData.buyStart ?? (roundData.startTick || 0);
+  // Lower bound: parser's startTick = freeze_end(N) = start of gameplay.
+  // This naturally excludes the previous round's walk-back samples.
+  // Upper bound: gameplayEnd = lastKill + buffer so the replay doesn't overflow
+  // into the next round's walk-back and buy phase.
+  const startTick = roundData.startTick || 0;
   const endTick = roundData.gameplayEnd ?? (roundData.endTick || 0);
   const killsR = roundData.killsRound ?? (round + 1);
 
@@ -1532,7 +1523,7 @@ function drawTrails(frame, W, H) {
   // Clamp trails to current round boundaries to prevent ghost trails from
   // previous/next round bleeding into the replay window.
   const rd = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
-  const rdStart = rd.buyStart ?? (rd.startTick || 0);
+  const rdStart = rd.startTick || 0;
   const rdEnd = rd.gameplayEnd ?? (rd.endTick || Number.MAX_SAFE_INTEGER);
 
   Object.entries(frame.players).forEach(([name, p]) => {
