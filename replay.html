@@ -461,6 +461,9 @@ let currentRound = null, frames = [], frameIdx = 0;
 let playing = false, timer = null, speed = 1;
 const FPS = 30;
 let shotsConverted = false;
+// Per-round filtered positions, shared by buildFrames and drawTrails so trails
+// cannot include samples from outside the current round.
+let currentRoundPos = {};
 
 // ══ UTILS ════════════════════════════════════════════════════════════════════
 function assignColors() {
@@ -1138,6 +1141,9 @@ function buildFrames(round) {
   const rangeSample = Object.entries(perPlayerRange).slice(0, 3).map(([n, r]) => `${n}:[${r.first}-${r.last}]/${r.count}`).join(' ');
   console.log('[buildFrames] player ranges:', rangeSample);
 
+  // Expose filtered positions for drawTrails so it uses the same per-round slice
+  currentRoundPos = roundPos;
+
   frames = [];
   for (let f = 0; f <= N; f++) {
     const progress = f / N, tick = minT + progress * span;
@@ -1516,24 +1522,28 @@ function drawScoreboard(frame, W, H) {
 function drawTrails(frame, W, H) {
   const tick = frame.tick || 0;
   const TRAIL_TICKS = 400;
-  const positions = demoData.positions || {};
   const scaleX = W / 1024;
   const scaleY = H / 1024;
 
-  // Clamp trails to current round boundaries to prevent ghost trails from
-  // previous/next round bleeding into the replay window.
-  const rd = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
-  const rdStart = rd.startTick || 0;
-  const rdEnd = rd.gameplayEnd ?? (rd.endTick || Number.MAX_SAFE_INTEGER);
+  // Use the same per-round filtered positions that buildFrames used. This
+  // guarantees trails can never include samples from another round.
+  const roundPos = currentRoundPos || {};
 
+  let _dbgLoggedOne = false;
   Object.entries(frame.players).forEach(([name, p]) => {
     if (!p.alive || hiddenPlayers.has(name)) return;
     const color = getColor(name);
-    const pts = positions[name] || [];
+    const pts = roundPos[name] || [];
     const trail = pts.filter(pt => {
       const t = pt.tick || 0;
-      return t >= tick - TRAIL_TICKS && t <= tick && t >= rdStart && t <= rdEnd;
+      return t >= tick - TRAIL_TICKS && t <= tick;
     });
+    if (frameIdx === 0 && !_dbgLoggedOne) {
+      _dbgLoggedOne = true;
+      const f0 = trail[0], fl = trail[trail.length - 1];
+      console.log(`[drawTrails] f0 tick=${Math.round(tick)} ${name}: roundPts=${pts.length}, trailPts=${trail.length}` +
+        (trail.length ? ` first=(t=${f0.tick},${f0.x},${f0.y}) last=(t=${fl.tick},${fl.x},${fl.y})` : ''));
+    }
     if (trail.length < 2) return;
 
     // Fading trail: draw segments with decreasing opacity
