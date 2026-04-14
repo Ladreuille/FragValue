@@ -1727,25 +1727,66 @@ function drawEffects(frame, W, H) {
     const _dp = w2c(g.detonX, g.detonY);
     const lx = _lp.x * scaleX, ly = _lp.y * scaleY;
     const dx2 = _dp.x * scaleX, dy2 = _dp.y * scaleY;
-    const hasValidDeton = g.detonX !== 0 && (Math.abs(g.detonX - g.x) > 50 || Math.abs(g.detonY - g.y) > 50);
+    const hasPathData = !!(g.path && g.path.length >= 4);
+    // With real trajectory data, trust the landing spot. Otherwise require
+    // meaningful distance from the throw (guards against bogus event matches).
+    const hasValidDeton = hasPathData ||
+      (g.detonX !== 0 && (Math.abs(g.detonX - g.x) > 50 || Math.abs(g.detonY - g.y) > 50));
 
     // Trajectory
     if (tick >= g.tick && tick < g.detonTick && inBounds(lx, ly)) {
-      const tx = hasValidDeton ? dx2 : lx;
-      const ty = hasValidDeton ? dy2 : ly;
-      const trajDx = tx - lx;
-      const trajDy = ty - ly;
-      const trajLen = Math.sqrt(trajDx * trajDx + trajDy * trajDy);
-      if (trajLen <= 350) {
-        const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
-        const curX = lx + trajDx * progress;
-        const curY = ly + trajDy * progress;
+      if (g.path && g.path.length >= 4) {
+        // Real trajectory from parseGrenades: polyline that bounces off walls.
+        // Path is a flat array [x1, y1, x2, y2, ...] in world coordinates.
+        const numPts = g.path.length / 2;
+        const progress = Math.max(0, Math.min(1, (tick - g.tick) / Math.max(g.detonTick - g.tick, 1)));
+        const fIdx = progress * (numPts - 1);
+        const i0 = Math.floor(fIdx);
+        const i1 = Math.min(numPts - 1, i0 + 1);
+        const f = fIdx - i0;
+        const wx0 = g.path[i0 * 2],     wy0 = g.path[i0 * 2 + 1];
+        const wx1 = g.path[i1 * 2],     wy1 = g.path[i1 * 2 + 1];
+        const curWX = wx0 * (1 - f) + wx1 * f;
+        const curWY = wy0 * (1 - f) + wy1 * f;
+        const _cp = w2c(curWX, curWY);
+        const curX = _cp.x * scaleX, curY = _cp.y * scaleY;
+
+        // Draw traveled polyline up to current position (bouncing path).
         ctx.setLineDash([3, 3]);
-        ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(curX, curY); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        const _p0 = w2c(g.path[0], g.path[1]);
+        ctx.moveTo(_p0.x * scaleX, _p0.y * scaleY);
+        for (let i = 1; i <= i0; i++) {
+          const _pp = w2c(g.path[i * 2], g.path[i * 2 + 1]);
+          ctx.lineTo(_pp.x * scaleX, _pp.y * scaleY);
+        }
+        ctx.lineTo(curX, curY);
+        ctx.stroke();
         ctx.setLineDash([]);
+
+        // Grenade dot at current position.
         ctx.beginPath(); ctx.arc(curX, curY, 3, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
+      } else {
+        // Fallback: straight-line interpolation (old demos without path data).
+        const tx = hasValidDeton ? dx2 : lx;
+        const ty = hasValidDeton ? dy2 : ly;
+        const trajDx = tx - lx;
+        const trajDy = ty - ly;
+        const trajLen = Math.sqrt(trajDx * trajDx + trajDy * trajDy);
+        if (trajLen <= 350) {
+          const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
+          const curX = lx + trajDx * progress;
+          const curY = ly + trajDy * progress;
+          ctx.setLineDash([3, 3]);
+          ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(curX, curY); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.beginPath(); ctx.arc(curX, curY, 3, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
+        }
       }
     }
 
@@ -1755,9 +1796,13 @@ function drawEffects(frame, W, H) {
     if (!isActive) return;
     const px = dx2, py = dy2;
     if (!inBounds(px, py)) return;
-    const impDx = dx2 - lx;
-    const impDy = dy2 - ly;
-    if (Math.sqrt(impDx * impDx + impDy * impDy) > 350) return;
+    // Without real trajectory data, guard against bogus detonation matches by
+    // rejecting landings more than 350px from the throw position on screen.
+    if (!hasPathData) {
+      const impDx = dx2 - lx;
+      const impDy = dy2 - ly;
+      if (Math.sqrt(impDx * impDx + impDy * impDy) > 350) return;
+    }
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
 
