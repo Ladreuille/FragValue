@@ -79,34 +79,59 @@ export default async function handler(req, res) {
     // IMPORTANT: depuis v0.2 on ne declenche PLUS le parser Railway ici car
     // les URLs renvoyees par open.faceit.com/data/v4 pointent toutes sur le
     // CDN regional Backblaze decommissionne par FACEIT en 2024. A la place,
-    // l'extension navigateur FragValue reprend cette liste, va chercher des
-    // URLs presignees fraiches via api.faceit.com (authentifie via cookies
-    // user), et les envoie a /api/submit-demo-url qui fait le fan-out au
-    // parser avec l'override demoUrl.
+    // l'extension navigateur FragValue reprend cette liste et va chercher
+    // des URLs presignees fraiches via www.faceit.com (authentifie via
+    // cookies user), puis les envoie a /api/submit-demo-url qui fait le
+    // fan-out au parser avec l'override demoUrl.
     const imported = [];
     for (const m of items) {
       const matchId = m.match_id;
       if (!matchId) continue;
 
-      // Skip si deja parse
+      // Recuperer l'etat existant : on veut eviter de stomper une row qui a
+      // deja des donnees parsees (score, rounds, parsed_at). Ca arrivait
+      // quand l'utilisateur re-cliquait "Importer" apres qu'un parse ait
+      // reussi — on resetait status='pending' en gardant silencieusement les
+      // scores, ce qui mettait l'UI en etat incoherent.
       const { data: existing } = await supabase
         .from('matches')
-        .select('faceit_match_id, status')
+        .select('faceit_match_id, status, parsed_at, score_ct, score_t, rounds')
         .eq('faceit_match_id', matchId)
         .single();
 
-      if (existing?.status === 'parsed') {
+      const alreadyParsed = existing && (
+        existing.status === 'parsed' ||
+        existing.parsed_at != null ||
+        existing.score_ct != null ||
+        existing.score_t != null ||
+        (existing.rounds || 0) > 0
+      );
+
+      if (alreadyParsed) {
+        // Heal : si les donnees parsees sont la mais le status est faux
+        // (typiquement 'pending' suite a un precedent import-history
+        // defectueux), on corrige.
+        if (existing.status !== 'parsed') {
+          await supabase
+            .from('matches')
+            .update({
+              status: 'parsed',
+              error_message: null,
+              parsed_at: existing.parsed_at || new Date().toISOString(),
+            })
+            .eq('faceit_match_id', matchId);
+        }
         imported.push({ matchId, status: 'already_parsed' });
         continue;
       }
 
-      // Insert ou reset en pending — si le match existait deja en 'failed',
-      // on le repasse en pending pour que l'extension puisse retenter
+      // Insert une nouvelle row ou reset une row 'failed' / 'pending' sans
+      // donnees parsees. Pas de map : m.i1 est une URL d'image FACEIT, pas
+      // un nom de map. Le parser ecrit le vrai map sur le succes.
       await supabase.from('matches').upsert({
         id: matchId,
         faceit_match_id: matchId,
         user_id: user.id,
-        map: m.i1 || null,
         status: 'pending',
         error_message: null,
       }, { onConflict: 'faceit_match_id' });
