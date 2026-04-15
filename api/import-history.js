@@ -93,13 +93,14 @@ export default async function handler(req, res) {
         continue;
       }
 
-      // Insert en pending
+      // Insert ou reset en pending — si le match existait deja en 'failed',
+      // on le repasse en pending pour que le parser puisse retenter
       await supabase.from('matches').upsert({
         id: matchId,
         faceit_match_id: matchId,
         user_id: user.id,
         map: m.i1 || null,
-        status: existing?.status || 'pending',
+        status: 'pending',
       }, { onConflict: 'faceit_match_id' });
 
       // Declencher le parsing cote Railway (fire and forget)

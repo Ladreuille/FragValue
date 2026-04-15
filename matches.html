@@ -87,9 +87,41 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .mc-parsing-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);background-size:200% 100%;animation:scan 1.6s linear infinite}
 @keyframes scan{0%{background-position:-100% 0}100%{background-position:100% 0}}
 
+.mc-spin{width:14px;height:14px;border:1.5px solid rgba(184,255,87,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mc-elapsed{font-size:10px;color:var(--text3);letter-spacing:.04em;margin-top:10px;text-align:center}
+.mc-elapsed span{color:var(--accent)}
+.mc-retry{margin-top:12px;display:flex;justify-content:center}
+.mc-retry-btn{background:transparent;color:var(--text2);border:1px solid var(--border2);padding:7px 14px;border-radius:var(--r);font-family:var(--mono);font-size:10px;letter-spacing:.06em;cursor:pointer;transition:all .15s;text-transform:uppercase}
+.mc-retry-btn:hover{border-color:var(--accent);color:var(--accent)}
+
 .empty-box{background:var(--surface);border:1px dashed var(--border2);border-radius:var(--r2);padding:60px 28px;text-align:center}
 .empty-box-title{font-family:var(--display);font-size:22px;margin-bottom:10px;letter-spacing:.02em}
 .empty-box-sub{font-size:11px;color:var(--text3);line-height:1.7;margin-bottom:22px;max-width:440px;margin-left:auto;margin-right:auto}
+
+/* IMPORT OVERLAY */
+.ov-back{display:none;position:fixed;inset:0;z-index:300;background:rgba(8,9,9,.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px}
+.ov-back.open{display:flex}
+.ov-card{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:28px;position:relative;overflow:hidden;animation:up .3s ease}
+.ov-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:shimmer 1.8s ease-in-out infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+.ov-hd{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.ov-spin{width:24px;height:24px;flex-shrink:0;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .75s linear infinite}
+.ov-title{font-family:var(--display);font-size:20px;letter-spacing:.02em}
+.ov-sub{font-size:10px;color:var(--text3);letter-spacing:.06em;margin-top:3px}
+.ov-track{height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-bottom:20px}
+.ov-fill{height:100%;width:0%;background:var(--accent);border-radius:1px;transition:width .5s ease}
+.ov-steps{display:flex;flex-direction:column;gap:10px}
+.ov-step{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text3);letter-spacing:.04em;transition:color .2s}
+.ov-step.done{color:var(--success)}
+.ov-step.active{color:var(--text)}
+.ov-step-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .2s}
+.ov-step.done .ov-step-dot{background:var(--success)}
+.ov-step.active .ov-step-dot{background:var(--accent);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ov-close{margin-top:22px;display:flex;justify-content:flex-end}
+.ov-close-btn{background:transparent;color:var(--text3);border:1px solid var(--border);padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:10px;letter-spacing:.06em;cursor:pointer;text-transform:uppercase}
+.ov-close-btn:hover{border-color:var(--text2);color:var(--text2)}
 
 @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 </style>
@@ -128,6 +160,28 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   <div class="sl">Historique</div>
   <div id="matchesContainer">
     <div style="text-align:center;padding:60px 20px;font-size:11px;color:var(--text3)">Chargement...</div>
+  </div>
+</div>
+
+<div class="ov-back" id="importOverlay">
+  <div class="ov-card">
+    <div class="ov-hd">
+      <div class="ov-spin"></div>
+      <div>
+        <div class="ov-title" id="ovTitle">Import en cours</div>
+        <div class="ov-sub" id="ovSub">Connexion a FACEIT</div>
+      </div>
+    </div>
+    <div class="ov-track"><div class="ov-fill" id="ovFill"></div></div>
+    <div class="ov-steps">
+      <div class="ov-step" id="ovStep0"><div class="ov-step-dot"></div>Verification du compte FACEIT</div>
+      <div class="ov-step" id="ovStep1"><div class="ov-step-dot"></div>Recuperation des 20 derniers matchs</div>
+      <div class="ov-step" id="ovStep2"><div class="ov-step-dot"></div>Mise en file pour le parser Railway</div>
+      <div class="ov-step" id="ovStep3"><div class="ov-step-dot"></div>Analyse des demos en arriere plan</div>
+    </div>
+    <div class="ov-close" id="ovClose" style="display:none">
+      <button class="ov-close-btn" onclick="closeOverlay()">Fermer</button>
+    </div>
   </div>
 </div>
 
@@ -201,16 +255,36 @@ function renderCard(m) {
   const isParsing = m.status === 'parsing' || m.status === 'pending';
   const isFailed = m.status === 'failed';
   const classes = ['match-card', isParsing ? 'parsing' : '', isFailed ? 'failed' : ''].filter(Boolean).join(' ');
-  const statusLabel = isParsed ? 'Analyse' : isParsing ? 'En cours' : isFailed ? 'Echec' : 'En attente';
+  const statusLabel = isParsed ? 'Analyse'
+    : m.status === 'pending' ? 'En file'
+    : m.status === 'parsing' ? 'Analyse en cours'
+    : isFailed ? 'Echec' : 'En attente';
   const statusClass = isParsed ? 'parsed' : m.status === 'pending' ? 'pending' : isParsing ? 'parsing' : 'failed';
 
   const ct = m.score_ct ?? 0, t = m.score_t ?? 0;
-  const map = (m.map || 'unknown').replace('de_', '').toUpperCase();
+  const map = (m.map || 'UNKNOWN').replace('de_', '').toUpperCase();
   const ctWin = m.winner === 'ct';
   const tWin = m.winner === 't';
 
   const href = isParsed ? 'analysis.html?match=' + encodeURIComponent(m.faceit_match_id) : '#';
   const tag = isParsed ? 'a' : 'div';
+
+  // Elapsed timer since created_at pour les matchs en cours
+  let elapsedHtml = '';
+  if (isParsing) {
+    const elapsed = Math.max(0, Math.floor((Date.now() - new Date(m.created_at).getTime()) / 1000));
+    const mm = Math.floor(elapsed / 60);
+    const ss = elapsed % 60;
+    const human = mm > 0 ? mm + ' min ' + ss + 's' : ss + 's';
+    const label = m.status === 'pending' ? 'En attente du parser Railway' : 'Telechargement et parsing de la demo';
+    elapsedHtml = '<div class="mc-elapsed"><span class="mc-spin"></span>' + label + ' · <span>' + human + '</span></div>';
+  }
+
+  // Bouton relance sur les matchs failed
+  let retryHtml = '';
+  if (isFailed) {
+    retryHtml = '<div class="mc-retry"><button class="mc-retry-btn" onclick="retryMatch(event,\'' + m.faceit_match_id + '\')">Reessayer</button></div>';
+  }
 
   return '<' + tag + (isParsed ? ' href="' + href + '"' : '') + ' class="' + classes + '">' +
     '<div class="mc-top">' +
@@ -226,13 +300,85 @@ function renderCard(m) {
       '<span>' + (m.rounds || 0) + ' rounds</span>' +
       '<span>' + fmtFull(m.parsed_at || m.created_at) + '</span>' +
     '</div>' +
+    elapsedHtml +
+    retryHtml +
     (isParsing ? '<div class="mc-parsing-bar"></div>' : '') +
   '</' + tag + '>';
+}
+
+async function retryMatch(e, matchId) {
+  e.preventDefault();
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  btn.textContent = 'Relance en cours';
+  try {
+    const r = await fetch('/api/retry-match', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + _session.access_token,
+      },
+      body: JSON.stringify({ matchId }),
+    });
+    if (!r.ok) {
+      btn.disabled = false;
+      btn.textContent = 'Reessayer';
+      return;
+    }
+    // Recharge immediat pour voir le match repasser en pending
+    await loadMatches();
+  } catch (_) {
+    btn.disabled = false;
+    btn.textContent = 'Reessayer';
+  }
+}
+
+// ============================================================================
+// IMPORT OVERLAY — affichage d'une progression visible
+// ============================================================================
+function openOverlay() {
+  document.getElementById('importOverlay').classList.add('open');
+  setOvStep(0, 'active');
+  setOvFill(8);
+  setOvSub('Verification du compte FACEIT');
+  document.getElementById('ovTitle').textContent = 'Import en cours';
+  document.getElementById('ovClose').style.display = 'none';
+}
+function closeOverlay() {
+  document.getElementById('importOverlay').classList.remove('open');
+}
+function setOvStep(i, state) {
+  const el = document.getElementById('ovStep' + i);
+  if (!el) return;
+  el.classList.remove('active', 'done');
+  if (state) el.classList.add(state);
+}
+function setOvFill(pct) {
+  document.getElementById('ovFill').style.width = pct + '%';
+}
+function setOvSub(txt) {
+  document.getElementById('ovSub').textContent = txt;
+}
+function markStepsDoneUntil(idx) {
+  for (let i = 0; i <= idx; i++) setOvStep(i, 'done');
 }
 
 async function importHistory() {
   const btn = document.getElementById('importBtn');
   if (btn) { btn.disabled = true; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/></svg>Import en cours'; }
+
+  openOverlay();
+
+  // Tick visuel pendant l'attente reseau (avance progressif jusqu'a 30%)
+  let fakePct = 8;
+  const fakeTick = setInterval(() => {
+    if (fakePct < 28) {
+      fakePct += 2;
+      setOvFill(fakePct);
+    }
+  }, 300);
+
   try {
     const r = await fetch('/api/import-history', {
       method: 'POST',
@@ -241,16 +387,45 @@ async function importHistory() {
         'Authorization': 'Bearer ' + _session.access_token,
       },
     });
-    if (r.ok) {
-      const data = await r.json();
-      console.log('Imported:', data);
-      await loadMatches();
-    } else {
+    clearInterval(fakeTick);
+
+    if (!r.ok) {
       const err = await r.json().catch(() => ({}));
-      alert(err.error || 'Erreur import');
+      document.getElementById('ovTitle').textContent = 'Echec de l\'import';
+      setOvSub(err.error || 'Erreur serveur');
+      setOvFill(100);
+      document.getElementById('ovClose').style.display = 'flex';
+      if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importer mes 20 derniers matchs'; }
+      return;
     }
+
+    const data = await r.json();
+    console.log('Imported:', data);
+
+    // Etapes 0-2 done
+    markStepsDoneUntil(2);
+    setOvStep(3, 'active');
+    setOvFill(65);
+    setOvSub((data.imported || 0) + ' matchs en file — analyse en cours');
+
+    await loadMatches();
+
+    // Laisse l'overlay affiche 2s de plus puis finalise
+    setTimeout(() => {
+      setOvFill(100);
+      markStepsDoneUntil(3);
+      document.getElementById('ovTitle').textContent = 'Import termine';
+      setOvSub('Les analyses se finaliseront en arriere plan');
+      document.getElementById('ovClose').style.display = 'flex';
+      // Auto close apres 3s
+      setTimeout(closeOverlay, 3000);
+    }, 1200);
   } catch (e) {
-    alert('Connexion impossible');
+    clearInterval(fakeTick);
+    document.getElementById('ovTitle').textContent = 'Connexion impossible';
+    setOvSub('Reessaie dans quelques secondes');
+    setOvFill(100);
+    document.getElementById('ovClose').style.display = 'flex';
   }
   if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importer mes 20 derniers matchs'; }
 }
