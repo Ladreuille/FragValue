@@ -125,6 +125,20 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .empty-link{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#000;padding:10px 20px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.04em;transition:all .15s}
 .empty-link:hover{background:var(--accent2);transform:translateY(-1px)}
 
+/* EXTENSION CARD */
+.ext-card{display:flex;align-items:center;gap:18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px 24px;margin-bottom:24px}
+.ext-card-icon{width:42px;height:42px;border-radius:var(--r);background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
+.ext-card-body{flex:1;min-width:0}
+.ext-card-title{font-size:12px;color:var(--text);letter-spacing:.02em;margin-bottom:3px}
+.ext-card-sub{font-size:10px;color:var(--text3);line-height:1.5}
+.ext-card-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);display:inline-block;margin-right:6px}
+.ext-card-dot.ok{background:var(--accent)}
+.ext-card-dot.err{background:var(--danger)}
+.ext-card-cta{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:9px 16px;border-radius:var(--r);text-decoration:none;border:1px solid var(--border2);color:var(--text);transition:all .15s;white-space:nowrap}
+.ext-card-cta:hover{border-color:var(--accent);color:var(--accent)}
+.ext-card-cta.primary{background:var(--accent);color:#000;border-color:var(--accent)}
+.ext-card-cta.primary:hover{background:var(--accent2);border-color:var(--accent2);color:#000}
+
 @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
@@ -164,6 +178,18 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
     </button>
     <button class="nav-out" onclick="logout()">Déconnexion</button>
+  </div>
+
+  <!-- EXTENSION STATUS -->
+  <div class="ext-card" id="extCard" style="display:none">
+    <div class="ext-card-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 7h7v7M3 21l18-18M3 10v-7h7"/></svg>
+    </div>
+    <div class="ext-card-body">
+      <div class="ext-card-title" id="extCardTitle">Extension FragValue</div>
+      <div class="ext-card-sub"><span class="ext-card-dot" id="extCardDot"></span><span id="extCardSub">...</span></div>
+    </div>
+    <a class="ext-card-cta" id="extCardCta" href="/extension-auth.html">Ouvrir</a>
   </div>
 
   <!-- KPIs -->
@@ -620,7 +646,57 @@ document.addEventListener('click', (e) => {
   }
 });
 
-init().then(() => loadNotifs());
+// ─── Extension status ────────────────────────────────────────────────────
+// Detects the FragValue browser extension via the data-fv-ext-installed
+// marker set by content-pairing.js, then queries its pairing state.
+function showExtCard(state) {
+  const card = document.getElementById('extCard');
+  const title = document.getElementById('extCardTitle');
+  const dot = document.getElementById('extCardDot');
+  const sub = document.getElementById('extCardSub');
+  const cta = document.getElementById('extCardCta');
+  card.style.display = 'flex';
+  if (state === 'paired') {
+    title.textContent = 'Extension FragValue connectee';
+    dot.className = 'ext-card-dot ok';
+    sub.textContent = 'Synchronisation auto des demos FACEIT active';
+    cta.textContent = 'Gerer';
+    cta.classList.remove('primary');
+  } else if (state === 'installed') {
+    title.textContent = 'Extension FragValue detectee';
+    dot.className = 'ext-card-dot';
+    sub.textContent = 'Cliquez pour autoriser la synchronisation';
+    cta.textContent = 'Autoriser';
+    cta.classList.add('primary');
+  } else {
+    title.textContent = 'Extension FragValue non installee';
+    dot.className = 'ext-card-dot err';
+    sub.textContent = 'Requise pour la synchro auto depuis la migration CDN FACEIT';
+    cta.textContent = 'Installer';
+    cta.classList.add('primary');
+  }
+}
+
+function refreshExtCard() {
+  const installed = document.documentElement.getAttribute('data-fv-ext-installed') === '1';
+  if (!installed) {
+    showExtCard('missing');
+    return;
+  }
+  window.postMessage({ type: 'FV_EXT_STATUS' }, '*');
+}
+
+window.addEventListener('message', (e) => {
+  if (e.source !== window) return;
+  const d = e.data;
+  if (!d || d.type !== 'FV_EXT_STATUS_REPLY') return;
+  showExtCard(d.paired ? 'paired' : 'installed');
+});
+
+init().then(() => {
+  loadNotifs();
+  setTimeout(refreshExtCard, 200);
+});
 </script>
 </body>
 </html>

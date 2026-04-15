@@ -75,7 +75,14 @@ export default async function handler(req, res) {
     const history = await histRes.json();
     const items = history.items || [];
 
-    // Inserer les matches en pending et lancer le parse pour chacun
+    // Inserer les matches en pending.
+    // IMPORTANT: depuis v0.2 on ne declenche PLUS le parser Railway ici car
+    // les URLs renvoyees par open.faceit.com/data/v4 pointent toutes sur le
+    // CDN regional Backblaze decommissionne par FACEIT en 2024. A la place,
+    // l'extension navigateur FragValue reprend cette liste, va chercher des
+    // URLs presignees fraiches via api.faceit.com (authentifie via cookies
+    // user), et les envoie a /api/submit-demo-url qui fait le fan-out au
+    // parser avec l'override demoUrl.
     const imported = [];
     for (const m of items) {
       const matchId = m.match_id;
@@ -94,34 +101,25 @@ export default async function handler(req, res) {
       }
 
       // Insert ou reset en pending — si le match existait deja en 'failed',
-      // on le repasse en pending pour que le parser puisse retenter
+      // on le repasse en pending pour que l'extension puisse retenter
       await supabase.from('matches').upsert({
         id: matchId,
         faceit_match_id: matchId,
         user_id: user.id,
         map: m.i1 || null,
         status: 'pending',
+        error_message: null,
       }, { onConflict: 'faceit_match_id' });
 
-      // Declencher le parsing cote Railway (fire and forget)
-      try {
-        await fetch(`${PARSER_URL}/process-match`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${PARSER_SECRET}`,
-          },
-          body: JSON.stringify({ matchId }),
-        });
-        imported.push({ matchId, status: 'queued' });
-      } catch (e) {
-        imported.push({ matchId, status: 'parser_error' });
-      }
+      imported.push({ matchId, status: 'queued' });
     }
 
     return res.status(200).json({
       imported: imported.length,
       matches: imported,
+      // Flag lu par l'UI pour afficher le hint extension si elle n'est pas
+      // installee. Le flow auto-import ne peut pas marcher sans extension.
+      extensionRequired: true,
     });
   } catch (err) {
     console.error('import-history error:', err);
