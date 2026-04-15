@@ -15,13 +15,18 @@ const supabase = createClient(
 const PARSER_URL = process.env.PARSER_URL || 'https://fragvalue-demo-parser-production.up.railway.app';
 const PARSER_SECRET = process.env.FACEIT_WEBHOOK_SECRET || '';
 
-// Defensive whitelist: we only accept URLs on FACEIT's known demo hosts or
-// their Backblaze B2 successor. Stops the extension from being used as an
-// open fetch-and-process relay.
+// Defensive whitelist: only accept URLs on hosts we know FACEIT uses for
+// demo distribution. Stops the extension from being used as an open
+// fetch-and-process relay. Kept broad enough to survive FACEIT swapping
+// CDN backends (observed: Backblaze direct, Backblaze-behind-CDN, AWS S3,
+// democracy.faceit.com intermediary).
 const ALLOWED_HOST_PATTERNS = [
   /(^|\.)faceit-cdn\.net$/i,
-  /(^|\.)backblazeb2\.com$/i,
   /(^|\.)faceit\.com$/i,
+  /(^|\.)backblazeb2\.com$/i,
+  /(^|\.)backblaze\.com$/i,
+  /(^|\.)amazonaws\.com$/i,
+  /(^|\.)cloudfront\.net$/i,
 ];
 
 function isAllowedDemoHost(urlStr) {
