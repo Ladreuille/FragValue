@@ -155,7 +155,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     </div>
     <button class="btn-import" id="importBtn" onclick="importHistory()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-      Importer mes 20 derniers matchs
+      Importer mes 5 derniers matchs
     </button>
   </div>
 
@@ -177,7 +177,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <div class="ov-track"><div class="ov-fill" id="ovFill"></div></div>
     <div class="ov-steps">
       <div class="ov-step" id="ovStep0"><div class="ov-step-dot"></div>Verification du compte FACEIT</div>
-      <div class="ov-step" id="ovStep1"><div class="ov-step-dot"></div>Recuperation des 20 derniers matchs</div>
+      <div class="ov-step" id="ovStep1"><div class="ov-step-dot"></div>Recuperation des 5 derniers matchs</div>
       <div class="ov-step" id="ovStep2"><div class="ov-step-dot"></div>Mise en file pour le parser Railway</div>
       <div class="ov-step" id="ovStep3"><div class="ov-step-dot"></div>Analyse des demos en arriere plan</div>
     </div>
@@ -242,7 +242,7 @@ function renderMatches(matches) {
   if (!matches.length) {
     el.innerHTML = '<div class="empty-box">' +
       '<div class="empty-box-title">AUCUN MATCH POUR L\'INSTANT</div>' +
-      '<div class="empty-box-sub">Lance l\'import pour recuperer tes 20 derniers matchs FACEIT. FragValue les analysera automatiquement en arriere-plan et tu seras notifie des qu\'ils sont prets.</div>' +
+      '<div class="empty-box-sub">Lance l\'import pour recuperer tes 5 derniers matchs FACEIT de moins d\'un mois. Pour des matchs plus anciens utilise l\'upload manuel de demo. FragValue les analysera automatiquement en arriere-plan et tu seras notifie des qu\'ils sont prets.</div>' +
       '<button class="btn-import" onclick="importHistory()">' +
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>' +
       'Importer mes matchs</button>' +
@@ -445,7 +445,7 @@ async function importHistory() {
       setOvSub(err.error || 'Erreur serveur');
       setOvFill(100);
       document.getElementById('ovClose').style.display = 'flex';
-      if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importer mes 20 derniers matchs'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importer mes 5 derniers matchs'; }
       return;
     }
 
@@ -456,7 +456,11 @@ async function importHistory() {
     markStepsDoneUntil(2);
     setOvStep(3, 'active');
     setOvFill(65);
-    setOvSub((data.imported || 0) + ' matchs en file — analyse en cours');
+    const skipped = data.skippedTooOld || 0;
+    const subImport = (data.imported || 0) + ' matchs en file' +
+      (skipped > 0 ? ' (' + skipped + ' trop anciens ignores)' : '') +
+      ' — analyse en cours';
+    setOvSub(subImport);
 
     await loadMatches();
 
@@ -465,7 +469,10 @@ async function importHistory() {
       setOvFill(100);
       markStepsDoneUntil(3);
       document.getElementById('ovTitle').textContent = 'Import termine';
-      setOvSub('Les analyses se finaliseront en arriere plan');
+      const subDone = skipped > 0
+        ? skipped + ' matchs trop anciens — upload manuel pour ceux-la'
+        : 'Les analyses se finaliseront en arriere plan';
+      setOvSub(subDone);
       document.getElementById('ovClose').style.display = 'flex';
       // Auto close apres 3s
       setTimeout(closeOverlay, 3000);
@@ -477,7 +484,7 @@ async function importHistory() {
     setOvFill(100);
     document.getElementById('ovClose').style.display = 'flex';
   }
-  if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importer mes 20 derniers matchs'; }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importer mes 5 derniers matchs'; }
 }
 
 // ============================================================================
