@@ -271,6 +271,9 @@ function friendlyReason(msg) {
   if (m.startsWith('resolve_failed:')) {
     return { title: 'Resolution echouee', sub: 'Erreur pendant la recuperation de l URL FACEIT' };
   }
+  if (m.startsWith('parser_stuck:')) {
+    return { title: 'Parser bloque', sub: 'Reset manuel effectue, cliquez Reessayer pour relancer' };
+  }
   // Parser-side errors (Railway downloadAndParse)
   if (m.includes('err_nf0') || m.includes('file not found')) {
     return { title: 'Demo expiree', sub: 'FACEIT purge les demos apres ~30 jours' };
