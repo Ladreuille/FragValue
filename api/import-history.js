@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       .eq('id', user.id)
       .single();
 
-    if (!profile?.faceit_id) {
+    if (!profile?.faceit_id && !profile?.faceit_nickname) {
       return res.status(400).json({ error: 'FACEIT non lie a ce compte' });
     }
 
@@ -41,8 +41,31 @@ export default async function handler(req, res) {
       return res.status(503).json({ error: 'FACEIT_API_KEY non configure' });
     }
 
+    // Resoudre faceit_id a la volee via le nickname si manquant (legacy profils
+    // crees avant qu'on stocke l'id) puis persister pour les prochains imports
+    let faceitId = profile.faceit_id;
+    if (!faceitId && profile.faceit_nickname) {
+      const lookupUrl = `https://open.faceit.com/data/v4/players?nickname=${encodeURIComponent(profile.faceit_nickname)}&game=cs2`;
+      const lookupRes = await fetch(lookupUrl, {
+        headers: { 'Authorization': `Bearer ${FACEIT_API_KEY}` }
+      });
+      if (!lookupRes.ok) {
+        return res.status(502).json({ error: 'FACEIT player lookup failed' });
+      }
+      const lookup = await lookupRes.json();
+      faceitId = lookup.player_id || lookup.id || null;
+      if (!faceitId) {
+        return res.status(404).json({ error: 'Joueur FACEIT introuvable' });
+      }
+      await supabase.from('profiles').update({
+        faceit_id: faceitId,
+        faceit_elo: lookup.games?.cs2?.faceit_elo || null,
+        faceit_level: lookup.games?.cs2?.skill_level || null,
+      }).eq('id', user.id);
+    }
+
     // Fetch 20 derniers matchs CS2
-    const histUrl = `https://open.faceit.com/data/v4/players/${profile.faceit_id}/history?game=cs2&offset=0&limit=20`;
+    const histUrl = `https://open.faceit.com/data/v4/players/${faceitId}/history?game=cs2&offset=0&limit=20`;
     const histRes = await fetch(histUrl, {
       headers: { 'Authorization': `Bearer ${FACEIT_API_KEY}` }
     });
