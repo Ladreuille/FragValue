@@ -1,0 +1,68 @@
+// api/matches.js
+// GET : liste des matches FragValue de l'utilisateur
+// GET ?id=... : detail d'un match + players
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', 'https://frag-value.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'Non authentifie' });
+
+  try {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) return res.status(401).json({ error: 'Token invalide' });
+
+    const matchId = req.query.id;
+
+    // Detail d'un match specifique
+    if (matchId) {
+      const { data: match, error: mErr } = await supabase
+        .from('matches')
+        .select('*')
+        .eq('faceit_match_id', matchId)
+        .single();
+      if (mErr || !match) return res.status(404).json({ error: 'Match introuvable' });
+
+      const { data: players } = await supabase
+        .from('match_players')
+        .select('*')
+        .eq('match_id', matchId)
+        .order('fv_rating', { ascending: false });
+
+      return res.status(200).json({ match, players: players || [] });
+    }
+
+    // Liste des matches du user
+    // On recupere d'abord les match_id via match_players puis on joint les matches
+    const { data: playerRows } = await supabase
+      .from('match_players')
+      .select('match_id')
+      .eq('user_id', user.id);
+
+    const matchIds = [...new Set((playerRows || []).map(p => p.match_id))];
+    if (!matchIds.length) return res.status(200).json({ matches: [] });
+
+    const { data: matches } = await supabase
+      .from('matches')
+      .select('id, faceit_match_id, map, score_ct, score_t, winner, rounds, status, parsed_at, created_at')
+      .in('faceit_match_id', matchIds)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    return res.status(200).json({ matches: matches || [] });
+  } catch (err) {
+    console.error('matches error:', err);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}

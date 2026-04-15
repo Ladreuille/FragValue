@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<link rel="icon" type="image/svg+xml" href="fragvalue_icon.svg"/>
 <title>FragValue - Analyse Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -192,6 +191,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
   <div class="nav-right">
     <a href="demo.html" class="nav-link">Analyser</a>
+    <a href="matches.html" class="nav-link" id="navMatchesBtn" style="display:none">Mes matchs</a>
     <a href="login.html" class="nav-link" id="navLoginBtn">Connexion</a>
     <a href="account.html" class="nav-cta" id="navAccountBtn" style="display:none">Mon espace</a>
   </div>
@@ -1362,9 +1362,16 @@ init();
 _sb.auth.getSession().then(({ data: { session } }) => {
   const loginBtn = document.getElementById('navLoginBtn');
   const accountBtn = document.getElementById('navAccountBtn');
+  const matchesBtn = document.getElementById('navMatchesBtn');
   if (!loginBtn || !accountBtn) return;
-  if (session) { loginBtn.style.display = 'none'; accountBtn.style.display = ''; }
-  else { loginBtn.style.display = ''; accountBtn.style.display = 'none'; }
+  if (session) {
+    loginBtn.style.display = 'none';
+    accountBtn.style.display = '';
+    if (matchesBtn) matchesBtn.style.display = '';
+  } else {
+    loginBtn.style.display = '';
+    accountBtn.style.display = 'none';
+  }
 });
 </script>
 </body>

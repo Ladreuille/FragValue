@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<link rel="icon" type="image/svg+xml" href="fragvalue_icon.svg"/>
 <title>FragValue · Mon espace</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
@@ -31,6 +30,25 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .nav-cta:hover{background:var(--accent2)}
 .nav-out{font-size:11px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border:none;background:none;font-family:var(--mono);transition:color .15s;padding:7px 12px;border-radius:var(--r);border:1px solid var(--border)}
 .nav-out:hover{border-color:var(--danger);color:var(--danger)}
+.nav-link{font-size:11px;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;text-decoration:none;font-family:var(--mono);transition:color .15s}
+.nav-link:hover{color:var(--accent)}
+.nav-bell{position:relative;cursor:pointer;padding:7px;border-radius:var(--r);border:1px solid var(--border);color:var(--text2);transition:all .15s;display:flex;align-items:center}
+.nav-bell:hover{border-color:var(--accent);color:var(--accent)}
+.bell-dot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--bg)}
+.notif-dropdown{display:none;position:absolute;top:calc(100% + 8px);right:0;width:340px;max-height:420px;overflow-y:auto;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);box-shadow:0 12px 48px rgba(0,0,0,.6);z-index:200}
+.notif-dropdown.open{display:block}
+.notif-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.notif-head-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2)}
+.notif-head-mark{font-size:9px;color:var(--text3);cursor:pointer;letter-spacing:.06em}
+.notif-head-mark:hover{color:var(--accent)}
+.notif-item{padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;display:block;text-decoration:none;color:inherit}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:var(--card)}
+.notif-item.unread{border-left:2px solid var(--accent)}
+.notif-title{font-size:11px;color:var(--text);margin-bottom:3px;letter-spacing:.02em}
+.notif-msg{font-size:10px;color:var(--text3);line-height:1.5}
+.notif-time{font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:.04em}
+.notif-empty{padding:28px 16px;text-align:center;font-size:10px;color:var(--text3)}
 
 .page{max-width:1100px;margin:0 auto;padding:36px 32px 100px;position:relative;z-index:1}
 
@@ -115,6 +133,12 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 <nav>
   <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
   <div class="nav-right">
+    <a href="matches.html" class="nav-link">MES MATCHS</a>
+    <div class="nav-bell" id="navBell" onclick="toggleNotifs(event)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="bell-dot" id="bellDot" style="display:none"></span>
+      <div class="notif-dropdown" id="notifDropdown"></div>
+    </div>
     <a href="demo.html" class="nav-cta">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
       Nouvelle démo
@@ -315,10 +339,38 @@ async function init() {
     kpiRow.appendChild(eloKpi);
   }
 
+  // Source 1 : demos uploadees manuellement
   const { data: demos } = await _sb.from('demos')
     .select('*').eq('user_id', u.id)
     .order('analysed_at', { ascending:false }).limit(100);
-  const list = demos || [];
+
+  // Source 2 : matches FACEIT auto-parses (via match_players + matches join)
+  const { data: mpRows } = await _sb.from('match_players')
+    .select('fv_rating, kills, deaths, match_id, matches(map, rounds, parsed_at, created_at)')
+    .eq('user_id', u.id)
+    .order('fv_rating', { ascending: false })
+    .limit(100);
+
+  // Fusionner en un format commun pour les renderers existants
+  const demoRows = (demos || []).map(d => ({
+    fv_rating: d.fv_rating,
+    total_kills: d.total_kills,
+    rounds: d.rounds,
+    map: d.map,
+    analysed_at: d.analysed_at,
+    source: 'demo',
+  }));
+  const matchRows = (mpRows || []).filter(r => r.matches).map(r => ({
+    fv_rating: r.fv_rating,
+    total_kills: r.kills,
+    rounds: r.matches.rounds,
+    map: r.matches.map,
+    analysed_at: r.matches.parsed_at || r.matches.created_at,
+    source: 'match',
+    match_id: r.match_id,
+  }));
+  const list = [...demoRows, ...matchRows]
+    .sort((a, b) => new Date(b.analysed_at) - new Date(a.analysed_at));
 
   renderKPIs(list);
   renderChart(list);
@@ -493,7 +545,82 @@ async function refreshProfile() {
 }
 
 async function logout(){await _sb.auth.signOut();window.location.href='index.html';}
-init();
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+let _notifCache = [];
+
+async function loadNotifs() {
+  const { data:{ session } } = await _sb.auth.getSession();
+  if (!session) return;
+  try {
+    const r = await fetch('/api/notifications', {
+      headers: { 'Authorization': 'Bearer ' + session.access_token }
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    _notifCache = data.notifications || [];
+    document.getElementById('bellDot').style.display = data.unread > 0 ? 'block' : 'none';
+    renderNotifDropdown();
+  } catch (_) {}
+}
+
+function renderNotifDropdown() {
+  const dd = document.getElementById('notifDropdown');
+  if (!_notifCache.length) {
+    dd.innerHTML = '<div class="notif-head"><span class="notif-head-title">Notifications</span></div><div class="notif-empty">Aucune notification</div>';
+    return;
+  }
+  const fmt = (d) => {
+    const diff = (Date.now() - new Date(d).getTime()) / 1000;
+    if (diff < 60) return 'a l\'instant';
+    if (diff < 3600) return Math.floor(diff/60) + ' min';
+    if (diff < 86400) return Math.floor(diff/3600) + ' h';
+    return Math.floor(diff/86400) + ' j';
+  };
+  dd.innerHTML = '<div class="notif-head"><span class="notif-head-title">Notifications</span><span class="notif-head-mark" onclick="markAllNotifs(event)">Tout marquer lu</span></div>' +
+    _notifCache.slice(0, 20).map(n => {
+      const href = n.match_id ? 'matches.html?id=' + encodeURIComponent(n.match_id) : 'matches.html';
+      return '<a class="notif-item ' + (n.read ? '' : 'unread') + '" href="' + href + '">' +
+        '<div class="notif-title">' + (n.title || '') + '</div>' +
+        '<div class="notif-msg">' + (n.message || '') + '</div>' +
+        '<div class="notif-time">' + fmt(n.created_at) + '</div>' +
+        '</a>';
+    }).join('');
+}
+
+function toggleNotifs(e) {
+  e.stopPropagation();
+  document.getElementById('notifDropdown').classList.toggle('open');
+}
+
+async function markAllNotifs(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  const { data:{ session } } = await _sb.auth.getSession();
+  if (!session) return;
+  await fetch('/api/notifications', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + session.access_token,
+    },
+    body: JSON.stringify({ all: true }),
+  });
+  _notifCache.forEach(n => n.read = true);
+  document.getElementById('bellDot').style.display = 'none';
+  renderNotifDropdown();
+}
+
+document.addEventListener('click', (e) => {
+  const bell = document.getElementById('navBell');
+  if (bell && !bell.contains(e.target)) {
+    document.getElementById('notifDropdown')?.classList.remove('open');
+  }
+});
+
+init().then(() => loadNotifs());
 </script>
 </body>
 </html>

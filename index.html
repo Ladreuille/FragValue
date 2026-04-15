@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="fragvalue_icon.svg"/>
 <title>FragValue · Analyse CS2 Pro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -432,6 +431,7 @@ footer{
     <a href="/demo.html">Analyser</a>
   </div>
   <div id="navAuth">
+    <a href="/matches.html" class="nav-cta" id="navMatchesBtn" style="display:none;background:transparent;color:var(--accent);border:1px solid rgba(184,255,87,.3)">MES MATCHS</a>
     <a href="/login.html" class="nav-cta" id="navLoginBtn">Se connecter</a>
     <a href="/account.html" class="nav-cta" id="navAccountBtn" style="display:none">Mon espace</a>
   </div>
@@ -844,6 +844,8 @@ _sb.auth.getSession().then(({ data }) => {
   if (data.session) {
     document.getElementById('navLoginBtn').style.display  = 'none';
     document.getElementById('navAccountBtn').style.display = '';
+    const mb = document.getElementById('navMatchesBtn');
+    if (mb) mb.style.display = '';
   }
 });
 

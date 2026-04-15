@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<link rel="icon" type="image/svg+xml" href="fragvalue_icon.svg"/>
 <title>FragValue · Analyser une démo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
@@ -328,6 +327,7 @@ nav{
     <a href="index.html">Accueil</a>
     <a href="index.html#pricing">Tarifs</a>
     <a href="demo.html" class="active">Analyse</a>
+    <a href="matches.html" id="navMatchesBtn" style="display:none">Mes matchs</a>
     <a href="login.html" id="navLoginBtn">Connexion</a>
     <a href="account.html" class="nav-cta" id="navAccountBtn" style="display:none">Mon espace</a>
   </div>
@@ -713,6 +713,8 @@ _sb.auth.getSession().then(({ data }) => {
   if (data.session) {
     document.getElementById('navLoginBtn').style.display  = 'none';
     document.getElementById('navAccountBtn').style.display = '';
+    const mb = document.getElementById('navMatchesBtn');
+    if (mb) mb.style.display = '';
   }
 });
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FragValue · 2D Demo Replay</title>
-  <link rel="icon" type="image/svg+xml" href="fragvalue_icon.svg"/>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzA4MDkwRCIvPgogIDxyZWN0IHg9IjUiIHk9IjUiIHdpZHRoPSIzLjUiIGhlaWdodD0iMjAiIHJ4PSIxLjUiIGZpbGw9IiMzQjdGRjUiLz4KICA8cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iMTMiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHJlY3QgeD0iNSIgeT0iMTMuNSIgd2lkdGg9IjkiIGhlaWdodD0iMy41IiByeD0iMS41IiBmaWxsPSIjM0I3RkY1Ii8+CiAgPHBhdGggZD0iTTE1LjUgOC41IEwyMC41IDIzLjUgTDI1LjUgOC41IiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIxNS41IiB5MT0iOC41IiB4Mj0iMjUuNSIgeTI9IjIzLjUiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzNCN0ZGNSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMyREQ0QTAiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgo8L3N2Zz4="/>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -67,7 +67,7 @@
     .tb-logo span{color:var(--accent)}
 
     /* ── Main area: sidebar left + canvas + sidebar right ────── */
-    .main{flex:1;display:grid;grid-template-columns:220px 1fr 280px;min-height:0;overflow:hidden}
+    .main{flex:1;display:grid;grid-template-columns:220px 1fr 240px;min-height:0;overflow:hidden}
 
     /* ── Left sidebar: shortcuts ────────────────────────────────── */
     .sidebar-left{
@@ -167,12 +167,9 @@
       overflow:hidden;margin:4px 0 3px;
     }
     .player-hp-fill{height:100%;border-radius:2px;transition:width .3s}
-    .player-gear{display:flex;align-items:center;gap:6px;min-height:16px;margin-top:4px;padding:2px 0;flex-wrap:wrap}
-    .player-gear .icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0;height:14px}
-    .player-gear .icon svg{display:block;height:14px;width:auto}
-    .player-gear .icon img{display:block;height:14px;width:auto;max-width:48px;filter:brightness(1.2) invert(0)}
-    .player-gear .icon.off{opacity:.4}
-    .player-gear .icon.off img{filter:brightness(.6) grayscale(1)}
+    .player-gear{display:flex;align-items:center;gap:4px;min-height:16px;margin-top:1px}
+    .player-gear .icon{display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .player-gear .icon.off{opacity:.15}
 
     /* ── Bottom bar: rounds + timeline + controls ──────────────── */
     .bottombar{
@@ -461,9 +458,6 @@ let currentRound = null, frames = [], frameIdx = 0;
 let playing = false, timer = null, speed = 1;
 const FPS = 30;
 let shotsConverted = false;
-// Per-round filtered positions, shared by buildFrames and drawTrails so trails
-// cannot include samples from outside the current round.
-let currentRoundPos = {};
 
 // ══ UTILS ════════════════════════════════════════════════════════════════════
 function assignColors() {
@@ -580,7 +574,6 @@ window.addEventListener('load', async () => {
 
     detectKnifeRounds();
     convertPositionTicks();
-    recalcRoundBoundaries();
     loadMapImage(() => {
       initRoundsBar();
       initTeamPanels();
@@ -651,23 +644,46 @@ function detectKnifeRounds() {
 }
 
 function convertPositionTicks() {
-  // The parser emits ABSOLUTE ticks (row.tick from parseTicks, counted from
-  // the start of the demo including warmup). Earlier parser versions emitted
-  // per-round relative ticks; the legacy "< 1000 ⇒ relative" conversion below
-  // is ACTIVELY HARMFUL against the current parser, because small absolute
-  // ticks (warmup samples like 31, 63, 95, ...) get rewritten to
-  // startTick + originalTick, which collides with legitimate knife-round
-  // samples already at those absolute ticks. After sort the array contains
-  // duplicate ticks with wildly different (x, y), and the buildFrames bracket
-  // search picks two "adjacent" samples from different game phases, producing
-  // 3000+ unit jumps → players frozen at spawn while trails zigzag (reported
-  // replay bug at round 0).
-  //
-  // Fix: don't rewrite ticks. Just sort defensively in case any upstream
-  // step leaves the array out of order.
+  const rounds = demoData.rounds || [];
   const pos = demoData.positions || {};
-  Object.values(pos).forEach(pts => pts.sort((a, b) => (a.tick || 0) - (b.tick || 0)));
-  console.log('[Replay] Positions assumed absolute, sorted defensively');
+  const firstPts = Object.values(pos)[0];
+  if (!firstPts || !firstPts.length) return;
+  const stMap = {};
+  rounds.forEach(r => { stMap[r.round ?? 0] = r.startTick || 0; });
+
+  // Step 1: convert relative ticks (< 1000) to absolute
+  let converted = 0;
+  Object.values(pos).forEach(pts => {
+    pts.forEach(p => {
+      if ((p.tick || 0) > 1000) return;
+      const freezeR = (p.round || 1) - 1;
+      p.tick = (stMap[freezeR] || 0) + (p.tick || 0);
+      converted++;
+    });
+  });
+  console.log(`[Replay] ${converted} positions converties en ticks absolus`);
+
+  // Step 2: detect tick offset between positions and round boundaries
+  // parseTicks and parseEvent can use different tick bases in demoparser2
+  if (converted === 0 && rounds.length > 1) {
+    const testRound = rounds.find(r => !r.isKnife && r.startTick > 0);
+    if (testRound) {
+      const testKillsR = testRound.killsRound ?? ((testRound.round ?? 0) + 1);
+      const roundPts = [];
+      Object.values(pos).forEach(pts => {
+        pts.forEach(p => { if (p.round === testKillsR || p.round === testRound.round) roundPts.push(p); });
+      });
+      if (roundPts.length > 0) {
+        const posMinTick = Math.min(...roundPts.map(p => p.tick || 0));
+        const offset = testRound.startTick - posMinTick;
+        console.log(`[Replay] Tick offset check: posMin=${posMinTick}, roundStart=${testRound.startTick}, offset=${offset}`);
+        if (Math.abs(offset) > 500) {
+          console.log(`[Replay] Applying tick offset ${offset} to all positions`);
+          Object.values(pos).forEach(pts => pts.forEach(p => { p.tick = (p.tick || 0) + offset; }));
+        }
+      }
+    }
+  }
 }
 
 function getFirstRealRound() {
@@ -676,34 +692,6 @@ function getFirstRealRound() {
     if (!rnds[i].isKnife) return rnds[i].round ?? i;
   }
   return rnds[0]?.round ?? 0;
-}
-
-// Compute gameplayEnd (last kill + small buffer) for each round.
-// Parser's endTick = freeze_end(N+1) - 1 extends into the NEXT round's walk-back
-// and buy phase, which caused alive players to be seen returning to spawn at
-// the end of each round. We clip maxT to lastKill + buffer so the replay stops
-// right after the decisive kill. Lower bound stays at rd.startTick = freeze_end(N),
-// which naturally excludes the previous round's walk-back samples (their tick
-// is < freeze_end(N)).
-function recalcRoundBoundaries() {
-  const rounds = demoData.rounds || [];
-  const kills = demoData.kills || [];
-  const POST_ROUND_BUFFER = 128; // ~2s after last kill
-
-  rounds.forEach((rd, i) => {
-    const st = rd.startTick || 0;
-    const et = rd.endTick || (rounds[i + 1]?.startTick || 0) || (st + 115 * 64);
-    const rdKills = kills.filter(k => {
-      const t = k.tick || 0;
-      return t >= st && t <= et;
-    });
-    const lastKillT = rdKills.length > 0 ? Math.max(...rdKills.map(k => k.tick || 0)) : 0;
-    rd.gameplayEnd = lastKillT > 0
-      ? lastKillT + POST_ROUND_BUFFER
-      : (rd.endTick || (st + 90 * 64));
-  });
-
-  console.log('[Replay] Boundaries recalculated for', rounds.length, 'rounds');
 }
 
 // ══ ROUNDS BAR ═══════════════════════════════════════════════════════════════
@@ -786,13 +774,11 @@ function renderTeamPlayers(containerId, players) {
   const hpColor = isCT ? '#4A9EFF' : '#F5C842';
   el.innerHTML = players.map(p => {
     const c = getColor(p.name);
-    const safeName = p.name.replace(/'/g, "\\'");
-    return `<div class="player-row active" data-name="${p.name}" data-alive="true" onclick="togglePlayer('${safeName}')">
+    return `<div class="player-row active" data-name="${p.name}" onclick="togglePlayer('${p.name.replace(/'/g, "\\'")}')">
       <div class="player-row-top">
-        <span class="player-dot" style="background:${c.solid};color:${c.solid}"></span>
-        <span class="player-name">${p.name.substring(0, 14)}</span>
-        <span class="player-kills" data-field="kills"></span>
-        <span class="player-money" data-field="money"></span>
+        <div class="player-dot" style="background:${c.solid};color:${c.solid}"></div>
+        <div class="player-name">${p.name.substring(0, 14)}</div>
+        <div class="player-money" data-field="money"></div>
       </div>
       <div class="player-hp-bar"><div class="player-hp-fill" data-field="hp" style="width:100%;background:${hpColor}"></div></div>
       <div class="player-gear" data-field="gear"></div>
@@ -805,11 +791,11 @@ function updateScores() {
   const rounds = demoData.rounds || [];
   let ctScore = 0, tScore = 0;
 
-  // Count wins strictly BEFORE current round (current round not yet decided)
+  // Count wins up to current round
   rounds.forEach(rd => {
     if (rd.isKnife) return;
     const freezeR = rd.round ?? 0;
-    if (currentRound !== null && freezeR >= currentRound) return;
+    if (currentRound !== null && freezeR > currentRound) return;
     if (rd.winner === 2) tScore++; // team 2 = T wins
     else if (rd.winner === 3) ctScore++; // team 3 = CT wins
   });
@@ -819,53 +805,16 @@ function updateScores() {
 }
 
 // Weapon icon via real SVG files in /icons/
-// @laihoe/demoparser2 active_weapon_name returns a MIX of:
-//   - internal classnames: knife, knife_t, bayonet, c4, ...
-//   - display names: "AK-47", "USP-S", "M4A1-S", "Desert Eagle", ...
-// This map handles both formats, normalized via normalizeWeaponName().
+// Maps CS2 weapon names to SVG file names
 const WEAPON_FILE_MAP = {
-  // Rifles
-  ak47:'ak47', 'ak-47':'ak47',
-  m4a1:'m4a1', m4a4:'m4a1', 'm4a4':'m4a1',
-  m4a1_silencer:'m4a1_silencer', 'm4a1-s':'m4a1_silencer',
-  m4a1_silencer_off:'m4a1_silencer_off',
-  galil:'galilar', galilar:'galilar', 'galil ar':'galilar', 'galilar':'galilar',
-  famas:'famas',
-  aug:'aug',
-  sg556:'sg556', 'sg 553':'sg556', 'sg553':'sg556',
-  // Snipers
-  awp:'awp',
-  ssg08:'ssg08', 'ssg 08':'ssg08', 'ssg-08':'ssg08',
-  scar20:'scar20', 'scar-20':'scar20',
-  g3sg1:'g3sg1',
-  // SMGs
-  mp9:'mp9',
-  mac10:'mac10', 'mac-10':'mac10',
-  mp7:'mp7',
-  ump45:'ump45', 'ump-45':'ump45',
-  p90:'p90',
-  mp5sd:'mp5sd', 'mp5-sd':'mp5sd',
-  bizon:'bizon', 'pp-bizon':'bizon',
-  // Pistols
-  deagle:'deagle', 'desert eagle':'deagle',
-  glock:'glock', 'glock-18':'glock',
-  usp_silencer:'usp_silencer', 'usp-s':'usp_silencer',
-  usp_silencer_off:'usp_silencer_off',
-  hkp2000:'hkp2000', p2000:'p2000',
-  p250:'p250',
-  fiveseven:'fiveseven', 'five-seven':'fiveseven', 'fiveseven':'fiveseven',
-  tec9:'tec9', 'tec-9':'tec9',
-  elite:'elite', 'dual berettas':'elite',
-  cz75a:'cz75a', cz75_auto:'cz75a', 'cz75-auto':'cz75a',
-  revolver:'revolver', 'r8 revolver':'revolver',
-  // Heavy
-  nova:'nova',
-  xm1014:'xm1014',
-  mag7:'mag7', 'mag-7':'mag7',
-  sawedoff:'sawedoff', 'sawed-off':'sawedoff',
-  m249:'m249',
-  negev:'negev',
-  // Knives
+  ak47:'ak47', m4a1:'m4a1', m4a1_silencer:'m4a1_silencer', m4a1_silencer_off:'m4a1_silencer_off',
+  m4a4:'m4a1', galil:'galilar', galilar:'galilar', famas:'famas',
+  aug:'aug', sg556:'sg556', awp:'awp', ssg08:'ssg08', scar20:'scar20', g3sg1:'g3sg1',
+  mp9:'mp9', mac10:'mac10', mp7:'mp7', ump45:'ump45', p90:'p90', mp5sd:'mp5sd', bizon:'bizon',
+  deagle:'deagle', glock:'glock', usp_silencer:'usp_silencer', usp_silencer_off:'usp_silencer_off',
+  hkp2000:'hkp2000', p2000:'p2000', p250:'p250', fiveseven:'fiveseven',
+  tec9:'tec9', elite:'elite', cz75a:'cz75a', cz75_auto:'cz75a', revolver:'revolver',
+  nova:'nova', xm1014:'xm1014', mag7:'mag7', sawedoff:'sawedoff', m249:'m249', negev:'negev',
   knife:'knife', knife_t:'knife_t', bayonet:'bayonet',
   knife_karambit:'knife_karambit', knife_butterfly:'knife_butterfly', knife_flip:'knife_flip',
   knife_m9_bayonet:'knife_m9_bayonet', knife_gut:'knife_gut', knife_falchion:'knife_falchion',
@@ -875,30 +824,14 @@ const WEAPON_FILE_MAP = {
   knife_css:'knife_css', knife_cord:'knife_cord', knife_canis:'knife_canis',
   knife_outdoor:'knife_outdoor', knife_push:'knife_push', knife_twinblade:'knife_twinblade',
   knife_gypsy_jackknife:'knife_gypsy_jackknife',
-  // Grenades
-  hegrenade:'hegrenade', 'he grenade':'hegrenade', 'he':'hegrenade',
-  flashbang:'flashbang',
-  smokegrenade:'smokegrenade', 'smoke grenade':'smokegrenade', 'smoke':'smokegrenade',
-  molotov:'molotov',
-  incgrenade:'incgrenade', 'incendiary grenade':'incgrenade', 'incendiary':'incgrenade',
-  decoy:'decoy', 'decoy grenade':'decoy',
-  // Utility
-  c4:'c4', planted_c4:'planted_c4',
-  taser:'taser', 'zeus x27':'taser', 'zeus':'taser',
+  hegrenade:'hegrenade', flashbang:'flashbang', smokegrenade:'smokegrenade',
+  molotov:'molotov', incgrenade:'incgrenade', decoy:'decoy',
+  c4:'c4', planted_c4:'planted_c4', taser:'taser',
 };
-
-// Normalize CS2 weapon name (classname OR display name) to a map key
-function normalizeWeaponName(raw) {
-  if (!raw) return '';
-  return String(raw)
-    .replace(/^weapon_/i, '')
-    .toLowerCase()
-    .trim();
-}
 
 function weaponIconImg(weaponName, height) {
   if (!weaponName) return '';
-  const clean = normalizeWeaponName(weaponName);
+  const clean = weaponName.replace('weapon_', '').toLowerCase();
   const file = WEAPON_FILE_MAP[clean] || null;
   if (!file) return '<span style="font-size:9px;color:var(--text3)">' + clean + '</span>';
   const h = height || 14;
@@ -912,9 +845,9 @@ const WEAPON_ICONS_INLINE = {
 
 function getWeaponIcon(weaponName, color) {
   if (!weaponName) return '';
-  const clean = normalizeWeaponName(weaponName);
+  const clean = weaponName.replace('weapon_', '').toLowerCase();
   const file = WEAPON_FILE_MAP[clean];
-  if (file) return '<img src="icons/' + file + '.svg" alt="' + clean + '" height="14" loading="lazy">';
+  if (file) return '<img src="icons/' + file + '.svg" height="12" style="vertical-align:middle;filter:brightness(0.9)" loading="lazy">';
   return WEAPON_ICONS_INLINE.default.replace(/CL/g, color);
 }
 function getHelmetIcon(active) {
@@ -930,25 +863,24 @@ function getDefuseIcon(active) {
   return '<svg width="10" height="10" viewBox="0 0 10 10"><line x1="5" y1="1" x2="5" y2="9" stroke="' + c + '" stroke-width="1.5"/><line x1="1" y1="5" x2="9" y2="5" stroke="' + c + '" stroke-width="1.5"/></svg>';
 }
 
-let _gearDebugLogged = false;
 function updatePlayerStates(frame) {
   if (!frame) return;
+  const kills = demoData.kills || [];
+  const roundData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
+  const startTick = roundData.startTick || 0;
+  const endTick = roundData.endTick || 999999;
 
-  (demoData.playerStats || []).forEach((p, pIdx) => {
+  (demoData.playerStats || []).forEach(p => {
     const escaped = CSS.escape(p.name);
     const row = document.querySelector(`.player-row[data-name="${escaped}"]`);
-    if (!row) {
-      if (!_gearDebugLogged && pIdx === 0) console.warn('[updatePlayerStates] no row for', p.name);
-      return;
-    }
+    if (!row) return;
 
     const state = frame.players[p.name];
     const alive = state ? state.alive : true;
     const hp = alive ? (state?.hp ?? 100) : 0;
-    const team = state?.team === 3 ? 'CT' : (state?.team === 2 ? 'T' : (window._ctNames && window._ctNames.includes(p.name) ? 'CT' : 'T'));
+    const team = state?.team === 3 ? 'CT' : 'T';
     const color = team === 'CT' ? '#4A9EFF' : '#F5C842';
 
-    row.setAttribute('data-alive', alive ? 'true' : 'false');
     row.classList.toggle('dead', !alive);
     row.classList.toggle('active', !hiddenPlayers.has(p.name));
 
@@ -956,6 +888,7 @@ function updatePlayerStates(frame) {
     const hpFill = row.querySelector('[data-field="hp"]');
     if (hpFill) {
       hpFill.style.width = (alive ? Math.max(hp, 0) : 0) + '%';
+      // Color shifts to red when low HP
       if (hp < 25 && alive) hpFill.style.background = '#ff4444';
       else hpFill.style.background = color;
     }
@@ -965,35 +898,25 @@ function updatePlayerStates(frame) {
     const money = state?.money ?? 0;
     if (moneyEl) moneyEl.textContent = (money > 0) ? '$' + money : '';
 
-    // Gear row (weapon, helmet, armor, defuse)
-    const gear = row.querySelector('.player-gear');
-    if (!gear) { console.warn('player-gear not found for', p.name); return; }
-
-    const offCol = '#5a5d5d';
-    let html = '';
-    // Weapon
-    if (state?.weapon) {
-      html += '<span class="icon">' + getWeaponIcon(state.weapon, color) + '</span>';
-    } else {
-      html += '<span class="icon off">' + WEAPON_ICONS_INLINE.default.replace(/CL/g, offCol) + '</span>';
-    }
-    // Helmet
-    html += '<span class="icon' + (state?.hasHelmet ? '' : ' off') + '">' + getHelmetIcon(!!state?.hasHelmet) + '</span>';
-    // Armor
-    const hasArmor = (state?.armor ?? 0) > 0;
-    html += '<span class="icon' + (hasArmor ? '' : ' off') + '">' + getArmorIcon(hasArmor, color) + '</span>';
-    // Defuse kit (CT only)
-    if (team === 'CT') {
-      html += '<span class="icon' + (state?.hasDefuser ? '' : ' off') + '">' + getDefuseIcon(!!state?.hasDefuser) + '</span>';
-    }
-    gear.innerHTML = html;
-
-    if (!_gearDebugLogged && pIdx === 0) {
-      console.log('[updatePlayerStates] sample player:', p.name,
-        'state:', state ? { w: state.weapon, hp: state.hp, a: state.armor, he: state.hasHelmet, d: state.hasDefuser, m: state.money } : 'NO STATE',
-        'gear.innerHTML length:', gear.innerHTML.length,
-        'children:', gear.children.length);
-      _gearDebugLogged = true;
+    // Gear row
+    const gearEl = row.querySelector('[data-field="gear"]');
+    if (gearEl) {
+      let html = '';
+      // Weapon
+      if (state?.weapon) {
+        html += '<span class="icon">' + getWeaponIcon(state.weapon, color) + '</span>';
+      } else {
+        html += '<span class="icon off">' + WEAPON_ICONS_INLINE.default.replace(/CL/g, '#2a2c2c') + '</span>';
+      }
+      // Helmet
+      html += '<span class="icon' + (state?.hasHelmet ? '' : ' off') + '">' + getHelmetIcon(!!state?.hasHelmet) + '</span>';
+      // Armor
+      html += '<span class="icon' + ((state?.armor ?? 0) > 0 ? '' : ' off') + '">' + getArmorIcon((state?.armor ?? 0) > 0, color) + '</span>';
+      // Defuse kit (CT only)
+      if (team === 'CT') {
+        html += '<span class="icon' + (state?.hasDefuser ? '' : ' off') + '">' + getDefuseIcon(!!state?.hasDefuser) + '</span>';
+      }
+      gearEl.innerHTML = html;
     }
   });
 }
@@ -1009,7 +932,6 @@ function togglePlayer(name) {
 // ══ ROUND SELECTION ══════════════════════════════════════════════════════════
 function selectRound(round, btn) {
   shotsConverted = false;
-  _gearDebugLogged = false;
   currentRound = round;
   clearInterval(timer); playing = false; setPlayPause(false);
   document.querySelectorAll('.rnd').forEach(b => b.classList.remove('sel'));
@@ -1028,12 +950,8 @@ function selectRound(round, btn) {
 function buildFrames(round) {
   const positions = demoData.positions || {}, kills = demoData.kills || [];
   const roundData = (demoData.rounds || []).find(r => (r.round ?? -1) === round) || {};
-  // Lower bound: parser's startTick = freeze_end(N) = start of gameplay.
-  // This naturally excludes the previous round's walk-back samples.
-  // Upper bound: gameplayEnd = lastKill + buffer so the replay doesn't overflow
-  // into the next round's walk-back and buy phase.
   const startTick = roundData.startTick || 0;
-  const endTick = roundData.gameplayEnd ?? (roundData.endTick || 0);
+  const endTick = roundData.endTick || 0;
   const killsR = roundData.killsRound ?? (round + 1);
 
   console.log('[buildFrames] round:', round, 'killsR:', killsR, 'ticks:', startTick, '-', endTick, 'posPlayers:', Object.keys(positions).length);
@@ -1083,12 +1001,6 @@ function buildFrames(round) {
 
   if (!Object.keys(roundPos).length && !roundKills.length) { frames = []; return; }
 
-  // Per-player tick range: pts[0].tick and pts[last].tick for each player
-  const perPlayerRange = {};
-  Object.entries(roundPos).forEach(([name, pts]) => {
-    if (pts.length) perPlayerRange[name] = { first: pts[0].tick || 0, last: pts[pts.length - 1].tick || 0, count: pts.length };
-  });
-
   const posTicks = [];
   Object.values(roundPos).forEach(pts => pts.forEach(p => posTicks.push(p.tick || 0)));
   if (!posTicks.length && !roundKills.length) { frames = []; return; }
@@ -1096,37 +1008,22 @@ function buildFrames(round) {
   // Use position tick range when fallback was used (ticks may not align with round boundaries)
   const posMin = posTicks.length ? Math.min(...posTicks) : 0;
   const posMax = posTicks.length ? Math.max(...posTicks) : 0;
-  // Start at first actual position data across ALL players to avoid frozen frames
-  const minT = usedFallback ? posMin : (posMin > 0 ? posMin : (startTick > 0 ? startTick : 0));
+  const minT = usedFallback ? posMin : (startTick > 0 ? startTick : posMin);
   const lastKillTick = roundKills.length > 0 ? Math.max(...roundKills.map(k => k.tick || 0)) : 0;
   const postKillBuffer = 128;
   let maxT;
   if (usedFallback) {
     maxT = posMax > posMin ? posMax : posMin + 1;
   } else {
-    // Always include posMax so every player's last sample is reachable
-    const killEnd = lastKillTick > 0 ? lastKillTick + postKillBuffer : 0;
-    maxT = Math.max(killEnd, endTick || 0, posMax || 0, minT + 1);
+    maxT = lastKillTick > minT
+      ? lastKillTick + postKillBuffer
+      : (endTick > minT ? endTick : (posMax > minT ? posMax : minT + 1));
   }
 
   const span = Math.max(maxT - minT, 1);
   const durSec = span / 64;
-  // N = durSec * FPS gives real-time playback. The old clamp at 1800 frames
-  // capped wall-clock playback at 60s, which compressed any round longer than
-  // 60s into 60s of wall time → 1.5x–2x constant speedup that felt worst at
-  // round start when players sprint out of spawn. Raise to 7200 (= 4 minutes
-  // at 30fps) so every realistic round plays at true 1x.
-  const N = Math.min(7200, Math.max(80, Math.round(durSec * FPS)));
+  const N = Math.min(1800, Math.max(80, Math.round(durSec * FPS)));
   const MAX_INTERP_DIST = 500;
-  const playbackSpeed = (durSec * FPS) / N;
-
-  console.log('[buildFrames] minT:', minT, 'maxT:', maxT, 'span:', span, 'N:', N,
-    'durSec:', durSec.toFixed(1), 'playback:', playbackSpeed.toFixed(2) + 'x');
-  const rangeSample = Object.entries(perPlayerRange).slice(0, 3).map(([n, r]) => `${n}:[${r.first}-${r.last}]/${r.count}`).join(' ');
-  console.log('[buildFrames] player ranges:', rangeSample);
-
-  // Expose filtered positions for drawTrails so it uses the same per-round slice
-  currentRoundPos = roundPos;
 
   frames = [];
   for (let f = 0; f <= N; f++) {
@@ -1134,32 +1031,16 @@ function buildFrames(round) {
     const frame = { tick, players: {}, deaths: [] };
     Object.entries(roundPos).forEach(([name, pts]) => {
       if (!pts.length) return;
-
-      // Proper clamping: if outside sample range, freeze at nearest endpoint (no teleport)
-      let prev, next;
-      const firstTick = pts[0].tick || 0;
-      const lastTick = pts[pts.length - 1].tick || 0;
-      if (tick <= firstTick) {
-        prev = next = pts[0];
-      } else if (tick >= lastTick) {
-        prev = next = pts[pts.length - 1];
-      } else {
-        // Linear search for bracket (pts sorted by tick)
-        prev = pts[0]; next = pts[pts.length - 1];
-        for (let i = 0; i < pts.length - 1; i++) {
-          if ((pts[i].tick || 0) <= tick && (pts[i + 1].tick || 0) >= tick) {
-            prev = pts[i]; next = pts[i + 1]; break;
-          }
-        }
+      let prev = pts[0], next = pts[pts.length - 1];
+      for (let i = 0; i < pts.length - 1; i++) {
+        if ((pts[i].tick || 0) <= tick && (pts[i + 1].tick || 0) >= tick) { prev = pts[i]; next = pts[i + 1]; break; }
       }
-
       const s = Math.max((next.tick || 0) - (prev.tick || 0), 1);
       const t = Math.min(1, Math.max(0, (tick - (prev.tick || 0)) / s));
       const dx = next.x - prev.x, dy = next.y - prev.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       let px, py;
       if (dist > MAX_INTERP_DIST) {
-        // Teleport / respawn / large gap: snap to whichever endpoint is closer in time
         px = t < 0.5 ? prev.x : next.x;
         py = t < 0.5 ? prev.y : next.y;
       } else {
@@ -1176,9 +1057,6 @@ function buildFrames(round) {
         hasDefuser: nearest.hasDefuser || false,
         money: nearest.money ?? 0,
         yaw: nearest.yaw ?? 0,
-        _dbg: { pt: prev.tick, px: Math.round(prev.x), py: Math.round(prev.y),
-                nt: next.tick, nx: Math.round(next.x), ny: Math.round(next.y),
-                t: t.toFixed(2), dist: Math.round(dist), snap: dist > MAX_INTERP_DIST ? 1 : 0 },
       };
     });
     roundKills.forEach(k => {
@@ -1188,16 +1066,6 @@ function buildFrames(round) {
       }
     });
     frames.push(frame);
-  }
-
-  // Dump first/middle/last frame positions for a sample player to verify interpolation
-  const samplePlayer = Object.keys(roundPos)[0];
-  if (samplePlayer && frames.length > 10) {
-    const snap = (i) => {
-      const p = frames[i].players[samplePlayer];
-      return p ? `f${i}(tick=${Math.round(frames[i].tick)}): x=${Math.round(p.x)} y=${Math.round(p.y)} w=${p.weapon || 'null'}` : `f${i}:NO`;
-    };
-    console.log(`[buildFrames] ${samplePlayer} samples:`, snap(0), '|', snap(Math.floor(frames.length/4)), '|', snap(Math.floor(frames.length/2)), '|', snap(frames.length-1));
   }
 
   // Update timer total
@@ -1388,67 +1256,8 @@ function drawFrame(idx) {
   // Effects (grenades + shots)
   drawEffects(frame, W, H);
 
-  // Killfeed (top-right of the map)
-  drawKillfeed(frame, W, H);
-
-  // ── DIAGNOSTIC OVERLAY (temporary) ──
-  {
-    const firstName = Object.keys(frame.players)[0];
-    const rp = (currentRoundPos && firstName) ? (currentRoundPos[firstName] || []) : [];
-    const tickNow = frame.tick || 0;
-    const TRAIL_TICKS = 400;
-    const trailPts = rp.filter(pt => {
-      const t = pt.tick || 0;
-      return t >= tickNow - TRAIL_TICKS && t <= tickNow;
-    });
-    const t0 = trailPts[0], tl = trailPts[trailPts.length - 1];
-    const curP = firstName ? frame.players[firstName] : null;
-    const minTf = frames[0]?.tick || 0;
-    const maxTf = frames[frames.length - 1]?.tick || 0;
-    const span = maxTf - minTf;
-    // Count ALL things being drawn right now
-    const nKills = (demoData.kills || []).filter(k => {
-      const kt = k.tick || 0;
-      return kt > 0 && tickNow >= kt && tickNow <= kt + 12;
-    }).length;
-    const nShots = (demoData.shots || []).filter(s => {
-      const st = s.absTick || s.tick || 0;
-      return st > 0 && tickNow >= st && tickNow <= st + 6;
-    }).length;
-    const nGren = (demoData.grenades || []).filter(g => {
-      if (!g.tick || !g.detonTick) return false;
-      return (tickNow >= g.tick && tickNow < g.detonTick) ||
-             (g.endTick && tickNow >= g.detonTick && tickNow <= g.endTick);
-    }).length;
-    const dbg = curP?._dbg || null;
-    const lines = [
-      `round=${currentRound} frame=${frameIdx}/${frames.length - 1} N=${frames.length - 1}`,
-      `tick=${Math.round(tickNow)} min=${Math.round(minTf)} max=${Math.round(maxTf)} span=${span}`,
-      `sample=${firstName || 'NONE'} roundPts=${rp.length} trailPts=${trailPts.length}`,
-      `cur pos=(${curP ? Math.round(curP.x) : '-'},${curP ? Math.round(curP.y) : '-'})`,
-      `trail0=(${t0 ? Math.round(t0.x) : '-'},${t0 ? Math.round(t0.y) : '-'}) t=${t0 ? t0.tick : '-'}`,
-      `trailL=(${tl ? Math.round(tl.x) : '-'},${tl ? Math.round(tl.y) : '-'}) t=${tl ? tl.tick : '-'}`,
-      `prev=(${dbg?.px ?? '-'},${dbg?.py ?? '-'}) t=${dbg?.pt ?? '-'}`,
-      `next=(${dbg?.nx ?? '-'},${dbg?.ny ?? '-'}) t=${dbg?.nt ?? '-'}`,
-      `frac=${dbg?.t ?? '-'} dist=${dbg?.dist ?? '-'} snap=${dbg?.snap ?? '-'}`,
-      `fx: kills=${nKills} shots=${nShots} grens=${nGren}`,
-    ];
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,.85)';
-    const boxH = 14 + lines.length * 15;
-    ctx.fillRect(6, H - boxH - 6, 420, boxH);
-    ctx.strokeStyle = 'rgba(184,255,87,.5)'; ctx.lineWidth = 1;
-    ctx.strokeRect(6, H - boxH - 6, 420, boxH);
-    ctx.font = '11px "Space Mono",monospace';
-    ctx.fillStyle = '#b8ff57';
-    ctx.textAlign = 'left';
-    lines.forEach((l, i) => ctx.fillText(l, 12, H - boxH + 8 + i * 15));
-    ctx.restore();
-  }
-
   // ── Canvas Scoreboard (top center of map) ────────────────────────────────
-  // Disabled: redundant with the right sidebar team panels; hid per user request.
-  // drawScoreboard(frame, W, H);
+  drawScoreboard(frame, W, H);
 
   // Timeline UI
   const pct = frames.length > 1 ? (idx / (frames.length - 1)) * 100 : 0;
@@ -1464,166 +1273,13 @@ function drawFrame(idx) {
   updatePlayerStates(frame);
 }
 
-// ══ CANVAS KILLFEED ═════════════════════════════════════════════════════════
-// Icon cache for canvas drawing: lazily loads SVG as HTMLImageElement so
-// ctx.drawImage can render it. Once loaded, triggers a redraw so the icon
-// appears on the next frame.
-const _canvasIconCache = {};
-function getIconImageForCanvas(weaponName) {
-  if (!weaponName) return null;
-  const clean = normalizeWeaponName(weaponName);
-  const file = WEAPON_FILE_MAP[clean];
-  if (!file) return null;
-  const cached = _canvasIconCache[file];
-  if (cached) return cached.loaded ? cached.img : null;
-  const entry = { img: null, loaded: false };
-  const img = new Image();
-  img.onload  = () => { entry.img = img; entry.loaded = true; if (typeof drawFrame === 'function') drawFrame(frameIdx); };
-  img.onerror = () => { entry.loaded = false; };
-  img.src = 'icons/' + file + '.svg';
-  _canvasIconCache[file] = entry;
-  return null;
-}
-
-function drawKillfeed(frame, W, H) {
-  const tick = frame.tick || 0;
-  const kills = demoData.kills || [];
-  const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
-  const rdStart = rdData.startTick || 0;
-
-  // Kills from the current round, up to the current tick, last 6 only.
-  const recent = kills
-    .filter(k => {
-      const kt = k.tick || 0;
-      if (kt <= 0) return false;
-      if (kt < rdStart) return false;
-      return kt <= tick;
-    })
-    .slice(-6);
-
-  if (recent.length === 0) return;
-
-  ctx.save();
-  const rowH = 22;
-  const padX = 9;
-  const gap  = 7;
-  const iconW = 22, iconH = 14;
-  const margin = 10;
-  const baseFont = 'bold 11px "Space Mono",monospace';
-
-  recent.forEach((k, i) => {
-    const age = tick - (k.tick || 0);
-    // Fade in over 8 ticks, hold for ~500, fade out over 96.
-    let alpha = 1;
-    if (age < 8) alpha = age / 8;
-    else if (age > 500) alpha = Math.max(0, 1 - (age - 500) / 96);
-    if (alpha <= 0) return;
-
-    const attTeam = k.attackerTeam === 3 ? 'CT' : 'T';
-    const vicTeam = k.victimTeam === 3 ? 'CT' : 'T';
-    const attRGB = attTeam === 'CT' ? '74,158,255' : '245,200,66';
-    const vicRGB = vicTeam === 'CT' ? '74,158,255' : '245,200,66';
-
-    ctx.font = baseFont;
-    ctx.textBaseline = 'middle';
-    const attW = ctx.measureText(k.attacker || 'Unknown').width;
-    const vicW = ctx.measureText(k.victim || 'Unknown').width;
-    const hsW  = k.isHeadshot ? 12 : 0;
-    const wbW  = k.isWallbang  ? 18 : 0;
-    const smkW = k.thruSmoke   ? 14 : 0;
-    const rowW = padX * 2 + attW + gap + iconW + gap + hsW + wbW + smkW + vicW;
-    const bx = W - margin - rowW;
-    const by = margin + i * (rowH + 4);
-
-    // Background pill
-    const r = 4;
-    ctx.beginPath();
-    ctx.moveTo(bx + r, by);
-    ctx.lineTo(bx + rowW - r, by);
-    ctx.quadraticCurveTo(bx + rowW, by, bx + rowW, by + r);
-    ctx.lineTo(bx + rowW, by + rowH - r);
-    ctx.quadraticCurveTo(bx + rowW, by + rowH, bx + rowW - r, by + rowH);
-    ctx.lineTo(bx + r, by + rowH);
-    ctx.quadraticCurveTo(bx, by + rowH, bx, by + rowH - r);
-    ctx.lineTo(bx, by + r);
-    ctx.quadraticCurveTo(bx, by, bx + r, by);
-    ctx.closePath();
-    ctx.fillStyle = `rgba(10,12,16,${0.86 * alpha})`;
-    ctx.fill();
-    ctx.strokeStyle = `rgba(184,255,87,${0.18 * alpha})`;
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    let x = bx + padX;
-    const cy = by + rowH / 2;
-
-    // Attacker name
-    ctx.textAlign = 'left';
-    ctx.fillStyle = `rgba(${attRGB},${alpha})`;
-    ctx.font = baseFont;
-    ctx.fillText(k.attacker || 'Unknown', x, cy + 0.5);
-    x += attW + gap;
-
-    // Weapon icon
-    const iconImg = getIconImageForCanvas(k.weapon);
-    if (iconImg) {
-      const oldAlpha = ctx.globalAlpha;
-      ctx.globalAlpha = alpha;
-      ctx.drawImage(iconImg, x, by + (rowH - iconH) / 2, iconW, iconH);
-      ctx.globalAlpha = oldAlpha;
-    } else {
-      ctx.fillStyle = `rgba(255,255,255,${alpha * 0.7})`;
-      ctx.font = '9px "Space Mono",monospace';
-      ctx.fillText((k.weapon || '').replace(/^weapon_/, '').slice(0, 5), x, cy + 0.5);
-      ctx.font = baseFont;
-    }
-    x += iconW + gap;
-
-    // Headshot marker
-    if (k.isHeadshot) {
-      ctx.fillStyle = `rgba(255,60,60,${alpha})`;
-      ctx.beginPath();
-      ctx.arc(x + 4, cy, 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = `rgba(255,255,255,${alpha * 0.9})`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      x += hsW;
-    }
-    // Wallbang marker
-    if (k.isWallbang) {
-      ctx.fillStyle = `rgba(255,255,255,${alpha * 0.85})`;
-      ctx.font = 'bold 8px "Space Mono",monospace';
-      ctx.fillText('WB', x, cy + 0.5);
-      ctx.font = baseFont;
-      x += wbW;
-    }
-    // Smoke marker
-    if (k.thruSmoke) {
-      ctx.fillStyle = `rgba(200,200,200,${alpha * 0.85})`;
-      ctx.font = 'bold 8px "Space Mono",monospace';
-      ctx.fillText('SMK', x, cy + 0.5);
-      ctx.font = baseFont;
-      x += smkW;
-    }
-
-    // Victim name
-    ctx.fillStyle = `rgba(${vicRGB},${alpha * 0.92})`;
-    ctx.font = baseFont;
-    ctx.fillText(k.victim || 'Unknown', x, cy + 0.5);
-  });
-
-  ctx.restore();
-}
-
 // ══ CANVAS SCOREBOARD ═══════════════════════════════════════════════════════
 function drawScoreboard(frame, W, H) {
   const rounds = demoData.rounds || [];
   let ctScore = 0, tScore = 0;
   rounds.forEach(rd => {
     if (rd.isKnife) return;
-    // Strictly BEFORE current round: round in progress is not yet decided
-    if (currentRound !== null && (rd.round ?? 0) >= currentRound) return;
+    if (currentRound !== null && (rd.round ?? 0) > currentRound) return;
     if (rd.winner === 2) tScore++;
     else if (rd.winner === 3) ctScore++;
   });
@@ -1720,28 +1376,15 @@ function drawScoreboard(frame, W, H) {
 function drawTrails(frame, W, H) {
   const tick = frame.tick || 0;
   const TRAIL_TICKS = 400;
+  const positions = demoData.positions || {};
   const scaleX = W / 1024;
   const scaleY = H / 1024;
 
-  // Use the same per-round filtered positions that buildFrames used. This
-  // guarantees trails can never include samples from another round.
-  const roundPos = currentRoundPos || {};
-
-  let _dbgLoggedOne = false;
   Object.entries(frame.players).forEach(([name, p]) => {
     if (!p.alive || hiddenPlayers.has(name)) return;
     const color = getColor(name);
-    const pts = roundPos[name] || [];
-    const trail = pts.filter(pt => {
-      const t = pt.tick || 0;
-      return t >= tick - TRAIL_TICKS && t <= tick;
-    });
-    if (frameIdx === 0 && !_dbgLoggedOne) {
-      _dbgLoggedOne = true;
-      const f0 = trail[0], fl = trail[trail.length - 1];
-      console.log(`[drawTrails] f0 tick=${Math.round(tick)} ${name}: roundPts=${pts.length}, trailPts=${trail.length}` +
-        (trail.length ? ` first=(t=${f0.tick},${f0.x},${f0.y}) last=(t=${fl.tick},${fl.x},${fl.y})` : ''));
-    }
+    const pts = positions[name] || [];
+    const trail = pts.filter(pt => (pt.tick || 0) >= tick - TRAIL_TICKS && (pt.tick || 0) <= tick);
     if (trail.length < 2) return;
 
     // Fading trail: draw segments with decreasing opacity
@@ -1792,7 +1435,7 @@ function drawEffects(frame, W, H) {
     shotsConverted = true;
   }
 
-  const SHOT_DUR = 10;
+  const SHOT_DUR = 6;
   const KILL_DUR = 12;
   const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
   const rdStart = rdData.startTick || 0, rdEnd = rdData.endTick || 999999;
@@ -1826,42 +1469,19 @@ function drawEffects(frame, W, H) {
     if (nearKill) {
       // Don't draw normal tracer for kill shots, kill tracers handle them
     } else {
-      // Non-kill shot: thick bright tracer in the player's aiming direction.
-      // Layered: dark outline, bright core, solid bullet dot at the tip.
+      // Non-kill shot: dashed yellow line in the player's aiming direction
       const yawDeg = shooterState.yaw || 0;
       const angle = -(yawDeg) * Math.PI / 180;
-      const len = 55;
-      const tipX = sx + Math.cos(angle) * len;
-      const tipY = sy + Math.sin(angle) * len;
-
-      // Dark outline for contrast on bright map areas
-      ctx.strokeStyle = `rgba(30,20,0,${alpha * 0.9})`;
-      ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.setLineDash([]);
-      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(tipX, tipY); ctx.stroke();
-
-      // Bright yellow core
-      ctx.strokeStyle = `rgba(255,230,90,${alpha})`;
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(tipX, tipY); ctx.stroke();
-
-      // Hot white inner line
-      ctx.strokeStyle = `rgba(255,255,220,${alpha * 0.95})`;
-      ctx.lineWidth = 1.3;
-      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(tipX, tipY); ctx.stroke();
-      ctx.lineCap = 'butt';
-
-      // Bullet dot at the tip
-      ctx.beginPath(); ctx.arc(tipX, tipY, 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,230,${alpha})`; ctx.fill();
+      const len = 35;
+      ctx.strokeStyle = `rgba(255,220,80,${alpha * 0.75})`;
+      ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+      ctx.beginPath(); ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + Math.cos(angle) * len, sy + Math.sin(angle) * len);
+      ctx.stroke(); ctx.setLineDash([]);
     }
-    // Muzzle flash (bigger, brighter)
-    const mfR = 5 + (1 - alpha) * 3;
-    ctx.beginPath(); ctx.arc(sx, sy, mfR * 1.6, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,200,40,${alpha * 0.35})`; ctx.fill();
-    ctx.beginPath(); ctx.arc(sx, sy, mfR, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,240,120,${alpha})`; ctx.fill();
-    ctx.beginPath(); ctx.arc(sx, sy, mfR * 0.45, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,255,230,${alpha})`; ctx.fill();
+    // Muzzle flash
+    ctx.beginPath(); ctx.arc(sx, sy, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,240,120,${alpha * 0.9})`; ctx.fill();
   });
 
   // Kill tracers (solid RED line from attacker to victim)
@@ -1906,66 +1526,25 @@ function drawEffects(frame, W, H) {
     const _dp = w2c(g.detonX, g.detonY);
     const lx = _lp.x * scaleX, ly = _lp.y * scaleY;
     const dx2 = _dp.x * scaleX, dy2 = _dp.y * scaleY;
-    const hasPathData = !!(g.path && g.path.length >= 4);
-    // With real trajectory data, trust the landing spot. Otherwise require
-    // meaningful distance from the throw (guards against bogus event matches).
-    const hasValidDeton = hasPathData ||
-      (g.detonX !== 0 && (Math.abs(g.detonX - g.x) > 50 || Math.abs(g.detonY - g.y) > 50));
+    const hasValidDeton = g.detonX !== 0 && (Math.abs(g.detonX - g.x) > 50 || Math.abs(g.detonY - g.y) > 50);
 
     // Trajectory
     if (tick >= g.tick && tick < g.detonTick && inBounds(lx, ly)) {
-      if (g.path && g.path.length >= 4) {
-        // Real trajectory from parseGrenades: polyline that bounces off walls.
-        // Path is a flat array [x1, y1, x2, y2, ...] in world coordinates.
-        const numPts = g.path.length / 2;
-        const progress = Math.max(0, Math.min(1, (tick - g.tick) / Math.max(g.detonTick - g.tick, 1)));
-        const fIdx = progress * (numPts - 1);
-        const i0 = Math.floor(fIdx);
-        const i1 = Math.min(numPts - 1, i0 + 1);
-        const f = fIdx - i0;
-        const wx0 = g.path[i0 * 2],     wy0 = g.path[i0 * 2 + 1];
-        const wx1 = g.path[i1 * 2],     wy1 = g.path[i1 * 2 + 1];
-        const curWX = wx0 * (1 - f) + wx1 * f;
-        const curWY = wy0 * (1 - f) + wy1 * f;
-        const _cp = w2c(curWX, curWY);
-        const curX = _cp.x * scaleX, curY = _cp.y * scaleY;
-
-        // Draw traveled polyline up to current position (bouncing path).
+      const tx = hasValidDeton ? dx2 : lx;
+      const ty = hasValidDeton ? dy2 : ly;
+      const trajDx = tx - lx;
+      const trajDy = ty - ly;
+      const trajLen = Math.sqrt(trajDx * trajDx + trajDy * trajDy);
+      if (trajLen <= 350) {
+        const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
+        const curX = lx + trajDx * progress;
+        const curY = ly + trajDy * progress;
         ctx.setLineDash([3, 3]);
-        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        const _p0 = w2c(g.path[0], g.path[1]);
-        ctx.moveTo(_p0.x * scaleX, _p0.y * scaleY);
-        for (let i = 1; i <= i0; i++) {
-          const _pp = w2c(g.path[i * 2], g.path[i * 2 + 1]);
-          ctx.lineTo(_pp.x * scaleX, _pp.y * scaleY);
-        }
-        ctx.lineTo(curX, curY);
-        ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(curX, curY); ctx.stroke();
         ctx.setLineDash([]);
-
-        // Grenade dot at current position.
         ctx.beginPath(); ctx.arc(curX, curY, 3, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
-      } else {
-        // Fallback: straight-line interpolation (old demos without path data).
-        const tx = hasValidDeton ? dx2 : lx;
-        const ty = hasValidDeton ? dy2 : ly;
-        const trajDx = tx - lx;
-        const trajDy = ty - ly;
-        const trajLen = Math.sqrt(trajDx * trajDx + trajDy * trajDy);
-        if (trajLen <= 350) {
-          const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
-          const curX = lx + trajDx * progress;
-          const curY = ly + trajDy * progress;
-          ctx.setLineDash([3, 3]);
-          ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(curX, curY); ctx.stroke();
-          ctx.setLineDash([]);
-          ctx.beginPath(); ctx.arc(curX, curY, 3, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
-        }
       }
     }
 
@@ -1975,13 +1554,9 @@ function drawEffects(frame, W, H) {
     if (!isActive) return;
     const px = dx2, py = dy2;
     if (!inBounds(px, py)) return;
-    // Without real trajectory data, guard against bogus detonation matches by
-    // rejecting landings more than 350px from the throw position on screen.
-    if (!hasPathData) {
-      const impDx = dx2 - lx;
-      const impDy = dy2 - ly;
-      if (Math.sqrt(impDx * impDx + impDy * impDy) > 350) return;
-    }
+    const impDx = dx2 - lx;
+    const impDy = dy2 - ly;
+    if (Math.sqrt(impDx * impDx + impDy * impDy) > 350) return;
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
 

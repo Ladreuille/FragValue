@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FragValue · Mes matchs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;
+  --border:#1c1e1e;--border2:#252727;
+  --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --danger:#ff4444;--success:#2dd4a0;--gold:#f5c842;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  --r:6px;--r2:12px
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.nav-logo{font-family:var(--display);font-size:20px;letter-spacing:.04em;color:var(--text);text-decoration:none}
+.nav-logo span{color:var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-cta{background:var(--accent);color:#000;padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;transition:all .15s;border:none;cursor:pointer;display:flex;align-items:center;gap:6px}
+.nav-cta:hover{background:var(--accent2)}
+.nav-out{font-size:11px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border:none;background:none;font-family:var(--mono);transition:color .15s;padding:7px 12px;border-radius:var(--r);border:1px solid var(--border)}
+.nav-out:hover{border-color:var(--danger);color:var(--danger)}
+.nav-link{font-size:11px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;text-decoration:none;font-family:var(--mono)}
+.nav-bell{position:relative;cursor:pointer;padding:7px;border-radius:var(--r);border:1px solid var(--border);color:var(--text2);transition:all .15s;display:flex;align-items:center}
+.nav-bell:hover{border-color:var(--accent);color:var(--accent)}
+.bell-dot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--bg)}
+.notif-dropdown{display:none;position:absolute;top:calc(100% + 8px);right:0;width:340px;max-height:420px;overflow-y:auto;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);box-shadow:0 12px 48px rgba(0,0,0,.6);z-index:200}
+.notif-dropdown.open{display:block}
+.notif-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.notif-head-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2)}
+.notif-head-mark{font-size:9px;color:var(--text3);cursor:pointer;letter-spacing:.06em}
+.notif-head-mark:hover{color:var(--accent)}
+.notif-item{padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;display:block;text-decoration:none;color:inherit}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:var(--card)}
+.notif-item.unread{border-left:2px solid var(--accent)}
+.notif-title{font-size:11px;color:var(--text);margin-bottom:3px;letter-spacing:.02em}
+.notif-msg{font-size:10px;color:var(--text3);line-height:1.5}
+.notif-time{font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:.04em}
+.notif-empty{padding:28px 16px;text-align:center;font-size:10px;color:var(--text3)}
+
+.page{max-width:1200px;margin:0 auto;padding:36px 32px 100px;position:relative;z-index:1}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;opacity:0;animation:up .4s ease forwards}
+.page-title{font-family:var(--display);font-size:32px;letter-spacing:.02em}
+.page-title span{color:var(--accent)}
+.page-sub{font-size:11px;color:var(--text3);letter-spacing:.06em;margin-top:4px}
+.btn-import{background:transparent;color:var(--accent);border:1px solid rgba(184,255,87,.3);padding:10px 18px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
+.btn-import:hover{background:rgba(184,255,87,.08);border-color:var(--accent)}
+.btn-import:disabled{opacity:.5;cursor:default}
+
+.sl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sl::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.matches-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px;opacity:0;animation:up .4s .1s ease forwards}
+
+.match-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:20px;transition:all .2s;cursor:pointer;text-decoration:none;color:inherit;display:block;position:relative;overflow:hidden}
+.match-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.match-card.parsing{border-color:rgba(184,255,87,.25)}
+.match-card.failed{opacity:.5}
+
+.mc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.mc-map{font-family:var(--display);font-size:22px;letter-spacing:.02em}
+.mc-status{font-size:9px;padding:4px 10px;border-radius:40px;letter-spacing:.1em;text-transform:uppercase}
+.mc-status.parsed{background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);color:var(--success)}
+.mc-status.parsing{background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.2);color:var(--accent)}
+.mc-status.pending{background:rgba(122,128,128,.08);border:1px solid rgba(122,128,128,.15);color:var(--text2)}
+.mc-status.failed{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.15);color:var(--danger)}
+
+.mc-score{display:flex;align-items:center;justify-content:center;gap:18px;padding:16px 0;margin-bottom:14px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.mc-score-val{font-family:var(--display);font-size:36px;line-height:1;color:var(--text3)}
+.mc-score-val.win{color:var(--success)}
+.mc-score-val.loss{color:var(--danger)}
+.mc-score-sep{font-family:var(--display);font-size:24px;color:var(--text3)}
+
+.mc-meta{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--text3);letter-spacing:.04em}
+
+.mc-parsing-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);background-size:200% 100%;animation:scan 1.6s linear infinite}
+@keyframes scan{0%{background-position:-100% 0}100%{background-position:100% 0}}
+
+.empty-box{background:var(--surface);border:1px dashed var(--border2);border-radius:var(--r2);padding:60px 28px;text-align:center}
+.empty-box-title{font-family:var(--display);font-size:22px;margin-bottom:10px;letter-spacing:.02em}
+.empty-box-sub{font-size:11px;color:var(--text3);line-height:1.7;margin-bottom:22px;max-width:440px;margin-left:auto;margin-right:auto}
+
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
+  <div class="nav-right">
+    <a href="matches.html" class="nav-link">MES MATCHS</a>
+    <div class="nav-bell" id="navBell" onclick="toggleNotifs(event)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="bell-dot" id="bellDot" style="display:none"></span>
+      <div class="notif-dropdown" id="notifDropdown"></div>
+    </div>
+    <a href="account.html" class="nav-link">MON ESPACE</a>
+    <a href="demo.html" class="nav-cta">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Nouvelle démo
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-head">
+    <div>
+      <div class="page-title">MES <span>MATCHS</span></div>
+      <div class="page-sub">Analyse automatique de tes matchs FACEIT</div>
+    </div>
+    <button class="btn-import" id="importBtn" onclick="importHistory()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      Importer mes 20 derniers matchs
+    </button>
+  </div>
+
+  <div class="sl">Historique</div>
+  <div id="matchesContainer">
+    <div style="text-align:center;padding:60px 20px;font-size:11px;color:var(--text3)">Chargement...</div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let _pollTimer = null;
+let _session = null;
+
+async function init() {
+  const { data:{ session } } = await _sb.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; return; }
+  _session = session;
+  await loadMatches();
+  await loadNotifs();
+  // Poll toutes les 10s si au moins un match est en pending/parsing
+  schedulePoll();
+}
+
+function schedulePoll() {
+  clearTimeout(_pollTimer);
+  _pollTimer = setTimeout(async () => {
+    await loadMatches();
+    schedulePoll();
+  }, 10000);
+}
+
+async function loadMatches() {
+  try {
+    const r = await fetch('/api/matches', {
+      headers: { 'Authorization': 'Bearer ' + _session.access_token }
+    });
+    if (!r.ok) { renderError('Erreur serveur'); return; }
+    const data = await r.json();
+    renderMatches(data.matches || []);
+  } catch (e) {
+    renderError('Connexion impossible');
+  }
+}
+
+function renderError(msg) {
+  document.getElementById('matchesContainer').innerHTML =
+    '<div class="empty-box"><div class="empty-box-title">' + msg + '</div></div>';
+}
+
+function fmtFull(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})
+    + ' · ' + new Date(d).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderMatches(matches) {
+  const el = document.getElementById('matchesContainer');
+  if (!matches.length) {
+    el.innerHTML = '<div class="empty-box">' +
+      '<div class="empty-box-title">AUCUN MATCH POUR L\'INSTANT</div>' +
+      '<div class="empty-box-sub">Lance l\'import pour recuperer tes 20 derniers matchs FACEIT. FragValue les analysera automatiquement en arriere-plan et tu seras notifie des qu\'ils sont prets.</div>' +
+      '<button class="btn-import" onclick="importHistory()">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>' +
+      'Importer mes matchs</button>' +
+      '</div>';
+    return;
+  }
+  el.innerHTML = '<div class="matches-grid">' + matches.map(renderCard).join('') + '</div>';
+}
+
+function renderCard(m) {
+  const isParsed = m.status === 'parsed';
+  const isParsing = m.status === 'parsing' || m.status === 'pending';
+  const isFailed = m.status === 'failed';
+  const classes = ['match-card', isParsing ? 'parsing' : '', isFailed ? 'failed' : ''].filter(Boolean).join(' ');
+  const statusLabel = isParsed ? 'Analyse' : isParsing ? 'En cours' : isFailed ? 'Echec' : 'En attente';
+  const statusClass = isParsed ? 'parsed' : m.status === 'pending' ? 'pending' : isParsing ? 'parsing' : 'failed';
+
+  const ct = m.score_ct ?? 0, t = m.score_t ?? 0;
+  const map = (m.map || 'unknown').replace('de_', '').toUpperCase();
+  const ctWin = m.winner === 'ct';
+  const tWin = m.winner === 't';
+
+  const href = isParsed ? 'analysis.html?match=' + encodeURIComponent(m.faceit_match_id) : '#';
+  const tag = isParsed ? 'a' : 'div';
+
+  return '<' + tag + (isParsed ? ' href="' + href + '"' : '') + ' class="' + classes + '">' +
+    '<div class="mc-top">' +
+      '<div class="mc-map">' + map + '</div>' +
+      '<div class="mc-status ' + statusClass + '">' + statusLabel + '</div>' +
+    '</div>' +
+    '<div class="mc-score">' +
+      '<div class="mc-score-val ' + (ctWin ? 'win' : tWin ? 'loss' : '') + '">' + ct + '</div>' +
+      '<div class="mc-score-sep">:</div>' +
+      '<div class="mc-score-val ' + (tWin ? 'win' : ctWin ? 'loss' : '') + '">' + t + '</div>' +
+    '</div>' +
+    '<div class="mc-meta">' +
+      '<span>' + (m.rounds || 0) + ' rounds</span>' +
+      '<span>' + fmtFull(m.parsed_at || m.created_at) + '</span>' +
+    '</div>' +
+    (isParsing ? '<div class="mc-parsing-bar"></div>' : '') +
+  '</' + tag + '>';
+}
+
+async function importHistory() {
+  const btn = document.getElementById('importBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/></svg>Import en cours'; }
+  try {
+    const r = await fetch('/api/import-history', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + _session.access_token,
+      },
+    });
+    if (r.ok) {
+      const data = await r.json();
+      console.log('Imported:', data);
+      await loadMatches();
+    } else {
+      const err = await r.json().catch(() => ({}));
+      alert(err.error || 'Erreur import');
+    }
+  } catch (e) {
+    alert('Connexion impossible');
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importer mes 20 derniers matchs'; }
+}
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+let _notifCache = [];
+
+async function loadNotifs() {
+  if (!_session) return;
+  try {
+    const r = await fetch('/api/notifications', {
+      headers: { 'Authorization': 'Bearer ' + _session.access_token }
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    _notifCache = data.notifications || [];
+    document.getElementById('bellDot').style.display = data.unread > 0 ? 'block' : 'none';
+    renderNotifDropdown();
+  } catch (_) {}
+}
+
+function renderNotifDropdown() {
+  const dd = document.getElementById('notifDropdown');
+  if (!_notifCache.length) {
+    dd.innerHTML = '<div class="notif-head"><span class="notif-head-title">Notifications</span></div><div class="notif-empty">Aucune notification</div>';
+    return;
+  }
+  const fmt = (d) => {
+    const diff = (Date.now() - new Date(d).getTime()) / 1000;
+    if (diff < 60) return 'a l\'instant';
+    if (diff < 3600) return Math.floor(diff/60) + ' min';
+    if (diff < 86400) return Math.floor(diff/3600) + ' h';
+    return Math.floor(diff/86400) + ' j';
+  };
+  dd.innerHTML = '<div class="notif-head"><span class="notif-head-title">Notifications</span><span class="notif-head-mark" onclick="markAllNotifs(event)">Tout marquer lu</span></div>' +
+    _notifCache.slice(0, 20).map(n => {
+      const href = n.match_id ? 'matches.html?id=' + encodeURIComponent(n.match_id) : 'matches.html';
+      return '<a class="notif-item ' + (n.read ? '' : 'unread') + '" href="' + href + '">' +
+        '<div class="notif-title">' + (n.title || '') + '</div>' +
+        '<div class="notif-msg">' + (n.message || '') + '</div>' +
+        '<div class="notif-time">' + fmt(n.created_at) + '</div>' +
+        '</a>';
+    }).join('');
+}
+
+function toggleNotifs(e) {
+  e.stopPropagation();
+  document.getElementById('notifDropdown').classList.toggle('open');
+}
+
+async function markAllNotifs(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  if (!_session) return;
+  await fetch('/api/notifications', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + _session.access_token,
+    },
+    body: JSON.stringify({ all: true }),
+  });
+  _notifCache.forEach(n => n.read = true);
+  document.getElementById('bellDot').style.display = 'none';
+  renderNotifDropdown();
+}
+
+document.addEventListener('click', (e) => {
+  const bell = document.getElementById('navBell');
+  if (bell && !bell.contains(e.target)) {
+    document.getElementById('notifDropdown')?.classList.remove('open');
+  }
+});
+
+init();
+</script>
+</body>
+</html>
