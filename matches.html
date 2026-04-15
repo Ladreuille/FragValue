@@ -255,11 +255,31 @@ function renderMatches(matches) {
 function friendlyReason(msg) {
   const m = (msg || '').toLowerCase();
   if (!m) return { title: 'Erreur parser', sub: 'Cause inconnue — relancez le match' };
+  // Tags emitted by the extension resolver (background.js friendlyResolveError)
+  if (m.startsWith('demo_expired:')) {
+    return { title: 'Demo expiree', sub: 'FACEIT purge les demos apres ~30 jours' };
+  }
+  if (m.startsWith('demo_forbidden:')) {
+    return { title: 'Acces demo refuse', sub: 'FACEIT a bloque le telechargement' };
+  }
+  if (m.startsWith('no_demo:')) {
+    return { title: 'Pas de demo disponible', sub: 'Match annule, forfait, ou demo pas encore uploadee' };
+  }
+  if (m.startsWith('captcha_required:')) {
+    return { title: 'Verification requise', sub: 'FACEIT demande un captcha, ouvrez www.faceit.com' };
+  }
+  if (m.startsWith('resolve_failed:')) {
+    return { title: 'Resolution echouee', sub: 'Erreur pendant la recuperation de l URL FACEIT' };
+  }
+  // Parser-side errors (Railway downloadAndParse)
+  if (m.includes('err_nf0') || m.includes('file not found')) {
+    return { title: 'Demo expiree', sub: 'FACEIT purge les demos apres ~30 jours' };
+  }
   if (m.includes('enotfound') || m.includes('getaddrinfo') || m.includes('eai_again')) {
     return { title: 'Demo FACEIT indisponible', sub: 'Le CDN ou l\'URL fournie par FACEIT ne repond pas. Relancez plus tard.' };
   }
   if (m.includes('404')) {
-    return { title: 'Demo supprimee par FACEIT', sub: 'Les demos FACEIT sont purgees apres ~14 jours' };
+    return { title: 'Demo supprimee par FACEIT', sub: 'Les demos FACEIT sont purgees apres ~30 jours' };
   }
   if (m.includes('403') || m.includes('401')) {
     return { title: 'Acces demo refuse', sub: 'FACEIT a bloque le telechargement (token expire)' };

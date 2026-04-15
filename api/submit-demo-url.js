@@ -54,10 +54,32 @@ export default async function handler(req, res) {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) return res.status(401).json({ error: 'Token invalide' });
 
-    const { matchId, demoUrl, map, finishedAt } = req.body || {};
+    const { matchId, demoUrl, map, finishedAt, error: failureReason } = req.body || {};
     if (!matchId || typeof matchId !== 'string') {
       return res.status(400).json({ error: 'matchId required' });
     }
+
+    // Failure fast-path: the extension hit a dead end while resolving the
+    // demo URL (most commonly FACEIT retention purge after ~30 days, signal
+    // "err_nf0 file not found"). Mark the row as failed with a friendly
+    // error message so the UI stops showing it as pending forever.
+    if (failureReason && !demoUrl) {
+      const { error: upsertErr } = await supabase
+        .from('matches')
+        .upsert({
+          id: matchId,
+          faceit_match_id: matchId,
+          user_id: user.id,
+          status: 'failed',
+          error_message: String(failureReason).slice(0, 500),
+        }, { onConflict: 'faceit_match_id' });
+      if (upsertErr) {
+        console.error('submit-demo-url failure upsert error:', upsertErr);
+        return res.status(500).json({ error: 'DB upsert failed' });
+      }
+      return res.status(200).json({ ok: true, matchId, failed: true });
+    }
+
     if (!demoUrl || typeof demoUrl !== 'string') {
       return res.status(400).json({ error: 'demoUrl required' });
     }
