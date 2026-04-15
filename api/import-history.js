@@ -88,39 +88,24 @@ export default async function handler(req, res) {
       const matchId = m.match_id;
       if (!matchId) continue;
 
-      // Recuperer l'etat existant : on veut eviter de stomper une row qui a
-      // deja des donnees parsees (score, rounds, parsed_at). Ca arrivait
-      // quand l'utilisateur re-cliquait "Importer" apres qu'un parse ait
-      // reussi — on resetait status='pending' en gardant silencieusement les
-      // scores, ce qui mettait l'UI en etat incoherent.
+      // Recuperer l'etat existant. On skippe les rows qui sont deja terminees
+      // (status='parsed') ou en cours (status='parsing') pour ne pas stomper
+      // le travail du parser. Les rows 'pending' ou 'failed' sont re-queuees
+      // (l'utilisateur peut vouloir retenter un match echoue).
+      //
+      // ATTENTION: on se fie UNIQUEMENT a `status` comme signal de verite.
+      // Un test du genre `score_ct != null` donne des faux positifs parce que
+      // la colonne a un default 0 (pas null), donc toute row fraichement
+      // inseree declenche le match. Un test `rounds > 0` est aussi risque
+      // (rows debug / mid-parse). status est la seule source de verite
+      // canonique du parser.
       const { data: existing } = await supabase
         .from('matches')
-        .select('faceit_match_id, status, parsed_at, score_ct, score_t, rounds')
+        .select('status')
         .eq('faceit_match_id', matchId)
         .single();
 
-      const alreadyParsed = existing && (
-        existing.status === 'parsed' ||
-        existing.parsed_at != null ||
-        existing.score_ct != null ||
-        existing.score_t != null ||
-        (existing.rounds || 0) > 0
-      );
-
-      if (alreadyParsed) {
-        // Heal : si les donnees parsees sont la mais le status est faux
-        // (typiquement 'pending' suite a un precedent import-history
-        // defectueux), on corrige.
-        if (existing.status !== 'parsed') {
-          await supabase
-            .from('matches')
-            .update({
-              status: 'parsed',
-              error_message: null,
-              parsed_at: existing.parsed_at || new Date().toISOString(),
-            })
-            .eq('faceit_match_id', matchId);
-        }
+      if (existing?.status === 'parsed' || existing?.status === 'parsing') {
         imported.push({ matchId, status: 'already_parsed' });
         continue;
       }
