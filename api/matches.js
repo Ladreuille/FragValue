@@ -50,7 +50,7 @@ export default async function handler(req, res) {
     const [directRes, playerRes] = await Promise.all([
       supabase
         .from('matches')
-        .select('id, faceit_match_id, map, score_ct, score_t, winner, rounds, status, parsed_at, created_at')
+        .select('id, faceit_match_id, map, score_ct, score_t, winner, rounds, status, parsed_at, created_at, error_message')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50),
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
     if (missingIds.length) {
       const { data } = await supabase
         .from('matches')
-        .select('id, faceit_match_id, map, score_ct, score_t, winner, rounds, status, parsed_at, created_at')
+        .select('id, faceit_match_id, map, score_ct, score_t, winner, rounds, status, parsed_at, created_at, error_message')
         .in('faceit_match_id', missingIds)
         .limit(50);
       extraMatches = data || [];

@@ -91,9 +91,11 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 @keyframes spin{to{transform:rotate(360deg)}}
 .mc-elapsed{font-size:10px;color:var(--text3);letter-spacing:.04em;margin-top:10px;text-align:center}
 .mc-elapsed span{color:var(--accent)}
-.mc-retry{margin-top:12px;display:flex;justify-content:center}
+.mc-retry{margin-top:10px;display:flex;justify-content:center}
 .mc-retry-btn{background:transparent;color:var(--text2);border:1px solid var(--border2);padding:7px 14px;border-radius:var(--r);font-family:var(--mono);font-size:10px;letter-spacing:.06em;cursor:pointer;transition:all .15s;text-transform:uppercase}
 .mc-retry-btn:hover{border-color:var(--accent);color:var(--accent)}
+.mc-reason{margin-top:10px;padding:9px 10px;border:1px solid rgba(255,99,99,.25);background:rgba(255,99,99,.06);border-radius:var(--r);font-family:var(--mono);font-size:10px;line-height:1.5;color:#ff9e9e;letter-spacing:.02em;text-align:center}
+.mc-reason b{color:#ffb8b8;font-weight:600}
 
 .empty-box{background:var(--surface);border:1px dashed var(--border2);border-radius:var(--r2);padding:60px 28px;text-align:center}
 .empty-box-title{font-family:var(--display);font-size:22px;margin-bottom:10px;letter-spacing:.02em}
@@ -250,6 +252,27 @@ function renderMatches(matches) {
   el.innerHTML = '<div class="matches-grid">' + matches.map(renderCard).join('') + '</div>';
 }
 
+function friendlyReason(msg) {
+  const m = (msg || '').toLowerCase();
+  if (!m) return { title: 'Erreur parser', sub: 'Cause inconnue — relancez le match' };
+  if (m.includes('enotfound') || m.includes('getaddrinfo') || m.includes('eai_again')) {
+    return { title: 'Demo FACEIT indisponible', sub: 'Le CDN ou l\'URL fournie par FACEIT ne repond pas. Relancez plus tard.' };
+  }
+  if (m.includes('404')) {
+    return { title: 'Demo supprimee par FACEIT', sub: 'Les demos FACEIT sont purgees apres ~14 jours' };
+  }
+  if (m.includes('403') || m.includes('401')) {
+    return { title: 'Acces demo refuse', sub: 'FACEIT a bloque le telechargement (token expire)' };
+  }
+  if (m.includes('zst') || m.includes('gzip') || m.includes('magic')) {
+    return { title: 'Format demo incompatible', sub: 'Le parser n\'a pas reconnu le format FACEIT' };
+  }
+  if (m.includes('timeout') || m.includes('econnreset') || m.includes('etimedout')) {
+    return { title: 'Telechargement trop long', sub: 'Relancez le match' };
+  }
+  return { title: 'Erreur parser', sub: (msg || '').slice(0, 120) };
+}
+
 function renderCard(m) {
   const isParsed = m.status === 'parsed';
   const isParsing = m.status === 'parsing' || m.status === 'pending';
@@ -280,9 +303,12 @@ function renderCard(m) {
     elapsedHtml = '<div class="mc-elapsed"><span class="mc-spin"></span>' + label + ' · <span>' + human + '</span></div>';
   }
 
-  // Bouton relance sur les matchs failed
+  // Raison lisible sur les matchs failed + bouton relance
+  let reasonHtml = '';
   let retryHtml = '';
   if (isFailed) {
+    const r = friendlyReason(m.error_message);
+    reasonHtml = '<div class="mc-reason"><b>' + r.title + '</b><br>' + r.sub + '</div>';
     retryHtml = '<div class="mc-retry"><button class="mc-retry-btn" onclick="retryMatch(event,\'' + m.faceit_match_id + '\')">Reessayer</button></div>';
   }
 
@@ -301,6 +327,7 @@ function renderCard(m) {
       '<span>' + fmtFull(m.parsed_at || m.created_at) + '</span>' +
     '</div>' +
     elapsedHtml +
+    reasonHtml +
     retryHtml +
     (isParsing ? '<div class="mc-parsing-bar"></div>' : '') +
   '</' + tag + '>';
