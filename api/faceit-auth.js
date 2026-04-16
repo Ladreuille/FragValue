@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { code, code_verifier, redirect_uri: clientRedirectUri } = req.body;
+  const { code, redirect_uri: clientRedirectUri } = req.body;
   if (!code) return res.status(400).json({ error: 'Code manquant' });
 
   // Le redirect_uri envoye a FACEIT pour l'echange DOIT correspondre EXACTEMENT
@@ -53,27 +53,28 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ── Étape 1 : Échange du code contre un access token ─────────────────
+    // ── Etape 1 : Echange du code contre un access token ─────────────────
+    // Conforme a la doc OAuth FACEIT v3.0 : HTTP Basic auth avec
+    // client_id:client_secret + x-www-form-urlencoded payload.
+    // Pas de PKCE (la doc FACEIT ne le mentionne pas et le backend rejette
+    // code_challenge dans la requete d'autorisation initiale).
     const tokenRes = await fetch('https://api.faceit.com/auth/v1/oauth/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        // PKCE flow: no client_secret in header, use Basic auth only if secret available
-        ...(CLIENT_SECRET ? { 'Authorization': 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64') } : {}),
+        'Authorization': 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
       },
       body: new URLSearchParams({
-        grant_type:    'authorization_code',
+        grant_type:   'authorization_code',
         code,
         redirect_uri,
-        client_id:     CLIENT_ID,
-        ...(code_verifier ? { code_verifier } : {}),
       }).toString(),
     });
 
     if (!tokenRes.ok) {
       const err = await tokenRes.text();
       console.error('Token error:', err);
-      return res.status(400).json({ error: 'Échange de token échoué' });
+      return res.status(400).json({ error: 'Echange de token echoue', detail: err.slice(0, 200) });
     }
 
     const tokenData = await tokenRes.json();

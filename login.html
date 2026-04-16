@@ -298,7 +298,11 @@ function showMsg(txt, type) {
 }
 function hideMsg() { document.getElementById('msgBox').style.display = 'none'; }
 
-// FACEIT OAuth PKCE via popup
+// FACEIT OAuth Authorization Code Flow via popup
+// PKCE retire : la doc officielle FACEIT ne mentionne pas PKCE et le backend
+// /api/v1/authorize rejette la requete en 400 quand code_challenge est present.
+// Le flux reste securise car notre /api/faceit-auth utilise le client_secret
+// (confidential client) pour echanger le code contre un access_token.
 async function loginFaceit() {
   try {
     let clientId = '141a2533-b3b9-45e7-8c98-8cb683871f74';
@@ -310,37 +314,27 @@ async function loginFaceit() {
 
     const redirectUri = window.location.origin + '/faceit-callback.html';
 
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    const codeVerifier = btoa(String.fromCharCode(...array))
+    // State aleatoire pour prevenir les CSRF OAuth (remplace le role
+    // anti-CSRF que jouait le code_verifier PKCE).
+    const stateBytes = new Uint8Array(16);
+    crypto.getRandomValues(stateBytes);
+    const state = btoa(String.fromCharCode(...stateBytes))
       .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
-    const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
-    // localStorage (partage entre popup et parent) car window.open cree un
-    // contexte de navigation distinct ou le sessionStorage du parent n'est
-    // pas accessible. On stocke aussi un timestamp pour nettoyer les
-    // verifiers orphelins (popup fermee sans completer l'auth).
-    localStorage.setItem('faceit_code_verifier', codeVerifier);
-    localStorage.setItem('faceit_code_verifier_ts', String(Date.now()));
+    localStorage.setItem('faceit_oauth_state', state);
+    localStorage.setItem('faceit_oauth_state_ts', String(Date.now()));
     localStorage.setItem('faceit_redirect_uri', redirectUri);
-    // Fallback sessionStorage au cas ou (redirection same-tab sans popup)
-    sessionStorage.setItem('faceit_code_verifier', codeVerifier);
-    sessionStorage.setItem('faceit_redirect_uri', redirectUri);
+    sessionStorage.setItem('faceit_oauth_state', state);
 
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: clientId,
       redirect_uri: redirectUri,
       scope: 'openid profile email',
-      code_challenge: codeChallenge,
-      code_challenge_method: 'S256',
+      state,
     });
 
     // URL officielle depuis openid_configuration : pas de /accounts en path.
-    // L'endpoint /accounts retourne 400 sur /api/v1/authorize cote FACEIT backend.
     const authUrl = 'https://accounts.faceit.com/?' + params.toString();
 
     const w = 500, h = 700;
