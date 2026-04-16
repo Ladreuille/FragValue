@@ -319,6 +319,14 @@ async function loginFaceit() {
     const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
       .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
+    // localStorage (partage entre popup et parent) car window.open cree un
+    // contexte de navigation distinct ou le sessionStorage du parent n'est
+    // pas accessible. On stocke aussi un timestamp pour nettoyer les
+    // verifiers orphelins (popup fermee sans completer l'auth).
+    localStorage.setItem('faceit_code_verifier', codeVerifier);
+    localStorage.setItem('faceit_code_verifier_ts', String(Date.now()));
+    localStorage.setItem('faceit_redirect_uri', redirectUri);
+    // Fallback sessionStorage au cas ou (redirection same-tab sans popup)
     sessionStorage.setItem('faceit_code_verifier', codeVerifier);
     sessionStorage.setItem('faceit_redirect_uri', redirectUri);
 
