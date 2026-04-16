@@ -51,27 +51,101 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .hero-title span{color:var(--accent)}
 .hero-sub{font-size:13px;color:var(--text2);line-height:1.7;max-width:580px;margin:0 auto;opacity:0;animation:up .4s .1s ease forwards}
 
-/* MY LEVEL CARD */
-.my-level-wrap{max-width:920px;margin:32px auto 0;padding:0 32px;position:relative;z-index:1;opacity:0;animation:up .4s .2s ease forwards}
-.my-level{
+/* ═══ PERSONAL ROADMAP (individuelle par client) ═══ */
+.perso-wrap{max-width:920px;margin:32px auto 0;padding:0 32px;position:relative;z-index:1;opacity:0;animation:up .4s .2s ease forwards}
+.perso-card{
   background:linear-gradient(135deg,rgba(184,255,87,.08) 0%,rgba(184,255,87,.02) 100%);
-  border:1px solid rgba(184,255,87,.25);border-radius:var(--r2);
-  padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap
+  border:1px solid rgba(184,255,87,.3);border-radius:var(--r2);
+  padding:0;overflow:hidden
 }
-.my-level-left{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.my-level-badge{
-  width:56px;height:56px;border-radius:12px;
-  background:var(--card);border:1px solid var(--border2);
+
+/* Header : niveau + progression ELO */
+.perso-head{padding:24px 28px;border-bottom:1px solid rgba(184,255,87,.15);display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.perso-badge{width:64px;height:64px;border-radius:12px;background:var(--card);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:26px;color:var(--accent);flex-shrink:0}
+.perso-head-info{flex:1;min-width:200px}
+.perso-tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;font-weight:700}
+.perso-name{font-size:16px;color:var(--text);margin-bottom:2px}
+.perso-name strong{color:var(--accent)}
+.perso-target{font-size:11px;color:var(--text2);letter-spacing:.04em}
+.perso-target strong{color:var(--text)}
+
+/* ELO progress bar */
+.perso-elo{min-width:220px;flex-shrink:0}
+.perso-elo-nums{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px}
+.perso-elo-current{font-family:var(--display);font-size:22px;color:var(--accent)}
+.perso-elo-target{font-size:11px;color:var(--text3);letter-spacing:.04em}
+.perso-elo-bar{height:8px;background:var(--card);border:1px solid var(--border2);border-radius:4px;overflow:hidden}
+.perso-elo-fill{height:100%;background:linear-gradient(90deg,var(--accent) 0%,var(--accent2) 100%);transition:width .6s ease;border-radius:3px}
+.perso-elo-remaining{font-size:10px;color:var(--text2);letter-spacing:.04em;margin-top:5px;text-align:right}
+.perso-elo-remaining strong{color:var(--accent)}
+
+/* Diagnostic : stats vs seuils */
+.perso-diag{padding:24px 28px}
+.perso-diag-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;font-weight:700}
+.perso-diag-title span{color:var(--accent)}
+.perso-stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.perso-stat-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;border-radius:8px;
+  background:var(--card);border:1px solid var(--border);
+  transition:border-color .15s
+}
+.perso-stat-row.ok{border-color:rgba(45,212,160,.3);background:rgba(45,212,160,.04)}
+.perso-stat-row.gap{border-color:rgba(245,200,66,.3);background:rgba(245,200,66,.04)}
+.perso-stat-row.critical{border-color:rgba(255,68,68,.3);background:rgba(255,68,68,.04)}
+.perso-stat-icon{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.perso-stat-row.ok .perso-stat-icon{background:rgba(45,212,160,.15);color:var(--success)}
+.perso-stat-row.gap .perso-stat-icon{background:rgba(245,200,66,.15);color:var(--gold)}
+.perso-stat-row.critical .perso-stat-icon{background:rgba(255,68,68,.15);color:var(--danger)}
+.perso-stat-content{flex:1;min-width:0}
+.perso-stat-lbl{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+.perso-stat-val{font-size:12px;color:var(--text)}
+.perso-stat-val strong{font-family:var(--display);font-size:14px}
+.perso-stat-val .target{color:var(--text3);font-size:10px;margin-left:4px}
+.perso-stat-val .delta{font-family:var(--mono);font-size:10px;letter-spacing:.04em;margin-left:6px}
+.perso-stat-row.ok .perso-stat-val .delta{color:var(--success)}
+.perso-stat-row.gap .perso-stat-val .delta{color:var(--gold)}
+.perso-stat-row.critical .perso-stat-val .delta{color:var(--danger)}
+
+/* Actions checklist */
+.perso-actions{padding:20px 28px 26px;border-top:1px solid rgba(184,255,87,.15)}
+.perso-actions-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.perso-action-list{display:flex;flex-direction:column;gap:8px}
+.perso-action{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:12px 14px;border-radius:8px;
+  background:var(--card);border:1px solid var(--border);
+  font-size:12px;color:var(--text2);line-height:1.6
+}
+.perso-action-num{
+  flex-shrink:0;width:22px;height:22px;border-radius:50%;
+  background:rgba(184,255,87,.12);color:var(--accent);
   display:flex;align-items:center;justify-content:center;
-  font-family:var(--display);font-size:22px;color:var(--accent);
-  flex-shrink:0
+  font-family:var(--display);font-size:12px;font-weight:700
 }
-.my-level-info-title{font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
-.my-level-info-main{font-size:15px;color:var(--text)}
-.my-level-info-main strong{color:var(--accent)}
-.my-level-right{font-size:11px;color:var(--text2);letter-spacing:.04em}
-.my-level-right a{color:var(--accent);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
-.my-level.loading .my-level-info-main{color:var(--text3)}
+.perso-action-text strong{color:var(--text);display:block;margin-bottom:3px;font-weight:400}
+.perso-action-text span{color:var(--text3);font-size:11px}
+
+/* Not connected state */
+.perso-notlinked{
+  padding:32px 28px;text-align:center
+}
+.perso-notlinked-icon{
+  width:48px;height:48px;margin:0 auto 16px;
+  border-radius:12px;background:rgba(184,255,87,.1);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--accent)
+}
+.perso-notlinked-title{font-family:var(--display);font-size:20px;letter-spacing:.02em;margin-bottom:8px}
+.perso-notlinked-desc{font-size:12px;color:var(--text2);line-height:1.7;max-width:420px;margin:0 auto 18px}
+.perso-notlinked-btn{display:inline-block;background:var(--accent);color:#000;padding:10px 22px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em}
+
+@media(max-width:720px){
+  .perso-stats-grid{grid-template-columns:1fr}
+  .perso-head{padding:18px;gap:14px}
+  .perso-diag,.perso-actions{padding:18px}
+  .perso-elo{width:100%}
+}
 
 /* LEVELS SECTION */
 .levels-wrap{max-width:920px;margin:64px auto;padding:0 32px;position:relative;z-index:1}
@@ -223,18 +297,17 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
   <p class="hero-sub">Les 10 niveaux FACEIT, les seuils ELO a passer, les stats attendues a chaque palier, et les leviers concrets pour monter plus vite.</p>
 </section>
 
-<!-- MY LEVEL CARD (filled via JS if user is linked to FACEIT) -->
-<div class="my-level-wrap">
-  <div class="my-level loading" id="myLevelCard">
-    <div class="my-level-left">
-      <div class="my-level-badge" id="myLevelBadge">-</div>
-      <div>
-        <div class="my-level-info-title">Ton niveau actuel</div>
-        <div class="my-level-info-main" id="myLevelInfo">Connecte ton compte FACEIT pour voir ta position exacte</div>
+<!-- PERSONAL ROADMAP (affichee si user connecte + compte FACEIT lie) -->
+<div class="perso-wrap">
+  <div class="perso-card" id="persoCard">
+    <!-- Etat par defaut : not linked (ecrase par JS si compte FACEIT lie) -->
+    <div class="perso-notlinked" id="persoNotLinked">
+      <div class="perso-notlinked-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>
       </div>
-    </div>
-    <div class="my-level-right" id="myLevelRight">
-      <a href="login.html">Lier mon compte FACEIT</a>
+      <div class="perso-notlinked-title">Ta roadmap personnalisée t'attend</div>
+      <div class="perso-notlinked-desc">Connecte ton compte FACEIT pour voir exactement ce qui te manque pour passer au niveau suivant : stats à améliorer, actions à prendre, ELO restant à gagner.</div>
+      <a href="login.html" class="perso-notlinked-btn">Connexion FACEIT</a>
     </div>
   </div>
 </div>
@@ -292,6 +365,49 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
 // Source ELO : documentation FACEIT officielle (2024+)
 // Stats attendues : observations sur populations de joueurs du niveau
 // ═════════════════════════════════════════════════════════════════════════
+
+// Seuils numeriques pour comparer les stats reelles d'un user au niveau cible.
+// Clef = niveau du joueur CIBLE (niveau qu'il veut atteindre).
+// Chaque stat a une valeur "median" attendue pour ce niveau.
+const LEVEL_TARGETS = {
+  2:  { kd: 0.80, adr: 55, kast: 55, openingWr: 42, hs: 38, winRate: 45, fvScore: 28, elo: 501 },
+  3:  { kd: 0.90, adr: 60, kast: 60, openingWr: 45, hs: 40, winRate: 47, fvScore: 35, elo: 751 },
+  4:  { kd: 0.95, adr: 65, kast: 63, openingWr: 47, hs: 42, winRate: 48, fvScore: 42, elo: 901 },
+  5:  { kd: 1.00, adr: 70, kast: 66, openingWr: 48, hs: 43, winRate: 50, fvScore: 48, elo: 1051 },
+  6:  { kd: 1.05, adr: 75, kast: 68, openingWr: 50, hs: 44, winRate: 51, fvScore: 54, elo: 1201 },
+  7:  { kd: 1.10, adr: 80, kast: 70, openingWr: 51, hs: 45, winRate: 52, fvScore: 60, elo: 1351 },
+  8:  { kd: 1.15, adr: 85, kast: 72, openingWr: 53, hs: 46, winRate: 54, fvScore: 66, elo: 1531 },
+  9:  { kd: 1.20, adr: 88, kast: 74, openingWr: 55, hs: 48, winRate: 56, fvScore: 72, elo: 1751 },
+  10: { kd: 1.25, adr: 92, kast: 76, openingWr: 57, hs: 50, winRate: 58, fvScore: 78, elo: 2001 },
+  11: { kd: 1.30, adr: 96, kast: 78, openingWr: 60, hs: 52, winRate: 62, fvScore: 85, elo: 2401 }, // Challenger
+};
+
+// ELO max de chaque niveau (pour barre de progression entre niveau N et N+1).
+const LEVEL_ELO_RANGES = {
+  1: { min: 100,  max: 500 },
+  2: { min: 501,  max: 750 },
+  3: { min: 751,  max: 900 },
+  4: { min: 901,  max: 1050 },
+  5: { min: 1051, max: 1200 },
+  6: { min: 1201, max: 1350 },
+  7: { min: 1351, max: 1530 },
+  8: { min: 1531, max: 1750 },
+  9: { min: 1751, max: 2000 },
+  10:{ min: 2001, max: null }, // pas de max, challenger au dessus
+};
+
+// Actions concretes generees selon les stats en dessous du seuil.
+// Chaque entree propose jusqu'a 2 actions prioritaires par stat manquante.
+const ACTIONS_BY_STAT = {
+  kd:        { title: 'Ton K/D est sous le seuil',         tips: ['Grind 30 min de DM + aim_botz avant chaque session pour stabiliser ta precision.','Evite les solo peek : chaque duel doit etre trade par un coequipier.'] },
+  adr:       { title: 'Ton ADR est trop bas',              tips: ['Apprends 2-3 lineups de grenades (HE + molo) par map : +5 ADR facile.','Damage check chaque ennemi meme sans le kill : les degats s\'accumulent.'] },
+  kast:      { title: 'Ton KAST manque de regularite',     tips: ['Ne meurs jamais isole : assure que tu es trade-able sur chaque peek.','Supporte tes coequipiers avec des assists (flash, utility, trade kill).'] },
+  openingWr: { title: 'Tes duels d\'ouverture sont perdants', tips: ['Laisse l\'entry au lurker / lineup. Suis en second avec trade.','Utilise une flash avant de peek un angle long : +20% d\'opening WR.'] },
+  hs:        { title: 'Ton HS% freine ta progression',     tips: ['Crosshair placement : hauteur de tete sur tous les angles serres.','Spray control AK 1st mag en aim_training tous les jours (10 min).'] },
+  winRate:   { title: 'Ton win rate doit remonter',        tips: ['Ameliore ta communication : appelle tes positions en comm court.','Ne force pas les rounds eco risques : save permet de rebondir.'] },
+  fvScore:   { title: 'Ton FV Score global a des lacunes', tips: ['Regarde le breakdown Performance/Consistance/Impact sur ton espace.','Corrige d\'abord la dimension la plus faible, pas la plus forte.'] },
+};
+
 const LEVELS = [
   {
     key: 'challenger', num: 'CH', name: 'Challenger',
@@ -485,7 +601,8 @@ function renderLevels(currentLevel) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════
-// Load the user's current FACEIT level from Supabase profile
+// Load the user's current FACEIT level + recent stats
+// and generate a personalized roadmap comparing to next level targets.
 // ═════════════════════════════════════════════════════════════════════════
 async function loadUserLevel() {
   try {
@@ -500,34 +617,172 @@ async function loadUserLevel() {
       .eq('id', session.user.id)
       .single();
 
-    if (!profile || !profile.faceit_level) { renderLevels(null); return; }
+    if (!profile || !profile.faceit_nickname) { renderLevels(null); return; }
 
-    const level = parseInt(profile.faceit_level, 10);
-    const card = document.getElementById('myLevelCard');
-    const badge = document.getElementById('myLevelBadge');
-    const info = document.getElementById('myLevelInfo');
-    const right = document.getElementById('myLevelRight');
+    const level = parseInt(profile.faceit_level || 1, 10);
 
-    if (card) card.classList.remove('loading');
-    if (badge) badge.textContent = level;
-    if (info) {
-      const lvlObj = LEVELS.find(function(l) { return l.key === 'level-' + level; });
-      const targetName = level >= 10 ? 'Challenger' : ('Niveau ' + (level + 1));
-      info.innerHTML = '<strong>' + profile.faceit_nickname + '</strong> &middot; Niveau ' + level
-        + (profile.faceit_elo ? ' &middot; ' + profile.faceit_elo + ' ELO' : '')
-        + '<div style="font-size:11px;color:var(--text3);margin-top:4px;letter-spacing:.04em">Prochain palier : ' + targetName + '</div>';
-    }
-    if (right) {
-      // Pointer vers la carte du niveau SUIVANT (c'est la que sont les conseils
-      // pour atteindre le palier superieur). Si deja lvl 10, pointe sur Challenger.
-      const targetAnchor = level >= 10 ? 'challenger' : ('level-' + (level + 1));
-      right.innerHTML = '<a href="#' + targetAnchor + '">Voir ce qu\'il me manque &rarr;</a>';
-    }
+    // Fetch recent stats from /api/scout (20 last matches) to power the
+    // personalized diagnostic. Use Authorization header so the rate limit
+    // treats this as the user's own scout (exempt).
+    let scoutData = null;
+    try {
+      const scoutRes = await fetch('/api/scout?nickname=' + encodeURIComponent(profile.faceit_nickname), {
+        headers: { 'Authorization': 'Bearer ' + session.access_token },
+      });
+      if (scoutRes.ok) scoutData = await scoutRes.json();
+    } catch (_) {}
 
+    // Render the personalized roadmap card
+    renderPersonalRoadmap(profile, level, scoutData);
+
+    // Keep rendering the 11 reference level cards below (now with currentLevel
+    // highlighted and next-target conseils visible).
     renderLevels(level);
   } catch (_) {
     renderLevels(null);
   }
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Generate the personalized roadmap card : compare user stats to next-level
+// targets, detect gaps, propose prioritized actions.
+// ═════════════════════════════════════════════════════════════════════════
+function renderPersonalRoadmap(profile, level, scoutData) {
+  const card = document.getElementById('persoCard');
+  if (!card) return;
+
+  const nextLevel = Math.min(level + 1, 11); // 11 = Challenger
+  const targets = LEVEL_TARGETS[nextLevel];
+  const currentElo = (scoutData && scoutData.cs2 && scoutData.cs2.elo) || profile.faceit_elo || 0;
+
+  // Calcule les valeurs reelles de l'utilisateur (parseFloat safe)
+  const recent = (scoutData && scoutData.recent) || {};
+  const fvScore = (scoutData && scoutData.fvScore) || {};
+  const userStats = {
+    kd:        parseFloat(recent.avgKd) || 0,
+    adr:       parseFloat(recent.avgAdr) || 0,
+    kast:      parseFloat(recent.avgKast) || 0,
+    openingWr: recent.totalFirstKills + recent.totalFirstDeaths > 0
+                 ? (recent.totalFirstKills / (recent.totalFirstKills + recent.totalFirstDeaths)) * 100
+                 : 0,
+    hs:        parseFloat(recent.avgHs) || 0,
+    winRate:   parseFloat(recent.winRate) || 0,
+    fvScore:   parseFloat(fvScore.total) || 0,
+  };
+
+  // ELO progress bar
+  const eloRange = LEVEL_ELO_RANGES[level] || { min: 0, max: 0 };
+  const eloTarget = level >= 10 ? 2400 : (LEVEL_ELO_RANGES[level].max + 1); // Challenger estime ~2400
+  const eloStart = eloRange.min;
+  const eloPct = Math.max(0, Math.min(100, ((currentElo - eloStart) / (eloTarget - eloStart)) * 100));
+  const eloRemaining = Math.max(0, eloTarget - currentElo);
+
+  // Build stat rows
+  const STATS_TO_CHECK = [
+    { key: 'kd',        lbl: 'K/D',           format: function(v){return v.toFixed(2);} },
+    { key: 'adr',       lbl: 'ADR',           format: function(v){return v.toFixed(0);} },
+    { key: 'kast',      lbl: 'KAST',          format: function(v){return v.toFixed(0)+'%';} },
+    { key: 'openingWr', lbl: 'Opening WR',    format: function(v){return v.toFixed(0)+'%';} },
+    { key: 'hs',        lbl: 'HS%',           format: function(v){return v.toFixed(0)+'%';} },
+    { key: 'fvScore',   lbl: 'FV Score /100', format: function(v){return v.toFixed(0);} },
+  ];
+
+  let criticalGaps = 0;
+  const statsHtml = STATS_TO_CHECK.map(function(s) {
+    const userVal = userStats[s.key];
+    const target  = targets[s.key];
+    const hasData = userVal > 0;
+    const delta   = userVal - target;
+    const pctGap  = target > 0 ? (delta / target) * 100 : 0;
+
+    let statusClass, icon, deltaText;
+    if (!hasData) {
+      statusClass = 'gap';
+      icon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+      deltaText = '<span class="delta">- donnees manquantes</span>';
+    } else if (delta >= 0) {
+      statusClass = 'ok';
+      icon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+      deltaText = '<span class="delta">+' + Math.abs(delta).toFixed(s.key === 'kd' ? 2 : 0) + ' vs cible</span>';
+    } else if (pctGap >= -10) {
+      statusClass = 'gap';
+      icon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="12 5 12 19"/><polyline points="19 12 12 19 5 12"/></svg>';
+      deltaText = '<span class="delta">' + delta.toFixed(s.key === 'kd' ? 2 : 0) + ' vs cible</span>';
+    } else {
+      statusClass = 'critical';
+      icon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      deltaText = '<span class="delta">' + delta.toFixed(s.key === 'kd' ? 2 : 0) + ' vs cible</span>';
+      criticalGaps++;
+    }
+
+    return ''
+      + '<div class="perso-stat-row ' + statusClass + '">'
+      + '  <div class="perso-stat-icon">' + icon + '</div>'
+      + '  <div class="perso-stat-content">'
+      + '    <div class="perso-stat-lbl">' + s.lbl + '</div>'
+      + '    <div class="perso-stat-val"><strong>' + s.format(userVal) + '</strong>'
+      + '    <span class="target">cible ' + s.format(target) + '</span>' + deltaText + '</div>'
+      + '  </div>'
+      + '</div>';
+  }).join('');
+
+  // Build action checklist : pick the top 3-5 stats with the biggest gap
+  // and generate 1 action per stat from ACTIONS_BY_STAT.
+  const gaps = STATS_TO_CHECK
+    .map(function(s) { return { key: s.key, lbl: s.lbl, user: userStats[s.key], target: targets[s.key], pctGap: targets[s.key] > 0 ? ((userStats[s.key] - targets[s.key]) / targets[s.key]) * 100 : 0 }; })
+    .filter(function(g) { return g.user > 0 && g.pctGap < 0; })
+    .sort(function(a, b) { return a.pctGap - b.pctGap; })
+    .slice(0, 4);
+
+  let actionsHtml = '';
+  if (gaps.length > 0) {
+    actionsHtml = gaps.map(function(g, i) {
+      const action = ACTIONS_BY_STAT[g.key];
+      if (!action) return '';
+      const tip = action.tips[0];
+      return ''
+        + '<div class="perso-action">'
+        + '  <div class="perso-action-num">' + (i + 1) + '</div>'
+        + '  <div class="perso-action-text"><strong>' + action.title + '</strong><span>' + tip + '</span></div>'
+        + '</div>';
+    }).join('');
+  } else {
+    // Tout est au vert
+    actionsHtml = ''
+      + '<div class="perso-action">'
+      + '  <div class="perso-action-num"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>'
+      + '  <div class="perso-action-text"><strong>Toutes tes stats sont au niveau ' + nextLevel + '</strong><span>Tu es en position de grimper. Continue a jouer regulierement pour convertir en ELO.</span></div>'
+      + '</div>';
+  }
+
+  const targetLvlName = nextLevel >= 11 ? 'Challenger (top 1000 mondial)' : ('Niveau ' + nextLevel);
+
+  // Assemble the full card
+  card.innerHTML = ''
+    + '<div class="perso-head">'
+    + '  <div class="perso-badge">' + level + '</div>'
+    + '  <div class="perso-head-info">'
+    + '    <div class="perso-tag">Ta roadmap personnalisee</div>'
+    + '    <div class="perso-name"><strong>' + escapeHtml(profile.faceit_nickname) + '</strong> &middot; Niveau ' + level + '</div>'
+    + '    <div class="perso-target">Prochain palier : <strong>' + targetLvlName + '</strong></div>'
+    + '  </div>'
+    + '  <div class="perso-elo">'
+    + '    <div class="perso-elo-nums"><div class="perso-elo-current">' + currentElo + '</div><div class="perso-elo-target">&rarr; ' + eloTarget + ' ELO</div></div>'
+    + '    <div class="perso-elo-bar"><div class="perso-elo-fill" style="width:' + eloPct.toFixed(1) + '%"></div></div>'
+    + '    <div class="perso-elo-remaining"><strong>+' + eloRemaining + '</strong> ELO a gagner</div>'
+    + '  </div>'
+    + '</div>'
+    + '<div class="perso-diag">'
+    + '  <div class="perso-diag-title">Tes stats vs <span>niveau ' + (nextLevel >= 11 ? 'Challenger' : nextLevel) + '</span> (20 derniers matchs)</div>'
+    + '  <div class="perso-stats-grid">' + statsHtml + '</div>'
+    + '</div>'
+    + '<div class="perso-actions">'
+    + '  <div class="perso-actions-title">'
+    + '    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>'
+    + '    Checklist prioritaire pour monter'
+    + '  </div>'
+    + '  <div class="perso-action-list">' + actionsHtml + '</div>'
+    + '</div>';
 }
 
 // ═════════════════════════════════════════════════════════════════════════
