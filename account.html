@@ -142,6 +142,55 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .ext-card-cta.primary:hover{background:var(--accent2);border-color:var(--accent2);color:#000}
 
 @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* FACEIT STATS SECTION */
+.faceit-section{margin-top:40px;opacity:0;animation:up .4s .2s ease forwards}
+.faceit-section .sl{margin-top:0;margin-bottom:12px}
+.faceit-kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:24px}
+.faceit-kpi-row .kpi{background:var(--surface);padding:18px 16px;text-align:center;transition:background .15s}
+.faceit-kpi-row .kpi:hover{background:var(--card)}
+@media(max-width:860px){.faceit-kpi-row{grid-template-columns:repeat(3,1fr)}}
+
+/* FV SCORE BAR */
+.fvs-bar-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.fvs-bar-row:last-child{border-bottom:none}
+.fvs-lbl{font-size:10px;color:var(--text2);letter-spacing:.06em;min-width:100px;text-transform:uppercase}
+.fvs-track{flex:1;height:6px;background:var(--card);border-radius:3px;overflow:hidden}
+.fvs-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .5s ease}
+.fvs-val{font-family:var(--display);font-size:14px;color:var(--accent);min-width:50px;text-align:right}
+
+/* SIDE COMPARE (CT vs T) */
+.side-compare{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-top:8px}
+.side-col{background:var(--surface);padding:14px 16px;text-align:center}
+.side-col:hover{background:var(--card)}
+.side-title{font-size:9px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+.side-title.ct{color:#5b9bd5}
+.side-title.t{color:#d4a843}
+.side-stat{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+.side-stat-lbl{font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+.side-stat-val{font-family:var(--display);font-size:16px}
+
+/* MAP PERF ROW */
+.mperf-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.mperf-row:last-child{border-bottom:none}
+.mperf-tag{font-size:10px;padding:3px 8px;border-radius:3px;background:var(--card);border:1px solid var(--border2);color:var(--text2);letter-spacing:.04em;min-width:70px;text-align:center}
+.mperf-bar{flex:1;height:3px;background:var(--card);border-radius:2px}
+.mperf-fill{height:100%;border-radius:2px;background:var(--accent)}
+.mperf-wr{font-family:var(--display);font-size:13px;color:var(--accent);min-width:38px;text-align:right}
+.mperf-meta{font-size:9px;color:var(--text3);min-width:80px;text-align:right;letter-spacing:.02em}
+
+/* LOADING STATE */
+.faceit-loading{text-align:center;padding:40px 20px;font-size:11px;color:var(--text3);letter-spacing:.04em}
+.faceit-loading span{display:inline-block;animation:fPulse 1.5s ease-in-out infinite}
+@keyframes fPulse{0%,100%{opacity:.4}50%{opacity:1}}
+.faceit-error{text-align:center;padding:20px;font-size:11px;color:var(--text3);letter-spacing:.04em}
+
+/* FACEIT CHART */
+.fchart-wrap{position:relative;height:140px;margin-top:16px}
+.fchart-wrap canvas{width:100%!important;height:100%!important}
+.fchart-legend{display:flex;gap:16px;margin-top:8px}
+.fchart-legend-item{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3);letter-spacing:.06em}
+.fchart-legend-dot{width:8px;height:8px;border-radius:50%}
 </style>
 </head>
 <body>
@@ -244,6 +293,97 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     </div>
   </div>
 
+  <!-- FACEIT STATS SECTION -->
+  <div id="faceitSection" class="faceit-section" style="display:none">
+
+    <div class="sl" id="faceitStatsLabel">STATS FACEIT · 20 DERNIERS MATCHS</div>
+
+    <!-- FACEIT LOADING -->
+    <div id="faceitLoading" class="faceit-loading"><span>Chargement des stats FACEIT...</span></div>
+
+    <!-- FACEIT CONTENT (hidden until loaded) -->
+    <div id="faceitContent" style="display:none">
+
+      <!-- KPI ROW -->
+      <div class="faceit-kpi-row" id="fKpiRow">
+        <div class="kpi"><div class="kpi-val g" id="fkWr">-</div><div class="kpi-lbl">Win Rate</div></div>
+        <div class="kpi"><div class="kpi-val g" id="fkKd">-</div><div class="kpi-lbl">K/D</div></div>
+        <div class="kpi"><div class="kpi-val" id="fkAdr">-</div><div class="kpi-lbl">ADR</div></div>
+        <div class="kpi"><div class="kpi-val go" id="fkHs">-</div><div class="kpi-lbl">HS%</div></div>
+        <div class="kpi"><div class="kpi-val s" id="fkFvs">-</div><div class="kpi-lbl">FV Score</div><div class="kpi-sub ne" id="fkFvsLbl"></div></div>
+        <div class="kpi"><div class="kpi-val" id="fkRole">-</div><div class="kpi-lbl">Role</div></div>
+      </div>
+
+      <!-- TWO COLUMN GRID -->
+      <div class="main-grid">
+        <!-- LEFT -->
+        <div>
+          <div class="sl">K/D et ADR Trend</div>
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+              <div style="font-size:11px;color:var(--text2)">20 derniers matchs</div>
+            </div>
+            <div class="fchart-wrap" id="fChartWrap">
+              <canvas id="fTrendChart"></canvas>
+            </div>
+            <div class="fchart-legend">
+              <div class="fchart-legend-item"><div class="fchart-legend-dot" style="background:#b8ff57"></div>K/D</div>
+              <div class="fchart-legend-item"><div class="fchart-legend-dot" style="background:#5b9bd5"></div>ADR</div>
+            </div>
+          </div>
+
+          <div class="sl" style="margin-top:16px">Performance par map</div>
+          <div class="card" id="fMapPerfCard">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Aucune donnee</div>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div>
+          <div class="sl">FV Score Breakdown</div>
+          <div class="card" id="fScoreCard">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <div style="font-size:11px;color:var(--text2)">Score global</div>
+              <div style="font-family:var(--display);font-size:24px;color:var(--accent)" id="fScoreTotal">-</div>
+            </div>
+            <div id="fScoreBars"></div>
+            <div style="margin-top:10px;font-size:9px;color:var(--text3);letter-spacing:.06em;text-align:center" id="fScoreLabelLine"></div>
+          </div>
+
+          <div class="sl" style="margin-top:16px">Impact</div>
+          <div class="card" id="fImpactCard">
+            <div class="ms"><span class="ms-l">First Kills</span><span class="ms-v g" id="fImpFk">-</span></div>
+            <div class="ms"><span class="ms-l">First Deaths</span><span class="ms-v" id="fImpFd">-</span></div>
+            <div class="ms"><span class="ms-l">Opening Ratio</span><span class="ms-v" id="fImpOr">-</span></div>
+            <div class="ms"><span class="ms-l">Clutchs 1v1</span><span class="ms-v s" id="fImpC1">-</span></div>
+            <div class="ms"><span class="ms-l">Clutchs 1v2</span><span class="ms-v s" id="fImpC2">-</span></div>
+            <div class="ms"><span class="ms-l">Triple Kills</span><span class="ms-v go" id="fImpTk">-</span></div>
+            <div class="ms"><span class="ms-l">Quadra Kills</span><span class="ms-v go" id="fImpQk">-</span></div>
+            <div class="ms"><span class="ms-l">Aces</span><span class="ms-v go" id="fImpAce">-</span></div>
+            <div class="ms"><span class="ms-l">Trade Kills</span><span class="ms-v" id="fImpTrd">-</span></div>
+          </div>
+
+          <div class="sl" style="margin-top:16px">CT vs T</div>
+          <div class="side-compare" id="fSideCompare">
+            <div class="side-col">
+              <div class="side-title ct">CT Side</div>
+              <div class="side-stat"><span class="side-stat-lbl">Win Rate</span><span class="side-stat-val" id="fCtWr" style="color:#5b9bd5">-</span></div>
+              <div class="side-stat"><span class="side-stat-lbl">K/D</span><span class="side-stat-val" id="fCtKd" style="color:#5b9bd5">-</span></div>
+            </div>
+            <div class="side-col">
+              <div class="side-title t">T Side</div>
+              <div class="side-stat"><span class="side-stat-lbl">Win Rate</span><span class="side-stat-val" id="fTWr" style="color:#d4a843">-</span></div>
+              <div class="side-stat"><span class="side-stat-lbl">K/D</span><span class="side-stat-val" id="fTKd" style="color:#d4a843">-</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FACEIT ERROR -->
+    <div id="faceitError" class="faceit-error" style="display:none"></div>
+  </div>
+
 </div>
 
 <script>
@@ -329,6 +469,11 @@ async function init() {
   // "Lier mon compte FACEIT" button if no FACEIT linked
   if (!faceitNickname) {
     document.getElementById('faceitLinkZone').innerHTML = '<a href="login.html?link_faceit=1" class="btn-link-faceit"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>Lier mon compte FACEIT</a>';
+  }
+
+  // Load FACEIT stats dashboard (non-blocking)
+  if (faceitNickname) {
+    loadFaceitStats(faceitNickname);
   }
 
   // Fetch plan from API
@@ -694,6 +839,293 @@ window.addEventListener('message', (e) => {
   if (!d || d.type !== 'FV_EXT_STATUS_REPLY') return;
   showExtCard(d.paired ? 'paired' : 'installed');
 });
+
+// ============================================================================
+// FACEIT STATS DASHBOARD
+// ============================================================================
+async function loadFaceitStats(nickname) {
+  const section = document.getElementById('faceitSection');
+  const loading = document.getElementById('faceitLoading');
+  const content = document.getElementById('faceitContent');
+  const errorEl = document.getElementById('faceitError');
+
+  section.style.display = 'block';
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  errorEl.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/scout?nickname=' + encodeURIComponent(nickname));
+    if (!res.ok) throw new Error('Erreur ' + res.status);
+    const data = await res.json();
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+
+    renderFaceitKpis(data);
+    renderFaceitTrendChart(data);
+    renderFaceitMapPerf(data);
+    renderFaceitScore(data);
+    renderFaceitImpact(data);
+    renderFaceitSides(data);
+  } catch (err) {
+    loading.style.display = 'none';
+    errorEl.style.display = 'block';
+    errorEl.textContent = 'Impossible de charger les stats FACEIT';
+    console.warn('FACEIT stats error:', err);
+  }
+}
+
+function renderFaceitKpis(data) {
+  const r = data.recent || {};
+  const fvs = data.fvScore || {};
+
+  document.getElementById('fkWr').textContent = r.winRate != null ? parseFloat(r.winRate).toFixed(0) + '%' : '-';
+  document.getElementById('fkKd').textContent = r.avgKd != null ? parseFloat(r.avgKd).toFixed(2) : '-';
+  document.getElementById('fkAdr').textContent = r.avgAdr != null ? parseFloat(r.avgAdr).toFixed(1) : '-';
+  document.getElementById('fkHs').textContent = r.avgHs != null ? parseFloat(r.avgHs).toFixed(0) + '%' : '-';
+  document.getElementById('fkFvs').textContent = fvs.total != null ? fvs.total : '-';
+  document.getElementById('fkFvsLbl').textContent = fvs.label || '';
+  document.getElementById('fkRole').textContent = r.role || '-';
+  document.getElementById('fkRole').style.fontSize = '14px';
+  document.getElementById('fkRole').style.fontFamily = 'var(--mono)';
+  document.getElementById('fkRole').style.letterSpacing = '.02em';
+
+  // Color coding for KD
+  const kdEl = document.getElementById('fkKd');
+  const kd = parseFloat(r.avgKd);
+  if (!isNaN(kd)) {
+    kdEl.style.color = kd >= 1.0 ? 'var(--accent)' : 'var(--danger)';
+  }
+
+  // Color coding for ADR
+  const adrEl = document.getElementById('fkAdr');
+  const adr = parseFloat(r.avgAdr);
+  if (!isNaN(adr)) {
+    adrEl.style.color = adr >= 75 ? 'var(--text)' : 'var(--text2)';
+  }
+}
+
+function renderFaceitTrendChart(data) {
+  const matches = (data.recent && data.recent.matches) || [];
+  if (matches.length < 2) return;
+
+  // Reverse to show oldest on left, newest on right
+  const ordered = matches.slice().reverse();
+
+  const canvas = document.getElementById('fTrendChart');
+  const ctx = canvas.getContext('2d');
+
+  requestAnimationFrame(() => {
+    const W = canvas.parentElement.offsetWidth;
+    const H = 140;
+    canvas.width = W * devicePixelRatio;
+    canvas.height = H * devicePixelRatio;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+
+    const kdVals = ordered.map(m => parseFloat(m.kd) || 0);
+    const adrVals = ordered.map(m => parseFloat(m.adr) || 0);
+
+    const p = { t: 10, r: 10, b: 22, l: 10 };
+    const cW = W - p.l - p.r;
+    const cH = H - p.t - p.b;
+
+    // KD axis (left)
+    const kdMin = Math.min(...kdVals) * 0.85;
+    const kdMax = Math.max(...kdVals) * 1.15;
+    const kdRange = kdMax - kdMin || 1;
+
+    // ADR axis (right, separate scale)
+    const adrMin = Math.min(...adrVals) * 0.85;
+    const adrMax = Math.max(...adrVals) * 1.15;
+    const adrRange = adrMax - adrMin || 1;
+
+    const px = function(i) { return p.l + (i / (ordered.length - 1)) * cW; };
+    const pyKd = function(v) { return p.t + (1 - (v - kdMin) / kdRange) * cH; };
+    const pyAdr = function(v) { return p.t + (1 - (v - adrMin) / adrRange) * cH; };
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(28,30,30,.6)';
+    ctx.lineWidth = 1;
+    [0, 0.5, 1].forEach(function(t) {
+      var y = p.t + t * cH;
+      ctx.beginPath(); ctx.moveTo(p.l, y); ctx.lineTo(p.l + cW, y); ctx.stroke();
+    });
+
+    // ADR area fill
+    var adrGrad = ctx.createLinearGradient(0, p.t, 0, p.t + cH);
+    adrGrad.addColorStop(0, 'rgba(91,155,213,.12)');
+    adrGrad.addColorStop(1, 'rgba(91,155,213,0)');
+    ctx.beginPath();
+    ctx.moveTo(px(0), pyAdr(adrVals[0]));
+    adrVals.forEach(function(v, i) { if (i > 0) ctx.lineTo(px(i), pyAdr(v)); });
+    ctx.lineTo(px(adrVals.length - 1), p.t + cH);
+    ctx.lineTo(px(0), p.t + cH);
+    ctx.closePath();
+    ctx.fillStyle = adrGrad;
+    ctx.fill();
+
+    // ADR line
+    ctx.beginPath();
+    ctx.strokeStyle = '#5b9bd5';
+    ctx.lineWidth = 1.2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    adrVals.forEach(function(v, i) {
+      if (i === 0) ctx.moveTo(px(i), pyAdr(v));
+      else ctx.lineTo(px(i), pyAdr(v));
+    });
+    ctx.stroke();
+
+    // KD area fill
+    var kdGrad = ctx.createLinearGradient(0, p.t, 0, p.t + cH);
+    kdGrad.addColorStop(0, 'rgba(184,255,87,.18)');
+    kdGrad.addColorStop(1, 'rgba(184,255,87,0)');
+    ctx.beginPath();
+    ctx.moveTo(px(0), pyKd(kdVals[0]));
+    kdVals.forEach(function(v, i) { if (i > 0) ctx.lineTo(px(i), pyKd(v)); });
+    ctx.lineTo(px(kdVals.length - 1), p.t + cH);
+    ctx.lineTo(px(0), p.t + cH);
+    ctx.closePath();
+    ctx.fillStyle = kdGrad;
+    ctx.fill();
+
+    // KD line
+    ctx.beginPath();
+    ctx.strokeStyle = '#b8ff57';
+    ctx.lineWidth = 1.5;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    kdVals.forEach(function(v, i) {
+      if (i === 0) ctx.moveTo(px(i), pyKd(v));
+      else ctx.lineTo(px(i), pyKd(v));
+    });
+    ctx.stroke();
+
+    // KD dots
+    kdVals.forEach(function(v, i) {
+      ctx.beginPath();
+      ctx.arc(px(i), pyKd(v), 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#b8ff57';
+      ctx.fill();
+    });
+
+    // ADR dots
+    adrVals.forEach(function(v, i) {
+      ctx.beginPath();
+      ctx.arc(px(i), pyAdr(v), 2, 0, Math.PI * 2);
+      ctx.fillStyle = '#5b9bd5';
+      ctx.fill();
+    });
+
+    // Date labels (every few points to avoid overlap)
+    ctx.font = "8px 'Space Mono'";
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#4a5050';
+    var step = ordered.length <= 10 ? 1 : Math.ceil(ordered.length / 8);
+    ordered.forEach(function(m, i) {
+      if (i % step === 0 || i === ordered.length - 1) {
+        var d = m.date ? new Date(m.date) : null;
+        if (d) {
+          ctx.fillText(d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }), px(i), H - 5);
+        }
+      }
+    });
+  });
+}
+
+function renderFaceitMapPerf(data) {
+  var maps = data.mapStats || [];
+  var el = document.getElementById('fMapPerfCard');
+  if (!maps.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Aucune donnee par map</div>';
+    return;
+  }
+
+  var sorted = maps.slice().sort(function(a, b) { return b.matches - a.matches; });
+  var maxWr = 100;
+
+  el.innerHTML = sorted.map(function(m) {
+    var wr = parseFloat(m.winRate) || 0;
+    var wrColor = wr >= 50 ? '#b8ff57' : '#ff4444';
+    return '<div class="mperf-row">' +
+      '<span class="mperf-tag">' + (m.map || '?').replace('de_', '').toLowerCase() + '</span>' +
+      '<div class="mperf-bar"><div class="mperf-fill" style="width:' + (wr / maxWr * 100) + '%;background:' + wrColor + '"></div></div>' +
+      '<span class="mperf-wr" style="color:' + wrColor + '">' + wr.toFixed(0) + '%</span>' +
+      '<span class="mperf-meta">' + parseFloat(m.kd || 0).toFixed(2) + ' K/D · ' + parseFloat(m.avgAdr || 0).toFixed(0) + ' ADR</span>' +
+    '</div>';
+  }).join('');
+}
+
+function renderFaceitScore(data) {
+  var fvs = data.fvScore || {};
+  var bd = fvs.breakdown || {};
+
+  document.getElementById('fScoreTotal').textContent = fvs.total != null ? fvs.total : '-';
+
+  var cats = [
+    { key: 'performance', label: 'Performance', max: 35 },
+    { key: 'consistency', label: 'Consistency', max: 28 },
+    { key: 'impact', label: 'Impact', max: 25 },
+    { key: 'utility', label: 'Utility', max: 15 }
+  ];
+
+  var barsEl = document.getElementById('fScoreBars');
+  barsEl.innerHTML = cats.map(function(c) {
+    var item = bd[c.key] || {};
+    var score = item.score != null ? item.score : 0;
+    var pct = c.max > 0 ? (score / c.max * 100) : 0;
+    return '<div class="fvs-bar-row">' +
+      '<span class="fvs-lbl">' + c.label + '</span>' +
+      '<div class="fvs-track"><div class="fvs-fill" style="width:' + pct.toFixed(1) + '%"></div></div>' +
+      '<span class="fvs-val">' + score + '/' + c.max + '</span>' +
+    '</div>';
+  }).join('');
+
+  var labelLine = document.getElementById('fScoreLabelLine');
+  var parts = [];
+  if (fvs.label) parts.push(fvs.label);
+  if (fvs.subLevel) parts.push('Sous niveau ' + fvs.subLevel);
+  if (fvs.subLevelProgress != null) parts.push(fvs.subLevelProgress + '% progression');
+  labelLine.textContent = parts.join(' · ');
+}
+
+function renderFaceitImpact(data) {
+  var r = data.recent || {};
+
+  document.getElementById('fImpFk').textContent = r.totalFirstKills != null ? r.totalFirstKills : '-';
+  document.getElementById('fImpFd').textContent = r.totalFirstDeaths != null ? r.totalFirstDeaths : '-';
+
+  var orEl = document.getElementById('fImpOr');
+  var orVal = parseFloat(r.openingRatio);
+  if (!isNaN(orVal)) {
+    orEl.textContent = orVal.toFixed(2);
+    orEl.style.color = orVal >= 1.0 ? 'var(--accent)' : 'var(--danger)';
+  }
+
+  document.getElementById('fImpC1').textContent = r.totalClutch1v1 != null ? r.totalClutch1v1 : '-';
+  document.getElementById('fImpC2').textContent = r.totalClutch1v2 != null ? r.totalClutch1v2 : '-';
+  document.getElementById('fImpTk').textContent = r.totalTriples != null ? r.totalTriples : '-';
+  document.getElementById('fImpQk').textContent = r.totalQuads != null ? r.totalQuads : '-';
+  document.getElementById('fImpAce').textContent = r.totalAces != null ? r.totalAces : '-';
+  document.getElementById('fImpTrd').textContent = r.totalTradeKills != null ? r.totalTradeKills : '-';
+}
+
+function renderFaceitSides(data) {
+  var r = data.recent || {};
+
+  var ctWr = document.getElementById('fCtWr');
+  var ctKd = document.getElementById('fCtKd');
+  var tWr = document.getElementById('fTWr');
+  var tKd = document.getElementById('fTKd');
+
+  ctWr.textContent = r.ctWinRate != null ? parseFloat(r.ctWinRate).toFixed(0) + '%' : '-';
+  ctKd.textContent = r.ctKd != null ? parseFloat(r.ctKd).toFixed(2) : '-';
+  tWr.textContent = r.tWinRate != null ? parseFloat(r.tWinRate).toFixed(0) + '%' : '-';
+  tKd.textContent = r.tKd != null ? parseFloat(r.tKd).toFixed(2) : '-';
+}
 
 init().then(() => {
   loadNotifs();
