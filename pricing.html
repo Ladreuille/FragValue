@@ -513,8 +513,8 @@ footer{
       <div class="soon-badge">BIENT&Ocirc;T</div>
       <div class="pricing-tag">Dominer</div>
       <div class="pricing-name">Elite</div>
-      <div class="pricing-price">29<span>&euro;/mois</span></div>
-      <div class="pricing-period">Pour les coachs et équipes</div>
+      <div class="pricing-price" id="elitePrice">29<span>&euro;/mois</span></div>
+      <div class="pricing-period" id="elitePeriod">Pour les coachs et équipes</div>
       <hr class="pricing-divider">
       <div class="pricing-features">
         <div class="pricing-feature">
@@ -874,8 +874,10 @@ function toggleBilling() {
   const badge = document.getElementById('yearlyBadge');
   const labelM = document.getElementById('labelMonthly');
   const labelY = document.getElementById('labelYearly');
-  const price = document.getElementById('proPrice');
-  const period = document.getElementById('proPeriod');
+  const proPrice = document.getElementById('proPrice');
+  const proPeriod = document.getElementById('proPeriod');
+  const elitePrice = document.getElementById('elitePrice');
+  const elitePeriod = document.getElementById('elitePeriod');
 
   track.classList.toggle('on', isYearly);
   badge.classList.toggle('show', isYearly);
@@ -883,11 +885,15 @@ function toggleBilling() {
   labelY.classList.toggle('active', isYearly);
 
   if (isYearly) {
-    price.innerHTML = '79<span>\u20ac/an</span>';
-    period.textContent = 'soit 6,58\u20ac/mois. 2 mois offerts';
+    proPrice.innerHTML = '79<span>\u20ac/an</span>';
+    proPeriod.textContent = 'soit 6,58\u20ac/mois \u00b7 2 mois offerts';
+    if (elitePrice) elitePrice.innerHTML = '239<span>\u20ac/an</span>';
+    if (elitePeriod) elitePeriod.textContent = 'soit 19,92\u20ac/mois \u00b7 2 mois offerts';
   } else {
-    price.innerHTML = '9<span>\u20ac/mois</span>';
-    period.textContent = 'soit 108\u20ac/an';
+    proPrice.innerHTML = '9<span>\u20ac/mois</span>';
+    proPeriod.textContent = 'soit 108\u20ac/an';
+    if (elitePrice) elitePrice.innerHTML = '29<span>\u20ac/mois</span>';
+    if (elitePeriod) elitePeriod.textContent = 'Pour les coachs et \u00e9quipes';
   }
 }
 

@@ -126,6 +126,44 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .perso-action-text strong{color:var(--text);display:block;margin-bottom:3px;font-weight:400}
 .perso-action-text span{color:var(--text3);font-size:11px}
 
+/* AI Diagnosis block (remplace la checklist statique quand l'IA repond) */
+.perso-ai{padding:22px 28px;border-top:1px solid rgba(184,255,87,.15);background:linear-gradient(180deg,rgba(184,255,87,.02) 0%,transparent 100%)}
+.perso-ai-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.perso-ai-title{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.perso-ai-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#b8ff57 0%,#7ddd1a 100%);color:#000;padding:3px 8px;border-radius:40px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em}
+.perso-ai-refresh{background:transparent;border:1px solid var(--border2);color:var(--text3);padding:6px 10px;border-radius:var(--r);font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.04em;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.perso-ai-refresh:hover{border-color:var(--accent);color:var(--accent)}
+.perso-ai-refresh:disabled{opacity:.4;cursor:not-allowed}
+.perso-ai-loading{display:flex;align-items:center;gap:10px;padding:14px;font-size:12px;color:var(--text2)}
+.perso-ai-spinner{width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.perso-ai-summary{font-size:13px;color:var(--text);line-height:1.7;margin-bottom:20px;padding:14px 16px;background:var(--card);border-left:2px solid var(--accent);border-radius:0 var(--r) var(--r) 0}
+.perso-ai-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.perso-ai-col{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.perso-ai-col-title{font-size:9px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:700;display:flex;align-items:center;gap:6px}
+.perso-ai-col.strengths .perso-ai-col-title{color:var(--success)}
+.perso-ai-col.weaknesses .perso-ai-col-title{color:var(--danger)}
+.perso-ai-col ul{list-style:none;padding:0;display:flex;flex-direction:column;gap:7px}
+.perso-ai-col li{font-size:11px;color:var(--text2);line-height:1.6;padding-left:14px;position:relative}
+.perso-ai-col.strengths li::before{content:'';position:absolute;left:0;top:6px;width:5px;height:5px;border-radius:50%;background:var(--success)}
+.perso-ai-col.weaknesses li::before{content:'';position:absolute;left:0;top:6px;width:5px;height:5px;border-radius:50%;background:var(--danger)}
+.perso-ai-actions{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.perso-ai-action{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:8px;background:var(--card);border:1px solid var(--border);transition:border-color .15s}
+.perso-ai-action:hover{border-color:var(--border2)}
+.perso-ai-action-num{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:rgba(184,255,87,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:12px;font-weight:700}
+.perso-ai-action-text strong{color:var(--text);display:block;margin-bottom:3px;font-size:12px}
+.perso-ai-action-text span{color:var(--text2);font-size:11px;line-height:1.6}
+.perso-ai-goals{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.perso-ai-goal{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.perso-ai-goal-lbl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.perso-ai-goal-val{font-size:12px;color:var(--text);line-height:1.6}
+.perso-ai-goal-val strong{color:var(--accent);display:block;margin-bottom:3px;font-family:var(--display);font-size:14px}
+.perso-ai-footer{margin-top:14px;font-size:10px;color:var(--text3);letter-spacing:.04em;text-align:right}
+@media(max-width:720px){
+  .perso-ai-cols,.perso-ai-goals{grid-template-columns:1fr}
+  .perso-ai{padding:18px}
+}
+
 /* Not connected state */
 .perso-notlinked{
   padding:32px 28px;text-align:center
@@ -638,6 +676,10 @@ async function loadUserLevel() {
     // Keep rendering the 11 référence level cards below (now with currentLevel
     // highlighted and next-target conseils visible).
     renderLevels(level);
+
+    // Fetch AI diagnosis in the background (non-blocking). The placeholder
+    // spinner inside .perso-ai is replaced when the response arrives.
+    loadAIDiagnosis(session.access_token).catch(function(_){});
   } catch (_) {
     renderLevels(null);
   }
@@ -782,7 +824,122 @@ function renderPersonalRoadmap(profile, level, scoutData) {
     + '    Checklist prioritaire pour monter'
     + '  </div>'
     + '  <div class="perso-action-list">' + actionsHtml + '</div>'
+    + '</div>'
+    // Placeholder AI : sera rempli par loadAIDiagnosis()
+    + '<div class="perso-ai" id="persoAI">'
+    + '  <div class="perso-ai-head">'
+    + '    <div class="perso-ai-title">'
+    + '      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/><line x1="9" y1="22" x2="15" y2="22"/></svg>'
+    + '      Diagnostic IA personnalise'
+    + '      <span class="perso-ai-badge">COACH IA</span>'
+    + '    </div>'
+    + '  </div>'
+    + '  <div class="perso-ai-loading">'
+    + '    <div class="perso-ai-spinner"></div>'
+    + '    <span>Analyse de tes 20 derniers matchs par l\'IA... (peut prendre 10 secondes)</span>'
+    + '  </div>'
     + '</div>';
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Fetch le diagnostic IA depuis /api/ai-roadmap et l'injecte dans la carte.
+// Cache serveur de 7 jours, donc l'appel est quasi instantane la plupart
+// du temps. Premier appel : ~5-10s (call Claude).
+// ═════════════════════════════════════════════════════════════════════════
+async function loadAIDiagnosis(sessionToken) {
+  const host = document.getElementById('persoAI');
+  if (!host) return;
+
+  try {
+    const res = await fetch('/api/ai-roadmap', {
+      headers: { 'Authorization': 'Bearer ' + sessionToken },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || err.error || 'API ' + res.status);
+    }
+    const data = await res.json();
+    const d = data.diagnosis || {};
+    if (!d.summary) throw new Error('Diagnostic IA vide');
+
+    const cachedWhen = data.cachedAt
+      ? new Date(data.cachedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+      : '';
+
+    const strengthsHtml = (d.strengths || []).map(function(s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('');
+    const weaknessesHtml = (d.weaknesses || []).map(function(s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('');
+    const actionsHtml = (d.actions || []).map(function(a, i) {
+      return ''
+        + '<div class="perso-ai-action">'
+        + '  <div class="perso-ai-action-num">' + (i + 1) + '</div>'
+        + '  <div class="perso-ai-action-text"><strong>' + escapeHtml(a.title || '') + '</strong><span>' + escapeHtml(a.detail || '') + '</span></div>'
+        + '</div>';
+    }).join('');
+
+    const goalsHtml = ''
+      + '<div class="perso-ai-goal">'
+      + '  <div class="perso-ai-goal-lbl">Objectif hebdo</div>'
+      + '  <div class="perso-ai-goal-val"><strong>5 prochains matchs</strong>' + escapeHtml(d.weeklyGoal || '-') + '</div>'
+      + '</div>'
+      + '<div class="perso-ai-goal">'
+      + '  <div class="perso-ai-goal-lbl">Map a travailler</div>'
+      + '  <div class="perso-ai-goal-val"><strong>' + escapeHtml((d.mapTip || {}).map || '-') + '</strong>' + escapeHtml((d.mapTip || {}).advice || '-') + '</div>'
+      + '</div>';
+
+    host.innerHTML = ''
+      + '<div class="perso-ai-head">'
+      + '  <div class="perso-ai-title">'
+      + '    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/><line x1="9" y1="22" x2="15" y2="22"/></svg>'
+      + '    Diagnostic IA personnalise'
+      + '    <span class="perso-ai-badge">COACH IA</span>'
+      + '  </div>'
+      + '  <button class="perso-ai-refresh" onclick="refreshAI(this)">'
+      + '    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>'
+      + '    Rafraichir'
+      + '  </button>'
+      + '</div>'
+      + '<div class="perso-ai-summary">' + escapeHtml(d.summary) + '</div>'
+      + '<div class="perso-ai-cols">'
+      + '  <div class="perso-ai-col strengths"><div class="perso-ai-col-title">TES FORCES</div><ul>' + strengthsHtml + '</ul></div>'
+      + '  <div class="perso-ai-col weaknesses"><div class="perso-ai-col-title">TES FAIBLESSES</div><ul>' + weaknessesHtml + '</ul></div>'
+      + '</div>'
+      + '<div class="perso-ai-actions">' + actionsHtml + '</div>'
+      + '<div class="perso-ai-goals">' + goalsHtml + '</div>'
+      + '<div class="perso-ai-footer">Genere le ' + cachedWhen + ' &middot; Cache 7 jours &middot; Base sur tes 20 derniers matchs FACEIT</div>';
+  } catch (err) {
+    host.innerHTML = ''
+      + '<div class="perso-ai-head">'
+      + '  <div class="perso-ai-title">'
+      + '    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/><line x1="9" y1="22" x2="15" y2="22"/></svg>'
+      + '    Diagnostic IA personnalise'
+      + '  </div>'
+      + '</div>'
+      + '<div style="padding:16px;font-size:11px;color:var(--text3);line-height:1.7;background:var(--card);border:1px dashed var(--border2);border-radius:var(--r)">'
+      + '  Le coach IA est temporairement indisponible. Ta roadmap classique au-dessus reste valide.'
+      + '</div>';
+    console.warn('AI roadmap error:', err.message);
+  }
+}
+
+// Refresh manuel (ignore le cache serveur)
+async function refreshAI(btn) {
+  btn.disabled = true;
+  btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Regenere...';
+  try {
+    const SB_URL = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+    const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+    const sb = supabase.createClient(SB_URL, SB_ANON);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const res = await fetch('/api/ai-roadmap?refresh=1', {
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    // Simplicite : on reload la section (le code ci-dessus gere le render)
+    await loadAIDiagnosis(session.access_token);
+  } catch (_) {
+    btn.disabled = false;
+    btn.textContent = 'Rafraichir';
+  }
 }
 
 // ═════════════════════════════════════════════════════════════════════════

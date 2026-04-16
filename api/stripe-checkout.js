@@ -34,9 +34,10 @@ export default async function handler(req, res) {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
 
     const PLANS = {
-      pro_monthly: process.env.STRIPE_PRICE_PRO_MONTHLY,
-      pro_yearly: process.env.STRIPE_PRICE_PRO_ANNUEL,
+      pro_monthly:  process.env.STRIPE_PRICE_PRO_MONTHLY,
+      pro_yearly:   process.env.STRIPE_PRICE_PRO_ANNUEL,
       team_monthly: process.env.STRIPE_PRICE_TEAM_MONTHLY,
+      team_yearly:  process.env.STRIPE_PRICE_TEAM_ANNUEL,
     };
 
     const body = req.body || {};
