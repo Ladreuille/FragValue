@@ -29,8 +29,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { code, redirect_uri: clientRedirectUri } = req.body;
+  const { code, code_verifier, redirect_uri: clientRedirectUri } = req.body;
   if (!code) return res.status(400).json({ error: 'Code manquant' });
+  if (!code_verifier) return res.status(400).json({ error: 'code_verifier manquant (PKCE requis)' });
 
   // Le redirect_uri envoye a FACEIT pour l'echange DOIT correspondre EXACTEMENT
   // a celui utilise lors de la requete d'autorisation initiale. Le client nous
@@ -54,10 +55,10 @@ export default async function handler(req, res) {
 
   try {
     // ── Etape 1 : Echange du code contre un access token ─────────────────
-    // Conforme a la doc OAuth FACEIT v3.0 : HTTP Basic auth avec
-    // client_id:client_secret + x-www-form-urlencoded payload.
-    // Pas de PKCE (la doc FACEIT ne le mentionne pas et le backend rejette
-    // code_challenge dans la requete d'autorisation initiale).
+    // Le client FragValue est configure "PKCE required" cote FACEIT.
+    // On envoie code_verifier dans le body ET Basic auth (certains clients
+    // FACEIT acceptent/requierent les deux, et c'est safe d'envoyer les
+    // deux : FACEIT ignore celui qu'il n'utilise pas).
     const tokenRes = await fetch('https://api.faceit.com/auth/v1/oauth/token', {
       method: 'POST',
       headers: {
@@ -65,9 +66,11 @@ export default async function handler(req, res) {
         'Authorization': 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
       },
       body: new URLSearchParams({
-        grant_type:   'authorization_code',
+        grant_type:    'authorization_code',
         code,
         redirect_uri,
+        client_id:     CLIENT_ID,
+        code_verifier,
       }).toString(),
     });
 

@@ -298,11 +298,9 @@ function showMsg(txt, type) {
 }
 function hideMsg() { document.getElementById('msgBox').style.display = 'none'; }
 
-// FACEIT OAuth Authorization Code Flow via popup
-// PKCE retire : la doc officielle FACEIT ne mentionne pas PKCE et le backend
-// /api/v1/authorize rejette la requete en 400 quand code_challenge est present.
-// Le flux reste securise car notre /api/faceit-auth utilise le client_secret
-// (confidential client) pour echanger le code contre un access_token.
+// FACEIT OAuth Authorization Code Flow + PKCE (S256) via popup.
+// PKCE est OBLIGATOIRE pour le client OAuth FragValue : FACEIT repond
+// {"errors":[{"message":"pkce_required"}]} si code_challenge est absent.
 async function loginFaceit() {
   try {
     let clientId = '141a2533-b3b9-45e7-8c98-8cb683871f74';
@@ -314,16 +312,30 @@ async function loginFaceit() {
 
     const redirectUri = window.location.origin + '/faceit-callback.html';
 
-    // State aleatoire pour prevenir les CSRF OAuth (remplace le role
-    // anti-CSRF que jouait le code_verifier PKCE).
+    // ── PKCE : code_verifier + code_challenge (SHA-256) ─────────────────
+    const verifierBytes = new Uint8Array(32);
+    crypto.getRandomValues(verifierBytes);
+    const codeVerifier = btoa(String.fromCharCode(...verifierBytes))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
+    const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+    // State aleatoire pour CSRF (complementaire a PKCE).
     const stateBytes = new Uint8Array(16);
     crypto.getRandomValues(stateBytes);
     const state = btoa(String.fromCharCode(...stateBytes))
       .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
+    // localStorage pour partage entre popup et parent (sessionStorage est
+    // isole par contexte de navigation).
+    localStorage.setItem('faceit_code_verifier', codeVerifier);
+    localStorage.setItem('faceit_code_verifier_ts', String(Date.now()));
     localStorage.setItem('faceit_oauth_state', state);
-    localStorage.setItem('faceit_oauth_state_ts', String(Date.now()));
     localStorage.setItem('faceit_redirect_uri', redirectUri);
+    // Fallback sessionStorage pour redirection same-tab
+    sessionStorage.setItem('faceit_code_verifier', codeVerifier);
     sessionStorage.setItem('faceit_oauth_state', state);
 
     const params = new URLSearchParams({
@@ -331,6 +343,8 @@ async function loginFaceit() {
       client_id: clientId,
       redirect_uri: redirectUri,
       scope: 'openid profile email',
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256',
       state,
     });
 

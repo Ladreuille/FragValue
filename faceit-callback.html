@@ -86,13 +86,14 @@ async function handleCallback() {
 
   sessionStorage.setItem(processedKey, code);
 
-  // Verification anti-CSRF : le state retourne doit correspondre a celui
-  // stocke avant l'auth. Purge des states orphelins > 10 min.
+  // Verification anti-CSRF + recuperation du code_verifier PKCE.
+  // Purge des secrets orphelins > 10 min pour eviter l'accumulation.
   const TEN_MIN = 10 * 60 * 1000;
-  const stateTs = parseInt(localStorage.getItem('faceit_oauth_state_ts') || '0', 10);
-  if (stateTs && (Date.now() - stateTs) > TEN_MIN) {
+  const verifierTs = parseInt(localStorage.getItem('faceit_code_verifier_ts') || '0', 10);
+  if (verifierTs && (Date.now() - verifierTs) > TEN_MIN) {
+    localStorage.removeItem('faceit_code_verifier');
+    localStorage.removeItem('faceit_code_verifier_ts');
     localStorage.removeItem('faceit_oauth_state');
-    localStorage.removeItem('faceit_oauth_state_ts');
     localStorage.removeItem('faceit_redirect_uri');
   }
   const expectedState =
@@ -102,6 +103,15 @@ async function handleCallback() {
   const returnedState = params.get('state') || '';
   if (expectedState && returnedState && expectedState !== returnedState) {
     showError('Etat OAuth invalide (protection CSRF). Recommence la connexion.');
+    return;
+  }
+
+  const codeVerifier =
+    localStorage.getItem('faceit_code_verifier') ||
+    sessionStorage.getItem('faceit_code_verifier') ||
+    '';
+  if (!codeVerifier) {
+    showError('Session OAuth expiree (code_verifier manquant). Recommence la connexion.');
     return;
   }
 
@@ -119,6 +129,7 @@ async function handleCallback() {
       body: JSON.stringify({
         code,
         redirect_uri: redirectUri,
+        code_verifier: codeVerifier,
       }),
     });
     faceitData = await res.json();
@@ -147,8 +158,10 @@ async function handleCallback() {
   }
 
   sessionStorage.removeItem('faceit_oauth_state');
+  sessionStorage.removeItem('faceit_code_verifier');
   localStorage.removeItem('faceit_oauth_state');
-  localStorage.removeItem('faceit_oauth_state_ts');
+  localStorage.removeItem('faceit_code_verifier');
+  localStorage.removeItem('faceit_code_verifier_ts');
   localStorage.removeItem('faceit_redirect_uri');
 
   // Step 2: Auto-login Supabase via session token
