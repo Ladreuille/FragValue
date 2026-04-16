@@ -1050,10 +1050,19 @@ function renderFaceitTrendChart(data) {
     var step = ordered.length <= 10 ? 1 : Math.ceil(ordered.length / 8);
     ordered.forEach(function(m, i) {
       if (i % step === 0 || i === ordered.length - 1) {
-        var d = m.date ? new Date(m.date) : null;
-        if (d) {
-          ctx.fillText(d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }), px(i), H - 5);
+        // m.date is a French locale string like "15/04/2026" — parse DD/MM/YYYY
+        var label = '';
+        if (m.date) {
+          var parts = String(m.date).split('/');
+          if (parts.length === 3) {
+            var d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            if (!isNaN(d.getTime())) {
+              label = d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+            }
+          }
+          if (!label) label = String(m.date).slice(0, 5);
         }
+        if (label) ctx.fillText(label, px(i), H - 5);
       }
     });
   });
@@ -1118,22 +1127,44 @@ function renderFaceitScore(data) {
 function renderFaceitImpact(data) {
   var r = data.recent || {};
 
-  document.getElementById('fImpFk').textContent = r.totalFirstKills != null ? r.totalFirstKills : '-';
-  document.getElementById('fImpFd').textContent = r.totalFirstDeaths != null ? r.totalFirstDeaths : '-';
+  // Show actual value or "-" when data is 0/unavailable
+  // FACEIT CS2 API often doesn't return first kills, clutches, trades
+  // per match — they only appear in the advanced cache after a second fetch.
+  function impVal(v) {
+    if (v == null || v === '' || v === 0) return '-';
+    return String(v);
+  }
+
+  document.getElementById('fImpFk').textContent = impVal(r.totalFirstKills);
+  document.getElementById('fImpFd').textContent = impVal(r.totalFirstDeaths);
 
   var orEl = document.getElementById('fImpOr');
   var orVal = parseFloat(r.openingRatio);
-  if (!isNaN(orVal)) {
+  if (!isNaN(orVal) && orVal > 0) {
     orEl.textContent = orVal.toFixed(2);
     orEl.style.color = orVal >= 1.0 ? 'var(--accent)' : 'var(--danger)';
+  } else {
+    orEl.textContent = '-';
+    orEl.style.color = 'var(--text3)';
   }
 
-  document.getElementById('fImpC1').textContent = r.totalClutch1v1 != null ? r.totalClutch1v1 : '-';
-  document.getElementById('fImpC2').textContent = r.totalClutch1v2 != null ? r.totalClutch1v2 : '-';
-  document.getElementById('fImpTk').textContent = r.totalTriples != null ? r.totalTriples : '-';
-  document.getElementById('fImpQk').textContent = r.totalQuads != null ? r.totalQuads : '-';
-  document.getElementById('fImpAce').textContent = r.totalAces != null ? r.totalAces : '-';
-  document.getElementById('fImpTrd').textContent = r.totalTradeKills != null ? r.totalTradeKills : '-';
+  document.getElementById('fImpC1').textContent = impVal(r.totalClutch1v1);
+  document.getElementById('fImpC2').textContent = impVal(r.totalClutch1v2);
+  document.getElementById('fImpTk').textContent = impVal(r.totalTriples);
+  document.getElementById('fImpQk').textContent = impVal(r.totalQuads);
+  document.getElementById('fImpAce').textContent = impVal(r.totalAces);
+  document.getElementById('fImpTrd').textContent = impVal(r.totalTradeKills);
+
+  // If all impact data is missing, show explanation
+  var allZero = !r.totalFirstKills && !r.totalFirstDeaths && !r.totalClutch1v1
+    && !r.totalTriples && !r.totalQuads && !r.totalTradeKills;
+  if (allZero) {
+    var card = document.getElementById('fImpactCard');
+    if (card) {
+      card.insertAdjacentHTML('beforeend',
+        '<div style="text-align:center;font-size:9px;color:var(--text3);margin-top:10px;padding-top:10px;border-top:1px solid var(--border);letter-spacing:.04em">Donnees avancees en cours de chargement. Recharge la page dans 1 min.</div>');
+    }
+  }
 }
 
 function renderFaceitSides(data) {
@@ -1144,10 +1175,27 @@ function renderFaceitSides(data) {
   var tWr = document.getElementById('fTWr');
   var tKd = document.getElementById('fTKd');
 
-  ctWr.textContent = r.ctWinRate != null ? parseFloat(r.ctWinRate).toFixed(0) + '%' : '-';
-  ctKd.textContent = r.ctKd != null ? parseFloat(r.ctKd).toFixed(2) : '-';
-  tWr.textContent = r.tWinRate != null ? parseFloat(r.tWinRate).toFixed(0) + '%' : '-';
-  tKd.textContent = r.tKd != null ? parseFloat(r.tKd).toFixed(2) : '-';
+  // Guard against empty strings and NaN
+  function safeNum(v, decimals, suffix) {
+    if (v == null || v === '') return '-';
+    var n = parseFloat(v);
+    if (isNaN(n)) return '-';
+    return n.toFixed(decimals) + (suffix || '');
+  }
+
+  ctWr.textContent = safeNum(r.ctWinRate, 0, '%');
+  ctKd.textContent = safeNum(r.ctKd, 2);
+  tWr.textContent = safeNum(r.tWinRate, 0, '%');
+  tKd.textContent = safeNum(r.tKd, 2);
+
+  // If no CT/T data available, show a message
+  if (ctWr.textContent === '-' && tWr.textContent === '-') {
+    var compare = document.getElementById('fSideCompare');
+    if (compare) {
+      compare.style.opacity = '0.4';
+      compare.insertAdjacentHTML('afterend', '<div style="text-align:center;font-size:9px;color:var(--text3);margin-top:6px;letter-spacing:.04em">Donnees CT/T non disponibles sur ces matchs</div>');
+    }
+  }
 }
 
 // ============================================================================
@@ -1160,6 +1208,9 @@ function renderExclusiveStats(data) {
   var fvs = data.fvScore || {};
   var bd = fvs.breakdown || {};
 
+  var card = document.getElementById('statsCard');
+  if (!card) return;
+
   // Update section label
   var labelEl = document.getElementById('statsLabel');
   if (labelEl) labelEl.textContent = 'Stats exclusives';
@@ -1167,90 +1218,56 @@ function renderExclusiveStats(data) {
   // Compute values
   var kast = parseFloat(r.avgKast);
   var kpr = parseFloat(r.avgKr);
-  var fk = r.totalFirstKills || 0;
-  var fd = r.totalFirstDeaths || 0;
-  var owr = (fk + fd > 0) ? (fk / (fk + fd) * 100) : null;
-  var flashT = r.totalFlashesThrown || 0;
-  var flashH = r.totalEnemiesFlashed || 0;
-  var flashEff = flashT > 0 ? (flashH / flashT * 100) : null;
-  var pwr = r.pistolWinRate ? parseFloat(r.pistolWinRate) : null;
+  var fk = parseInt(r.totalFirstKills) || 0;
+  var fd = parseInt(r.totalFirstDeaths) || 0;
+  var owr = (fk + fd > 0) ? (fk / (fk + fd) * 100) : NaN;
+  var flashT = parseInt(r.totalFlashesThrown) || 0;
+  var flashH = parseInt(r.totalEnemiesFlashed) || 0;
+  var flashEff = flashT > 0 ? (flashH / flashT * 100) : NaN;
+  var pwr = parseFloat(r.pistolWinRate);
   var cv = (bd.consistency && bd.consistency.detail) ? bd.consistency.detail.cv : null;
 
   // Color thresholds
   function sc(val, good, mid) {
+    if (isNaN(val)) return 'var(--text3)';
     return val >= good ? 'var(--accent)' : val >= mid ? 'var(--text)' : 'var(--danger)';
   }
 
-  var stats = [];
+  // Always show all 6 stats, with "-" for unavailable values
+  var rows = [];
 
-  // KAST% — most important competitive metric, FACEIT doesn't show prominently
-  if (!isNaN(kast) && kast > 0) {
-    stats.push({
-      label: 'KAST',
-      value: kast.toFixed(1) + '%',
-      color: sc(kast, 70, 60)
-    });
+  // 1. KAST%
+  var kastVal = (!isNaN(kast) && kast > 0) ? kast.toFixed(1) + '%' : '-';
+  rows.push('<div class="ms"><span class="ms-l">KAST</span><span class="ms-v" style="color:' + sc(kast, 70, 60) + '">' + kastVal + '</span></div>');
+
+  // 2. KPR
+  var kprVal = (!isNaN(kpr) && kpr > 0) ? kpr.toFixed(3) : '-';
+  rows.push('<div class="ms"><span class="ms-l">Kills / Round</span><span class="ms-v" style="color:' + sc(kpr, 0.70, 0.55) + '">' + kprVal + '</span></div>');
+
+  // 3. Opening Win Rate
+  var owrVal = !isNaN(owr) ? owr.toFixed(0) + '%' : '-';
+  rows.push('<div class="ms"><span class="ms-l">Opening Win Rate</span><span class="ms-v" style="color:' + sc(owr, 55, 45) + '">' + owrVal + '</span></div>');
+
+  // 4. Flash Efficiency
+  var feVal = !isNaN(flashEff) ? flashEff.toFixed(0) + '%' : '-';
+  var feColor = !isNaN(flashEff) ? (flashEff >= 50 ? 'var(--success)' : flashEff >= 30 ? 'var(--text)' : 'var(--text3)') : 'var(--text3)';
+  rows.push('<div class="ms"><span class="ms-l">Flash Efficiency</span><span class="ms-v" style="color:' + feColor + '">' + feVal + '</span></div>');
+
+  // 5. Pistol WR
+  var pwrVal = (!isNaN(pwr) && pwr > 0) ? pwr.toFixed(0) + '%' : '-';
+  rows.push('<div class="ms"><span class="ms-l">Pistol WR</span><span class="ms-v" style="color:' + sc(pwr, 55, 45) + '">' + pwrVal + '</span></div>');
+
+  // 6. Consistance
+  var cVal = '-';
+  var cColor = 'var(--text3)';
+  if (cv !== null && cv !== undefined && !isNaN(cv)) {
+    cVal = cv <= 0.10 ? 'Elite' : cv <= 0.18 ? 'Stable' : cv <= 0.25 ? 'Variable' : 'Instable';
+    cColor = cv <= 0.10 ? 'var(--accent)' : cv <= 0.18 ? 'var(--success)' : cv <= 0.25 ? 'var(--gold)' : 'var(--danger)';
   }
+  rows.push('<div class="ms"><span class="ms-l">Consistance</span><span class="ms-v" style="color:' + cColor + ';font-size:14px;font-family:var(--mono)">' + cVal + '</span></div>');
 
-  // KPR — Kills per Round, more granular than K/D
-  if (!isNaN(kpr) && kpr > 0) {
-    stats.push({
-      label: 'Kills / Round',
-      value: kpr.toFixed(3),
-      color: sc(kpr, 0.70, 0.55)
-    });
-  }
-
-  // Opening Win Rate — FK / (FK + FD), FACEIT shows counts but not WR%
-  if (owr !== null) {
-    stats.push({
-      label: 'Opening Win Rate',
-      value: owr.toFixed(0) + '%',
-      color: sc(owr, 55, 45)
-    });
-  }
-
-  // Flash Efficiency — enemies flashed / flashes thrown
-  if (flashEff !== null) {
-    stats.push({
-      label: 'Flash Efficiency',
-      value: flashEff.toFixed(0) + '%',
-      color: flashEff >= 50 ? 'var(--success)' : flashEff >= 30 ? 'var(--text)' : 'var(--text3)'
-    });
-  }
-
-  // Pistol Round Win Rate — critical for competitive play
-  if (pwr !== null && !isNaN(pwr) && pwr > 0) {
-    stats.push({
-      label: 'Pistol WR',
-      value: parseFloat(pwr).toFixed(0) + '%',
-      color: sc(pwr, 55, 45)
-    });
-  }
-
-  // Consistency — from FV Score CV, lower = more consistent
-  if (cv !== null && cv !== undefined) {
-    var cLabel = cv <= 0.10 ? 'Elite' : cv <= 0.18 ? 'Stable' : cv <= 0.25 ? 'Variable' : 'Instable';
-    var cColor = cv <= 0.10 ? 'var(--accent)' : cv <= 0.18 ? 'var(--success)' : cv <= 0.25 ? 'var(--gold)' : 'var(--danger)';
-    stats.push({
-      label: 'Consistance',
-      value: cLabel,
-      color: cColor,
-      small: true
-    });
-  }
-
-  if (!stats.length) return;
-
-  var card = document.getElementById('statsCard');
-  if (!card) return;
-
-  card.innerHTML = stats.map(function(s) {
-    var style = 'color:' + s.color;
-    if (s.small) style += ';font-size:14px;font-family:var(--mono)';
-    return '<div class="ms"><span class="ms-l">' + s.label + '</span><span class="ms-v" style="' + style + '">' + s.value + '</span></div>';
-  }).join('') +
-  '<a href="stats-guide.html" style="display:block;text-align:center;margin-top:14px;font-size:9px;color:var(--text3);letter-spacing:.08em;text-decoration:none;text-transform:uppercase;transition:color .15s" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text3)\'">Comprendre mes stats</a>';
+  card.innerHTML = rows.join('') +
+    '<a href="stats-guide.html" style="display:block;text-align:center;margin-top:14px;font-size:9px;color:var(--text3);letter-spacing:.08em;text-decoration:none;text-transform:uppercase;transition:color .15s" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text3)\'">Comprendre mes stats</a>';
 }
 
 init().then(() => {

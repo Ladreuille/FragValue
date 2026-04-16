@@ -180,21 +180,34 @@
   window.addEventListener('scroll', onScroll, { passive: true });
 
   /* ── Supabase session check (async, cancels if logged in) ── */
-  function checkSession() {
-    var sb = window._sb;
-    if (!sb || !sb.auth || typeof sb.auth.getSession !== 'function') return;
-    sb.auth.getSession().then(function (res) {
-      if (res && res.data && res.data.session) {
-        /* User is logged in, cancel everything */
-        canceled = true;
-        clearTimeout(timer);
-        window.removeEventListener('scroll', onScroll);
-        if (shown) {
-          overlay.classList.remove('fv-popup-visible');
-        }
-      }
-    }).catch(function () { /* silently ignore */ });
+  function cancelPopup() {
+    canceled = true;
+    clearTimeout(timer);
+    window.removeEventListener('scroll', onScroll);
+    if (shown) {
+      overlay.classList.remove('fv-popup-visible');
+    }
   }
 
-  checkSession();
+  function checkSession() {
+    var sb = window._sb;
+    if (!sb || !sb.auth) return;
+
+    // Immediate check
+    if (typeof sb.auth.getSession === 'function') {
+      sb.auth.getSession().then(function (res) {
+        if (res && res.data && res.data.session) cancelPopup();
+      }).catch(function () {});
+    }
+
+    // Listen for auth state changes (session restored from localStorage)
+    if (typeof sb.auth.onAuthStateChange === 'function') {
+      sb.auth.onAuthStateChange(function (event, session) {
+        if (session) cancelPopup();
+      });
+    }
+  }
+
+  // Delay check slightly to let Supabase restore session from localStorage
+  setTimeout(checkSession, 300);
 })();
