@@ -203,8 +203,9 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
 <nav>
   <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
   <div class="nav-right">
-    <a href="matches.html" class="nav-link">MES MATCHS</a>
     <a href="stats-guide.html" class="nav-link">GUIDE STATS</a>
+    <a href="pricing.html" class="nav-link">TARIFS</a>
+    <a href="matches.html" class="nav-link">MES MATCHS</a>
     <a href="demo.html" class="nav-cta">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
       Nouvelle demo
@@ -456,8 +457,11 @@ function renderLevels(currentLevel) {
     if (isCurrent) classes.push('current');
     if (isNextTarget) classes.push('next-target');
 
+    // Ancre cliquable : #level-10, #level-9, ..., #challenger
+    const anchorId = lvl.key;
+
     return ''
-      + '<div class="' + classes.join(' ') + '">'
+      + '<div id="' + anchorId + '" class="' + classes.join(' ') + '" style="scroll-margin-top:80px">'
       + '  <div class="level-badge">' + lvl.num + '</div>'
       + '  <div class="level-content">'
       + '    <div class="level-name">' + lvl.name + '</div>'
@@ -514,7 +518,10 @@ async function loadUserLevel() {
         + '<div style="font-size:11px;color:var(--text3);margin-top:4px;letter-spacing:.04em">Prochain palier : ' + targetName + '</div>';
     }
     if (right) {
-      right.innerHTML = '<a href="#level-' + level + '">Voir ce qu\'il me manque &rarr;</a>';
+      // Pointer vers la carte du niveau SUIVANT (c'est la que sont les conseils
+      // pour atteindre le palier superieur). Si deja lvl 10, pointe sur Challenger.
+      const targetAnchor = level >= 10 ? 'challenger' : ('level-' + (level + 1));
+      right.innerHTML = '<a href="#' + targetAnchor + '">Voir ce qu\'il me manque &rarr;</a>';
     }
 
     renderLevels(level);
