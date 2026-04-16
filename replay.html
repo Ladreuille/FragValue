@@ -459,6 +459,10 @@ let currentRound = null, frames = [], frameIdx = 0;
 let playing = false, timer = null, speed = 1;
 const FPS = 30;
 let shotsConverted = false;
+// Per-round filtered positions, partagee entre buildFrames et drawTrails pour
+// que les trails n'incluent jamais de samples d'un autre round (evite le
+// "trails qui avancent tous seuls puis se remettent a jour" au debut de round).
+let currentRoundPos = {};
 
 // ══ UTILS ════════════════════════════════════════════════════════════════════
 function assignColors() {
@@ -792,11 +796,11 @@ function updateScores() {
   const rounds = demoData.rounds || [];
   let ctScore = 0, tScore = 0;
 
-  // Count wins up to current round
+  // Count wins strictly BEFORE current round (current round not yet decided)
   rounds.forEach(rd => {
     if (rd.isKnife) return;
     const freezeR = rd.round ?? 0;
-    if (currentRound !== null && freezeR > currentRound) return;
+    if (currentRound !== null && freezeR >= currentRound) return;
     if (rd.winner === 2) tScore++; // team 2 = T wins
     else if (rd.winner === 3) ctScore++; // team 3 = CT wins
   });
@@ -999,6 +1003,11 @@ function buildFrames(round) {
     const rounds = [...new Set(sample.map(p => p.round))].sort((a,b)=>a-b);
     console.log('[buildFrames] NO MATCH. Position rounds:', rounds.join(','), 'ticks:', sample[0]?.tick, '-', sample[sample.length-1]?.tick);
   }
+
+  // Expose les positions filtrees par round pour que drawTrails utilise la
+  // meme slice. Empeche les trails d'inclure des samples d'autres rounds
+  // (bug visible : trails qui avancent tous seuls en debut de round).
+  currentRoundPos = roundPos;
 
   if (!Object.keys(roundPos).length && !roundKills.length) { frames = []; return; }
 
@@ -1280,7 +1289,8 @@ function drawScoreboard(frame, W, H) {
   let ctScore = 0, tScore = 0;
   rounds.forEach(rd => {
     if (rd.isKnife) return;
-    if (currentRound !== null && (rd.round ?? 0) > currentRound) return;
+    // Strictly BEFORE current round: round in progress is not yet decided
+    if (currentRound !== null && (rd.round ?? 0) >= currentRound) return;
     if (rd.winner === 2) tScore++;
     else if (rd.winner === 3) ctScore++;
   });
@@ -1377,7 +1387,9 @@ function drawScoreboard(frame, W, H) {
 function drawTrails(frame, W, H) {
   const tick = frame.tick || 0;
   const TRAIL_TICKS = 400;
-  const positions = demoData.positions || {};
+  // Utilise les positions filtrees par round (meme slice que buildFrames).
+  // Garantit qu'aucun sample hors round courant n'est jamais affiche.
+  const positions = currentRoundPos || {};
   const scaleX = W / 1024;
   const scaleY = H / 1024;
 
