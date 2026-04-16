@@ -312,6 +312,15 @@ section{padding:100px 80px;position:relative}
 .pro-val{font-family:var(--display);font-size:18px}
 .pro-val.accent{color:var(--accent)}
 .pro-val.muted{color:var(--text3)}
+.pro-avatar{width:24px;height:24px;border-radius:50%;background:var(--card);background-size:cover;background-position:center;flex-shrink:0;border:1px solid var(--border2)}
+.pro-rank{font-family:var(--display);font-size:14px;color:var(--text3);min-width:24px;text-align:right}
+.pro-country{font-family:var(--mono);font-size:9px;color:var(--text3);background:var(--surface);border:1px solid var(--border);padding:2px 6px;border-radius:3px;letter-spacing:.04em;margin-left:6px}
+.pro-live-tag{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.08em;margin-top:8px}
+.pro-live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(184,255,87,.7);animation:livePulse 2s infinite}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(184,255,87,.5)}70%{box-shadow:0 0 0 6px rgba(184,255,87,0)}100%{box-shadow:0 0 0 0 rgba(184,255,87,0)}}
+.pro-row.loading{opacity:.4}
+.pro-skel{height:16px;background:linear-gradient(90deg,var(--card) 0%,var(--surface) 50%,var(--card) 100%);background-size:200% 100%;animation:skelShimmer 1.4s infinite;border-radius:3px}
+@keyframes skelShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* ── PRICING ── */
 .pricing-section{background:var(--surface);border-top:1px solid var(--border)}
@@ -684,71 +693,99 @@ footer{
   </div>
 </section>
 
-<!-- PRO COMPARISON -->
+<!-- FACEIT LEADERBOARD (top challengers EU en temps reel) -->
 <section class="pro-section" id="pro">
   <div class="section-tag">Référence FACEIT</div>
   <h2 class="section-title">Où tu te situes<br>sur FACEIT</h2>
-  <p class="section-sub">Stats FACEIT publiques des meilleurs joueurs du monde. Même plateforme, même système ELO. Vois exactement l'écart à combler.</p>
+  <p class="section-sub">Le top 5 des Challengers FACEIT CS2 en Europe, mis à jour automatiquement. Même plateforme, même système ELO que toi. Vois l'écart à combler en temps réel.</p>
+  <div class="pro-live-tag" id="proLiveTag">
+    <span class="pro-live-dot"></span>
+    <span id="proLiveText">Chargement...</span>
+  </div>
   <div class="pro-table fade-in">
     <div class="pro-table-head">
       <div>Joueur</div>
       <div>ELO FACEIT</div>
       <div>K/D</div>
-      <div>ADR</div>
+      <div>HS%</div>
     </div>
-    <div class="pro-row">
-      <div class="pro-name">
-        <div class="pro-dot" style="background:#f5c842"></div>
-        <span style="font-size:13px">ZywOo</span>
-        <span class="pro-tag">GOAT · ~4000 ELO</span>
-      </div>
-      <div class="pro-val accent">4001</div>
-      <div class="pro-val">1.70</div>
-      <div class="pro-val">102</div>
-    </div>
-    <div class="pro-row">
-      <div class="pro-name">
-        <div class="pro-dot" style="background:#ff4444"></div>
-        <span style="font-size:13px">donk</span>
-        <span class="pro-tag">CHALLENGER · ~4700 ELO</span>
-      </div>
-      <div class="pro-val accent">4752</div>
-      <div class="pro-val">1.65</div>
-      <div class="pro-val">98</div>
-    </div>
-    <div class="pro-row" style="background:rgba(184,255,87,.03);border-left:2px solid var(--accent)">
-      <div class="pro-name">
-        <div class="pro-dot" style="background:var(--accent)"></div>
-        <span style="font-size:13px">Toi (exemple)</span>
-        <span class="pro-tag">NIVEAU 8 · ~1400 ELO</span>
-      </div>
-      <div class="pro-val accent">1400</div>
-      <div class="pro-val">1.12</div>
-      <div class="pro-val">76</div>
-    </div>
-    <div class="pro-row">
-      <div class="pro-name">
-        <div class="pro-dot" style="background:var(--text3)"></div>
-        <span style="font-size:13px;color:var(--text2)">Niveau 10 (seuil)</span>
-      </div>
-      <div class="pro-val muted">2001+</div>
-      <div class="pro-val muted">1.25+</div>
-      <div class="pro-val muted">80+</div>
-    </div>
-    <div class="pro-row">
-      <div class="pro-name">
-        <div class="pro-dot" style="background:var(--text3)"></div>
-        <span style="font-size:13px;color:var(--text2)">Niveau 8 (seuil)</span>
-      </div>
-      <div class="pro-val muted">1251</div>
-      <div class="pro-val muted">1.05+</div>
-      <div class="pro-val muted">68+</div>
+    <div id="proRows">
+      <!-- Rows injected by JS (faceitLeaderboardInit) -->
+      <div class="pro-row loading"><div class="pro-name"><div class="pro-skel" style="width:180px"></div></div><div class="pro-skel" style="width:48px"></div><div class="pro-skel" style="width:32px"></div><div class="pro-skel" style="width:32px"></div></div>
+      <div class="pro-row loading"><div class="pro-name"><div class="pro-skel" style="width:160px"></div></div><div class="pro-skel" style="width:48px"></div><div class="pro-skel" style="width:32px"></div><div class="pro-skel" style="width:32px"></div></div>
+      <div class="pro-row loading"><div class="pro-name"><div class="pro-skel" style="width:200px"></div></div><div class="pro-skel" style="width:48px"></div><div class="pro-skel" style="width:32px"></div><div class="pro-skel" style="width:32px"></div></div>
     </div>
   </div>
   <div style="margin-top:16px;font-size:11px;color:var(--text3)">
-    * Stats publiques FACEIT  - ELO et K/D moyens sur les derniers matchs. ADR estimé depuis les trackers publics (faceittracker.net).
+    * Données issues de l'API officielle FACEIT (classement CS2 region EU), cache 1h.
   </div>
 </section>
+
+<script>
+(function() {
+  async function loadLeaderboard() {
+    const rows = document.getElementById('proRows');
+    const liveText = document.getElementById('proLiveText');
+    try {
+      const res = await fetch('/api/faceit-leaderboard?region=EU&limit=5');
+      if (!res.ok) throw new Error('API ' + res.status);
+      const data = await res.json();
+      if (!data.players || !data.players.length) throw new Error('no players');
+
+      // Compose rows
+      rows.innerHTML = data.players.map(function(p) {
+        var avatarStyle = p.avatar ? ('background-image:url(' + p.avatar + ')') : '';
+        var eloTxt  = p.elo != null ? p.elo : '-';
+        var kdTxt   = p.kd != null ? p.kd.toFixed(2) : '-';
+        var hsTxt   = p.hsPct != null ? p.hsPct.toFixed(0) + '%' : '-';
+        var rankTxt = p.rank != null ? '#' + p.rank : '';
+        var country = p.country ? '<span class="pro-country">' + p.country + '</span>' : '';
+        return ''
+          + '<div class="pro-row">'
+          +   '<div class="pro-name">'
+          +     '<span class="pro-rank">' + rankTxt + '</span>'
+          +     '<div class="pro-avatar" style="' + avatarStyle + '"></div>'
+          +     '<span style="font-size:13px">' + escapeHtml(p.nickname) + '</span>'
+          +     country
+          +   '</div>'
+          +   '<div class="pro-val accent">' + eloTxt + '</div>'
+          +   '<div class="pro-val">' + kdTxt + '</div>'
+          +   '<div class="pro-val">' + hsTxt + '</div>'
+          + '</div>';
+      }).join('');
+
+      // Update live tag
+      var when = new Date(data.updatedAt).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+      liveText.textContent = (data.cached ? 'Synchronisé ' : 'En direct ') + when;
+    } catch (err) {
+      rows.innerHTML = '<div class="pro-row"><div class="pro-name" style="color:var(--text3);font-size:11px">Classement temporairement indisponible. Réessaie dans quelques minutes.</div><div></div><div></div><div></div></div>';
+      if (liveText) liveText.textContent = 'Données indisponibles';
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // Lazy load : only when the pro section enters the viewport
+  var proSection = document.getElementById('pro');
+  if (proSection && 'IntersectionObserver' in window) {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          loadLeaderboard();
+          obs.disconnect();
+        }
+      });
+    }, { rootMargin: '200px' });
+    obs.observe(proSection);
+  } else {
+    loadLeaderboard();
+  }
+})();
+</script>
 
 <!-- PRICING -->
 <section class="pricing-section" id="pricing">

@@ -59,6 +59,33 @@ async function handleCallback() {
     return;
   }
 
+  // ── Guard anti-double-call ────────────────────────────────────────────
+  // Le code OAuth est a usage unique. Si la page est rechargee / le back
+  // button est utilise / le BFCache re-execute le script, on relance un
+  // POST avec le meme code -> 400. Pour eviter ca, on tagge le code
+  // comme "en cours" dans sessionStorage. Si on detecte un re-run, on
+  // regarde si la session Supabase a deja ete creee (cas du 2e run
+  // legitime post-redirect). Si oui, on redirige. Sinon, on bloque.
+  const processedKey = 'fv_faceit_code_processed';
+  const processedCode = sessionStorage.getItem(processedKey);
+
+  if (processedCode === code) {
+    // Ce code a deja ete traite dans cet onglet. Verifie la session et redirige.
+    try {
+      const { data } = await sb.auth.getSession();
+      if (data?.session) {
+        updateStatus('Deja connecte, redirection...');
+        setTimeout(() => { window.location.href = '/account.html'; }, 400);
+        return;
+      }
+    } catch (_) {}
+    // Pas de session : l'utilisateur doit refaire le flow.
+    showError('Ce code FACEIT a expire. Recommence la connexion.');
+    return;
+  }
+
+  sessionStorage.setItem(processedKey, code);
+
   const codeVerifier = sessionStorage.getItem('faceit_code_verifier');
   const redirectUri = 'https://frag-value.vercel.app/faceit-callback.html';
 
@@ -77,10 +104,25 @@ async function handleCallback() {
     });
     faceitData = await res.json();
     if (!res.ok || !faceitData.success) {
+      // Si l'echange a echoue mais que la session Supabase existe deja,
+      // c'est probablement une race: le 1er appel avait reussi cote serveur,
+      // Supabase a connecte l'user, puis notre onglet a renvoye le code
+      // une 2eme fois (refresh/BFCache). On considere le login OK.
+      try {
+        const { data } = await sb.auth.getSession();
+        if (data?.session) {
+          updateStatus('Connexion confirmee, redirection...');
+          setTimeout(() => { window.location.href = '/account.html'; }, 400);
+          return;
+        }
+      } catch (_) {}
+      // Pas de session, vraie erreur : reset le guard pour permettre un retry.
+      sessionStorage.removeItem(processedKey);
       showError(faceitData.error || 'Echange de token echoue.');
       return;
     }
   } catch (err) {
+    sessionStorage.removeItem(processedKey);
     showError('Erreur reseau : ' + err.message);
     return;
   }
