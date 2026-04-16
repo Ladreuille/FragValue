@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="FragValue. Les niveaux FACEIT CS2 : seuils ELO, stats attendues, et roadmap pour progresser vers Challenger.">
+<meta name="theme-color" content="#080909">
+<meta property="og:title" content="FragValue. Roadmap FACEIT">
+<meta property="og:description" content="Les 10 niveaux FACEIT et comment progresser de l'un a l'autre.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fragvalue.com/levels.html">
+<meta property="og:image" content="https://fragvalue.com/fragvalue_icon.svg">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<title>FragValue · Roadmap FACEIT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;
+  --border:#1c1e1e;--border2:#252727;
+  --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --danger:#ff4444;--success:#2dd4a0;--gold:#f5c842;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  --r:6px;--r2:12px
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.4
+}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.nav-logo{font-family:var(--display);font-size:20px;letter-spacing:.04em;color:var(--text);text-decoration:none}
+.nav-logo span{color:var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-cta{background:var(--accent);color:#000;padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;transition:all .15s;display:flex;align-items:center;gap:6px}
+.nav-cta:hover{background:var(--accent2)}
+.nav-link{font-size:11px;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;text-decoration:none;transition:color .15s}
+.nav-link:hover{color:var(--accent)}
+
+/* HERO */
+.hero{text-align:center;padding:80px 32px 40px;position:relative;z-index:1}
+.hero-back{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:var(--text3);letter-spacing:.06em;text-decoration:none;margin-bottom:24px;transition:color .15s}
+.hero-back:hover{color:var(--accent)}
+.hero-title{font-family:var(--display);font-size:clamp(40px,5vw,64px);line-height:.95;letter-spacing:.02em;margin-bottom:16px;opacity:0;animation:up .4s ease forwards}
+.hero-title span{color:var(--accent)}
+.hero-sub{font-size:13px;color:var(--text2);line-height:1.7;max-width:580px;margin:0 auto;opacity:0;animation:up .4s .1s ease forwards}
+
+/* MY LEVEL CARD */
+.my-level-wrap{max-width:920px;margin:32px auto 0;padding:0 32px;position:relative;z-index:1;opacity:0;animation:up .4s .2s ease forwards}
+.my-level{
+  background:linear-gradient(135deg,rgba(184,255,87,.08) 0%,rgba(184,255,87,.02) 100%);
+  border:1px solid rgba(184,255,87,.25);border-radius:var(--r2);
+  padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap
+}
+.my-level-left{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.my-level-badge{
+  width:56px;height:56px;border-radius:12px;
+  background:var(--card);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:22px;color:var(--accent);
+  flex-shrink:0
+}
+.my-level-info-title{font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+.my-level-info-main{font-size:15px;color:var(--text)}
+.my-level-info-main strong{color:var(--accent)}
+.my-level-right{font-size:11px;color:var(--text2);letter-spacing:.04em}
+.my-level-right a{color:var(--accent);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.my-level.loading .my-level-info-main{color:var(--text3)}
+
+/* LEVELS SECTION */
+.levels-wrap{max-width:920px;margin:64px auto;padding:0 32px;position:relative;z-index:1}
+.section-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;text-align:center}
+.section-title{font-family:var(--display);font-size:clamp(28px,3.5vw,42px);line-height:1;letter-spacing:.01em;margin-bottom:48px;text-align:center}
+
+/* LEVEL CARD */
+.level-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);padding:24px 28px;margin-bottom:16px;
+  position:relative;overflow:hidden;
+  display:grid;grid-template-columns:64px 1fr auto;gap:22px;align-items:center;
+  transition:border-color .2s;
+  opacity:0;animation:up .4s ease forwards
+}
+.level-card:hover{border-color:var(--border2)}
+.level-card.current{
+  border-color:var(--accent);
+  background:linear-gradient(135deg,rgba(184,255,87,.04) 0%,transparent 60%)
+}
+.level-card.current::before{
+  content:'TU ES ICI';position:absolute;top:-10px;left:22px;
+  background:var(--accent);color:#000;
+  font-size:9px;font-weight:700;padding:3px 10px;border-radius:40px;
+  letter-spacing:.1em
+}
+.level-card:nth-child(1){animation-delay:.05s}
+.level-card:nth-child(2){animation-delay:.08s}
+.level-card:nth-child(3){animation-delay:.11s}
+.level-card:nth-child(4){animation-delay:.14s}
+.level-card:nth-child(5){animation-delay:.17s}
+.level-card:nth-child(6){animation-delay:.20s}
+.level-card:nth-child(7){animation-delay:.23s}
+.level-card:nth-child(8){animation-delay:.26s}
+.level-card:nth-child(9){animation-delay:.29s}
+.level-card:nth-child(10){animation-delay:.32s}
+.level-card:nth-child(11){animation-delay:.35s}
+
+.level-badge{
+  width:64px;height:64px;border-radius:12px;
+  background:var(--card);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:28px;line-height:1;
+  flex-shrink:0
+}
+.level-1 .level-badge,.level-2 .level-badge,.level-3 .level-badge{color:#7a8080}
+.level-4 .level-badge,.level-5 .level-badge,.level-6 .level-badge{color:#5b9bd5}
+.level-7 .level-badge,.level-8 .level-badge,.level-9 .level-badge{color:var(--gold)}
+.level-10 .level-badge{color:var(--accent);background:rgba(184,255,87,.08);border-color:rgba(184,255,87,.3)}
+.level-challenger .level-badge{color:var(--danger);background:rgba(255,68,68,.08);border-color:rgba(255,68,68,.3);font-size:20px}
+
+.level-content{min-width:0}
+.level-name{font-family:var(--display);font-size:22px;letter-spacing:.02em;line-height:1;margin-bottom:6px}
+.level-elo{display:inline-block;font-size:10px;color:var(--text3);background:var(--card);border:1px solid var(--border);padding:3px 9px;border-radius:4px;letter-spacing:.04em;margin-bottom:10px}
+.level-desc{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:12px}
+
+.level-stats{display:flex;gap:20px;flex-wrap:wrap}
+.level-stat{display:flex;flex-direction:column;gap:2px}
+.level-stat-val{font-family:var(--display);font-size:16px;color:var(--text)}
+.level-stat-lbl{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+
+.level-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0}
+.level-population{font-size:10px;color:var(--text3);letter-spacing:.04em;text-align:right;line-height:1.6}
+.level-population strong{color:var(--text2);font-family:var(--display);font-size:14px}
+
+.level-tips{
+  grid-column:1 / -1;margin-top:18px;padding-top:16px;
+  border-top:1px dashed var(--border);
+  display:none
+}
+.level-card.current .level-tips,
+.level-card.next-target .level-tips{display:block}
+.level-tips-title{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.level-tips ul{list-style:none;padding:0;display:flex;flex-direction:column;gap:6px}
+.level-tips li{font-size:11px;color:var(--text2);line-height:1.6;padding-left:14px;position:relative}
+.level-tips li::before{content:'';position:absolute;left:0;top:7px;width:4px;height:4px;border-radius:50%;background:var(--accent)}
+
+/* LEADERBOARD */
+.leaderboard-wrap{max-width:920px;margin:80px auto 32px;padding:0 32px;position:relative;z-index:1}
+.leaderboard-head{text-align:center;margin-bottom:32px}
+.live-tag{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.08em;margin-top:8px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(184,255,87,.7);animation:livePulse 2s infinite}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(184,255,87,.5)}70%{box-shadow:0 0 0 6px rgba(184,255,87,0)}100%{box-shadow:0 0 0 0 rgba(184,255,87,0)}}
+.leaderboard{border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;background:var(--surface)}
+.leaderboard-row{display:grid;grid-template-columns:50px 2fr 1fr 1fr 1fr;padding:14px 20px;border-bottom:1px solid var(--border);align-items:center;transition:background .15s;gap:12px}
+.leaderboard-row:last-child{border-bottom:none}
+.leaderboard-row:hover{background:rgba(255,255,255,.01)}
+.leaderboard-row.head{background:rgba(255,255,255,.02);padding:12px 20px;font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+.lb-rank{font-family:var(--display);font-size:18px;color:var(--text3)}
+.lb-name{display:flex;align-items:center;gap:10px;min-width:0}
+.lb-avatar{width:26px;height:26px;border-radius:50%;background:var(--card);background-size:cover;background-position:center;flex-shrink:0;border:1px solid var(--border2)}
+.lb-nick{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-country{font-size:9px;color:var(--text3);background:var(--card);border:1px solid var(--border);padding:2px 6px;border-radius:3px;letter-spacing:.04em}
+.lb-val{font-family:var(--display);font-size:16px}
+.lb-val.accent{color:var(--accent)}
+.lb-skel{height:14px;background:linear-gradient(90deg,var(--card) 0%,var(--surface) 50%,var(--card) 100%);background-size:200% 100%;animation:skelShimmer 1.4s infinite;border-radius:3px}
+@keyframes skelShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* CTA */
+.cta-section{text-align:center;padding:80px 32px 120px;position:relative;z-index:1}
+.cta-title{font-family:var(--display);font-size:clamp(28px,3.5vw,42px);line-height:1;letter-spacing:.02em;margin-bottom:14px}
+.cta-sub{font-size:12px;color:var(--text2);line-height:1.7;max-width:420px;margin:0 auto 28px}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:14px 28px;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em;transition:all .15s}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,255,87,.15)}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-size:11px;color:var(--text3);position:relative;z-index:1}
+
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:720px){
+  .level-card{grid-template-columns:48px 1fr;gap:14px;padding:18px 18px}
+  .level-badge{width:48px;height:48px;font-size:22px}
+  .level-right{grid-column:1 / -1;align-items:flex-start}
+  .level-population{text-align:left}
+  .my-level{padding:18px;flex-direction:column;align-items:flex-start}
+  .leaderboard-row{grid-template-columns:36px 1.5fr 1fr 1fr;font-size:11px}
+  .leaderboard-row>*:nth-child(5){display:none}
+  nav{padding:0 16px}
+  .nav-link{display:none}
+  .hero{padding:60px 24px 32px}
+  .levels-wrap{padding:0 16px}
+  .leaderboard-wrap{padding:0 16px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
+  <div class="nav-right">
+    <a href="matches.html" class="nav-link">MES MATCHS</a>
+    <a href="stats-guide.html" class="nav-link">GUIDE STATS</a>
+    <a href="demo.html" class="nav-cta">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Nouvelle demo
+    </a>
+    <a href="account.html" class="nav-link">MON ESPACE</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <a href="index.html" class="hero-back">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Retour a l'accueil
+  </a>
+  <h1 class="hero-title">Ta roadmap<br>vers <span>Challenger</span></h1>
+  <p class="hero-sub">Les 10 niveaux FACEIT, les seuils ELO a passer, les stats attendues a chaque palier, et les leviers concrets pour monter plus vite.</p>
+</section>
+
+<!-- MY LEVEL CARD (filled via JS if user is linked to FACEIT) -->
+<div class="my-level-wrap">
+  <div class="my-level loading" id="myLevelCard">
+    <div class="my-level-left">
+      <div class="my-level-badge" id="myLevelBadge">-</div>
+      <div>
+        <div class="my-level-info-title">Ton niveau actuel</div>
+        <div class="my-level-info-main" id="myLevelInfo">Connecte ton compte FACEIT pour voir ta position exacte</div>
+      </div>
+    </div>
+    <div class="my-level-right" id="myLevelRight">
+      <a href="login.html">Lier mon compte FACEIT</a>
+    </div>
+  </div>
+</div>
+
+<!-- LEVELS ROADMAP -->
+<section class="levels-wrap">
+  <div class="section-label">Progression</div>
+  <h2 class="section-title">Les 10 niveaux FACEIT</h2>
+
+  <div id="levelsList">
+    <!-- Rendered by JS below -->
+  </div>
+</section>
+
+<!-- FACEIT TOP CHALLENGERS LEADERBOARD -->
+<section class="leaderboard-wrap">
+  <div class="leaderboard-head">
+    <div class="section-label">Tout en haut</div>
+    <h2 class="section-title">Le top 5 Challengers EU</h2>
+    <div class="live-tag" id="liveTag">
+      <span class="live-dot"></span>
+      <span id="liveText">Chargement...</span>
+    </div>
+  </div>
+
+  <div class="leaderboard" id="leaderboard">
+    <div class="leaderboard-row head">
+      <div>Rang</div><div>Joueur</div><div>ELO</div><div>K/D</div><div>HS%</div>
+    </div>
+    <div class="leaderboard-row"><div class="lb-rank">-</div><div class="lb-name"><div class="lb-skel" style="width:140px"></div></div><div class="lb-skel" style="width:48px"></div><div class="lb-skel" style="width:32px"></div><div class="lb-skel" style="width:32px"></div></div>
+    <div class="leaderboard-row"><div class="lb-rank">-</div><div class="lb-name"><div class="lb-skel" style="width:120px"></div></div><div class="lb-skel" style="width:48px"></div><div class="lb-skel" style="width:32px"></div><div class="lb-skel" style="width:32px"></div></div>
+    <div class="leaderboard-row"><div class="lb-rank">-</div><div class="lb-name"><div class="lb-skel" style="width:160px"></div></div><div class="lb-skel" style="width:48px"></div><div class="lb-skel" style="width:32px"></div><div class="lb-skel" style="width:32px"></div></div>
+  </div>
+  <div style="margin-top:12px;font-size:10px;color:var(--text3);text-align:center;letter-spacing:.04em">Donnees issues de l'API officielle FACEIT. Cache 1h.</div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section">
+  <h2 class="cta-title">Commence par analyser<br>ta derniere demo</h2>
+  <p class="cta-sub">Pour savoir quoi travailler en priorite, rien de tel qu'une analyse concrete de ton jeu actuel.</p>
+  <a href="demo.html" class="btn-primary">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    Analyser ma demo
+  </a>
+</section>
+
+<footer>
+  &copy; 2026 FragValue &middot; <a href="index.html" style="color:var(--text3);text-decoration:underline">Accueil</a> &middot; <a href="stats-guide.html" style="color:var(--text3);text-decoration:underline">Guide stats</a> &middot; <a href="pricing.html" style="color:var(--text3);text-decoration:underline">Tarifs</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ═════════════════════════════════════════════════════════════════════════
+// DATA : les 10 niveaux FACEIT CS2 + Challenger
+// Source ELO : documentation FACEIT officielle (2024+)
+// Stats attendues : observations sur populations de joueurs du niveau
+// ═════════════════════════════════════════════════════════════════════════
+const LEVELS = [
+  {
+    key: 'challenger', num: 'CH', name: 'Challenger',
+    eloMin: null, eloMax: null, eloLabel: 'Top 1000 mondial Lvl 10',
+    kd: '1.25+', adr: '95+', winRate: '60%+',
+    populationPct: '<0.1%',
+    desc: 'Le sommet de FACEIT. Rank ELO mondial affiche publiquement. Joueurs semi-pros, pros, streamers haut niveau.',
+    tips: [
+      'ELO gagne/perdu accelere : +15 a +25 par match.',
+      'Adversaires quasi exclusivement level 10 Challenger ou 10 high-elo.',
+      'Stats equivalentes HLTV : rating 1.15+ minimum pour tenir le rank.'
+    ]
+  },
+  {
+    key: 'level-10', num: '10', name: 'Niveau 10',
+    eloMin: 2001, eloMax: null, eloLabel: '2001 ELO et plus',
+    kd: '1.15 - 1.30', adr: '85 - 100', winRate: '55 - 62%',
+    populationPct: '0.5%',
+    desc: 'Le top 1% de la playerbase FACEIT. Des joueurs serieux qui jouent minimum 3-5 matchs par semaine, avec un temps de jeu significatif en deathmatch et aim training.',
+    tips: [
+      'KAST minimum 72% sur 20 matchs.',
+      'Opening win rate > 55% a cette tranche.',
+      'Utility spend : flashs executees en timing avec l\'equipe, smoke lineups appris sur chaque map.',
+      'Monte en Challenger : top 1000 FACEIT est remanie en temps reel, vise rating HLTV 1.15+.'
+    ]
+  },
+  {
+    key: 'level-9', num: '9', name: 'Niveau 9',
+    eloMin: 1751, eloMax: 2000, eloLabel: '1751 - 2000 ELO',
+    kd: '1.10 - 1.20', adr: '80 - 92', winRate: '52 - 58%',
+    populationPct: '2%',
+    desc: 'Les meilleurs joueurs de la population classique. Attendu : game sense tres solide, map knowledge parfaite sur au moins 3 maps, execution de strats automatique.',
+    tips: [
+      'Tu dois carry les rounds eco avec des positions agressives calculees.',
+      'Clutch 1v1 gagne > 45% (contre 35% en Lvl 7).',
+      'Pistol WR > 55% (impact disproportionne sur le ELO).',
+      'Pour monter : reduis ton CV (variance des performances). Regularite > spikes de perf.'
+    ]
+  },
+  {
+    key: 'level-8', num: '8', name: 'Niveau 8',
+    eloMin: 1531, eloMax: 1750, eloLabel: '1531 - 1750 ELO',
+    kd: '1.05 - 1.15', adr: '75 - 85', winRate: '50 - 55%',
+    populationPct: '4%',
+    desc: 'Le palier ou ton aim est deja bon, mais ce qui fait la difference c\'est la prise de decision et l\'utility. Tu commences a jouer contre des anciens lvl 10 en queue.',
+    tips: [
+      'Travaille les lineups de smokes et molotovs sur 3 maps minimum.',
+      'Opening duel win > 50%, sinon delegue l\'entry a un teammate.',
+      'HS% moyen 45-55% sur 20 matchs.',
+      'Stop les solo peek. Chaque duel doit etre trade-able.'
+    ]
+  },
+  {
+    key: 'level-7', num: '7', name: 'Niveau 7',
+    eloMin: 1351, eloMax: 1530, eloLabel: '1351 - 1530 ELO',
+    kd: '1.00 - 1.10', adr: '70 - 80', winRate: '48 - 52%',
+    populationPct: '8%',
+    desc: 'Le mid-high. Aim correct, positions apprises, mais souvent tilt face aux smurf ou boost. Beaucoup y restent coinces faute de travailler l\'utility.',
+    tips: [
+      'Route d\'echauffement obligatoire : 10 min aim_botz + 1 DM avant chaque session.',
+      'Apprends 2 smoke executes par map pour A et B sites.',
+      'Watch demos pros sur tes 2 maps preferees (30 min/semaine suffit).',
+      'KAST cible : 68%+.'
+    ]
+  },
+  {
+    key: 'level-6', num: '6', name: 'Niveau 6',
+    eloMin: 1201, eloMax: 1350, eloLabel: '1201 - 1350 ELO',
+    kd: '0.95 - 1.05', adr: '65 - 75', winRate: '48 - 52%',
+    populationPct: '15%',
+    desc: 'Le mid pur. Decisif : commence a etre constant dans tes performances. Aim solide, mais fails recurrents sur des details tactiques.',
+    tips: [
+      'Focus HS% a 45%+ : sort de la tranche duel-moyen.',
+      'Travaille la gestion d\'economie (save, force buy, etc.).',
+      'Un minimum de comm en micro, meme en solo queue.',
+      'Vise K/D > 1.05 sur 20 matchs consecutifs pour monter stable.'
+    ]
+  },
+  {
+    key: 'level-5', num: '5', name: 'Niveau 5',
+    eloMin: 1051, eloMax: 1200, eloLabel: '1051 - 1200 ELO',
+    kd: '0.90 - 1.00', adr: '60 - 70', winRate: '47 - 50%',
+    populationPct: '17%',
+    desc: 'Le low-mid. Point de bascule : tu sais shoot, mais tu perds parce que tu ne sais pas ou te positionner en anti-eco ou retake.',
+    tips: [
+      'Arrete de peek les AWP en eco. Regarde tes demos.',
+      'Apprends les spots d\'ancrage CT sur 2 maps (Mirage A CT, Inferno banana).',
+      'Cible HS% > 40%.',
+      'Ne jamais dry-peek un angle large sans utility.'
+    ]
+  },
+  {
+    key: 'level-4', num: '4', name: 'Niveau 4',
+    eloMin: 901, eloMax: 1050, eloLabel: '901 - 1050 ELO',
+    kd: '0.85 - 0.95', adr: '55 - 65', winRate: '45 - 50%',
+    populationPct: '18%',
+    desc: 'Le niveau "je suis pas mauvais mais je coince". Generalement un aim OK mais game sense faible et zero utility usage.',
+    tips: [
+      'Grind aim_botz + DM 20 min/jour pendant 2 semaines : tu montes tout seul.',
+      'Spray control : AK recoil pattern doit etre parfait sur 1st mag.',
+      'Verifie ta sensi souris : la plupart des lvl 4 jouent trop vite.',
+      'Arrete de rush sans info.'
+    ]
+  },
+  {
+    key: 'level-3', num: '3', name: 'Niveau 3',
+    eloMin: 751, eloMax: 900, eloLabel: '751 - 900 ELO',
+    kd: '0.75 - 0.90', adr: '50 - 60', winRate: '42 - 47%',
+    populationPct: '15%',
+    desc: 'Debutant-intermediaire. Sait shoot sur les cibles statiques, galere sur les cibles en mouvement et les crossfires.',
+    tips: [
+      'Crosshair placement : mire toujours a hauteur de tete, adosse aux murs.',
+      'Apprends les callouts des 2 maps que tu joues le plus.',
+      'Installe un config avec mouse accel OFF + sensi basse (1.5-2 a 800 DPI).',
+      'Joue en FFA DM pour habituer le flick.'
+    ]
+  },
+  {
+    key: 'level-2', num: '2', name: 'Niveau 2',
+    eloMin: 501, eloMax: 750, eloLabel: '501 - 750 ELO',
+    kd: '0.65 - 0.80', adr: '45 - 55', winRate: '40 - 45%',
+    populationPct: '12%',
+    desc: 'Debutant. Tu comprends les bases du jeu mais tu manques encore de repetition sur le mecanique.',
+    tips: [
+      'Focus exclusif sur l\'aim pendant 1 mois : aim_botz + DM tous les jours.',
+      'Baisse ta sensi si elle est > 3 a 800 DPI.',
+      'Evite de prendre des duels longs : reste en mid-range.',
+      'Regarde des videos "FACEIT tips for beginners" sur YouTube (WarOwl, TheWarOwl, etc.).'
+    ]
+  },
+  {
+    key: 'level-1', num: '1', name: 'Niveau 1',
+    eloMin: 100, eloMax: 500, eloLabel: '100 - 500 ELO',
+    kd: '<0.70', adr: '<50', winRate: '<42%',
+    populationPct: '8%',
+    desc: 'Le point de depart. Objectif : comprendre le jeu, apprendre a tirer proprement, ne pas tilt.',
+    tips: [
+      'Ne te prends pas la tete sur le ELO pour l\'instant.',
+      'Joue pour t\'amuser et apprendre.',
+      'Installe une config pro classique (video 1920x1080 black bars, raw input, sensi 2-3 a 800 DPI).',
+      'Fais 15 min d\'aim_botz avant chaque session.'
+    ]
+  }
+];
+
+// ═════════════════════════════════════════════════════════════════════════
+// Render the 11 level cards (Challenger + 10 to 1)
+// ═════════════════════════════════════════════════════════════════════════
+function renderLevels(currentLevel) {
+  const list = document.getElementById('levelsList');
+  if (!list) return;
+
+  list.innerHTML = LEVELS.map(function(lvl, idx) {
+    const isCurrent = currentLevel != null && (
+      (lvl.key === 'level-' + currentLevel) ||
+      (lvl.key === 'challenger' && currentLevel === 11)
+    );
+    const isNextTarget = currentLevel != null && (
+      (lvl.key === 'level-' + (currentLevel + 1)) ||
+      (currentLevel === 10 && lvl.key === 'challenger')
+    );
+    const classes = ['level-card', lvl.key];
+    if (isCurrent) classes.push('current');
+    if (isNextTarget) classes.push('next-target');
+
+    return ''
+      + '<div class="' + classes.join(' ') + '">'
+      + '  <div class="level-badge">' + lvl.num + '</div>'
+      + '  <div class="level-content">'
+      + '    <div class="level-name">' + lvl.name + '</div>'
+      + '    <span class="level-elo">' + lvl.eloLabel + '</span>'
+      + '    <p class="level-desc">' + lvl.desc + '</p>'
+      + '    <div class="level-stats">'
+      + '      <div class="level-stat"><div class="level-stat-val">' + lvl.kd + '</div><div class="level-stat-lbl">K/D</div></div>'
+      + '      <div class="level-stat"><div class="level-stat-val">' + lvl.adr + '</div><div class="level-stat-lbl">ADR</div></div>'
+      + '      <div class="level-stat"><div class="level-stat-val">' + lvl.winRate + '</div><div class="level-stat-lbl">Win rate</div></div>'
+      + '    </div>'
+      + '  </div>'
+      + '  <div class="level-right">'
+      + '    <div class="level-population">~<strong>' + lvl.populationPct + '</strong><br>de la playerbase</div>'
+      + '  </div>'
+      + '  <div class="level-tips">'
+      + '    <div class="level-tips-title">' + (isCurrent ? 'Comment monter au niveau suivant' : 'Pour atteindre ce niveau') + '</div>'
+      + '    <ul>' + lvl.tips.map(function(t) { return '<li>' + t + '</li>'; }).join('') + '</ul>'
+      + '  </div>'
+      + '</div>';
+  }).join('');
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Load the user's current FACEIT level from Supabase profile
+// ═════════════════════════════════════════════════════════════════════════
+async function loadUserLevel() {
+  try {
+    const SB_URL = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+    const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+    const sb = supabase.createClient(SB_URL, SB_ANON);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { renderLevels(null); return; }
+
+    const { data: profile } = await sb.from('profiles')
+      .select('faceit_nickname, faceit_level, faceit_elo')
+      .eq('id', session.user.id)
+      .single();
+
+    if (!profile || !profile.faceit_level) { renderLevels(null); return; }
+
+    const level = parseInt(profile.faceit_level, 10);
+    const card = document.getElementById('myLevelCard');
+    const badge = document.getElementById('myLevelBadge');
+    const info = document.getElementById('myLevelInfo');
+    const right = document.getElementById('myLevelRight');
+
+    if (card) card.classList.remove('loading');
+    if (badge) badge.textContent = level;
+    if (info) {
+      const lvlObj = LEVELS.find(function(l) { return l.key === 'level-' + level; });
+      const targetName = level >= 10 ? 'Challenger' : ('Niveau ' + (level + 1));
+      info.innerHTML = '<strong>' + profile.faceit_nickname + '</strong> &middot; Niveau ' + level
+        + (profile.faceit_elo ? ' &middot; ' + profile.faceit_elo + ' ELO' : '')
+        + '<div style="font-size:11px;color:var(--text3);margin-top:4px;letter-spacing:.04em">Prochain palier : ' + targetName + '</div>';
+    }
+    if (right) {
+      right.innerHTML = '<a href="#level-' + level + '">Voir ce qu\'il me manque &rarr;</a>';
+    }
+
+    renderLevels(level);
+  } catch (_) {
+    renderLevels(null);
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// Load the FACEIT EU top 5 challengers (reuses /api/faceit-leaderboard)
+// ═════════════════════════════════════════════════════════════════════════
+async function loadLeaderboard() {
+  const lb = document.getElementById('leaderboard');
+  const liveText = document.getElementById('liveText');
+  try {
+    const res = await fetch('/api/faceit-leaderboard?region=EU&limit=5');
+    if (!res.ok) throw new Error('API ' + res.status);
+    const data = await res.json();
+    if (!data.players || !data.players.length) throw new Error('no players');
+
+    const rows = ['<div class="leaderboard-row head"><div>Rang</div><div>Joueur</div><div>ELO</div><div>K/D</div><div>HS%</div></div>'];
+    data.players.forEach(function(p) {
+      const avatarStyle = p.avatar ? ('background-image:url(' + p.avatar + ')') : '';
+      const eloTxt = p.elo != null ? p.elo : '-';
+      const kdTxt = p.kd != null ? p.kd.toFixed(2) : '-';
+      const hsTxt = p.hsPct != null ? p.hsPct.toFixed(0) + '%' : '-';
+      const rankTxt = p.rank != null ? '#' + p.rank : '-';
+      const country = p.country ? '<span class="lb-country">' + p.country + '</span>' : '';
+      rows.push(''
+        + '<div class="leaderboard-row">'
+        + '  <div class="lb-rank">' + rankTxt + '</div>'
+        + '  <div class="lb-name">'
+        + '    <div class="lb-avatar" style="' + avatarStyle + '"></div>'
+        + '    <span class="lb-nick">' + escapeHtml(p.nickname) + '</span>'
+        + '    ' + country
+        + '  </div>'
+        + '  <div class="lb-val accent">' + eloTxt + '</div>'
+        + '  <div class="lb-val">' + kdTxt + '</div>'
+        + '  <div class="lb-val">' + hsTxt + '</div>'
+        + '</div>');
+    });
+    lb.innerHTML = rows.join('');
+
+    const when = new Date(data.updatedAt).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    liveText.textContent = (data.cached ? 'Synchronise ' : 'En direct ') + when;
+  } catch (_) {
+    lb.innerHTML = '<div class="leaderboard-row"><div class="lb-rank">-</div><div style="grid-column:2 / -1;color:var(--text3);font-size:11px">Classement temporairement indisponible.</div></div>';
+    if (liveText) liveText.textContent = 'Donnees indisponibles';
+  }
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, function(c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+// Init
+renderLevels(null);
+loadUserLevel();
+if ('IntersectionObserver' in window) {
+  const lbWrap = document.querySelector('.leaderboard-wrap');
+  const obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { loadLeaderboard(); obs.disconnect(); }
+    });
+  }, { rootMargin: '200px' });
+  if (lbWrap) obs.observe(lbWrap);
+  else loadLeaderboard();
+} else {
+  loadLeaderboard();
+}
+</script>
+</body>
+</html>

@@ -50,6 +50,12 @@ export default async function handler(req, res) {
       success_url: siteOrigin + '/account.html?checkout=success',
       cancel_url: siteOrigin + '/pricing.html',
       allow_promotion_codes: true,
+      // 7 jours d'essai gratuit sur les plans Pro (claim marketing sur pricing.html).
+      // Pendant le trial, aucun prelevement. L'abonnement commence automatiquement
+      // apres 7 jours si l'utilisateur n'a pas annule (cancel en 1 clic depuis Stripe).
+      subscription_data: {
+        trial_period_days: 7,
+      },
     };
 
     const authHeader = req.headers.authorization;
