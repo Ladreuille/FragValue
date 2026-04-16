@@ -150,7 +150,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .moment-badge.triple{background:rgba(91,141,217,.1);color:var(--ct);border:1px solid rgba(91,141,217,.2)}
 .moment-info{flex:1}
 .moment-player{font-size:12px;font-weight:700;margin-bottom:2px}
-.moment-detail{font-size:10px;color:var(--text3);letter-spacing:.02em}
+.moment-détail{font-size:10px;color:var(--text3);letter-spacing:.02em}
 .moment-result{font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;white-space:nowrap}
 .moment-result.win{background:rgba(45,212,160,.1);color:var(--success)}
 .moment-result.loss{background:rgba(255,68,68,.08);color:var(--danger)}
@@ -268,7 +268,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   </div>
 
   <!-- 7. MOMENTS CLES -->
-  <div class="sl">Moments cles</div>
+  <div class="sl">Moments clés</div>
   <div class="card" id="momentsCard"><div class="empty-msg">Chargement...</div></div>
 
   <!-- 8. BILAN TACTIQUE -->
@@ -352,7 +352,7 @@ function detectKnifeRounds() {
     if (startT > 0 && endT > 0) rKills = kills.filter(k => (k.tick || 0) >= startT && (k.tick || 0) <= endT);
     if (!rKills.length) rKills = kills.filter(k => k.round === killsR || k.round === roundNum);
     if (!rKills.length) {
-      // Garder le flag du parser si present, sinon round 0 = knife (FACEIT)
+      // Garder le flag du parser si présent, sinon round 0 = knife (FACEIT)
       if (rd.isKnife === undefined || rd.isKnife === null) rd.isKnife = (i === 0);
       return;
     }
@@ -592,7 +592,7 @@ async function init() {
 
   const raw = sessionStorage.getItem('demoData');
   if (!raw) {
-    document.getElementById('mainPage').innerHTML = '<div class="empty-msg" style="padding:60px">Aucune donnee disponible. Analyse une demo depuis la page principale.</div>';
+    document.getElementById('mainPage').innerHTML = '<div class="empty-msg" style="padding:60px">Aucune donnée disponible. Analyse une demo depuis la page principale.</div>';
     document.getElementById('mainPage').style.display = 'block';
     return;
   }
@@ -772,7 +772,7 @@ function renderOpenings(c) {
   const playersWithFB = c.stats.filter(p => p.fk > 0 || p.fd > 0).sort((a, b) => b.fk - a.fk);
 
   if (!playersWithFB.length) {
-    card.innerHTML = '<div class="empty-msg">Pas de donnees d\'ouverture disponibles</div>';
+    card.innerHTML = '<div class="empty-msg">Pas de données d\'ouverture disponibles</div>';
     return;
   }
 
@@ -818,7 +818,7 @@ function renderOpenings(c) {
 
   html += `<div class="open-insight">
     Le side <strong>${dominantTeam}</strong> a domine les ouvertures avec <strong>${dominantPct}%</strong> des first bloods.
-    Quand une equipe prend le premier kill, elle convertit le round dans <strong>${globalConv}%</strong> des cas.
+    Quand une équipe prend le premier kill, elle convertit le round dans <strong>${globalConv}%</strong> des cas.
     <strong>${bestOpener.name}</strong> est le meilleur ouvreur avec ${bestOpener.fk} first kills sur ${c.totalRounds} rounds.
   </div>`;
 
@@ -894,7 +894,7 @@ function renderMinimaps(c) {
   const players = Object.keys(positions);
 
   if (!players.length) {
-    grid.innerHTML = '<div class="empty-msg">Aucune donnee de position disponible</div>';
+    grid.innerHTML = '<div class="empty-msg">Aucune donnée de position disponible</div>';
     return;
   }
 
@@ -1182,7 +1182,7 @@ function renderMoments(kills, rounds, c) {
       <span class="moment-badge ${badge}">${badgeText}</span>
       <div class="moment-info">
         <div class="moment-player" style="color:${m.team === 3 ? 'var(--ct)' : 'var(--t)'}">${m.player}</div>
-        <div class="moment-detail">${m.killCount} kills (${m.hs} HS) ${m.weapons.map(w => weaponIcon(w, 14)).join(' ')}</div>
+        <div class="moment-détail">${m.killCount} kills (${m.hs} HS) ${m.weapons.map(w => weaponIcon(w, 14)).join(' ')}</div>
       </div>
       <span class="moment-result ${resultClass}">${resultText}</span>
     </div>`;
@@ -1268,11 +1268,11 @@ function renderCoachBilan(c, kills, rounds) {
   html += `<div class="coach-block">
     <div class="coach-label">Joueur cle</div>
     <div class="coach-text">
-      <strong>${mvp.name}</strong> termine MVP avec un FV Rating de <strong>${mvp.fvr.toFixed(2)}</strong> (${fvrLabel(mvp.fvr)}).`;
+      <strong>${mvp.name}</strong> terminé MVP avec un FV Rating de <strong>${mvp.fvr.toFixed(2)}</strong> (${fvrLabel(mvp.fvr)}).`;
 
   if (mvp.fk >= 3) html += ` Il est implique dans ${mvp.fk} opening duels, creant des avantages numeriques en debut de round.`;
   if (mvp.kast >= 75) html += ` Son KAST de ${mvp.kast}% montre une presence constante a chaque round.`;
-  if (mvp.hsPct >= 55) html += ` Sa precision est remarquable avec ${mvp.hsPct}% de headshots.`;
+  if (mvp.hsPct >= 55) html += ` Sa précision est remarquable avec ${mvp.hsPct}% de headshots.`;
   html += `</div></div>`;
 
   // Ouvertures
@@ -1280,11 +1280,11 @@ function renderCoachBilan(c, kills, rounds) {
     <div class="coach-label">Analyse des ouvertures</div>
     <div class="coach-text">
       Le side CT obtient <strong>${team3FB}</strong> first bloods contre <strong>${team2FB}</strong> pour le side T.
-      Le taux de conversion global apres un premier kill est de <strong>${fbConv}%</strong>.`;
+      Le taux de conversion global après un premier kill est de <strong>${fbConv}%</strong>.`;
 
-  if (fbConv >= 70) html += ` C'est un taux excellent - l'equipe qui ouvre le round controle bien les suites de round.`;
-  else if (fbConv >= 55) html += ` Un taux correct, mais il y a des rounds perdus malgre l'avantage initial. Il faut mieux capitaliser apres le first blood.`;
-  else html += ` Ce taux est trop bas. Les equipes ne convertissent pas assez apres avoir pris l'avantage. Il faut revoir le jeu post-opening.`;
+  if (fbConv >= 70) html += ` C'est un taux excellent - l'équipe qui ouvre le round controle bien les suites de round.`;
+  else if (fbConv >= 55) html += ` Un taux correct, mais il y a des rounds perdus malgre l'avantage initial. Il faut mieux capitaliser après le first blood.`;
+  else html += ` Ce taux est trop bas. Les équipes ne convertissent pas assez après avoir pris l'avantage. Il faut revoir le jeu post-opening.`;
   html += `</div></div>`;
 
   // Trading et consistance
@@ -1295,7 +1295,7 @@ function renderCoachBilan(c, kills, rounds) {
 
   if (tradePct >= 30) html += ` Les joueurs se tradent correctement, limitant les situations de desavantage numerique.`;
   else if (tradePct >= 15) html += ` Le trading est moyen. Trop de morts ne sont pas tradees, ce qui laisse l'adversaire en avantage numerique gratuitement.`;
-  else html += ` Le trading est insuffisant. Les joueurs meurent isoles sans que leurs coequipiers puissent reagir. C'est un point critique a travailler.`;
+  else html += ` Le trading est insuffisant. Les joueurs meurent isoles sans que leurs coéquipiers puissent reagir. C'est un point critique a travailler.`;
 
   if (highKast.length) {
     html += `<div class="coach-bullet"><strong>${highKast[0].name}</strong> est le joueur le plus constant avec un KAST de ${highKast[0].kast}%. Il contribue a chaque round par un kill, une survie ou un trade.</div>`;
@@ -1312,12 +1312,12 @@ function renderCoachBilan(c, kills, rounds) {
 
   const weakOpeners = c.stats.filter(p => p.fd > p.fk && p.fd >= 3);
   if (weakOpeners.length) {
-    html += `<div class="coach-bullet">${weakOpeners.map(p => '<strong>' + p.name + '</strong>').join(', ')} ${weakOpeners.length > 1 ? 'perdent' : 'perd'} trop d'opening duels. Il faut revoir le positionnement en debut de round ou eviter les peeks risques.</div>`;
+    html += `<div class="coach-bullet">${weakOpeners.map(p => '<strong>' + p.name + '</strong>').join(', ')} ${weakOpeners.length > 1 ? 'perdent' : 'perd'} trop d'opening duels. Il faut revoir le positionnement en debut de round ou éviter les peeks risques.</div>`;
   }
 
   const adrGap = mvp.adr - lowest.adr;
   if (adrGap > 40) {
-    html += `<div class="coach-bullet">L'ecart d'ADR entre <strong>${mvp.name}</strong> (${mvp.adr}) et <strong>${lowest.name}</strong> (${lowest.adr}) est de ${adrGap} points. L'equipe depend trop d'un seul joueur pour faire du damage.</div>`;
+    html += `<div class="coach-bullet">L'ecart d'ADR entre <strong>${mvp.name}</strong> (${mvp.adr}) et <strong>${lowest.name}</strong> (${lowest.adr}) est de ${adrGap} points. L'équipe depend trop d'un seul joueur pour faire du damage.</div>`;
   }
 
   if (tradePct < 20) {
@@ -1337,19 +1337,19 @@ function renderCoachBilan(c, kills, rounds) {
     <div class="coach-text">`;
 
   if (Math.abs(c.team3Score - c.team2Score) <= 3) {
-    html += `Match serre (${c.team3Score} - ${c.team2Score}). Les details font la difference dans ce type de match : ouvertures de round, trades, et utilisation des utilitaires.`;
+    html += `Match serre (${c.team3Score} - ${c.team2Score}). Les détails font la différence dans ce type de match : ouvertures de round, trades, et utilisation des utilitaires.`;
   } else if (Math.abs(c.team3Score - c.team2Score) >= 8) {
-    html += `Match domine par le side ${winnerLabel}. L'equipe perdante doit revoir ses fondamentaux : positionnement, communication et discipline de jeu.`;
+    html += `Match domine par le side ${winnerLabel}. L'équipe perdante doit revoir ses fondamentaux : positionnement, communication et discipline de jeu.`;
   } else {
-    html += `Match equilibre dans l'ensemble, avec des phases de domination des deux cotes.`;
+    html += `Match equilibre dans l'ensemble, avec des phases de domination des deux côtés.`;
   }
 
   if (allMK.length) {
     const totalMK = allMK.reduce((s, p) => s + p.multiKills.three + p.multiKills.four + p.multiKills.ace, 0);
-    html += ` ${totalMK} multi-kills ont ete realises dans ce match, montrant des pics d'impact individuel.`;
+    html += ` ${totalMK} multi-kills ont été realises dans ce match, montrant des pics d'impact individuel.`;
   }
 
-  html += ` Pour progresser, l'accent doit etre mis sur le jeu d'equipe, le trading systematique et la conversion des avantages numeriques.`;
+  html += ` Pour progresser, l'accent doit être mis sur le jeu d'équipe, le trading systematique et la conversion des avantages numeriques.`;
   html += `</div></div>`;
 
   card.innerHTML = html;

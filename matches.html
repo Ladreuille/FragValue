@@ -206,7 +206,7 @@ a.match-card:hover .mc-col-chevron{color:var(--accent);transform:translateX(3px)
       <div class="ov-step" id="ovStep0"><div class="ov-step-dot"></div>Verification du compte FACEIT</div>
       <div class="ov-step" id="ovStep1"><div class="ov-step-dot"></div>Recuperation des 5 derniers matchs</div>
       <div class="ov-step" id="ovStep2"><div class="ov-step-dot"></div>Mise en file pour le parser Railway</div>
-      <div class="ov-step" id="ovStep3"><div class="ov-step-dot"></div>Analyse des demos en arriere plan</div>
+      <div class="ov-step" id="ovStep3"><div class="ov-step-dot"></div>Analyse des demos en arrière plan</div>
     </div>
     <div class="ov-close" id="ovClose" style="display:none">
       <button class="ov-close-btn" onclick="closeOverlay()">Fermer</button>
@@ -269,7 +269,7 @@ function renderMatches(matches) {
   if (!matches.length) {
     el.innerHTML = '<div class="empty-box">' +
       '<div class="empty-box-title">AUCUN MATCH POUR L\'INSTANT</div>' +
-      '<div class="empty-box-sub">Lance l\'import pour recuperer tes 5 derniers matchs FACEIT de moins d\'un mois. Pour des matchs plus anciens utilise l\'upload manuel de demo. FragValue les analysera automatiquement en arriere-plan et tu seras notifie des qu\'ils sont prets.</div>' +
+      '<div class="empty-box-sub">Lance l\'import pour récupérer tes 5 derniers matchs FACEIT de moins d\'un mois. Pour des matchs plus anciens utilise l\'upload manuel de demo. FragValue les analysera automatiquement en arrière-plan et tu seras notifie des qu\'ils sont prets.</div>' +
       '<button class="btn-import" onclick="importHistory()">' +
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>' +
       'Importer mes matchs</button>' +
@@ -284,35 +284,35 @@ function friendlyReason(msg) {
   if (!m) return { title: 'Erreur parser', sub: 'Cause inconnue · relancez le match' };
   // Tags emitted by the extension resolver (background.js friendlyResolveError)
   if (m.startsWith('demo_expired:')) {
-    return { title: 'Demo expiree', sub: 'FACEIT purge les demos apres ~30 jours' };
+    return { title: 'Demo expirée', sub: 'FACEIT purge les demos après ~30 jours' };
   }
   if (m.startsWith('demo_forbidden:')) {
-    return { title: 'Acces demo refuse', sub: 'FACEIT a bloque le telechargement' };
+    return { title: 'Accès demo refuse', sub: 'FACEIT a bloqué le telechargement' };
   }
   if (m.startsWith('no_demo:')) {
-    return { title: 'Pas de demo disponible', sub: 'Match annule, forfait, ou demo pas encore uploadee' };
+    return { title: 'Pas de demo disponible', sub: 'Match annulé, forfait, ou demo pas encore uploadee' };
   }
   if (m.startsWith('captcha_required:')) {
     return { title: 'Verification requise', sub: 'FACEIT demande un captcha, ouvrez www.faceit.com' };
   }
   if (m.startsWith('resolve_failed:')) {
-    return { title: 'Resolution echouee', sub: 'Erreur pendant la recuperation de l URL FACEIT' };
+    return { title: 'Résolution échouée', sub: 'Erreur pendant la récupération de l URL FACEIT' };
   }
   if (m.startsWith('parser_stuck:')) {
-    return { title: 'Parser bloque', sub: 'Reset manuel effectue, cliquez Reessayer pour relancer' };
+    return { title: 'Parser bloque', sub: 'Reset manuel effectue, cliquez Réessayer pour relancer' };
   }
   // Parser-side errors (Railway downloadAndParse)
   if (m.includes('err_nf0') || m.includes('file not found')) {
-    return { title: 'Demo expiree', sub: 'FACEIT purge les demos apres ~30 jours' };
+    return { title: 'Demo expirée', sub: 'FACEIT purge les demos après ~30 jours' };
   }
   if (m.includes('enotfound') || m.includes('getaddrinfo') || m.includes('eai_again')) {
     return { title: 'Demo FACEIT indisponible', sub: 'Le CDN ou l\'URL fournie par FACEIT ne repond pas. Relancez plus tard.' };
   }
   if (m.includes('404')) {
-    return { title: 'Demo supprimee par FACEIT', sub: 'Les demos FACEIT sont purgees apres ~30 jours' };
+    return { title: 'Demo supprimée par FACEIT', sub: 'Les demos FACEIT sont purgees après ~30 jours' };
   }
   if (m.includes('403') || m.includes('401')) {
-    return { title: 'Acces demo refuse', sub: 'FACEIT a bloque le telechargement (token expire)' };
+    return { title: 'Accès demo refuse', sub: 'FACEIT a bloqué le telechargement (token expiré)' };
   }
   if (m.includes('zst') || m.includes('gzip') || m.includes('magic')) {
     return { title: 'Format demo incompatible', sub: 'Le parser n\'a pas reconnu le format FACEIT' };
@@ -331,12 +331,12 @@ function renderCard(m) {
   const statusLabel = isParsed ? 'Analyse'
     : m.status === 'pending' ? 'En file'
     : m.status === 'parsing' ? 'Analyse en cours'
-    : isFailed ? 'Echec' : 'En attente';
+    : isFailed ? 'Échec' : 'En attente';
   const statusClass = isParsed ? 'parsed' : m.status === 'pending' ? 'pending' : isParsing ? 'parsing' : 'failed';
 
-  // Sur les rows non-parsees on n a pas encore de map ni de score reel, donc
+  // Sur les rows non-parsees on n a pas encore de map ni de score réel, donc
   // on affiche un placeholder "EN ATTENTE" a la place du nom de map et on
-  // skippe entierement le bloc score pour eviter un "0 : 0" disgracieux.
+  // skippe entièrement le bloc score pour éviter un "0 : 0" disgracieux.
   const ct = m.score_ct ?? 0;
   const t = m.score_t ?? 0;
   const map = isParsed
@@ -348,7 +348,7 @@ function renderCard(m) {
   const href = isParsed ? 'analysis.html?match=' + encodeURIComponent(m.faceit_match_id) : '#';
   const tag = isParsed ? 'a' : 'div';
 
-  // Date affichee a cote du nom de map. Pour un match parse on affiche la
+  // Date affichée a côté du nom de map. Pour un match parse on affiche la
   // date du match (parsed_at fait foi), sinon la date d import (created_at).
   const dateHtml = '<div class="mc-date">' + fmtFull(m.parsed_at || m.created_at) + '</div>';
 
@@ -381,12 +381,12 @@ function renderCard(m) {
     const r = friendlyReason(m.error_message);
     subrowHtml = '<div class="mc-subrow">' +
       '<div class="mc-reason"><b>' + r.title + '</b>' + r.sub + '</div>' +
-      '<button class="mc-retry-btn" onclick="retryMatch(event,\'' + m.faceit_match_id + '\')">Reessayer</button>' +
+      '<button class="mc-retry-btn" onclick="retryMatch(event,\'' + m.faceit_match_id + '\')">Réessayer</button>' +
     '</div>';
   }
 
   // Score block : seulement sur les matchs parses (les autres n ont pas de
-  // score reel et afficher "0 : 0" en gros chiffres est visuellement moche).
+  // score réel et afficher "0 : 0" en gros chiffres est visuellement moche).
   const scoreHtml = isParsed
     ? '<div class="mc-col-score">' +
         '<div class="mc-score-val ' + (ctWin ? 'win' : tWin ? 'loss' : '') + '">' + ct + '</div>' +
@@ -428,14 +428,14 @@ async function retryMatch(e, matchId) {
     });
     if (!r.ok) {
       btn.disabled = false;
-      btn.textContent = 'Reessayer';
+      btn.textContent = 'Réessayer';
       return;
     }
     // Recharge immediat pour voir le match repasser en pending
     await loadMatches();
   } catch (_) {
     btn.disabled = false;
-    btn.textContent = 'Reessayer';
+    btn.textContent = 'Réessayer';
   }
 }
 
@@ -496,7 +496,7 @@ async function importHistory() {
 
     if (!r.ok) {
       const err = await r.json().catch(() => ({}));
-      document.getElementById('ovTitle').textContent = 'Echec de l\'import';
+      document.getElementById('ovTitle').textContent = 'Échec de l\'import';
       setOvSub(err.error || 'Erreur serveur');
       setOvFill(100);
       document.getElementById('ovClose').style.display = 'flex';
@@ -517,7 +517,7 @@ async function importHistory() {
 
     await loadMatches();
 
-    // If the extension is installed and required for demo URL resolution,
+    // If the extension is installed and required for demo URL résolution,
     // trigger its full sync flow (resolve presigned URLs + submit to parser).
     // The 10s poll will pick up status changes automatically.
     const extInstalled = document.documentElement.hasAttribute('data-fv-ext-installed');
@@ -536,19 +536,19 @@ async function importHistory() {
     setTimeout(() => {
       setOvFill(100);
       markStepsDoneUntil(3);
-      document.getElementById('ovTitle').textContent = 'Import termine';
+      document.getElementById('ovTitle').textContent = 'Import terminé';
       const subDone = skipped > 0
         ? skipped + ' matchs trop anciens · upload manuel pour ceux-la'
-        : 'Les analyses se finaliseront en arriere plan';
+        : 'Les analyses se finaliseront en arrière plan';
       setOvSub(subDone);
       document.getElementById('ovClose').style.display = 'flex';
-      // Auto close apres 3s
+      // Auto close après 3s
       setTimeout(closeOverlay, 3000);
     }, 1200);
   } catch (e) {
     clearInterval(fakeTick);
     document.getElementById('ovTitle').textContent = 'Connexion impossible';
-    setOvSub('Reessaie dans quelques secondes');
+    setOvSub('Réessaie dans quelques secondes');
     setOvFill(100);
     document.getElementById('ovClose').style.display = 'flex';
   }

@@ -44,12 +44,12 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .nav-link:hover{color:var(--accent)}
 
 /* HERO */
-.hero{text-align:center;padding:80px 32px 40px;position:relative;z-index:1}
-.hero-back{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:var(--text3);letter-spacing:.06em;text-decoration:none;margin-bottom:24px;transition:color .15s}
-.hero-back:hover{color:var(--accent)}
-.hero-title{font-family:var(--display);font-size:clamp(40px,5vw,64px);line-height:.95;letter-spacing:.02em;margin-bottom:16px;opacity:0;animation:up .4s ease forwards}
-.hero-title span{color:var(--accent)}
-.hero-sub{font-size:13px;color:var(--text2);line-height:1.7;max-width:580px;margin:0 auto;opacity:0;animation:up .4s .1s ease forwards}
+.héros{text-align:center;padding:80px 32px 40px;position:relative;z-index:1}
+.héros-back{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:var(--text3);letter-spacing:.06em;text-decoration:none;margin-bottom:24px;transition:color .15s}
+.héros-back:hover{color:var(--accent)}
+.héros-title{font-family:var(--display);font-size:clamp(40px,5vw,64px);line-height:.95;letter-spacing:.02em;margin-bottom:16px;opacity:0;animation:up .4s ease forwards}
+.héros-title span{color:var(--accent)}
+.héros-sub{font-size:13px;color:var(--text2);line-height:1.7;max-width:580px;margin:0 auto;opacity:0;animation:up .4s .1s ease forwards}
 
 /* ═══ PERSONAL ROADMAP (individuelle par client) ═══ */
 .perso-wrap{max-width:920px;margin:32px auto 0;padding:0 32px;position:relative;z-index:1;opacity:0;animation:up .4s .2s ease forwards}
@@ -266,7 +266,7 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
   .leaderboard-row>*:nth-child(5){display:none}
   nav{padding:0 16px}
   .nav-link{display:none}
-  .hero{padding:60px 24px 32px}
+  .héros{padding:60px 24px 32px}
   .levels-wrap{padding:0 16px}
   .leaderboard-wrap{padding:0 16px}
 }
@@ -288,16 +288,16 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
   </div>
 </nav>
 
-<section class="hero">
-  <a href="index.html" class="hero-back">
+<section class="héros">
+  <a href="index.html" class="héros-back">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-    Retour a l'accueil
+    Retour à l'accueil
   </a>
-  <h1 class="hero-title">Ta roadmap<br>vers <span>Challenger</span></h1>
-  <p class="hero-sub">Les 10 niveaux FACEIT, les seuils ELO a passer, les stats attendues a chaque palier, et les leviers concrets pour monter plus vite.</p>
+  <h1 class="héros-title">Ta roadmap<br>vers <span>Challenger</span></h1>
+  <p class="héros-sub">Les 10 niveaux FACEIT, les seuils ELO a passer, les stats attendues à chaque palier, et les leviers concrets pour monter plus vite.</p>
 </section>
 
-<!-- PERSONAL ROADMAP (affichee si user connecte + compte FACEIT lie) -->
+<!-- PERSONAL ROADMAP (affichée si user connecte + compte FACEIT lie) -->
 <div class="perso-wrap">
   <div class="perso-card" id="persoCard">
     <!-- Etat par defaut : not linked (ecrase par JS si compte FACEIT lie) -->
@@ -347,7 +347,7 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
 <!-- CTA FINAL -->
 <section class="cta-section">
   <h2 class="cta-title">Commence par analyser<br>ta derniere demo</h2>
-  <p class="cta-sub">Pour savoir quoi travailler en priorite, rien de tel qu'une analyse concrete de ton jeu actuel.</p>
+  <p class="cta-sub">Pour savoir quoi travailler en priorite, rien de tel qu'une analysé concrete de ton jeu actuel.</p>
   <a href="demo.html" class="btn-primary">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
     Analyser ma demo
@@ -366,7 +366,7 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
 // Stats attendues : observations sur populations de joueurs du niveau
 // ═════════════════════════════════════════════════════════════════════════
 
-// Seuils numeriques pour comparer les stats reelles d'un user au niveau cible.
+// Seuils numeriques pour comparer les stats réelles d'un user au niveau cible.
 // Clef = niveau du joueur CIBLE (niveau qu'il veut atteindre).
 // Chaque stat a une valeur "median" attendue pour ce niveau.
 const LEVEL_TARGETS = {
@@ -399,12 +399,12 @@ const LEVEL_ELO_RANGES = {
 // Actions concretes generees selon les stats en dessous du seuil.
 // Chaque entree propose jusqu'a 2 actions prioritaires par stat manquante.
 const ACTIONS_BY_STAT = {
-  kd:        { title: 'Ton K/D est sous le seuil',         tips: ['Grind 30 min de DM + aim_botz avant chaque session pour stabiliser ta precision.','Evite les solo peek : chaque duel doit etre trade par un coequipier.'] },
-  adr:       { title: 'Ton ADR est trop bas',              tips: ['Apprends 2-3 lineups de grenades (HE + molo) par map : +5 ADR facile.','Damage check chaque ennemi meme sans le kill : les degats s\'accumulent.'] },
-  kast:      { title: 'Ton KAST manque de regularite',     tips: ['Ne meurs jamais isole : assure que tu es trade-able sur chaque peek.','Supporte tes coequipiers avec des assists (flash, utility, trade kill).'] },
+  kd:        { title: 'Ton K/D est sous le seuil',         tips: ['Grind 30 min de DM + aim_botz avant chaque session pour stabiliser ta précision.','Évite les solo peek : chaque duel doit être trade par un coéquipier.'] },
+  adr:       { title: 'Ton ADR est trop bas',              tips: ['Apprends 2-3 lineups de grenades (HE + molo) par map : +5 ADR facile.','Damage check chaque ennemi même sans le kill : les dégâts s\'accumulent.'] },
+  kast:      { title: 'Ton KAST manque de regularite',     tips: ['Ne meurs jamais isole : assure que tu es trade-able sur chaque peek.','Supporte tes coéquipiers avec des assists (flash, utility, trade kill).'] },
   openingWr: { title: 'Tes duels d\'ouverture sont perdants', tips: ['Laisse l\'entry au lurker / lineup. Suis en second avec trade.','Utilise une flash avant de peek un angle long : +20% d\'opening WR.'] },
   hs:        { title: 'Ton HS% freine ta progression',     tips: ['Crosshair placement : hauteur de tete sur tous les angles serres.','Spray control AK 1st mag en aim_training tous les jours (10 min).'] },
-  winRate:   { title: 'Ton win rate doit remonter',        tips: ['Ameliore ta communication : appelle tes positions en comm court.','Ne force pas les rounds eco risques : save permet de rebondir.'] },
+  winRate:   { title: 'Ton win rate doit remonter',        tips: ['Améliore ta communication : appelle tes positions en comm court.','Ne force pas les rounds eco risques : save permet de rebondir.'] },
   fvScore:   { title: 'Ton FV Score global a des lacunes', tips: ['Regarde le breakdown Performance/Consistance/Impact sur ton espace.','Corrige d\'abord la dimension la plus faible, pas la plus forte.'] },
 };
 
@@ -414,7 +414,7 @@ const LEVELS = [
     eloMin: null, eloMax: null, eloLabel: 'Top 1000 mondial Lvl 10',
     kd: '1.25+', adr: '95+', winRate: '60%+',
     populationPct: '<0.1%',
-    desc: 'Le sommet de FACEIT. Rank ELO mondial affiche publiquement. Joueurs semi-pros, pros, streamers haut niveau.',
+    desc: 'Le sommet de FACEIT. Rank ELO mondial affiché publiquement. Joueurs semi-pros, pros, streamers haut niveau.',
     tips: [
       'ELO gagne/perdu accelere : +15 a +25 par match.',
       'Adversaires quasi exclusivement level 10 Challenger ou 10 high-elo.',
@@ -426,12 +426,12 @@ const LEVELS = [
     eloMin: 2001, eloMax: null, eloLabel: '2001 ELO et plus',
     kd: '1.15 - 1.30', adr: '85 - 100', winRate: '55 - 62%',
     populationPct: '0.5%',
-    desc: 'Le top 1% de la playerbase FACEIT. Des joueurs serieux qui jouent minimum 3-5 matchs par semaine, avec un temps de jeu significatif en deathmatch et aim training.',
+    desc: 'Le top 1% de la playerbase FACEIT. Des joueurs sérieux qui jouent minimum 3-5 matchs par semaine, avec un temps de jeu significatif en deathmatch et aim training.',
     tips: [
       'KAST minimum 72% sur 20 matchs.',
-      'Opening win rate > 55% a cette tranche.',
-      'Utility spend : flashs executees en timing avec l\'equipe, smoke lineups appris sur chaque map.',
-      'Monte en Challenger : top 1000 FACEIT est remanie en temps reel, vise rating HLTV 1.15+.'
+      'Opening win rate > 55% à cette tranche.',
+      'Utility spend : flashs exécutées en timing avec l\'équipe, smoke lineups appris sur chaque map.',
+      'Monte en Challenger : top 1000 FACEIT est remanie en temps réel, vise rating HLTV 1.15+.'
     ]
   },
   {
@@ -439,9 +439,9 @@ const LEVELS = [
     eloMin: 1751, eloMax: 2000, eloLabel: '1751 - 2000 ELO',
     kd: '1.10 - 1.20', adr: '80 - 92', winRate: '52 - 58%',
     populationPct: '2%',
-    desc: 'Les meilleurs joueurs de la population classique. Attendu : game sense tres solide, map knowledge parfaite sur au moins 3 maps, execution de strats automatique.',
+    desc: 'Les meilleurs joueurs de la population classique. Attendu : game sense très solide, map knowledge parfaite sur au moins 3 maps, exécution de strats automatique.',
     tips: [
-      'Tu dois carry les rounds eco avec des positions agressives calculees.',
+      'Tu dois carry les rounds eco avec des positions agressives calculées.',
       'Clutch 1v1 gagne > 45% (contre 35% en Lvl 7).',
       'Pistol WR > 55% (impact disproportionne sur le ELO).',
       'Pour monter : reduis ton CV (variance des performances). Regularite > spikes de perf.'
@@ -452,12 +452,12 @@ const LEVELS = [
     eloMin: 1531, eloMax: 1750, eloLabel: '1531 - 1750 ELO',
     kd: '1.05 - 1.15', adr: '75 - 85', winRate: '50 - 55%',
     populationPct: '4%',
-    desc: 'Le palier ou ton aim est deja bon, mais ce qui fait la difference c\'est la prise de decision et l\'utility. Tu commences a jouer contre des anciens lvl 10 en queue.',
+    desc: 'Le palier ou ton aim est déjà bon, mais ce qui fait la différence c\'est la prise de décision et l\'utility. Tu commences à jouer contre des anciens lvl 10 en queue.',
     tips: [
       'Travaille les lineups de smokes et molotovs sur 3 maps minimum.',
-      'Opening duel win > 50%, sinon delegue l\'entry a un teammate.',
+      'Opening duel win > 50%, sinon délègue l\'entry a un teammate.',
       'HS% moyen 45-55% sur 20 matchs.',
-      'Stop les solo peek. Chaque duel doit etre trade-able.'
+      'Stop les solo peek. Chaque duel doit être trade-able.'
     ]
   },
   {
@@ -478,11 +478,11 @@ const LEVELS = [
     eloMin: 1201, eloMax: 1350, eloLabel: '1201 - 1350 ELO',
     kd: '0.95 - 1.05', adr: '65 - 75', winRate: '48 - 52%',
     populationPct: '15%',
-    desc: 'Le mid pur. Decisif : commence a etre constant dans tes performances. Aim solide, mais fails recurrents sur des details tactiques.',
+    desc: 'Le mid pur. Decisif : commence a être constant dans tes performances. Aim solide, mais fails recurrents sur des détails tactiques.',
     tips: [
       'Focus HS% a 45%+ : sort de la tranche duel-moyen.',
-      'Travaille la gestion d\'economie (save, force buy, etc.).',
-      'Un minimum de comm en micro, meme en solo queue.',
+      'Travaille la gestion d\'économie (save, force buy, etc.).',
+      'Un minimum de comm en micro, même en solo queue.',
       'Vise K/D > 1.05 sur 20 matchs consecutifs pour monter stable.'
     ]
   },
@@ -507,8 +507,8 @@ const LEVELS = [
     desc: 'Le niveau "je suis pas mauvais mais je coince". Generalement un aim OK mais game sense faible et zero utility usage.',
     tips: [
       'Grind aim_botz + DM 20 min/jour pendant 2 semaines : tu montes tout seul.',
-      'Spray control : AK recoil pattern doit etre parfait sur 1st mag.',
-      'Verifie ta sensi souris : la plupart des lvl 4 jouent trop vite.',
+      'Spray control : AK recoil pattern doit être parfait sur 1st mag.',
+      'Vérifie ta sensi souris : la plupart des lvl 4 jouent trop vite.',
       'Arrete de rush sans info.'
     ]
   },
@@ -530,11 +530,11 @@ const LEVELS = [
     eloMin: 501, eloMax: 750, eloLabel: '501 - 750 ELO',
     kd: '0.65 - 0.80', adr: '45 - 55', winRate: '40 - 45%',
     populationPct: '12%',
-    desc: 'Debutant. Tu comprends les bases du jeu mais tu manques encore de repetition sur le mecanique.',
+    desc: 'Debutant. Tu comprends les bases du jeu mais tu manques encore de repetition sur le mécanique.',
     tips: [
       'Focus exclusif sur l\'aim pendant 1 mois : aim_botz + DM tous les jours.',
       'Baisse ta sensi si elle est > 3 a 800 DPI.',
-      'Evite de prendre des duels longs : reste en mid-range.',
+      'Évite de prendre des duels longs : reste en mid-range.',
       'Regarde des videos "FACEIT tips for beginners" sur YouTube (WarOwl, TheWarOwl, etc.).'
     ]
   },
@@ -601,7 +601,7 @@ function renderLevels(currentLevel) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════
-// Load the user's current FACEIT level + recent stats
+// Load the user's current FACEIT level + récent stats
 // and generate a personalized roadmap comparing to next level targets.
 // ═════════════════════════════════════════════════════════════════════════
 async function loadUserLevel() {
@@ -621,7 +621,7 @@ async function loadUserLevel() {
 
     const level = parseInt(profile.faceit_level || 1, 10);
 
-    // Fetch recent stats from /api/scout (20 last matches) to power the
+    // Fetch récent stats from /api/scout (20 last matches) to power the
     // personalized diagnostic. Use Authorization header so the rate limit
     // treats this as the user's own scout (exempt).
     let scoutData = null;
@@ -635,7 +635,7 @@ async function loadUserLevel() {
     // Render the personalized roadmap card
     renderPersonalRoadmap(profile, level, scoutData);
 
-    // Keep rendering the 11 reference level cards below (now with currentLevel
+    // Keep rendering the 11 référence level cards below (now with currentLevel
     // highlighted and next-target conseils visible).
     renderLevels(level);
   } catch (_) {
@@ -655,24 +655,24 @@ function renderPersonalRoadmap(profile, level, scoutData) {
   const targets = LEVEL_TARGETS[nextLevel];
   const currentElo = (scoutData && scoutData.cs2 && scoutData.cs2.elo) || profile.faceit_elo || 0;
 
-  // Calcule les valeurs reelles de l'utilisateur (parseFloat safe)
-  const recent = (scoutData && scoutData.recent) || {};
+  // Calcule les valeurs réelles de l'utilisateur (parseFloat safe)
+  const récent = (scoutData && scoutData.récent) || {};
   const fvScore = (scoutData && scoutData.fvScore) || {};
   const userStats = {
-    kd:        parseFloat(recent.avgKd) || 0,
-    adr:       parseFloat(recent.avgAdr) || 0,
-    kast:      parseFloat(recent.avgKast) || 0,
-    openingWr: recent.totalFirstKills + recent.totalFirstDeaths > 0
-                 ? (recent.totalFirstKills / (recent.totalFirstKills + recent.totalFirstDeaths)) * 100
+    kd:        parseFloat(récent.avgKd) || 0,
+    adr:       parseFloat(récent.avgAdr) || 0,
+    kast:      parseFloat(récent.avgKast) || 0,
+    openingWr: récent.totalFirstKills + récent.totalFirstDeaths > 0
+                 ? (récent.totalFirstKills / (récent.totalFirstKills + récent.totalFirstDeaths)) * 100
                  : 0,
-    hs:        parseFloat(recent.avgHs) || 0,
-    winRate:   parseFloat(recent.winRate) || 0,
+    hs:        parseFloat(récent.avgHs) || 0,
+    winRate:   parseFloat(récent.winRate) || 0,
     fvScore:   parseFloat(fvScore.total) || 0,
   };
 
   // ELO progress bar
   const eloRange = LEVEL_ELO_RANGES[level] || { min: 0, max: 0 };
-  const eloTarget = level >= 10 ? 2400 : (LEVEL_ELO_RANGES[level].max + 1); // Challenger estime ~2400
+  const eloTarget = level >= 10 ? 2400 : (LEVEL_ELO_RANGES[level].max + 1); // Challenger estimé ~2400
   const eloStart = eloRange.min;
   const eloPct = Math.max(0, Math.min(100, ((currentElo - eloStart) / (eloTarget - eloStart)) * 100));
   const eloRemaining = Math.max(0, eloTarget - currentElo);
@@ -699,7 +699,7 @@ function renderPersonalRoadmap(profile, level, scoutData) {
     if (!hasData) {
       statusClass = 'gap';
       icon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
-      deltaText = '<span class="delta">- donnees manquantes</span>';
+      deltaText = '<span class="delta">- données manquantes</span>';
     } else if (delta >= 0) {
       statusClass = 'ok';
       icon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
@@ -751,7 +751,7 @@ function renderPersonalRoadmap(profile, level, scoutData) {
     actionsHtml = ''
       + '<div class="perso-action">'
       + '  <div class="perso-action-num"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>'
-      + '  <div class="perso-action-text"><strong>Toutes tes stats sont au niveau ' + nextLevel + '</strong><span>Tu es en position de grimper. Continue a jouer regulierement pour convertir en ELO.</span></div>'
+      + '  <div class="perso-action-text"><strong>Toutes tes stats sont au niveau ' + nextLevel + '</strong><span>Tu es en position de grimper. Continue à jouer régulièrement pour convertir en ELO.</span></div>'
       + '</div>';
   }
 
@@ -762,7 +762,7 @@ function renderPersonalRoadmap(profile, level, scoutData) {
     + '<div class="perso-head">'
     + '  <div class="perso-badge">' + level + '</div>'
     + '  <div class="perso-head-info">'
-    + '    <div class="perso-tag">Ta roadmap personnalisee</div>'
+    + '    <div class="perso-tag">Ta roadmap personnalisée</div>'
     + '    <div class="perso-name"><strong>' + escapeHtml(profile.faceit_nickname) + '</strong> &middot; Niveau ' + level + '</div>'
     + '    <div class="perso-target">Prochain palier : <strong>' + targetLvlName + '</strong></div>'
     + '  </div>'

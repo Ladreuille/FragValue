@@ -55,26 +55,26 @@ async function handleCallback() {
   }
 
   if (!code) {
-    showError('Aucun code FACEIT recu. Reessaye depuis la page de connexion.');
+    showError('Aucun code FACEIT reçu. Réessaye depuis la page de connexion.');
     return;
   }
 
   // ── Guard anti-double-call ────────────────────────────────────────────
   // Le code OAuth est a usage unique. Si la page est rechargee / le back
-  // button est utilise / le BFCache re-execute le script, on relance un
-  // POST avec le meme code -> 400. Pour eviter ca, on tagge le code
+  // button est utilise / le BFCache re-exécute le script, on relance un
+  // POST avec le même code -> 400. Pour éviter ca, on tagge le code
   // comme "en cours" dans sessionStorage. Si on detecte un re-run, on
-  // regarde si la session Supabase a deja ete creee (cas du 2e run
+  // regarde si la session Supabase a déjà été creee (cas du 2e run
   // legitime post-redirect). Si oui, on redirige. Sinon, on bloque.
   const processedKey = 'fv_faceit_code_processed';
   const processedCode = sessionStorage.getItem(processedKey);
 
   if (processedCode === code) {
-    // Ce code a deja ete traite dans cet onglet. Verifie la session et redirige.
+    // Ce code a déjà été traite dans cet onglet. Vérifie la session et redirige.
     try {
       const { data } = await sb.auth.getSession();
       if (data?.session) {
-        updateStatus('Deja connecte, redirection...');
+        updateStatus('Déjà connecte, redirection...');
         setTimeout(() => { window.location.href = '/account.html'; }, 400);
         return;
       }
@@ -86,8 +86,8 @@ async function handleCallback() {
 
   sessionStorage.setItem(processedKey, code);
 
-  // Verification anti-CSRF + recuperation du code_verifier PKCE.
-  // Purge des secrets orphelins > 10 min pour eviter l'accumulation.
+  // Verification anti-CSRF + récupération du code_verifier PKCE.
+  // Purge des secrets orphelins > 10 min pour éviter l'accumulation.
   const TEN_MIN = 10 * 60 * 1000;
   const verifierTs = parseInt(localStorage.getItem('faceit_code_verifier_ts') || '0', 10);
   if (verifierTs && (Date.now() - verifierTs) > TEN_MIN) {
@@ -111,7 +111,7 @@ async function handleCallback() {
     sessionStorage.getItem('faceit_code_verifier') ||
     '';
   if (!codeVerifier) {
-    showError('Session OAuth expiree (code_verifier manquant). Recommence la connexion.');
+    showError('Session OAuth expirée (code_verifier manquant). Recommence la connexion.');
     return;
   }
 
@@ -134,8 +134,8 @@ async function handleCallback() {
     });
     faceitData = await res.json();
     if (!res.ok || !faceitData.success) {
-      // Si l'echange a echoue mais que la session Supabase existe deja,
-      // c'est probablement une race: le 1er appel avait reussi cote serveur,
+      // Si l'echange a échoué mais que la session Supabase existe déjà,
+      // c'est probablement une race: le 1er appel avait reussi côté serveur,
       // Supabase a connecte l'user, puis notre onglet a renvoye le code
       // une 2eme fois (refresh/BFCache). On considere le login OK.
       try {
@@ -148,7 +148,7 @@ async function handleCallback() {
       } catch (_) {}
       // Pas de session, vraie erreur : reset le guard pour permettre un retry.
       sessionStorage.removeItem(processedKey);
-      showError(faceitData.error || 'Echange de token echoue.');
+      showError(faceitData.error || 'Echange de token échoué.');
       return;
     }
   } catch (err) {
@@ -195,7 +195,7 @@ async function handleCallback() {
     await linkFaceitToProfile(session.user.id, faceitData);
     showSuccess(faceitData);
   } else {
-    // Dernier recours : stocker les donnees FACEIT en attente
+    // Dernier recours : stocker les données FACEIT en attente
     sessionStorage.setItem('pending_faceit_link', JSON.stringify(faceitData));
     document.getElementById('card').innerHTML = `
       <div class="title">Compte FACEIT verifie</div>
@@ -203,7 +203,7 @@ async function handleCallback() {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>
         ${faceitData.nickname}${faceitData.level ? ' . Lvl ' + faceitData.level : ''}
       </div>
-      <p class="sub" style="margin-top:16px">Connecte-toi ou cree un compte pour lier ton profil FACEIT.</p>
+      <p class="sub" style="margin-top:16px">Connecte-toi ou créé un compte pour lier ton profil FACEIT.</p>
       <a href="login.html" class="link-btn">Se connecter</a>
     `;
   }

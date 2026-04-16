@@ -295,8 +295,8 @@
 
 <!-- No data fallback -->
 <div class="no-data" id="noData" style="display:none">
-  <div class="no-data-title">Aucune donnee de replay</div>
-  <p class="no-data-sub">Analyse d'abord une demo pour acceder au replay.</p>
+  <div class="no-data-title">Aucune donnée de replay</div>
+  <p class="no-data-sub">Analyse d'abord une demo pour accéder au replay.</p>
   <a href="demo.html" class="no-data-btn">Analyser une demo</a>
 </div>
 
@@ -529,7 +529,7 @@ async function checkReplayAccess() {
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI'
     );
     const { data:{ session } } = await _sb.auth.getSession();
-    if (!session) return false; // non connecte = pas d'acces replay
+    if (!session) return false; // non connecte = pas d'accès replay
     const subRes = await fetch('/api/check-subscription', {
       method: 'POST',
       headers: {
@@ -615,7 +615,7 @@ function detectKnifeRounds() {
     }
 
     if (rKills.length === 0) {
-      // Pas de kills : garder le flag du parser si present,
+      // Pas de kills : garder le flag du parser si présent,
       // sinon round 0 (premier round) = knife par defaut (FACEIT standard)
       if (rd.isKnife === undefined || rd.isKnife === null) {
         rd.isKnife = (i === 0);
@@ -665,7 +665,7 @@ function convertPositionTicks() {
   console.log(`[Replay] ${converted} positions converties en ticks absolus`);
 
   // Step 2: detect tick offset between positions and round boundaries
-  // parseTicks and parseEvent can use different tick bases in demoparser2
+  // parseTicks and parseEvent can use différent tick bases in demoparser2
   if (converted === 0 && rounds.length > 1) {
     const testRound = rounds.find(r => !r.isKnife && r.startTick > 0);
     if (testRound) {

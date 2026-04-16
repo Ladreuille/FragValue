@@ -76,7 +76,7 @@ p.desc{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:22px}
   </div>
 
   <button class="btn primary" id="pairBtn" disabled>Autoriser l'extension</button>
-  <button class="btn" id="unpairBtn" style="display:none">Revoquer l'acces</button>
+  <button class="btn" id="unpairBtn" style="display:none">Revoquer l'accès</button>
 
   <div class="hint" id="installHint" style="display:none">
     <b style="color:var(--text2);font-weight:700;display:block;margin-bottom:8px">L'extension n'est pas encore installee dans ce navigateur.</b>
@@ -88,7 +88,7 @@ p.desc{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:22px}
       <li>Selectionnez le dossier <code>fragvalue-extension/</code></li>
       <li>Rechargez cette page</li>
     </ol>
-    Pas encore l'extension en local ? Le code source est dans le repo FragValue sous <code>/fragvalue-extension</code> (a cote de <code>/FragValue</code> et <code>/fragvalue-demo-parser</code>).
+    Pas encore l'extension en local ? Le code source est dans le repo FragValue sous <code>/fragvalue-extension</code> (a côté de <code>/FragValue</code> et <code>/fragvalue-demo-parser</code>).
   </div>
 
   <a class="back" href="/matches.html">&larr; Retour aux matchs</a>
@@ -126,12 +126,12 @@ function setExtState(installed, paired) {
   } else if (paired) {
     els.extDot.className = 'state-dot ok';
     els.extTitle.textContent = 'Extension connectee';
-    els.extSub.textContent = 'Votre extension est deja liee a ce compte';
+    els.extSub.textContent = 'Votre extension est déjà liee a ce compte';
     els.installHint.style.display = 'none';
   } else {
     els.extDot.className = 'state-dot ok';
     els.extTitle.textContent = 'Extension detectee';
-    els.extSub.textContent = 'Pret a etre autorisee';
+    els.extSub.textContent = 'Prêt a être autorisee';
     els.installHint.style.display = 'none';
   }
   updateButtons();
@@ -154,7 +154,7 @@ function setAuthState(session) {
 function updateButtons() {
   const canPair = extInstalled && !extPaired && currentSession;
   els.pairBtn.disabled = !canPair;
-  els.pairBtn.textContent = extPaired ? 'Extension deja connectee' : 'Autoriser l\'extension';
+  els.pairBtn.textContent = extPaired ? 'Extension déjà connectee' : 'Autoriser l\'extension';
   els.unpairBtn.style.display = extPaired ? 'block' : 'none';
 }
 
