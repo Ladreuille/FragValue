@@ -546,6 +546,39 @@ const PLAYER_COLORS = [
   {solid:'#ED4E20',rgb:'237,78,32'},{solid:'#6BF0A0',rgb:'107,240,160'},
 ];
 const NEUTRAL_COLOR = {solid:'#8892A4',rgb:'136,146,164'};
+
+// ══ PRO GATING HELPERS (shared pattern) ═════════════════════════════════
+const FV_PLAN_CACHE_KEY='fv_user_plan', FV_PLAN_TTL=5*60*1000;
+async function fvGetPlan(){
+  try{
+    const raw=sessionStorage.getItem(FV_PLAN_CACHE_KEY);
+    if(raw){const c=JSON.parse(raw);if(c&&c.ts&&(Date.now()-c.ts)<FV_PLAN_TTL)return c.plan||'free';}
+  }catch(_){}
+  try{
+    const _sbPlan=supabase.createClient(_sbUrl,_sbAnon);
+    const {data:{session}}=await _sbPlan.auth.getSession();
+    if(!session){sessionStorage.setItem(FV_PLAN_CACHE_KEY,JSON.stringify({plan:'free',ts:Date.now()}));return 'free';}
+    const res=await fetch('/api/check-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token}});
+    if(!res.ok)return 'free';
+    const d=await res.json();const plan=d.plan||'free';
+    sessionStorage.setItem(FV_PLAN_CACHE_KEY,JSON.stringify({plan,ts:Date.now()}));
+    return plan;
+  }catch(_){return 'free';}
+}
+async function fvIsPro(){const p=await fvGetPlan();return p==='pro'||p==='team';}
+function fvShowProModal(featureName){
+  const existing=document.getElementById('fvProUpgradeModal');
+  if(existing){existing.style.display='flex';return;}
+  const ov=document.createElement('div');
+  ov.id='fvProUpgradeModal';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)';
+  ov.innerHTML='<div style="background:#0f1010;border:1px solid #1c1e1e;border-radius:12px;padding:36px 32px;max-width:420px;width:90%;text-align:center;position:relative"><button aria-label="Fermer" onclick="document.getElementById(\'fvProUpgradeModal\').style.display=\'none\'" style="position:absolute;top:14px;right:14px;width:28px;height:28px;background:transparent;border:1px solid #252727;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#7a8080" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/></svg></button><div style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);color:#b8ff57;padding:4px 10px;border-radius:40px;font-family:\'Space Mono\',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;margin-bottom:18px">PRO</div><div style="font-family:\'Anton\',sans-serif;font-size:24px;line-height:1.15;letter-spacing:.01em;color:#e8eaea;margin-bottom:12px">'+(featureName||'Fonctionnalite Pro')+'</div><p style="font-family:\'Space Mono\',monospace;font-size:12px;color:#7a8080;line-height:1.7;margin-bottom:24px">Cette fonctionnalite est reservee aux abonnes Pro. Passe au plan Pro des 9 euros/mois pour debloquer toutes les analyses avancees.</p><a href="pricing.html" style="display:inline-block;background:#b8ff57;color:#000;padding:12px 28px;border-radius:6px;font-family:\'Space Mono\',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">Voir les plans</a><div style="margin-top:14px"><button onclick="document.getElementById(\'fvProUpgradeModal\').style.display=\'none\'" style="background:none;border:none;color:#4a5050;font-family:\'Space Mono\',monospace;font-size:11px;cursor:pointer;letter-spacing:.04em">Plus tard</button></div></div>';
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.style.display='none';});
+  document.body.appendChild(ov);
+}
+const _sbUrl='https://xmyruycvvkmcwysfygcq.supabase.co';
+const _sbAnon='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+
 let playerColorMap={}, demoData=null, activePlayers=new Set();
 let currentHeatmap='kills', currentFloor='upper', showCT=true, showT=true;
 let canvas, ctx, mapImage=null;
@@ -1182,7 +1215,15 @@ function renderPlayerList(){
   const phEl=document.querySelector('.panel-hint'); if(phEl) phEl.innerHTML=`Clic pour toggle · <span style="color:${atMax?'var(--danger)':'var(--accent)'}">${activePlayers.size}/5</span> actifs`;
 }
 
-function switchHeatmap(type,btn){
+async function switchHeatmap(type,btn){
+  // Gate l'onglet grenades (utility) derriere Pro
+  if(type==='utility'){
+    const isP = await fvIsPro();
+    if(!isP){
+      fvShowProModal('Heatmaps grenades');
+      return;
+    }
+  }
   currentHeatmap=type;
   document.querySelectorAll('.heatmap-tab').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
@@ -1999,12 +2040,15 @@ function rfStepBack(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(fals
 function rfStepFwd(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);rfIdx=Math.min(rfFrames.length-1,rfIdx+5);rfDrawFrame(rfIdx);}
 function rfSeek(e){const rect=document.getElementById('rfTimeline').getBoundingClientRect();const pct=Math.min(1,Math.max(0,(e.clientX-rect.left)/rect.width));rfIdx=Math.round(pct*(rfFrames.length-1));rfDrawFrame(rfIdx);}
 
-// ── Sauvegarde FV Rating dans Supabase ───────────────────────────
-const _sbUrl  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
-const _sbAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+// ── Sauvegarde FV Rating dans Supabase (_sbUrl / _sbAnon definis plus haut) ─
 
 // ── Export PDF Pro ────────────────────────────────────────────────
-function exportPDF() {
+async function exportPDF() {
+  const isP = await fvIsPro();
+  if(!isP){
+    fvShowProModal('Export PDF');
+    return;
+  }
   const meta = demoData?.meta || {};
   const kills = demoData?.kills || [];
   const rounds = (demoData?.rounds || []).filter(r => !r.isKnife);

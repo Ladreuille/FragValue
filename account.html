@@ -476,12 +476,9 @@ async function init() {
     document.getElementById('faceitLinkZone').innerHTML = '<a href="login.html?link_faceit=1" class="btn-link-faceit"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>Lier mon compte FACEIT</a>';
   }
 
-  // Load FACEIT stats dashboard (non-blocking)
-  if (faceitNickname) {
-    loadFaceitStats(faceitNickname);
-  }
-
-  // Fetch plan from API
+  // Fetch plan from API BEFORE loading stats so gating is applied
+  window.fvUserPlan = 'free';
+  window.fvIsProUser = false;
   try {
     const subRes = await fetch('/api/check-subscription', {
       method: 'POST',
@@ -492,8 +489,11 @@ async function init() {
     });
     if (subRes.ok) {
       const subData = await subRes.json();
+      window.fvUserPlan = subData.plan || 'free';
+      window.fvIsProUser = window.fvUserPlan === 'pro' || window.fvUserPlan === 'team';
+      try { sessionStorage.setItem('fv_user_plan', JSON.stringify({ plan: window.fvUserPlan, ts: Date.now() })); } catch(_) {}
       const planEl = document.getElementById('planBadge');
-      const pn = (subData.plan || 'free').toUpperCase();
+      const pn = window.fvUserPlan.toUpperCase();
       planEl.textContent = pn;
       if (pn === 'PRO') {
         planEl.style.background = 'rgba(184,255,87,.12)';
@@ -506,6 +506,11 @@ async function init() {
       }
     }
   } catch (_) {}
+
+  // Load FACEIT stats dashboard (non-blocking) after plan is resolved
+  if (faceitNickname) {
+    loadFaceitStats(faceitNickname);
+  }
 
   // Add FACEIT ELO KPI if available (accent color #b8ff57)
   if (faceitElo) {
@@ -667,16 +672,32 @@ function renderHistory(list) {
     return;
   }
   const rc = r => !r?'no':r>=1.15?'gd':r>=0.9?'av':'bd';
+  const isPro = window.fvIsProUser === true;
+  const cap = isPro ? 25 : 5;
+  const truncated = list.length > cap;
+  const displayList = list.slice(0, cap);
+  const total = list.length;
+
+  let footer = '';
+  if (isPro) {
+    footer = truncated ? `<div style="text-align:center;padding:12px 0;font-size:10px;color:var(--text3)">+${total - cap} démos supplémentaires</div>` : '';
+  } else if (truncated) {
+    footer = `<div style="text-align:center;padding:16px 0 12px;font-size:11px;color:var(--text3);letter-spacing:.04em;border-top:1px solid var(--border);margin-top:4px">
+      <div style="margin-bottom:10px">+${total - cap} démos masquées &middot; historique limité au plan Free</div>
+      <a href="pricing.html" style="display:inline-block;background:rgba(184,255,87,.12);color:#b8ff57;padding:8px 18px;border-radius:6px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;border:1px solid rgba(184,255,87,.3)">Débloquer tout l'historique avec Pro</a>
+    </div>`;
+  }
+
   el.innerHTML=`<table class="history-table">
     <thead><tr><th>Map</th><th>Date</th><th>Rounds</th><th>Kills</th><th>FV Rating</th></tr></thead>
-    <tbody>${list.slice(0,25).map(d=>`<tr>
+    <tbody>${displayList.map(d=>`<tr>
       <td><span class="map-tag">${(d.map||'?').replace('de_','')}</span></td>
       <td class="td-d">${fmtFull(d.analysed_at)}</td>
       <td style="color:var(--text2)">${d.rounds||'-'}</td>
       <td style="font-family:var(--display);font-size:14px">${d.total_kills||'-'}</td>
       <td><span class="rp ${rc(d.fv_rating)}">${d.fv_rating?d.fv_rating.toFixed(2):'-'}</span></td>
     </tr>`).join('')}</tbody>
-  </table>${list.length>25?`<div style="text-align:center;padding:12px 0;font-size:10px;color:var(--text3)">+${list.length-25} démos supplémentaires</div>`:''}`;
+  </table>${footer}`;
 }
 
 function renderMaps(list) {
@@ -877,7 +898,13 @@ async function loadFaceitStats(nickname) {
   errorEl.style.display = 'none';
 
   try {
-    const res = await fetch('/api/scout?nickname=' + encodeURIComponent(nickname));
+    // Authenticated fetch so API recognizes this as own-nickname (exempt from rate limit)
+    const headersScout = {};
+    try {
+      const { data: { session } } = await _sb.auth.getSession();
+      if (session) headersScout['Authorization'] = 'Bearer ' + session.access_token;
+    } catch(_) {}
+    const res = await fetch('/api/scout?nickname=' + encodeURIComponent(nickname), { headers: headersScout });
     if (!res.ok) throw new Error('Erreur ' + res.status);
     const data = await res.json();
 
@@ -1092,6 +1119,12 @@ function renderFaceitMapPerf(data) {
 }
 
 function renderFaceitScore(data) {
+  // Pro gate: lock detailed breakdown for Free users
+  if (!window.fvIsProUser) {
+    var card = document.getElementById('fScoreCard');
+    if (card) renderProLock(card, 'FV Score /100 detaille', null, null);
+    return;
+  }
   var fvs = data.fvScore || {};
   var bd = fvs.breakdown || {};
 
@@ -1125,6 +1158,12 @@ function renderFaceitScore(data) {
 }
 
 function renderFaceitImpact(data) {
+  // Pro gate: lock impact stats for Free users
+  if (!window.fvIsProUser) {
+    var impCard = document.getElementById('fImpactCard');
+    if (impCard) renderProLock(impCard, 'Stats d\'impact', null, null);
+    return;
+  }
   var r = data.recent || {};
 
   // Show actual value or "-" when data is 0/unavailable
@@ -1199,6 +1238,29 @@ function renderFaceitSides(data) {
 }
 
 // ============================================================================
+// PRO GATING helper for dashboard cards
+// Renders a locked overlay with an upgrade CTA into the given card element.
+// ============================================================================
+function renderProLock(cardEl, featureName, sectionLabelEl, sectionLabelText) {
+  if (!cardEl) return;
+  if (sectionLabelEl && sectionLabelText) sectionLabelEl.textContent = sectionLabelText;
+  cardEl.innerHTML =
+    '<div style="position:relative;padding:28px 20px;text-align:center">' +
+      '<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);color:#b8ff57;padding:3px 10px;border-radius:40px;font-family:\'Space Mono\',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;margin-bottom:14px">' +
+        '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' +
+        'RESERVE PRO' +
+      '</div>' +
+      '<div style="font-family:\'Anton\',sans-serif;font-size:18px;line-height:1.2;color:var(--text);margin-bottom:10px">' +
+        featureName +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text3);line-height:1.7;max-width:280px;margin:0 auto 18px;letter-spacing:.02em">' +
+        'Debloque cette analyse avancee en passant au plan Pro.' +
+      '</div>' +
+      '<a href="pricing.html" style="display:inline-block;background:#b8ff57;color:#000;padding:8px 20px;border-radius:6px;font-family:\'Space Mono\',monospace;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em">Voir les plans Pro</a>' +
+    '</div>';
+}
+
+// ============================================================================
 // STATS EXCLUSIVES (replaces "Stats clés" with FACEIT-derived metrics)
 // These are stats that FACEIT does not show: KAST, KPR, Opening WR,
 // Flash Efficiency, Pistol WR, Consistency Index.
@@ -1211,8 +1273,15 @@ function renderExclusiveStats(data) {
   var card = document.getElementById('statsCard');
   if (!card) return;
 
-  // Update section label
   var labelEl = document.getElementById('statsLabel');
+
+  // Pro gate: lock this card for Free users
+  if (!window.fvIsProUser) {
+    renderProLock(card, 'Stats exclusives', labelEl, 'Stats exclusives');
+    return;
+  }
+
+  // Update section label
   if (labelEl) labelEl.textContent = 'Stats exclusives';
 
   // Compute values

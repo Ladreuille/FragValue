@@ -25,8 +25,25 @@ async function searchPlayer(nicknameOverride) {
   }
 
   try {
-    const res  = await fetch(`/api/scout?nickname=${encodeURIComponent(nickname)}`);
+    // Ajouter le token Supabase si l'utilisateur est connecté
+    // (permet au rate limit server-side de decompter correctement pour Free)
+    const headers = {};
+    try {
+      if (window.supabase) {
+        const sbUrl = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+        const sbAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+        const sb = window.supabase.createClient(sbUrl, sbAnon);
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+      }
+    } catch(_) {}
+
+    const res  = await fetch(`/api/scout?nickname=${encodeURIComponent(nickname)}`, { headers });
     const data = await res.json();
+    if (res.status === 429 && data.code === 'scout_limit_reached') {
+      showScoutLimitModal(data.message, data.usedToday, data.limit);
+      return;
+    }
     if (!res.ok) { showError(data.error || 'Erreur inconnue.'); return; }
     if (fromTopbar) resetDashboard();
     renderDashboard(data);
@@ -505,6 +522,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function showError(msg) { const el = document.getElementById('errorMsg'); if(el){el.textContent=msg;el.style.display='block';} }
 function hideError()    { const el = document.getElementById('errorMsg'); if(el) el.style.display='none'; }
+
+function showScoutLimitModal(message, used, limit) {
+  const existing = document.getElementById('fvScoutLimitModal');
+  if (existing) { existing.style.display = 'flex'; return; }
+  const ov = document.createElement('div');
+  ov.id = 'fvScoutLimitModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(8,9,12,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)';
+  ov.innerHTML =
+    '<div style="background:#0F1119;border:1px solid #1F2433;border-radius:12px;padding:36px 32px;max-width:420px;width:90%;text-align:center;position:relative">' +
+      '<button aria-label="Fermer" onclick="document.getElementById(\'fvScoutLimitModal\').style.display=\'none\'" style="position:absolute;top:14px;right:14px;width:28px;height:28px;background:transparent;border:1px solid #252B3B;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8892A4">' +
+        '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/></svg>' +
+      '</button>' +
+      '<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);color:#b8ff57;padding:4px 10px;border-radius:40px;font-family:JetBrains Mono,monospace;font-size:10px;font-weight:700;letter-spacing:.08em;margin-bottom:18px">PLAN FREE</div>' +
+      '<div style="font-size:22px;font-weight:700;letter-spacing:-.4px;color:#EDF0F7;margin-bottom:12px">Limite quotidienne atteinte</div>' +
+      '<p style="font-family:JetBrains Mono,monospace;font-size:12px;color:#8892A4;line-height:1.7;margin-bottom:24px">' + (message || ('Tu as utilise tes ' + (limit||3) + ' scouts du jour.')) + '</p>' +
+      '<a href="pricing.html" style="display:inline-block;background:#b8ff57;color:#000;padding:12px 28px;border-radius:6px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">Passer a Pro</a>' +
+      '<div style="margin-top:14px"><button onclick="document.getElementById(\'fvScoutLimitModal\').style.display=\'none\'" style="background:none;border:none;color:#4A5568;font-family:JetBrains Mono,monospace;font-size:11px;cursor:pointer;letter-spacing:.04em">Plus tard</button></div>' +
+    '</div>';
+  ov.addEventListener('click', e => { if (e.target === ov) ov.style.display = 'none'; });
+  document.body.appendChild(ov);
+  showLoading(false);
+  showTopbarLoading(false);
+  const btn = document.getElementById('searchBtn');
+  if (btn) btn.disabled = false;
+}
 
 // ── Bouton Suivre (Watchlist) ─────────────────────────────────────────────
 let _currentPlayerData = null;

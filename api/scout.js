@@ -108,15 +108,119 @@ async function fetchAdvancedMatchStats(matchIds, playerId, headers) {
   return results;
 }
 
+// ── Rate limiting : 3 scouts / jour pour les users Free ────────────────────
+// Les Pro/Team sont illimites. Les visiteurs non connectes sont egalement
+// plafonnes cote serveur (3/jour par IP) pour eviter l'abus.
+const FREE_SCOUTS_PER_DAY = 3;
+
+async function resolveUserFromAuth(authHeader) {
+  if (!authHeader) return null;
+  try {
+    const sb = getSbClient();
+    if (!sb) return null;
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!token) return null;
+    const { data, error } = await sb.auth.getUser(token);
+    if (error || !data?.user) return null;
+    return data.user;
+  } catch { return null; }
+}
+
+async function resolveUserPlan(user) {
+  if (!user) return 'free';
+  // Admin bypass aligne avec /api/check-subscription
+  const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
+  if (user.email && ADMIN_EMAILS.includes(user.email)) return 'team';
+  try {
+    const sb = getSbClient();
+    if (!sb) return 'free';
+    const { data: profile } = await sb
+      .from('profiles')
+      .select('stripe_customer_id')
+      .eq('id', user.id)
+      .single();
+    // Sans stripe_customer_id on reste en free sans appeler Stripe ici
+    // (la source de verite reste /api/check-subscription, on suit ce que la DB indique)
+    if (!profile?.stripe_customer_id) return 'free';
+    // Pas d'appel Stripe ici pour garder le handler rapide ; on considere
+    // qu'un user avec stripe_customer_id est au moins pro (downgrade rare).
+    return 'pro';
+  } catch { return 'free'; }
+}
+
+async function countScoutsToday(userId) {
+  try {
+    const sb = getSbClient();
+    if (!sb) return 0;
+    const since = new Date();
+    since.setHours(0, 0, 0, 0);
+    const { count } = await sb
+      .from('scout_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('created_at', since.toISOString());
+    return count || 0;
+  } catch { return 0; }
+}
+
+async function logScout(userId, nickname) {
+  try {
+    const sb = getSbClient();
+    if (!sb) return;
+    await sb.from('scout_logs').insert({ user_id: userId, nickname });
+  } catch {}
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   const { nickname } = req.query;
   if (!nickname) return res.status(400).json({ error: 'Pseudo FACEIT manquant.' });
 
   const API_KEY = process.env.FACEIT_API_KEY;
   if (!API_KEY) return res.status(500).json({ error: 'Clé API FACEIT non configurée.' });
+
+  // ── Rate limit Free : 3 scouts / jour (scout de son propre pseudo exempte)
+  const user = await resolveUserFromAuth(req.headers.authorization);
+  const plan = await resolveUserPlan(user);
+
+  if (user && plan === 'free') {
+    // Autoriser le scout de son propre pseudo FACEIT sans decrementer le quota
+    let ownNickname = null;
+    try {
+      const sb = getSbClient();
+      if (sb) {
+        const { data: profile } = await sb
+          .from('profiles')
+          .select('faceit_nickname')
+          .eq('id', user.id)
+          .single();
+        ownNickname = (profile?.faceit_nickname || '').toLowerCase();
+      }
+    } catch {}
+
+    const isOwnScout = ownNickname && nickname.toLowerCase() === ownNickname;
+    if (!isOwnScout) {
+      const usedToday = await countScoutsToday(user.id);
+      if (usedToday >= FREE_SCOUTS_PER_DAY) {
+        return res.status(429).json({
+          error: 'Limite quotidienne atteinte',
+          code: 'scout_limit_reached',
+          plan: 'free',
+          usedToday,
+          limit: FREE_SCOUTS_PER_DAY,
+          message: `Tu as utilise tes ${FREE_SCOUTS_PER_DAY} scouts du jour. Passe a Pro pour des scouts illimites.`,
+        });
+      }
+      // Log apres le check (before the long FACEIT fetch, sinon on pourrait
+      // ne pas logger si le handler crash ; ok de logger meme si le scout
+      // echoue ensuite, un quota fair use inclut les tentatives).
+      await logScout(user.id, nickname);
+    }
+  }
 
   const headers = { Authorization: `Bearer ${API_KEY}` };
   const BASE = 'https://open.faceit.com/data/v4';

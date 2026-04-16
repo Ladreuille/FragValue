@@ -2,10 +2,10 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="description" content="FragValue. Tarifs et abonnements. Du joueur casual au coach professionnel.">
+<meta name="description" content="FragValue. Tarifs. Analyse CS2 FACEIT gratuite ou illimitee avec le plan Pro.">
 <meta name="theme-color" content="#080909">
 <meta property="og:title" content="FragValue. Tarifs">
-<meta property="og:description" content="Plans Free, Pro et Team pour analyser tes matchs CS2 FACEIT.">
+<meta property="og:description" content="Plans Free et Pro pour analyser tes matchs CS2 FACEIT.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://frag-value.vercel.app/pricing.html">
 <meta property="og:image" content="https://frag-value.vercel.app/fragvalue_icon.svg">
@@ -136,9 +136,23 @@ section{padding:80px 80px;position:relative;z-index:1}
 
 /* PRICING CARDS */
 .pricing-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
-  max-width:1100px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(2,1fr);gap:24px;
+  max-width:820px;margin:0 auto;
   opacity:0;animation:up .4s .3s ease forwards
+}
+.pricing-card.soon{
+  border-color:var(--border);opacity:.72;
+  background:repeating-linear-gradient(135deg,var(--card),var(--card) 10px,rgba(255,255,255,.012) 10px,rgba(255,255,255,.012) 20px)
+}
+.pricing-card.soon:hover{transform:none}
+.soon-badge{
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:var(--border2);color:var(--text2);
+  font-size:10px;font-weight:700;padding:4px 14px;
+  border-radius:40px;letter-spacing:.1em;white-space:nowrap
+}
+.coming-soon-wrap{
+  max-width:820px;margin:48px auto 0
 }
 .pricing-card{
   border:1px solid var(--border2);border-radius:var(--r2);
@@ -315,6 +329,7 @@ footer{
 /* RESPONSIVE */
 @media(max-width:960px){
   .pricing-grid{grid-template-columns:1fr;max-width:420px}
+  .coming-soon-wrap{max-width:420px}
   .pricing-card.featured{order:-1}
   .compare-table{font-size:11px}
   .compare-table thead th,
@@ -387,19 +402,23 @@ footer{
       <div class="pricing-features">
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          3 analyses / mois
+          3 analyses de demos / mois
         </div>
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Heatmaps basiques
+          Heatmaps kills et deaths
         </div>
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          FV Rating
+          FV Rating par match
         </div>
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Stats FACEIT de base (20 derniers matchs)
+          Stats FACEIT de base (K/D, ADR, HS%)
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          3 scouts de joueur / jour
         </div>
       </div>
       <a href="demo.html" class="pricing-btn">Commencer gratuitement</a>
@@ -415,27 +434,23 @@ footer{
       <div class="pricing-features">
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Analyses illimitees
+          Analyses de demos illimitees
         </div>
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          2D Replay complet
+          2D Replay complet (timeline, positions, kills)
         </div>
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Toutes les heatmaps (smoke, flash, HE, fire)
+          Heatmaps grenades (smoke, flash, HE, molotov)
         </div>
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Comparaison pro
+          Historique complet (tous les matchs)
         </div>
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Historique complet
-        </div>
-        <div class="pricing-feature">
-          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Stats exclusives avancees (KAST, KPR, Opening WR, Flash Efficiency)
+          Stats exclusives (KAST, KPR, Opening WR, Flash Efficiency)
         </div>
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -443,7 +458,15 @@ footer{
         </div>
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Export PDF
+          Export PDF des analyses
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Comparaison multi-joueurs (jusqu'a 5)
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Scouts de joueurs illimites
         </div>
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -457,45 +480,24 @@ footer{
       <button class="pricing-btn featured" id="proCta" onclick="startCheckout(isYearly?'pro_yearly':'pro_monthly')">Essayer Pro</button>
     </div>
 
-    <!-- TEAM -->
-    <div class="pricing-card">
-      <div class="pricing-name">Team</div>
-      <div class="pricing-price">29<span>&euro;/mois</span></div>
-      <div class="pricing-period">jusqu'a 10 joueurs</div>
-      <hr class="pricing-divider">
-      <div class="pricing-features">
-        <div class="pricing-feature">
-          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Tout Pro inclus
-        </div>
-        <div class="pricing-feature">
-          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Jusqu'a 10 joueurs
-        </div>
-        <div class="pricing-feature">
-          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Dashboard equipe
-        </div>
-        <div class="pricing-feature">
-          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Analyse tactique par round
-        </div>
-        <div class="pricing-feature">
-          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Preparation veto (ban/pick maps)
-        </div>
-        <div class="pricing-feature">
-          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Coach access (vision multi-joueur)
-        </div>
-        <div class="pricing-feature">
-          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          API access
-        </div>
-      </div>
-      <button class="pricing-btn" onclick="startCheckout('team_monthly')">Essayer Team</button>
-    </div>
+  </div>
+</section>
 
+<!-- COMING SOON (Team preview) -->
+<section style="padding-top:32px;padding-bottom:32px">
+  <div class="coming-soon-wrap">
+    <div class="pricing-card soon" style="padding:28px 32px">
+      <div class="soon-badge">BIENT&Ocirc;T DISPONIBLE</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <div class="pricing-name" style="margin-bottom:10px">Team &middot; En preparation</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.7">
+            Dashboard equipe, analyse tactique par round, preparation veto, comparaison vs reference pro. En cours de developpement pour les coachs et clubs esport.
+          </div>
+        </div>
+        <a href="mailto:contact@frag-value.app?subject=Interet%20plan%20Team" class="pricing-btn" style="width:auto;padding:12px 24px">Me tenir au courant</a>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -507,135 +509,100 @@ footer{
   <table class="compare-table">
     <thead>
       <tr>
-        <th style="width:40%">Fonctionnalite</th>
-        <th style="width:20%">Free</th>
-        <th style="width:20%" class="col-pro">Pro</th>
-        <th style="width:20%">Team</th>
+        <th style="width:52%">Fonctionnalite</th>
+        <th style="width:24%">Free</th>
+        <th style="width:24%" class="col-pro">Pro</th>
       </tr>
     </thead>
     <tbody>
       <!-- ANALYSE DE DEMOS -->
-      <tr class="compare-cat"><td colspan="4">Analyse de demos</td></tr>
+      <tr class="compare-cat"><td colspan="3">Analyse de demos</td></tr>
       <tr>
         <td>Upload et parsing de demos</td>
         <td><span class="val-text">3/mois</span></td>
-        <td><span class="val-text" style="color:var(--accent)">illimite</span></td>
         <td><span class="val-text" style="color:var(--accent)">illimite</span></td>
       </tr>
       <tr>
         <td>FV Rating par match</td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Heatmaps kills et deaths</td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
       <tr>
-        <td>Heatmaps kills/deaths</td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td>Heatmaps deplacements et duels</td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
       <tr>
-        <td>Heatmaps grenades (smoke, flash, HE, fire)</td>
+        <td>Heatmaps grenades (smoke, flash, HE, molotov)</td>
         <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
       <tr>
-        <td>2D Replay interactif</td>
+        <td>2D Replay interactif (timeline, positions, kills)</td>
         <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
       <tr>
         <td>Export PDF des analyses</td>
         <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
 
       <!-- STATS FACEIT -->
-      <tr class="compare-cat"><td colspan="4">Stats FACEIT</td></tr>
+      <tr class="compare-cat"><td colspan="3">Stats FACEIT</td></tr>
       <tr>
         <td>Stats de base (K/D, ADR, HS%)</td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Stats exclusives (KAST, KPR, Opening WR, Flash Eff.)</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
       <tr>
-        <td>Stats exclusives (KAST, KPR, Opening WR)</td>
+        <td>FV Score /100 avec breakdown detaille</td>
         <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
       <tr>
-        <td>FV Score /100 avec breakdown</td>
-        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
-      </tr>
-      <tr>
-        <td>Historique complet</td>
-        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td>Historique complet des matchs</td>
+        <td><span class="val-text">5 derniers</span></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
       <tr>
         <td>Synchro auto via extension</td>
         <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
 
       <!-- COMPARAISON ET SCOUTING -->
-      <tr class="compare-cat"><td colspan="4">Comparaison et scouting</td></tr>
+      <tr class="compare-cat"><td colspan="3">Comparaison et scouting</td></tr>
       <tr>
-        <td>Scout un joueur</td>
+        <td>Scout d'un joueur FACEIT</td>
         <td><span class="val-text">3/jour</span></td>
         <td><span class="val-text" style="color:var(--accent)">illimite</span></td>
-        <td><span class="val-text" style="color:var(--accent)">illimite</span></td>
       </tr>
       <tr>
-        <td>Comparaison multi joueurs</td>
+        <td>Comparaison multi-joueurs (jusqu'a 5)</td>
         <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
-      </tr>
-      <tr>
-        <td>Comparaison vs reference pro</td>
-        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
 
-      <!-- EQUIPE ET COACHING -->
-      <tr class="compare-cat"><td colspan="4">Equipe et coaching</td></tr>
+      <!-- SUPPORT -->
+      <tr class="compare-cat"><td colspan="3">Support</td></tr>
       <tr>
-        <td>Dashboard equipe</td>
-        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td>Support par email</td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
       <tr>
-        <td>Analyse tactique</td>
-        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
-      </tr>
-      <tr>
-        <td>Preparation veto</td>
-        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
-      </tr>
-      <tr>
-        <td>Coach access</td>
-        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
-        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
-      </tr>
-      <tr>
-        <td>API access</td>
-        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td>Support prioritaire</td>
         <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
@@ -704,6 +671,14 @@ footer{
         <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div class="faq-a"><div class="faq-a-inner">L'extension est optionnelle mais recommandee pour les utilisateurs Pro. Elle permet la synchronisation automatique de tes matchs FACEIT sans upload manuel.</div></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Vous aviez un plan Team, il est ou ?
+        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Le plan Team (dashboard equipe, analyse tactique par round, preparation veto, comparaison vs reference pro) est actuellement en preparation. On prefere ne pas le vendre tant qu'il n'est pas pret. Si tu es coach ou club esport, ecris nous a contact@frag-value.app pour etre prevenu du lancement et acceder a la beta.</div></div>
     </div>
 
   </div>

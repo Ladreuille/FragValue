@@ -373,7 +373,12 @@ async function saveFaceitNick() {
   if (btn) { btn.disabled = true; btn.textContent = '...'; }
   msg.style.color='var(--text3)'; msg.textContent='Vérification en cours...';
   try {
-    const res = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`);
+    const headersScout = {};
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) headersScout['Authorization'] = 'Bearer ' + session.access_token;
+    } catch(_) {}
+    const res = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`, { headers: headersScout });
     const d = await res.json();
     if (!res.ok||!d.player) {
       msg.style.color='var(--danger)'; msg.textContent=`Pseudo "${nick}" introuvable sur FACEIT.`;
@@ -397,7 +402,12 @@ async function saveFaceitNick() {
 async function loadFaceitData(nick) {
   showLoading(true,`Chargement de ${nick}...`);
   try {
-    const res = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`);
+    const headersScout = {};
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) headersScout['Authorization'] = 'Bearer ' + session.access_token;
+    } catch(_) {}
+    const res = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`, { headers: headersScout });
     const d = await res.json();
     if (!res.ok||!d.player) { showLinkPrompt(); return; }
     playerData = d;
