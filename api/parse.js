@@ -9,12 +9,13 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  // CORS
-  const allowedOrigins = ['https://frag-value.vercel.app', 'http://localhost:3456', 'http://localhost:5500'];
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
+  // CORS multi-origin : prod (fragvalue.com) + alias/previews Vercel + dev local
+  const ALLOWED_ORIGIN_RE = /^(https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)|http:\/\/localhost:(3456|5500))$/;
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGIN_RE.test(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();

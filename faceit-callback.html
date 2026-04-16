@@ -106,7 +106,9 @@ async function handleCallback() {
     return;
   }
 
-  const redirectUri = 'https://frag-value.vercel.app/faceit-callback.html';
+  // Dynamique : marche sur fragvalue.com (prod) ET frag-value.vercel.app (preview)
+  // Doit correspondre EXACTEMENT a celui envoye lors de l'auth request dans login.html
+  const redirectUri = window.location.origin + '/faceit-callback.html';
 
   // Step 1: Exchange code for FACEIT profile
   updateStatus('Echange du token FACEIT...');
@@ -225,7 +227,7 @@ function showSuccess(data) {
     <p class="sub" style="margin-top:12px">Redirection...</p>
   `;
   if (window.opener && !window.opener.closed) {
-    window.opener.postMessage({ type: 'FACEIT_AUTH_SUCCESS' }, 'https://frag-value.vercel.app');
+    window.opener.postMessage({ type: 'FACEIT_AUTH_SUCCESS' }, window.location.origin);
     setTimeout(() => window.close(), 300);
   } else {
     setTimeout(() => { window.location.href = '/account.html'; }, 1500);

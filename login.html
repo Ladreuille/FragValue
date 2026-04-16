@@ -308,7 +308,7 @@ async function loginFaceit() {
       if (cfg.clientId || cfg.client_id) clientId = cfg.clientId || cfg.client_id;
     } catch (_) {}
 
-    const redirectUri = 'https://frag-value.vercel.app/faceit-callback.html';
+    const redirectUri = window.location.origin + '/faceit-callback.html';
 
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
@@ -352,7 +352,7 @@ async function loginFaceit() {
     }
 
     const handler = async (event) => {
-      if (event.origin !== 'https://frag-value.vercel.app') return;
+      if (event.origin !== window.location.origin) return;
       if (!event.data || event.data.type !== 'FACEIT_AUTH_SUCCESS') return;
       window.removeEventListener('message', handler);
       clearInterval(checkClosed);

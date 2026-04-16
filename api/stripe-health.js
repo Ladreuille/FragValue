@@ -2,9 +2,13 @@
 // Health check : verifie que toutes les variables Stripe et Supabase sont configurees
 // v2 : force redeploy pour prise en compte des env vars
 
+const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
+
 export default function handler(req, res) {
-  // Internal debugging only — restricted to production origin
-  res.setHeader('Access-Control-Allow-Origin', 'https://frag-value.vercel.app');
+  // Internal debugging only - restricted to allowed production origins
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGIN_RE.test(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 

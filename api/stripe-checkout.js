@@ -1,8 +1,22 @@
 // api/stripe-checkout.js // FragValue
 // Cree une Stripe Checkout Session pour l'abonnement Pro ou Team
 
+const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
+
+// Origine logique pour construire les success_url / cancel_url Stripe.
+// En prod on veut fragvalue.com ; en preview Vercel on veut le host courant.
+function originFrom(req) {
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGIN_RE.test(origin)) return origin;
+  const host = req.headers.host || '';
+  if (host && ALLOWED_ORIGIN_RE.test('https://' + host)) return 'https://' + host;
+  return 'https://fragvalue.com';
+}
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', 'https://frag-value.vercel.app');
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGIN_RE.test(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -29,11 +43,12 @@ export default async function handler(req, res) {
     const plan = body.plan;
     if (!plan || !PLANS[plan]) return res.status(400).json({ error: 'Plan invalide : ' + (plan || 'undefined') });
 
+    const siteOrigin = originFrom(req);
     const sessionParams = {
       mode: 'subscription',
       line_items: [{ price: PLANS[plan], quantity: 1 }],
-      success_url: 'https://frag-value.vercel.app/account.html?checkout=success',
-      cancel_url: 'https://frag-value.vercel.app/#tarifs',
+      success_url: siteOrigin + '/account.html?checkout=success',
+      cancel_url: siteOrigin + '/pricing.html',
       allow_promotion_codes: true,
     };
 

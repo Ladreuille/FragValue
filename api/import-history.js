@@ -26,8 +26,12 @@ const PARSER_SECRET = process.env.FACEIT_WEBHOOK_SECRET || '';
 const AUTO_IMPORT_MAX_MATCHES = 5;
 const AUTO_IMPORT_MAX_AGE_DAYS = 30;
 
+const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', 'https://frag-value.vercel.app');
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGIN_RE.test(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();

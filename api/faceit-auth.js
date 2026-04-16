@@ -8,17 +8,42 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
+// CORS : autorise prod (fragvalue.com) + toutes les URLs Vercel du projet
+// (frag-value.vercel.app + previews). Pattern-match pour ne pas lister chaque
+// preview manuellement.
+function allowedOrigin(reqOrigin) {
+  if (!reqOrigin) return null;
+  if (reqOrigin === 'https://fragvalue.com') return reqOrigin;
+  if (reqOrigin === 'https://www.fragvalue.com') return reqOrigin;
+  if (/^https:\/\/frag-value(-[a-z0-9]+)*(-qdreuillet-9752s-projects)?\.vercel\.app$/.test(reqOrigin)) return reqOrigin;
+  return null;
+}
+
 export default async function handler(req, res) {
   // CORS
-  res.setHeader('Access-Control-Allow-Origin', 'https://frag-value.vercel.app');
+  const origin = allowedOrigin(req.headers.origin);
+  if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { code, code_verifier } = req.body;
-  const redirect_uri = 'https://frag-value.vercel.app/faceit-callback.html';
+  const { code, code_verifier, redirect_uri: clientRedirectUri } = req.body;
   if (!code) return res.status(400).json({ error: 'Code manquant' });
+
+  // Le redirect_uri envoye a FACEIT pour l'echange DOIT correspondre EXACTEMENT
+  // a celui utilise lors de la requete d'autorisation initiale. Le client nous
+  // le passe pour supporter prod (fragvalue.com) et preview (frag-value.vercel.app)
+  // avec le meme code. On valide qu'il pointe bien sur un /faceit-callback.html
+  // d'une origine autorisee pour eviter l'open redirect.
+  let redirect_uri = clientRedirectUri || '';
+  if (!redirect_uri.endsWith('/faceit-callback.html') || !allowedOrigin(redirect_uri.replace(/\/faceit-callback\.html$/, ''))) {
+    // Fallback : utilise l'origine de la requete si le client n'a rien envoye
+    const reqOrigin = req.headers.origin && allowedOrigin(req.headers.origin);
+    if (reqOrigin) redirect_uri = reqOrigin + '/faceit-callback.html';
+    else return res.status(400).json({ error: 'redirect_uri invalide' });
+  }
 
   const CLIENT_ID     = process.env.FACEIT_CLIENT_ID;
   const CLIENT_SECRET = process.env.FACEIT_CLIENT_SECRET;
