@@ -2,7 +2,7 @@
 // Cree une Stripe Checkout Session pour l'abonnement Pro ou Team
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'https://frag-value.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -60,6 +60,6 @@ export default async function handler(req, res) {
     const session = await stripe.checkout.sessions.create(sessionParams);
     return res.status(200).json({ url: session.url });
   } catch (err) {
-    return res.status(500).json({ error: err.message, stack: err.stack?.split('\n').slice(0, 3) });
+    return res.status(500).json({ error: 'Erreur serveur' });
   }
 }

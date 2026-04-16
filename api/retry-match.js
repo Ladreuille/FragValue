@@ -31,7 +31,8 @@ export default async function handler(req, res) {
     // Reset en pending (RLS bypass via service key)
     await supabase.from('matches')
       .update({ status: 'pending', parsed_at: null })
-      .eq('faceit_match_id', matchId);
+      .eq('faceit_match_id', matchId)
+      .eq('user_id', user.id);
 
     // Fire and forget vers le parser Railway
     try {

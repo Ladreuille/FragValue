@@ -2,7 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8"/>
+<meta name="description" content="FragValue — CS2 Match Analytics">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
 <title>FragValue · Mes matchs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
@@ -501,8 +503,6 @@ async function importHistory() {
     }
 
     const data = await r.json();
-    console.log('Imported:', data);
-
     // Etapes 0-2 done
     markStepsDoneUntil(2);
     setOvStep(3, 'active');
@@ -514,6 +514,21 @@ async function importHistory() {
     setOvSub(subImport);
 
     await loadMatches();
+
+    // If the extension is installed and required for demo URL resolution,
+    // trigger its full sync flow (resolve presigned URLs + submit to parser).
+    // The 10s poll will pick up status changes automatically.
+    const extInstalled = document.documentElement.hasAttribute('data-fv-ext-installed');
+    if (data.extensionRequired && extInstalled) {
+      const _syncHandler = (event) => {
+        if (event.source !== window) return;
+        if (!event.data || event.data.type !== 'FV_EXT_SYNC_REPLY') return;
+        window.removeEventListener('message', _syncHandler);
+        if (event.data.ok) loadMatches();
+      };
+      window.addEventListener('message', _syncHandler);
+      window.postMessage({ type: 'FV_EXT_SYNC' }, '*');
+    }
 
     // Laisse l'overlay affiche 2s de plus puis finalise
     setTimeout(() => {

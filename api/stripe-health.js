@@ -3,7 +3,8 @@
 // v2 : force redeploy pour prise en compte des env vars
 
 export default function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Internal debugging only — restricted to production origin
+  res.setHeader('Access-Control-Allow-Origin', 'https://frag-value.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 

@@ -2,9 +2,12 @@ const { createClient } = require('@supabase/supabase-js');
 
 // ── Supabase client ──────────────────────────────────────────────────────────
 function getSbClient() {
-  const url  = process.env.SUPABASE_URL  || 'https://xmyruycvvkmcwysfygcq.supabase.co';
-  const key  = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY;
+  if (!url || !key) {
+    console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
+    return null;
+  }
   return createClient(url, key);
 }
 
@@ -14,6 +17,7 @@ const CACHE_TTL_H = 24; // heures
 async function readCache(playerId) {
   try {
     const sb = getSbClient();
+    if (!sb) return null;
     const { data } = await sb
       .from('player_advanced_cache')
       .select('advanced_stats, cached_at')
@@ -29,6 +33,7 @@ async function readCache(playerId) {
 async function writeCache(playerId, nickname, advancedStats) {
   try {
     const sb = getSbClient();
+    if (!sb) return;
     await sb.from('player_advanced_cache').upsert({
       player_id:      playerId,
       nickname:       nickname,
