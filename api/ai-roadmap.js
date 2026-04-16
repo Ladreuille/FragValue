@@ -40,6 +40,52 @@ async function getUser(authHeader) {
   return data.user;
 }
 
+// Determine le plan de l'utilisateur (free / pro / team) via Stripe.
+// Retourne aussi isAdmin pour l'admin bypass.
+async function resolveUserPlan(user) {
+  if (!user) return { plan: 'free', isAdmin: false };
+  const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
+  if (user.email && ADMIN_EMAILS.includes(user.email)) {
+    return { plan: 'team', isAdmin: true };
+  }
+  try {
+    const s = sb();
+    const { data: profile } = await s
+      .from('profiles')
+      .select('stripe_customer_id')
+      .eq('id', user.id)
+      .single();
+    if (!profile?.stripe_customer_id) return { plan: 'free', isAdmin: false };
+
+    // Check abonnement actif via Stripe (source de verite)
+    if (!process.env.STRIPE_SECRET_KEY) return { plan: 'free', isAdmin: false };
+    const Stripe = (await import('stripe')).default;
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const subs = await stripe.subscriptions.list({
+      customer: profile.stripe_customer_id,
+      status: 'active',
+      limit: 1,
+    });
+    if (!subs.data.length) return { plan: 'free', isAdmin: false };
+
+    const sub = subs.data[0];
+    const priceId = sub.items.data[0]?.price?.id || '';
+    let plan = 'free';
+    if (priceId.includes('team') || priceId === process.env.STRIPE_PRICE_TEAM_MONTHLY || priceId === process.env.STRIPE_PRICE_TEAM_ANNUEL) plan = 'team';
+    else if (priceId.includes('pro') || sub.items.data[0]?.price?.unit_amount >= 500) plan = 'pro';
+    return { plan, isAdmin: false };
+  } catch { return { plan: 'free', isAdmin: false }; }
+}
+
+// Check combien de diagnostics IA l'user a genere ce mois-ci.
+// Utilise la colonne cached_at de la derniere generation.
+// Pour les Free, on se base sur le cached_at : si < 30 jours, pas de regen.
+function monthsAgo(dateStr, n) {
+  if (!dateStr) return true;
+  const ageMs = Date.now() - new Date(dateStr).getTime();
+  return ageMs > n * 30 * 24 * 60 * 60 * 1000;
+}
+
 async function readCache(userId) {
   const s = sb();
   const { data } = await s
@@ -276,21 +322,51 @@ module.exports = async function handler(req, res) {
   } catch {}
   if (!nickname) return res.status(400).json({ error: 'Aucun compte FACEIT lie' });
 
-  // Cache lookup sauf si ?refresh=1
+  // ── Gating par plan ────────────────────────────────────────────────────
+  // Free : 1 diagnostic par mois maximum. Le cache existant est renvoye,
+  //        mais le bouton Refresh est bloque (429 ai_limit_reached).
+  // Pro / Team : refresh illimite.
+  const { plan, isAdmin } = await resolveUserPlan(user);
+  const isPro = plan === 'pro' || plan === 'team' || isAdmin;
+
+  const cached = await readCache(user.id);
   const forceRefresh = req.query.refresh === '1';
-  if (!forceRefresh) {
-    const cached = await readCache(user.id);
-    if (cached) {
-      return res.status(200).json({
-        diagnosis: cached.diagnosis,
-        cached: true,
-        cachedAt: cached.cached_at,
-        nickname: cached.nickname,
-        userLevel: cached.faceit_level,
-        userElo: cached.faceit_elo,
+
+  // Si refresh demande ET plan Free : verifier qu'on a pas deja un diagnostic
+  // genere dans les 30 derniers jours. Si oui -> 429 avec code upgrade.
+  if (forceRefresh && !isPro && cached) {
+    const cachedAgeMs = Date.now() - new Date(cached.cached_at).getTime();
+    const cachedAgeDays = cachedAgeMs / (1000 * 60 * 60 * 24);
+    if (cachedAgeDays < 30) {
+      const nextAvailable = new Date(new Date(cached.cached_at).getTime() + 30 * 24 * 60 * 60 * 1000);
+      return res.status(429).json({
+        error: 'Limite mensuelle atteinte',
+        code: 'ai_limit_reached',
+        plan: 'free',
+        message: 'Le plan Free permet 1 diagnostic IA par mois. Passe a Pro pour refresh illimite.',
+        nextAvailableAt: nextAvailable.toISOString(),
+        currentDiagnosis: cached.diagnosis,
       });
     }
   }
+
+  // Cas normal : on sert le cache si dispo et pas de refresh demande
+  if (!forceRefresh && cached) {
+    return res.status(200).json({
+      diagnosis: cached.diagnosis,
+      cached: true,
+      cachedAt: cached.cached_at,
+      nickname: cached.nickname,
+      userLevel: cached.faceit_level,
+      userElo: cached.faceit_elo,
+      plan,
+    });
+  }
+
+  // Si plan Free et PAS de cache : autoriser la premiere generation
+  // Si plan Free et cache < 30j (sans forceRefresh) : on a deja renvoye
+  //   le cache au-dessus, donc on arrive ici seulement si cache expire
+  //   (>30j) ou forceRefresh=true (deja gere).
 
   // Verif env vars avant de commencer
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -318,6 +394,7 @@ module.exports = async function handler(req, res) {
       nickname: stats.nickname,
       userLevel: stats.level,
       userElo: stats.elo,
+      plan,
     });
   } catch (err) {
     console.error('ai-roadmap error:', err);

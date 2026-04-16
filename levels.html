@@ -44,12 +44,12 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .nav-link:hover{color:var(--accent)}
 
 /* HERO */
-.héros{text-align:center;padding:80px 32px 40px;position:relative;z-index:1}
-.héros-back{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:var(--text3);letter-spacing:.06em;text-decoration:none;margin-bottom:24px;transition:color .15s}
-.héros-back:hover{color:var(--accent)}
-.héros-title{font-family:var(--display);font-size:clamp(40px,5vw,64px);line-height:.95;letter-spacing:.02em;margin-bottom:16px;opacity:0;animation:up .4s ease forwards}
-.héros-title span{color:var(--accent)}
-.héros-sub{font-size:13px;color:var(--text2);line-height:1.7;max-width:580px;margin:0 auto;opacity:0;animation:up .4s .1s ease forwards}
+.hero{text-align:center;padding:80px 32px 40px;position:relative;z-index:1}
+.hero-back{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:var(--text3);letter-spacing:.06em;text-decoration:none;margin-bottom:24px;transition:color .15s}
+.hero-back:hover{color:var(--accent)}
+.hero-title{font-family:var(--display);font-size:clamp(40px,5vw,64px);line-height:.95;letter-spacing:.02em;margin-bottom:16px;opacity:0;animation:up .4s ease forwards}
+.hero-title span{color:var(--accent)}
+.hero-sub{font-size:13px;color:var(--text2);line-height:1.7;max-width:580px;margin:0 auto;opacity:0;animation:up .4s .1s ease forwards}
 
 /* ═══ PERSONAL ROADMAP (individuelle par client) ═══ */
 .perso-wrap{max-width:920px;margin:32px auto 0;padding:0 32px;position:relative;z-index:1;opacity:0;animation:up .4s .2s ease forwards}
@@ -304,7 +304,7 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
   .leaderboard-row>*:nth-child(5){display:none}
   nav{padding:0 16px}
   .nav-link{display:none}
-  .héros{padding:60px 24px 32px}
+  .hero{padding:60px 24px 32px}
   .levels-wrap{padding:0 16px}
   .leaderboard-wrap{padding:0 16px}
 }
@@ -326,13 +326,13 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
   </div>
 </nav>
 
-<section class="héros">
-  <a href="index.html" class="héros-back">
+<section class="hero">
+  <a href="index.html" class="hero-back">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     Retour à l'accueil
   </a>
-  <h1 class="héros-title">Ta roadmap<br>vers <span>Challenger</span></h1>
-  <p class="héros-sub">Les 10 niveaux FACEIT, les seuils ELO a passer, les stats attendues à chaque palier, et les leviers concrets pour monter plus vite.</p>
+  <h1 class="hero-title">Ta roadmap<br>vers <span>Challenger</span></h1>
+  <p class="hero-sub">Les 10 niveaux FACEIT, les seuils ELO a passer, les stats attendues à chaque palier, et les leviers concrets pour monter plus vite.</p>
 </section>
 
 <!-- PERSONAL ROADMAP (affichée si user connecte + compte FACEIT lie) -->
@@ -921,8 +921,10 @@ async function loadAIDiagnosis(sessionToken) {
   }
 }
 
-// Refresh manuel (ignore le cache serveur)
+// Refresh manuel (ignore le cache serveur). Si plan Free, serveur renvoie
+// 429 avec ai_limit_reached -> on affiche un modal upgrade vers Pro.
 async function refreshAI(btn) {
+  const originalHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Rafraichir';
   btn.disabled = true;
   btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Regenere...';
   try {
@@ -934,12 +936,54 @@ async function refreshAI(btn) {
     const res = await fetch('/api/ai-roadmap?refresh=1', {
       headers: { 'Authorization': 'Bearer ' + session.access_token },
     });
-    // Simplicite : on reload la section (le code ci-dessus gere le render)
+    if (res.status === 429) {
+      const err = await res.json().catch(function(){ return {}; });
+      if (err.code === 'ai_limit_reached') {
+        showAILimitModal(err);
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        return;
+      }
+    }
+    if (!res.ok) throw new Error('API ' + res.status);
     await loadAIDiagnosis(session.access_token);
   } catch (_) {
     btn.disabled = false;
-    btn.textContent = 'Rafraichir';
+    btn.innerHTML = originalHTML;
   }
+}
+
+// Modal d'upgrade Pro quand un user Free tente un refresh apres avoir
+// deja consomme son diagnostic IA du mois.
+function showAILimitModal(payload) {
+  const existing = document.getElementById('fvAILimitModal');
+  if (existing) { existing.style.display = 'flex'; return; }
+  const nextDate = payload.nextAvailableAt
+    ? new Date(payload.nextAvailableAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+    : null;
+  const ov = document.createElement('div');
+  ov.id = 'fvAILimitModal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)';
+  ov.innerHTML = ''
+    + '<div style="background:#0f1010;border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:36px 32px;max-width:460px;width:90%;text-align:center;position:relative">'
+    + '  <button aria-label="Fermer" onclick="document.getElementById(\'fvAILimitModal\').style.display=\'none\'" style="position:absolute;top:14px;right:14px;width:28px;height:28px;background:transparent;border:1px solid #252727;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center">'
+    + '    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#7a8080" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/></svg>'
+    + '  </button>'
+    + '  <div style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;padding:5px 12px;border-radius:40px;font-family:\'Space Mono\',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;margin-bottom:18px">'
+    + '    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>'
+    + '    COACH IA &middot; LIMITE ATTEINTE'
+    + '  </div>'
+    + '  <div style="font-family:\'Anton\',sans-serif;font-size:24px;line-height:1.2;letter-spacing:.01em;color:#e8eaea;margin-bottom:12px">Tu as utilise ton diagnostic IA du mois</div>'
+    + '  <p style="font-family:\'Space Mono\',monospace;font-size:12px;color:#7a8080;line-height:1.7;margin-bottom:20px">'
+    + '    Le plan Free permet <strong style="color:#b8ff57">1 diagnostic IA par mois</strong>. Passe a Pro pour un coach IA illimite : rafraichis ton diagnostic apres chaque match et suis ta progression en temps reel.'
+    + '  </p>'
+    + (nextDate ? '  <div style="font-size:11px;color:#4a5050;margin-bottom:20px;letter-spacing:.04em">Prochain diagnostic gratuit le ' + nextDate + '</div>' : '')
+    + '  <a href="pricing.html" style="display:inline-block;background:#b8ff57;color:#000;padding:12px 28px;border-radius:6px;font-family:\'Space Mono\',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">Passer a Pro (9&euro;/mois)</a>'
+    + '  <div style="margin-top:14px;font-size:10px;color:#4a5050;letter-spacing:.04em">7 jours d\'essai gratuit &middot; Satisfait ou rembourse 14j</div>'
+    + '  <div style="margin-top:12px"><button onclick="document.getElementById(\'fvAILimitModal\').style.display=\'none\'" style="background:none;border:none;color:#4a5050;font-family:\'Space Mono\',monospace;font-size:11px;cursor:pointer;letter-spacing:.04em">Plus tard</button></div>'
+    + '</div>';
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.style.display = 'none'; });
+  document.body.appendChild(ov);
 }
 
 // ═════════════════════════════════════════════════════════════════════════
