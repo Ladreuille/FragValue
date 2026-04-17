@@ -1248,7 +1248,14 @@ function buildFrames(round) {
   currentRoundPeak = {};
   currentRoundBestWeapon = {};
   const pickupsAll = demoData.grenadePickups || {};
-  const rdStart = roundData.startTick || 0;
+  // Inclure les achats de freeze time : on prend tous les pickups depuis la
+  // fin du round precedent (ou 0 pour round 0) jusqu'a la fin de ce round.
+  // Avant, on ne prenait que [startTick, endTick] ce qui EXCLUAIT les buys
+  // pendant le freeze (car startTick = fin du freeze = debut du play).
+  const sortedRounds = (demoData.rounds || []).slice().sort((a, b) => (a.round ?? 0) - (b.round ?? 0));
+  const curIdx = sortedRounds.findIndex(r => (r.round ?? -1) === round);
+  const prevRd = curIdx > 0 ? sortedRounds[curIdx - 1] : null;
+  const rdStart = prevRd ? (prevRd.endTick || 0) : 0;
   const rdEnd = roundData.endTick || Infinity;
   // Priorite des armes pour le HUD : primary (rifle/sniper/heavy/smg) >
   // secondary (pistol) > knife. On prend la meilleure categorie vue sur
