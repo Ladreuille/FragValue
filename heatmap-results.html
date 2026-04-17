@@ -1797,20 +1797,21 @@ function rfDrawEffects(frame, W, H) {
     };
 
     if (type.includes('smoke')) {
-      // SMOKE : grand nuage gris semi-transparent qui grossit progressivement
-      const r = 12 + progress * 32; // 12 → 44px
-      const alpha = progress < 0.08 ? progress/0.08*0.82
-                  : progress > 0.88 ? (1-progress)/0.12*0.82 : 0.82;
-      // Couche exterieure diffuse
-      rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(160,160,160,${alpha*0.45})`; rfCtx.fill();
-      // Couche centrale opaque
-      rfCtx.beginPath(); rfCtx.arc(px,py,r*0.7,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(200,200,200,${alpha*0.75})`; rfCtx.fill();
-      // Contour
-      rfCtx.strokeStyle=`rgba(120,120,120,${alpha*0.5})`; rfCtx.lineWidth=1.5; rfCtx.stroke();
+      // SMOKE : nuage blanc-gris avec gradient radial + halo externe contour
+      const r = 18 + progress * 28;
+      const a = progress < 0.08 ? progress / 0.08 * 0.85 : progress > 0.88 ? (1 - progress) / 0.12 * 0.85 : 0.85;
+      // Halo externe pour delimiter
+      rfCtx.beginPath(); rfCtx.arc(px, py, r + 4, 0, Math.PI * 2);
+      rfCtx.strokeStyle = `rgba(220,220,220,${a * 0.5})`; rfCtx.lineWidth = 2; rfCtx.stroke();
+      // Fumee interieure avec gradient (bien plus visible)
+      const sg = rfCtx.createRadialGradient(px, py, 0, px, py, r);
+      sg.addColorStop(0, `rgba(230,230,230,${a * 0.85})`);
+      sg.addColorStop(0.6, `rgba(180,180,180,${a * 0.65})`);
+      sg.addColorStop(1, `rgba(120,120,120,${a * 0.25})`);
+      rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
+      rfCtx.fillStyle = sg; rfCtx.fill();
       // Label SMK au centre, pill sombre en passe 2
-      pushLabel('SMK', px, py, '#ffffff', 10);
+      pushLabel('SMK', px, py, '#ffffff', 11);
 
     } else if (type.includes('flash')) {
       // FLASH : etoile blanche eclatante + halo cyan
@@ -1829,35 +1830,38 @@ function rfDrawEffects(frame, W, H) {
       if (progress < 0.7) pushLabel('FL', px, py, '#ffffaa', 9);
 
     } else if (type.includes('hegre')) {
-      // HE : explosion avec onde de choc
-      const r = 3 + progress*24;
-      const alpha = Math.pow(1-progress,0.6)*0.9;
-      rfCtx.beginPath(); rfCtx.arc(px,py,r*1.3,0,Math.PI*2);
-      rfCtx.strokeStyle=`rgba(255,140,0,${alpha*0.6})`; rfCtx.lineWidth=2; rfCtx.stroke();
-      rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
-      const hg = rfCtx.createRadialGradient(px,py,0,px,py,r);
-      hg.addColorStop(0,`rgba(255,255,100,${alpha})`);
-      hg.addColorStop(0.5,`rgba(255,100,0,${alpha})`);
-      hg.addColorStop(1,`rgba(200,0,0,${alpha*0.5})`);
-      rfCtx.fillStyle=hg; rfCtx.fill();
-      if (progress < 0.5) pushLabel('HE', px, py, '#ffffff', 10);
+      // HE : explosion rouge-orange avec shockwave
+      const r = 8 + progress * 32;
+      const a = Math.pow(1 - progress, 0.6) * 0.95;
+      rfCtx.beginPath(); rfCtx.arc(px, py, r * 1.5, 0, Math.PI * 2);
+      rfCtx.strokeStyle = `rgba(255,120,0,${a * 0.5})`; rfCtx.lineWidth = 2.5; rfCtx.stroke();
+      const hg = rfCtx.createRadialGradient(px, py, 0, px, py, r);
+      hg.addColorStop(0, `rgba(255,255,150,${a})`);
+      hg.addColorStop(0.4, `rgba(255,120,20,${a * 0.95})`);
+      hg.addColorStop(1, `rgba(180,20,0,${a * 0.5})`);
+      rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
+      rfCtx.fillStyle = hg; rfCtx.fill();
+      if (progress < 0.7) pushLabel('HE', px, py, '#ffffff', 11);
 
     } else if (type.includes('molotov') || type.includes('incgren')) {
-      // MOLOTOV : zone de feu animee
-      const r = 14 + Math.sin(tick*0.15)*2;
-      const alpha = 0.85;
-      rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
-      const mg = rfCtx.createRadialGradient(px,py,0,px,py,r);
-      mg.addColorStop(0,`rgba(255,220,0,${alpha})`);
-      mg.addColorStop(0.5,`rgba(255,80,0,${alpha*0.9})`);
-      mg.addColorStop(1,`rgba(180,20,0,${alpha*0.4})`);
-      rfCtx.fillStyle=mg; rfCtx.fill();
-      for(let f=0;f<6;f++){
-        const fa=f*Math.PI/3+tick*0.08, fr=r*0.5+Math.sin(tick*0.2+f)*r*0.3;
-        rfCtx.beginPath(); rfCtx.arc(px+Math.cos(fa)*fr*0.7, py+Math.sin(fa)*fr*0.7, 2.5,0,Math.PI*2);
-        rfCtx.fillStyle=`rgba(255,${150+Math.round(Math.sin(tick*0.3+f)*80)},0,0.9)`; rfCtx.fill();
+      // MOLOTOV : flamme large avec halo, gradient feu, particules animees
+      const r = 22 + Math.sin(tick * 0.15) * 3;
+      const a = 0.88;
+      rfCtx.beginPath(); rfCtx.arc(px, py, r + 5, 0, Math.PI * 2);
+      rfCtx.strokeStyle = `rgba(255,80,0,${a * 0.4})`; rfCtx.lineWidth = 2; rfCtx.stroke();
+      const mg = rfCtx.createRadialGradient(px, py, 0, px, py, r);
+      mg.addColorStop(0, `rgba(255,240,100,${a})`);
+      mg.addColorStop(0.4, `rgba(255,120,0,${a * 0.95})`);
+      mg.addColorStop(1, `rgba(180,20,0,${a * 0.5})`);
+      rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
+      rfCtx.fillStyle = mg; rfCtx.fill();
+      for (let f = 0; f < 8; f++) {
+        const fa = f * Math.PI / 4 + tick * 0.08;
+        const fr = r * 0.55 + Math.sin(tick * 0.2 + f) * r * 0.25;
+        rfCtx.beginPath(); rfCtx.arc(px + Math.cos(fa) * fr, py + Math.sin(fa) * fr, 3, 0, Math.PI * 2);
+        rfCtx.fillStyle = `rgba(255,${160 + Math.round(Math.sin(tick * 0.3 + f) * 80)},0,0.9)`; rfCtx.fill();
       }
-      pushLabel('MOLO', px, py - r - 6, '#ffcc66', 8);
+      pushLabel('MOLO', px, py - r - 8, '#ffcc66', 10);
 
     } else if (type.includes('decoy')) {
       // DECOY : point rouge avec signal radar clignotant

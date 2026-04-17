@@ -4,6 +4,24 @@ Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/frag
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
+## 2026-04-17 — Fallback round_end pour rounds non detectes
+
+`round_freeze_end` peut rater le dernier round si le demo se termine juste
+apres le round decisif (pas de buy phase suivante). Resultat : MR12 qui finit
+a 13-X peut etre vu comme 12-X par notre parser (1 round manquant).
+
+### Fix
+
+Ajout de `parseEvent(demoPath, 'round_end', ...)` comme fallback pour :
+
+1. **Detecter les rounds manquants** : pour chaque `round_end`, si `total_rounds_played`
+   n'est pas dans `roundStartTicks` (pas de freeze_end associe), reconstruire
+   `startTick` en estimant `endTick - 6000 ticks` (90s de round typique).
+
+2. **Completer les winners** : `round_end.winner` est utilise comme fallback
+   apres `round_announce_win` si ce dernier est vide. Le champ est frequemment
+   renseigne dans les demos FACEIT meme quand `round_announce_win` ne fire pas.
+
 ## 2026-04-17 — HE detonTick precis (recale sur event)
 
 Le dernier point de `parseGrenades` continue parfois d'etre tracke 2-4 ticks
