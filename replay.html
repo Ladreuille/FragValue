@@ -499,6 +499,9 @@ let currentRoundPeak = {};
 // Meilleure arme du joueur sur le round (priorite : primary > secondary > knife).
 // Calcule depuis tous les weapons vus dans les positions du round.
 let currentRoundBestWeapon = {};
+// Peak stats par joueur (money, armor, helmet, defuser) sur le round.
+// Permet au HUD d'afficher l'etat d'achat stable du round.
+let currentRoundPeakStats = {};
 
 // ══ UTILS ════════════════════════════════════════════════════════════════════
 function assignColors() {
@@ -938,13 +941,18 @@ const WEAPON_FILE_MAP = {
   taser:'taser', 'zeus x27':'taser', 'zeus':'taser',
 };
 
-// Normalize CS2 weapon name (classname OR display name) to a map key
+// Normalize CS2 weapon name (classname OR display name) to a map key.
+// Accepte : 'weapon_ak47', 'AK-47', 'M9 Bayonet', 'USP-S', etc.
 function normalizeWeaponName(raw) {
   if (!raw) return '';
   return String(raw)
     .replace(/^weapon_/i, '')
     .toLowerCase()
     .trim();
+}
+// Version ultra-normalisee pour le fallback (enleve tout caractere non alphanum)
+function compactWeaponName(raw) {
+  return normalizeWeaponName(raw).replace(/[\s\-_]/g, '');
 }
 
 function weaponIconImg(weaponName, height) {
@@ -964,7 +972,19 @@ const WEAPON_ICONS_INLINE = {
 function getWeaponIcon(weaponName, color) {
   if (!weaponName) return '';
   const clean = normalizeWeaponName(weaponName);
-  const file = WEAPON_FILE_MAP[clean];
+  let file = WEAPON_FILE_MAP[clean];
+  // Fallback compact (supprime espaces/tirets) pour 'M9 Bayonet', 'AK-47', etc.
+  if (!file) {
+    const compact = compactWeaponName(weaponName);
+    // Recherche dans la map par cle compact
+    for (const [k, v] of Object.entries(WEAPON_FILE_MAP)) {
+      if (k.replace(/[\s\-_]/g, '') === compact) { file = v; break; }
+    }
+  }
+  // Fallback final : toutes les knives skins -> icone knife generique
+  if (!file && /knife|bayonet|karambit|butterfly|falchion|huntsman|gut|flip|ursus|stiletto|kukri|skeleton|talon|paracord|survival|outdoor|nomad|shadow|daggers|navaja|canis|cord|widowmaker/i.test(clean)) {
+    file = 'knife';
+  }
   if (file) return '<img src="icons/' + file + '.svg" alt="' + clean + '" height="14" loading="lazy">';
   return WEAPON_ICONS_INLINE.default.replace(/CL/g, color);
 }
@@ -1032,9 +1052,10 @@ function updatePlayerStates(frame) {
       else hpFill.style.background = color;
     }
 
-    // Money
+    // Money : preferer le peak du round (stable) sinon state courant
     const moneyEl = row.querySelector('[data-field="money"]');
-    const money = state?.money ?? 0;
+    const peakStats = currentRoundPeakStats[p.name] || {};
+    const money = (state?.money ?? 0) || peakStats.money || 0;
     if (moneyEl) moneyEl.textContent = (money > 0) ? '$' + money : '';
 
     // Gear row (weapon, helmet, armor, defuse)
@@ -1054,13 +1075,16 @@ function updatePlayerStates(frame) {
       if (bestW) {
         html += '<span class="icon">' + getWeaponIcon(bestW, color) + '</span>';
       }
-      // Armure / casque / defuser : affiches UNIQUEMENT si possedes (comme SCL)
-      if (state?.hasHelmet) {
+      // Armure/casque/defuser : preferer peak du round (stable), sinon state courant
+      const hasHelmet = state?.hasHelmet || peakStats.helmet || false;
+      const hasArmor = (state?.armor ?? 0) > 0 || (peakStats.armor ?? 0) > 0;
+      const hasDefuser = state?.hasDefuser || peakStats.defuser || false;
+      if (hasHelmet) {
         html += '<span class="icon">' + getHelmetIcon(true) + '</span>';
-      } else if ((state?.armor ?? 0) > 0) {
+      } else if (hasArmor) {
         html += '<span class="icon">' + getArmorIcon(true, color) + '</span>';
       }
-      if (team === 'CT' && state?.hasDefuser) {
+      if (team === 'CT' && hasDefuser) {
         html += '<span class="icon">' + getDefuseIcon(true) + '</span>';
       }
       // Inventaire grenades : affiche TOUTES les grenades du round (peak) avec
@@ -1257,20 +1281,19 @@ function buildFrames(round) {
   const prevRd = curIdx > 0 ? sortedRounds[curIdx - 1] : null;
   const rdStart = prevRd ? (prevRd.endTick || 0) : 0;
   const rdEnd = roundData.endTick || Infinity;
-  // Priorite des armes pour le HUD : primary (rifle/sniper/heavy/smg) >
-  // secondary (pistol) > knife. On prend la meilleure categorie vue sur
-  // le round (ignore active_weapon_name transient comme grenade en main).
+  // Priorite des armes (normalisation compact : enleve tirets/espaces).
   const WEAPON_PRIORITY = (w) => {
     if (!w) return 0;
-    const n = (w || '').toLowerCase().replace(/^weapon_/, '');
-    // Primary 3 : rifles/snipers/heavy/smg (toutes les armes principales)
-    if (/ak47|m4a|aug|sg556|galilar|galil|famas|awp|ssg08|scar20|g3sg1|nova|xm1014|mag7|sawedoff|m249|negev|mp9|mac10|mp7|ump45|p90|mp5sd|bizon/i.test(n)) return 3;
-    // Secondary 2 : pistolets
-    if (/deagle|glock|usp|hkp2000|p2000|p250|fiveseven|tec9|elite|cz75|revolver/i.test(n)) return 2;
-    // Knife 1
-    if (/knife|bayonet/i.test(n)) return 1;
-    return 0;  // grenades, c4, taser = non affiche
+    const n = (w || '').toLowerCase().replace(/^weapon_/, '').replace(/[\s\-_]/g, '');
+    if (/ak47|m4a|aug|sg55|galil|famas|awp|ssg08|scar20|g3sg1|nova|xm1014|mag7|sawedoff|m249|negev|mp9|mac10|mp7|ump45|p90|mp5sd|bizon/i.test(n)) return 3;
+    if (/deagle|deserteagle|glock|usp|hkp2000|p2000|p250|fiveseven|tec9|elite|dualberettas|cz75|revolver|r8/i.test(n)) return 2;
+    if (/knife|bayonet|karambit|butterfly|falchion|huntsman|gut|flip|ursus|stiletto|kukri|skeleton|talon|paracord|survival|outdoor|nomad|shadow|daggers|navaja|canis|cord|widowmaker/i.test(n)) return 1;
+    return 0;
   };
+  // Peak stats : max observe sur toutes les positions du round. Permet au HUD
+  // d'afficher l'intention du buy meme si on pause a un tick ou le joueur
+  // n'a pas encore equipe l'item (money=0 momentane etc.).
+  currentRoundPeakStats = {};
   Object.entries(roundPos).forEach(([name, pts]) => {
     const peak = { smk: 0, fl: 0, heg: 0, mol: 0, dec: 0, c4: 0 };
     const playerPickups = pickupsAll[name] || [];
@@ -1279,13 +1302,19 @@ function buildFrames(round) {
       if (peak[pk.type] !== undefined) peak[pk.type]++;
     });
     currentRoundPeak[name] = peak;
-    // Meilleure arme du round : max priorite sur active_weapon_name sampled
+    // Meilleure arme + peak money/armor/helmet/defuser du round
     let bestPrio = 0, bestName = null;
+    let peakMoney = 0, peakArmor = 0, peakHelmet = false, peakDefuser = false;
     pts.forEach(p => {
       const prio = WEAPON_PRIORITY(p.weapon);
       if (prio > bestPrio) { bestPrio = prio; bestName = p.weapon; }
+      if ((p.money || 0) > peakMoney) peakMoney = p.money;
+      if ((p.armor || 0) > peakArmor) peakArmor = p.armor;
+      if (p.hasHelmet) peakHelmet = true;
+      if (p.hasDefuser) peakDefuser = true;
     });
     if (bestName) currentRoundBestWeapon[name] = bestName;
+    currentRoundPeakStats[name] = { money: peakMoney, armor: peakArmor, helmet: peakHelmet, defuser: peakDefuser };
   });
 
   frames = [];
