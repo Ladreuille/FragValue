@@ -493,6 +493,9 @@ let shotsConverted = false;
 // Per-round filtered positions, shared by buildFrames and drawTrails so trails
 // cannot include samples from outside the current round.
 let currentRoundPos = {};
+// Peak inventory du round en cours : { [name]: { smk, fl, heg, mol, dec, c4 } }
+// Recalcule a chaque selectRound via buildFrames.
+let currentRoundPeak = {};
 
 // ══ UTILS ════════════════════════════════════════════════════════════════════
 function assignColors() {
@@ -995,6 +998,9 @@ let _gearDebugLogged = false;
 function updatePlayerStates(frame) {
   if (!frame) return;
 
+  // Bornes du round courant pour filtrer les grenades lancees
+  const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
+
   (demoData.playerStats || []).forEach((p, pIdx) => {
     const escaped = CSS.escape(p.name);
     const row = document.querySelector(`.player-row[data-name="${escaped}"]`);
@@ -1052,12 +1058,32 @@ function updatePlayerStates(frame) {
       if (team === 'CT') {
         html += '<span class="icon' + (state?.hasDefuser ? '' : ' off') + '">' + getDefuseIcon(!!state?.hasDefuser) + '</span>';
       }
-      // Inventaire grenades + C4 : affiche uniquement les slots avec un item.
-      // Au debut du round l'inventaire complet est montre puis les icones
-      // disparaissent au fur et a mesure des lancers (parseTicks.inventory
-      // est re-calcule a chaque tick echantillonne).
-      const smk = state?.smk ?? 0, fl = state?.fl ?? 0, heg = state?.heg ?? 0;
-      const mol = state?.mol ?? 0, dec = state?.dec ?? 0, c4 = state?.c4 ?? 0;
+      // Inventaire grenades : utilise le PEAK du round (inventaire achete au
+      // freeze-time) moins les grenades lancees depuis le debut du round.
+      // Resultat : affichage stable de l'intention de buy meme avant que les
+      // grenades soient tenues en main + diminution realiste au fil des jets.
+      const peak = currentRoundPeak[p.name] || { smk: 0, fl: 0, heg: 0, mol: 0, dec: 0, c4: 0 };
+      // Compter grenades thrown par ce joueur dans le round jusqu'au tick courant
+      const thrown = { smk: 0, fl: 0, heg: 0, mol: 0, dec: 0 };
+      const tick = frame.tick || 0;
+      (demoData.grenades || []).forEach(g => {
+        if (g.thrower !== p.name) return;
+        if ((g.tick || 0) > tick) return;
+        if (rdData.startTick && (g.tick || 0) < rdData.startTick) return;
+        if (rdData.endTick && (g.tick || 0) > rdData.endTick + 500) return;
+        const gt = g.type || '';
+        if (gt.includes('smoke')) thrown.smk++;
+        else if (gt.includes('flash')) thrown.fl++;
+        else if (gt.includes('hegre')) thrown.heg++;
+        else if (gt.includes('molotov') || gt.includes('incgren')) thrown.mol++;
+        else if (gt.includes('decoy')) thrown.dec++;
+      });
+      const smk = Math.max(0, peak.smk - thrown.smk);
+      const fl  = Math.max(0, peak.fl  - thrown.fl);
+      const heg = Math.max(0, peak.heg - thrown.heg);
+      const mol = Math.max(0, peak.mol - thrown.mol);
+      const dec = Math.max(0, peak.dec - thrown.dec);
+      const c4  = state?.c4 ?? peak.c4 ?? 0;  // C4 = carrier instant
       if (smk + fl + heg + mol + dec + c4 > 0) {
         html += '<span class="player-gear-sep"></span>';
         if (smk) html += renderNadeSlot('smk', smk);
@@ -1209,6 +1235,24 @@ function buildFrames(round) {
 
   // Expose filtered positions for drawTrails so it uses the same per-round slice
   currentRoundPos = roundPos;
+
+  // Peak inventory par joueur pour ce round : max observe sur l'ensemble du
+  // round. Permet d'afficher l'inventaire ACHETE au freeze-time meme si le
+  // viewer pause juste au debut (avant que le joueur tienne les grenades en
+  // main). Les grenades lancees sont ensuite soustraites au rendu HUD.
+  currentRoundPeak = {};
+  Object.entries(roundPos).forEach(([name, pts]) => {
+    const peak = { smk: 0, fl: 0, heg: 0, mol: 0, dec: 0, c4: 0 };
+    pts.forEach(p => {
+      peak.smk = Math.max(peak.smk, p.smk || 0);
+      peak.fl  = Math.max(peak.fl,  p.fl  || 0);
+      peak.heg = Math.max(peak.heg, p.heg || 0);
+      peak.mol = Math.max(peak.mol, p.mol || 0);
+      peak.dec = Math.max(peak.dec, p.dec || 0);
+      peak.c4  = Math.max(peak.c4,  p.c4  || 0);
+    });
+    currentRoundPeak[name] = peak;
+  });
 
   frames = [];
   for (let f = 0; f <= N; f++) {
@@ -2394,21 +2438,25 @@ function drawEffects(frame, W, H) {
     };
 
     if (type.includes('smoke')) {
-      // Smoke : APPARITION INSTANTANEE a la detonation (alpha = 1 des le t=0).
-      // Seulement fade-out dans les derniers 8% de la vie. Avant le fade-in
-      // rendait la smoke invisible au moment precis de detonation.
-      const r = 22;
-      const fadeOutLen = 0.08;
+      // Smoke : cloud TRES visible avec gradient radial pour donner l'effet
+      // de fumee volumetrique. Apparition INSTANTANEE a detonTick.
+      const r = 24;
+      const fadeOutLen = 0.1;
       const a = progress > (1 - fadeOutLen) ? (1 - progress) / fadeOutLen : 1;
-      // Fill leger : delimite la zone couverte par la fumee
+      // Fill gradient radial (blanc dense au centre, fade sur les bords)
+      const smokeGrad = ctx.createRadialGradient(px, py, r * 0.25, px, py, r);
+      smokeGrad.addColorStop(0, `rgba(240,242,245,${a * 0.55})`);
+      smokeGrad.addColorStop(0.7, `rgba(215,220,225,${a * 0.35})`);
+      smokeGrad.addColorStop(1, `rgba(180,185,190,${a * 0.08})`);
       ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(210,215,220,${a * 0.18})`;
+      ctx.fillStyle = smokeGrad;
       ctx.fill();
-      // Outline epais pour meilleure visibilite
-      ctx.strokeStyle = `rgba(230,235,240,${a * 0.95})`;
-      ctx.lineWidth = 1.8;
+      // Contour blanc net pour delimiter la zone
+      ctx.strokeStyle = `rgba(240,245,250,${a * 0.95})`;
+      ctx.lineWidth = 2;
       ctx.stroke();
-      drawCloudIcon(ctx, px, py, 7, `rgba(235,240,245,${a})`);
+      // Cloud icon au centre (plus gros et plus opaque)
+      drawCloudIcon(ctx, px, py, 8, `rgba(255,255,255,${a})`);
       drawBareTimer(timerTxt, px, py - r - 6);
     } else if (type.includes('flash')) {
       // Brief pulse blanc, pas de rayons
