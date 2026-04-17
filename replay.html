@@ -67,43 +67,44 @@
     .tb-logo span{color:var(--accent)}
 
     /* ── Main area: sidebar left + canvas + sidebar right ────── */
-    .main{flex:1;display:grid;grid-template-columns:220px 1fr 280px;min-height:0;overflow:hidden}
+    .main{flex:1;display:grid;grid-template-columns:56px 1fr 280px;min-height:0;overflow:hidden}
 
-    /* ── Left sidebar: shortcuts ────────────────────────────────── */
+    /* ── Left sidebar: icon-only rail (style SCL) ───────────────── */
     .sidebar-left{
       background:var(--surface);border-right:1px solid var(--border);
-      display:flex;flex-direction:column;padding:16px 14px;gap:16px;
-      overflow-y:auto;
+      display:flex;flex-direction:column;padding:10px 8px;gap:6px;
+      overflow-y:auto;align-items:center;
     }
-    .sl-section-title{font-size:9px;letter-spacing:.14em;color:var(--text3);text-transform:uppercase;margin-bottom:6px}
-    .shortcut{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-    .shortcut kbd{
-      display:inline-flex;align-items:center;justify-content:center;
-      min-width:26px;height:22px;padding:0 6px;
-      background:var(--card);border:1px solid var(--border2);border-radius:4px;
-      font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text);
-      line-height:1;
-    }
-    .shortcut-sep{color:var(--text3);font-size:10px;margin:0 -2px}
-    .shortcut-label{font-size:10px;color:var(--text2)}
-    .sl-tools{display:flex;flex-direction:column;gap:4px;margin-top:auto}
     .sl-tool{
-      width:36px;height:36px;border-radius:8px;
-      background:var(--card);border:1px solid var(--border);
+      width:40px;height:40px;border-radius:8px;
+      background:transparent;border:1px solid transparent;
       color:var(--text3);cursor:pointer;
       display:flex;align-items:center;justify-content:center;
-      transition:all .15s;
+      transition:all .12s;position:relative;flex-shrink:0;
     }
-    .sl-tool:hover{border-color:var(--accent);color:var(--accent)}
-    .sl-tool.active{background:var(--accent);border-color:var(--accent);color:#000}
+    .sl-tool:hover{background:var(--card);border-color:var(--border2);color:var(--text)}
+    .sl-tool.active{background:var(--accent-dim);border-color:rgba(184,255,87,.3);color:var(--accent)}
+    /* Tooltip au survol — affiche raccourci + description */
+    .sl-tool[data-tip]::after{
+      content:attr(data-tip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
+      background:#0b0c0c;border:1px solid var(--border2);border-radius:6px;
+      padding:5px 9px;font-size:10px;color:var(--text);white-space:nowrap;
+      font-family:var(--mono);letter-spacing:.02em;
+      opacity:0;pointer-events:none;transition:opacity .15s;z-index:100;
+      box-shadow:0 4px 12px rgba(0,0,0,.5);
+    }
+    .sl-tool:hover[data-tip]::after{opacity:1}
+    .sl-divider{width:22px;height:1px;background:var(--border);margin:4px 0;flex-shrink:0}
+    .sl-tools-top{display:flex;flex-direction:column;gap:4px;align-items:center}
+    .sl-tools-bottom{display:flex;flex-direction:column;gap:4px;align-items:center;margin-top:auto}
 
-    /* Floor toggle within sidebar */
-    .floor-toggle{display:none;gap:4px;margin-top:4px}
+    /* Floor toggle : pastille compacte, affichee pour Nuke uniquement */
+    .floor-toggle{display:none;flex-direction:column;gap:3px;align-items:center}
     .floor-toggle.visible{display:flex}
     .floor-btn{
-      font-family:var(--mono);font-size:10px;padding:5px 10px;border-radius:5px;
+      font-family:var(--mono);font-size:9px;padding:4px 7px;border-radius:4px;
       cursor:pointer;color:var(--text2);border:1px solid var(--border);
-      background:transparent;transition:all .15s;
+      background:transparent;transition:all .15s;width:36px;
     }
     .floor-btn.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(184,255,87,.3)}
 
@@ -125,53 +126,53 @@
     .team-panel{flex:1;display:flex;flex-direction:column;min-height:0}
     .team-panel+.team-panel{border-top:2px solid var(--border)}
     .tp-header{
-      display:flex;align-items:center;gap:10px;
-      padding:10px 14px;
+      display:flex;align-items:center;gap:9px;
+      padding:8px 12px;
       border-bottom:1px solid var(--border);
       background:var(--card);flex-shrink:0;
     }
     .tp-header.ct-header{border-left:3px solid var(--ct)}
     .tp-header.t-header{border-left:3px solid var(--t)}
     .tp-team-icon{
-      width:26px;height:26px;border-radius:6px;
+      width:22px;height:22px;border-radius:5px;
       display:flex;align-items:center;justify-content:center;
-      font-size:13px;font-weight:700;flex-shrink:0;
+      font-size:12px;font-weight:700;flex-shrink:0;
     }
     .tp-team-icon.ct{background:rgba(74,158,255,.2);color:var(--ct)}
     .tp-team-icon.t{background:rgba(245,200,66,.18);color:var(--t)}
-    .tp-team-name{font-family:var(--display);font-size:16px;flex:1;letter-spacing:.5px;text-transform:uppercase}
-    .tp-team-score{font-family:var(--display);font-size:28px;line-height:1}
-    .tp-players{flex:1;overflow-y:auto;padding:4px 6px}
+    .tp-team-name{font-family:var(--display);font-size:14px;flex:1;letter-spacing:.5px;text-transform:uppercase}
+    .tp-team-score{font-family:var(--display);font-size:24px;line-height:1}
+    .tp-players{flex:1;overflow-y:auto;padding:3px 5px}
 
-    /* Player row */
+    /* Player row — compact SCL-style */
     .player-row{
       display:flex;flex-direction:column;gap:0;
-      padding:7px 10px;border-radius:6px;
+      padding:5px 9px 6px;border-radius:5px;
       cursor:pointer;transition:all .12s;
-      border:1px solid transparent;margin-bottom:2px;
+      border:1px solid transparent;margin-bottom:1px;
     }
     .player-row:hover{background:rgba(255,255,255,.04)}
     .player-row.active{background:rgba(184,255,87,.04);border-color:rgba(184,255,87,.12)}
-    .player-row.dead{opacity:.3}
+    .player-row.dead{opacity:.35}
     .player-row.dead .player-name{text-decoration:line-through;color:var(--text3)}
-    .player-row-top{display:flex;align-items:center;gap:8px}
-    .player-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 4px currentColor}
-    .player-name{font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;color:var(--text)}
+    .player-row-top{display:flex;align-items:center;gap:7px}
+    .player-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;box-shadow:0 0 4px currentColor}
+    .player-name{font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;color:var(--text)}
     .player-kills{
-      font-family:var(--mono);font-size:11px;font-weight:700;
-      min-width:18px;text-align:right;flex-shrink:0;
+      font-family:var(--mono);font-size:10px;font-weight:700;
+      min-width:16px;text-align:right;flex-shrink:0;color:var(--text2);
     }
-    .player-money{font-size:10px;font-family:var(--mono);color:var(--accent);font-weight:600;margin-top:2px}
+    .player-money{font-size:10px;font-family:var(--mono);color:var(--accent);font-weight:600;flex-shrink:0}
     .player-hp-bar{
-      width:100%;height:4px;background:var(--border);border-radius:2px;
-      overflow:hidden;margin:4px 0 3px;
+      width:100%;height:3px;background:var(--border);border-radius:2px;
+      overflow:hidden;margin:3px 0 2px;
     }
     .player-hp-fill{height:100%;border-radius:2px;transition:width .3s}
-    .player-gear{display:flex;align-items:center;gap:6px;min-height:16px;margin-top:4px;padding:2px 0;flex-wrap:wrap}
-    .player-gear .icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0;height:14px}
-    .player-gear .icon svg{display:block;height:14px;width:auto}
-    .player-gear .icon img{display:block;height:14px;width:auto;max-width:48px;filter:brightness(1.2) invert(0)}
-    .player-gear .icon.off{opacity:.4}
+    .player-gear{display:flex;align-items:center;gap:4px;min-height:13px;flex-wrap:wrap}
+    .player-gear .icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0;height:12px}
+    .player-gear .icon svg{display:block;height:12px;width:auto}
+    .player-gear .icon img{display:block;height:12px;width:auto;max-width:40px;filter:brightness(1.2) invert(0)}
+    .player-gear .icon.off{opacity:.35}
     .player-gear .icon.off img{filter:brightness(.6) grayscale(1)}
     .player-gear-sep{width:1px;height:14px;background:rgba(255,255,255,.1);margin:0 2px}
     .nade-slot{
@@ -213,11 +214,13 @@
       display:flex;align-items:center;justify-content:center;
       flex-shrink:0;overflow:hidden;
     }
-    .rnd::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
-    .rnd.ct-win::after{background:var(--ct)}
-    .rnd.t-win::after{background:var(--t)}
+    /* Indicateur win team : barre 3px colore equipe gagnante (style SCL bien visible) */
+    .rnd::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:transparent}
+    .rnd.ct-win::after{background:var(--ct);box-shadow:0 0 4px rgba(74,158,255,.4)}
+    .rnd.t-win::after{background:var(--t);box-shadow:0 0 4px rgba(245,200,66,.4)}
     .rnd:hover{border-color:rgba(184,255,87,.3);color:var(--text)}
     .rnd.sel{background:var(--accent);border-color:var(--accent);color:#000;box-shadow:0 2px 8px rgba(184,255,87,.3)}
+    .rnd.sel::after{height:3px}
     .rnd-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;margin:0 2px}
 
     /* Controls row */
@@ -347,29 +350,35 @@
   <!-- Main area -->
   <div class="main">
 
-    <!-- Left sidebar: shortcuts -->
+    <!-- Left sidebar: icon rail style SCL -->
     <div class="sidebar-left">
-      <div>
-        <div class="sl-section-title">Raccourcis</div>
-        <div class="shortcut"><kbd>Z</kbd><span class="shortcut-sep">/</span><kbd>X</kbd><span class="shortcut-label">ralentir / accelerer</span></div>
-        <div class="shortcut"><kbd>J</kbd><span class="shortcut-sep">/</span><kbd>K</kbd><span class="shortcut-label">round precedent / suivant</span></div>
-        <div class="shortcut"><kbd>Space</kbd><span class="shortcut-label">play / pause</span></div>
-        <div class="shortcut"><kbd>L</kbd><span class="shortcut-label">changer d'etage</span></div>
-        <div class="shortcut"><kbd>&larr;</kbd><span class="shortcut-sep">/</span><kbd>&rarr;</kbd><span class="shortcut-label">reculer / avancer</span></div>
-      </div>
-
-      <!-- Floor toggle for Nuke -->
-      <div class="floor-toggle" id="floorToggle">
-        <div class="sl-section-title" style="width:100%">Etage</div>
-        <button class="floor-btn active" onclick="switchFloor('upper',this)">Upper</button>
-        <button class="floor-btn" onclick="switchFloor('lower',this)">Lower</button>
-      </div>
-
-      <!-- Tool buttons -->
-      <div class="sl-tools">
-        <button class="sl-tool" id="btnTrail" onclick="toggleTrail()" title="Trainee de mouvement">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      <div class="sl-tools-top">
+        <!-- Raccourcis en mode icon + tooltip -->
+        <div class="sl-tool" data-tip="Z / X — Ralentir / Accelerer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg>
+        </div>
+        <div class="sl-tool" data-tip="J / K — Round precedent / suivant">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+        </div>
+        <div class="sl-tool" data-tip="Space — Play / Pause">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+        <div class="sl-tool" data-tip="&larr; / &rarr; — Reculer / Avancer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </div>
+        <div class="sl-divider"></div>
+        <!-- Trainee toggle (reel : click modifie l etat) -->
+        <button class="sl-tool" id="btnTrail" onclick="toggleTrail()" data-tip="Trainee de mouvement">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         </button>
+      </div>
+
+      <!-- Floor toggle Nuke -->
+      <div class="sl-tools-bottom">
+        <div class="floor-toggle" id="floorToggle">
+          <button class="floor-btn active" onclick="switchFloor('upper',this)">HAUT</button>
+          <button class="floor-btn" onclick="switchFloor('lower',this)">BAS</button>
+        </div>
       </div>
     </div>
 
@@ -410,17 +419,15 @@
     <!-- Rounds strip -->
     <div class="rounds-strip" id="roundsBar"></div>
 
-    <!-- Controls -->
+    <!-- Controls : prev round / play / next round + speed -->
     <div class="controls-row">
       <div class="ctrl-btns">
-        <button class="cb" onclick="skipBack()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
-        <button class="cb" onclick="stepBack()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4"/><polygon points="11 20 1 12 11 4"/></svg></button>
-        <button class="cb cb-play" id="playBtn" onclick="togglePlay()">
+        <button class="cb" onclick="skipBack()" title="Round precedent (J)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
+        <button class="cb cb-play" id="playBtn" onclick="togglePlay()" title="Play / Pause (Space)">
           <svg id="playIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           <svg id="pauseIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
         </button>
-        <button class="cb" onclick="stepFwd()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20"/><polygon points="13 4 23 12 13 20"/></svg></button>
-        <button class="cb" onclick="skipFwd()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+        <button class="cb" onclick="skipFwd()" title="Round suivant (K)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
       </div>
       <div class="ctrl-time"><span id="timeCur">0:00</span> / <span id="timeTot">0:00</span></div>
       <div class="ctrl-timeline" id="timeline" onclick="seek(event)">
@@ -577,6 +584,12 @@ async function checkReplayAccess() {
 
 // ══ INIT ═════════════════════════════════════════════════════════════════════
 window.addEventListener('load', async () => {
+  // Debug overlay : gate derriere ?debug=1 dans l'URL (pas affiche en prod normale).
+  try {
+    const _qs = new URLSearchParams(window.location.search);
+    window._fvDebugOverlay = _qs.get('debug') === '1';
+  } catch(_) { window._fvDebugOverlay = false; }
+
   // Check plan gating
   const hasAccess = await checkReplayAccess();
   if (!hasAccess) {
@@ -606,6 +619,9 @@ window.addEventListener('load', async () => {
     detectKnifeRounds();
     convertPositionTicks();
     recalcRoundBoundaries();
+    // Precharge les SVGs des armes droppees (fire & forget, pas bloquant).
+    // Les images seront pretes bien avant le premier rendu d'un kill.
+    preloadWeaponIcons();
     loadMapImage(() => {
       initRoundsBar();
       initTeamPanels();
@@ -812,11 +828,11 @@ function renderTeamPlayers(containerId, players) {
   el.innerHTML = players.map(p => {
     const c = getColor(p.name);
     const safeName = p.name.replace(/'/g, "\\'");
+    // Layout SCL : nom a gauche, money a droite sur meme ligne (compact)
     return `<div class="player-row active" data-name="${p.name}" data-alive="true" onclick="togglePlayer('${safeName}')">
       <div class="player-row-top">
         <span class="player-dot" style="background:${c.solid};color:${c.solid}"></span>
         <span class="player-name">${p.name.substring(0, 14)}</span>
-        <span class="player-kills" data-field="kills"></span>
         <span class="player-money" data-field="money"></span>
       </div>
       <div class="player-hp-bar"><div class="player-hp-fill" data-field="hp" style="width:100%;background:${hpColor}"></div></div>
@@ -1229,10 +1245,15 @@ function buildFrames(round) {
         mol: nearest.mol ?? 0,
         dec: nearest.dec ?? 0,
         c4:  nearest.c4  ?? 0,
-        _dbg: { pt: prev.tick, px: Math.round(prev.x), py: Math.round(prev.y),
-                nt: next.tick, nx: Math.round(next.x), ny: Math.round(next.y),
-                t: t.toFixed(2), dist: Math.round(dist), snap: dist > MAX_INTERP_DIST ? 1 : 0 },
       };
+      // Metadata debug : uniquement si overlay debug actif (evite ~10 alloc/frame/joueur)
+      if (window._fvDebugOverlay) {
+        frame.players[name]._dbg = {
+          pt: prev.tick, px: Math.round(prev.x), py: Math.round(prev.y),
+          nt: next.tick, nx: Math.round(next.x), ny: Math.round(next.y),
+          t: t.toFixed(2), dist: Math.round(dist), snap: dist > MAX_INTERP_DIST ? 1 : 0,
+        };
+      }
     });
     roundKills.forEach(k => {
       if ((k.tick || 0) <= tick) {
@@ -1444,8 +1465,8 @@ function drawFrame(idx) {
   // Killfeed (top-right of the map)
   drawKillfeed(frame, W, H);
 
-  // ── DIAGNOSTIC OVERLAY (temporary) ──
-  {
+  // ── DIAGNOSTIC OVERLAY (gate derriere ?debug=1 uniquement) ──
+  if (window._fvDebugOverlay) {
     const firstName = Object.keys(frame.players)[0];
     const rp = (currentRoundPos && firstName) ? (currentRoundPos[firstName] || []) : [];
     const tickNow = frame.tick || 0;
@@ -1772,7 +1793,9 @@ function drawScoreboard(frame, W, H) {
 // ══ MOVEMENT TRAILS ══════════════════════════════════════════════════════════
 function drawTrails(frame, W, H) {
   const tick = frame.tick || 0;
-  const TRAIL_TICKS = 400;
+  // Style SCL : trainees courtes (~1.5s reelles a 128 tick/s = 200 ticks)
+  // Avant 400 tick = 3s : trop long, bruite visuellement.
+  const TRAIL_TICKS = 200;
   const scaleX = W / 1024;
   const scaleY = H / 1024;
 
@@ -1780,7 +1803,6 @@ function drawTrails(frame, W, H) {
   // guarantees trails can never include samples from another round.
   const roundPos = currentRoundPos || {};
 
-  let _dbgLoggedOne = false;
   Object.entries(frame.players).forEach(([name, p]) => {
     if (!p.alive || hiddenPlayers.has(name)) return;
     const color = getColor(name);
@@ -1789,25 +1811,20 @@ function drawTrails(frame, W, H) {
       const t = pt.tick || 0;
       return t >= tick - TRAIL_TICKS && t <= tick;
     });
-    if (frameIdx === 0 && !_dbgLoggedOne) {
-      _dbgLoggedOne = true;
-      const f0 = trail[0], fl = trail[trail.length - 1];
-      console.log(`[drawTrails] f0 tick=${Math.round(tick)} ${name}: roundPts=${pts.length}, trailPts=${trail.length}` +
-        (trail.length ? ` first=(t=${f0.tick},${f0.x},${f0.y}) last=(t=${fl.tick},${fl.x},${fl.y})` : ''));
-    }
     if (trail.length < 2) return;
 
-    // Fading trail: draw segments with decreasing opacity
+    // Fading trail : segments avec opacite decroissante (alpha plus fin pour
+    // un rendu plus subtil, a la SCL).
     for (let i = 1; i < trail.length; i++) {
       const age = (tick - (trail[i].tick || 0)) / TRAIL_TICKS;
-      const alpha = Math.max(0, 0.4 * (1 - age));
+      const alpha = Math.max(0, 0.28 * (1 - age));
       const prev = w2c(trail[i-1].x, trail[i-1].y);
       const cur = w2c(trail[i].x, trail[i].y);
       ctx.beginPath();
       ctx.moveTo(prev.x * scaleX, prev.y * scaleY);
       ctx.lineTo(cur.x * scaleX, cur.y * scaleY);
       ctx.strokeStyle = `rgba(${color.rgb},${alpha.toFixed(2)})`;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.2;
       ctx.stroke();
     }
   });
@@ -1873,12 +1890,96 @@ function drawDecoyIcon(ctx, cx, cy, size, color) {
   ctx.restore();
 }
 
+// ══ Helpers partages ═════════════════════════════════════════════════════════
+// Bornes du round courant (utilise par drawEffects, drawKillfeed, drawWeaponDrops).
+function getRoundBounds(buffer = 2000) {
+  const _rd = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
+  return { start: _rd.startTick || 0, end: (_rd.endTick || 999999) + buffer };
+}
+// Echantillon de position le plus proche d'un tick (<=). Retourne null si aucun.
+function findSampleAt(pts, tick) {
+  if (!pts || !pts.length) return null;
+  let nearest = null, minDt = Infinity;
+  for (const p of pts) {
+    const pt = p.tick ?? 0;
+    if (pt > tick) continue;
+    const dt = tick - pt;
+    if (dt < minDt) { nearest = p; minDt = dt; }
+  }
+  return nearest;
+}
+
+// ══ WEAPON DROPS (SVG au sol aux positions des kills) ════════════════════════
+// Cache des images SVG (une seule instance par arme, reutilisee a chaque frame).
+const weaponImgCache = {};
+function getWeaponImg(file) {
+  if (weaponImgCache[file]) return weaponImgCache[file];
+  const img = new Image();
+  img.src = `icons/${file}.svg`;
+  weaponImgCache[file] = img;
+  return img;
+}
+// Precharge les fichiers uniques de WEAPON_FILE_MAP pour eviter un pop-in.
+function preloadWeaponIcons() {
+  const files = new Set(Object.values(WEAPON_FILE_MAP));
+  files.forEach(f => getWeaponImg(f));
+}
+
+const _noDropWeapons = /^(grenade|hegrenade|flashbang|smokegrenade|molotov|incgrenade|decoy|c4|healthshot|planted_c4|taser)$/;
+
+function drawWeaponDrops(frame, W, H) {
+  const kills = demoData.kills || [];
+  if (!kills.length) return;
+  const tick = frame.tick || 0;
+  const { start, end } = getRoundBounds();
+  const scaleX = W / 1024, scaleY = H / 1024;
+  const positions = demoData.positions || {};
+
+  kills.forEach(k => {
+    const kt = k.tick || 0;
+    if (kt < start || kt > end || kt > tick || k.victimX == null) return;
+
+    const nearest = findSampleAt(positions[k.victim], kt);
+    const weapon = normalizeWeaponName(nearest?.weapon);
+    if (!weapon || _noDropWeapons.test(weapon)) return;
+    const file = WEAPON_FILE_MAP[weapon];
+    if (!file) return;
+
+    const img = getWeaponImg(file);
+    if (!img.complete || !img.naturalWidth) return; // pas encore charge
+
+    const _p = w2c(k.victimX, k.victimY);
+    const px = _p.x * scaleX, py = _p.y * scaleY;
+    if (!inBounds(px, py)) return;
+
+    // Taille par categorie pour garder une echelle raisonnable
+    let h = 10;
+    if (weapon.includes('awp') || weapon.includes('scar20') || weapon.includes('ssg08') || weapon.includes('g3sg1')) h = 13;
+    else if (weapon.includes('knife') || weapon.includes('bayonet')) h = 7;
+    else if (/^(deagle|glock|usp_silencer|hkp2000|p2000|p250|fiveseven|tec9|elite|cz75a|revolver)/.test(weapon)) h = 8;
+    const w = h * (img.naturalWidth / img.naturalHeight);
+
+    // Fade-in sur ~0.5s apres le kill
+    const fadeIn = Math.min(1, (tick - kt) / 64);
+    if (fadeIn <= 0.05) return;
+
+    ctx.save();
+    ctx.globalAlpha = fadeIn * 0.7;
+    ctx.filter = 'grayscale(1) brightness(1.1)';
+    ctx.drawImage(img, px - w / 2, py - h / 2, w, h);
+    ctx.restore();
+  });
+}
+
 function drawEffects(frame, W, H) {
   const tick = frame.tick || 0;
   const grenades = demoData.grenades || [];
   const shots = demoData.shots || [];
   const scaleX = W / 1024;
   const scaleY = H / 1024;
+
+  // Weapon drops : rendu en premier pour etre sous les autres effets
+  drawWeaponDrops(frame, W, H);
 
   // Convert shot ticks (once per round)
   if (!shotsConverted) {
@@ -2031,8 +2132,7 @@ function drawEffects(frame, W, H) {
   };
   const sortedGrenades = [...grenades].sort((a, b) => grenadeZIndex(a.type) - grenadeZIndex(b.type));
   const pendingLabels = [];
-  const _rd = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
-  const _rStart = _rd.startTick || 0, _rEnd = (_rd.endTick || 999999) + 2000;
+  const { start: _rStart, end: _rEnd } = getRoundBounds();
   sortedGrenades.forEach(g => {
     if (!g.tick) return;
     if (g.tick < _rStart || g.tick > _rEnd) return;
