@@ -615,7 +615,21 @@ window.addEventListener('load', async () => {
   if (!raw) { document.getElementById('noData').style.display = 'flex'; return; }
   try {
     demoData = JSON.parse(raw);
+    // Diagnostic : taille de la payload + 1er sample pour 1er joueur AVANT expand
+    try {
+      const rawLen = raw.length;
+      const _firstName = Object.keys(demoData.positions || {})[0];
+      const _rawSample = demoData.positions?.[_firstName]?.[0];
+      console.log(`[LOAD] sessionStorage payload=${(rawLen/1024/1024).toFixed(2)}MB demoData keys=${Object.keys(demoData).join(',')}`);
+      console.log(`[LOAD] 1er sample AVANT expand ${_firstName}:`, _rawSample);
+    } catch(e) {}
     if (demoData.positions) demoData.positions = expandPositions(demoData.positions);
+    // Diagnostic : 1er sample APRES expand
+    try {
+      const _firstName2 = Object.keys(demoData.positions || {})[0];
+      const _expSample = demoData.positions?.[_firstName2]?.[0];
+      console.log(`[LOAD] 1er sample APRES expand ${_firstName2}:`, _expSample);
+    } catch(e) {}
     if (demoData.kills) demoData.kills = expandKills(demoData.kills);
     document.getElementById('appShell').style.display = 'flex';
     assignColors();
