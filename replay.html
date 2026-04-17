@@ -398,7 +398,7 @@
       <div class="team-panel" id="panelCT">
         <div class="tp-header ct-header">
           <div class="tp-team-icon ct">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z"/><path d="M12 7v10M7 9.5l10 5M17 9.5l-10 5"/></svg>
+            <img src="icons/team_ct.png" alt="CT" width="22" height="22" style="border-radius:5px">
           </div>
           <div class="tp-team-name" id="ctTeamName" style="color:var(--ct)">CT</div>
           <div class="tp-team-score" id="ctScore" style="color:var(--ct)">0</div>
@@ -409,7 +409,7 @@
       <div class="team-panel" id="panelT">
         <div class="tp-header t-header">
           <div class="tp-team-icon t">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            <img src="icons/team_t.png" alt="T" width="22" height="22" style="border-radius:5px">
           </div>
           <div class="tp-team-name" id="tTeamName" style="color:var(--t)">T</div>
           <div class="tp-team-score" id="tScore" style="color:var(--t)">0</div>
@@ -1382,30 +1382,41 @@ function drawFrame(idx) {
     ctx.closePath();
     ctx.fillStyle = coneGrad; ctx.fill();
 
-    // Drop shadow under player
-    ctx.beginPath(); ctx.arc(cx + 1, cy + 1, 10, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fill();
+    // ── Player marker : pin PNG avec centre colore par joueur ──
+    // Le PNG location.png est positionne pour que son trou (centre blanc)
+    // coincide avec la position exacte du joueur. Le trou est ensuite
+    // repeint avec la couleur distincte du joueur pour identification.
+    const PIN_H = 24;  // hauteur affichee en px
+    const PIN_W = PIN_H;  // pin carre dans le PNG source
+    const holeYPx = PIN_H * PIN_HOLE_Y_RATIO;
+    const holeR = PIN_H * PIN_HOLE_R_RATIO;
 
-    // ── Pin marker style (comme demande) ──
-    // Anneau exterieur : couleur equipe (CT bleu / T jaune) avec contour fonce.
-    // Anneau interieur : COULEUR JOUEUR (centre du pin, distinct par teammate).
-    // Orientation : fleche blanche bien visible pointe vers le yaw.
+    if (playerPinImg.complete && playerPinImg.naturalWidth) {
+      // Drop shadow sous la base du pin (tip pointe)
+      ctx.beginPath(); ctx.ellipse(cx + 1, cy + PIN_H - holeYPx, 5, 2, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fill();
 
-    // 1. Anneau team
-    ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI * 2);
-    ctx.fillStyle = teamColor; ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 1.5; ctx.stroke();
+      // Pin : positionne pour que le trou blanc soit en (cx, cy)
+      ctx.drawImage(playerPinImg, cx - PIN_W / 2, cy - holeYPx, PIN_W, PIN_H);
 
-    // 2. Centre colore par joueur (distingue les 5 d'une meme equipe)
-    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-    ctx.fillStyle = color.solid; ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 0.8; ctx.stroke();
+      // Centre recolore par couleur joueur (par-dessus le trou blanc du PNG)
+      ctx.beginPath(); ctx.arc(cx, cy, holeR, 0, Math.PI * 2);
+      ctx.fillStyle = color.solid; ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1; ctx.stroke();
+    } else {
+      // Fallback si PNG pas encore charge : cercle team + centre joueur
+      ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+      ctx.fillStyle = teamColor; ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+      ctx.fillStyle = color.solid; ctx.fill();
+    }
 
-    // 3. Fleche orientation (blanc + contour noir, bien visible)
+    // Fleche orientation (blanc + contour noir) par-dessus le pin
     const arrowLen = 17, arrowW = 6;
     const tipX = cx + Math.cos(yawRad) * arrowLen;
     const tipY = cy + Math.sin(yawRad) * arrowLen;
-    const baseR = 5;
+    const baseR = 6;
     const lX = cx + Math.cos(yawRad + Math.PI / 2) * arrowW + Math.cos(yawRad) * baseR;
     const lY = cy + Math.sin(yawRad + Math.PI / 2) * arrowW + Math.sin(yawRad) * baseR;
     const rX = cx + Math.cos(yawRad - Math.PI / 2) * arrowW + Math.cos(yawRad) * baseR;
@@ -1939,6 +1950,14 @@ function preloadWeaponIcons() {
   const files = new Set(Object.values(WEAPON_FILE_MAP));
   files.forEach(f => getWeaponImg(f));
 }
+
+// Player pin PNG (location.png fourni par l'utilisateur, centre recolore par joueur).
+// Mesures intrinseques du PNG : hole (cercle blanc) centre ~ 35% sous le top,
+// horizontalement centre. Tip 100% bas. Rapport 1:1 carre.
+const playerPinImg = new Image();
+playerPinImg.src = 'icons/player_pin.png';
+const PIN_HOLE_Y_RATIO = 0.38;  // centre du trou blanc, en % de la hauteur depuis le top
+const PIN_HOLE_R_RATIO = 0.17;  // rayon du trou blanc, en % de la hauteur
 
 const _noDropWeapons = /^(grenade|hegrenade|flashbang|smokegrenade|molotov|incgrenade|decoy|c4|healthshot|planted_c4|taser)$/;
 
