@@ -1904,21 +1904,22 @@ function drawEffects(frame, W, H) {
   const _rd = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
   const _rStart = _rd.startTick || 0, _rEnd = (_rd.endTick || 999999) + 2000;
   grenades.forEach(g => {
-    if (!g.tick || !g.detonTick) return;
+    if (!g.tick) return;
     if (g.tick < _rStart || g.tick > _rEnd) return;
+    // Si le parser n'a pas pu determiner le point d'explosion (ni via path
+    // ni via event detonate coherent), on SKIP totalement cette grenade.
+    // Evite le bug "explosion a l'endroit du lancer" du a detonX === g.x.
+    if (g.detonX == null || g.detonY == null || g.detonTick == null) return;
+
+    const hasPathData = !!(g.path && g.path.length >= 4);
     const _lp = w2c(g.x, g.y);
     const _dp = w2c(g.detonX, g.detonY);
     const lx = _lp.x * scaleX, ly = _lp.y * scaleY;
     const dx2 = _dp.x * scaleX, dy2 = _dp.y * scaleY;
-    const hasPathData = !!(g.path && g.path.length >= 4);
-    // With real trajectory data, trust the landing spot. Otherwise require
-    // meaningful distance from the throw (guards against bogus event matches).
-    const hasValidDeton = hasPathData ||
-      (g.detonX !== 0 && (Math.abs(g.detonX - g.x) > 50 || Math.abs(g.detonY - g.y) > 50));
 
-    // Trajectory
+    // Trajectory : la grenade est en vol entre tick et detonTick
     if (tick >= g.tick && tick < g.detonTick && inBounds(lx, ly)) {
-      if (g.path && g.path.length >= 4) {
+      if (hasPathData) {
         // Real trajectory from parseGrenades: polyline that bounces off walls.
         // Path is a flat array [x1, y1, x2, y2, ...] in world coordinates.
         const numPts = g.path.length / 2;
@@ -1953,39 +1954,43 @@ function drawEffects(frame, W, H) {
         ctx.beginPath(); ctx.arc(curX, curY, 3, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
       } else {
-        // Fallback: straight-line interpolation (old demos without path data).
-        const tx = hasValidDeton ? dx2 : lx;
-        const ty = hasValidDeton ? dy2 : ly;
-        const trajDx = tx - lx;
-        const trajDy = ty - ly;
+        // Fallback: straight-line interpolation (pas de path, detonation
+        // venant d'un event filtrered par proximite spatiale cote parser).
+        const trajDx = dx2 - lx;
+        const trajDy = dy2 - ly;
         const trajLen = Math.sqrt(trajDx * trajDx + trajDy * trajDy);
-        if (trajLen <= 350) {
-          const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
-          const curX = lx + trajDx * progress;
-          const curY = ly + trajDy * progress;
-          ctx.setLineDash([3, 3]);
-          ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(curX, curY); ctx.stroke();
-          ctx.setLineDash([]);
-          ctx.beginPath(); ctx.arc(curX, curY, 3, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
-        }
+        // Si le point de detonation est au meme endroit que le lancer (< 20px
+        // ecran), on ne dessine pas la grenade en vol : c'etait clairement
+        // un mauvais match qui a passe les filtres du parser.
+        if (trajLen <= 20) return;
+        const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
+        const curX = lx + trajDx * progress;
+        const curY = ly + trajDy * progress;
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(curX, curY); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(curX, curY, 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
       }
     }
 
-    // Effect on impact
-    if (!g.endTick || !hasValidDeton) return;
+    // Effect on impact : n'affiche l'explosion que si distance throw-deton
+    // est coherente (evite les "boom a l'endroit du lancer").
+    if (!g.endTick) return;
     const isActive = tick >= g.detonTick && tick <= g.endTick;
     if (!isActive) return;
     const px = dx2, py = dy2;
     if (!inBounds(px, py)) return;
-    // Without real trajectory data, guard against bogus detonation matches by
-    // rejecting landings more than 350px from the throw position on screen.
-    if (!hasPathData) {
-      const impDx = dx2 - lx;
-      const impDy = dy2 - ly;
-      if (Math.sqrt(impDx * impDx + impDy * impDy) > 350) return;
-    }
+    // Double check : si la detonation est quasi au meme endroit que le
+    // lancer (< 20px ecran), probable match errone. Ne dessine pas l'effet.
+    const impDx = dx2 - lx;
+    const impDy = dy2 - ly;
+    const impDist = Math.sqrt(impDx * impDx + impDy * impDy);
+    if (impDist <= 20) return;
+    // Garde supplementaire pour les fallbacks : si pas de path ET distance
+    // > 350px, probablement un mauvais match d'un autre joueur.
+    if (!hasPathData && impDist > 350) return;
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
 
