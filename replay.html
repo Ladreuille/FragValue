@@ -173,6 +173,24 @@
     .player-gear .icon img{display:block;height:14px;width:auto;max-width:48px;filter:brightness(1.2) invert(0)}
     .player-gear .icon.off{opacity:.4}
     .player-gear .icon.off img{filter:brightness(.6) grayscale(1)}
+    .player-gear-sep{width:1px;height:14px;background:rgba(255,255,255,.1);margin:0 2px}
+    .nade-slot{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:14px;height:14px;border-radius:50%;
+      font-family:var(--mono);font-size:8px;font-weight:700;
+      flex-shrink:0;position:relative;
+    }
+    .nade-slot.smk{background:rgba(180,180,180,.85);color:#111}
+    .nade-slot.fl{background:rgba(255,230,80,.9);color:#5a3f00}
+    .nade-slot.he{background:rgba(230,70,70,.9);color:#fff}
+    .nade-slot.mol{background:rgba(255,110,20,.9);color:#fff}
+    .nade-slot.dec{background:rgba(100,90,255,.85);color:#fff}
+    .nade-slot.c4{background:rgba(255,40,40,.95);color:#fff;border:1px solid rgba(255,255,255,.35)}
+    .nade-slot .count{
+      position:absolute;top:-4px;right:-4px;
+      background:#0b0c0c;border:1px solid rgba(255,255,255,.35);
+      font-size:7px;padding:0 3px;border-radius:4px;line-height:9px;color:#b8ff57;
+    }
 
     /* ── Bottom bar: rounds + timeline + controls ──────────────── */
     .bottombar{
@@ -520,6 +538,13 @@ function expandPositions(pos) {
       hasDefuser: !!p.d,
       money: p.m ?? 0,
       yaw: p.ya ?? 0,
+      // Inventaire grenades (depuis parseTicks.inventory)
+      smk: p.smk ?? 0,
+      fl:  p.fl  ?? 0,
+      heg: p.heg ?? 0,
+      mol: p.mol ?? 0,
+      dec: p.dec ?? 0,
+      c4:  p.c4  ?? 0,
     }));
   });
   return pos;
@@ -930,6 +955,15 @@ function getDefuseIcon(active) {
   return '<svg width="10" height="10" viewBox="0 0 10 10"><line x1="5" y1="1" x2="5" y2="9" stroke="' + c + '" stroke-width="1.5"/><line x1="1" y1="5" x2="9" y2="5" stroke="' + c + '" stroke-width="1.5"/></svg>';
 }
 
+// Nade slot : petit cercle code couleur par type + compteur si > 1
+function renderNadeSlot(type, count, team) {
+  const labels = { smk: 'S', fl: 'F', he: 'H', mol: 'M', dec: 'D', c4: 'C4' };
+  const label = labels[type] || '?';
+  const cls = type === 'mol' && team === 'CT' ? 'mol' : type;
+  const countBadge = count > 1 ? `<span class="count">${count}</span>` : '';
+  return `<span class="nade-slot ${cls}" title="${type.toUpperCase()} x${count}">${label}${countBadge}</span>`;
+}
+
 let _gearDebugLogged = false;
 function updatePlayerStates(frame) {
   if (!frame) return;
@@ -985,6 +1019,18 @@ function updatePlayerStates(frame) {
     // Defuse kit (CT only)
     if (team === 'CT') {
       html += '<span class="icon' + (state?.hasDefuser ? '' : ' off') + '">' + getDefuseIcon(!!state?.hasDefuser) + '</span>';
+    }
+    // Inventaire grenades + C4 : affiche uniquement les slots avec un item
+    const smk = state?.smk ?? 0, fl = state?.fl ?? 0, heg = state?.heg ?? 0;
+    const mol = state?.mol ?? 0, dec = state?.dec ?? 0, c4 = state?.c4 ?? 0;
+    if (smk + fl + heg + mol + dec + c4 > 0) {
+      html += '<span class="player-gear-sep"></span>';
+      if (smk) html += renderNadeSlot('smk', smk);
+      if (fl) html += renderNadeSlot('fl', fl);
+      if (heg) html += renderNadeSlot('he', heg);
+      if (mol) html += renderNadeSlot('mol', mol, team);
+      if (dec) html += renderNadeSlot('dec', dec);
+      if (c4) html += renderNadeSlot('c4', 1);
     }
     gear.innerHTML = html;
 
@@ -1176,6 +1222,13 @@ function buildFrames(round) {
         hasDefuser: nearest.hasDefuser || false,
         money: nearest.money ?? 0,
         yaw: nearest.yaw ?? 0,
+        // Inventaire grenades
+        smk: nearest.smk ?? 0,
+        fl:  nearest.fl  ?? 0,
+        heg: nearest.heg ?? 0,
+        mol: nearest.mol ?? 0,
+        dec: nearest.dec ?? 0,
+        c4:  nearest.c4  ?? 0,
         _dbg: { pt: prev.tick, px: Math.round(prev.x), py: Math.round(prev.y),
                 nt: next.tick, nx: Math.round(next.x), ny: Math.round(next.y),
                 t: t.toFixed(2), dist: Math.round(dist), snap: dist > MAX_INTERP_DIST ? 1 : 0 },
@@ -2028,12 +2081,36 @@ function drawEffects(frame, W, H) {
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
 
+    // Path statique visible pendant la duree de l'effet (apres detonation)
+    // pour qu'on voit les rebonds de la trajectoire meme apres qu'elle soit
+    // retombee. Alpha plus faible que pendant le vol.
+    if (hasPathData && (type.includes('smoke') || type.includes('molotov') || type.includes('incgren'))) {
+      const numPts = g.path.length / 2;
+      ctx.beginPath();
+      const _pp0 = w2c(g.path[0], g.path[1]);
+      ctx.moveTo(_pp0.x * scaleX, _pp0.y * scaleY);
+      for (let i = 1; i < numPts; i++) {
+        const _pp = w2c(g.path[i * 2], g.path[i * 2 + 1]);
+        ctx.lineTo(_pp.x * scaleX, _pp.y * scaleY);
+      }
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = `rgba(${throwColor.rgb},0.35)`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
     // Helper : defere le rendu du label vers la passe finale pour que
     // les labels ne soient jamais recouverts par une autre grenade qui
     // se dessinerait apres (chevauchement smoke/molo).
     const drawLabel = (text, x, y, fillColor, fontSize) => {
       pendingLabels.push({ text, x, y, fillColor, fontSize: fontSize || 11 });
     };
+
+    // Timer de dissipation : affiche les secondes restantes au-dessus de
+    // la grenade (position adaptee selon le type). 64 ticks/s en CS2.
+    const secLeft = Math.max(0, (g.endTick - tick) / 64);
+    const timerTxt = secLeft >= 10 ? Math.round(secLeft) + 's' : secLeft.toFixed(1) + 's';
 
     if (type.includes('smoke')) {
       // SMOKE : cercle gris-blanc avec halo + "SMK" au centre
@@ -2049,8 +2126,9 @@ function drawEffects(frame, W, H) {
       sg.addColorStop(1, `rgba(120,120,120,${a * 0.25})`);
       ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
       ctx.fillStyle = sg; ctx.fill();
-      // Label SMK centre
+      // Label SMK centre + timer dissipation au-dessus
       drawLabel('SMK', px, py, '#ffffff', 12);
+      drawLabel(timerTxt, px, py - r - 8, '#b8ff57', 10);
     } else if (type.includes('flash')) {
       // FLASH : eclair blanc-bleu intense mais court
       const r = 8 + (1 - progress) * 30;
@@ -2101,6 +2179,8 @@ function drawEffects(frame, W, H) {
       // MOLOTOV/INC : flamme large et animee + label au-dessus
       const r = 22 + Math.sin(tick * 0.15) * 3;  // plus gros : 19-25px
       const a = 0.88;
+      // Timer dissipation au-dessus du label
+      drawLabel(timerTxt, px, py - r - 22, '#b8ff57', 10);
       // Halo externe rouge
       ctx.beginPath(); ctx.arc(px, py, r + 5, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(255,80,0,${a * 0.4})`; ctx.lineWidth = 2; ctx.stroke();
@@ -2136,6 +2216,55 @@ function drawEffects(frame, W, H) {
           ctx.strokeStyle = `rgba(255,80,80,${0.4 / w})`; ctx.lineWidth = 1; ctx.stroke();
         }
       }
+    }
+  });
+
+  // ── Bombe : rendu plant + timer + defuse ────────────────────────────────
+  // La bombe plantee a 40s avant d'exploser. Si elle est desamorcee, affichage
+  // "DEFUSED". Si elle explose, affichage "BOOM".
+  const bombPlants = demoData.bombPlants || [];
+  const bombDefuses = demoData.bombDefuses || [];
+  const bombExplodes = demoData.bombExplodes || [];
+  bombPlants.forEach(bp => {
+    if (bp.tick < _rStart || bp.tick > _rEnd) return;
+    if (tick < bp.tick) return;
+    // Chercher defuse/explode du meme round
+    const defuse = bombDefuses.find(d => d.round === bp.round && d.tick >= bp.tick);
+    const explode = bombExplodes.find(e => e.round === bp.round && e.tick >= bp.tick);
+    const endEventTick = defuse ? defuse.tick : (explode ? explode.tick : bp.tick + 40 * 64);
+    if (tick > endEventTick + 192) return; // +3s apres event pour laisser l'indicateur visible
+
+    const bombPos = w2c(bp.x, bp.y);
+    const bx = bombPos.x * scaleX, by = bombPos.y * scaleY;
+    if (!inBounds(bx, by)) return;
+
+    const exploded = explode && tick >= explode.tick;
+    const defused = defuse && tick >= defuse.tick;
+    const secToEnd = Math.max(0, (endEventTick - tick) / 64);
+
+    // Cercle pulsant rouge (ou vert si defused)
+    const pulse = 1 + Math.sin(tick * 0.3) * 0.15;
+    const baseR = 9;
+    const haloColor = defused ? '80,220,120' : (exploded ? '255,80,0' : '255,40,40');
+    // Halo externe
+    ctx.beginPath(); ctx.arc(bx, by, baseR * 2 * pulse, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(${haloColor},0.5)`; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(bx, by, baseR * 1.4 * pulse, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(${haloColor},0.3)`; ctx.lineWidth = 1; ctx.stroke();
+    // Corps : gradient
+    const bg = ctx.createRadialGradient(bx, by, 0, bx, by, baseR);
+    bg.addColorStop(0, `rgba(${haloColor},1)`);
+    bg.addColorStop(1, `rgba(${haloColor},0.4)`);
+    ctx.beginPath(); ctx.arc(bx, by, baseR, 0, Math.PI * 2);
+    ctx.fillStyle = bg; ctx.fill();
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke();
+    // Icone "C4" au centre
+    const label = defused ? 'DEFUSED' : (exploded ? 'BOOM' : 'C4');
+    pendingLabels.push({ text: label, x: bx, y: by + baseR + 10, fillColor: defused ? '#80dc78' : '#ff4444', fontSize: 10 });
+    // Timer sous l'icone : seulement si en cours (ni defuse ni explode)
+    if (!defused && !exploded) {
+      const timerC4 = secToEnd >= 10 ? Math.round(secToEnd) + 's' : secToEnd.toFixed(1) + 's';
+      pendingLabels.push({ text: timerC4, x: bx, y: by - baseR - 10, fillColor: '#ffaa55', fontSize: 11 });
     }
   });
 

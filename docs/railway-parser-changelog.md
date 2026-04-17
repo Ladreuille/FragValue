@@ -4,6 +4,29 @@ Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/frag
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
+## 2026-04-17 — Bomb events + inventaire grenades par joueur
+
+### Bomb events
+
+`bomb_planted` ne retournait que 0 events car les champs user_X / user_Y
+n'etaient pas demandes explicitement. Fix :
+
+- `parseEvent('bomb_planted', [], ['tick', 'total_rounds_played', 'user_name', 'user_X', 'user_Y', 'X', 'Y', 'site'])` :
+  on recupere les coords du planter et le site
+- Ajout `bomb_defused` + `bomb_exploded` pour terminer le timer cote client
+- Payload : `bombPlants`, `bombDefuses`, `bombExplodes` (3 arrays)
+
+### Inventaire grenades
+
+`parseTicks` etend le payload avec le champ `inventory` (array de weapon names).
+On compte par joueur et par tick :
+
+- `smk` (nombre de smokes), `fl` (flashs), `heg` (HE), `mol` (molo/inc), `dec` (decoy), `c4` (0/1)
+- Cles compactes dans `positions` pour garder le payload < 5MB sessionStorage
+
+Cote client : `frame.players[name].smk/fl/heg/mol/dec/c4` disponibles a chaque
+tick interpole, utilises par le HUD pour afficher les icones grenades.
+
 ## 2026-04-17 — Fallback round_end pour rounds non detectes
 
 `round_freeze_end` peut rater le dernier round si le demo se termine juste
