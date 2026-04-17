@@ -1900,7 +1900,11 @@ function drawEffects(frame, W, H) {
     }
   });
 
-  // Grenades
+  // Grenades : rendu en 2 passes pour garantir la visibilite des labels
+  // quand plusieurs grenades se chevauchent (ex: 2 smokes au meme spot).
+  // Passe 1 = tous les effets visuels (cercles, halos, flammes, trajectoires)
+  // Passe 2 = tous les labels SMK/FL/HE/MOLO/DEC par-dessus tout
+  const pendingLabels = [];
   const _rd = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
   const _rStart = _rd.startTick || 0, _rEnd = (_rd.endTick || 999999) + 2000;
   grenades.forEach(g => {
@@ -2010,18 +2014,11 @@ function drawEffects(frame, W, H) {
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
 
-    // Helper : label contraste (contour noir + texte blanc/couleur) pour
-    // garantir la lisibilite sur tous les fonds (fumee, flamme, etc.)
+    // Helper : defere le rendu du label vers la passe finale pour que
+    // les labels ne soient jamais recouverts par une autre grenade qui
+    // se dessinerait apres (chevauchement smoke/molo).
     const drawLabel = (text, x, y, fillColor, fontSize) => {
-      ctx.font = `bold ${fontSize || 11}px "Space Mono",monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-      ctx.strokeText(text, x, y);
-      ctx.fillStyle = fillColor;
-      ctx.fillText(text, x, y);
-      ctx.textBaseline = 'alphabetic';
+      pendingLabels.push({ text, x, y, fillColor, fontSize: fontSize || 11 });
     };
 
     if (type.includes('smoke')) {
@@ -2127,6 +2124,20 @@ function drawEffects(frame, W, H) {
       }
     }
   });
+
+  // Passe 2 : dessine tous les labels par-dessus tous les effets.
+  // Garantit qu'une smoke ne recouvrira jamais le label d'une autre smoke.
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  pendingLabels.forEach(l => {
+    ctx.font = `bold ${l.fontSize}px "Space Mono",monospace`;
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = 'rgba(0,0,0,0.95)';
+    ctx.strokeText(l.text, l.x, l.y);
+    ctx.fillStyle = l.fillColor;
+    ctx.fillText(l.text, l.x, l.y);
+  });
+  ctx.textBaseline = 'alphabetic';
 }
 
 // ══ PLAYBACK CONTROLS ════════════════════════════════════════════════════════
