@@ -1051,6 +1051,25 @@ function updatePlayerStates(frame) {
 
   // Bornes du round courant pour filtrer les grenades lancees
   const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
+  const tickNow = frame.tick || 0;
+
+  // C4 : identifier le porteur actuel = pickup c4 le plus recent dans le round
+  // <= tickNow parmi tous les joueurs. Une seule bombe en jeu a la fois.
+  let currentRoundC4Holder = null;
+  let c4LatestTick = -1;
+  const pickupsAll = demoData.grenadePickups || {};
+  Object.entries(pickupsAll).forEach(([pname, pkList]) => {
+    (pkList || []).forEach(pk => {
+      if (pk.type !== 'c4') return;
+      if (pk.tick > tickNow) return;
+      if (rdData.startTick && pk.tick < rdData.startTick) return;
+      if (rdData.endTick && pk.tick > rdData.endTick) return;
+      if (pk.tick > c4LatestTick) {
+        c4LatestTick = pk.tick;
+        currentRoundC4Holder = pname;
+      }
+    });
+  });
 
   (demoData.playerStats || []).forEach((p, pIdx) => {
     const escaped = CSS.escape(p.name);
@@ -1130,11 +1149,12 @@ function updatePlayerStates(frame) {
         else if (gt.includes('molotov') || gt.includes('incgren')) thrown.mol++;
         else if (gt.includes('decoy')) thrown.dec++;
       });
-      const total = peak.smk + peak.fl + peak.heg + peak.mol + peak.dec + peak.c4;
+      // C4 : seulement le porteur actuel (dernier pickup c4 avant tick courant
+      // parmi tous les T). Une seule bombe en jeu.
+      const showC4 = currentRoundC4Holder === p.name;
+      const total = peak.smk + peak.fl + peak.heg + peak.mol + peak.dec + (showC4 ? 1 : 0);
       if (total > 0) {
         html += '<span class="player-gear-sep"></span>';
-        // Chaque slot rendu peak.X fois : les premiers (peak.X - thrown.X) en
-        // plein, les thrown.X derniers avec la class 'used' (transparent).
         const pushSlots = (type, peakCount, thrownCount, teamForMol) => {
           for (let i = 0; i < peakCount; i++) {
             const isUsed = i >= (peakCount - thrownCount);
@@ -1146,7 +1166,7 @@ function updatePlayerStates(frame) {
         pushSlots('he',  peak.heg, thrown.heg);
         pushSlots('mol', peak.mol, thrown.mol, team);
         pushSlots('dec', peak.dec, thrown.dec);
-        if (peak.c4) html += renderNadeSlot('c4', 1);
+        if (showC4) html += renderNadeSlot('c4', 1);
       }
       gear.innerHTML = html;
     }
@@ -1331,7 +1351,9 @@ function buildFrames(round) {
       if (peak[pk.type] !== undefined) peak[pk.type]++;
     });
     currentRoundPeak[name] = peak;
-    // Peak money/armor/helmet/defuser + best weapon du round
+    // Peak money/armor/helmet/defuser + best weapon STRICTEMENT round-specific.
+    // Pas de fallback all-time : on prefere rien afficher plutot que des valeurs
+    // d'un autre round (ex : $3250 de round 15 affiche au round 1 pistol).
     let bestPrio = 0, bestName = null;
     let peakMoney = 0, peakArmor = 0, peakHelmet = false, peakDefuser = false;
     pts.forEach(p => {
@@ -1342,22 +1364,6 @@ function buildFrames(round) {
       if (p.hasHelmet) peakHelmet = true;
       if (p.hasDefuser) peakDefuser = true;
     });
-    // Fallback ALL-TIME si round-specific data est vide (warmup, etc.)
-    // Recherche dans TOUTES les positions du joueur, pas seulement celles filtrees
-    // par le round. Utile pour round 0 (warmup) ou les samples ont tout a null.
-    if (!bestName || peakMoney === 0) {
-      const allPts = (demoData.positions || {})[name] || [];
-      allPts.forEach(p => {
-        if (!bestName || WEAPON_PRIORITY(p.weapon) > bestPrio) {
-          const prio = WEAPON_PRIORITY(p.weapon);
-          if (prio > bestPrio) { bestPrio = prio; bestName = p.weapon; }
-        }
-        if ((p.money || 0) > peakMoney) peakMoney = p.money;
-        if ((p.armor || 0) > peakArmor) peakArmor = p.armor;
-        if (p.hasHelmet) peakHelmet = true;
-        if (p.hasDefuser) peakDefuser = true;
-      });
-    }
     if (bestName) currentRoundBestWeapon[name] = bestName;
     currentRoundPeakStats[name] = { money: peakMoney, armor: peakArmor, helmet: peakHelmet, defuser: peakDefuser };
   });
