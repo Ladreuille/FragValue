@@ -178,22 +178,21 @@
     .player-gear .icon.off{opacity:.35}
     .player-gear .icon.off img{filter:brightness(.6) grayscale(1)}
     .player-gear-sep{width:1px;height:14px;background:rgba(255,255,255,.1);margin:0 2px}
-    .nade-slot{
+    /* Slot inventaire grenade : icone SVG du jeu (style SCL) */
+    .nade-slot-img{
       display:inline-flex;align-items:center;justify-content:center;
-      width:14px;height:14px;border-radius:50%;
-      font-family:var(--mono);font-size:8px;font-weight:700;
-      flex-shrink:0;position:relative;
+      height:14px;flex-shrink:0;position:relative;
     }
-    .nade-slot.smk{background:rgba(180,180,180,.85);color:#111}
-    .nade-slot.fl{background:rgba(255,230,80,.9);color:#5a3f00}
-    .nade-slot.he{background:rgba(230,70,70,.9);color:#fff}
-    .nade-slot.mol{background:rgba(255,110,20,.9);color:#fff}
-    .nade-slot.dec{background:rgba(100,90,255,.85);color:#fff}
-    .nade-slot.c4{background:rgba(255,40,40,.95);color:#fff;border:1px solid rgba(255,255,255,.35)}
-    .nade-slot .count{
-      position:absolute;top:-4px;right:-4px;
-      background:#0b0c0c;border:1px solid rgba(255,255,255,.35);
-      font-size:7px;padding:0 3px;border-radius:4px;line-height:9px;color:#b8ff57;
+    .nade-slot-img img{
+      height:14px;width:auto;display:block;
+      filter:brightness(1.3) saturate(.7);
+      opacity:.92;
+    }
+    .nade-slot-img .nade-count{
+      position:absolute;top:-4px;right:-5px;
+      background:#0b0c0c;border:1px solid rgba(255,255,255,.3);
+      font-size:7px;padding:0 3px;border-radius:4px;line-height:9px;
+      color:#b8ff57;font-family:var(--mono);font-weight:700;
     }
 
     /* ── Bottom bar: rounds + timeline + controls ──────────────── */
@@ -976,13 +975,20 @@ function getDefuseIcon(active) {
   return '<svg width="10" height="10" viewBox="0 0 10 10"><line x1="5" y1="1" x2="5" y2="9" stroke="' + c + '" stroke-width="1.5"/><line x1="1" y1="5" x2="9" y2="5" stroke="' + c + '" stroke-width="1.5"/></svg>';
 }
 
-// Nade slot : petit cercle code couleur par type + compteur si > 1
+// Nade slot : icone SVG officielle + badge compteur si > 1
 function renderNadeSlot(type, count, team) {
-  const labels = { smk: 'S', fl: 'F', he: 'H', mol: 'M', dec: 'D', c4: 'C4' };
-  const label = labels[type] || '?';
-  const cls = type === 'mol' && team === 'CT' ? 'mol' : type;
-  const countBadge = count > 1 ? `<span class="count">${count}</span>` : '';
-  return `<span class="nade-slot ${cls}" title="${type.toUpperCase()} x${count}">${label}${countBadge}</span>`;
+  const fileMap = {
+    smk: 'smokegrenade',
+    fl:  'flashbang',
+    he:  'hegrenade',
+    mol: team === 'CT' ? 'incgrenade' : 'molotov',  // CT = inc, T = molo
+    dec: 'decoy',
+    c4:  'c4',
+  };
+  const file = fileMap[type];
+  if (!file) return '';
+  const countBadge = count > 1 ? `<span class="nade-count">${count}</span>` : '';
+  return `<span class="nade-slot-img" title="${type.toUpperCase()}${count > 1 ? ' x' + count : ''}"><img src="icons/${file}.svg" alt="${type}" loading="lazy">${countBadge}</span>`;
 }
 
 let _gearDebugLogged = false;
@@ -1971,6 +1977,27 @@ function drawDecoyIcon(ctx, cx, cy, size, color) {
   ctx.restore();
 }
 
+// Affiche l'icone SVG de la grenade en vol (ou un dot fallback si l'image
+// n'est pas encore chargee). Petit halo thrower pour identifier qui lance.
+function drawNadeInFlight(cx, cy, img, hasImg, throwColor) {
+  // Petit halo circulaire colore par le thrower
+  ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(${throwColor.rgb},0.35)`;
+  ctx.fill();
+  if (hasImg) {
+    const h = 12;
+    const w = h * (img.naturalWidth / img.naturalHeight);
+    ctx.save();
+    ctx.filter = 'grayscale(1) brightness(1.8) contrast(1.2)';
+    ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h);
+    ctx.restore();
+  } else {
+    // Fallback dot si l'image SVG n'est pas encore chargee
+    ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = throwColor.solid; ctx.fill();
+  }
+}
+
 // ══ Helpers partages ═════════════════════════════════════════════════════════
 // Bornes du round courant (utilise par drawEffects, drawKillfeed, drawWeaponDrops).
 function getRoundBounds(buffer = 2000) {
@@ -2240,7 +2267,7 @@ function drawEffects(frame, W, H) {
     // des differents joueurs (meme code couleur que les dots joueurs).
     const throwColor = getColor(g.thrower || '') || { solid: '#ffffff', rgb: '255,255,255' };
 
-    // Label type pour identifier la grenade en vol (SMK/FL/HE/MOLO/DEC)
+    // Label type + fichier SVG pour rendre l'icone de la grenade en vol.
     const gType = g.type || '';
     const typeLabel = gType.includes('smoke') ? 'SMK'
                     : gType.includes('flash') ? 'FL'
@@ -2252,6 +2279,15 @@ function drawEffects(frame, W, H) {
                     : gType.includes('hegre') ? '#ff6060'
                     : (gType.includes('molotov') || gType.includes('incgren')) ? '#ffcc66'
                     : gType.includes('decoy') ? '#ff6666' : '#ffffff';
+    // Fichier SVG CS2 pour l'icone de la grenade (utilise weaponImgCache preload)
+    const nadeFile = gType.includes('smoke') ? 'smokegrenade'
+                   : gType.includes('flash') ? 'flashbang'
+                   : gType.includes('hegre') ? 'hegrenade'
+                   : gType.includes('incgren') ? 'incgrenade'
+                   : gType.includes('molotov') ? 'molotov'
+                   : gType.includes('decoy') ? 'decoy' : null;
+    const nadeImg = nadeFile ? getWeaponImg(nadeFile) : null;
+    const hasNadeImg = nadeImg && nadeImg.complete && nadeImg.naturalWidth > 0;
 
     // Trajectory : la grenade est en vol entre tick et detonTick
     if (tick >= g.tick && tick < g.detonTick && inBounds(lx, ly)) {
@@ -2285,11 +2321,7 @@ function drawEffects(frame, W, H) {
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.setLineDash([]);
-        // Petit dot au courant
-        ctx.beginPath(); ctx.arc(curX, curY, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = throwColor.solid; ctx.fill();
-        // Label type leger (bare, pas de pill)
-        if (typeLabel) pendingLabels.push({ text: typeLabel, x: curX, y: curY - 9, fillColor: typeColor, fontSize: 8, bare: true });
+        drawNadeInFlight(curX, curY, nadeImg, hasNadeImg, throwColor);
       } else {
         // Fallback: straight-line interpolation
         const trajDx = dx2 - lx;
@@ -2305,10 +2337,7 @@ function drawEffects(frame, W, H) {
         ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(curX, curY); ctx.stroke();
         ctx.setLineDash([]);
-        // Petit dot
-        ctx.beginPath(); ctx.arc(curX, curY, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = throwColor.solid; ctx.fill();
-        if (typeLabel) pendingLabels.push({ text: typeLabel, x: curX, y: curY - 9, fillColor: typeColor, fontSize: 8, bare: true });
+        drawNadeInFlight(curX, curY, nadeImg, hasNadeImg, throwColor);
       }
     }
 
@@ -2365,16 +2394,15 @@ function drawEffects(frame, W, H) {
     };
 
     if (type.includes('smoke')) {
-      // Smoke : zone delimitee avec fill leger + outline epais + cloud icon.
-      // Apparition quasi-instantanee a la detonation (fade-in 0.36s).
+      // Smoke : APPARITION INSTANTANEE a la detonation (alpha = 1 des le t=0).
+      // Seulement fade-out dans les derniers 8% de la vie. Avant le fade-in
+      // rendait la smoke invisible au moment precis de detonation.
       const r = 22;
-      const fadeInLen = 0.02;
       const fadeOutLen = 0.08;
-      const a = progress < fadeInLen ? progress / fadeInLen
-             : progress > (1 - fadeOutLen) ? (1 - progress) / fadeOutLen : 1;
+      const a = progress > (1 - fadeOutLen) ? (1 - progress) / fadeOutLen : 1;
       // Fill leger : delimite la zone couverte par la fumee
       ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(210,215,220,${a * 0.15})`;
+      ctx.fillStyle = `rgba(210,215,220,${a * 0.18})`;
       ctx.fill();
       // Outline epais pour meilleure visibilite
       ctx.strokeStyle = `rgba(230,235,240,${a * 0.95})`;
