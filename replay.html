@@ -1253,6 +1253,17 @@ function buildFrames(round) {
     });
     currentRoundPeak[name] = peak;
   });
+  // Debug : log un sample de peak inventory pour verifier que les donnees
+  // sont bien presentes dans positions (sinon le HUD restera vide).
+  const _peakSample = Object.entries(currentRoundPeak).slice(0, 3).map(([n, pk]) =>
+    `${n}=S${pk.smk}F${pk.fl}H${pk.heg}M${pk.mol}`).join(' ');
+  console.log(`[peak R${round}] ${_peakSample}`);
+  // Verifier aussi si le 1er sample du 1er joueur a bien le champ smk
+  const _firstName = Object.keys(roundPos)[0];
+  const _firstSample = roundPos[_firstName]?.[0];
+  if (_firstSample) {
+    console.log(`[peak] 1er sample ${_firstName}: smk=${_firstSample.smk} fl=${_firstSample.fl} keys=${Object.keys(_firstSample).join(',')}`);
+  }
 
   frames = [];
   for (let f = 0; f <= N; f++) {
@@ -2438,24 +2449,20 @@ function drawEffects(frame, W, H) {
     };
 
     if (type.includes('smoke')) {
-      // Smoke : cloud TRES visible avec gradient radial pour donner l'effet
-      // de fumee volumetrique. Apparition INSTANTANEE a detonTick.
+      // Smoke : solid white fill TRES opaque pour etre certainement visible.
+      // Plus de gradient complexe qui pouvait etre subtil. Apparition INSTANTANEE.
       const r = 24;
       const fadeOutLen = 0.1;
       const a = progress > (1 - fadeOutLen) ? (1 - progress) / fadeOutLen : 1;
-      // Fill gradient radial (blanc dense au centre, fade sur les bords)
-      const smokeGrad = ctx.createRadialGradient(px, py, r * 0.25, px, py, r);
-      smokeGrad.addColorStop(0, `rgba(240,242,245,${a * 0.55})`);
-      smokeGrad.addColorStop(0.7, `rgba(215,220,225,${a * 0.35})`);
-      smokeGrad.addColorStop(1, `rgba(180,185,190,${a * 0.08})`);
+      // Fill solide blanc gris - 55% d'opacite -> nuage bien visible
       ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
-      ctx.fillStyle = smokeGrad;
+      ctx.fillStyle = `rgba(240,245,250,${a * 0.55})`;
       ctx.fill();
-      // Contour blanc net pour delimiter la zone
-      ctx.strokeStyle = `rgba(240,245,250,${a * 0.95})`;
+      // Contour blanc net et epais
+      ctx.strokeStyle = `rgba(255,255,255,${a})`;
       ctx.lineWidth = 2;
       ctx.stroke();
-      // Cloud icon au centre (plus gros et plus opaque)
+      // Cloud icon au centre
       drawCloudIcon(ctx, px, py, 8, `rgba(255,255,255,${a})`);
       drawBareTimer(timerTxt, px, py - r - 6);
     } else if (type.includes('flash')) {
