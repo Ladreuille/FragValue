@@ -672,44 +672,42 @@ async function startAnalysis() {
       // Essentiels a garder : position, tick, team, round, hp, YAW (orientation pin),
       // weapon (arme active + droppee a la mort), grenades inventory (strip au-dessus
       // du pin). On strippe : armure/helmet/defuser/money (visuel HUD secondaire).
+      // Strip 1 : garde TOUS les HUD essentials (weapon, armor, helmet,
+      // defuser, money, hp, yaw). Drop uniquement les champs grenade deja
+      // absents du parser (smk/fl/...) + r (round derivable depuis tick).
       const stripped = {...data.data};
       if (stripped.positions && typeof stripped.positions === 'object') {
         Object.keys(stripped.positions).forEach(name => {
           stripped.positions[name] = stripped.positions[name].map(p => ({
             x: p.x, y: p.y,
-            t: p.t ?? p.team, r: p.r ?? p.round, k: p.k ?? p.tick, h: p.h ?? p.hp,
+            t: p.t ?? p.team, r: p.r ?? p.round,
+            k: p.k ?? p.tick,
+            h: p.h ?? p.hp,
             ya: p.ya ?? p.yaw ?? 0,
             w: p.w ?? p.weapon ?? null,
-            // HUD essentials : armure, casque, defuser, argent (sinon tout le HUD
-            // apparait vide/transparent pour les joueurs qui ont bought stuff)
             a: p.a ?? p.armor ?? 0,
             he: p.he ?? (p.hasHelmet ? 1 : 0),
             d: p.d ?? (p.hasDefuser ? 1 : 0),
             m: p.m ?? p.money ?? 0,
-            // Inventaire grenades (affiche au-dessus du pin)
-            smk: p.smk ?? 0, fl: p.fl ?? 0, heg: p.heg ?? 0,
-            mol: p.mol ?? 0, dec: p.dec ?? 0, c4: p.c4 ?? 0,
           }));
+        });
+        // Sous-sampling supplementaire : garde 1 position sur 2 pour diviser
+        // la taille par 2 en fallback (reste fluide pour le replay).
+        Object.keys(stripped.positions).forEach(name => {
+          stripped.positions[name] = stripped.positions[name].filter((_, i) => i % 2 === 0);
         });
       }
       try {
         sessionStorage.setItem('demoData', JSON.stringify(stripped));
       } catch(e2) {
-        console.warn('Still too large, ultra-strip (keep yaw even here)');
-        const ultra = {...data.data};
-        if (ultra.positions && typeof ultra.positions === 'object') {
-          Object.keys(ultra.positions).forEach(name => {
-            ultra.positions[name] = ultra.positions[name].map(p => ({
-              x: p.x, y: p.y,
-              t: p.t ?? p.team, r: p.r ?? p.round, k: p.k ?? p.tick,
-              ya: p.ya ?? p.yaw ?? 0,
-            }));
-          });
-        }
+        console.warn('Still too large, sub-sampling plus aggressif...');
+        Object.keys(stripped.positions).forEach(name => {
+          stripped.positions[name] = stripped.positions[name].filter((_, i) => i % 2 === 0);
+        });
         try {
-          sessionStorage.setItem('demoData', JSON.stringify(ultra));
+          sessionStorage.setItem('demoData', JSON.stringify(stripped));
         } catch(e3) {
-          console.warn('Still too large, dropping positions entirely');
+          console.warn('Encore trop gros, drop positions entierement');
           sessionStorage.setItem('demoData', JSON.stringify({...data.data, positions:{}}));
         }
       }
