@@ -1992,6 +1992,19 @@ function drawEffects(frame, W, H) {
     // des differents joueurs (meme code couleur que les dots joueurs).
     const throwColor = getColor(g.thrower || '') || { solid: '#ffffff', rgb: '255,255,255' };
 
+    // Label type pour identifier la grenade en vol (SMK/FL/HE/MOLO/DEC)
+    const gType = g.type || '';
+    const typeLabel = gType.includes('smoke') ? 'SMK'
+                    : gType.includes('flash') ? 'FL'
+                    : gType.includes('hegre') ? 'HE'
+                    : (gType.includes('molotov') || gType.includes('incgren')) ? 'MOLO'
+                    : gType.includes('decoy') ? 'DEC' : null;
+    const typeColor = gType.includes('smoke') ? '#ffffff'
+                    : gType.includes('flash') ? '#ffffaa'
+                    : gType.includes('hegre') ? '#ff6060'
+                    : (gType.includes('molotov') || gType.includes('incgren')) ? '#ffcc66'
+                    : gType.includes('decoy') ? '#ff6666' : '#ffffff';
+
     // Trajectory : la grenade est en vol entre tick et detonTick
     if (tick >= g.tick && tick < g.detonTick && inBounds(lx, ly)) {
       if (hasPathData) {
@@ -2035,6 +2048,8 @@ function drawEffects(frame, W, H) {
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fill();
         ctx.beginPath(); ctx.arc(curX, curY, 3.2, 0, Math.PI * 2);
         ctx.fillStyle = throwColor.solid; ctx.fill();
+        // Label type au-dessus du dot pour identifier la grenade en vol
+        if (typeLabel) pendingLabels.push({ text: typeLabel, x: curX, y: curY - 11, fillColor: typeColor, fontSize: 9 });
       } else {
         // Fallback: straight-line interpolation
         const trajDx = dx2 - lx;
@@ -2059,6 +2074,8 @@ function drawEffects(frame, W, H) {
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fill();
         ctx.beginPath(); ctx.arc(curX, curY, 3.2, 0, Math.PI * 2);
         ctx.fillStyle = throwColor.solid; ctx.fill();
+        // Label type au-dessus du dot
+        if (typeLabel) pendingLabels.push({ text: typeLabel, x: curX, y: curY - 11, fillColor: typeColor, fontSize: 9 });
       }
     }
 

@@ -1746,6 +1746,19 @@ function rfDrawEffects(frame, W, H) {
     const launchPos = w2c(g.x, g.y, rfMapName, W, H);
     const detonPos  = w2c(g.detonX, g.detonY, rfMapName, W, H);
 
+    // Label type pour identifier la grenade en vol
+    const gType = g.type || '';
+    const typeLabel = gType.includes('smoke') ? 'SMK'
+                    : gType.includes('flash') ? 'FL'
+                    : gType.includes('hegre') ? 'HE'
+                    : (gType.includes('molotov') || gType.includes('incgren')) ? 'MOLO'
+                    : gType.includes('decoy') ? 'DEC' : null;
+    const typeColor = gType.includes('smoke') ? '#ffffff'
+                    : gType.includes('flash') ? '#ffffaa'
+                    : gType.includes('hegre') ? '#ff6060'
+                    : (gType.includes('molotov') || gType.includes('incgren')) ? '#ffcc66'
+                    : gType.includes('decoy') ? '#ff6666' : '#ffffff';
+
     // Trajectoire : polyline a rebonds si path dispo, sinon interpolation lineaire.
     if (tick >= g.tick && tick < g.detonTick && inBounds(launchPos.px,launchPos.py,W,H)) {
       if (hasPathData) {
@@ -1777,6 +1790,8 @@ function rfDrawEffects(frame, W, H) {
         // Dot courant
         rfCtx.beginPath(); rfCtx.arc(_cp.px, _cp.py, 3, 0, Math.PI*2);
         rfCtx.fillStyle = 'rgba(255,255,255,0.9)'; rfCtx.fill();
+        // Label type au-dessus (identifie la grenade en vol)
+        if (typeLabel) rfLabels.push({ text: typeLabel, x: _cp.px, y: _cp.py - 10, color: typeColor, size: 8 });
       } else {
         // Fallback : trait droit
         const trajDx = detonPos.px - launchPos.px;
@@ -1793,6 +1808,7 @@ function rfDrawEffects(frame, W, H) {
           rfCtx.setLineDash([]);
           rfCtx.beginPath(); rfCtx.arc(curX, curY, 3, 0, Math.PI*2);
           rfCtx.fillStyle = 'rgba(255,255,255,0.9)'; rfCtx.fill();
+          if (typeLabel) rfLabels.push({ text: typeLabel, x: curX, y: curY - 10, color: typeColor, size: 8 });
         }
       }
     }
