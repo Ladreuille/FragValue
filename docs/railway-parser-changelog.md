@@ -4,6 +4,26 @@ Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/frag
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
+## 2026-04-17 — HE detonTick precis (recale sur event)
+
+Le dernier point de `parseGrenades` continue parfois d'etre tracke 2-4 ticks
+apres l'explosion reelle d'une HE (le projectile a un "ghost state"). Le client
+voyait donc un delai anormal entre le lancer et le boom.
+
+### Fix
+
+Pour les grenades de type HE et flash : apres avoir choisi `detonTick = lastPoint.tick`
+via la trajectoire, on cherche le `hegrenade_detonate` / `flashbang_detonate`
+event le plus proche spatialement du lastPoint (< 400px, tick <= lastPoint.tick + 64)
+et on recale `detonTick` dessus.
+
+Les points du path ecrits dans le payload sont aussi filtres pour ne pas
+continuer au-dela de ce detonTick (evite la queue fantome visible dans le replay).
+
+Pas de changement pour smokes/molotov/decoy : leurs events ont des timings
+differents (smoke_started != smoke_expired, inferno_startburn est le debut de
+flamme pas le lancer), donc le lastPoint du path reste la meilleure source.
+
 ## 2026-04-17 — Fix trajectoires grenades (rebonds)
 
 Ajout de l'extraction des trajectoires complètes via `parseGrenades` du SDK

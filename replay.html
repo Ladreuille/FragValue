@@ -1904,10 +1904,24 @@ function drawEffects(frame, W, H) {
   // quand plusieurs grenades se chevauchent (ex: 2 smokes au meme spot).
   // Passe 1 = tous les effets visuels (cercles, halos, flammes, trajectoires)
   // Passe 2 = tous les labels SMK/FL/HE/MOLO/DEC par-dessus tout
+  //
+  // Tri explicite par priorite de rendu : smokes en premier (couche du bas)
+  // pour que les flammes de molotov lancees dans la fumee restent visibles.
+  // Ordre : smoke < decoy < flash < HE < molotov/inc (molo dessus)
+  const grenadeZIndex = (t) => {
+    t = t || '';
+    if (t.includes('smoke')) return 0;
+    if (t.includes('decoy')) return 1;
+    if (t.includes('flash')) return 2;
+    if (t.includes('hegre')) return 3;
+    if (t.includes('molotov') || t.includes('incgren')) return 4;
+    return 5;
+  };
+  const sortedGrenades = [...grenades].sort((a, b) => grenadeZIndex(a.type) - grenadeZIndex(b.type));
   const pendingLabels = [];
   const _rd = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
   const _rStart = _rd.startTick || 0, _rEnd = (_rd.endTick || 999999) + 2000;
-  grenades.forEach(g => {
+  sortedGrenades.forEach(g => {
     if (!g.tick) return;
     if (g.tick < _rStart || g.tick > _rEnd) return;
     // Si le parser n'a pas pu determiner le point d'explosion (ni via path
@@ -2127,13 +2141,36 @@ function drawEffects(frame, W, H) {
 
   // Passe 2 : dessine tous les labels par-dessus tous les effets.
   // Garantit qu'une smoke ne recouvrira jamais le label d'une autre smoke.
+  // Chaque label est prefixe d'un pill sombre pour garantir la lisibilite
+  // meme sur une smoke blanche ou une flamme lumineuse.
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   pendingLabels.forEach(l => {
     ctx.font = `bold ${l.fontSize}px "Space Mono",monospace`;
-    ctx.lineWidth = 3.5;
-    ctx.strokeStyle = 'rgba(0,0,0,0.95)';
-    ctx.strokeText(l.text, l.x, l.y);
+    // Pill sombre adapte a la longueur du texte
+    const metrics = ctx.measureText(l.text);
+    const padX = 5, padY = 3;
+    const w = Math.ceil(metrics.width) + padX * 2;
+    const h = l.fontSize + padY * 2;
+    const rx = l.x - w / 2, ry = l.y - h / 2;
+    const rad = 3;
+    ctx.beginPath();
+    ctx.moveTo(rx + rad, ry);
+    ctx.lineTo(rx + w - rad, ry);
+    ctx.quadraticCurveTo(rx + w, ry, rx + w, ry + rad);
+    ctx.lineTo(rx + w, ry + h - rad);
+    ctx.quadraticCurveTo(rx + w, ry + h, rx + w - rad, ry + h);
+    ctx.lineTo(rx + rad, ry + h);
+    ctx.quadraticCurveTo(rx, ry + h, rx, ry + h - rad);
+    ctx.lineTo(rx, ry + rad);
+    ctx.quadraticCurveTo(rx, ry, rx + rad, ry);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(0,0,0,0.78)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Texte par-dessus
     ctx.fillStyle = l.fillColor;
     ctx.fillText(l.text, l.x, l.y);
   });
