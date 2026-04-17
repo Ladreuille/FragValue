@@ -1429,12 +1429,25 @@ function drawFrame(idx) {
       ctx.fillStyle = color.solid; ctx.fill();
     }
 
-    // Name label with pill background
-    ctx.font = 'bold 9px "Space Mono",monospace'; ctx.textAlign = 'center';
+    // Pill name + arme active : icone de l'arme que le joueur tient EN TEMPS REEL
+    // a gauche, pseudo a droite, dans une seule pill sombre au-dessus du pin.
+    ctx.font = 'bold 9px "Space Mono",monospace';
     const label = name.slice(0, 10);
     const tw = ctx.measureText(label).width;
-    const lx = cx - tw / 2 - 5, ly = cy - 26, lw = tw + 10, lh = 14;
-    // Rounded rect background
+    // Lookup icone arme active (weapon file dans WEAPON_FILE_MAP)
+    const weaponKey = normalizeWeaponName(p.weapon);
+    const weaponFile = weaponKey ? WEAPON_FILE_MAP[weaponKey] : null;
+    const weaponImg = weaponFile ? getWeaponImg(weaponFile) : null;
+    const hasIcon = weaponImg && weaponImg.complete && weaponImg.naturalWidth > 0;
+    // Taille icone adaptee a la pill (hauteur 10px, largeur proportionnelle)
+    const iconH = 10;
+    const iconW = hasIcon ? Math.min(18, iconH * (weaponImg.naturalWidth / weaponImg.naturalHeight)) : 0;
+    const iconGap = hasIcon ? 4 : 0;
+    const padX = 5;
+    const lw = padX + iconW + iconGap + tw + padX;
+    const lh = 14;
+    const lx = cx - lw / 2, ly = cy - 26;
+    // Pill sombre arrondie
     const lr = 3;
     ctx.beginPath();
     ctx.moveTo(lx + lr, ly); ctx.lineTo(lx + lw - lr, ly);
@@ -1446,9 +1459,21 @@ function drawFrame(idx) {
     ctx.lineTo(lx, ly + lr);
     ctx.quadraticCurveTo(lx, ly, lx + lr, ly);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.82)'; ctx.fill();
+    ctx.strokeStyle = `rgba(${teamRGB},.35)`; ctx.lineWidth = 1; ctx.stroke();
+    // Icone arme (grayscale clair pour ressortir sur fond noir)
+    if (hasIcon) {
+      ctx.save();
+      ctx.filter = 'grayscale(1) brightness(1.6)';
+      ctx.drawImage(weaponImg, lx + padX, ly + (lh - iconH) / 2, iconW, iconH);
+      ctx.restore();
+    }
+    // Pseudo
     ctx.fillStyle = '#fff';
-    ctx.fillText(label, cx, cy - 15);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, lx + padX + iconW + iconGap, ly + lh / 2);
+    ctx.textBaseline = 'alphabetic';
   });
 
   // Bomb planted indicator
