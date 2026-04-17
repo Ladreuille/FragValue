@@ -1697,57 +1697,111 @@ function rfDrawEffects(frame, W, H) {
   // Filtrer grenades du round courant
   const _rd = (demoData.rounds||[]).find(r=>(r.round??-1)===rfRound)||{};
   const _rStart = _rd.startTick||0, _rEnd = (_rd.endTick||999999) + 2000;
-  grenades.forEach(g => {
-    if (!g.tick || !g.detonTick) return;
+
+  // Tri par zIndex pour que les smokes soient dessinees en dessous
+  // (sinon une smoke lancee apres un molo recouvrirait la flamme).
+  const rfZ = (t) => {
+    t = t || '';
+    if (t.includes('smoke')) return 0;
+    if (t.includes('decoy')) return 1;
+    if (t.includes('flash')) return 2;
+    if (t.includes('hegre')) return 3;
+    if (t.includes('molotov') || t.includes('incgren')) return 4;
+    return 5;
+  };
+  const sortedGrenades = [...grenades].sort((a,b) => rfZ(a.type) - rfZ(b.type));
+
+  // Rendu en 2 passes : effets d'abord, labels par-dessus avec pill sombre.
+  const rfLabels = [];
+
+  sortedGrenades.forEach(g => {
+    if (!g.tick) return;
     if (g.tick < _rStart || g.tick > _rEnd) return;
+    // Si le parser n'a pas pu determiner le point d'explosion, on SKIP.
+    if (g.detonX == null || g.detonY == null || g.detonTick == null) return;
+
+    const hasPathData = !!(g.path && g.path.length >= 4);
     const launchPos = w2c(g.x, g.y, rfMapName, W, H);
     const detonPos  = w2c(g.detonX, g.detonY, rfMapName, W, H);
 
-    // Ignorer si detonX/Y = position lanceur (détonation non trouvée)
-    const hasValidDeton = g.detonX !== 0 && (Math.abs(g.detonX - g.x) > 50 || Math.abs(g.detonY - g.y) > 50);
-    // Si pas de détonation distincte, afficher seulement en vol (pas l'effet)
-    const effectPos = hasValidDeton ? detonPos : launchPos;
-
-    // Trajectoire : trait fin entre lanceur et point d'impact
+    // Trajectoire : polyline a rebonds si path dispo, sinon interpolation lineaire.
     if (tick >= g.tick && tick < g.detonTick && inBounds(launchPos.px,launchPos.py,W,H)) {
-      const targetPos = hasValidDeton ? detonPos : launchPos;
-      // Vérifier que la trajectoire n'est pas impossible (> 350px = mauvais matching)
-      const trajDx = targetPos.px - launchPos.px;
-      const trajDy = targetPos.py - launchPos.py;
-      const trajLen = Math.sqrt(trajDx*trajDx + trajDy*trajDy);
-      if(trajLen <= 350) {
-        const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
-        const curX = launchPos.px + trajDx * progress;
-        const curY = launchPos.py + trajDy * progress;
-        rfCtx.setLineDash([3,3]);
-        rfCtx.strokeStyle = 'rgba(255,255,255,0.4)';
-        rfCtx.lineWidth = 1;
-        rfCtx.beginPath(); rfCtx.moveTo(launchPos.px, launchPos.py); rfCtx.lineTo(curX, curY); rfCtx.stroke();
+      if (hasPathData) {
+        const numPts = g.path.length / 2;
+        const progress = Math.max(0, Math.min(1, (tick - g.tick) / Math.max(g.detonTick - g.tick, 1)));
+        const fIdx = progress * (numPts - 1);
+        const i0 = Math.floor(fIdx);
+        const i1 = Math.min(numPts - 1, i0 + 1);
+        const f = fIdx - i0;
+        const wx0 = g.path[i0*2], wy0 = g.path[i0*2+1];
+        const wx1 = g.path[i1*2], wy1 = g.path[i1*2+1];
+        const curWX = wx0 * (1-f) + wx1 * f;
+        const curWY = wy0 * (1-f) + wy1 * f;
+        const _cp = w2c(curWX, curWY, rfMapName, W, H);
+        // Polyline a rebonds
+        rfCtx.beginPath();
+        const _p0 = w2c(g.path[0], g.path[1], rfMapName, W, H);
+        rfCtx.moveTo(_p0.px, _p0.py);
+        for (let i = 1; i <= i0; i++) {
+          const _pp = w2c(g.path[i*2], g.path[i*2+1], rfMapName, W, H);
+          rfCtx.lineTo(_pp.px, _pp.py);
+        }
+        rfCtx.lineTo(_cp.px, _cp.py);
+        rfCtx.setLineDash([4,3]);
+        rfCtx.strokeStyle = 'rgba(255,255,255,0.55)';
+        rfCtx.lineWidth = 1.2;
+        rfCtx.stroke();
         rfCtx.setLineDash([]);
-        rfCtx.beginPath(); rfCtx.arc(curX, curY, 3, 0, Math.PI*2);
+        // Dot courant
+        rfCtx.beginPath(); rfCtx.arc(_cp.px, _cp.py, 3, 0, Math.PI*2);
         rfCtx.fillStyle = 'rgba(255,255,255,0.9)'; rfCtx.fill();
+      } else {
+        // Fallback : trait droit
+        const trajDx = detonPos.px - launchPos.px;
+        const trajDy = detonPos.py - launchPos.py;
+        const trajLen = Math.sqrt(trajDx*trajDx + trajDy*trajDy);
+        if (trajLen > 20) {
+          const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
+          const curX = launchPos.px + trajDx * progress;
+          const curY = launchPos.py + trajDy * progress;
+          rfCtx.setLineDash([3,3]);
+          rfCtx.strokeStyle = 'rgba(255,255,255,0.4)';
+          rfCtx.lineWidth = 1;
+          rfCtx.beginPath(); rfCtx.moveTo(launchPos.px, launchPos.py); rfCtx.lineTo(curX, curY); rfCtx.stroke();
+          rfCtx.setLineDash([]);
+          rfCtx.beginPath(); rfCtx.arc(curX, curY, 3, 0, Math.PI*2);
+          rfCtx.fillStyle = 'rgba(255,255,255,0.9)'; rfCtx.fill();
+        }
       }
     }
 
-    // Effet à l'impact : seulement si détonation connue
-    if (!g.endTick || !hasValidDeton) return;
+    // Effet a l'impact
+    if (!g.endTick) return;
     const isActive = tick >= g.detonTick && tick <= g.endTick;
     if (!isActive) return;
     const {px,py} = detonPos;
     if (!inBounds(px,py,W,H)) return;
-    // Vérifier distance max lancer→explosion (~350px max sur minimap)
+    // Guard : explosion quasi au lancer → ne dessine pas (bug match)
     const impDx = detonPos.px - launchPos.px;
     const impDy = detonPos.py - launchPos.py;
-    if(Math.sqrt(impDx*impDx + impDy*impDy) > 350) return;
+    const impDist = Math.sqrt(impDx*impDx + impDy*impDy);
+    if (impDist <= 15) return;
+    // Garde supplementaire si pas de path ET distance excessive
+    if (!hasPathData && impDist > 400) return;
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
+
+    // Helper : defere le label vers la passe finale
+    const pushLabel = (text, x, y, color, size) => {
+      rfLabels.push({ text, x, y, color, size: size || 9 });
+    };
 
     if (type.includes('smoke')) {
       // SMOKE : grand nuage gris semi-transparent qui grossit progressivement
       const r = 12 + progress * 32; // 12 → 44px
       const alpha = progress < 0.08 ? progress/0.08*0.82
                   : progress > 0.88 ? (1-progress)/0.12*0.82 : 0.82;
-      // Couche extérieure diffuse
+      // Couche exterieure diffuse
       rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
       rfCtx.fillStyle=`rgba(160,160,160,${alpha*0.45})`; rfCtx.fill();
       // Couche centrale opaque
@@ -1755,65 +1809,55 @@ function rfDrawEffects(frame, W, H) {
       rfCtx.fillStyle=`rgba(200,200,200,${alpha*0.75})`; rfCtx.fill();
       // Contour
       rfCtx.strokeStyle=`rgba(120,120,120,${alpha*0.5})`; rfCtx.lineWidth=1.5; rfCtx.stroke();
-      // Label "SMK"
-      rfCtx.fillStyle=`rgba(255,255,255,${alpha*0.8})`; rfCtx.font='bold 8px JetBrains Mono,monospace'; rfCtx.textAlign='center';
-      rfCtx.fillText('SMK',px,py+3);
+      // Label SMK au centre, pill sombre en passe 2
+      pushLabel('SMK', px, py, '#ffffff', 10);
 
     } else if (type.includes('flash')) {
-      // FLASH : étoile blanche éclatante + halo cyan
+      // FLASH : etoile blanche eclatante + halo cyan
       const r = 4 + (1-progress)*22;
       const alpha = Math.pow(1-progress, 0.5) * 0.95;
-      // Halo cyan externe
       rfCtx.beginPath(); rfCtx.arc(px,py,r*1.4,0,Math.PI*2);
       rfCtx.fillStyle=`rgba(180,240,255,${alpha*0.3})`; rfCtx.fill();
-      // Cercle blanc central
       rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
       rfCtx.fillStyle=`rgba(255,255,255,${alpha})`; rfCtx.fill();
-      // Rayons
       for(let a=0;a<8;a++){
         const angle=a*Math.PI/4, len=r*0.8;
         rfCtx.strokeStyle=`rgba(255,255,220,${alpha*0.7})`; rfCtx.lineWidth=1.5;
         rfCtx.beginPath(); rfCtx.moveTo(px+Math.cos(angle)*r*0.3,py+Math.sin(angle)*r*0.3);
         rfCtx.lineTo(px+Math.cos(angle)*(r+len),py+Math.sin(angle)*(r+len)); rfCtx.stroke();
       }
+      if (progress < 0.7) pushLabel('FL', px, py, '#ffffaa', 9);
 
     } else if (type.includes('hegre')) {
       // HE : explosion avec onde de choc
       const r = 3 + progress*24;
       const alpha = Math.pow(1-progress,0.6)*0.9;
-      // Onde de choc orange
       rfCtx.beginPath(); rfCtx.arc(px,py,r*1.3,0,Math.PI*2);
       rfCtx.strokeStyle=`rgba(255,140,0,${alpha*0.6})`; rfCtx.lineWidth=2; rfCtx.stroke();
-      // Boule de feu centrale rouge→orange
       rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
       const hg = rfCtx.createRadialGradient(px,py,0,px,py,r);
       hg.addColorStop(0,`rgba(255,255,100,${alpha})`);
       hg.addColorStop(0.5,`rgba(255,100,0,${alpha})`);
       hg.addColorStop(1,`rgba(200,0,0,${alpha*0.5})`);
       rfCtx.fillStyle=hg; rfCtx.fill();
-      // Label "HE"
-      if(progress<0.5){rfCtx.fillStyle=`rgba(255,255,255,${alpha})`; rfCtx.font='bold 8px JetBrains Mono,monospace'; rfCtx.textAlign='center'; rfCtx.fillText('HE',px,py+3);}
+      if (progress < 0.5) pushLabel('HE', px, py, '#ffffff', 10);
 
     } else if (type.includes('molotov') || type.includes('incgren')) {
-      // MOLOTOV : zone de feu animée
+      // MOLOTOV : zone de feu animee
       const r = 14 + Math.sin(tick*0.15)*2;
       const alpha = 0.85;
-      // Zone brûlante orange
       rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
       const mg = rfCtx.createRadialGradient(px,py,0,px,py,r);
       mg.addColorStop(0,`rgba(255,220,0,${alpha})`);
       mg.addColorStop(0.5,`rgba(255,80,0,${alpha*0.9})`);
       mg.addColorStop(1,`rgba(180,20,0,${alpha*0.4})`);
       rfCtx.fillStyle=mg; rfCtx.fill();
-      // Particules de feu animées
       for(let f=0;f<6;f++){
         const fa=f*Math.PI/3+tick*0.08, fr=r*0.5+Math.sin(tick*0.2+f)*r*0.3;
         rfCtx.beginPath(); rfCtx.arc(px+Math.cos(fa)*fr*0.7, py+Math.sin(fa)*fr*0.7, 2.5,0,Math.PI*2);
         rfCtx.fillStyle=`rgba(255,${150+Math.round(Math.sin(tick*0.3+f)*80)},0,0.9)`; rfCtx.fill();
       }
-      // Label "MOLO"
-      rfCtx.fillStyle='rgba(255,255,200,0.9)'; rfCtx.font='bold 7px JetBrains Mono,monospace'; rfCtx.textAlign='center';
-      rfCtx.fillText('MOLO',px,py+3);
+      pushLabel('MOLO', px, py - r - 6, '#ffcc66', 8);
 
     } else if (type.includes('decoy')) {
       // DECOY : point rouge avec signal radar clignotant
@@ -1821,15 +1865,47 @@ function rfDrawEffects(frame, W, H) {
       rfCtx.beginPath(); rfCtx.arc(px,py,5,0,Math.PI*2);
       rfCtx.fillStyle=`rgba(255,50,50,${blink?0.95:0.5})`; rfCtx.fill();
       rfCtx.strokeStyle='rgba(255,120,120,0.7)'; rfCtx.lineWidth=1.5; rfCtx.stroke();
-      // Ondes radar
       if(blink){
         for(let w=1;w<=2;w++){
           rfCtx.beginPath(); rfCtx.arc(px,py,5+w*6,0,Math.PI*2);
           rfCtx.strokeStyle=`rgba(255,80,80,${0.4/w})`; rfCtx.lineWidth=1; rfCtx.stroke();
         }
       }
+      pushLabel('DEC', px, py - 12, '#ff6666', 8);
     }
   });
+
+  // Passe 2 : tous les labels par-dessus avec pill sombre pour lisibilite
+  rfCtx.textAlign = 'center';
+  rfCtx.textBaseline = 'middle';
+  rfLabels.forEach(l => {
+    rfCtx.font = `bold ${l.size}px "Space Mono","JetBrains Mono",monospace`;
+    const metrics = rfCtx.measureText(l.text);
+    const padX = 4, padY = 2;
+    const w = Math.ceil(metrics.width) + padX * 2;
+    const h = l.size + padY * 2;
+    const rx = l.x - w / 2, ry = l.y - h / 2;
+    const rad = 2.5;
+    rfCtx.beginPath();
+    rfCtx.moveTo(rx + rad, ry);
+    rfCtx.lineTo(rx + w - rad, ry);
+    rfCtx.quadraticCurveTo(rx + w, ry, rx + w, ry + rad);
+    rfCtx.lineTo(rx + w, ry + h - rad);
+    rfCtx.quadraticCurveTo(rx + w, ry + h, rx + w - rad, ry + h);
+    rfCtx.lineTo(rx + rad, ry + h);
+    rfCtx.quadraticCurveTo(rx, ry + h, rx, ry + h - rad);
+    rfCtx.lineTo(rx, ry + rad);
+    rfCtx.quadraticCurveTo(rx, ry, rx + rad, ry);
+    rfCtx.closePath();
+    rfCtx.fillStyle = 'rgba(0,0,0,0.82)';
+    rfCtx.fill();
+    rfCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+    rfCtx.lineWidth = 1;
+    rfCtx.stroke();
+    rfCtx.fillStyle = l.color;
+    rfCtx.fillText(l.text, l.x, l.y);
+  });
+  rfCtx.textBaseline = 'alphabetic';
 }
 
 function rfSelectRound(round,btn){
