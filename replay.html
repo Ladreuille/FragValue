@@ -1126,10 +1126,13 @@ function updatePlayerStates(frame) {
     }
 
     if (!_gearDebugLogged && pIdx === 0) {
-      console.log('[updatePlayerStates] sample player:', p.name,
-        'state:', state ? { w: state.weapon, hp: state.hp, a: state.armor, he: state.hasHelmet, d: state.hasDefuser, m: state.money } : 'NO STATE',
-        'gear.innerHTML length:', gear.innerHTML.length,
-        'children:', gear.children.length);
+      // Log ALL 10 joueurs une fois par round pour diagnostiquer
+      (demoData.playerStats || []).forEach(pp => {
+        const ss = frame.players[pp.name];
+        const ps = currentRoundPeakStats[pp.name] || {};
+        const bw = currentRoundBestWeapon[pp.name];
+        console.log(`[HUD ${pp.name}] state.w=${ss?.weapon || 'null'} m=${ss?.money || 0} a=${ss?.armor || 0} | peak.m=${ps.money || 0} a=${ps.armor || 0} he=${ps.helmet || false} | bestW=${bw || 'null'}`);
+      });
       _gearDebugLogged = true;
     }
   });
