@@ -1536,6 +1536,55 @@ function drawFrame(idx) {
     ctx.lineCap = 'butt';
   });
 
+  // ── C4 state : porteur actuel ou location dropee au sol ──
+  // Logique : dernier pickup c4 ≤ tick courant = carrier. Si ce joueur est
+  // mort depuis le pickup sans que personne d'autre n'ait repris, la bombe
+  // est droppee a sa mort location. Si plantee, ne pas afficher (rendue par
+  // drawEffects).
+  let mapC4Carrier = null;
+  let mapC4DroppedAt = null;
+  (() => {
+    const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
+    const rdStartTick = rdData.startTick || 0;
+    const rdEndTick = rdData.endTick || Infinity;
+    const tickNow = frame.tick || 0;
+    // Bombe deja plantee ? Si oui, skip (rendu par drawEffects).
+    const planted = (demoData.bombPlants || []).some(bp => {
+      const pr = bp.round || 0;
+      const rndCheck = pr === (rdData.killsRound ?? (currentRound + 1)) || pr === (currentRound + 1);
+      return rndCheck && bp.tick <= tickNow && bp.tick >= rdStartTick && bp.tick <= rdEndTick;
+    });
+    if (planted) return;
+    // Trouver le pickup c4 le plus recent <= tickNow
+    let latestPickup = null;
+    const pickupsAll = demoData.grenadePickups || {};
+    Object.entries(pickupsAll).forEach(([pname, pkList]) => {
+      (pkList || []).forEach(pk => {
+        if (pk.type !== 'c4') return;
+        if (pk.tick > tickNow) return;
+        if (pk.tick < rdStartTick || pk.tick > rdEndTick) return;
+        if (!latestPickup || pk.tick > latestPickup.tick) {
+          latestPickup = { name: pname, tick: pk.tick };
+        }
+      });
+    });
+    if (!latestPickup) return;
+    const carrier = latestPickup.name;
+    const carrierState = frame.players[carrier];
+    if (carrierState && carrierState.alive) {
+      mapC4Carrier = carrier;
+      return;
+    }
+    // Le carrier est mort : trouver sa mort apres le pickup, c'est la que la
+    // bombe est tombee. S'il n'y a pas de pickup posterieur, on affiche au sol.
+    const carrierDeath = (demoData.kills || []).find(k =>
+      k.victim === carrier && k.tick >= latestPickup.tick && k.tick <= tickNow
+    );
+    if (carrierDeath && carrierDeath.victimX != null) {
+      mapC4DroppedAt = { x: carrierDeath.victimX, y: carrierDeath.victimY };
+    }
+  })();
+
   // Players (directional arrow showing view angle)
   Object.entries(frame.players).forEach(([name, p]) => {
     if (!p.alive || hiddenPlayers.has(name)) return;
@@ -1607,35 +1656,6 @@ function drawFrame(idx) {
       ctx.fillStyle = color.solid; ctx.fill();
     }
 
-    // Inventaire grenades : calcule depuis peak (item_pickup) - thrown
-    const peak = currentRoundPeak[name] || { smk: 0, fl: 0, heg: 0, mol: 0, dec: 0, c4: 0 };
-    const thrown = { smk: 0, fl: 0, heg: 0, mol: 0, dec: 0 };
-    const curTick = frame.tick || 0;
-    (demoData.grenades || []).forEach(g => {
-      if (g.thrower !== name) return;
-      const gt = g.tick || 0;
-      if (gt > curTick) return;
-      const gType = g.type || '';
-      if (gType.includes('smoke')) thrown.smk++;
-      else if (gType.includes('flash')) thrown.fl++;
-      else if (gType.includes('hegre')) thrown.heg++;
-      else if (gType.includes('molotov') || gType.includes('incgren')) thrown.mol++;
-      else if (gType.includes('decoy')) thrown.dec++;
-    });
-    const invSmk = Math.max(0, peak.smk - thrown.smk);
-    const invFl  = Math.max(0, peak.fl  - thrown.fl);
-    const invHeg = Math.max(0, peak.heg - thrown.heg);
-    const invMol = Math.max(0, peak.mol - thrown.mol);
-    const invDec = Math.max(0, peak.dec - thrown.dec);
-    const invC4  = peak.c4;
-    const invSlots = [];
-    if (invSmk > 0) invSlots.push({ file: 'smokegrenade', count: invSmk });
-    if (invFl  > 0) invSlots.push({ file: 'flashbang',    count: invFl  });
-    if (invHeg > 0) invSlots.push({ file: 'hegrenade',    count: invHeg });
-    if (invMol > 0) invSlots.push({ file: (p.team === 3 ? 'incgrenade' : 'molotov'), count: invMol });
-    if (invDec > 0) invSlots.push({ file: 'decoy',        count: invDec });
-    if (invC4  > 0) invSlots.push({ file: 'c4',           count: 1 });
-
     // Pill name + arme active : icone de l'arme que le joueur tient EN TEMPS REEL
     // a gauche, pseudo a droite, dans une seule pill sombre au-dessus du pin.
     ctx.font = 'bold 9px "Space Mono",monospace';
@@ -1653,9 +1673,7 @@ function drawFrame(idx) {
     const padX = 5;
     const lw = padX + iconW + iconGap + tw + padX;
     const lh = 14;
-    // Decale la pill vers le haut si inventaire present pour faire de la place
-    const invH = invSlots.length > 0 ? 14 : 0;
-    const ly = cy - 26 - invH;
+    const ly = cy - 26;
     const lx = cx - lw / 2;
     // Pill sombre arrondie
     const lr = 3;
@@ -1685,39 +1703,41 @@ function drawFrame(idx) {
     ctx.fillText(label, lx + padX + iconW + iconGap, ly + lh / 2);
     ctx.textBaseline = 'alphabetic';
 
-    // Inventaire grenades : strip d'icones compactes juste en dessous de la pill
-    // (entre pill et pin). La pill a deja ete decalee vers le haut par invH.
-    if (invSlots.length > 0) {
-      const slotH = 11;
-      const slotW = 11;
-      const slotGap = 2;
-      const stripW = invSlots.length * slotW + (invSlots.length - 1) * slotGap;
-      const stripX = cx - stripW / 2;
-      const stripY = ly + lh + 1;  // juste sous la pill (decalage 1px)
-      invSlots.forEach((slot, i) => {
-        const sx = stripX + i * (slotW + slotGap);
-        const img = getWeaponImg(slot.file);
-        if (img && img.complete && img.naturalWidth) {
-          ctx.save();
-          ctx.filter = 'grayscale(1) brightness(1.5)';
-          ctx.drawImage(img, sx, stripY, slotW, slotH);
-          ctx.restore();
-        }
-        // Badge compteur si > 1 exemplaire (rare mais possible)
-        if (slot.count > 1) {
-          ctx.fillStyle = 'rgba(0,0,0,.85)';
-          ctx.beginPath(); ctx.arc(sx + slotW - 1, stripY + slotH - 1, 3.5, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#b8ff57';
-          ctx.font = 'bold 6px "Space Mono",monospace';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(slot.count, sx + slotW - 1, stripY + slotH - 1);
-          ctx.textBaseline = 'alphabetic';
-        }
-      });
+    // Bombe C4 portee par ce joueur : petite icone a cote du pin
+    if (mapC4Carrier === name) {
+      const c4Img = getWeaponImg('c4');
+      if (c4Img && c4Img.complete && c4Img.naturalWidth) {
+        const bh = 12;
+        const bw = bh * (c4Img.naturalWidth / c4Img.naturalHeight);
+        ctx.save();
+        ctx.filter = 'brightness(1.3) drop-shadow(0 0 3px rgba(255,60,40,0.8))';
+        // Position : en bas a droite du pin
+        ctx.drawImage(c4Img, cx + 8, cy + 2, bw, bh);
+        ctx.restore();
+      }
     }
   });
+
+  // C4 au sol (bombe droppee, pas plantee ni portee) : rendu a la position
+  // du dernier porteur connu s'il est mort sans transmettre la bombe.
+  if (mapC4DroppedAt) {
+    const _bp = w2c(mapC4DroppedAt.x, mapC4DroppedAt.y);
+    const bx = _bp.x * scaleX, by = _bp.y * scaleY;
+    if (inBounds(bx, by)) {
+      const c4Img = getWeaponImg('c4');
+      if (c4Img && c4Img.complete && c4Img.naturalWidth) {
+        const bh = 14;
+        const bw = bh * (c4Img.naturalWidth / c4Img.naturalHeight);
+        // Pulse subtle pour attirer l'oeil
+        const pulse = 0.85 + Math.sin(frame.tick * 0.2) * 0.15;
+        ctx.save();
+        ctx.globalAlpha = pulse;
+        ctx.filter = 'brightness(1.3) drop-shadow(0 0 4px rgba(255,60,40,0.9))';
+        ctx.drawImage(c4Img, bx - bw / 2, by - bh / 2, bw, bh);
+        ctx.restore();
+      }
+    }
+  }
 
   // Bomb rendering : delegue entierement a drawEffects (avec timer 40s +
   // detection defuse/explode). Le rendu duplique ici causait une bombe
