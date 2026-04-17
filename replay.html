@@ -483,6 +483,9 @@ const NEUTRAL_COLOR = {solid:'#8892A4',rgb:'136,146,164'};
 // ══ STATE ════════════════════════════════════════════════════════════════════
 let demoData = null;
 let playerColorMap = {}, hiddenPlayers = new Set();
+// Memoire de la derniere orientation de chaque joueur (fallback mouvement)
+// pour eviter les flips brutaux quand un joueur s'arrete de bouger.
+const _lastYaw = {};
 let canvas, ctx, mapImg = null, mapName = 'de_dust2';
 let currentFloor = 'upper';
 let showTrail = true;
@@ -1078,6 +1081,8 @@ function selectRound(round, btn) {
   shotsConverted = false;
   _gearDebugLogged = false;
   currentRound = round;
+  // Reset orientation cache : nouveau round, les joueurs peuvent spawn ailleurs
+  for (const k in _lastYaw) delete _lastYaw[k];
   clearInterval(timer); playing = false; setPlayPause(false);
   document.querySelectorAll('.rnd').forEach(b => b.classList.remove('sel'));
   if (btn) btn.classList.add('sel');
@@ -1362,7 +1367,34 @@ function drawFrame(idx) {
     const color = getColor(name), isCT = p.team === 3;
     const teamColor = isCT ? '#4A9EFF' : '#F5C842';
     const teamRGB = isCT ? '74,158,255' : '245,200,66';
-    const yawRad = -(p.yaw || 0) * Math.PI / 180;
+
+    // Orientation : yaw du parser si dispo, sinon inferee depuis la direction
+    // de mouvement recent. Certaines demos CS2 ne populent pas bien le yaw,
+    // ce fallback garantit que les pins tournent quand le joueur se deplace.
+    let yawRad;
+    const rawYaw = p.yaw;
+    const hasValidYaw = rawYaw !== null && rawYaw !== undefined && Math.abs(rawYaw) > 0.01;
+    if (hasValidYaw) {
+      yawRad = -rawYaw * Math.PI / 180;
+    } else {
+      // Regarde la position 3-5 frames avant pour deduire le vecteur de mouvement
+      yawRad = 0;
+      const lookback = Math.max(0, idx - 4);
+      const prevFrame = frames[lookback];
+      const prevP = prevFrame?.players?.[name];
+      if (prevP && prevP.alive) {
+        const _prevSc = w2c(prevP.x, prevP.y);
+        const ppx = _prevSc.x * scaleX, ppy = _prevSc.y * scaleY;
+        const movDx = cx - ppx, movDy = cy - ppy;
+        const movDist = Math.sqrt(movDx * movDx + movDy * movDy);
+        // Seulement si le joueur s'est deplace de facon significative
+        if (movDist > 1.5) yawRad = Math.atan2(movDy, movDx);
+        // On garde la derniere direction connue pour qu'un joueur stationnaire
+        // ne voit pas son pin se remettre brutalement a l'est.
+        else if (_lastYaw[name] !== undefined) yawRad = _lastYaw[name];
+      }
+      _lastYaw[name] = yawRad;
+    }
 
     // Soft outer glow (team-tinted)
     const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 20);
