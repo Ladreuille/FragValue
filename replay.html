@@ -1369,6 +1369,18 @@ function drawFrame(idx) {
     // Canvas Y est inverse donc on negate pour faire correspondre.
     const yawRad = -((p.yaw || 0) * Math.PI / 180);
 
+    // Diagnostic : log une fois par round les yaw du premier joueur
+    // pour confirmer que les donnees arrivent correctement cote client.
+    if (!window._yawDebugRound || window._yawDebugRound !== currentRound) {
+      window._yawDebugRound = currentRound;
+      const firstPlayer = Object.keys(frame.players)[0];
+      if (firstPlayer === name) {
+        const yawStats = Object.entries(frame.players).map(([n, pp]) =>
+          `${n}=${pp.yaw?.toFixed(0) ?? 'N/A'}°`).join(', ');
+        console.log(`[yaw R${currentRound}] ${yawStats}`);
+      }
+    }
+
     // Soft outer glow (team-tinted)
     const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 20);
     glow.addColorStop(0, `rgba(${teamRGB},.18)`);
