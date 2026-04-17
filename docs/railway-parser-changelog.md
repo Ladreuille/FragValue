@@ -4,6 +4,27 @@ Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/frag
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
+## 2026-04-17 — Durees grenades exactes + timers client en secondes reelles
+
+Les demos FACEIT tournent a **128 tick/s** (confirme par headers des demos).
+Les durees parser etaient deja en 128 tick mais le client divisait par 64
+→ timers affichaient 2x le temps reel.
+
+### Parser (durees corrigees pour CS2 2025)
+
+- Smoke : 2304 ticks (18.0s) — inchange, deja correct
+- Flash : 192 → **64 ticks** (1.5s → 0.5s, duree visuelle carte uniquement)
+- HE    : 64 ticks (0.5s pulse visuel) — inchange
+- Molo  : 896 ticks (7.0s) — inchange, deja correct
+- Decoy : 1920 → **2304 ticks** (15s → 18s carte ; le son dure ~45s mais on
+  garde le visuel court pour la lisibilite)
+
+### Client (replay.html + heatmap-results.html)
+
+- Grenade timer `secLeft = (endTick - tick) / 64` → `/128` (vraies secondes)
+- Bombe C4 timer : `40 * 64` → `40 * 128` (40s reels) + `/64` → `/128`
+- Buffer post-event : `+192` → `+384` (3s reels apres defuse/explode)
+
 ## 2026-04-17 — Hotfix parser crash (inventory_as_string + bomb isolation)
 
 La demo parsait correctement les 20 rounds mais crashait apres "Rounds: 20" :

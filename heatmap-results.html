@@ -1902,8 +1902,8 @@ function rfDrawEffects(frame, W, H) {
       rfLabels.push({ text, x, y, color, size: size || 9 });
     };
 
-    // Timer de dissipation : secondes restantes jusqu'a g.endTick
-    const secLeft = Math.max(0, (g.endTick - tick) / 64);
+    // Timer de dissipation : secondes reelles (demos FACEIT = 128 tick/s).
+    const secLeft = Math.max(0, (g.endTick - tick) / 128);
     const timerTxt = secLeft >= 10 ? Math.round(secLeft) + 's' : secLeft.toFixed(1) + 's';
 
     // Timer bare (pas de pill)
@@ -1967,15 +1967,15 @@ function rfDrawEffects(frame, W, H) {
     if (tick < bp.tick) return;
     const defuse  = bombDefuses.find(d => d.round === bp.round && d.tick >= bp.tick);
     const explode = bombExplodes.find(e => e.round === bp.round && e.tick >= bp.tick);
-    const endEventTick = defuse ? defuse.tick : (explode ? explode.tick : bp.tick + 40 * 64);
-    if (tick > endEventTick + 192) return;
+    const endEventTick = defuse ? defuse.tick : (explode ? explode.tick : bp.tick + 40 * 128);
+    if (tick > endEventTick + 384) return;
 
     const {px:bx, py:by} = w2c(bp.x, bp.y, rfMapName, W, H);
     if (!inBounds(bx, by, W, H)) return;
 
     const exploded = explode && tick >= explode.tick;
     const defused  = defuse  && tick >= defuse.tick;
-    const secToEnd = Math.max(0, (endEventTick - tick) / 64);
+    const secToEnd = Math.max(0, (endEventTick - tick) / 128);
     const pulse = 1 + Math.sin(tick * 0.3) * 0.15;
     const haloColor = defused ? '80,220,120' : (exploded ? '255,80,0' : '255,40,40');
     const baseR = 8;

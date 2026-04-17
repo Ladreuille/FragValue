@@ -2166,9 +2166,8 @@ function drawEffects(frame, W, H) {
       pendingLabels.push({ text, x, y, fillColor, fontSize: fontSize || 11 });
     };
 
-    // Timer de dissipation : affiche les secondes restantes au-dessus de
-    // la grenade (position adaptee selon le type). 64 ticks/s en CS2.
-    const secLeft = Math.max(0, (g.endTick - tick) / 64);
+    // Timer de dissipation : secondes reelles restantes (demos FACEIT = 128 tick/s).
+    const secLeft = Math.max(0, (g.endTick - tick) / 128);
     const timerTxt = secLeft >= 10 ? Math.round(secLeft) + 's' : secLeft.toFixed(1) + 's';
 
     // Timer "bare" (pas de pill, juste texte fin avec contour noir)
@@ -2237,8 +2236,9 @@ function drawEffects(frame, W, H) {
     // Chercher defuse/explode du meme round
     const defuse = bombDefuses.find(d => d.round === bp.round && d.tick >= bp.tick);
     const explode = bombExplodes.find(e => e.round === bp.round && e.tick >= bp.tick);
-    const endEventTick = defuse ? defuse.tick : (explode ? explode.tick : bp.tick + 40 * 64);
-    if (tick > endEventTick + 192) return; // +3s apres event pour laisser l'indicateur visible
+    // Bombe : 40s avant explosion en CS2 a 128 tick/s = 5120 ticks
+    const endEventTick = defuse ? defuse.tick : (explode ? explode.tick : bp.tick + 40 * 128);
+    if (tick > endEventTick + 384) return; // +3s apres event pour laisser l'indicateur visible
 
     const bombPos = w2c(bp.x, bp.y);
     const bx = bombPos.x * scaleX, by = bombPos.y * scaleY;
@@ -2246,7 +2246,7 @@ function drawEffects(frame, W, H) {
 
     const exploded = explode && tick >= explode.tick;
     const defused = defuse && tick >= defuse.tick;
-    const secToEnd = Math.max(0, (endEventTick - tick) / 64);
+    const secToEnd = Math.max(0, (endEventTick - tick) / 128);
 
     // Cercle pulsant rouge (ou vert si defused)
     const pulse = 1 + Math.sin(tick * 0.3) * 0.15;
