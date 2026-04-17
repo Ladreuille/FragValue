@@ -668,22 +668,41 @@ async function startAnalysis() {
     try {
       sessionStorage.setItem('demoData', JSON.stringify(data.data));
     } catch(e) {
-      console.warn('sessionStorage full, stripping equipment fields from positions...');
-      // Strip equipment fields to reduce size, keep only x,y,t,r,k,h (or full names)
+      console.warn('sessionStorage full, stripping HUD-only fields from positions...');
+      // Essentiels a garder : position, tick, team, round, hp, YAW (orientation pin),
+      // weapon (pour arme droppee a la mort). On strippe : inventaire grenades,
+      // armure/helmet/defuser/money (rarement decisifs pour l'analyse tactique).
       const stripped = {...data.data};
       if (stripped.positions && typeof stripped.positions === 'object') {
         Object.keys(stripped.positions).forEach(name => {
           stripped.positions[name] = stripped.positions[name].map(p => ({
             x: p.x, y: p.y,
             t: p.t ?? p.team, r: p.r ?? p.round, k: p.k ?? p.tick, h: p.h ?? p.hp,
+            ya: p.ya ?? p.yaw ?? 0,
+            w: p.w ?? p.weapon ?? null,
           }));
         });
       }
       try {
         sessionStorage.setItem('demoData', JSON.stringify(stripped));
       } catch(e2) {
-        console.warn('Still too large, dropping positions entirely');
-        sessionStorage.setItem('demoData', JSON.stringify({...data.data, positions:{}}));
+        console.warn('Still too large, ultra-strip (keep yaw even here)');
+        const ultra = {...data.data};
+        if (ultra.positions && typeof ultra.positions === 'object') {
+          Object.keys(ultra.positions).forEach(name => {
+            ultra.positions[name] = ultra.positions[name].map(p => ({
+              x: p.x, y: p.y,
+              t: p.t ?? p.team, r: p.r ?? p.round, k: p.k ?? p.tick,
+              ya: p.ya ?? p.yaw ?? 0,
+            }));
+          });
+        }
+        try {
+          sessionStorage.setItem('demoData', JSON.stringify(ultra));
+        } catch(e3) {
+          console.warn('Still too large, dropping positions entirely');
+          sessionStorage.setItem('demoData', JSON.stringify({...data.data, positions:{}}));
+        }
       }
     }
     await saveDemoAnalysis(data.data);
