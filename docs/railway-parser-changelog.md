@@ -4,6 +4,24 @@ Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/frag
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
+## 2026-04-17 — Hotfix parser crash (inventory_as_string + bomb isolation)
+
+La demo parsait correctement les 20 rounds mais crashait apres "Rounds: 20" :
+le champ `inventory` dans parseTicks n'est pas supporte par toutes les
+versions de demoparser2, et le champ `site` dans bomb_planted non plus.
+
+### Fix
+
+1. `parseTicks` utilise `inventory_as_string` (string CSV universellement
+   supportee) au lieu de `inventory` (array, pas toujours dispo). Fallback
+   sans inventaire si le champ manque.
+2. Bomb events : un try/catch independant par event (plant / defuse / explode)
+   pour qu'un crash sur un event ne bloque pas les autres.
+3. Champ `site` retire de bomb_planted (parfois non present).
+
+Sans ce fix, le parser redemarrait en boucle apres "Rounds: 20" → le client
+recevait "Failed to fetch" (pas de reponse HTTP → pas de CORS headers).
+
 ## 2026-04-17 — Bomb events + inventaire grenades par joueur
 
 ### Bomb events
