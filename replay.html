@@ -608,6 +608,24 @@ window.addEventListener('load', async () => {
   try {
     demoData = JSON.parse(raw);
     if (demoData.positions) demoData.positions = expandPositions(demoData.positions);
+    // Diagnostic yaw : dump des valeurs yaw d'un joueur directement apres expand
+    // (sans attendre le rendu, pour voir si les donnees arrivent deja a zero)
+    try {
+      const _name = Object.keys(demoData.positions || {})[0];
+      const _pts = demoData.positions?.[_name] || [];
+      if (_pts.length) {
+        const _yaws = _pts.slice(0, 40).map(p => p.yaw);
+        const _nonZero = _pts.filter(p => (p.yaw ?? 0) !== 0).length;
+        console.log(`[yaw-raw ${_name}] samples=${JSON.stringify(_yaws)}`);
+        console.log(`[yaw-raw ${_name}] nonZero=${_nonZero}/${_pts.length}`);
+        // Dump egalement le p.ya brut AVANT expand pour voir si la cle est bonne
+        const _rawPts = (demoData._rawPositions || {})[_name];
+        if (_rawPts) {
+          const _yas = _rawPts.slice(0, 10).map(p => p.ya);
+          console.log(`[yaw-raw ${_name}] p.ya brut=${JSON.stringify(_yas)}`);
+        }
+      }
+    } catch (e) { console.warn('yaw diag failed:', e); }
     if (demoData.kills) demoData.kills = expandKills(demoData.kills);
     document.getElementById('appShell').style.display = 'flex';
     assignColors();
