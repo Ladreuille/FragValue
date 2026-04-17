@@ -1913,8 +1913,12 @@ function rfDrawEffects(frame, W, H) {
 
     if (type.includes('smoke')) {
       // SCL-style : cercle contour fin + glyph nuage au centre
+      // Fade-in quasi-instantane (~0.36s au lieu de 1.8s) pour afficher
+      // l'icone au moment exact de la detonation.
       const r = 20;
-      const a = progress < 0.1 ? progress / 0.1 : progress > 0.9 ? (1 - progress) / 0.1 : 1;
+      const fadeInLen = 0.02, fadeOutLen = 0.08;
+      const a = progress < fadeInLen ? progress / fadeInLen
+             : progress > (1 - fadeOutLen) ? (1 - progress) / fadeOutLen : 1;
       rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
       rfCtx.strokeStyle = `rgba(220,220,220,${a * 0.9})`;
       rfCtx.lineWidth = 1;
