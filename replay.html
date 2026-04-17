@@ -1369,15 +1369,19 @@ function drawFrame(idx) {
     // Canvas Y est inverse donc on negate pour faire correspondre.
     const yawRad = -((p.yaw || 0) * Math.PI / 180);
 
-    // Diagnostic : log une fois par round les yaw du premier joueur
-    // pour confirmer que les donnees arrivent correctement cote client.
-    if (!window._yawDebugRound || window._yawDebugRound !== currentRound) {
-      window._yawDebugRound = currentRound;
-      const firstPlayer = Object.keys(frame.players)[0];
-      if (firstPlayer === name) {
+    // Diagnostic yaw : log a 4 moments cles du round (freeze + 3 instants play)
+    // pour verifier que le yaw varie bien dans le temps (vs toujours 0).
+    const firstPlayer = Object.keys(frame.players)[0];
+    if (firstPlayer === name) {
+      const yawCache = window._yawDebugCache || (window._yawDebugCache = {});
+      const N = frames.length;
+      const checkpoints = [0, Math.floor(N * 0.33), Math.floor(N * 0.66), N - 1];
+      const cpKey = `R${currentRound}:${idx}`;
+      if (checkpoints.includes(idx) && !yawCache[cpKey]) {
+        yawCache[cpKey] = 1;
         const yawStats = Object.entries(frame.players).map(([n, pp]) =>
-          `${n}=${pp.yaw?.toFixed(0) ?? 'N/A'}°`).join(', ');
-        console.log(`[yaw R${currentRound}] ${yawStats}`);
+          `${n.slice(0, 8)}=${pp.yaw?.toFixed(0) ?? 'N/A'}`).join(' ');
+        console.log(`[yaw R${currentRound} f${idx}/${N-1}] ${yawStats}`);
       }
     }
 
