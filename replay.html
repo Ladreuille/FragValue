@@ -1917,11 +1917,14 @@ function drawEffects(frame, W, H) {
     const lx = _lp.x * scaleX, ly = _lp.y * scaleY;
     const dx2 = _dp.x * scaleX, dy2 = _dp.y * scaleY;
 
+    // Couleur de trace associee au thrower pour differencier les grenades
+    // des differents joueurs (meme code couleur que les dots joueurs).
+    const throwColor = getColor(g.thrower || '') || { solid: '#ffffff', rgb: '255,255,255' };
+
     // Trajectory : la grenade est en vol entre tick et detonTick
     if (tick >= g.tick && tick < g.detonTick && inBounds(lx, ly)) {
       if (hasPathData) {
         // Real trajectory from parseGrenades: polyline that bounces off walls.
-        // Path is a flat array [x1, y1, x2, y2, ...] in world coordinates.
         const numPts = g.path.length / 2;
         const progress = Math.max(0, Math.min(1, (tick - g.tick) / Math.max(g.detonTick - g.tick, 1)));
         const fIdx = progress * (numPts - 1);
@@ -1935,10 +1938,7 @@ function drawEffects(frame, W, H) {
         const _cp = w2c(curWX, curWY);
         const curX = _cp.x * scaleX, curY = _cp.y * scaleY;
 
-        // Draw traveled polyline up to current position (bouncing path).
-        ctx.setLineDash([3, 3]);
-        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-        ctx.lineWidth = 1;
+        // Draw traveled polyline (bouncing path) : outline noir + couleur thrower
         ctx.beginPath();
         const _p0 = w2c(g.path[0], g.path[1]);
         ctx.moveTo(_p0.x * scaleX, _p0.y * scaleY);
@@ -1947,31 +1947,47 @@ function drawEffects(frame, W, H) {
           ctx.lineTo(_pp.x * scaleX, _pp.y * scaleY);
         }
         ctx.lineTo(curX, curY);
-        ctx.stroke();
+        // Dark outline pour contraste
         ctx.setLineDash([]);
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+        ctx.lineWidth = 3; ctx.lineCap = 'round';
+        ctx.stroke();
+        // Inner line coloree par thrower
+        ctx.setLineDash([4, 3]);
+        ctx.strokeStyle = `rgba(${throwColor.rgb},0.85)`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.setLineDash([]); ctx.lineCap = 'butt';
 
-        // Grenade dot at current position.
-        ctx.beginPath(); ctx.arc(curX, curY, 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
+        // Grenade dot at current position : halo + dot couleur thrower
+        ctx.beginPath(); ctx.arc(curX, curY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(curX, curY, 3.2, 0, Math.PI * 2);
+        ctx.fillStyle = throwColor.solid; ctx.fill();
       } else {
-        // Fallback: straight-line interpolation (pas de path, detonation
-        // venant d'un event filtrered par proximite spatiale cote parser).
+        // Fallback: straight-line interpolation
         const trajDx = dx2 - lx;
         const trajDy = dy2 - ly;
         const trajLen = Math.sqrt(trajDx * trajDx + trajDy * trajDy);
-        // Si le point de detonation est au meme endroit que le lancer (< 20px
-        // ecran), on ne dessine pas la grenade en vol : c'etait clairement
-        // un mauvais match qui a passe les filtres du parser.
         if (trajLen <= 20) return;
         const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
         const curX = lx + trajDx * progress;
         const curY = ly + trajDy * progress;
-        ctx.setLineDash([3, 3]);
-        ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
+        // Dark outline
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+        ctx.lineWidth = 3; ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(curX, curY); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.beginPath(); ctx.arc(curX, curY, 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
+        // Colored dashed
+        ctx.setLineDash([4, 3]);
+        ctx.strokeStyle = `rgba(${throwColor.rgb},0.75)`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(curX, curY); ctx.stroke();
+        ctx.setLineDash([]); ctx.lineCap = 'butt';
+        // Dot with halo
+        ctx.beginPath(); ctx.arc(curX, curY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(curX, curY, 3.2, 0, Math.PI * 2);
+        ctx.fillStyle = throwColor.solid; ctx.fill();
       }
     }
 
@@ -2009,66 +2025,99 @@ function drawEffects(frame, W, H) {
     };
 
     if (type.includes('smoke')) {
-      const r = 12 + progress * 32;
-      const a = progress < 0.08 ? progress / 0.08 * 0.82 : progress > 0.88 ? (1 - progress) / 0.12 * 0.82 : 0.82;
+      // SMOKE : cercle gris-blanc avec halo + "SMK" au centre
+      const r = 18 + progress * 28;
+      const a = progress < 0.08 ? progress / 0.08 * 0.85 : progress > 0.88 ? (1 - progress) / 0.12 * 0.85 : 0.85;
+      // Halo externe pour delimiter
+      ctx.beginPath(); ctx.arc(px, py, r + 4, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(220,220,220,${a * 0.5})`; ctx.lineWidth = 2; ctx.stroke();
+      // Fumee interieure gradient
+      const sg = ctx.createRadialGradient(px, py, 0, px, py, r);
+      sg.addColorStop(0, `rgba(230,230,230,${a * 0.85})`);
+      sg.addColorStop(0.6, `rgba(180,180,180,${a * 0.65})`);
+      sg.addColorStop(1, `rgba(120,120,120,${a * 0.25})`);
       ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(160,160,160,${a * 0.45})`; ctx.fill();
-      ctx.beginPath(); ctx.arc(px, py, r * 0.7, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(200,200,200,${a * 0.75})`; ctx.fill();
-      ctx.strokeStyle = `rgba(120,120,120,${a * 0.5})`; ctx.lineWidth = 1.5; ctx.stroke();
-      // Label SMK toujours visible (contour noir + texte blanc)
-      drawLabel('SMK', px, py, `rgba(255,255,255,${Math.max(a, 0.9)})`, 11);
+      ctx.fillStyle = sg; ctx.fill();
+      // Label SMK centre
+      drawLabel('SMK', px, py, '#ffffff', 12);
     } else if (type.includes('flash')) {
-      const r = 4 + (1 - progress) * 22;
-      const a = Math.pow(1 - progress, 0.5) * 0.95;
-      ctx.beginPath(); ctx.arc(px, py, r * 1.4, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(180,240,255,${a * 0.3})`; ctx.fill();
+      // FLASH : eclair blanc-bleu intense mais court
+      const r = 8 + (1 - progress) * 30;
+      const a = Math.pow(1 - progress, 0.5) * 0.98;
+      // Halo bleu externe
+      ctx.beginPath(); ctx.arc(px, py, r * 1.6, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(150,220,255,${a * 0.25})`; ctx.fill();
+      // Corps blanc
+      const fg = ctx.createRadialGradient(px, py, 0, px, py, r);
+      fg.addColorStop(0, `rgba(255,255,255,${a})`);
+      fg.addColorStop(0.5, `rgba(220,240,255,${a * 0.9})`);
+      fg.addColorStop(1, `rgba(150,220,255,${a * 0.3})`);
       ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fill();
+      ctx.fillStyle = fg; ctx.fill();
+      // Rayons divergents
       for (let i = 0; i < 8; i++) {
-        const angle = i * Math.PI / 4, len = r * 0.8;
-        ctx.strokeStyle = `rgba(255,255,220,${a * 0.7})`; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(px + Math.cos(angle) * r * 0.3, py + Math.sin(angle) * r * 0.3);
-        ctx.lineTo(px + Math.cos(angle) * (r + len), py + Math.sin(angle) * (r + len)); ctx.stroke();
+        const angle = i * Math.PI / 4 + progress * 0.5, len = r * 0.9;
+        ctx.strokeStyle = `rgba(255,255,220,${a * 0.8})`; ctx.lineWidth = 2; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(px + Math.cos(angle) * r * 0.4, py + Math.sin(angle) * r * 0.4);
+        ctx.lineTo(px + Math.cos(angle) * (r + len), py + Math.sin(angle) * (r + len));
+        ctx.stroke();
       }
-      // Label FL au debut de la flash pour identifier
-      if (progress < 0.6) {
-        drawLabel('FL', px, py, `rgba(255,255,220,${Math.max(a, 0.95)})`, 10);
+      ctx.lineCap = 'butt';
+      // Label FL au debut
+      if (progress < 0.7) {
+        drawLabel('FL', px, py, '#ffffaa', 11);
       }
     } else if (type.includes('hegre')) {
-      const r = 3 + progress * 24;
-      const a = Math.pow(1 - progress, 0.6) * 0.9;
-      ctx.beginPath(); ctx.arc(px, py, r * 1.3, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255,140,0,${a * 0.6})`; ctx.lineWidth = 2; ctx.stroke();
-      ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
+      // HE : explosion rouge-orange avec shockwave
+      const r = 8 + progress * 32;
+      const a = Math.pow(1 - progress, 0.6) * 0.95;
+      // Shockwave ring externe
+      ctx.beginPath(); ctx.arc(px, py, r * 1.5, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,120,0,${a * 0.5})`; ctx.lineWidth = 2.5; ctx.stroke();
+      // Corps gradient feu
       const hg = ctx.createRadialGradient(px, py, 0, px, py, r);
-      hg.addColorStop(0, `rgba(255,255,100,${a})`);
-      hg.addColorStop(0.5, `rgba(255,100,0,${a})`);
-      hg.addColorStop(1, `rgba(200,0,0,${a * 0.5})`);
+      hg.addColorStop(0, `rgba(255,255,150,${a})`);
+      hg.addColorStop(0.4, `rgba(255,120,20,${a * 0.95})`);
+      hg.addColorStop(1, `rgba(180,20,0,${a * 0.5})`);
+      ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
       ctx.fillStyle = hg; ctx.fill();
-      if (progress < 0.6) {
-        drawLabel('HE', px, py, `rgba(255,255,255,${Math.max(a, 0.95)})`, 11);
+      // Label HE
+      if (progress < 0.7) {
+        drawLabel('HE', px, py, '#ffffff', 12);
       }
     } else if (type.includes('molotov') || type.includes('incgren')) {
-      const r = 14 + Math.sin(tick * 0.15) * 2;
-      const a = 0.85;
-      ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
+      // MOLOTOV/INC : flamme large et animee + label au-dessus
+      const r = 22 + Math.sin(tick * 0.15) * 3;  // plus gros : 19-25px
+      const a = 0.88;
+      // Halo externe rouge
+      ctx.beginPath(); ctx.arc(px, py, r + 5, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,80,0,${a * 0.4})`; ctx.lineWidth = 2; ctx.stroke();
+      // Corps flamme gradient
       const mg = ctx.createRadialGradient(px, py, 0, px, py, r);
-      mg.addColorStop(0, `rgba(255,220,0,${a})`);
-      mg.addColorStop(0.5, `rgba(255,80,0,${a * 0.9})`);
-      mg.addColorStop(1, `rgba(180,20,0,${a * 0.4})`);
+      mg.addColorStop(0, `rgba(255,240,100,${a})`);
+      mg.addColorStop(0.4, `rgba(255,120,0,${a * 0.95})`);
+      mg.addColorStop(1, `rgba(180,20,0,${a * 0.5})`);
+      ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
       ctx.fillStyle = mg; ctx.fill();
-      for (let f = 0; f < 6; f++) {
-        const fa = f * Math.PI / 3 + tick * 0.08, fr = r * 0.5 + Math.sin(tick * 0.2 + f) * r * 0.3;
-        ctx.beginPath(); ctx.arc(px + Math.cos(fa) * fr * 0.7, py + Math.sin(fa) * fr * 0.7, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,${150 + Math.round(Math.sin(tick * 0.3 + f) * 80)},0,0.9)`; ctx.fill();
+      // Particules de feu animees
+      for (let f = 0; f < 8; f++) {
+        const fa = f * Math.PI / 4 + tick * 0.08;
+        const fr = r * 0.55 + Math.sin(tick * 0.2 + f) * r * 0.25;
+        const fx = px + Math.cos(fa) * fr;
+        const fy = py + Math.sin(fa) * fr;
+        ctx.beginPath(); ctx.arc(fx, fy, 3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,${160 + Math.round(Math.sin(tick * 0.3 + f) * 80)},0,0.9)`; ctx.fill();
       }
-      drawLabel('MOLO', px, py, 'rgba(255,255,200,0.98)', 10);
+      // Label MOLO au-dessus du cercle pour ne pas chevaucher
+      drawLabel('MOLO', px, py - r - 8, '#ffcc66', 10);
     } else if (type.includes('decoy')) {
+      // DECOY : petit dot rouge clignotant + label au-dessus
       const blink = Math.sin(tick * 0.4) > 0;
-      ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2);
+      ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(255,50,50,${blink ? 0.95 : 0.5})`; ctx.fill();
-      drawLabel('DEC', px, py - 12, 'rgba(255,100,100,0.98)', 9);
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 1.5; ctx.stroke();
+      drawLabel('DEC', px, py - 14, '#ff6666', 10);
       ctx.strokeStyle = 'rgba(255,120,120,0.7)'; ctx.lineWidth = 1.5; ctx.stroke();
       if (blink) {
         for (let w = 1; w <= 2; w++) {
