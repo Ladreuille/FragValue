@@ -670,8 +670,8 @@ async function startAnalysis() {
     } catch(e) {
       console.warn('sessionStorage full, stripping HUD-only fields from positions...');
       // Essentiels a garder : position, tick, team, round, hp, YAW (orientation pin),
-      // weapon (pour arme droppee a la mort). On strippe : inventaire grenades,
-      // armure/helmet/defuser/money (rarement decisifs pour l'analyse tactique).
+      // weapon (arme active + droppee a la mort), grenades inventory (strip au-dessus
+      // du pin). On strippe : armure/helmet/defuser/money (visuel HUD secondaire).
       const stripped = {...data.data};
       if (stripped.positions && typeof stripped.positions === 'object') {
         Object.keys(stripped.positions).forEach(name => {
@@ -680,6 +680,9 @@ async function startAnalysis() {
             t: p.t ?? p.team, r: p.r ?? p.round, k: p.k ?? p.tick, h: p.h ?? p.hp,
             ya: p.ya ?? p.yaw ?? 0,
             w: p.w ?? p.weapon ?? null,
+            // Inventaire grenades (affiche au-dessus du pin)
+            smk: p.smk ?? 0, fl: p.fl ?? 0, heg: p.heg ?? 0,
+            mol: p.mol ?? 0, dec: p.dec ?? 0, c4: p.c4 ?? 0,
           }));
         });
       }

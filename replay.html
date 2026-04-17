@@ -1429,6 +1429,16 @@ function drawFrame(idx) {
       ctx.fillStyle = color.solid; ctx.fill();
     }
 
+    // Inventaire grenades : ligne d'icones au-dessus de la pill nom.
+    // Affiche uniquement les types que le joueur possede (pas de case vide).
+    const invSlots = [];
+    if ((p.smk || 0) > 0) invSlots.push({ file: 'smokegrenade',  count: p.smk });
+    if ((p.fl  || 0) > 0) invSlots.push({ file: 'flashbang',     count: p.fl  });
+    if ((p.heg || 0) > 0) invSlots.push({ file: 'hegrenade',     count: p.heg });
+    if ((p.mol || 0) > 0) invSlots.push({ file: (p.team === 3 ? 'incgrenade' : 'molotov'), count: p.mol });
+    if ((p.dec || 0) > 0) invSlots.push({ file: 'decoy',         count: p.dec });
+    if ((p.c4  || 0) > 0) invSlots.push({ file: 'c4',            count: 1 });
+
     // Pill name + arme active : icone de l'arme que le joueur tient EN TEMPS REEL
     // a gauche, pseudo a droite, dans une seule pill sombre au-dessus du pin.
     ctx.font = 'bold 9px "Space Mono",monospace';
@@ -1446,7 +1456,10 @@ function drawFrame(idx) {
     const padX = 5;
     const lw = padX + iconW + iconGap + tw + padX;
     const lh = 14;
-    const lx = cx - lw / 2, ly = cy - 26;
+    // Decale la pill vers le haut si inventaire present pour faire de la place
+    const invH = invSlots.length > 0 ? 14 : 0;
+    const ly = cy - 26 - invH;
+    const lx = cx - lw / 2;
     // Pill sombre arrondie
     const lr = 3;
     ctx.beginPath();
@@ -1474,6 +1487,39 @@ function drawFrame(idx) {
     ctx.textBaseline = 'middle';
     ctx.fillText(label, lx + padX + iconW + iconGap, ly + lh / 2);
     ctx.textBaseline = 'alphabetic';
+
+    // Inventaire grenades : strip d'icones compactes juste en dessous de la pill
+    // (entre pill et pin). La pill a deja ete decalee vers le haut par invH.
+    if (invSlots.length > 0) {
+      const slotH = 11;
+      const slotW = 11;
+      const slotGap = 2;
+      const stripW = invSlots.length * slotW + (invSlots.length - 1) * slotGap;
+      const stripX = cx - stripW / 2;
+      const stripY = ly + lh + 1;  // juste sous la pill (decalage 1px)
+      invSlots.forEach((slot, i) => {
+        const sx = stripX + i * (slotW + slotGap);
+        const img = getWeaponImg(slot.file);
+        if (img && img.complete && img.naturalWidth) {
+          ctx.save();
+          ctx.filter = 'grayscale(1) brightness(1.5)';
+          ctx.drawImage(img, sx, stripY, slotW, slotH);
+          ctx.restore();
+        }
+        // Badge compteur si > 1 exemplaire (rare mais possible)
+        if (slot.count > 1) {
+          ctx.fillStyle = 'rgba(0,0,0,.85)';
+          ctx.beginPath(); ctx.arc(sx + slotW - 1, stripY + slotH - 1, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#b8ff57';
+          ctx.font = 'bold 6px "Space Mono",monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(slot.count, sx + slotW - 1, stripY + slotH - 1);
+          ctx.textBaseline = 'alphabetic';
+        }
+      });
+    }
   });
 
   // Bomb planted indicator
