@@ -1383,28 +1383,36 @@ function drawFrame(idx) {
     ctx.fillStyle = coneGrad; ctx.fill();
 
     // Drop shadow under player
-    ctx.beginPath(); ctx.arc(cx + 1, cy + 1, 9, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 1, cy + 1, 10, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fill();
 
-    // Team-colored circle base with border
-    ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+    // ── Pin marker style (comme demande) ──
+    // Anneau exterieur : couleur equipe (CT bleu / T jaune) avec contour fonce.
+    // Anneau interieur : COULEUR JOUEUR (centre du pin, distinct par teammate).
+    // Orientation : fleche blanche bien visible pointe vers le yaw.
+
+    // 1. Anneau team
+    ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI * 2);
     ctx.fillStyle = teamColor; ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 1.5; ctx.stroke();
 
-    // Fleche directionnelle : pointe clairement vers l'exterieur, contraste fort.
-    // Base rattachee au cercle, tip bien au-dela pour que l'orientation saute aux yeux.
-    const arrowLen = 16, arrowW = 6;
+    // 2. Centre colore par joueur (distingue les 5 d'une meme equipe)
+    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+    ctx.fillStyle = color.solid; ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 0.8; ctx.stroke();
+
+    // 3. Fleche orientation (blanc + contour noir, bien visible)
+    const arrowLen = 17, arrowW = 6;
     const tipX = cx + Math.cos(yawRad) * arrowLen;
     const tipY = cy + Math.sin(yawRad) * arrowLen;
-    const bA = yawRad + Math.PI;
-    const baseR = 4;  // base du triangle attachee a la bordure du cercle (rayon 9)
+    const baseR = 5;
     const lX = cx + Math.cos(yawRad + Math.PI / 2) * arrowW + Math.cos(yawRad) * baseR;
     const lY = cy + Math.sin(yawRad + Math.PI / 2) * arrowW + Math.sin(yawRad) * baseR;
     const rX = cx + Math.cos(yawRad - Math.PI / 2) * arrowW + Math.cos(yawRad) * baseR;
     const rY = cy + Math.sin(yawRad - Math.PI / 2) * arrowW + Math.sin(yawRad) * baseR;
     ctx.beginPath(); ctx.moveTo(tipX, tipY); ctx.lineTo(lX, lY); ctx.lineTo(rX, rY); ctx.closePath();
     ctx.fillStyle = '#ffffff'; ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.lineWidth = 1; ctx.stroke();
 
     // Name label with pill background
     ctx.font = 'bold 9px "Space Mono",monospace'; ctx.textAlign = 'center';
