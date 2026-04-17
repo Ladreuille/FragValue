@@ -1570,6 +1570,56 @@ function rfTogglePlayer(name,el){
 }
 
 // ── Effets visuels grenades et tirs ─────────────────────────────────────────
+// ══ Icon glyphs SCL-style ════════════════════════════════════════════════════
+function rfDrawCloudIcon(ctx, cx, cy, size, color) {
+  const s = size;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(cx - s * 0.5, cy + s * 0.1, s * 0.45, 0, Math.PI * 2);
+  ctx.arc(cx + s * 0.5, cy + s * 0.1, s * 0.45, 0, Math.PI * 2);
+  ctx.arc(cx,           cy - s * 0.15, s * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+function rfDrawFlameIcon(ctx, cx, cy, size, color) {
+  const s = size;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - s);
+  ctx.bezierCurveTo(cx + s * 0.8, cy - s * 0.4, cx + s * 0.7, cy + s * 0.6, cx, cy + s * 0.7);
+  ctx.bezierCurveTo(cx - s * 0.7, cy + s * 0.6, cx - s * 0.8, cy - s * 0.4, cx, cy - s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+function rfDrawFlashIcon(ctx, cx, cy, size, color) {
+  const s = size;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - s);
+  ctx.lineTo(cx + s * 0.3, cy - s * 0.3);
+  ctx.lineTo(cx + s, cy);
+  ctx.lineTo(cx + s * 0.3, cy + s * 0.3);
+  ctx.lineTo(cx, cy + s);
+  ctx.lineTo(cx - s * 0.3, cy + s * 0.3);
+  ctx.lineTo(cx - s, cy);
+  ctx.lineTo(cx - s * 0.3, cy - s * 0.3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+function rfDrawHEIcon(ctx, cx, cy, size, color) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 function rfDrawEffects(frame, W, H) {
   const tick = frame.tick||0;
   const grenades = demoData.grenades || [];
@@ -1782,16 +1832,16 @@ function rfDrawEffects(frame, W, H) {
           rfCtx.lineTo(_pp.px, _pp.py);
         }
         rfCtx.lineTo(_cp.px, _cp.py);
-        rfCtx.setLineDash([4,3]);
-        rfCtx.strokeStyle = 'rgba(255,255,255,0.55)';
-        rfCtx.lineWidth = 1.2;
+        rfCtx.setLineDash([3,3]);
+        rfCtx.strokeStyle = 'rgba(220,220,220,0.5)';
+        rfCtx.lineWidth = 1;
         rfCtx.stroke();
         rfCtx.setLineDash([]);
-        // Dot courant
-        rfCtx.beginPath(); rfCtx.arc(_cp.px, _cp.py, 3, 0, Math.PI*2);
-        rfCtx.fillStyle = 'rgba(255,255,255,0.9)'; rfCtx.fill();
-        // Label type au-dessus (identifie la grenade en vol)
-        if (typeLabel) rfLabels.push({ text: typeLabel, x: _cp.px, y: _cp.py - 10, color: typeColor, size: 8 });
+        // Dot courant (plus petit)
+        rfCtx.beginPath(); rfCtx.arc(_cp.px, _cp.py, 2.2, 0, Math.PI*2);
+        rfCtx.fillStyle = 'rgba(255,255,255,0.85)'; rfCtx.fill();
+        // Label type bare
+        if (typeLabel) rfLabels.push({ text: typeLabel, x: _cp.px, y: _cp.py - 9, color: typeColor, size: 7, bare: true });
       } else {
         // Fallback : trait droit
         const trajDx = detonPos.px - launchPos.px;
@@ -1802,13 +1852,13 @@ function rfDrawEffects(frame, W, H) {
           const curX = launchPos.px + trajDx * progress;
           const curY = launchPos.py + trajDy * progress;
           rfCtx.setLineDash([3,3]);
-          rfCtx.strokeStyle = 'rgba(255,255,255,0.4)';
+          rfCtx.strokeStyle = 'rgba(220,220,220,0.45)';
           rfCtx.lineWidth = 1;
           rfCtx.beginPath(); rfCtx.moveTo(launchPos.px, launchPos.py); rfCtx.lineTo(curX, curY); rfCtx.stroke();
           rfCtx.setLineDash([]);
-          rfCtx.beginPath(); rfCtx.arc(curX, curY, 3, 0, Math.PI*2);
-          rfCtx.fillStyle = 'rgba(255,255,255,0.9)'; rfCtx.fill();
-          if (typeLabel) rfLabels.push({ text: typeLabel, x: curX, y: curY - 10, color: typeColor, size: 8 });
+          rfCtx.beginPath(); rfCtx.arc(curX, curY, 2.2, 0, Math.PI*2);
+          rfCtx.fillStyle = 'rgba(255,255,255,0.85)'; rfCtx.fill();
+          if (typeLabel) rfLabels.push({ text: typeLabel, x: curX, y: curY - 9, color: typeColor, size: 7, bare: true });
         }
       }
     }
@@ -1856,96 +1906,55 @@ function rfDrawEffects(frame, W, H) {
     const secLeft = Math.max(0, (g.endTick - tick) / 64);
     const timerTxt = secLeft >= 10 ? Math.round(secLeft) + 's' : secLeft.toFixed(1) + 's';
 
+    // Timer bare (pas de pill)
+    const pushBareTimer = (txt, x, y) => {
+      rfLabels.push({ text: txt, x, y, color: '#d8d8d8', size: 8, bare: true });
+    };
+
     if (type.includes('smoke')) {
-      // SMOKE : nuage blanc-gris TRES visible avec contour epais.
-      // Alpha minimum 0.55 pour rester lisible meme en fin de dissipation.
-      const r = 18 + progress * 28;
-      const aRaw = progress < 0.08 ? progress / 0.08 * 0.9
-                : progress > 0.88 ? (1 - progress) / 0.12 * 0.9 : 0.9;
-      const a = Math.max(0.55, aRaw);
-      // Contour noir epais pour separer du fond
-      rfCtx.beginPath(); rfCtx.arc(px, py, r + 2, 0, Math.PI * 2);
-      rfCtx.strokeStyle = 'rgba(0,0,0,0.85)'; rfCtx.lineWidth = 2.5; rfCtx.stroke();
-      // Halo blanc externe
-      rfCtx.beginPath(); rfCtx.arc(px, py, r + 4, 0, Math.PI * 2);
-      rfCtx.strokeStyle = `rgba(255,255,255,${a * 0.6})`; rfCtx.lineWidth = 2; rfCtx.stroke();
-      // Fumee interieure avec gradient bien dense
-      const sg = rfCtx.createRadialGradient(px, py, 0, px, py, r);
-      sg.addColorStop(0,   `rgba(245,245,245,${a})`);
-      sg.addColorStop(0.55,`rgba(200,200,200,${a * 0.9})`);
-      sg.addColorStop(1,   `rgba(140,140,140,${a * 0.55})`);
+      // SCL-style : cercle contour fin + glyph nuage au centre
+      const r = 20;
+      const a = progress < 0.1 ? progress / 0.1 : progress > 0.9 ? (1 - progress) / 0.1 : 1;
       rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
-      rfCtx.fillStyle = sg; rfCtx.fill();
-      // Label SMK au centre, pill sombre en passe 2
-      pushLabel('SMK', px, py, '#ffffff', 11);
-      // Timer dissipation
-      pushLabel(timerTxt, px, py - r - 8, '#b8ff57', 9);
-
+      rfCtx.strokeStyle = `rgba(220,220,220,${a * 0.9})`;
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
+      rfDrawCloudIcon(rfCtx, px, py, 6, `rgba(225,225,225,${a})`);
+      pushBareTimer(timerTxt, px, py - r - 5);
     } else if (type.includes('flash')) {
-      // FLASH : etoile blanche eclatante + halo cyan
-      const r = 4 + (1-progress)*22;
-      const alpha = Math.pow(1-progress, 0.5) * 0.95;
-      rfCtx.beginPath(); rfCtx.arc(px,py,r*1.4,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(180,240,255,${alpha*0.3})`; rfCtx.fill();
-      rfCtx.beginPath(); rfCtx.arc(px,py,r,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(255,255,255,${alpha})`; rfCtx.fill();
-      for(let a=0;a<8;a++){
-        const angle=a*Math.PI/4, len=r*0.8;
-        rfCtx.strokeStyle=`rgba(255,255,220,${alpha*0.7})`; rfCtx.lineWidth=1.5;
-        rfCtx.beginPath(); rfCtx.moveTo(px+Math.cos(angle)*r*0.3,py+Math.sin(angle)*r*0.3);
-        rfCtx.lineTo(px+Math.cos(angle)*(r+len),py+Math.sin(angle)*(r+len)); rfCtx.stroke();
-      }
-      if (progress < 0.7) pushLabel('FL', px, py, '#ffffaa', 9);
-
+      const r = 5 + (1 - progress) * 16;
+      const a = Math.pow(1 - progress, 0.7) * 0.9;
+      rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
+      rfCtx.strokeStyle = `rgba(255,255,255,${a})`;
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
+      if (progress < 0.35) rfDrawFlashIcon(rfCtx, px, py, 4, `rgba(255,255,200,${a})`);
     } else if (type.includes('hegre')) {
-      // HE : explosion rouge-orange avec shockwave
-      const r = 8 + progress * 32;
-      const a = Math.pow(1 - progress, 0.6) * 0.95;
-      rfCtx.beginPath(); rfCtx.arc(px, py, r * 1.5, 0, Math.PI * 2);
-      rfCtx.strokeStyle = `rgba(255,120,0,${a * 0.5})`; rfCtx.lineWidth = 2.5; rfCtx.stroke();
-      const hg = rfCtx.createRadialGradient(px, py, 0, px, py, r);
-      hg.addColorStop(0, `rgba(255,255,150,${a})`);
-      hg.addColorStop(0.4, `rgba(255,120,20,${a * 0.95})`);
-      hg.addColorStop(1, `rgba(180,20,0,${a * 0.5})`);
+      const r = 5 + progress * 22;
+      const a = Math.pow(1 - progress, 0.7) * 0.9;
       rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
-      rfCtx.fillStyle = hg; rfCtx.fill();
-      if (progress < 0.7) pushLabel('HE', px, py, '#ffffff', 11);
-
+      rfCtx.strokeStyle = `rgba(255,140,40,${a})`;
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
+      if (progress < 0.3) rfDrawHEIcon(rfCtx, px, py, 5, `rgba(255,140,40,${a})`);
     } else if (type.includes('molotov') || type.includes('incgren')) {
-      // MOLOTOV : flamme large avec halo, gradient feu, particules animees
-      const r = 22 + Math.sin(tick * 0.15) * 3;
-      const a = 0.88;
-      // Timer dissipation
-      pushLabel(timerTxt, px, py - r - 20, '#b8ff57', 9);
-      rfCtx.beginPath(); rfCtx.arc(px, py, r + 5, 0, Math.PI * 2);
-      rfCtx.strokeStyle = `rgba(255,80,0,${a * 0.4})`; rfCtx.lineWidth = 2; rfCtx.stroke();
-      const mg = rfCtx.createRadialGradient(px, py, 0, px, py, r);
-      mg.addColorStop(0, `rgba(255,240,100,${a})`);
-      mg.addColorStop(0.4, `rgba(255,120,0,${a * 0.95})`);
-      mg.addColorStop(1, `rgba(180,20,0,${a * 0.5})`);
+      const r = 18;
+      const a = 0.85;
       rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
-      rfCtx.fillStyle = mg; rfCtx.fill();
-      for (let f = 0; f < 8; f++) {
-        const fa = f * Math.PI / 4 + tick * 0.08;
-        const fr = r * 0.55 + Math.sin(tick * 0.2 + f) * r * 0.25;
-        rfCtx.beginPath(); rfCtx.arc(px + Math.cos(fa) * fr, py + Math.sin(fa) * fr, 3, 0, Math.PI * 2);
-        rfCtx.fillStyle = `rgba(255,${160 + Math.round(Math.sin(tick * 0.3 + f) * 80)},0,0.9)`; rfCtx.fill();
-      }
-      pushLabel('MOLO', px, py - r - 8, '#ffcc66', 10);
-
+      rfCtx.strokeStyle = `rgba(255,80,40,${a})`;
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
+      rfDrawFlameIcon(rfCtx, px, py, 5, `rgba(255,120,40,${a})`);
+      pushBareTimer(timerTxt, px, py - r - 5);
     } else if (type.includes('decoy')) {
-      // DECOY : point rouge avec signal radar clignotant
-      const blink = (Math.sin(tick*0.4)>0);
-      rfCtx.beginPath(); rfCtx.arc(px,py,5,0,Math.PI*2);
-      rfCtx.fillStyle=`rgba(255,50,50,${blink?0.95:0.5})`; rfCtx.fill();
-      rfCtx.strokeStyle='rgba(255,120,120,0.7)'; rfCtx.lineWidth=1.5; rfCtx.stroke();
-      if(blink){
-        for(let w=1;w<=2;w++){
-          rfCtx.beginPath(); rfCtx.arc(px,py,5+w*6,0,Math.PI*2);
-          rfCtx.strokeStyle=`rgba(255,80,80,${0.4/w})`; rfCtx.lineWidth=1; rfCtx.stroke();
-        }
-      }
-      pushLabel('DEC', px, py - 12, '#ff6666', 8);
+      rfCtx.beginPath(); rfCtx.arc(px, py, 3, 0, Math.PI * 2);
+      rfCtx.fillStyle = 'rgba(255,60,60,0.9)'; rfCtx.fill();
+      const pulseR = 3 + ((tick % 40) / 40) * 8;
+      const pulseA = 1 - ((tick % 40) / 40);
+      rfCtx.beginPath(); rfCtx.arc(px, py, pulseR, 0, Math.PI * 2);
+      rfCtx.strokeStyle = `rgba(255,60,60,${pulseA * 0.5})`;
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
     }
   });
 
@@ -1993,28 +2002,36 @@ function rfDrawEffects(frame, W, H) {
   rfCtx.textBaseline = 'middle';
   rfLabels.forEach(l => {
     rfCtx.font = `bold ${l.size}px "Space Mono","JetBrains Mono",monospace`;
-    const metrics = rfCtx.measureText(l.text);
-    const padX = 4, padY = 2;
-    const w = Math.ceil(metrics.width) + padX * 2;
-    const h = l.size + padY * 2;
-    const rx = l.x - w / 2, ry = l.y - h / 2;
-    const rad = 2.5;
-    rfCtx.beginPath();
-    rfCtx.moveTo(rx + rad, ry);
-    rfCtx.lineTo(rx + w - rad, ry);
-    rfCtx.quadraticCurveTo(rx + w, ry, rx + w, ry + rad);
-    rfCtx.lineTo(rx + w, ry + h - rad);
-    rfCtx.quadraticCurveTo(rx + w, ry + h, rx + w - rad, ry + h);
-    rfCtx.lineTo(rx + rad, ry + h);
-    rfCtx.quadraticCurveTo(rx, ry + h, rx, ry + h - rad);
-    rfCtx.lineTo(rx, ry + rad);
-    rfCtx.quadraticCurveTo(rx, ry, rx + rad, ry);
-    rfCtx.closePath();
-    rfCtx.fillStyle = 'rgba(0,0,0,0.82)';
-    rfCtx.fill();
-    rfCtx.strokeStyle = 'rgba(255,255,255,0.3)';
-    rfCtx.lineWidth = 1;
-    rfCtx.stroke();
+    if (!l.bare) {
+      // Pill sombre (bomb C4 / DEFUSED / BOOM critique)
+      const metrics = rfCtx.measureText(l.text);
+      const padX = 4, padY = 2;
+      const w = Math.ceil(metrics.width) + padX * 2;
+      const h = l.size + padY * 2;
+      const rx = l.x - w / 2, ry = l.y - h / 2;
+      const rad = 2.5;
+      rfCtx.beginPath();
+      rfCtx.moveTo(rx + rad, ry);
+      rfCtx.lineTo(rx + w - rad, ry);
+      rfCtx.quadraticCurveTo(rx + w, ry, rx + w, ry + rad);
+      rfCtx.lineTo(rx + w, ry + h - rad);
+      rfCtx.quadraticCurveTo(rx + w, ry + h, rx + w - rad, ry + h);
+      rfCtx.lineTo(rx + rad, ry + h);
+      rfCtx.quadraticCurveTo(rx, ry + h, rx, ry + h - rad);
+      rfCtx.lineTo(rx, ry + rad);
+      rfCtx.quadraticCurveTo(rx, ry, rx + rad, ry);
+      rfCtx.closePath();
+      rfCtx.fillStyle = 'rgba(0,0,0,0.82)';
+      rfCtx.fill();
+      rfCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
+    } else {
+      // Mode bare : contour noir fin, pas de pill
+      rfCtx.lineWidth = 3;
+      rfCtx.strokeStyle = 'rgba(0,0,0,0.75)';
+      rfCtx.strokeText(l.text, l.x, l.y);
+    }
     rfCtx.fillStyle = l.color;
     rfCtx.fillText(l.text, l.x, l.y);
   });
