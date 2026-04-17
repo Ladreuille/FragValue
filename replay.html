@@ -615,20 +615,32 @@ window.addEventListener('load', async () => {
   if (!raw) { document.getElementById('noData').style.display = 'flex'; return; }
   try {
     demoData = JSON.parse(raw);
-    // Diagnostic : taille de la payload + 1er sample pour 1er joueur AVANT expand
+    // Diagnostic : dump JSON complet du 1er sample + un sample au milieu
+    // pour voir les vraies valeurs (sans troncature ...)
     try {
       const rawLen = raw.length;
       const _firstName = Object.keys(demoData.positions || {})[0];
-      const _rawSample = demoData.positions?.[_firstName]?.[0];
-      console.log(`[LOAD] sessionStorage payload=${(rawLen/1024/1024).toFixed(2)}MB demoData keys=${Object.keys(demoData).join(',')}`);
-      console.log(`[LOAD] 1er sample AVANT expand ${_firstName}:`, _rawSample);
-    } catch(e) {}
+      const _pts = demoData.positions?.[_firstName] || [];
+      console.log(`[LOAD] payload=${(rawLen/1024/1024).toFixed(2)}MB demoData=${Object.keys(demoData).join(',')}`);
+      console.log(`[LOAD] ${_firstName} count=${_pts.length} AVANT expand :`);
+      console.log(`  1er:  ${JSON.stringify(_pts[0])}`);
+      console.log(`  mid:  ${JSON.stringify(_pts[Math.floor(_pts.length/2)])}`);
+      console.log(`  last: ${JSON.stringify(_pts[_pts.length-1])}`);
+      // Compter les w non-null dans le raw
+      const wNonNull = _pts.filter(p => p.w).length;
+      const mNonZero = _pts.filter(p => (p.m || 0) > 0).length;
+      console.log(`  w non-null: ${wNonNull}/${_pts.length}, m>0: ${mNonZero}/${_pts.length}`);
+    } catch(e) { console.warn('diag load failed:', e); }
     if (demoData.positions) demoData.positions = expandPositions(demoData.positions);
-    // Diagnostic : 1er sample APRES expand
+    // Diagnostic APRES expand
     try {
       const _firstName2 = Object.keys(demoData.positions || {})[0];
-      const _expSample = demoData.positions?.[_firstName2]?.[0];
-      console.log(`[LOAD] 1er sample APRES expand ${_firstName2}:`, _expSample);
+      const _pts2 = demoData.positions?.[_firstName2] || [];
+      console.log(`[LOAD] ${_firstName2} APRES expand :`);
+      console.log(`  1er: ${JSON.stringify(_pts2[0])}`);
+      console.log(`  mid: ${JSON.stringify(_pts2[Math.floor(_pts2.length/2)])}`);
+      const wNonNull = _pts2.filter(p => p.weapon).length;
+      console.log(`  weapon non-null: ${wNonNull}/${_pts2.length}`);
     } catch(e) {}
     if (demoData.kills) demoData.kills = expandKills(demoData.kills);
     document.getElementById('appShell').style.display = 'flex';
