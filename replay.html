@@ -174,9 +174,9 @@
     .player-gear{display:flex;align-items:center;gap:4px;min-height:13px;flex-wrap:wrap}
     .player-gear .icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0;height:12px}
     .player-gear .icon svg{display:block;height:12px;width:auto}
-    .player-gear .icon img{display:block;height:12px;width:auto;max-width:40px;filter:brightness(1.2) invert(0)}
-    .player-gear .icon.off{opacity:.35}
-    .player-gear .icon.off img{filter:brightness(.6) grayscale(1)}
+    .player-gear .icon img{display:block;height:12px;width:auto;max-width:40px;filter:brightness(1.3) saturate(.7);opacity:.92}
+    /* Icone grenade "deja lancee" : transparence reduite au lieu de disparition */
+    .nade-slot-img.used img{opacity:.3;filter:brightness(.9) saturate(.3)}
     .player-gear-sep{width:1px;height:14px;background:rgba(255,255,255,.1);margin:0 2px}
     /* Slot inventaire grenade : icone SVG du jeu (style SCL) */
     .nade-slot-img{
@@ -496,6 +496,9 @@ let currentRoundPos = {};
 // Peak inventory du round en cours : { [name]: { smk, fl, heg, mol, dec, c4 } }
 // Recalcule a chaque selectRound via buildFrames.
 let currentRoundPeak = {};
+// Meilleure arme du joueur sur le round (priorite : primary > secondary > knife).
+// Calcule depuis tous les weapons vus dans les positions du round.
+let currentRoundBestWeapon = {};
 
 // ══ UTILS ════════════════════════════════════════════════════════════════════
 function assignColors() {
@@ -978,8 +981,9 @@ function getDefuseIcon(active) {
   return '<svg width="10" height="10" viewBox="0 0 10 10"><line x1="5" y1="1" x2="5" y2="9" stroke="' + c + '" stroke-width="1.5"/><line x1="1" y1="5" x2="9" y2="5" stroke="' + c + '" stroke-width="1.5"/></svg>';
 }
 
-// Nade slot : icone SVG officielle + badge compteur si > 1
-function renderNadeSlot(type, count, team) {
+// Nade slot : icone SVG officielle + badge compteur si > 1.
+// `used=true` rend l'icone transparente (grenade deja lancee dans le round).
+function renderNadeSlot(type, count, team, used) {
   const fileMap = {
     smk: 'smokegrenade',
     fl:  'flashbang',
@@ -991,7 +995,8 @@ function renderNadeSlot(type, count, team) {
   const file = fileMap[type];
   if (!file) return '';
   const countBadge = count > 1 ? `<span class="nade-count">${count}</span>` : '';
-  return `<span class="nade-slot-img" title="${type.toUpperCase()}${count > 1 ? ' x' + count : ''}"><img src="icons/${file}.svg" alt="${type}" loading="lazy">${countBadge}</span>`;
+  const cls = 'nade-slot-img' + (used ? ' used' : '');
+  return `<span class="${cls}" title="${type.toUpperCase()}${used ? ' (utilisee)' : ''}"><img src="icons/${file}.svg" alt="${type}" loading="lazy">${countBadge}</span>`;
 }
 
 let _gearDebugLogged = false;
@@ -1037,33 +1042,30 @@ function updatePlayerStates(frame) {
     if (!gear) { console.warn('player-gear not found for', p.name); return; }
 
     // Joueur mort : aucune arme / gear / inventaire. On affiche juste un
-    // indicateur visuel mort (skull ou dash) pour garder la ligne stable.
+    // indicateur visuel mort pour garder la ligne stable.
     if (!alive) {
       gear.innerHTML = '<span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em">— dead —</span>';
     } else {
-      const offCol = '#5a5d5d';
       let html = '';
-      // Weapon
-      if (state?.weapon) {
-        html += '<span class="icon">' + getWeaponIcon(state.weapon, color) + '</span>';
-      } else {
-        html += '<span class="icon off">' + WEAPON_ICONS_INLINE.default.replace(/CL/g, offCol) + '</span>';
+      // Weapon principale du joueur (priorite slot 1 > 2 > couteau) : on
+      // prefere l'arme "la plus significative" detenue, pas celle en main
+      // (qui est souvent un couteau au freeze-time malgre le buy).
+      const bestW = currentRoundBestWeapon[p.name] || state?.weapon;
+      if (bestW) {
+        html += '<span class="icon">' + getWeaponIcon(bestW, color) + '</span>';
       }
-      // Helmet
-      html += '<span class="icon' + (state?.hasHelmet ? '' : ' off') + '">' + getHelmetIcon(!!state?.hasHelmet) + '</span>';
-      // Armor
-      const hasArmor = (state?.armor ?? 0) > 0;
-      html += '<span class="icon' + (hasArmor ? '' : ' off') + '">' + getArmorIcon(hasArmor, color) + '</span>';
-      // Defuse kit (CT only)
-      if (team === 'CT') {
-        html += '<span class="icon' + (state?.hasDefuser ? '' : ' off') + '">' + getDefuseIcon(!!state?.hasDefuser) + '</span>';
+      // Armure / casque / defuser : affiches UNIQUEMENT si possedes (comme SCL)
+      if (state?.hasHelmet) {
+        html += '<span class="icon">' + getHelmetIcon(true) + '</span>';
+      } else if ((state?.armor ?? 0) > 0) {
+        html += '<span class="icon">' + getArmorIcon(true, color) + '</span>';
       }
-      // Inventaire grenades : utilise le PEAK du round (inventaire achete au
-      // freeze-time) moins les grenades lancees depuis le debut du round.
-      // Resultat : affichage stable de l'intention de buy meme avant que les
-      // grenades soient tenues en main + diminution realiste au fil des jets.
+      if (team === 'CT' && state?.hasDefuser) {
+        html += '<span class="icon">' + getDefuseIcon(true) + '</span>';
+      }
+      // Inventaire grenades : affiche TOUTES les grenades du round (peak) avec
+      // celles deja lancees en transparence reduite (class 'used').
       const peak = currentRoundPeak[p.name] || { smk: 0, fl: 0, heg: 0, mol: 0, dec: 0, c4: 0 };
-      // Compter grenades thrown par ce joueur dans le round jusqu'au tick courant
       const thrown = { smk: 0, fl: 0, heg: 0, mol: 0, dec: 0 };
       const tick = frame.tick || 0;
       (demoData.grenades || []).forEach(g => {
@@ -1078,20 +1080,23 @@ function updatePlayerStates(frame) {
         else if (gt.includes('molotov') || gt.includes('incgren')) thrown.mol++;
         else if (gt.includes('decoy')) thrown.dec++;
       });
-      const smk = Math.max(0, peak.smk - thrown.smk);
-      const fl  = Math.max(0, peak.fl  - thrown.fl);
-      const heg = Math.max(0, peak.heg - thrown.heg);
-      const mol = Math.max(0, peak.mol - thrown.mol);
-      const dec = Math.max(0, peak.dec - thrown.dec);
-      const c4  = state?.c4 ?? peak.c4 ?? 0;  // C4 = carrier instant
-      if (smk + fl + heg + mol + dec + c4 > 0) {
+      const total = peak.smk + peak.fl + peak.heg + peak.mol + peak.dec + peak.c4;
+      if (total > 0) {
         html += '<span class="player-gear-sep"></span>';
-        if (smk) html += renderNadeSlot('smk', smk);
-        if (fl) html += renderNadeSlot('fl', fl);
-        if (heg) html += renderNadeSlot('he', heg);
-        if (mol) html += renderNadeSlot('mol', mol, team);
-        if (dec) html += renderNadeSlot('dec', dec);
-        if (c4) html += renderNadeSlot('c4', 1);
+        // Chaque slot rendu peak.X fois : les premiers (peak.X - thrown.X) en
+        // plein, les thrown.X derniers avec la class 'used' (transparent).
+        const pushSlots = (type, peakCount, thrownCount, teamForMol) => {
+          for (let i = 0; i < peakCount; i++) {
+            const isUsed = i >= (peakCount - thrownCount);
+            html += renderNadeSlot(type, 1, teamForMol, isUsed);
+          }
+        };
+        pushSlots('smk', peak.smk, thrown.smk);
+        pushSlots('fl',  peak.fl,  thrown.fl);
+        pushSlots('he',  peak.heg, thrown.heg);
+        pushSlots('mol', peak.mol, thrown.mol, team);
+        pushSlots('dec', peak.dec, thrown.dec);
+        if (peak.c4) html += renderNadeSlot('c4', 1);
       }
       gear.innerHTML = html;
     }
@@ -1241,10 +1246,25 @@ function buildFrames(round) {
   // demoparser2 v6). Chaque pickup dans la fenetre [startTick, endTick] du
   // round compte. Les grenades lancees seront deduites au rendu HUD.
   currentRoundPeak = {};
+  currentRoundBestWeapon = {};
   const pickupsAll = demoData.grenadePickups || {};
   const rdStart = roundData.startTick || 0;
   const rdEnd = roundData.endTick || Infinity;
-  Object.keys(roundPos).forEach(name => {
+  // Priorite des armes pour le HUD : primary (rifle/sniper/heavy/smg) >
+  // secondary (pistol) > knife. On prend la meilleure categorie vue sur
+  // le round (ignore active_weapon_name transient comme grenade en main).
+  const WEAPON_PRIORITY = (w) => {
+    if (!w) return 0;
+    const n = (w || '').toLowerCase().replace(/^weapon_/, '');
+    // Primary 3 : rifles/snipers/heavy/smg (toutes les armes principales)
+    if (/ak47|m4a|aug|sg556|galilar|galil|famas|awp|ssg08|scar20|g3sg1|nova|xm1014|mag7|sawedoff|m249|negev|mp9|mac10|mp7|ump45|p90|mp5sd|bizon/i.test(n)) return 3;
+    // Secondary 2 : pistolets
+    if (/deagle|glock|usp|hkp2000|p2000|p250|fiveseven|tec9|elite|cz75|revolver/i.test(n)) return 2;
+    // Knife 1
+    if (/knife|bayonet/i.test(n)) return 1;
+    return 0;  // grenades, c4, taser = non affiche
+  };
+  Object.entries(roundPos).forEach(([name, pts]) => {
     const peak = { smk: 0, fl: 0, heg: 0, mol: 0, dec: 0, c4: 0 };
     const playerPickups = pickupsAll[name] || [];
     playerPickups.forEach(pk => {
@@ -1252,6 +1272,13 @@ function buildFrames(round) {
       if (peak[pk.type] !== undefined) peak[pk.type]++;
     });
     currentRoundPeak[name] = peak;
+    // Meilleure arme du round : max priorite sur active_weapon_name sampled
+    let bestPrio = 0, bestName = null;
+    pts.forEach(p => {
+      const prio = WEAPON_PRIORITY(p.weapon);
+      if (prio > bestPrio) { bestPrio = prio; bestName = p.weapon; }
+    });
+    if (bestName) currentRoundBestWeapon[name] = bestName;
   });
 
   frames = [];

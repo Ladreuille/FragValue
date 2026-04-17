@@ -680,6 +680,12 @@ async function startAnalysis() {
             t: p.t ?? p.team, r: p.r ?? p.round, k: p.k ?? p.tick, h: p.h ?? p.hp,
             ya: p.ya ?? p.yaw ?? 0,
             w: p.w ?? p.weapon ?? null,
+            // HUD essentials : armure, casque, defuser, argent (sinon tout le HUD
+            // apparait vide/transparent pour les joueurs qui ont bought stuff)
+            a: p.a ?? p.armor ?? 0,
+            he: p.he ?? (p.hasHelmet ? 1 : 0),
+            d: p.d ?? (p.hasDefuser ? 1 : 0),
+            m: p.m ?? p.money ?? 0,
             // Inventaire grenades (affiche au-dessus du pin)
             smk: p.smk ?? 0, fl: p.fl ?? 0, heg: p.heg ?? 0,
             mol: p.mol ?? 0, dec: p.dec ?? 0, c4: p.c4 ?? 0,
