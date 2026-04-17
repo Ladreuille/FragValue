@@ -1024,36 +1024,45 @@ function updatePlayerStates(frame) {
     const gear = row.querySelector('.player-gear');
     if (!gear) { console.warn('player-gear not found for', p.name); return; }
 
-    const offCol = '#5a5d5d';
-    let html = '';
-    // Weapon
-    if (state?.weapon) {
-      html += '<span class="icon">' + getWeaponIcon(state.weapon, color) + '</span>';
+    // Joueur mort : aucune arme / gear / inventaire. On affiche juste un
+    // indicateur visuel mort (skull ou dash) pour garder la ligne stable.
+    if (!alive) {
+      gear.innerHTML = '<span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em">— dead —</span>';
     } else {
-      html += '<span class="icon off">' + WEAPON_ICONS_INLINE.default.replace(/CL/g, offCol) + '</span>';
+      const offCol = '#5a5d5d';
+      let html = '';
+      // Weapon
+      if (state?.weapon) {
+        html += '<span class="icon">' + getWeaponIcon(state.weapon, color) + '</span>';
+      } else {
+        html += '<span class="icon off">' + WEAPON_ICONS_INLINE.default.replace(/CL/g, offCol) + '</span>';
+      }
+      // Helmet
+      html += '<span class="icon' + (state?.hasHelmet ? '' : ' off') + '">' + getHelmetIcon(!!state?.hasHelmet) + '</span>';
+      // Armor
+      const hasArmor = (state?.armor ?? 0) > 0;
+      html += '<span class="icon' + (hasArmor ? '' : ' off') + '">' + getArmorIcon(hasArmor, color) + '</span>';
+      // Defuse kit (CT only)
+      if (team === 'CT') {
+        html += '<span class="icon' + (state?.hasDefuser ? '' : ' off') + '">' + getDefuseIcon(!!state?.hasDefuser) + '</span>';
+      }
+      // Inventaire grenades + C4 : affiche uniquement les slots avec un item.
+      // Au debut du round l'inventaire complet est montre puis les icones
+      // disparaissent au fur et a mesure des lancers (parseTicks.inventory
+      // est re-calcule a chaque tick echantillonne).
+      const smk = state?.smk ?? 0, fl = state?.fl ?? 0, heg = state?.heg ?? 0;
+      const mol = state?.mol ?? 0, dec = state?.dec ?? 0, c4 = state?.c4 ?? 0;
+      if (smk + fl + heg + mol + dec + c4 > 0) {
+        html += '<span class="player-gear-sep"></span>';
+        if (smk) html += renderNadeSlot('smk', smk);
+        if (fl) html += renderNadeSlot('fl', fl);
+        if (heg) html += renderNadeSlot('he', heg);
+        if (mol) html += renderNadeSlot('mol', mol, team);
+        if (dec) html += renderNadeSlot('dec', dec);
+        if (c4) html += renderNadeSlot('c4', 1);
+      }
+      gear.innerHTML = html;
     }
-    // Helmet
-    html += '<span class="icon' + (state?.hasHelmet ? '' : ' off') + '">' + getHelmetIcon(!!state?.hasHelmet) + '</span>';
-    // Armor
-    const hasArmor = (state?.armor ?? 0) > 0;
-    html += '<span class="icon' + (hasArmor ? '' : ' off') + '">' + getArmorIcon(hasArmor, color) + '</span>';
-    // Defuse kit (CT only)
-    if (team === 'CT') {
-      html += '<span class="icon' + (state?.hasDefuser ? '' : ' off') + '">' + getDefuseIcon(!!state?.hasDefuser) + '</span>';
-    }
-    // Inventaire grenades + C4 : affiche uniquement les slots avec un item
-    const smk = state?.smk ?? 0, fl = state?.fl ?? 0, heg = state?.heg ?? 0;
-    const mol = state?.mol ?? 0, dec = state?.dec ?? 0, c4 = state?.c4 ?? 0;
-    if (smk + fl + heg + mol + dec + c4 > 0) {
-      html += '<span class="player-gear-sep"></span>';
-      if (smk) html += renderNadeSlot('smk', smk);
-      if (fl) html += renderNadeSlot('fl', fl);
-      if (heg) html += renderNadeSlot('he', heg);
-      if (mol) html += renderNadeSlot('mol', mol, team);
-      if (dec) html += renderNadeSlot('dec', dec);
-      if (c4) html += renderNadeSlot('c4', 1);
-    }
-    gear.innerHTML = html;
 
     if (!_gearDebugLogged && pIdx === 0) {
       console.log('[updatePlayerStates] sample player:', p.name,
@@ -1412,9 +1421,14 @@ function drawFrame(idx) {
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(yawRad - Math.PI / 2);
-      // Le trou est a (0, 0) dans le repere tourne ; le pin top-left est donc
-      // en (-PIN_W/2, -holeYPx) pour avoir le trou a l'origine.
+      // PNG source est bleu (blue ~220°). Pour les T (team=2), on shift en
+      // jaune (yellow ~50°) via hue-rotate. Pour les CT (team=3), on garde
+      // le bleu original du PNG.
+      if (p.team === 2) {
+        ctx.filter = 'hue-rotate(-170deg) saturate(1.15) brightness(1.05)';
+      }
       ctx.drawImage(playerPinImg, -PIN_W / 2, -holeYPx, PIN_W, PIN_H);
+      ctx.filter = 'none';
       // Centre recolore avec couleur joueur (cercle invariant par rotation)
       ctx.beginPath(); ctx.arc(0, 0, holeR, 0, Math.PI * 2);
       ctx.fillStyle = color.solid; ctx.fill();
@@ -1522,45 +1536,11 @@ function drawFrame(idx) {
     }
   });
 
-  // Bomb planted indicator
-  const bombPlants = demoData.bombPlants || [];
-  const rdBomb = bombPlants.find(b => {
-    const bRound = b.round || 0;
-    const killsR = ((demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {}).killsRound ?? ((currentRound ?? 0) + 1);
-    return (bRound === killsR || bRound === currentRound) && b.tick <= frame.tick;
-  });
-  if (rdBomb && rdBomb.x !== 0) {
-    const bombPos = w2c(rdBomb.x, rdBomb.y, mapName);
-    const bx = bombPos.x * scaleX, by = bombPos.y * scaleY;
-    if (inBounds(bx, by)) {
-      const pulse = 0.5 + Math.sin(frame.tick * 0.15) * 0.3;
-      // Outer pulse rings
-      ctx.beginPath(); ctx.arc(bx, by, 18 + pulse * 8, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255,60,40,${0.15 + pulse * 0.1})`; ctx.lineWidth = 1; ctx.stroke();
-      ctx.beginPath(); ctx.arc(bx, by, 13 + pulse * 4, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255,60,40,${0.25 + pulse * 0.15})`; ctx.lineWidth = 1.5; ctx.stroke();
-      // Inner glow
-      const bGlow = ctx.createRadialGradient(bx, by, 0, bx, by, 12);
-      bGlow.addColorStop(0, 'rgba(255,60,40,.35)');
-      bGlow.addColorStop(1, 'rgba(255,60,40,0)');
-      ctx.fillStyle = bGlow;
-      ctx.beginPath(); ctx.arc(bx, by, 12, 0, Math.PI * 2); ctx.fill();
-      // Bomb circle
-      ctx.beginPath(); ctx.arc(bx, by, 7, 0, Math.PI * 2);
-      ctx.fillStyle = '#ff3c28'; ctx.fill();
-      ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke();
-      // C4 text
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 7px "Space Mono",monospace'; ctx.textAlign = 'center';
-      ctx.fillText('C4', bx, by + 2.5);
-      // Label
-      ctx.fillStyle = 'rgba(0,0,0,.75)';
-      ctx.fillRect(bx - 24, by - 23, 48, 12);
-      ctx.fillStyle = '#ff3c28'; ctx.font = 'bold 8px "Space Mono",monospace';
-      ctx.fillText('PLANTED', bx, by - 14);
-    }
-  }
+  // Bomb rendering : delegue entierement a drawEffects (avec timer 40s +
+  // detection defuse/explode). Le rendu duplique ici causait une bombe
+  // "tout le temps plantee" car ne verifiait pas defuse/explode/round end.
 
-  // Effects (grenades + shots)
+  // Effects (grenades + shots + bombe via drawEffects)
   drawEffects(frame, W, H);
 
   // Killfeed (top-right of the map)
@@ -2385,19 +2365,22 @@ function drawEffects(frame, W, H) {
     };
 
     if (type.includes('smoke')) {
-      // SCL-style : cercle contour fin + glyph nuage au centre.
-      // Apparition quasi-instantanee (fade-in 0.2s au lieu de 10%=1.8s)
-      // pour que l'icone s'affiche au moment precis de la detonation.
+      // Smoke : zone delimitee avec fill leger + outline epais + cloud icon.
+      // Apparition quasi-instantanee a la detonation (fade-in 0.36s).
       const r = 22;
-      const fadeInLen = 0.02;  // ~0.36s a 128 tick/s
+      const fadeInLen = 0.02;
       const fadeOutLen = 0.08;
       const a = progress < fadeInLen ? progress / fadeInLen
              : progress > (1 - fadeOutLen) ? (1 - progress) / fadeOutLen : 1;
+      // Fill leger : delimite la zone couverte par la fumee
       ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(220,220,220,${a * 0.9})`;
-      ctx.lineWidth = 1;
+      ctx.fillStyle = `rgba(210,215,220,${a * 0.15})`;
+      ctx.fill();
+      // Outline epais pour meilleure visibilite
+      ctx.strokeStyle = `rgba(230,235,240,${a * 0.95})`;
+      ctx.lineWidth = 1.8;
       ctx.stroke();
-      drawCloudIcon(ctx, px, py, 7, `rgba(225,225,225,${a})`);
+      drawCloudIcon(ctx, px, py, 7, `rgba(235,240,245,${a})`);
       drawBareTimer(timerTxt, px, py - r - 6);
     } else if (type.includes('flash')) {
       // Brief pulse blanc, pas de rayons
