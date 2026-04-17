@@ -1714,6 +1714,28 @@ function rfDrawEffects(frame, W, H) {
   // Rendu en 2 passes : effets d'abord, labels par-dessus avec pill sombre.
   const rfLabels = [];
 
+  // Debug : compter les grenades du round visible et leurs etats (1 fois par round)
+  if (!window._rfGrenadeDebug || window._rfGrenadeDebug.round !== rfRound) {
+    window._rfGrenadeDebug = { round: rfRound };
+    const inRound = sortedGrenades.filter(g => g.tick && g.tick >= _rStart && g.tick <= _rEnd);
+    const withDeton = inRound.filter(g => g.detonX != null && g.detonY != null && g.detonTick != null);
+    const byType = {};
+    inRound.forEach(g => {
+      const key = (g.type || '').replace('weapon_', '');
+      byType[key] = (byType[key] || 0) + 1;
+    });
+    const smokeSample = withDeton.filter(g => (g.type || '').includes('smoke')).slice(0, 3);
+    console.log(`[rfDrawEffects] Round ${rfRound}: ${inRound.length} grenades, ${withDeton.length} avec deton, par type:`, byType);
+    if (smokeSample.length) {
+      console.log(`[rfDrawEffects] smokes sample:`, smokeSample.map(g => ({
+        thrower: g.thrower, tick: g.tick, detonTick: g.detonTick, endTick: g.endTick,
+        x: g.x, y: g.y, detonX: g.detonX, detonY: g.detonY, pathLen: g.path?.length || 0,
+      })));
+    } else {
+      console.log(`[rfDrawEffects] AUCUNE SMOKE avec deton trouvee dans ce round !`);
+    }
+  }
+
   sortedGrenades.forEach(g => {
     if (!g.tick) return;
     if (g.tick < _rStart || g.tick > _rEnd) return;
@@ -1819,17 +1841,23 @@ function rfDrawEffects(frame, W, H) {
     const timerTxt = secLeft >= 10 ? Math.round(secLeft) + 's' : secLeft.toFixed(1) + 's';
 
     if (type.includes('smoke')) {
-      // SMOKE : nuage blanc-gris avec gradient radial + halo externe contour
+      // SMOKE : nuage blanc-gris TRES visible avec contour epais.
+      // Alpha minimum 0.55 pour rester lisible meme en fin de dissipation.
       const r = 18 + progress * 28;
-      const a = progress < 0.08 ? progress / 0.08 * 0.85 : progress > 0.88 ? (1 - progress) / 0.12 * 0.85 : 0.85;
-      // Halo externe pour delimiter
+      const aRaw = progress < 0.08 ? progress / 0.08 * 0.9
+                : progress > 0.88 ? (1 - progress) / 0.12 * 0.9 : 0.9;
+      const a = Math.max(0.55, aRaw);
+      // Contour noir epais pour separer du fond
+      rfCtx.beginPath(); rfCtx.arc(px, py, r + 2, 0, Math.PI * 2);
+      rfCtx.strokeStyle = 'rgba(0,0,0,0.85)'; rfCtx.lineWidth = 2.5; rfCtx.stroke();
+      // Halo blanc externe
       rfCtx.beginPath(); rfCtx.arc(px, py, r + 4, 0, Math.PI * 2);
-      rfCtx.strokeStyle = `rgba(220,220,220,${a * 0.5})`; rfCtx.lineWidth = 2; rfCtx.stroke();
-      // Fumee interieure avec gradient (bien plus visible)
+      rfCtx.strokeStyle = `rgba(255,255,255,${a * 0.6})`; rfCtx.lineWidth = 2; rfCtx.stroke();
+      // Fumee interieure avec gradient bien dense
       const sg = rfCtx.createRadialGradient(px, py, 0, px, py, r);
-      sg.addColorStop(0, `rgba(230,230,230,${a * 0.85})`);
-      sg.addColorStop(0.6, `rgba(180,180,180,${a * 0.65})`);
-      sg.addColorStop(1, `rgba(120,120,120,${a * 0.25})`);
+      sg.addColorStop(0,   `rgba(245,245,245,${a})`);
+      sg.addColorStop(0.55,`rgba(200,200,200,${a * 0.9})`);
+      sg.addColorStop(1,   `rgba(140,140,140,${a * 0.55})`);
       rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
       rfCtx.fillStyle = sg; rfCtx.fill();
       // Label SMK au centre, pill sombre en passe 2
