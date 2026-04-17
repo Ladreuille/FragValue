@@ -1234,6 +1234,16 @@ function buildFrames(round) {
         py = prev.y + dy * t;
       }
       const nearest = t < 0.5 ? prev : next;
+      // Interpolation angulaire fluide entre deux samples yaw : utilise
+      // la difference la plus courte (wrap-around a +/- 180°).
+      // Exemple : lerp de 170° vers -170° passe par 180° (10° de rotation),
+      // pas par 0° (340° de rotation).
+      const prevYaw = prev.yaw ?? 0;
+      const nextYaw = next.yaw ?? 0;
+      let yawDiff = nextYaw - prevYaw;
+      if (yawDiff > 180) yawDiff -= 360;
+      else if (yawDiff < -180) yawDiff += 360;
+      const interpYaw = prevYaw + yawDiff * t;
       frame.players[name] = {
         x: px, y: py, team: prev.team, alive: true,
         hp: nearest.hp ?? 100,
@@ -1242,7 +1252,7 @@ function buildFrames(round) {
         hasHelmet: nearest.hasHelmet || false,
         hasDefuser: nearest.hasDefuser || false,
         money: nearest.money ?? 0,
-        yaw: nearest.yaw ?? 0,
+        yaw: interpYaw,
         // Inventaire grenades
         smk: nearest.smk ?? 0,
         fl:  nearest.fl  ?? 0,
