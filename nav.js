@@ -60,7 +60,8 @@
         { href: '/dashboard.html', label: 'Aperçu' },
         { href: '/matches.html', label: 'Mes matchs' },
         { href: '/demo.html', label: 'Nouvelle démo' },
-        { href: '/compare.html', label: 'Scout joueur' },
+        { href: '/scout.html', label: 'Scout', badge: 'pro' },
+        { href: '/compare.html', label: 'Comparer' },
       ],
     },
     {

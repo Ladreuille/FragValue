@@ -244,6 +244,55 @@
           </select>
         </div>
       </div>
+
+      <div class="sec-label">Profil Scout</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Apparaître dans les classements</div>
+          <div class="settings-value">Tes stats FACEIT seront publiques dans les leaderboards Scout dès le déblocage (1000 users). Opt-out à tout moment.</div>
+          <label class="toggle"><input type="checkbox" id="scoutOptIn"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="settings-row" data-requires-optin style="display:none">
+          <div class="settings-label">Rôle principal</div>
+          <select class="settings-select" id="scoutRolePrimary">
+            <option value="">—</option>
+            <option value="entry">Entry fragger</option>
+            <option value="awp">AWPer</option>
+            <option value="support">Support</option>
+            <option value="lurker">Lurker</option>
+            <option value="igl">IGL</option>
+            <option value="rifler">Rifler</option>
+          </select>
+        </div>
+        <div class="settings-row" data-requires-optin style="display:none">
+          <div class="settings-label">Rôle secondaire</div>
+          <select class="settings-select" id="scoutRoleSecondary">
+            <option value="">—</option>
+            <option value="entry">Entry fragger</option>
+            <option value="awp">AWPer</option>
+            <option value="support">Support</option>
+            <option value="lurker">Lurker</option>
+            <option value="igl">IGL</option>
+            <option value="rifler">Rifler</option>
+          </select>
+        </div>
+        <div class="settings-row" data-requires-optin style="display:none">
+          <div class="settings-label">Région</div>
+          <select class="settings-select" id="scoutRegion">
+            <option value="">—</option>
+            <option value="EU">Europe</option>
+            <option value="NA">North America</option>
+            <option value="SA">South America</option>
+            <option value="OCE">Oceania</option>
+            <option value="SEA">SE Asia</option>
+          </select>
+        </div>
+        <div class="settings-row" data-requires-optin style="display:none">
+          <div class="settings-label">Ouvert aux offres</div>
+          <div class="settings-value">Apparais dans le filtre "Free Agent" pour les équipes en recrutement</div>
+          <label class="toggle"><input type="checkbox" id="scoutOpenToOffers"/><span class="toggle-slider"></span></label>
+        </div>
+      </div>
     </div>
 
     <!-- SÉCURITÉ -->
@@ -431,7 +480,42 @@ async function loadSettings() {
       document.getElementById(id).addEventListener('change', saveNotifPrefs);
     });
     document.getElementById('settingsLang').addEventListener('change', saveLocale);
+
+    // Scout opt-in : charger l'etat + bind handlers
+    if (profile) {
+      document.getElementById('scoutOptIn').checked = !!profile.scout_opt_in;
+      if (profile.scout_role_primary)   document.getElementById('scoutRolePrimary').value = profile.scout_role_primary;
+      if (profile.scout_role_secondary) document.getElementById('scoutRoleSecondary').value = profile.scout_role_secondary;
+      if (profile.scout_region)         document.getElementById('scoutRegion').value = profile.scout_region;
+      document.getElementById('scoutOpenToOffers').checked = !!profile.scout_open_to_offers;
+      toggleScoutFields(profile.scout_opt_in);
+    }
+    document.getElementById('scoutOptIn').addEventListener('change', async (e) => {
+      toggleScoutFields(e.target.checked);
+      await saveScoutProfile();
+    });
+    ['scoutRolePrimary','scoutRoleSecondary','scoutRegion','scoutOpenToOffers'].forEach(id => {
+      document.getElementById(id).addEventListener('change', saveScoutProfile);
+    });
   } catch(e) { console.warn('Settings load error:', e.message); }
+}
+
+function toggleScoutFields(show) {
+  document.querySelectorAll('[data-requires-optin]').forEach(el => {
+    el.style.display = show ? 'flex' : 'none';
+  });
+}
+
+async function saveScoutProfile() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  await sb.from('profiles').update({
+    scout_opt_in:          document.getElementById('scoutOptIn').checked,
+    scout_role_primary:    document.getElementById('scoutRolePrimary').value || null,
+    scout_role_secondary:  document.getElementById('scoutRoleSecondary').value || null,
+    scout_region:          document.getElementById('scoutRegion').value || null,
+    scout_open_to_offers:  document.getElementById('scoutOpenToOffers').checked,
+  }).eq('id', session.user.id);
 }
 
 async function saveNotifPrefs() {

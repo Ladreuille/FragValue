@@ -50,3 +50,58 @@ FROM subscriptions s
 JOIN auth.users u ON u.id = s.user_id
 WHERE u.email = 'qdreuillet@gmail.com';
 -- Doit retourner : team | active | qdreuillet@gmail.com
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- SCOUT FEATURE (leaderboards + recrutement)
+-- Execute apres avoir verifie que les tables precedentes existent.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- Extensions profiles pour opt-in Scout + recrutement
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS scout_opt_in BOOLEAN DEFAULT false;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS scout_role_primary TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS scout_role_secondary TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS scout_bio TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS scout_open_to_offers BOOLEAN DEFAULT false;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS scout_region TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS notification_prefs JSONB;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS locale TEXT DEFAULT 'fr';
+
+-- Rankings table : snapshot du leaderboard a un instant T
+CREATE TABLE IF NOT EXISTS player_rankings (
+  player_id        TEXT NOT NULL,
+  nickname         TEXT NOT NULL,
+  ranking_type     TEXT NOT NULL, -- 'global', 'entry', 'awp', 'clutch', 'support', 'igl', 'rising', 'consistent', 'rookie', 'freeagent'
+  rank             INT NOT NULL,
+  score            NUMERIC NOT NULL,
+  metadata         JSONB,         -- detail des stats utilisees pour calcul
+  computed_at      TIMESTAMPTZ DEFAULT now(),
+  PRIMARY KEY (player_id, ranking_type)
+);
+CREATE INDEX IF NOT EXISTS idx_player_rankings_type_rank ON player_rankings (ranking_type, rank);
+CREATE INDEX IF NOT EXISTS idx_player_rankings_nickname ON player_rankings (lower(nickname));
+ALTER TABLE player_rankings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Rankings public read" ON player_rankings FOR SELECT USING (true);
+
+-- Ranking history pour detecter les "rising stars" (evolution du score)
+CREATE TABLE IF NOT EXISTS ranking_history (
+  player_id       TEXT NOT NULL,
+  ranking_type    TEXT NOT NULL,
+  rank            INT,
+  score           NUMERIC,
+  snapshot_date   DATE NOT NULL,
+  PRIMARY KEY (player_id, ranking_type, snapshot_date)
+);
+CREATE INDEX IF NOT EXISTS idx_ranking_history_date ON ranking_history (snapshot_date DESC);
+
+-- Waitlist progress : vue pour exposer le compteur d'users sans dump
+CREATE OR REPLACE VIEW scout_waitlist_progress AS
+SELECT
+  (SELECT COUNT(*) FROM auth.users) AS total_users,
+  (SELECT COUNT(*) FROM profiles WHERE scout_opt_in = true) AS opted_in_users,
+  1000 AS threshold,
+  (SELECT COUNT(*) FROM auth.users) >= 1000 AS unlocked;
+
+GRANT SELECT ON scout_waitlist_progress TO anon, authenticated;
+
+-- Pour launcher : quand unlocked devient true, le frontend bascule en mode live

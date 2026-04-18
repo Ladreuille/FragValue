@@ -32,13 +32,43 @@ Espace perso du joueur : son histoire, ses matchs, son coaching.
 
 | Page | URL | Description |
 |---|---|---|
-| Dashboard | `/dashboard.html` | FV Rating trend, derniers matchs, progression |
+| Aperçu (Dashboard) | `/dashboard.html` | FV Rating trend, KPIs, chart, stats par map, meilleur match |
 | Mes matchs | `/matches.html` | Historique paginé, filtres map/date |
 | Analyse démo | `/demo.html` → `/analysis.html` → `/heatmap-results.html` | Flow upload + analyse |
 | 2D Replay | `/replay.html` | Visualisation interactive de la démo |
 | Match Report | `/match-report.html` **(à créer)** | Bilan round-by-round type coach |
-| Scout joueur | `/compare.html` (sous-mode scout) | Profil stats d'un joueur FACEIT |
+| Scout | `/scout.html` **(teaser live, unlock 1000 users)** | Leaderboards multi-critères des meilleurs joueurs |
+| Comparer | `/compare.html` | Comparaison 2-5 joueurs FACEIT |
 | Coach IA | Intégré dans Analysis / Match Report | Narratif LLM |
+
+#### Scout (feature stratégique en mode teaser)
+
+Pre-launch (total users < 1000) : page teaser avec compteur live + preview blurred des 10 leaderboards + opt-in CTA.
+
+Post-launch (unlocked = true) : 10 classements multi-critères :
+- **Global talent** (FV Score composite)
+- **Best Entry / AWP / Clutch / Support** (par rôle)
+- **Best IGL** (prédit via consistency + KAST + K/R faible)
+- **Rising Stars** (plus grosse hausse FV Rating sur 30j)
+- **Most Consistent** (variance FV Rating la plus faible)
+- **Rookie Gems** (<50 matchs avec FV >1.10)
+- **Free Agents** (sans roster actif, opt-in aux offres)
+
+Tier gating post-launch :
+- Free : sa propre position + top 10 de chaque leaderboard
+- Pro : leaderboards complets (top 100), export CSV
+- Elite : filtres recruteurs avancés (rôle / région / niveau / free agent), metadata complete, pages profil privées
+
+Endpoints :
+- `GET /api/scout-rankings?type=global&limit=50` — leaderboard paginé
+- `GET /api/scout-waitlist-status` — compteur + progress threshold
+
+Tables Supabase :
+- `player_rankings` (snapshot actuel par type)
+- `ranking_history` (pour détecter rising stars)
+- `profiles` enrichi avec `scout_opt_in`, `scout_role_primary/secondary`, `scout_region`, `scout_open_to_offers`, `scout_bio`
+
+Opt-in géré depuis `account.html` → Paramètres → Profil Scout.
 
 ### PROGRESSER
 Ressources pédagogiques pour monter en niveau.
