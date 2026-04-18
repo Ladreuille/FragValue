@@ -924,6 +924,11 @@ function recalcRoundBoundaries() {
     const maxPts = MAX_PATH_PTS[key];
     if (maxPts && g.path && g.path.length / 2 > maxPts) {
       g.path = g.path.slice(0, maxPts * 2);
+    }
+    // Sync detonX/Y avec le dernier point du path (si path existe).
+    // Evite le decalage "traj finit ici, explosion pop la-bas" quand le
+    // parser a matche le mauvais event detonation (distance selection).
+    if (g.path && g.path.length >= 2) {
       g.detonX = g.path[g.path.length - 2];
       g.detonY = g.path[g.path.length - 1];
     }
