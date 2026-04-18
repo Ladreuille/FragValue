@@ -1394,21 +1394,13 @@ function selectRound(round, btn) {
 function buildFrames(round) {
   const positions = demoData.positions || {}, kills = demoData.kills || [];
   const roundData = (demoData.rounds || []).find(r => (r.round ?? -1) === round) || {};
-  const rawStartTick = roundData.startTick || 0;
+  // Lower bound: parser's startTick = freeze_end(N) = start of gameplay.
+  // This naturally excludes the previous round's walk-back samples.
+  // Upper bound: gameplayEnd = lastKill + buffer so the replay doesn't overflow
+  // into the next round's walk-back and buy phase.
+  const startTick = roundData.startTick || 0;
   const endTick = roundData.gameplayEnd ?? (roundData.endTick || 0);
   const killsR = roundData.killsRound ?? (round + 1);
-  // Trim du dead time au debut : si le 1er kill arrive > 30s apres freeze_end
-  // (tactical stall, last round non-engage, etc.), on remonte startTick a
-  // firstKill - 3s pour eviter le replay statique tout en gardant un bref
-  // lead-up a l'action.
-  const _roundKills = kills.filter(k => {
-    const t = k.tick || 0;
-    return t >= rawStartTick && (endTick === 0 || t <= endTick);
-  }).sort((a, b) => (a.tick || 0) - (b.tick || 0));
-  const firstKillT = _roundKills.length > 0 ? _roundKills[0].tick : 0;
-  const startTick = (firstKillT > 0 && firstKillT - rawStartTick > 3840)
-    ? firstKillT - 384
-    : rawStartTick;
 
   const roundKills = kills.filter(k => {
     const t = k.tick || 0;
