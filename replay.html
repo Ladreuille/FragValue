@@ -833,6 +833,18 @@ function recalcRoundBoundaries() {
   // premier saut anormal pour eviter les trajectoires zigzag a travers les murs.
   // Pour HE/flash : detecter aussi les renversements de direction multiples
   // (path zigzague = parser a recupere des samples d'entites differentes).
+  // DEBUG TEMPORAIRE : dump -Izo grenades + rounds avec score
+  const rounds = demoData.rounds || [];
+  console.log('[DEBUG] Rounds:', rounds.map(r => `R${r.round}(k${r.killsRound}):w${r.winner}:${r.startTick}-${r.endTick}`).join(' | '));
+  const izoGren = (demoData.grenades || []).filter(g => g.thrower === '-Izo').sort((a,b) => a.tick - b.tick);
+  izoGren.forEach((g, i) => {
+    const r = rounds.find(r => g.tick >= r.startTick && g.tick <= r.endTick);
+    const sec = r ? ((g.tick - r.startTick) / 128).toFixed(1) : '?';
+    const n = g.path ? g.path.length / 2 : 0;
+    const pts = [];
+    if (g.path) for (let j = 0; j < n; j++) pts.push(`(${Math.round(g.path[j*2])},${Math.round(g.path[j*2+1])})`);
+    console.log(`[-Izo #${i+1}] R${r?.displayNum || '?'} @${sec}s ${g.type} tick=${g.tick}→${g.detonTick} span=${g.detonTick-g.tick}t (${n}pts) detonXY=(${g.detonX},${g.detonY}) throwXY=(${g.x},${g.y})`);
+  });
   let reversalTruncated = 0;
   (demoData.grenades || []).forEach(g => {
     if (!g.tick || !g.detonTick) return;  // Apres passe 1, detonTick est normalise
