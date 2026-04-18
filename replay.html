@@ -800,10 +800,10 @@ function recalcRoundBoundaries() {
   const EFFECT_TICKS = { smoke: 2304, molotov: 896, incgren: 896, decoy: 5760, flash: 128, hegre: 64 };  // 18s/7s/45s/1s/0.5s
   const LANDS_ON_GROUND = { smoke: 1, molotov: 1, incgren: 1, decoy: 1 };  // types avec phase de repos (HE/flash explosent en vol)
   const STATIONARY_SQ = 100;   // (10 units)^2 : seuil pour considerer la grenade au sol
-  const MAX_JUMP_SQ = 40000; // (200 units)^2 : saut anormal entre deux samples. En CS2 un
-                             // grenade max thrown = 700 units/sec, soit ~5 units/tick.
-                             // Avec sampling jusqu'a ~16 ticks = max ~80 units/sample.
-                             // 200 units = 4x le max legitime, clairement un teleport.
+  const MAX_JUMP_SQ = 10000; // (100 units)^2 : saut anormal entre deux samples. Plus strict
+                             // que 200 pour catcher les paths pollues par une autre grenade
+                             // du meme joueur (flash/HE overlap, path includes debris d'une
+                             // autre entite).
   const typeKey = (t) => t.includes('smoke') ? 'smoke'
                        : t.includes('incgren') ? 'incgren'
                        : t.includes('molotov') ? 'molotov'
@@ -874,18 +874,12 @@ function recalcRoundBoundaries() {
       if (ddx * ddx + ddy * ddy > MAX_JUMP_SQ) { cut = i; break; }
     }
     if (cut > 0) {
-      // Min 3 points pour avoir une trajectoire path coherente. Sinon on
-      // vide le path et on laisse le rendu fall-back en ligne droite vers
-      // detonX/Y du parser (qui peut etre correct meme si le path est casse).
-      // La safety check pass 3 nullifiera detonTick si detonX/Y est aussi
-      // invalide (proche de 0 ou du throw).
-      if (cut >= 3) {
-        g.path = g.path.slice(0, cut * 2);
-        g.detonX = g.path[g.path.length - 2];
-        g.detonY = g.path[g.path.length - 1];
-      } else {
-        g.path = [];  // fall-back straight-line vers detonX/Y parser
-      }
+      // Path pollue (jump anormal suggere un merge avec data d'une autre
+      // grenade). Vider totalement le path et laisser le rendu fall-back
+      // en ligne droite vers detonX/Y du parser (qui est le vrai detonation
+      // event, fiable avec le claim flag). Meilleur visuel que de garder
+      // des points partiels qui pourraient etre de la mauvaise grenade.
+      g.path = [];
       jumpTruncated++;
       return;
     }
@@ -915,7 +909,10 @@ function recalcRoundBoundaries() {
         }
       }
     }
-    const maxReversals = { hegre: 2, flash: 2, molotov: 2, incgren: 2 }[key];
+    // Flash : aucune reversal legitime (explose en vol). Si reversal detecte,
+    // path pollue par une autre grenade -> vider totalement.
+    // HE/molo : peuvent rebondir 1-2 fois, truncate au-dela.
+    const maxReversals = { hegre: 2, flash: 0, molotov: 2, incgren: 2 }[key];
     if (maxReversals !== undefined) {
       let reversals = 0, prevDx = 0, prevDy = 0;
       for (let i = 1; i < n; i++) {
@@ -923,9 +920,14 @@ function recalcRoundBoundaries() {
         const dy = g.path[i * 2 + 1] - g.path[(i - 1) * 2 + 1];
         if (i > 1 && (prevDx * dx + prevDy * dy) < 0) reversals++;
         if (reversals > maxReversals) {
-          g.path = g.path.slice(0, i * 2);
-          g.detonX = g.path[g.path.length - 2];
-          g.detonY = g.path[g.path.length - 1];
+          if (key === 'flash') {
+            // Flash : vider completement, fall-back straight-line.
+            g.path = [];
+          } else {
+            g.path = g.path.slice(0, i * 2);
+            g.detonX = g.path[g.path.length - 2];
+            g.detonY = g.path[g.path.length - 1];
+          }
           reversalTruncated++;
           break;
         }
@@ -951,13 +953,11 @@ function recalcRoundBoundaries() {
     if (maxPts && g.path && g.path.length / 2 > maxPts) {
       g.path = g.path.slice(0, maxPts * 2);
     }
-    // Sync detonX/Y avec le dernier point du path (si path existe).
-    // Evite le decalage "traj finit ici, explosion pop la-bas" quand le
-    // parser a matche le mauvais event detonation (distance selection).
-    if (g.path && g.path.length >= 2) {
-      g.detonX = g.path[g.path.length - 2];
-      g.detonY = g.path[g.path.length - 1];
-    }
+    // NOTE : on NE sync PLUS detonX/Y avec path[N-1]. Le parser (avec claim
+    // flag + matching chronologique par type) donne maintenant les coords
+    // de l'event detonate exact, plus fiable que path[N-1] qui peut etre
+    // sur des debris/residus. Si path pollue, path=[] (straight-line vers
+    // detonX/Y).
     // Safety : grenade avec path vide ET detonX/Y invalide (= parser n'a pas
     // pu determiner la detonation). Nullifier detonTick pour que le rendu
     // skip cette grenade entierement (au lieu d'afficher une ligne random
