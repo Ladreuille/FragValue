@@ -777,10 +777,12 @@ function recalcRoundBoundaries() {
   const EFFECT_TICKS = { smoke: 2304, molotov: 896, incgren: 896, decoy: 5760, flash: 128, hegre: 64 };  // 18s/7s/45s/1s/0.5s
   const LANDS_ON_GROUND = { smoke: 1, molotov: 1, incgren: 1, decoy: 1 };  // types avec phase de repos (HE/flash explosent en vol)
   const STATIONARY_SQ = 100;   // (10 units)^2 : seuil pour considerer la grenade au sol
-  const MAX_JUMP_SQ = 10000; // (100 units)^2 : saut anormal entre deux samples. Plus strict
-                             // que 200 pour catcher les paths pollues par une autre grenade
-                             // du meme joueur (flash/HE overlap, path includes debris d'une
-                             // autre entite).
+  // Seuil de "teleport" entre deux samples consecutifs. Parser utilise maintenant
+  // entityId matching (pas de cross-entity pollution) ET downsample bounce-preserving
+  // qui garde peu de points avec gros gaps spatiaux (une HE flight a 1500 u/s peut
+  // avoir des segments de 150-300 units entre samples). Seuil a 1200 units pour ne
+  // couper QUE les vrais teleports cross-map.
+  const MAX_JUMP_SQ = 1440000; // (1200 units)^2
   const typeKey = (t) => t.includes('smoke') ? 'smoke'
                        : t.includes('incgren') ? 'incgren'
                        : t.includes('molotov') ? 'molotov'
@@ -955,6 +957,8 @@ function recalcRoundBoundaries() {
       skipped++;
     }
   });
+  const total = (demoData.grenades || []).length;
+  console.log(`[grenades] total=${total} clamped=${clamped} jumpTrunc=${jumpTruncated} reversalTrunc=${reversalTruncated} skipped=${skipped}`);
 }
 
 // ══ ROUNDS BAR ═══════════════════════════════════════════════════════════════
