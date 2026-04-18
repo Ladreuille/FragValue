@@ -870,17 +870,19 @@ function recalcRoundBoundaries() {
       if (ddx * ddx + ddy * ddy > MAX_JUMP_SQ) { cut = i; break; }
     }
     if (cut > 0) {
-      // Min 3 points pour avoir une trajectoire visible. Si le jump est
-      // tres tot dans le path (< 3 points valides), on peut pas afficher
-      // une traj coherente -> skip totalement la grenade.
+      // Min 3 points pour avoir une trajectoire path coherente. Sinon on
+      // vide le path et on laisse le rendu fall-back en ligne droite vers
+      // detonX/Y du parser (qui peut etre correct meme si le path est casse).
+      // La safety check pass 3 nullifiera detonTick si detonX/Y est aussi
+      // invalide (proche de 0 ou du throw).
       if (cut >= 3) {
         g.path = g.path.slice(0, cut * 2);
         g.detonX = g.path[g.path.length - 2];
         g.detonY = g.path[g.path.length - 1];
-        jumpTruncated++;
       } else {
-        g.detonTick = null;
+        g.path = [];  // fall-back straight-line vers detonX/Y parser
       }
+      jumpTruncated++;
       return;
     }
     // Renversements de direction : HE/flash/molo/incgren ne zigzaguent pas.
