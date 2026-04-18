@@ -124,7 +124,7 @@
     <div class="fv-right">
       <a href="/pricing.html" class="fv-login">Tarifs</a>
       <a href="/login.html" class="fv-login" id="navLoginBtn">Connexion</a>
-      <a href="/dashboard.html" class="fv-cta" id="navAccountBtn" style="display:none">Mon espace</a>
+      <a href="/account.html" class="fv-cta" id="navAccountBtn" style="display:none">Mon espace</a>
     </div>
   `;
 

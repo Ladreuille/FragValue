@@ -5,7 +5,7 @@
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
   <meta name="description" content="FragValue — CS2 Match Analytics">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FragValue · Mon espace</title>
+  <title>FragValue · Mon jeu</title>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -176,75 +176,6 @@
     .link-btn{background:var(--accent);color:#000;border:none;padding:12px 18px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
     .link-btn:hover{opacity:.9}
     .link-msg{font-family:var(--mono);font-size:12px;text-align:center;margin-top:10px;min-height:16px}
-    /* ── Mon compte : Abonnement / Paramètres / Sécurité ─────────────────────── */
-    .sub-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
-    .sub-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 0% 50%,rgba(184,255,87,.06),transparent);pointer-events:none}
-    .sub-card-loading{display:flex;align-items:center;gap:12px;color:var(--text2);font-size:13px;position:relative;z-index:1}
-    .sub-card-loading .load-spinner{width:18px;height:18px;border-width:2px}
-    .sub-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;position:relative;z-index:1;flex-wrap:wrap;gap:12px}
-    .sub-plan{display:flex;align-items:center;gap:12px}
-    .sub-plan-badge{font-family:var(--display);font-size:24px;letter-spacing:.04em;padding:4px 14px;border-radius:6px}
-    .sub-plan-badge.free{background:rgba(122,128,128,.12);color:var(--text2);border:1px solid var(--border2)}
-    .sub-plan-badge.pro{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000}
-    .sub-plan-badge.elite{background:linear-gradient(135deg,var(--gold),#d4a52a);color:#000}
-    .sub-plan-meta{font-size:12px;color:var(--text2)}
-    .sub-plan-meta strong{color:var(--text);font-family:var(--mono)}
-    .sub-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .sub-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:9px 16px;border-radius:6px;border:none;cursor:pointer;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
-    .sub-btn.primary{background:var(--accent);color:#000}
-    .sub-btn.primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
-    .sub-btn.secondary{background:transparent;color:var(--text);border:1px solid var(--border2)}
-    .sub-btn.secondary:hover{border-color:var(--accent);color:var(--accent)}
-    .sub-btn.danger{background:transparent;color:var(--danger);border:1px solid rgba(255,68,68,.3)}
-    .sub-btn.danger:hover{background:rgba(255,68,68,.08)}
-    .sub-usage{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;position:relative;z-index:1}
-    @media(max-width:600px){.sub-usage{grid-template-columns:1fr}}
-    .sub-usage-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px}
-    .sub-usage-label{font-size:10px;font-family:var(--mono);letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:6px}
-    .sub-usage-val{font-family:var(--display);font-size:20px;color:var(--text);line-height:1}
-    .sub-usage-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px}
-    .sub-usage-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:8px}
-    .sub-usage-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .6s ease}
-
-    .plan-compare{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    @media(max-width:700px){.plan-compare{grid-template-columns:1fr}}
-    .plan-mini{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
-    .plan-mini[data-plan="pro"]{border-color:rgba(184,255,87,.3)}
-    .plan-mini[data-plan="elite"]{border-color:rgba(245,200,66,.3)}
-    .plan-mini-name{font-family:var(--display);font-size:18px;letter-spacing:.04em;margin-bottom:6px}
-    .plan-mini-price{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent);margin-bottom:12px}
-    .plan-mini-price span{font-size:12px;color:var(--text3);font-weight:400}
-    .plan-mini-feats{list-style:none;padding:0;margin:0}
-    .plan-mini-feats li{font-size:12px;color:var(--text2);padding:4px 0 4px 16px;position:relative}
-    .plan-mini-feats li::before{content:'•';color:var(--accent);position:absolute;left:0}
-    .teaser-link-inline{color:var(--accent);text-decoration:none;font-family:var(--mono);font-size:12px}
-    .teaser-link-inline:hover{text-decoration:underline}
-
-    .settings-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px 18px;margin-bottom:16px}
-    .settings-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
-    .settings-row:last-child{border-bottom:none}
-    @media(max-width:600px){.settings-row{flex-wrap:wrap}}
-    .settings-label{font-size:13px;color:var(--text);font-weight:400;flex-shrink:0;min-width:180px}
-    .settings-value{flex:1;font-size:12px;color:var(--text2);font-family:var(--mono)}
-    .settings-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:7px 14px;border-radius:6px;background:transparent;color:var(--text);border:1px solid var(--border2);cursor:pointer;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
-    .settings-btn:hover{border-color:var(--accent);color:var(--accent)}
-    .settings-btn.danger-btn{color:var(--danger);border-color:rgba(255,68,68,.3)}
-    .settings-btn.danger-btn:hover{background:rgba(255,68,68,.08);color:var(--danger)}
-    .settings-select{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:6px;cursor:pointer}
-    .settings-msg{font-family:var(--mono);font-size:11px;padding:8px 0;min-height:14px}
-    .settings-msg.ok{color:var(--success)}
-    .settings-msg.err{color:var(--danger)}
-    .danger-label{color:var(--danger)!important}
-    .danger-label::after{background:rgba(255,68,68,.2)!important}
-    .danger-card{border-color:rgba(255,68,68,.2)!important}
-
-    .toggle{position:relative;display:inline-block;width:42px;height:22px;flex-shrink:0}
-    .toggle input{opacity:0;width:0;height:0}
-    .toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--card);border:1px solid var(--border2);border-radius:22px;transition:.2s}
-    .toggle-slider::before{content:'';position:absolute;height:16px;width:16px;left:2px;top:1px;background:var(--text2);border-radius:50%;transition:.2s}
-    .toggle input:checked + .toggle-slider{background:rgba(184,255,87,.15);border-color:var(--accent)}
-    .toggle input:checked + .toggle-slider::before{transform:translateX(20px);background:var(--accent)}
-
     @media(max-width:768px){nav{padding:0 16px}.page{padding:16px}.hero-kpis{grid-template-columns:repeat(3,1fr)}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
@@ -260,7 +191,7 @@
 <div class="page">
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="sidebar-section">Mon espace</div>
+    <div class="sidebar-section">Mon jeu</div>
     <button class="sidebar-btn active" onclick="setTab('overview',this)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Vue d'ensemble
@@ -283,18 +214,10 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       Roster
     </button>
-    <div class="sidebar-section">Mon compte</div>
-    <button class="sidebar-btn" onclick="setTab('subscription',this)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-      Abonnement
-    </button>
-    <button class="sidebar-btn" onclick="setTab('settings',this)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-      Paramètres
-    </button>
-    <button class="sidebar-btn" onclick="setTab('security',this)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-      Sécurité
+    <div class="sidebar-section">Compte</div>
+    <button class="sidebar-btn" onclick="window.location.href='account.html'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Mon espace
     </button>
   </aside>
 
@@ -384,137 +307,6 @@
           <div class="empty-title">Roster vide</div>
           <div class="empty-sub">Configure ton équipe depuis les paramètres.</div>
           <button class="empty-btn" onclick="setTab('settings',document.querySelector('[onclick*=settings]'))">Configurer</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ABONNEMENT -->
-    <div class="tab-panel" id="panelSubscription">
-      <div class="sec-label">Mon abonnement</div>
-      <div class="sub-card" id="subCard">
-        <div class="sub-card-loading"><div class="load-spinner"></div>Chargement de ton abonnement...</div>
-      </div>
-
-      <div class="sec-label">Comparaison des plans</div>
-      <div class="plan-compare">
-        <div class="plan-mini" data-plan="free">
-          <div class="plan-mini-name">Free</div>
-          <div class="plan-mini-price">0€</div>
-          <ul class="plan-mini-feats">
-            <li>3 analyses / mois</li>
-            <li>Stats basiques</li>
-            <li>1 diagnostic IA / mois</li>
-          </ul>
-        </div>
-        <div class="plan-mini" data-plan="pro">
-          <div class="plan-mini-name">Pro</div>
-          <div class="plan-mini-price">9€<span>/mois</span></div>
-          <ul class="plan-mini-feats">
-            <li>Analyses illimitées</li>
-            <li>2D Replay + KPIs avancés</li>
-            <li>Coach IA illimité</li>
-            <li>Pro demos viewer</li>
-          </ul>
-        </div>
-        <div class="plan-mini" data-plan="elite">
-          <div class="plan-mini-name">Elite</div>
-          <div class="plan-mini-price">29€<span>/mois</span></div>
-          <ul class="plan-mini-feats">
-            <li>Tout Pro + team tools</li>
-            <li>Pro strats DB</li>
-            <li>Anti-strat tool</li>
-            <li>Team dashboard</li>
-          </ul>
-        </div>
-      </div>
-      <div style="text-align:center;margin-top:18px">
-        <a href="pricing.html" class="teaser-link-inline">Voir la grille complète →</a>
-      </div>
-    </div>
-
-    <!-- PARAMÈTRES -->
-    <div class="tab-panel" id="panelSettings">
-      <div class="sec-label">Profil</div>
-      <div class="settings-card">
-        <div class="settings-row">
-          <div class="settings-label">Email</div>
-          <div class="settings-value" id="settingsEmail">—</div>
-        </div>
-        <div class="settings-row">
-          <div class="settings-label">Pseudo FACEIT</div>
-          <div class="settings-value" id="settingsFaceit">—</div>
-          <button class="settings-btn" onclick="window.location.href='onboarding.html'">Modifier</button>
-        </div>
-        <div class="settings-row">
-          <div class="settings-label">Membre depuis</div>
-          <div class="settings-value" id="settingsCreated">—</div>
-        </div>
-      </div>
-
-      <div class="sec-label">Extension Chrome</div>
-      <div class="settings-card">
-        <div class="settings-row">
-          <div class="settings-label">Statut</div>
-          <div class="settings-value" id="settingsExt">Vérification...</div>
-          <a href="extension-auth.html" class="settings-btn">Configurer</a>
-        </div>
-      </div>
-
-      <div class="sec-label">Notifications</div>
-      <div class="settings-card">
-        <div class="settings-row">
-          <div class="settings-label">Email — nouveau match analysé</div>
-          <label class="toggle"><input type="checkbox" id="notifMatches"/><span class="toggle-slider"></span></label>
-        </div>
-        <div class="settings-row">
-          <div class="settings-label">Email — rapport hebdo</div>
-          <label class="toggle"><input type="checkbox" id="notifWeekly"/><span class="toggle-slider"></span></label>
-        </div>
-        <div class="settings-row">
-          <div class="settings-label">Email — annonces produit</div>
-          <label class="toggle"><input type="checkbox" id="notifProduct"/><span class="toggle-slider"></span></label>
-        </div>
-      </div>
-
-      <div class="sec-label">Préférences</div>
-      <div class="settings-card">
-        <div class="settings-row">
-          <div class="settings-label">Langue</div>
-          <select class="settings-select" id="settingsLang">
-            <option value="fr">Français</option>
-            <option value="en">English</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- SÉCURITÉ -->
-    <div class="tab-panel" id="panelSecurity">
-      <div class="sec-label">Mot de passe</div>
-      <div class="settings-card">
-        <div class="settings-row">
-          <div class="settings-label">Changer mon mot de passe</div>
-          <div class="settings-value">Envoi d'un lien de réinitialisation par email</div>
-          <button class="settings-btn" onclick="sendPasswordReset()" id="pwdResetBtn">Envoyer le lien</button>
-        </div>
-        <div class="settings-msg" id="pwdMsg"></div>
-      </div>
-
-      <div class="sec-label">Sessions actives</div>
-      <div class="settings-card">
-        <div class="settings-row">
-          <div class="settings-label">Déconnexion de tous les appareils</div>
-          <div class="settings-value">Ferme toutes les sessions en cours sauf celle-ci</div>
-          <button class="settings-btn" onclick="logoutAll()">Déconnecter</button>
-        </div>
-      </div>
-
-      <div class="sec-label danger-label">Zone dangereuse</div>
-      <div class="settings-card danger-card">
-        <div class="settings-row">
-          <div class="settings-label">Supprimer mon compte</div>
-          <div class="settings-value">Toutes tes données (profil, démos, watchlist) seront définitivement supprimées. Cette action est irréversible.</div>
-          <button class="settings-btn danger-btn" onclick="deleteAccount()">Supprimer</button>
         </div>
       </div>
     </div>
@@ -899,192 +691,6 @@ function setTab(tab,btn) {
   document.querySelectorAll('.sidebar-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('panel'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
   if(btn)btn.classList.add('active');
-  // Lazy-load des donnees specifiques au tab (evite de tout charger au boot)
-  if (tab === 'subscription') loadSubscription();
-  if (tab === 'settings')     loadSettings();
-}
-
-// ══ ABONNEMENT ═════════════════════════════════════════════════════════════
-let _subLoaded = false;
-async function loadSubscription() {
-  if (_subLoaded) return;
-  _subLoaded = true;
-  const card = document.getElementById('subCard');
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    const headers = { 'Content-Type': 'application/json' };
-    if (session?.access_token) headers['Authorization'] = 'Bearer ' + session.access_token;
-    const res = await fetch('/api/check-subscription', { headers });
-    const d = await res.json();
-    const plan = (d.plan || 'free').toLowerCase();
-    const planLabel = plan === 'pro' ? 'Pro' : plan === 'team' || plan === 'elite' ? 'Elite' : 'Free';
-    const planKey = plan === 'team' ? 'elite' : plan;
-    const nextBilling = d.current_period_end
-      ? new Date(d.current_period_end * 1000).toLocaleDateString('fr-FR')
-      : null;
-    const status = d.status || (plan === 'free' ? 'actif' : '—');
-    const cancelAt = d.cancel_at_period_end
-      ? `Se termine le ${new Date(d.current_period_end * 1000).toLocaleDateString('fr-FR')}`
-      : null;
-    const usage = d.usage || {};
-    card.innerHTML = `
-      <div class="sub-head">
-        <div class="sub-plan">
-          <div class="sub-plan-badge ${planKey}">${planLabel}</div>
-          <div class="sub-plan-meta">
-            ${plan === 'free'
-              ? `Plan gratuit · <strong>${usage.analyses_used || 0}/3</strong> analyses ce mois`
-              : `Statut <strong>${status}</strong>${nextBilling ? ` · Prochaine facture <strong>${nextBilling}</strong>` : ''}${cancelAt ? ` · <span style="color:var(--gold)">${cancelAt}</span>` : ''}`}
-          </div>
-        </div>
-        <div class="sub-actions">
-          ${plan === 'free'
-            ? `<a href="pricing.html" class="sub-btn primary">Passer à Pro</a>`
-            : `<button class="sub-btn secondary" onclick="openStripePortal()">Gérer mon abonnement</button><a href="pricing.html" class="sub-btn secondary">Changer de plan</a>`}
-        </div>
-      </div>
-      ${plan === 'free' ? `
-        <div class="sub-usage">
-          <div class="sub-usage-item">
-            <div class="sub-usage-label">Analyses demos</div>
-            <div class="sub-usage-val">${usage.analyses_used || 0}<span style="color:var(--text3);font-size:14px"> / 3</span></div>
-            <div class="sub-usage-sub">ce mois · reset dans ${usage.days_to_reset || 30}j</div>
-            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, ((usage.analyses_used || 0) / 3) * 100)}%"></div></div>
-          </div>
-          <div class="sub-usage-item">
-            <div class="sub-usage-label">Scouts joueurs</div>
-            <div class="sub-usage-val">${usage.scouts_today || 0}<span style="color:var(--text3);font-size:14px"> / 3</span></div>
-            <div class="sub-usage-sub">aujourd'hui · reset minuit</div>
-            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, ((usage.scouts_today || 0) / 3) * 100)}%"></div></div>
-          </div>
-          <div class="sub-usage-item">
-            <div class="sub-usage-label">Diagnostic IA</div>
-            <div class="sub-usage-val">${usage.ai_used || 0}<span style="color:var(--text3);font-size:14px"> / 1</span></div>
-            <div class="sub-usage-sub">ce mois · Pro = illimite</div>
-            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, (usage.ai_used || 0) * 100)}%"></div></div>
-          </div>
-        </div>
-      ` : ''}
-    `;
-  } catch(e) {
-    card.innerHTML = `<div style="color:var(--text2);font-size:12px">Impossible de charger l'abonnement. <a href="pricing.html" style="color:var(--accent)">Voir les plans</a>.</div>`;
-  }
-}
-
-async function openStripePortal() {
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { window.location.href = 'login.html'; return; }
-    const res = await fetch('/api/stripe-portal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-    });
-    const d = await res.json();
-    if (d.url) window.location.href = d.url;
-    else alert('Portail indisponible. Contact support@fragvalue.com');
-  } catch(e) { alert('Erreur reseau. Reessaie.'); }
-}
-
-// ══ PARAMETRES ═════════════════════════════════════════════════════════════
-let _settingsLoaded = false;
-async function loadSettings() {
-  if (_settingsLoaded) return;
-  _settingsLoaded = true;
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) return;
-    document.getElementById('settingsEmail').textContent = session.user.email || '—';
-    const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
-    if (profile) {
-      document.getElementById('settingsFaceit').textContent = profile.faceit_nickname || 'Non lié';
-      if (profile.created_at) {
-        document.getElementById('settingsCreated').textContent = new Date(profile.created_at).toLocaleDateString('fr-FR');
-      }
-      // Preferences notifications
-      const notifs = profile.notification_prefs || {};
-      document.getElementById('notifMatches').checked = notifs.match_ready !== false;
-      document.getElementById('notifWeekly').checked  = notifs.weekly_report === true;
-      document.getElementById('notifProduct').checked = notifs.product_news !== false;
-      // Langue
-      if (profile.locale) document.getElementById('settingsLang').value = profile.locale;
-    }
-    // Extension Chrome status
-    const extMarker = document.querySelector('[data-fv-ext-installed]');
-    document.getElementById('settingsExt').textContent = extMarker ? 'Installée' : 'Non détectée';
-
-    // Bind les toggles pour save auto
-    ['notifMatches','notifWeekly','notifProduct'].forEach(id => {
-      document.getElementById(id).addEventListener('change', saveNotifPrefs);
-    });
-    document.getElementById('settingsLang').addEventListener('change', saveLocale);
-  } catch(e) { console.warn('Settings load error:', e.message); }
-}
-
-async function saveNotifPrefs() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) return;
-  const prefs = {
-    match_ready:  document.getElementById('notifMatches').checked,
-    weekly_report:document.getElementById('notifWeekly').checked,
-    product_news: document.getElementById('notifProduct').checked,
-  };
-  await sb.from('profiles').update({ notification_prefs: prefs }).eq('id', session.user.id);
-}
-
-async function saveLocale() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) return;
-  const locale = document.getElementById('settingsLang').value;
-  await sb.from('profiles').update({ locale }).eq('id', session.user.id);
-}
-
-// ══ SECURITE ═══════════════════════════════════════════════════════════════
-async function sendPasswordReset() {
-  const btn = document.getElementById('pwdResetBtn');
-  const msg = document.getElementById('pwdMsg');
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) return;
-  btn.disabled = true; btn.textContent = '...';
-  msg.className = 'settings-msg';
-  msg.textContent = '';
-  try {
-    const { error } = await sb.auth.resetPasswordForEmail(session.user.email, {
-      redirectTo: window.location.origin + '/account.html',
-    });
-    if (error) throw error;
-    msg.className = 'settings-msg ok';
-    msg.textContent = `Email envoye a ${session.user.email}. Verifie ta boite reception.`;
-  } catch(e) {
-    msg.className = 'settings-msg err';
-    msg.textContent = 'Erreur : ' + e.message;
-  } finally {
-    btn.disabled = false; btn.textContent = 'Envoyer le lien';
-  }
-}
-
-async function logoutAll() {
-  if (!confirm('Deconnecter toutes les sessions ? Tu devras te reconnecter ici.')) return;
-  await sb.auth.signOut({ scope: 'global' });
-  window.location.href = 'login.html';
-}
-
-async function deleteAccount() {
-  const confirmText = 'SUPPRIMER';
-  const input = prompt(`Cette action est irreversible. Toutes tes donnees (profil, demos, watchlist, roster) seront supprimees.\n\nTape "${confirmText}" pour confirmer :`);
-  if (input !== confirmText) return;
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    const res = await fetch('/api/delete-account', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-    });
-    if (!res.ok) throw new Error('Echec suppression');
-    await sb.auth.signOut();
-    alert('Compte supprime. Au revoir.');
-    window.location.href = 'index.html';
-  } catch(e) {
-    alert('Erreur : ' + e.message + '\n\nContact support@fragvalue.com');
-  }
 }
 
 function showLoading(show,text) {

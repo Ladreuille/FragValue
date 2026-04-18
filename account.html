@@ -2,22 +2,506 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
-  <title>FragValue · Mon espace</title>
-  <meta name="robots" content="noindex">
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
-  <meta http-equiv="refresh" content="0; url=/dashboard.html">
-  <script>
-    // Preserver les query params (ex: ?checkout=success apres Stripe)
-    const qs = window.location.search || '';
-    const hash = window.location.hash || '';
-    window.location.replace('/dashboard.html' + qs + hash);
-  </script>
+  <meta name="description" content="FragValue — Mon espace : abonnement, paramètres et sécurité">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FragValue · Mon espace</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body{background:#080909;color:#e8eaea;font-family:'Space Mono',monospace;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
-    a{color:#b8ff57}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
+      --accent:#b8ff57;--accent2:#7ddd1a;--accent-dim:rgba(184,255,87,.10);
+      --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+      --font:'Space Mono',monospace;--mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+      --radius:6px;--radius2:12px;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+    /* Nav styles injected by nav.js */
+    .page{max-width:1200px;margin:0 auto;padding:28px 32px 80px;display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start}
+    @media(max-width:900px){.page{grid-template-columns:1fr;padding:16px}}
+    .sidebar{position:sticky;top:76px;display:flex;flex-direction:column;gap:4px}
+    @media(max-width:900px){.sidebar{display:grid;grid-template-columns:repeat(3,1fr);position:static}}
+    .sidebar-section{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);padding:6px 10px;margin-top:6px}
+    @media(max-width:900px){.sidebar-section{display:none}}
+    .sidebar-btn{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;border:none;background:transparent;color:var(--text2);font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;width:100%;text-align:left}
+    .sidebar-btn:hover{background:var(--surface);color:var(--text)}
+    .sidebar-btn.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+    .sidebar-btn svg{flex-shrink:0;opacity:.6;transition:opacity .15s}
+    .sidebar-btn.active svg,.sidebar-btn:hover svg{opacity:1}
+    .main{min-width:0}
+    .tab-panel{display:none}.tab-panel.active{display:block;animation:fadeUp .25s ease}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .sec-label{font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:20px 0 12px;display:flex;align-items:center;gap:10px;font-family:var(--mono)}
+    .sec-label:first-child{margin-top:0}
+    .sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+    .load-spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── Abonnement ─────────────────────────────────────────── */
+    .sub-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
+    .sub-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 0% 50%,rgba(184,255,87,.06),transparent);pointer-events:none}
+    .sub-card-loading{display:flex;align-items:center;gap:12px;color:var(--text2);font-size:13px;position:relative;z-index:1}
+    .sub-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;position:relative;z-index:1;flex-wrap:wrap;gap:12px}
+    .sub-plan{display:flex;align-items:center;gap:12px}
+    .sub-plan-badge{font-family:var(--display);font-size:24px;letter-spacing:.04em;padding:4px 14px;border-radius:6px}
+    .sub-plan-badge.free{background:rgba(122,128,128,.12);color:var(--text2);border:1px solid var(--border2)}
+    .sub-plan-badge.pro{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000}
+    .sub-plan-badge.elite{background:linear-gradient(135deg,var(--gold),#d4a52a);color:#000}
+    .sub-plan-meta{font-size:12px;color:var(--text2)}
+    .sub-plan-meta strong{color:var(--text);font-family:var(--mono)}
+    .sub-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .sub-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:9px 16px;border-radius:6px;border:none;cursor:pointer;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+    .sub-btn.primary{background:var(--accent);color:#000}
+    .sub-btn.primary:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 20px rgba(184,255,87,.4)}
+    .sub-btn.secondary{background:transparent;color:var(--text);border:1px solid var(--border2)}
+    .sub-btn.secondary:hover{border-color:var(--accent);color:var(--accent)}
+    .sub-usage{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;position:relative;z-index:1}
+    @media(max-width:600px){.sub-usage{grid-template-columns:1fr}}
+    .sub-usage-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px}
+    .sub-usage-label{font-size:10px;font-family:var(--mono);letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:6px}
+    .sub-usage-val{font-family:var(--display);font-size:22px;color:var(--text);line-height:1}
+    .sub-usage-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px}
+    .sub-usage-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:8px}
+    .sub-usage-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .6s ease}
+
+    .plan-compare{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    @media(max-width:700px){.plan-compare{grid-template-columns:1fr}}
+    .plan-mini{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
+    .plan-mini[data-plan="pro"]{border-color:rgba(184,255,87,.3)}
+    .plan-mini[data-plan="elite"]{border-color:rgba(245,200,66,.3)}
+    .plan-mini-name{font-family:var(--display);font-size:18px;letter-spacing:.04em;margin-bottom:6px}
+    .plan-mini-price{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent);margin-bottom:12px}
+    .plan-mini-price span{font-size:12px;color:var(--text3);font-weight:400}
+    .plan-mini-feats{list-style:none;padding:0;margin:0}
+    .plan-mini-feats li{font-size:12px;color:var(--text2);padding:4px 0 4px 16px;position:relative}
+    .plan-mini-feats li::before{content:'•';color:var(--accent);position:absolute;left:0}
+    .teaser-link-inline{color:var(--accent);text-decoration:none;font-family:var(--mono);font-size:12px;font-weight:700}
+    .teaser-link-inline:hover{text-decoration:underline}
+
+    /* ── Paramètres / Sécurité ─────────────────────────────── */
+    .settings-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px 18px;margin-bottom:16px}
+    .settings-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+    .settings-row:last-child{border-bottom:none}
+    @media(max-width:600px){.settings-row{flex-wrap:wrap}}
+    .settings-label{font-size:13px;color:var(--text);font-weight:400;flex-shrink:0;min-width:180px}
+    .settings-value{flex:1;font-size:12px;color:var(--text2);font-family:var(--mono)}
+    .settings-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:7px 14px;border-radius:6px;background:transparent;color:var(--text);border:1px solid var(--border2);cursor:pointer;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .settings-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .settings-btn.danger-btn{color:var(--danger);border-color:rgba(255,68,68,.3)}
+    .settings-btn.danger-btn:hover{background:rgba(255,68,68,.08);color:var(--danger)}
+    .settings-select{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:6px;cursor:pointer}
+    .settings-msg{font-family:var(--mono);font-size:11px;padding:8px 0;min-height:14px}
+    .settings-msg.ok{color:var(--success)}
+    .settings-msg.err{color:var(--danger)}
+    .danger-label{color:var(--danger)!important}
+    .danger-label::after{background:rgba(255,68,68,.2)!important}
+    .danger-card{border-color:rgba(255,68,68,.2)!important}
+
+    .toggle{position:relative;display:inline-block;width:42px;height:22px;flex-shrink:0}
+    .toggle input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--card);border:1px solid var(--border2);border-radius:22px;transition:.2s}
+    .toggle-slider::before{content:'';position:absolute;height:16px;width:16px;left:2px;top:1px;background:var(--text2);border-radius:50%;transition:.2s}
+    .toggle input:checked + .toggle-slider{background:rgba(184,255,87,.15);border-color:var(--accent)}
+    .toggle input:checked + .toggle-slider::before{transform:translateX(20px);background:var(--accent)}
+
+    /* Header section de la page */
+    .page-header{margin-bottom:24px}
+    .page-title{font-family:var(--display);font-size:32px;letter-spacing:.02em;color:var(--text);margin-bottom:4px}
+    .page-sub{font-size:12px;color:var(--text2);font-family:var(--mono)}
+
+    @media(max-width:768px){.page{padding:16px}}
   </style>
 </head>
 <body>
-  <p>Redirection vers <a href="/dashboard.html">Mon espace</a>...</p>
+
+<nav></nav>
+
+<div class="page">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">Mon espace</div>
+    <button class="sidebar-btn active" onclick="setTab('subscription',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Abonnement
+    </button>
+    <button class="sidebar-btn" onclick="setTab('settings',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Paramètres
+    </button>
+    <button class="sidebar-btn" onclick="setTab('security',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Sécurité
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="page-header">
+      <h1 class="page-title">Mon espace</h1>
+      <div class="page-sub">Gère ton abonnement, tes préférences et la sécurité de ton compte</div>
+    </div>
+
+    <!-- ABONNEMENT -->
+    <div class="tab-panel active" id="panelSubscription">
+      <div class="sec-label">Mon abonnement</div>
+      <div class="sub-card" id="subCard">
+        <div class="sub-card-loading"><div class="load-spinner"></div>Chargement de ton abonnement...</div>
+      </div>
+
+      <div class="sec-label">Comparaison des plans</div>
+      <div class="plan-compare">
+        <div class="plan-mini" data-plan="free">
+          <div class="plan-mini-name">Free</div>
+          <div class="plan-mini-price">0€</div>
+          <ul class="plan-mini-feats">
+            <li>3 analyses / mois</li>
+            <li>Stats basiques</li>
+            <li>1 diagnostic IA / mois</li>
+          </ul>
+        </div>
+        <div class="plan-mini" data-plan="pro">
+          <div class="plan-mini-name">Pro</div>
+          <div class="plan-mini-price">9€<span>/mois</span></div>
+          <ul class="plan-mini-feats">
+            <li>Analyses illimitées</li>
+            <li>2D Replay + KPIs avancés</li>
+            <li>Coach IA illimité</li>
+            <li>Pro demos viewer</li>
+          </ul>
+        </div>
+        <div class="plan-mini" data-plan="elite">
+          <div class="plan-mini-name">Elite</div>
+          <div class="plan-mini-price">29€<span>/mois</span></div>
+          <ul class="plan-mini-feats">
+            <li>Tout Pro + team tools</li>
+            <li>Pro strats DB</li>
+            <li>Anti-strat tool</li>
+            <li>Team dashboard</li>
+          </ul>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:18px">
+        <a href="pricing.html" class="teaser-link-inline">Voir la grille complète →</a>
+      </div>
+    </div>
+
+    <!-- PARAMÈTRES -->
+    <div class="tab-panel" id="panelSettings">
+      <div class="sec-label">Profil</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Email</div>
+          <div class="settings-value" id="settingsEmail">—</div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Pseudo FACEIT</div>
+          <div class="settings-value" id="settingsFaceit">—</div>
+          <button class="settings-btn" onclick="window.location.href='onboarding.html'">Modifier</button>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Membre depuis</div>
+          <div class="settings-value" id="settingsCreated">—</div>
+        </div>
+      </div>
+
+      <div class="sec-label">Extension Chrome</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Statut</div>
+          <div class="settings-value" id="settingsExt">Vérification...</div>
+          <a href="extension-auth.html" class="settings-btn">Configurer</a>
+        </div>
+      </div>
+
+      <div class="sec-label">Notifications</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Email — nouveau match analysé</div>
+          <label class="toggle"><input type="checkbox" id="notifMatches"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Email — rapport hebdo</div>
+          <label class="toggle"><input type="checkbox" id="notifWeekly"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Email — annonces produit</div>
+          <label class="toggle"><input type="checkbox" id="notifProduct"/><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+
+      <div class="sec-label">Préférences</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Langue</div>
+          <select class="settings-select" id="settingsLang">
+            <option value="fr">Français</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- SÉCURITÉ -->
+    <div class="tab-panel" id="panelSecurity">
+      <div class="sec-label">Mot de passe</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Changer mon mot de passe</div>
+          <div class="settings-value">Envoi d'un lien de réinitialisation par email</div>
+          <button class="settings-btn" onclick="sendPasswordReset()" id="pwdResetBtn">Envoyer le lien</button>
+        </div>
+        <div class="settings-msg" id="pwdMsg"></div>
+      </div>
+
+      <div class="sec-label">Sessions actives</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Déconnexion de tous les appareils</div>
+          <div class="settings-value">Ferme toutes les sessions en cours sauf celle-ci</div>
+          <button class="settings-btn" onclick="logoutAll()">Déconnecter</button>
+        </div>
+      </div>
+
+      <div class="sec-label danger-label">Zone dangereuse</div>
+      <div class="settings-card danger-card">
+        <div class="settings-row">
+          <div class="settings-label">Supprimer mon compte</div>
+          <div class="settings-value">Toutes tes données (profil, démos, watchlist) seront définitivement supprimées. Cette action est irréversible.</div>
+          <button class="settings-btn danger-btn" onclick="deleteAccount()">Supprimer</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+window._sb = sb;
+let currentUser = null;
+
+async function init() {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; return; }
+  currentUser = session.user;
+  // Gere query params : ?checkout=success apres Stripe, #settings pour deep-link
+  const hash = (window.location.hash || '').replace('#','');
+  if (hash === 'settings' || hash === 'security') {
+    const btn = document.querySelector(`[onclick*="${hash}"]`);
+    if (btn) setTab(hash, btn);
+  } else {
+    loadSubscription();
+  }
+  if (window.location.search.includes('checkout=success')) {
+    showBanner('Bienvenue dans Pro. Ton abonnement est actif.', 'ok');
+  }
+}
+
+function setTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (tab === 'subscription') loadSubscription();
+  if (tab === 'settings')     loadSettings();
+  window.history.replaceState(null, '', '#' + tab);
+}
+
+function showBanner(text, type) {
+  const b = document.createElement('div');
+  b.style.cssText = `position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:500;background:${type==='ok'?'rgba(45,212,160,.1)':'rgba(255,68,68,.1)'};border:1px solid ${type==='ok'?'var(--success)':'var(--danger)'};color:${type==='ok'?'var(--success)':'var(--danger)'};font-family:var(--mono);font-size:12px;padding:10px 18px;border-radius:6px`;
+  b.textContent = text;
+  document.body.appendChild(b);
+  setTimeout(() => b.remove(), 5000);
+}
+
+// ══ ABONNEMENT ═════════════════════════════════════════════════════════════
+let _subLoaded = false;
+async function loadSubscription() {
+  if (_subLoaded) return;
+  _subLoaded = true;
+  const card = document.getElementById('subCard');
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const headers = { 'Content-Type': 'application/json' };
+    if (session?.access_token) headers['Authorization'] = 'Bearer ' + session.access_token;
+    const res = await fetch('/api/check-subscription', { headers });
+    const d = await res.json();
+    const plan = (d.plan || 'free').toLowerCase();
+    const planLabel = plan === 'pro' ? 'Pro' : plan === 'team' || plan === 'elite' ? 'Elite' : 'Free';
+    const planKey = plan === 'team' ? 'elite' : plan;
+    const nextBilling = d.current_period_end
+      ? new Date(d.current_period_end * 1000).toLocaleDateString('fr-FR')
+      : null;
+    const status = d.status || (plan === 'free' ? 'actif' : '—');
+    const cancelAt = d.cancel_at_period_end
+      ? `Se termine le ${new Date(d.current_period_end * 1000).toLocaleDateString('fr-FR')}`
+      : null;
+    const usage = d.usage || {};
+    card.innerHTML = `
+      <div class="sub-head">
+        <div class="sub-plan">
+          <div class="sub-plan-badge ${planKey}">${planLabel}</div>
+          <div class="sub-plan-meta">
+            ${plan === 'free'
+              ? `Plan gratuit · Passe Pro pour débloquer les fonctionnalités avancées`
+              : `Statut <strong>${status}</strong>${nextBilling ? ` · Prochaine facture <strong>${nextBilling}</strong>` : ''}${cancelAt ? ` · <span style="color:var(--gold)">${cancelAt}</span>` : ''}`}
+          </div>
+        </div>
+        <div class="sub-actions">
+          ${plan === 'free'
+            ? `<a href="pricing.html" class="sub-btn primary">Passer à Pro</a>`
+            : `<button class="sub-btn secondary" onclick="openStripePortal()">Gérer mon abonnement</button><a href="pricing.html" class="sub-btn secondary">Changer de plan</a>`}
+        </div>
+      </div>
+      ${plan === 'free' ? `
+        <div class="sub-usage">
+          <div class="sub-usage-item">
+            <div class="sub-usage-label">Analyses démos</div>
+            <div class="sub-usage-val">${usage.analyses_used || 0}<span style="color:var(--text3);font-size:14px"> / 3</span></div>
+            <div class="sub-usage-sub">ce mois · reset dans ${usage.days_to_reset || 30}j</div>
+            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, ((usage.analyses_used || 0) / 3) * 100)}%"></div></div>
+          </div>
+          <div class="sub-usage-item">
+            <div class="sub-usage-label">Scouts joueurs</div>
+            <div class="sub-usage-val">${usage.scouts_today || 0}<span style="color:var(--text3);font-size:14px"> / 3</span></div>
+            <div class="sub-usage-sub">aujourd'hui · reset minuit</div>
+            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, ((usage.scouts_today || 0) / 3) * 100)}%"></div></div>
+          </div>
+          <div class="sub-usage-item">
+            <div class="sub-usage-label">Diagnostic IA</div>
+            <div class="sub-usage-val">${usage.ai_used || 0}<span style="color:var(--text3);font-size:14px"> / 1</span></div>
+            <div class="sub-usage-sub">ce mois · Pro = illimité</div>
+            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, (usage.ai_used || 0) * 100)}%"></div></div>
+          </div>
+        </div>
+      ` : ''}
+    `;
+  } catch(e) {
+    card.innerHTML = `<div style="color:var(--text2);font-size:12px">Impossible de charger ton abonnement. <a href="pricing.html" style="color:var(--accent)">Voir les plans</a>.</div>`;
+  }
+}
+
+async function openStripePortal() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+    const res = await fetch('/api/stripe-portal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+    });
+    const d = await res.json();
+    if (d.url) window.location.href = d.url;
+    else showBanner(d.error || 'Portail indisponible.', 'err');
+  } catch(e) { showBanner('Erreur réseau. Réessaie.', 'err'); }
+}
+
+// ══ PARAMETRES ═════════════════════════════════════════════════════════════
+let _settingsLoaded = false;
+async function loadSettings() {
+  if (_settingsLoaded) return;
+  _settingsLoaded = true;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    document.getElementById('settingsEmail').textContent = session.user.email || '—';
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+    if (profile) {
+      document.getElementById('settingsFaceit').textContent = profile.faceit_nickname || 'Non lié';
+      if (profile.created_at) {
+        document.getElementById('settingsCreated').textContent = new Date(profile.created_at).toLocaleDateString('fr-FR');
+      }
+      const notifs = profile.notification_prefs || {};
+      document.getElementById('notifMatches').checked = notifs.match_ready !== false;
+      document.getElementById('notifWeekly').checked  = notifs.weekly_report === true;
+      document.getElementById('notifProduct').checked = notifs.product_news !== false;
+      if (profile.locale) document.getElementById('settingsLang').value = profile.locale;
+    }
+    const extMarker = document.querySelector('[data-fv-ext-installed]');
+    document.getElementById('settingsExt').textContent = extMarker ? 'Installée' : 'Non détectée';
+
+    ['notifMatches','notifWeekly','notifProduct'].forEach(id => {
+      document.getElementById(id).addEventListener('change', saveNotifPrefs);
+    });
+    document.getElementById('settingsLang').addEventListener('change', saveLocale);
+  } catch(e) { console.warn('Settings load error:', e.message); }
+}
+
+async function saveNotifPrefs() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  const prefs = {
+    match_ready:  document.getElementById('notifMatches').checked,
+    weekly_report:document.getElementById('notifWeekly').checked,
+    product_news: document.getElementById('notifProduct').checked,
+  };
+  await sb.from('profiles').update({ notification_prefs: prefs }).eq('id', session.user.id);
+}
+
+async function saveLocale() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  const locale = document.getElementById('settingsLang').value;
+  await sb.from('profiles').update({ locale }).eq('id', session.user.id);
+}
+
+// ══ SECURITE ═══════════════════════════════════════════════════════════════
+async function sendPasswordReset() {
+  const btn = document.getElementById('pwdResetBtn');
+  const msg = document.getElementById('pwdMsg');
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  btn.disabled = true; btn.textContent = '...';
+  msg.className = 'settings-msg'; msg.textContent = '';
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(session.user.email, {
+      redirectTo: window.location.origin + '/account.html',
+    });
+    if (error) throw error;
+    msg.className = 'settings-msg ok';
+    msg.textContent = `Email envoyé à ${session.user.email}. Vérifie ta boîte de réception.`;
+  } catch(e) {
+    msg.className = 'settings-msg err';
+    msg.textContent = 'Erreur : ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Envoyer le lien';
+  }
+}
+
+async function logoutAll() {
+  if (!confirm('Déconnecter toutes les sessions ? Tu devras te reconnecter ici.')) return;
+  await sb.auth.signOut({ scope: 'global' });
+  window.location.href = 'login.html';
+}
+
+async function deleteAccount() {
+  const confirmText = 'SUPPRIMER';
+  const input = prompt(`Cette action est irréversible. Toutes tes données (profil, démos, watchlist, roster) seront supprimées.\n\nTape "${confirmText}" pour confirmer :`);
+  if (input !== confirmText) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch('/api/delete-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (!res.ok) throw new Error('Échec suppression');
+    await sb.auth.signOut();
+    alert('Compte supprimé. Au revoir.');
+    window.location.href = 'index.html';
+  } catch(e) {
+    alert('Erreur : ' + e.message + '\n\nContact support@fragvalue.com');
+  }
+}
+
+init();
+</script>
+<script src="/nav.js"></script>
 </body>
 </html>
