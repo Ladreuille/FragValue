@@ -901,6 +901,7 @@ function recalcRoundBoundaries() {
   // Capper aussi la longueur de path par type : filet de securite si les
   // truncations stationnaire/jump/reversal ratent un cas.
   const MAX_PATH_PTS = { hegre: 80, flash: 80, smoke: 150, molotov: 150, incgren: 150, decoy: 100 };
+  let skipped = 0;
   (demoData.grenades || []).forEach(g => {
     if (!g.tick || !g.detonTick) return;
     const key = typeKey(g.type || '');
@@ -914,7 +915,20 @@ function recalcRoundBoundaries() {
       g.detonX = g.path[g.path.length - 2];
       g.detonY = g.path[g.path.length - 1];
     }
+    // Safety : grenade avec path vide ET detonX/Y invalide (= parser n'a pas
+    // pu determiner la detonation). Nullifier detonTick pour que le rendu
+    // skip cette grenade entierement (au lieu d'afficher une ligne random
+    // vers (0,0) ou une coord bizarre).
+    const noPath = !g.path || g.path.length < 4;
+    const badCoord = g.detonX == null || g.detonY == null
+                   || (Math.abs(g.detonX) < 10 && Math.abs(g.detonY) < 10)
+                   || (g.detonX === g.x && g.detonY === g.y);
+    if (noPath && badCoord) {
+      g.detonTick = null;
+      skipped++;
+    }
   });
+  console.log(`[Replay] Grenades skipped (bad data): ${skipped}`);
   console.log(`[Replay] Grenades clamped: ${clamped}, jump-truncated: ${jumpTruncated}, reversal-truncated: ${reversalTruncated} / ${(demoData.grenades || []).length}`);
   // Diagnostic : lister les 5 premiers HE + 5 molos avec leur path length
   // et span detonTick - tick, pour diagnostiquer les trajectoires bizarres.
