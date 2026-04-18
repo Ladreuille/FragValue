@@ -874,12 +874,16 @@ function recalcRoundBoundaries() {
       if (ddx * ddx + ddy * ddy > MAX_JUMP_SQ) { cut = i; break; }
     }
     if (cut > 0) {
-      // Path pollue (jump anormal suggere un merge avec data d'une autre
-      // grenade). Vider totalement le path et laisser le rendu fall-back
-      // en ligne droite vers detonX/Y du parser (qui est le vrai detonation
-      // event, fiable avec le claim flag). Meilleur visuel que de garder
-      // des points partiels qui pourraient etre de la mauvaise grenade.
-      g.path = [];
+      // Path pollue au point cut. Tronquer (garder les points valides 0..cut-1)
+      // et sync detonX/Y sur le dernier point valide. Sinon vider si trop peu
+      // de points restants pour une trajectoire coherente.
+      if (cut >= 3) {
+        g.path = g.path.slice(0, cut * 2);
+        g.detonX = g.path[g.path.length - 2];
+        g.detonY = g.path[g.path.length - 1];
+      } else {
+        g.path = [];
+      }
       jumpTruncated++;
       return;
     }
@@ -909,10 +913,8 @@ function recalcRoundBoundaries() {
         }
       }
     }
-    // Flash : aucune reversal legitime (explose en vol). Si reversal detecte,
-    // path pollue par une autre grenade -> vider totalement.
-    // HE/molo : peuvent rebondir 1-2 fois, truncate au-dela.
-    const maxReversals = { hegre: 2, flash: 0, molotov: 2, incgren: 2 }[key];
+    // Flash peut rebondir 1x mais pas plus. HE/molo 2 bounces max.
+    const maxReversals = { hegre: 2, flash: 1, molotov: 2, incgren: 2 }[key];
     if (maxReversals !== undefined) {
       let reversals = 0, prevDx = 0, prevDy = 0;
       for (let i = 1; i < n; i++) {
@@ -920,13 +922,14 @@ function recalcRoundBoundaries() {
         const dy = g.path[i * 2 + 1] - g.path[(i - 1) * 2 + 1];
         if (i > 1 && (prevDx * dx + prevDy * dy) < 0) reversals++;
         if (reversals > maxReversals) {
-          if (key === 'flash') {
-            // Flash : vider completement, fall-back straight-line.
-            g.path = [];
-          } else {
+          // Tronquer au point courant (garder les points avant la reversal
+          // de trop), sync detonX/Y sur ce dernier point valide.
+          if (i >= 3) {
             g.path = g.path.slice(0, i * 2);
             g.detonX = g.path[g.path.length - 2];
             g.detonY = g.path[g.path.length - 1];
+          } else {
+            g.path = [];
           }
           reversalTruncated++;
           break;
