@@ -1266,14 +1266,14 @@ function updatePlayerStates(frame) {
     if (!row) return;
 
     const state = frame.players[p.name];
-    // Detection joueur deconnecte : aucun sample de position dans la fenetre
-    // du round courant -> absent du match. Eviter de le montrer comme "vivant"
-    // a sa derniere position connue qui date d'un round precedent.
+    // Detection joueur deconnecte : player a quitte definitivement le match
+    // si son DERNIER sample est bien AVANT le round courant (gap > 1 round).
+    // Permet de distinguer 'absent du match' vs 'sparse samples dans le round'.
     const posPts = (demoData.positions || {})[p.name] || [];
-    const hasRoundData = rdData.startTick !== undefined && posPts.some(pt =>
-      (pt.tick || 0) >= rdData.startTick && (pt.tick || 0) <= (rdData.endTick || rdData.gameplayEnd || Infinity)
-    );
-    const disconnected = !hasRoundData;
+    const lastSampleTick = posPts.length > 0 ? (posPts[posPts.length - 1].tick || 0) : 0;
+    const roundEndRef = rdData.endTick || rdData.gameplayEnd || 0;
+    const disconnected = posPts.length === 0 ||
+      (roundEndRef > 0 && lastSampleTick < rdData.startTick - 3840); // > 30s avant le round
     const alive = disconnected ? false : (state ? state.alive : true);
     const hp = alive ? (state?.hp ?? 100) : 0;
     const team = state?.team === 3 ? 'CT' : (state?.team === 2 ? 'T' : (window._ctNames && window._ctNames.includes(p.name) ? 'CT' : 'T'));
