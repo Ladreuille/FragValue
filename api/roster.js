@@ -11,7 +11,9 @@
 //  - GET    ?view=my_roster           -> mon equipe + membres + invitations
 //  - GET    ?view=my_invitations      -> invitations recues en attente
 
-import { sendEmail, emailRosterInvite, emailInviteAccepted, emailInviteDeclined } from './_lib/email.js';
+// NB : pas d'import statique de ./_lib/email.js pour eviter un crash Vercel
+// au startup si le module a un probleme de resolution. Import dynamique
+// uniquement quand necessaire (dans sendEmailSafe).
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 const MAX_ROSTER_SIZE = 7; // 5 titulaires + 2 subs max
@@ -27,6 +29,48 @@ async function insertNotification(supabase, { user_id, title, body, link }) {
       read: false,
     });
   } catch (e) { console.warn('notification insert failed:', e.message); }
+}
+
+// Helper : envoie email via dynamic import (non-bloquant, fallback silencieux)
+async function sendEmailSafe(template, toEmail, payload) {
+  if (!toEmail) return;
+  try {
+    const lib = await import('./_lib/email.js');
+    const tplFn = lib[template];
+    if (!tplFn) return;
+    const { subject, html, text } = tplFn(payload);
+    await lib.sendEmail({ to: toEmail, subject, html, text });
+  } catch (e) { console.warn(`email ${template} failed:`, e.message); }
+}
+
+// Helper : insert avec tolerance aux colonnes manquantes.
+// Certains users n'ont pas encore joue la migration SQL etendue.
+async function tolerantInsert(supabase, table, fields, requiredKeys) {
+  // Tente d'abord avec tous les champs
+  const { data, error } = await supabase.from(table).insert(fields).select().single();
+  if (!error) return { data, error: null };
+
+  // Si erreur 'column does not exist', retry avec seulement les required
+  const msg = (error.message || '').toLowerCase();
+  if (msg.includes('column') && msg.includes('does not exist')) {
+    console.warn(`[${table}] colonne manquante, retry avec champs requis uniquement. Run the migration.`);
+    const minimal = {};
+    requiredKeys.forEach(k => { if (fields[k] !== undefined) minimal[k] = fields[k]; });
+    const retry = await supabase.from(table).insert(minimal).select().single();
+    return { data: retry.data, error: retry.error };
+  }
+  return { data: null, error };
+}
+
+async function tolerantUpdate(supabase, table, id, fields) {
+  const { error } = await supabase.from(table).update(fields).eq('id', id);
+  if (!error) return { error: null };
+  const msg = (error.message || '').toLowerCase();
+  if (msg.includes('column') && msg.includes('does not exist')) {
+    console.warn(`[${table}] extended fields ignored (migration not run)`);
+    return { error: null };
+  }
+  return { error };
 }
 
 export default async function handler(req, res) {
@@ -122,23 +166,28 @@ async function handlePost(req, res, supabase, user) {
     // Un user = un roster owned (pour l'instant)
     const { data: existing } = await supabase.from('rosters').select('id').eq('user_id', user.id).maybeSingle();
     if (existing) return res.status(400).json({ error: 'Tu as deja un roster. Supprime-le avant d\'en creer un nouveau.' });
-    const { data: roster, error } = await supabase.from('rosters').insert({
+
+    const rosterFields = {
       user_id: user.id,
       team_name: team_name.trim(),
       description: description || null,
       region: region || null,
       tag: tag ? tag.trim().toUpperCase().slice(0, 6) : null,
-    }).select().single();
-    if (error) throw error;
-    // Owner devient automatiquement membre (captain)
-    await supabase.from('roster_players').insert({
+    };
+    const { data: roster, error } = await tolerantInsert(supabase, 'rosters', rosterFields, ['user_id','team_name']);
+    if (error) return res.status(500).json({ error: 'Creation echouee : ' + error.message });
+
+    // Owner devient captain. Tolerant aux colonnes manquantes.
+    const nickname = (await getProfileNickname(supabase, user.id)) || 'Owner';
+    await tolerantInsert(supabase, 'roster_players', {
       roster_id: roster.id,
       user_id: user.id,
-      faceit_nickname: (await getProfileNickname(supabase, user.id)) || 'Owner',
+      faceit_nickname: nickname,
       team_role: 'captain',
       is_captain: true,
       invited_by: user.id,
-    });
+    }, ['roster_id','faceit_nickname']);
+
     return res.status(200).json({ ok: true, roster });
   }
 
@@ -198,20 +247,15 @@ async function handlePost(req, res, supabase, user) {
         body: `${inviterNickname} t'invite${proposed_role ? ` en tant que ${proposed_role}` : ''} dans son équipe.`,
         link: '/dashboard.html#roster',
       });
-      // Email (si on a l'email du user)
       const { data: inviteeAuth } = await supabase.auth.admin.getUserById(invitee_user_id);
-      const inviteeEmail = inviteeAuth?.user?.email;
-      if (inviteeEmail) {
-        const { subject, html, text } = emailRosterInvite({
-          team_name: roster.team_name,
-          tag: null,
-          inviter_nickname: inviterNickname,
-          proposed_role,
-          message,
-          accept_url: `${SITE}/dashboard.html#roster`,
-        });
-        sendEmail({ to: inviteeEmail, subject, html, text }).catch(() => {});
-      }
+      sendEmailSafe('emailRosterInvite', inviteeAuth?.user?.email, {
+        team_name: roster.team_name,
+        tag: null,
+        inviter_nickname: inviterNickname,
+        proposed_role,
+        message,
+        accept_url: `${SITE}/dashboard.html#roster`,
+      });
     }
     return res.status(200).json({ ok: true, invitation });
   }
@@ -234,7 +278,6 @@ async function handlePost(req, res, supabase, user) {
 
     if (response === 'decline') {
       await supabase.from('roster_invitations').update({ status: 'declined', responded_at: new Date().toISOString() }).eq('id', invitation_id);
-      // Notifier l'inviteur
       const inviteeNick = profile || inv.invitee_nickname || 'Un joueur';
       const { data: rosterMeta } = await supabase.from('rosters').select('team_name').eq('id', inv.roster_id).maybeSingle();
       await insertNotification(supabase, {
@@ -244,14 +287,11 @@ async function handlePost(req, res, supabase, user) {
         link: '/dashboard.html#roster',
       });
       const { data: inviterAuth } = await supabase.auth.admin.getUserById(inv.inviter_id);
-      if (inviterAuth?.user?.email) {
-        const { subject, html, text } = emailInviteDeclined({
-          team_name: rosterMeta?.team_name || '',
-          invitee_nickname: inviteeNick,
-          team_url: `${SITE}/dashboard.html#roster`,
-        });
-        sendEmail({ to: inviterAuth.user.email, subject, html, text }).catch(() => {});
-      }
+      sendEmailSafe('emailInviteDeclined', inviterAuth?.user?.email, {
+        team_name: rosterMeta?.team_name || '',
+        invitee_nickname: inviteeNick,
+        team_url: `${SITE}/dashboard.html#roster`,
+      });
       return res.status(200).json({ ok: true });
     }
 
@@ -276,7 +316,6 @@ async function handlePost(req, res, supabase, user) {
       invited_by: inv.inviter_id,
     });
     await supabase.from('roster_invitations').update({ status: 'accepted', responded_at: new Date().toISOString() }).eq('id', invitation_id);
-    // Notifier l'inviteur
     const inviteeNick = profile || inv.invitee_nickname || 'Un joueur';
     const { data: rosterMeta } = await supabase.from('rosters').select('team_name').eq('id', inv.roster_id).maybeSingle();
     await insertNotification(supabase, {
@@ -286,14 +325,11 @@ async function handlePost(req, res, supabase, user) {
       link: '/dashboard.html#roster',
     });
     const { data: inviterAuth } = await supabase.auth.admin.getUserById(inv.inviter_id);
-    if (inviterAuth?.user?.email) {
-      const { subject, html, text } = emailInviteAccepted({
-        team_name: rosterMeta?.team_name || '',
-        invitee_nickname: inviteeNick,
-        team_url: `${SITE}/dashboard.html#roster`,
-      });
-      sendEmail({ to: inviterAuth.user.email, subject, html, text }).catch(() => {});
-    }
+    sendEmailSafe('emailInviteAccepted', inviterAuth?.user?.email, {
+      team_name: rosterMeta?.team_name || '',
+      invitee_nickname: inviteeNick,
+      team_url: `${SITE}/dashboard.html#roster`,
+    });
     return res.status(200).json({ ok: true, roster_id: inv.roster_id });
   }
 
