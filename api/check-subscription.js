@@ -72,6 +72,7 @@ export default async function handler(req, res) {
       plan,
       status: sub.status,
       current_period_end: sub.current_period_end,
+      cancel_at_period_end: sub.cancel_at_period_end || false,
     });
   } catch (err) {
     console.error('check-subscription error:', err);

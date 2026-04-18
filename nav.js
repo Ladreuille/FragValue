@@ -57,7 +57,7 @@
       key: 'mon-jeu',
       label: 'Mon jeu',
       items: [
-        { href: '/dashboard.html', label: 'Dashboard' },
+        { href: '/dashboard.html', label: 'Aperçu' },
         { href: '/matches.html', label: 'Mes matchs' },
         { href: '/demo.html', label: 'Nouvelle démo' },
         { href: '/compare.html', label: 'Scout joueur' },
@@ -124,7 +124,7 @@
     <div class="fv-right">
       <a href="/pricing.html" class="fv-login">Tarifs</a>
       <a href="/login.html" class="fv-login" id="navLoginBtn">Connexion</a>
-      <a href="/account.html" class="fv-cta" id="navAccountBtn" style="display:none">Mon espace</a>
+      <a href="/dashboard.html" class="fv-cta" id="navAccountBtn" style="display:none">Mon espace</a>
     </div>
   `;
 
