@@ -891,6 +891,16 @@ function recalcRoundBoundaries() {
       }
     }
   });
+  // Passe 3 : forcer endTick = detonTick + duree de l'effet par type, pour
+  // TOUTES les grenades. Sinon les HE non-clampees ne montrent pas leur
+  // shockwave (parser laisse endTick <= detonTick -> isActive fires 0 tick).
+  (demoData.grenades || []).forEach(g => {
+    if (!g.tick || !g.detonTick) return;
+    const key = typeKey(g.type || '');
+    if (key && EFFECT_TICKS[key] !== undefined) {
+      g.endTick = g.detonTick + EFFECT_TICKS[key];
+    }
+  });
   console.log(`[Replay] Grenades clamped: ${clamped}, jump-truncated: ${jumpTruncated}, reversal-truncated: ${reversalTruncated} / ${(demoData.grenades || []).length}`);
 }
 
