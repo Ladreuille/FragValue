@@ -1418,6 +1418,14 @@ function buildFrames(round) {
   const startTick = roundData.startTick || 0;
   const endTick = roundData.gameplayEnd ?? (roundData.endTick || 0);
   const killsR = roundData.killsRound ?? (round + 1);
+  // DEBUG TEMPORAIRE : dump detail grenades R23 pour analyser
+  if (round === 23) {
+    const _grens23 = (demoData.grenades || []).filter(g => g.tick >= startTick && g.tick <= (roundData.endTick || endTick));
+    console.log(`[R23-grenades-detail]`);
+    _grens23.forEach(g => {
+      console.log(`  ${g.thrower} ${g.type} tick=${g.tick}→${g.detonTick} (span=${g.detonTick-g.tick}t, path=${g.path?.length/2 || 0}pts) detonXY=(${g.detonX},${g.detonY}) throwXY=(${g.x},${g.y}) endTick=${g.endTick}`);
+    });
+  }
 
   const roundKills = kills.filter(k => {
     const t = k.tick || 0;
