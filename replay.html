@@ -744,9 +744,37 @@ function getFirstRealRound() {
 // which naturally excludes the previous round's walk-back samples (their tick
 // is < freeze_end(N)).
 function recalcRoundBoundaries() {
-  const rounds = demoData.rounds || [];
+  let rounds = demoData.rounds || [];
   const kills = demoData.kills || [];
   const POST_ROUND_BUFFER = 128; // ~2s after last kill
+
+  // Filtre frontend : drop les rounds phantom avec tres peu de position samples.
+  // On compte les samples par round via tick range et on drop si < 50 samples
+  // (un vrai round en a 150+). Utile quand le parser n'a pas applique le filtre.
+  const positions = demoData.positions || {};
+  const samplesPerRound = rounds.map(rd => {
+    const st = rd.startTick || 0;
+    const et = rd.endTick || (st + 115 * 64);
+    let count = 0;
+    Object.values(positions).forEach(pts => {
+      for (const pt of pts) {
+        const t = pt.tick || 0;
+        if (t >= st && t <= et) count++;
+      }
+    });
+    return count;
+  });
+  const phantomIdx = samplesPerRound
+    .map((c, i) => ({ c, i }))
+    .filter(({ c, i }) => c < 50 && !rounds[i].isKnife);
+  if (phantomIdx.length > 0) {
+    const phantomRounds = new Set(phantomIdx.map(({ i }) => rounds[i].round));
+    rounds = rounds.filter(r => !phantomRounds.has(r.round));
+    // Recompute displayNum
+    let dn = 0;
+    rounds.forEach(r => { if (!r.isKnife) dn++; r.displayNum = r.isKnife ? 0 : dn; });
+    demoData.rounds = rounds;
+  }
 
   rounds.forEach((rd, i) => {
     const st = rd.startTick || 0;
