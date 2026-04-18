@@ -1418,19 +1418,6 @@ function buildFrames(round) {
   const startTick = roundData.startTick || 0;
   const endTick = roundData.gameplayEnd ?? (roundData.endTick || 0);
   const killsR = roundData.killsRound ?? (round + 1);
-  // DEBUG : dump tous les events dans la plage R
-  const rawEnd = roundData.endTick || endTick;
-  const _grens = (demoData.grenades || []).filter(g => g.tick >= startTick && g.tick <= rawEnd);
-  const _kills = (demoData.kills || []).filter(k => (k.tick || 0) >= startTick && (k.tick || 0) <= rawEnd);
-  const _shots = (demoData.shots || []).filter(s => (s.tick || 0) >= startTick && (s.tick || 0) <= rawEnd);
-  const _posByPlayer = Object.entries(demoData.positions || {}).map(([name, pts]) => {
-    const inRange = pts.filter(pt => (pt.tick || 0) >= startTick && (pt.tick || 0) <= rawEnd);
-    return `${name}:${inRange.length}`;
-  }).join(',');
-  console.log(`[ROUND ${round}] range=[${startTick},${rawEnd}] winner=${roundData.winner} | ${_kills.length} kills, ${_shots.length} shots, ${_grens.length} grenades`);
-  console.log(`[ROUND ${round}] positions: ${_posByPlayer}`);
-  if (_kills.length > 0) console.log(`[ROUND ${round}] kills:`, _kills.map(k => `${k.attacker}→${k.victim}@${k.tick}`).join(' | '));
-  if (_grens.length > 0) console.log(`[ROUND ${round}] grenades:`, _grens.slice(0, 5).map(g => `${g.thrower}@${g.tick}(${g.type}, path=${g.path?.length/2 || 0})`).join(' | '));
 
   const roundKills = kills.filter(k => {
     const t = k.tick || 0;
