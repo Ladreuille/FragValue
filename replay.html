@@ -890,8 +890,10 @@ function recalcRoundBoundaries() {
         }
       }
     }
-    // Flash peut rebondir 1x mais pas plus. HE/molo 2 bounces max.
-    const maxReversals = { hegre: 2, flash: 1, molotov: 2, incgren: 2 }[key];
+    // Grenades peuvent rebondir plusieurs fois (walls, floor, ceiling).
+    // On augmente les thresholds pour preserver les trajectoires complexes
+    // avec multiples bounces tout en rejettant les paths vraiment corrompus.
+    const maxReversals = { hegre: 4, flash: 3, molotov: 4, incgren: 4 }[key];
     if (maxReversals !== undefined) {
       let reversals = 0, prevDx = 0, prevDy = 0;
       for (let i = 1; i < n; i++) {
