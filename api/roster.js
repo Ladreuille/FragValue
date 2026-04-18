@@ -43,34 +43,70 @@ async function sendEmailSafe(template, toEmail, payload) {
   } catch (e) { console.warn(`email ${template} failed:`, e.message); }
 }
 
-// Helper : insert avec tolerance aux colonnes manquantes.
-// Certains users n'ont pas encore joue la migration SQL etendue.
-async function tolerantInsert(supabase, table, fields, requiredKeys) {
-  // Tente d'abord avec tous les champs
-  const { data, error } = await supabase.from(table).insert(fields).select().single();
-  if (!error) return { data, error: null };
+// Detecte les erreurs de colonne manquante (Postgres direct ou PostgREST cache)
+function isMissingColumnError(err) {
+  const msg = ((err && err.message) || '').toLowerCase();
+  return /column/.test(msg) && (
+    /does not exist/.test(msg) ||
+    /schema cache/.test(msg) ||
+    /not found/.test(msg) ||
+    /could not find/.test(msg)
+  );
+}
 
-  // Si erreur 'column does not exist', retry avec seulement les required
-  const msg = (error.message || '').toLowerCase();
-  if (msg.includes('column') && msg.includes('does not exist')) {
-    console.warn(`[${table}] colonne manquante, retry avec champs requis uniquement. Run the migration.`);
+// Extrait le nom de colonne manquante depuis l'erreur (pour retry cible)
+function missingColumnName(err) {
+  const msg = (err && err.message) || '';
+  // Format PostgREST : "Could not find the 'X' column of 'Y'"
+  const m1 = msg.match(/the '([^']+)' column/i);
+  if (m1) return m1[1];
+  // Format Postgres : column "X" does not exist
+  const m2 = msg.match(/column "([^"]+)"/i);
+  if (m2) return m2[1];
+  return null;
+}
+
+// Insert tolerant : si colonne manquante, on retire ce champ et on retry
+// (jusqu'a 8 fois) au lieu de tomber direct sur les required. Permet de
+// sauver les champs etendus disponibles en DB meme si quelques-uns manquent.
+async function tolerantInsert(supabase, table, fields, requiredKeys) {
+  let attempt = { ...fields };
+  for (let i = 0; i < 8; i++) {
+    const { data, error } = await supabase.from(table).insert(attempt).select().single();
+    if (!error) return { data, error: null };
+    if (!isMissingColumnError(error)) return { data: null, error };
+    const missing = missingColumnName(error);
+    if (missing && missing in attempt) {
+      console.warn(`[${table}] colonne '${missing}' manquante, retry sans. Run the SQL migration.`);
+      delete attempt[missing];
+      continue;
+    }
+    // Si on ne peut pas identifier la colonne, fallback : garde seulement les required
+    console.warn(`[${table}] fallback vers champs required uniquement`);
     const minimal = {};
     requiredKeys.forEach(k => { if (fields[k] !== undefined) minimal[k] = fields[k]; });
     const retry = await supabase.from(table).insert(minimal).select().single();
     return { data: retry.data, error: retry.error };
   }
-  return { data: null, error };
+  return { data: null, error: { message: 'Trop de tentatives de retry' } };
 }
 
 async function tolerantUpdate(supabase, table, id, fields) {
-  const { error } = await supabase.from(table).update(fields).eq('id', id);
-  if (!error) return { error: null };
-  const msg = (error.message || '').toLowerCase();
-  if (msg.includes('column') && msg.includes('does not exist')) {
+  let attempt = { ...fields };
+  for (let i = 0; i < 8; i++) {
+    const { error } = await supabase.from(table).update(attempt).eq('id', id);
+    if (!error) return { error: null };
+    if (!isMissingColumnError(error)) return { error };
+    const missing = missingColumnName(error);
+    if (missing && missing in attempt) {
+      delete attempt[missing];
+      if (Object.keys(attempt).length === 0) return { error: null };
+      continue;
+    }
     console.warn(`[${table}] extended fields ignored (migration not run)`);
     return { error: null };
   }
-  return { error };
+  return { error: null };
 }
 
 export default async function handler(req, res) {
@@ -194,14 +230,13 @@ async function handlePost(req, res, supabase, user) {
   if (action === 'update') {
     const { roster_id, fields } = body;
     if (!roster_id || !fields) return res.status(400).json({ error: 'roster_id et fields requis' });
-    // Verifie ownership
     const { data: roster } = await supabase.from('rosters').select('user_id').eq('id', roster_id).maybeSingle();
     if (!roster || roster.user_id !== user.id) return res.status(403).json({ error: 'Seul l\'owner peut modifier' });
     const allowed = ['team_name','description','region','tag','visibility','looking_for_players','looking_for_roles','logo_url'];
     const clean = {};
     Object.keys(fields).forEach(k => { if (allowed.includes(k)) clean[k] = fields[k]; });
-    const { error } = await supabase.from('rosters').update(clean).eq('id', roster_id);
-    if (error) throw error;
+    const { error } = await tolerantUpdate(supabase, 'rosters', roster_id, clean);
+    if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ ok: true });
   }
 
@@ -230,13 +265,19 @@ async function handlePost(req, res, supabase, user) {
       .ilike('invitee_nickname', nickname).eq('status', 'pending').maybeSingle();
     if (dup) return res.status(400).json({ error: 'Invitation deja envoyee a ce joueur' });
 
-    const { data: invitation, error } = await supabase.from('roster_invitations').insert({
+    const { data: invitation, error } = await tolerantInsert(supabase, 'roster_invitations', {
       roster_id, inviter_id: user.id,
       invitee_user_id, invitee_nickname: nickname,
       proposed_role: proposed_role || null,
       message: message || null,
-    }).select().single();
-    if (error) throw error;
+    }, ['roster_id', 'invitee_nickname']);
+    if (error) {
+      const msg = (error.message || '').toLowerCase();
+      if (/relation.*does not exist|not found/.test(msg)) {
+        return res.status(503).json({ error: 'Table roster_invitations pas encore creee. Joue la migration SQL Scout+Roster.' });
+      }
+      return res.status(500).json({ error: error.message });
+    }
 
     // ── Notifications : in-app (si on connait le user) + email ───────────
     const inviterNickname = await getProfileNickname(supabase, user.id) || 'Un joueur';
