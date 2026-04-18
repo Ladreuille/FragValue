@@ -800,7 +800,10 @@ function recalcRoundBoundaries() {
   const EFFECT_TICKS = { smoke: 2304, molotov: 896, incgren: 896, decoy: 5760, flash: 128, hegre: 64 };  // 18s/7s/45s/1s/0.5s
   const LANDS_ON_GROUND = { smoke: 1, molotov: 1, incgren: 1, decoy: 1 };  // types avec phase de repos (HE/flash explosent en vol)
   const STATIONARY_SQ = 100;   // (10 units)^2 : seuil pour considerer la grenade au sol
-  const MAX_JUMP_SQ = 1000000; // (1000 units)^2 : saut anormal entre deux samples (teleport)
+  const MAX_JUMP_SQ = 40000; // (200 units)^2 : saut anormal entre deux samples. En CS2 un
+                             // grenade max thrown = 700 units/sec, soit ~5 units/tick.
+                             // Avec sampling jusqu'a ~16 ticks = max ~80 units/sample.
+                             // 200 units = 4x le max legitime, clairement un teleport.
   const typeKey = (t) => t.includes('smoke') ? 'smoke'
                        : t.includes('incgren') ? 'incgren'
                        : t.includes('molotov') ? 'molotov'
