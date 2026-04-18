@@ -943,16 +943,21 @@ function recalcRoundBoundaries() {
   });
   console.log(`[Replay] HE samples: ${heSamples.join(' | ')}`);
   console.log(`[Replay] Molo samples: ${moloSamples.join(' | ')}`);
-  // Dump le path complet du 1er molo avec path >= 10 pts pour inspection
-  const firstMolo = (demoData.grenades || []).find(g => {
+  // Dump path d'un molo CLAMPE (span = CLAMP_SPAN_BY_TYPE.molotov = 512)
+  // pour voir si le path lui-meme est chaotique vs etendu au-dela du vrai landing.
+  const clampedMolo = (demoData.grenades || []).find(g => {
     const k = typeKey(g.type || '');
-    return (k === 'molotov' || k === 'incgren') && g.path && g.path.length >= 20 && g.detonTick;
+    return (k === 'molotov' || k === 'incgren')
+        && g.path && g.path.length >= 20
+        && g.detonTick && (g.detonTick - g.tick) === 512;  // signature du clamp molo
   });
-  if (firstMolo) {
-    const n = firstMolo.path.length / 2;
+  if (clampedMolo) {
+    const n = clampedMolo.path.length / 2;
     const pts = [];
-    for (let i = 0; i < n; i++) pts.push(`(${Math.round(firstMolo.path[i*2])},${Math.round(firstMolo.path[i*2+1])})`);
-    console.log(`[Replay] 1er molo path (${n}pts, tick=${firstMolo.tick}→${firstMolo.detonTick}): ${pts.join(' ')}`);
+    for (let i = 0; i < n; i++) pts.push(`(${Math.round(clampedMolo.path[i*2])},${Math.round(clampedMolo.path[i*2+1])})`);
+    console.log(`[Replay] CLAMPED molo path (${n}pts, tick=${clampedMolo.tick}→${clampedMolo.detonTick}): ${pts.join(' ')}`);
+  } else {
+    console.log(`[Replay] Pas de molo clampe avec >= 20 pts trouve`);
   }
 }
 
