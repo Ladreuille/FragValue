@@ -27,7 +27,9 @@
     @media(max-width:900px){.page{grid-template-columns:1fr;padding:16px}}
     .sidebar{position:sticky;top:76px;display:flex;flex-direction:column;gap:4px}
     @media(max-width:900px){.sidebar{display:grid;grid-template-columns:repeat(3,1fr);position:static}}
-    .sidebar-section{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);padding:6px 10px;margin-top:6px}
+    .sidebar-section{font-family:var(--display);font-size:15px;color:var(--text);letter-spacing:.05em;text-transform:uppercase;padding:8px 10px 6px;margin-top:16px;position:relative}
+    .sidebar-section:first-of-type{margin-top:4px}
+    .sidebar-section::before{content:'';position:absolute;left:10px;right:10px;bottom:2px;height:1px;background:linear-gradient(90deg,rgba(184,255,87,.25),transparent)}
     @media(max-width:900px){.sidebar-section{display:none}}
     .sidebar-btn{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;border:none;background:transparent;color:var(--text2);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;width:100%;text-align:left}
     .sidebar-btn:hover{background:var(--surface);color:var(--text)}
@@ -143,14 +145,19 @@
     .chart-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;font-family:var(--mono)}
     .chart-wrap{height:180px;position:relative}
     .match-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
-    .match-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
-    .match-table th{background:var(--card);padding:9px 12px;text-align:left;color:var(--text3);letter-spacing:.5px;font-weight:500;border-bottom:1px solid var(--border)}
-    .match-table td{padding:9px 12px;border-bottom:1px solid rgba(28,30,30,.5);color:var(--text2)}
+    .match-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+    .match-table th{background:var(--card);padding:11px 12px;text-align:left;color:var(--text2);letter-spacing:.08em;font-weight:700;text-transform:uppercase;font-size:10px;border-bottom:1px solid var(--border2)}
+    .match-table td{padding:11px 12px;border-bottom:1px solid rgba(28,30,30,.6);color:var(--text2)}
     .match-table tr:last-child td{border-bottom:none}
-    .match-table tr:hover td{background:rgba(255,255,255,.015)}
-    .td-win{color:var(--success);font-weight:600}.td-loss{color:var(--danger);font-weight:600}
-    .td-map{color:var(--text);font-weight:500}
-    .td-good{color:var(--success)}.td-warn{color:var(--gold)}.td-bad{color:var(--danger)}
+    .match-table tr:hover td{background:rgba(184,255,87,.03)}
+    /* W/L pill prominent */
+    .td-win,.td-loss{font-weight:700;letter-spacing:.1em;text-align:center;width:42px}
+    .td-win{color:var(--success);background:rgba(45,212,160,.1);border-left:2px solid var(--success)}
+    .td-loss{color:var(--danger);background:rgba(255,68,68,.08);border-left:2px solid var(--danger)}
+    /* Map name accent */
+    .td-map{color:var(--text);font-weight:700;letter-spacing:.02em}
+    /* Metrics colorees par seuil */
+    .td-good{color:var(--success);font-weight:700}.td-warn{color:var(--gold);font-weight:700}.td-bad{color:var(--danger);font-weight:700}
     .wl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:border-color .15s}
     .wl-card:hover{border-color:var(--border2)}
     .wl-avatar{width:36px;height:36px;border-radius:8px;background:var(--card);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
@@ -573,8 +580,12 @@ function renderMatches(d) {
   const heads = ['','Map','Score','K/D','K','D','HS%','ADR','KAST','FV Rating'];
   ['matchHead','matchHead2'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=heads.map(h=>`<th>${h}</th>`).join('');});
   const rows = ms.map(m=>{
-    const kd=m.kd||0,kdC=kd>=1.3?'td-good':kd>=1?'':'td-bad',fvC=m.fvRating>=1.05?'td-good':m.fvRating>=0.9?'':'td-bad';
-    return `<tr><td class="${m.result===1?'td-win':'td-loss'}">${m.result===1?'W':'L'}</td><td class="td-map">${m.map||''}</td><td>${m.score||''}</td><td class="${kdC}">${(kd).toFixed(2)}</td><td>${m.kills||0}</td><td>${m.deaths||0}</td><td>${(m.hsPct||0).toFixed(0)}%</td><td>${m.adr>0?(m.adr).toFixed(0):''}</td><td>${m.kast>0?(m.kast).toFixed(0)+'%':''}</td><td class="${fvC}">${(m.fvRating||0).toFixed(2)}</td></tr>`;
+    const kd=m.kd||0,kdC=kd>=1.3?'td-good':kd>=1?'td-warn':'td-bad';
+    const fvC=m.fvRating>=1.05?'td-good':m.fvRating>=0.9?'td-warn':'td-bad';
+    const hs=m.hsPct||0,hsC=hs>=50?'td-good':hs>=40?'td-warn':'';
+    const adr=m.adr||0,adrC=adr>=80?'td-good':adr>=65?'td-warn':adr>0?'td-bad':'';
+    const kast=m.kast||0,kastC=kast>=70?'td-good':kast>=60?'td-warn':kast>0?'td-bad':'';
+    return `<tr><td class="${m.result===1?'td-win':'td-loss'}">${m.result===1?'W':'L'}</td><td class="td-map">${m.map||''}</td><td>${m.score||''}</td><td class="${kdC}">${(kd).toFixed(2)}</td><td>${m.kills||0}</td><td>${m.deaths||0}</td><td class="${hsC}">${hs.toFixed(0)}%</td><td class="${adrC}">${adr>0?adr.toFixed(0):''}</td><td class="${kastC}">${kast>0?kast.toFixed(0)+'%':''}</td><td class="${fvC}">${(m.fvRating||0).toFixed(2)}</td></tr>`;
   }).join('');
   ['matchBody','matchBody2'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=rows;});
 }
