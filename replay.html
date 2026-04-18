@@ -158,6 +158,8 @@
     .player-row.active{background:rgba(184,255,87,.04);border-color:rgba(184,255,87,.12)}
     .player-row.dead{opacity:.35}
     .player-row.dead .player-name{text-decoration:line-through;color:var(--text3)}
+    .player-row.disconnected{opacity:.2;filter:grayscale(100%)}
+    .player-row.disconnected .player-name{color:var(--text3)}
     .player-row-top{display:flex;align-items:center;gap:7px}
     .player-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;box-shadow:0 0 4px currentColor}
     .player-name{font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;color:var(--text)}
@@ -1251,7 +1253,8 @@ function updatePlayerStates(frame) {
     const color = team === 'CT' ? '#4A9EFF' : '#F5C842';
 
     row.setAttribute('data-alive', alive ? 'true' : 'false');
-    row.classList.toggle('dead', !alive);
+    row.classList.toggle('dead', !alive && !disconnected);
+    row.classList.toggle('disconnected', disconnected);
     row.classList.toggle('active', !hiddenPlayers.has(p.name));
 
     // HP bar
@@ -2241,35 +2244,36 @@ function drawTrails(frame, W, H) {
     });
     if (trail.length < 2) return;
 
-    // Trail lisse via quadratic bezier : chaque segment utilise le point
-    // MILIEU entre deux samples comme control point, donnant une courbe
-    // continue au lieu d'une polyline brute angulaire.
-    ctx.lineWidth = 1.3;
+    // Trail = UNE seule polyline continue lissee via quadratic bezier.
+    // On utilise les midpoints des segments comme control points pour
+    // Catmull-Rom-like smoothing. Alpha constante pour eviter le clignotement
+    // entre segments. Fade via lineargradient applique sur tout le path.
+    const canvasPts = trail.map(pt => {
+      const c = w2c(pt.x, pt.y);
+      return { x: c.x * scaleX, y: c.y * scaleY };
+    });
+    ctx.beginPath();
+    ctx.moveTo(canvasPts[0].x, canvasPts[0].y);
+    for (let i = 1; i < canvasPts.length - 1; i++) {
+      const cp = canvasPts[i];
+      const next = canvasPts[i + 1];
+      const midX = (cp.x + next.x) / 2;
+      const midY = (cp.y + next.y) / 2;
+      ctx.quadraticCurveTo(cp.x, cp.y, midX, midY);
+    }
+    const last = canvasPts[canvasPts.length - 1];
+    ctx.lineTo(last.x, last.y);
+    // Gradient alpha : le trail fade progressivement de 0 (tete ancienne)
+    // vers 0.35 (tete actuelle). Appliqué comme strokeStyle gradient.
+    const first = canvasPts[0];
+    const grad = ctx.createLinearGradient(first.x, first.y, last.x, last.y);
+    grad.addColorStop(0, `rgba(${color.rgb},0)`);
+    grad.addColorStop(1, `rgba(${color.rgb},0.35)`);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1.4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    for (let i = 1; i < trail.length; i++) {
-      const age = (tick - (trail[i].tick || 0)) / TRAIL_TICKS;
-      const alpha = Math.max(0, 0.3 * (1 - age));
-      const prev = w2c(trail[i-1].x, trail[i-1].y);
-      const cur = w2c(trail[i].x, trail[i].y);
-      const px = prev.x * scaleX, py = prev.y * scaleY;
-      const cx = cur.x * scaleX, cy = cur.y * scaleY;
-      ctx.beginPath();
-      if (i >= 2) {
-        const p2 = w2c(trail[i - 2].x, trail[i - 2].y);
-        const pp = w2c(trail[i - 1].x, trail[i - 1].y);
-        // Control point = midpoint du segment precedent -> lissage Catmull-Rom simplifie
-        const midX = (p2.x + pp.x) / 2 * scaleX;
-        const midY = (p2.y + pp.y) / 2 * scaleY;
-        ctx.moveTo(midX, midY);
-        ctx.quadraticCurveTo(px, py, (px + cx) / 2, (py + cy) / 2);
-      } else {
-        ctx.moveTo(px, py);
-        ctx.lineTo(cx, cy);
-      }
-      ctx.strokeStyle = `rgba(${color.rgb},${alpha.toFixed(2)})`;
-      ctx.stroke();
-    }
+    ctx.stroke();
   });
 }
 
