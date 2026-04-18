@@ -797,7 +797,8 @@ function recalcRoundBoundaries() {
   // aller jusqu'a 3-4s. Appliquer 500 ticks (4s) uniforme rendait les flashes
   // 2.5x trop lentes visuellement.
   const CLAMP_SPAN_BY_TYPE = { hegre: 256, flash: 192, smoke: 512, molotov: 512, incgren: 512, decoy: 192 };
-  const EFFECT_TICKS = { smoke: 2304, molotov: 896, incgren: 896, decoy: 5760, flash: 128 };  // 18s/7s/45s/1s pulse
+  const EFFECT_TICKS = { smoke: 2304, molotov: 896, incgren: 896, decoy: 5760, flash: 128, hegre: 64 };  // 18s/7s/45s/1s/0.5s
+  const LANDS_ON_GROUND = { smoke: 1, molotov: 1, incgren: 1, decoy: 1 };  // types avec phase de repos (HE/flash explosent en vol)
   const STATIONARY_SQ = 100;   // (10 units)^2 : seuil pour considerer la grenade au sol
   const MAX_JUMP_SQ = 1000000; // (1000 units)^2 : saut anormal entre deux samples (teleport)
   const typeKey = (t) => t.includes('smoke') ? 'smoke'
@@ -823,7 +824,9 @@ function recalcRoundBoundaries() {
       // (apex de trajectoire, rebond, etc.) ET on saute les premiers points
       // pour ignorer un throw a faible velocite initiale.
       const SKIP_START = 3, MIN_STATIONARY_RUN = 3;
-      if (g.path && g.path.length / 2 >= SKIP_START + MIN_STATIONARY_RUN + 1) {
+      // HE/flash explosent en vol, pas de phase stationnaire legitime.
+      // La truncation ne doit s'appliquer qu'aux grenades qui landent (smoke/molo/decoy).
+      if (LANDS_ON_GROUND[key] && g.path && g.path.length / 2 >= SKIP_START + MIN_STATIONARY_RUN + 1) {
         const n = g.path.length / 2;
         for (let i = SKIP_START; i + MIN_STATIONARY_RUN <= n; i++) {
           let allStationary = true;
