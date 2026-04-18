@@ -217,14 +217,26 @@ nav{
 .demo-card-val.green{color:var(--accent)}
 .demo-card-val.gold{color:var(--gold)}
 .demo-card-sub{font-size:10px;color:var(--text3);margin-top:2px}
-.demo-map{
+.demo-coach{
   grid-column:1/-1;
-  height:140px;background:linear-gradient(135deg,#0a1a0a 0%,#0f1f0f 100%);
-  border-radius:var(--radius);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  position:relative;overflow:hidden
+  background:linear-gradient(135deg,rgba(184,255,87,.08) 0%,rgba(184,255,87,.02) 100%);
+  border:1px solid rgba(184,255,87,.25);border-radius:var(--radius);
+  padding:14px 18px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden
 }
-.demo-map-label{font-size:10px;color:var(--accent);letter-spacing:.1em}
+.demo-coach::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 80% at 100% 0%,rgba(184,255,87,.06),transparent);
+  pointer-events:none
+}
+.demo-coach-head{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:700;position:relative;z-index:1}
+.demo-coach-quote{font-size:11px;color:var(--text);line-height:1.55;padding:9px 11px;background:rgba(0,0,0,.25);border-left:2px solid var(--accent);border-radius:0 4px 4px 0;position:relative;z-index:1}
+.demo-coach-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:relative;z-index:1}
+.demo-coach-obj{display:flex;flex-direction:column;gap:2px;min-width:0}
+.demo-coach-obj-label{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+.demo-coach-obj-val{font-family:var(--display);font-size:13px;color:var(--text);letter-spacing:.02em;line-height:1.1}
+.demo-coach-trend{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.demo-coach-spark{width:60px;height:20px}
+.demo-coach-trend-pct{font-family:var(--mono);font-size:11px;color:var(--success);font-weight:700}
 .demo-bar{
   display:flex;align-items:center;gap:8px;margin-top:4px
 }
@@ -574,18 +586,27 @@ footer{
         <div class="demo-card-val">63%</div>
         <div class="demo-card-sub">Win rate premier duel</div>
       </div>
-      <div class="demo-map">
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px">
-          <div class="demo-map-label">2D REPLAY · ROUND 7</div>
-          <div style="font-size:9px;color:var(--text3);margin-top:2px">Clic pour ouvrir le replay interactif</div>
+      <div class="demo-coach">
+        <div class="demo-coach-head">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
+          Coach IA · Diagnostic
         </div>
-        <div style="position:absolute;top:20px;right:20px;font-size:9px;color:var(--text3);border:1px solid var(--border);padding:4px 8px;border-radius:3px">de_dust2</div>
-        <!-- Fake map dots -->
-        <div style="position:absolute;width:8px;height:8px;border-radius:50%;background:#4A9EFF;top:45%;left:30%"></div>
-        <div style="position:absolute;width:8px;height:8px;border-radius:50%;background:#4A9EFF;top:55%;left:35%"></div>
-        <div style="position:absolute;width:8px;height:8px;border-radius:50%;background:#F5C842;top:40%;left:65%"></div>
-        <div style="position:absolute;width:8px;height:8px;border-radius:50%;background:#F5C842;top:60%;left:70%"></div>
-        <div style="position:absolute;width:6px;height:6px;border-radius:50%;background:var(--accent);top:50%;left:50%;box-shadow:0 0 8px var(--accent)"></div>
+        <div class="demo-coach-quote">
+          Profil solide en duels d'ouverture (63%). Ton vrai plafond : la régularité du KAST. Vise +6 pts de consistance sur tes 5 prochains matchs.
+        </div>
+        <div class="demo-coach-footer">
+          <div class="demo-coach-obj">
+            <span class="demo-coach-obj-label">Objectif hebdo</span>
+            <span class="demo-coach-obj-val">KAST ≥ 70% · 5 matchs</span>
+          </div>
+          <div class="demo-coach-trend">
+            <svg class="demo-coach-spark" viewBox="0 0 60 20" preserveAspectRatio="none">
+              <polyline points="0,14 8,12 16,13 24,9 32,11 40,7 48,8 60,5" fill="none" stroke="#b8ff57" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="60" cy="5" r="2.5" fill="#b8ff57"/>
+            </svg>
+            <span class="demo-coach-trend-pct">↗ +12%</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
