@@ -1286,7 +1286,8 @@ function updatePlayerStates(frame) {
     const moneyEl = row.querySelector('[data-field="money"]');
     const peakStats = currentRoundPeakStats[p.name] || {};
     const money = (state?.money ?? 0) || peakStats.money || 0;
-    if (moneyEl) moneyEl.textContent = '$' + money;
+    const moneyTxt = '$' + money;
+    if (moneyEl && moneyEl.textContent !== moneyTxt) moneyEl.textContent = moneyTxt;
 
     // Gear row (weapon, helmet, armor, defuse)
     const gear = row.querySelector('.player-gear');
@@ -1295,7 +1296,8 @@ function updatePlayerStates(frame) {
     // Joueur mort : aucune arme / gear / inventaire. On affiche juste un
     // indicateur visuel mort pour garder la ligne stable.
     if (!alive) {
-      gear.innerHTML = '<span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em">— dead —</span>';
+      const deadHtml = '<span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em">— dead —</span>';
+      if (gear._prevHtml !== deadHtml) { gear.innerHTML = deadHtml; gear._prevHtml = deadHtml; }
     } else {
       let html = '';
       // Weapon principale du joueur (priorite slot 1 > 2 > couteau) : on
@@ -1353,7 +1355,7 @@ function updatePlayerStates(frame) {
         pushSlots('dec', peak.dec, thrown.dec);
         if (showC4) html += renderNadeSlot('c4', 1);
       }
-      gear.innerHTML = html;
+      if (gear._prevHtml !== html) { gear.innerHTML = html; gear._prevHtml = html; }
     }
 
     if (!_gearDebugLogged && pIdx === 0) {
