@@ -830,9 +830,13 @@ function recalcRoundBoundaries() {
       // (apex de trajectoire, rebond, etc.) ET on saute les premiers points
       // pour ignorer un throw a faible velocite initiale.
       const SKIP_START = 3, MIN_STATIONARY_RUN = 3;
-      // HE/flash explosent en vol, pas de phase stationnaire legitime.
-      // La truncation ne doit s'appliquer qu'aux grenades qui landent (smoke/molo/decoy).
-      if (LANDS_ON_GROUND[key] && g.path && g.path.length / 2 >= SKIP_START + MIN_STATIONARY_RUN + 1) {
+      // Truncation stationnaire pour les grenades qui landent (smoke/molo/decoy).
+      // Pour flash aussi : flash explose en vol mais le parser continue parfois
+      // a tracker l'entite flash post-explosion (drift 0-5 units/step) = path
+      // avec phase stationnaire apres la vraie detonation. HE seul est exclu
+      // car il peut rouler apres bounce avant d'exploser (fuse 1.5s fixe).
+      const shouldTruncateStationary = LANDS_ON_GROUND[key] || key === 'flash';
+      if (shouldTruncateStationary && g.path && g.path.length / 2 >= SKIP_START + MIN_STATIONARY_RUN + 1) {
         const n = g.path.length / 2;
         for (let i = SKIP_START; i + MIN_STATIONARY_RUN <= n; i++) {
           let allStationary = true;
@@ -889,6 +893,28 @@ function recalcRoundBoundaries() {
     // Un HE/flash a max 1-2 bounces avant explosion, un molo/inc peut rouler
     // apres landing mais rarement > 3 reversals dramatiques.
     const key = typeKey(g.type || '');
+    // Truncation stationnaire pour types qui ne devraient PAS rester au sol
+    // apres la vraie detonation (flash, smoke, molo, decoy). Le parser continue
+    // parfois a tracker post-event -> path etendu avec phase stationnaire.
+    // HE exclu : il peut rouler apres bounce avant d'exploser.
+    const shouldTruncStat = LANDS_ON_GROUND[key] || key === 'flash';
+    if (shouldTruncStat && g.path.length / 2 >= 6) {
+      const SKIP_START = 3, MIN_STATIONARY_RUN = 3;
+      for (let i = SKIP_START; i + MIN_STATIONARY_RUN <= n; i++) {
+        let allStationary = true;
+        for (let j = 0; j < MIN_STATIONARY_RUN; j++) {
+          const ddx = g.path[(i + j) * 2] - g.path[(i + j - 1) * 2];
+          const ddy = g.path[(i + j) * 2 + 1] - g.path[(i + j - 1) * 2 + 1];
+          if (ddx * ddx + ddy * ddy >= STATIONARY_SQ) { allStationary = false; break; }
+        }
+        if (allStationary) {
+          g.path = g.path.slice(0, i * 2);
+          g.detonX = g.path[g.path.length - 2];
+          g.detonY = g.path[g.path.length - 1];
+          break;
+        }
+      }
+    }
     const maxReversals = { hegre: 2, flash: 2, molotov: 2, incgren: 2 }[key];
     if (maxReversals !== undefined) {
       let reversals = 0, prevDx = 0, prevDy = 0;
