@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title id="pageTitle">FragValue · Équipe</title>
+  <meta name="description" id="metaDesc" content="Profil d'équipe CS2 sur FragValue">
+  <meta property="og:type" content="profile">
+  <meta property="og:title" id="ogTitle" content="FragValue · Équipe">
+  <meta property="og:description" id="ogDesc" content="Profil d'équipe CS2 sur FragValue">
+  <meta property="og:image" content="https://fragvalue.com/fragvalue_icon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
+      --accent:#b8ff57;--accent2:#7ddd1a;
+      --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+      --font:'Space Mono',monospace;--mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+    }
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+    .page{max-width:980px;margin:0 auto;padding:40px 32px 80px;position:relative;z-index:1}
+    @media(max-width:768px){.page{padding:24px 16px}}
+
+    .team-hero{display:flex;align-items:center;gap:20px;margin-bottom:32px;flex-wrap:wrap}
+    .team-logo{width:80px;height:80px;border-radius:14px;background:var(--card);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:36px;color:var(--accent);flex-shrink:0}
+    .team-name{font-family:var(--display);font-size:42px;color:var(--text);letter-spacing:.02em;line-height:1}
+    .team-tag{font-family:var(--mono);font-size:16px;color:var(--text3);margin-left:10px;font-weight:400}
+    .team-meta{font-family:var(--mono);font-size:12px;color:var(--text2);margin-top:6px;display:flex;gap:14px;flex-wrap:wrap}
+    .team-meta-item{display:flex;align-items:center;gap:4px}
+    .team-recruit-pill{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.3);padding:4px 10px;border-radius:40px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+    .team-desc{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:32px;max-width:640px;font-family:var(--mono)}
+
+    .section{margin-bottom:32px}
+    .section-title{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+    .section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(184,255,87,.2),transparent)}
+
+    .score-card{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:14px;padding:24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+    .score-donut{font-family:var(--display);font-size:56px;color:var(--accent);line-height:1;flex-shrink:0}
+    .score-donut small{font-size:20px;color:var(--text3)}
+    .score-info{flex:1;min-width:180px}
+    .score-rank{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+    .score-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5}
+
+    .metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:16px}
+    .metric{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;text-align:center}
+    .metric-val{font-family:var(--display);font-size:24px;color:var(--text);line-height:1}
+    .metric-lbl{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:5px}
+
+    .members-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+    .member{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+    .member-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+    .member-avatar{width:44px;height:44px;border-radius:10px;background:var(--card);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:20px;color:var(--accent);flex-shrink:0}
+    .member-nick{font-size:15px;font-weight:700;color:var(--text)}
+    .member-role-line{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px}
+    .captain-tag,.sub-tag{background:rgba(245,200,66,.15);color:var(--gold);padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-right:6px}
+    .sub-tag{background:rgba(122,128,128,.15);color:var(--text2)}
+
+    .map-pool{display:flex;flex-wrap:wrap;gap:8px}
+    .map-pill{font-family:var(--mono);font-size:12px;padding:8px 14px;border-radius:40px;background:var(--card);border:1px solid var(--border2)}
+    .map-pill strong{color:var(--accent);margin-right:6px}
+
+    .recruit-banner{background:linear-gradient(135deg,rgba(184,255,87,.1),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:20px 24px;margin-bottom:24px}
+    .recruit-title{font-family:var(--display);font-size:18px;color:var(--accent);margin-bottom:6px}
+    .recruit-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5}
+    .recruit-btn{display:inline-block;margin-top:12px;background:var(--accent);color:#000;padding:10px 18px;border-radius:6px;text-decoration:none;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .recruit-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+
+    .empty{text-align:center;padding:60px 24px;color:var(--text3);font-family:var(--mono);font-size:13px}
+    .empty a{color:var(--accent);text-decoration:none}
+    .empty a:hover{text-decoration:underline}
+
+    .loading{text-align:center;padding:60px 24px;color:var(--text3);font-family:var(--mono);font-size:13px}
+  </style>
+</head>
+<body>
+
+<nav></nav>
+
+<div class="page">
+  <div id="content" class="loading">Chargement de l'équipe...</div>
+</div>
+
+<script>
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+window._sb = sb;
+
+async function loadTeam() {
+  const params = new URLSearchParams(window.location.search);
+  const tag = (params.get('tag') || '').toUpperCase();
+  const contentEl = document.getElementById('content');
+
+  if (!tag) {
+    contentEl.className = 'empty';
+    contentEl.innerHTML = `Tag d'équipe manquant dans l'URL. <a href="/scout.html">Retour au Scout</a>`;
+    return;
+  }
+
+  // Lookup roster par tag + visibility public
+  const { data: roster, error } = await sb
+    .from('rosters')
+    .select('*')
+    .eq('tag', tag)
+    .eq('visibility', 'public')
+    .maybeSingle();
+
+  if (error || !roster) {
+    contentEl.className = 'empty';
+    contentEl.innerHTML = `<div>Aucune équipe publique avec le tag <strong style="color:var(--text)">[${tag}]</strong>.</div><div style="margin-top:12px"><a href="/scout.html">Retour au Scout</a></div>`;
+    return;
+  }
+
+  // Fetch membres (publics)
+  const { data: players } = await sb
+    .from('roster_players')
+    .select('faceit_nickname, team_role, is_captain, is_sub, faceit_level, faceit_elo')
+    .eq('roster_id', roster.id);
+
+  // Fetch stats agregees
+  let aggregated = null;
+  try {
+    const statsRes = await fetch(`/api/roster-stats?roster_id=${roster.id}`);
+    const d = await statsRes.json();
+    aggregated = d.aggregated || null;
+  } catch {}
+
+  // SEO
+  const pageTitle = `${roster.team_name} · Équipe CS2 sur FragValue`;
+  document.title = pageTitle;
+  document.getElementById('pageTitle').textContent = pageTitle;
+  const descText = `${roster.team_name} sur FragValue — ${roster.description || 'Équipe CS2 FACEIT'}.${aggregated ? ` Team Score ${aggregated.team_score}/100.` : ''}`;
+  document.getElementById('metaDesc').setAttribute('content', descText);
+  document.getElementById('ogTitle').setAttribute('content', pageTitle);
+  document.getElementById('ogDesc').setAttribute('content', descText);
+
+  renderTeam({ roster, players: players || [], aggregated });
+}
+
+function renderTeam({ roster, players, aggregated }) {
+  const contentEl = document.getElementById('content');
+  contentEl.classList.remove('loading');
+  contentEl.className = '';
+
+  const logoInitial = roster.team_name.charAt(0).toUpperCase();
+  const tag = roster.tag ? `<span class="team-tag">[${roster.tag}]</span>` : '';
+
+  let html = `
+    <div class="team-hero">
+      <div class="team-logo">${logoInitial}</div>
+      <div style="flex:1;min-width:180px">
+        <div class="team-name">${escapeHtml(roster.team_name)}${tag}</div>
+        <div class="team-meta">
+          ${roster.region ? `<span class="team-meta-item">📍 ${roster.region}</span>` : ''}
+          <span class="team-meta-item">${players.length} membre${players.length > 1 ? 's' : ''}</span>
+          ${roster.looking_for_players ? '<span class="team-recruit-pill">Recrutement ouvert</span>' : ''}
+        </div>
+      </div>
+    </div>
+
+    ${roster.description ? `<div class="team-desc">${escapeHtml(roster.description)}</div>` : ''}
+
+    ${roster.looking_for_players ? `
+      <div class="recruit-banner">
+        <div class="recruit-title">Cette équipe recrute</div>
+        <div class="recruit-sub">${roster.looking_for_roles && roster.looking_for_roles.length ? 'Rôles recherchés : ' + roster.looking_for_roles.join(', ') : 'Rôles ouverts, candidatures bienvenues.'}</div>
+        <a href="/scout.html" class="recruit-btn">Apparaître comme candidat →</a>
+      </div>
+    ` : ''}
+  `;
+
+  if (aggregated) {
+    const rankColor = aggregated.team_score >= 75 ? 'var(--success)' : aggregated.team_score >= 60 ? 'var(--accent)' : aggregated.team_score >= 45 ? 'var(--gold)' : 'var(--danger)';
+    html += `
+      <div class="section">
+        <div class="section-title">Team Score</div>
+        <div class="score-card">
+          <div class="score-donut" style="color:${rankColor}">${aggregated.team_score}<small>/100</small></div>
+          <div class="score-info">
+            <div class="score-rank">${aggregated.team_rank}</div>
+            <div class="score-sub">Score composite basé sur FV Rating, KAST et Win Rate collectifs sur les 20 derniers matchs de chaque membre (${aggregated.members_with_stats || 0} / ${players.length} membres avec FACEIT lié).</div>
+          </div>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric"><div class="metric-val" style="color:var(--accent)">${aggregated.avg_fv_rating}</div><div class="metric-lbl">FV Rating</div></div>
+          <div class="metric"><div class="metric-val">${aggregated.avg_kd}</div><div class="metric-lbl">K/D</div></div>
+          <div class="metric"><div class="metric-val">${aggregated.avg_adr}</div><div class="metric-lbl">ADR</div></div>
+          <div class="metric"><div class="metric-val">${aggregated.avg_hs}%</div><div class="metric-lbl">HS%</div></div>
+          <div class="metric"><div class="metric-val">${aggregated.avg_kast}%</div><div class="metric-lbl">KAST</div></div>
+          <div class="metric"><div class="metric-val">${aggregated.avg_win_rate}%</div><div class="metric-lbl">Win rate</div></div>
+          <div class="metric"><div class="metric-val" style="color:var(--gold)">${aggregated.avg_elo}</div><div class="metric-lbl">ELO moyen</div></div>
+        </div>
+      </div>
+    `;
+
+    if (aggregated.map_pool && aggregated.map_pool.length > 0) {
+      html += `
+        <div class="section">
+          <div class="section-title">Map pool collectif</div>
+          <div class="map-pool">
+            ${aggregated.map_pool.map(m => {
+              const name = (m.map || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
+              return `<div class="map-pill"><strong>${name}</strong> ${m.team_win_rate}% · ${m.total_matches}M</div>`;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  html += `
+    <div class="section">
+      <div class="section-title">Roster (${players.length})</div>
+      <div class="members-grid">
+        ${players.map(p => `
+          <div class="member">
+            <div class="member-head">
+              <div class="member-avatar">${(p.faceit_nickname || '?').charAt(0).toUpperCase()}</div>
+              <div>
+                <div class="member-nick">${escapeHtml(p.faceit_nickname || 'Joueur')}</div>
+                <div class="member-role-line">
+                  ${p.is_captain ? '<span class="captain-tag">Captain</span>' : ''}
+                  ${p.is_sub ? '<span class="sub-tag">Sub</span>' : ''}
+                  ${p.team_role ? p.team_role.charAt(0).toUpperCase() + p.team_role.slice(1) : 'Rôle non défini'}
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--text3)">
+              ${p.faceit_level ? `<span>Lvl ${p.faceit_level}</span>` : ''}
+              ${p.faceit_elo ? `<span style="color:var(--gold);font-weight:700">${p.faceit_elo} ELO</span>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  contentEl.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+loadTeam();
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>

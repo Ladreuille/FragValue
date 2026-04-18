@@ -345,6 +345,25 @@
     .invitation-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5}
     .invitation-msg{font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:6px;padding:8px 10px;background:rgba(0,0,0,.2);border-left:2px solid var(--accent);border-radius:0 4px 4px 0}
 
+    /* ── Team aggregated stats ────────────────────────── */
+    .team-score-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-top:14px;position:relative;z-index:1}
+    .team-score-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+    .team-score-val{font-family:var(--display);font-size:42px;line-height:1;letter-spacing:.01em}
+    .team-score-label{font-family:var(--mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+    .team-score-meta{font-family:var(--mono);font-size:11px;color:var(--text2);display:flex;flex-direction:column;gap:4px;text-align:right}
+    .team-metrics-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+    @media(max-width:600px){.team-metrics-grid{grid-template-columns:repeat(3,1fr)}}
+    .team-metric{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 8px;text-align:center}
+    .team-metric-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+    .team-metric-val{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);line-height:1}
+    .team-top-perf{background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .team-top-perf-label{font-family:var(--mono);font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+    .team-top-perf-val{font-family:var(--mono);font-size:12px;color:var(--text2)}
+    .team-top-perf-val strong{color:var(--text)}
+    .team-maps-label{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+    .team-maps-list{display:flex;flex-wrap:wrap;gap:6px}
+    .team-map-pill{font-family:var(--mono);font-size:11px;font-weight:700;padding:5px 10px;border-radius:40px;background:var(--surface);border:1px solid;display:inline-flex;align-items:center;gap:5px}
+
     /* ── Watchlist / Roster : enhanced card layout ────────── */
     .wl-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
     .wl-team-name{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em}
@@ -1222,23 +1241,29 @@ function renderRoster(data) {
   const tag = roster.tag ? `[${roster.tag}]` : '';
   const logoInitial = roster.team_name.charAt(0).toUpperCase();
 
-  // Stats agregees basiques (on pourra brancher les stats FACEIT reelles plus tard)
+  // Stats basiques (structure) — les agregats FACEIT sont charges async via renderTeamStats
   const statsHtml = `
     <div class="roster-stats-grid">
       <div class="roster-stat"><div class="roster-stat-label">Titulaires</div><div class="roster-stat-val">${titulaires.length}<span style="color:var(--text3);font-size:14px">/5</span></div></div>
       <div class="roster-stat"><div class="roster-stat-label">Remplaçants</div><div class="roster-stat-val">${subs.length}<span style="color:var(--text3);font-size:14px">/2</span></div></div>
       <div class="roster-stat"><div class="roster-stat-label">Invitations</div><div class="roster-stat-val">${(invitations || []).length}</div><div class="roster-stat-sub">en attente</div></div>
       <div class="roster-stat"><div class="roster-stat-label">Visibilité</div><div class="roster-stat-val" style="font-size:14px;color:var(--text);text-transform:capitalize">${roster.visibility || 'team'}</div></div>
-    </div>`;
+    </div>
+    <div id="teamStatsAggregated" style="margin-top:16px"></div>`;
 
+  const isPublic = roster.visibility === 'public';
+  const shareUrl = roster.tag ? `${window.location.origin}/team/${encodeURIComponent(roster.tag)}` : null;
   const ownerActions = is_owner ? `
     <div class="roster-actions">
       <button class="roster-btn primary" onclick="openInvitePlayerModal()">Inviter un joueur</button>
-      <button class="roster-btn" onclick="toggleLookingForPlayers()" id="lfpBtn">${roster.looking_for_players ? 'Fermer le recrutement' : 'Ouvrir le recrutement'}</button>
+      <button class="roster-btn" onclick="toggleLookingForPlayers()">${roster.looking_for_players ? 'Fermer le recrutement' : 'Ouvrir le recrutement'}</button>
+      <button class="roster-btn" onclick="toggleVisibility()">${isPublic ? 'Rendre privée' : 'Rendre publique'}</button>
+      ${isPublic && shareUrl ? `<a class="roster-btn" href="${shareUrl}" target="_blank">Voir la page publique</a>` : ''}
       <button class="roster-btn danger" onclick="deleteRoster()">Supprimer l'équipe</button>
     </div>
   ` : `
     <div class="roster-actions">
+      ${isPublic && shareUrl ? `<a class="roster-btn" href="${shareUrl}" target="_blank">Voir la page publique</a>` : ''}
       <button class="roster-btn danger" onclick="leaveRoster()">Quitter l'équipe</button>
     </div>
   `;
@@ -1292,6 +1317,69 @@ function renderRoster(data) {
     ${membersList}
     ${pendingInvList}
   `;
+  // Charge les stats agregees FACEIT en async
+  loadTeamStats(roster.id);
+}
+
+async function loadTeamStats(rosterId) {
+  const el = document.getElementById('teamStatsAggregated');
+  if (!el) return;
+  el.innerHTML = `<div style="color:var(--text3);font-size:12px;font-family:var(--mono);padding:12px;text-align:center">Calcul des stats collectives...</div>`;
+  try {
+    const res = await fetch(`/api/roster-stats?roster_id=${rosterId}`);
+    const d = await res.json();
+    if (!d.aggregated) {
+      el.innerHTML = `<div style="color:var(--text3);font-size:12px;font-family:var(--mono);padding:12px;text-align:center">Pas encore de stats collectives · les membres doivent avoir FACEIT lié</div>`;
+      return;
+    }
+    const a = d.aggregated;
+    const rankColor = a.team_score >= 75 ? 'var(--success)' : a.team_score >= 60 ? 'var(--accent)' : a.team_score >= 45 ? 'var(--gold)' : 'var(--danger)';
+    el.innerHTML = `
+      <div class="team-score-card">
+        <div class="team-score-head">
+          <div>
+            <div class="team-score-val" style="color:${rankColor}">${a.team_score}<span style="color:var(--text3);font-size:18px">/100</span></div>
+            <div class="team-score-label">Team Score · ${a.team_rank}</div>
+          </div>
+          <div class="team-score-meta">
+            <div><strong style="color:var(--accent)">${a.avg_fv_rating}</strong> FV moyen</div>
+            <div><strong style="color:var(--text)">${a.avg_level}</strong> Lvl moyen</div>
+            <div><strong style="color:var(--gold)">${a.avg_elo}</strong> ELO moyen</div>
+          </div>
+        </div>
+        <div class="team-metrics-grid">
+          <div class="team-metric"><div class="team-metric-lbl">K/D</div><div class="team-metric-val">${a.avg_kd}</div></div>
+          <div class="team-metric"><div class="team-metric-lbl">ADR</div><div class="team-metric-val">${a.avg_adr}</div></div>
+          <div class="team-metric"><div class="team-metric-lbl">HS%</div><div class="team-metric-val">${a.avg_hs}%</div></div>
+          <div class="team-metric"><div class="team-metric-lbl">KAST</div><div class="team-metric-val">${a.avg_kast}%</div></div>
+          <div class="team-metric"><div class="team-metric-lbl">Win rate</div><div class="team-metric-val">${a.avg_win_rate}%</div></div>
+        </div>
+        ${a.top_performer ? `
+          <div class="team-top-perf">
+            <div class="team-top-perf-label">Top performer</div>
+            <div class="team-top-perf-val"><strong>${a.top_performer.nickname}</strong> · FV ${a.top_performer.fvRating.toFixed(2)} · K/D ${a.top_performer.kd.toFixed(2)}</div>
+          </div>` : ''}
+        ${a.map_pool.length > 0 ? `
+          <div class="team-maps">
+            <div class="team-maps-label">Map pool collectif (top ${Math.min(5, a.map_pool.length)})</div>
+            <div class="team-maps-list">
+              ${a.map_pool.map(m => {
+                const name = (m.map || '').replace('de_', '').replace(/^\\w/, c => c.toUpperCase());
+                const isBest = a.best_map && m.map === a.best_map.map;
+                const isWorst = a.worst_map && m.map === a.worst_map.map;
+                const color = m.team_win_rate >= 55 ? 'var(--success)' : m.team_win_rate >= 45 ? 'var(--gold)' : 'var(--danger)';
+                return `<div class="team-map-pill" style="border-color:${color};color:${color}">
+                  ${isBest ? '<span title="Meilleure map">⭐</span>' : ''}${isWorst ? '<span title="À travailler">⚠️</span>' : ''}
+                  ${name} · ${m.team_win_rate}% · ${m.total_matches}M
+                </div>`;
+              }).join('')}
+            </div>
+          </div>` : ''}
+      </div>
+    `;
+  } catch (e) {
+    el.innerHTML = `<div style="color:var(--text3);font-size:12px;font-family:var(--mono);padding:12px;text-align:center">Stats collectives indisponibles</div>`;
+  }
 }
 
 // ══ Modals ═══════════════════════════════════════════════════════════════
@@ -1417,6 +1505,23 @@ async function toggleLookingForPlayers() {
     action: 'update',
     roster_id: _currentRoster.roster.id,
     fields: { looking_for_players: newVal },
+  });
+  if (r.error) { alert(r.error); return; }
+  await loadRoster();
+}
+
+async function toggleVisibility() {
+  if (!_currentRoster) return;
+  const current = _currentRoster.roster.visibility || 'team';
+  const newVal = current === 'public' ? 'team' : 'public';
+  if (newVal === 'public' && !_currentRoster.roster.tag) {
+    alert('Ajoute un tag a ton equipe avant de la rendre publique (utilise pour l\'URL /team/TAG).');
+    return;
+  }
+  const r = await callRosterAPI({
+    action: 'update',
+    roster_id: _currentRoster.roster.id,
+    fields: { visibility: newVal },
   });
   if (r.error) { alert(r.error); return; }
   await loadRoster();

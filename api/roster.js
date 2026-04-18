@@ -11,9 +11,23 @@
 //  - GET    ?view=my_roster           -> mon equipe + membres + invitations
 //  - GET    ?view=my_invitations      -> invitations recues en attente
 
+import { sendEmail, emailRosterInvite, emailInviteAccepted, emailInviteDeclined } from './_lib/email.js';
+
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 const MAX_ROSTER_SIZE = 7; // 5 titulaires + 2 subs max
 const VALID_ROLES = ['entry','awp','support','lurker','igl','rifler','coach'];
+const SITE = 'https://fragvalue.com';
+
+// Helper : insert notification in-app (non-bloquant si echoue)
+async function insertNotification(supabase, { user_id, title, body, link }) {
+  if (!user_id) return;
+  try {
+    await supabase.from('notifications').insert({
+      user_id, title, body, link,
+      read: false,
+    });
+  } catch (e) { console.warn('notification insert failed:', e.message); }
+}
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
@@ -174,6 +188,31 @@ async function handlePost(req, res, supabase, user) {
       message: message || null,
     }).select().single();
     if (error) throw error;
+
+    // ── Notifications : in-app (si on connait le user) + email ───────────
+    const inviterNickname = await getProfileNickname(supabase, user.id) || 'Un joueur';
+    if (invitee_user_id) {
+      await insertNotification(supabase, {
+        user_id: invitee_user_id,
+        title: `Invitation d'équipe : ${roster.team_name}`,
+        body: `${inviterNickname} t'invite${proposed_role ? ` en tant que ${proposed_role}` : ''} dans son équipe.`,
+        link: '/dashboard.html#roster',
+      });
+      // Email (si on a l'email du user)
+      const { data: inviteeAuth } = await supabase.auth.admin.getUserById(invitee_user_id);
+      const inviteeEmail = inviteeAuth?.user?.email;
+      if (inviteeEmail) {
+        const { subject, html, text } = emailRosterInvite({
+          team_name: roster.team_name,
+          tag: null,
+          inviter_nickname: inviterNickname,
+          proposed_role,
+          message,
+          accept_url: `${SITE}/dashboard.html#roster`,
+        });
+        sendEmail({ to: inviteeEmail, subject, html, text }).catch(() => {});
+      }
+    }
     return res.status(200).json({ ok: true, invitation });
   }
 
@@ -195,6 +234,24 @@ async function handlePost(req, res, supabase, user) {
 
     if (response === 'decline') {
       await supabase.from('roster_invitations').update({ status: 'declined', responded_at: new Date().toISOString() }).eq('id', invitation_id);
+      // Notifier l'inviteur
+      const inviteeNick = profile || inv.invitee_nickname || 'Un joueur';
+      const { data: rosterMeta } = await supabase.from('rosters').select('team_name').eq('id', inv.roster_id).maybeSingle();
+      await insertNotification(supabase, {
+        user_id: inv.inviter_id,
+        title: `${inviteeNick} a décliné ton invitation`,
+        body: `Pour l'équipe "${rosterMeta?.team_name || ''}".`,
+        link: '/dashboard.html#roster',
+      });
+      const { data: inviterAuth } = await supabase.auth.admin.getUserById(inv.inviter_id);
+      if (inviterAuth?.user?.email) {
+        const { subject, html, text } = emailInviteDeclined({
+          team_name: rosterMeta?.team_name || '',
+          invitee_nickname: inviteeNick,
+          team_url: `${SITE}/dashboard.html#roster`,
+        });
+        sendEmail({ to: inviterAuth.user.email, subject, html, text }).catch(() => {});
+      }
       return res.status(200).json({ ok: true });
     }
 
@@ -219,6 +276,24 @@ async function handlePost(req, res, supabase, user) {
       invited_by: inv.inviter_id,
     });
     await supabase.from('roster_invitations').update({ status: 'accepted', responded_at: new Date().toISOString() }).eq('id', invitation_id);
+    // Notifier l'inviteur
+    const inviteeNick = profile || inv.invitee_nickname || 'Un joueur';
+    const { data: rosterMeta } = await supabase.from('rosters').select('team_name').eq('id', inv.roster_id).maybeSingle();
+    await insertNotification(supabase, {
+      user_id: inv.inviter_id,
+      title: `${inviteeNick} a rejoint ton équipe`,
+      body: `${rosterMeta?.team_name || 'Ton équipe'} compte un nouveau membre.`,
+      link: '/dashboard.html#roster',
+    });
+    const { data: inviterAuth } = await supabase.auth.admin.getUserById(inv.inviter_id);
+    if (inviterAuth?.user?.email) {
+      const { subject, html, text } = emailInviteAccepted({
+        team_name: rosterMeta?.team_name || '',
+        invitee_nickname: inviteeNick,
+        team_url: `${SITE}/dashboard.html#roster`,
+      });
+      sendEmail({ to: inviterAuth.user.email, subject, html, text }).catch(() => {});
+    }
     return res.status(200).json({ ok: true, roster_id: inv.roster_id });
   }
 
