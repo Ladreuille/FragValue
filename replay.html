@@ -1357,8 +1357,6 @@ function buildFrames(round) {
     });
     currentRoundPeak[name] = peak;
     // Peak money/armor/helmet/defuser + best weapon STRICTEMENT round-specific.
-    // Pas de fallback all-time : on prefere rien afficher plutot que des valeurs
-    // d'un autre round (ex : $3250 de round 15 affiche au round 1 pistol).
     let bestPrio = 0, bestName = null;
     let peakMoney = 0, peakArmor = 0, peakHelmet = false, peakDefuser = false;
     pts.forEach(p => {
@@ -1372,6 +1370,13 @@ function buildFrames(round) {
     if (bestName) currentRoundBestWeapon[name] = bestName;
     currentRoundPeakStats[name] = { money: peakMoney, armor: peakArmor, helmet: peakHelmet, defuser: peakDefuser };
   });
+  // Diagnostic : montrer les bornes du round + peak money d'un joueur
+  // pour verifier que le filtrage tick range fonctionne bien.
+  const _firstName = Object.keys(roundPos)[0];
+  const _samples = roundPos[_firstName] || [];
+  const _moneyRange = _samples.length ? `${Math.min(..._samples.map(p=>p.money||0))}-${Math.max(..._samples.map(p=>p.money||0))}` : 'empty';
+  const _tickRange = _samples.length ? `${Math.min(..._samples.map(p=>p.tick||0))}-${Math.max(..._samples.map(p=>p.tick||0))}` : 'empty';
+  console.log(`[RoundBounds R${round}] roundData.startTick=${roundData.startTick} endTick=${roundData.endTick} | ${_firstName} samples tick=${_tickRange} money=${_moneyRange} peak=${currentRoundPeakStats[_firstName]?.money}`);
 
   frames = [];
   for (let f = 0; f <= N; f++) {
