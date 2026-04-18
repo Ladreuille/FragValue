@@ -255,6 +255,39 @@
     .kpi-baseline{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px;line-height:1.2;letter-spacing:.01em;white-space:nowrap}
     .kpi-baseline.up{color:var(--success)}.kpi-baseline.down{color:var(--danger)}
 
+    /* ── Tab intro headers ────────────────────────────────── */
+    .tab-intro{margin-bottom:22px}
+    .tab-title{font-family:var(--display);font-size:32px;color:var(--text);letter-spacing:.02em;margin-bottom:6px;line-height:1.1}
+    .tab-sub{font-size:13px;color:var(--text2);font-family:var(--mono);line-height:1.5;max-width:720px}
+
+    /* ── Matches tab : summary + filters ──────────────────── */
+    .matches-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+    .matches-summary-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+    .matches-summary-label{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+    .matches-summary-val{font-family:var(--display);font-size:22px;color:var(--text);line-height:1}
+    .matches-summary-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px}
+    .matches-filters{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px}
+    .filter-label{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+    .filter-select{background:var(--card);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;border-radius:6px;cursor:pointer;font-weight:700}
+    .filter-select:hover{border-color:var(--accent)}
+    .filter-toggle-group{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:3px}
+    .filter-toggle{font-family:var(--mono);font-size:11px;font-weight:700;padding:6px 12px;border-radius:4px;background:transparent;color:var(--text2);border:none;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:all .15s}
+    .filter-toggle:hover{color:var(--text)}
+    .filter-toggle.active{background:var(--accent);color:#000}
+
+    /* ── Watchlist / Roster : enhanced card layout ────────── */
+    .wl-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+    .wl-team-name{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em}
+    .wl-count{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+    .wl-add-btn{background:transparent;color:var(--accent);border:1px solid rgba(184,255,87,.3);padding:7px 14px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .wl-add-btn:hover{background:rgba(184,255,87,.08)}
+    .wl-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+    .wl-meta{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px}
+    .wl-level{display:inline-block;font-size:9px;font-family:var(--mono);font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.5px;margin-right:6px}
+    .wl-elo{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold);margin-right:8px}
+    .wl-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:6px 12px;border-radius:5px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .wl-btn:hover{border-color:var(--accent);color:var(--accent)}
+
     @media(max-width:768px){nav{padding:0 16px}.page{padding:16px}.hero-kpis{grid-template-columns:repeat(3,1fr)}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
@@ -364,35 +397,58 @@
 
     <!-- AMÉLIORATION -->
     <div class="tab-panel" id="panelImprove">
+      <div class="tab-intro">
+        <h1 class="tab-title">Tes axes d'amélioration</h1>
+        <p class="tab-sub">Analyse personnalisée de tes forces et points bloquants, calculée sur tes 20 derniers matchs FACEIT. Actionnable round par round.</p>
+      </div>
       <div id="improvementsPanel"><div class="empty-state"><div class="empty-title">Chargement de l'analyse...</div></div></div>
     </div>
 
     <!-- MATCHS -->
     <div class="tab-panel" id="panelMatches">
-      <div class="sec-label">Historique des matchs</div>
+      <div class="tab-intro">
+        <h1 class="tab-title">Historique des matchs</h1>
+        <p class="tab-sub">Tes 20 derniers matchs FACEIT avec tous les KPIs clés. Filtre par map ou résultat pour zoomer.</p>
+      </div>
+      <div id="matchesSummary"></div>
+      <div class="matches-filters" id="matchesFilters">
+        <label class="filter-label">Filtrer :</label>
+        <select class="filter-select" id="filterMap"><option value="">Toutes les maps</option></select>
+        <div class="filter-toggle-group">
+          <button class="filter-toggle active" data-result="all" onclick="applyMatchFilter(this)">Tous</button>
+          <button class="filter-toggle" data-result="win" onclick="applyMatchFilter(this)">Victoires</button>
+          <button class="filter-toggle" data-result="loss" onclick="applyMatchFilter(this)">Défaites</button>
+        </div>
+      </div>
       <div class="match-table-wrap"><table class="match-table"><thead><tr id="matchHead2"></tr></thead><tbody id="matchBody2"></tbody></table></div>
     </div>
 
     <!-- WATCHLIST -->
     <div class="tab-panel" id="panelWatchlist">
-      <div class="sec-label">Joueurs suivis</div>
+      <div class="tab-intro">
+        <h1 class="tab-title">Joueurs suivis</h1>
+        <p class="tab-sub">Garde un œil sur les joueurs qui t'intéressent : adversaires récurrents, potentiels coéquipiers, anciens duos.</p>
+      </div>
       <div id="watchlistContent">
         <div class="empty-state">
-          <div class="empty-title">Watchlist vide</div>
-          <div class="empty-sub">Ajoute des joueurs depuis le Scout pour les retrouver ici.</div>
-          <a href="index.html" class="empty-btn">Aller sur le Scout</a>
+          <div class="empty-title">Aucun joueur suivi</div>
+          <div class="empty-sub">Scout un joueur depuis la page Scout et ajoute-le à ta watchlist pour retrouver rapidement ses stats ici.</div>
+          <a href="compare.html" class="empty-btn">Aller au Scout</a>
         </div>
       </div>
     </div>
 
     <!-- ROSTER -->
     <div class="tab-panel" id="panelRoster">
-      <div class="sec-label">Mon équipe</div>
+      <div class="tab-intro">
+        <h1 class="tab-title">Mon équipe</h1>
+        <p class="tab-sub">Configure ton roster pour suivre les stats de toute ton équipe en un coup d'œil. Parfait pour les IGL et coaches.</p>
+      </div>
       <div id="rosterContent">
         <div class="empty-state">
-          <div class="empty-title">Roster vide</div>
-          <div class="empty-sub">Configure ton équipe depuis les paramètres.</div>
-          <button class="empty-btn" onclick="setTab('settings',document.querySelector('[onclick*=settings]'))">Configurer</button>
+          <div class="empty-title">Aucune équipe configurée</div>
+          <div class="empty-sub">Crée ton roster (jusqu'à 5 joueurs) depuis Mon espace pour suivre les stats collectives.</div>
+          <a href="account.html" class="empty-btn">Configurer mon roster</a>
         </div>
       </div>
     </div>
@@ -839,19 +895,76 @@ function renderLastMatch(d) {
     </div>`;
 }
 
+let _allMatches = [];
+let _matchFilters = { map: '', result: 'all' };
+
 function renderMatches(d) {
-  const ms = d.recent.matches||[];
+  _allMatches = d.recent.matches || [];
+  // Populer le filtre map avec les maps reellement jouees
+  const mapSelect = document.getElementById('filterMap');
+  if (mapSelect) {
+    const maps = [...new Set(_allMatches.map(m => m.map).filter(Boolean))].sort();
+    mapSelect.innerHTML = `<option value="">Toutes les maps (${_allMatches.length})</option>` +
+      maps.map(m => `<option value="${m}">${m} (${_allMatches.filter(x => x.map === m).length})</option>`).join('');
+    mapSelect.onchange = () => { _matchFilters.map = mapSelect.value; rerenderMatchesTables(); };
+  }
+  renderMatchesSummary(_allMatches);
+  rerenderMatchesTables();
+}
+
+function applyMatchFilter(btn) {
+  document.querySelectorAll('.filter-toggle').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _matchFilters.result = btn.dataset.result;
+  rerenderMatchesTables();
+}
+
+function rerenderMatchesTables() {
+  const filtered = _allMatches.filter(m => {
+    if (_matchFilters.map && m.map !== _matchFilters.map) return false;
+    if (_matchFilters.result === 'win' && m.result !== 1) return false;
+    if (_matchFilters.result === 'loss' && m.result === 1) return false;
+    return true;
+  });
   const heads = ['','Map','Score','K/D','K','D','HS%','ADR','KAST','FV Rating'];
-  ['matchHead','matchHead2'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=heads.map(h=>`<th>${h}</th>`).join('');});
-  const rows = ms.map(m=>{
-    const kd=m.kd||0,kdC=kd>=1.3?'td-good':kd>=1?'td-warn':'td-bad';
-    const fvC=m.fvRating>=1.05?'td-good':m.fvRating>=0.9?'td-warn':'td-bad';
-    const hs=m.hsPct||0,hsC=hs>=50?'td-good':hs>=40?'td-warn':'';
-    const adr=m.adr||0,adrC=adr>=80?'td-good':adr>=65?'td-warn':adr>0?'td-bad':'';
-    const kast=m.kast||0,kastC=kast>=70?'td-good':kast>=60?'td-warn':kast>0?'td-bad':'';
-    return `<tr><td class="${m.result===1?'td-win':'td-loss'}">${m.result===1?'W':'L'}</td><td class="td-map">${m.map||''}</td><td>${m.score||''}</td><td class="${kdC}">${(kd).toFixed(2)}</td><td>${m.kills||0}</td><td>${m.deaths||0}</td><td class="${hsC}">${hs.toFixed(0)}%</td><td class="${adrC}">${adr>0?adr.toFixed(0):''}</td><td class="${kastC}">${kast>0?kast.toFixed(0)+'%':''}</td><td class="${fvC}">${(m.fvRating||0).toFixed(2)}</td></tr>`;
+  ['matchHead','matchHead2'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = heads.map(h => `<th>${h}</th>`).join(''); });
+  const rows = filtered.map(m => {
+    const kd = m.kd||0, kdC = kd>=1.3?'td-good':kd>=1?'td-warn':'td-bad';
+    const fvC = m.fvRating>=1.05?'td-good':m.fvRating>=0.9?'td-warn':'td-bad';
+    const hs = m.hsPct||0, hsC = hs>=50?'td-good':hs>=40?'td-warn':'';
+    const adr = m.adr||0, adrC = adr>=80?'td-good':adr>=65?'td-warn':adr>0?'td-bad':'';
+    const kast = m.kast||0, kastC = kast>=70?'td-good':kast>=60?'td-warn':kast>0?'td-bad':'';
+    return `<tr><td class="${m.result===1?'td-win':'td-loss'}">${m.result===1?'W':'L'}</td><td class="td-map">${m.map||''}</td><td>${m.score||''}</td><td class="${kdC}">${kd.toFixed(2)}</td><td>${m.kills||0}</td><td>${m.deaths||0}</td><td class="${hsC}">${hs.toFixed(0)}%</td><td class="${adrC}">${adr>0?adr.toFixed(0):''}</td><td class="${kastC}">${kast>0?kast.toFixed(0)+'%':''}</td><td class="${fvC}">${(m.fvRating||0).toFixed(2)}</td></tr>`;
   }).join('');
-  ['matchBody','matchBody2'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=rows;});
+  const emptyRow = `<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">Aucun match ne correspond aux filtres</td></tr>`;
+  ['matchBody','matchBody2'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = filtered.length > 0 ? rows : emptyRow; });
+}
+
+function renderMatchesSummary(matches) {
+  const el = document.getElementById('matchesSummary');
+  if (!el || matches.length === 0) return;
+  const wins = matches.filter(m => m.result === 1).length;
+  const losses = matches.length - wins;
+  const wr = Math.round((wins / matches.length) * 100);
+  const avgKd = (matches.reduce((s, m) => s + (m.kd || 0), 0) / matches.length).toFixed(2);
+  const avgFv = (matches.reduce((s, m) => s + (m.fvRating || 0), 0) / matches.length).toFixed(2);
+  const avgAdr = Math.round(matches.reduce((s, m) => s + (m.adr || 0), 0) / matches.length);
+  // Map la plus jouee
+  const mapCount = {};
+  matches.forEach(m => { if (m.map) mapCount[m.map] = (mapCount[m.map] || 0) + 1; });
+  const topMap = Object.entries(mapCount).sort((a, b) => b[1] - a[1])[0];
+  const wrColor = wr >= 55 ? 'var(--success)' : wr >= 45 ? 'var(--gold)' : 'var(--danger)';
+  const kdColor = parseFloat(avgKd) >= 1.1 ? 'var(--success)' : parseFloat(avgKd) >= 0.95 ? 'var(--gold)' : 'var(--danger)';
+  const fvColor = parseFloat(avgFv) >= 1.05 ? 'var(--success)' : parseFloat(avgFv) >= 0.9 ? 'var(--gold)' : 'var(--danger)';
+  el.innerHTML = `
+    <div class="matches-summary">
+      <div class="matches-summary-card"><div class="matches-summary-label">Matchs</div><div class="matches-summary-val" style="color:var(--accent)">${matches.length}</div><div class="matches-summary-sub">${wins}W · ${losses}L</div></div>
+      <div class="matches-summary-card"><div class="matches-summary-label">Win rate</div><div class="matches-summary-val" style="color:${wrColor}">${wr}%</div><div class="matches-summary-sub">victoires</div></div>
+      <div class="matches-summary-card"><div class="matches-summary-label">K/D moyen</div><div class="matches-summary-val" style="color:${kdColor}">${avgKd}</div><div class="matches-summary-sub">kills / deaths</div></div>
+      <div class="matches-summary-card"><div class="matches-summary-label">FV Rating</div><div class="matches-summary-val" style="color:${fvColor}">${avgFv}</div><div class="matches-summary-sub">moyen</div></div>
+      <div class="matches-summary-card"><div class="matches-summary-label">ADR moyen</div><div class="matches-summary-val">${avgAdr}</div><div class="matches-summary-sub">dmg/round</div></div>
+      <div class="matches-summary-card"><div class="matches-summary-label">Map favorite</div><div class="matches-summary-val" style="font-size:16px">${topMap ? topMap[0].replace('de_','').replace(/^\w/,c=>c.toUpperCase()) : '—'}</div><div class="matches-summary-sub">${topMap ? topMap[1] + ' matchs' : ''}</div></div>
+    </div>`;
 }
 
 function renderImprovements(d) {
@@ -876,18 +989,51 @@ function renderImprovements(d) {
     </div>`;
 }
 
+function renderPlayerCard(p, opts) {
+  const lvl = p.faceit_level || p.faceit_lvl;
+  const lvlClass = lvl ? `badge-lvl${Math.min(10, Math.max(1, lvl))}` : '';
+  const lvlBadge = lvl ? `<span class="wl-level ${lvlClass}">Lvl ${lvl}</span>` : '';
+  const meta = opts && opts.isRoster
+    ? `${lvlBadge}${p.role || 'Rôle non défini'}`
+    : `${lvlBadge}${p.note || 'Ajouté récemment'}`;
+  const initial = (p.faceit_nickname || '?').charAt(0).toUpperCase();
+  return `
+    <div class="wl-card">
+      <div class="wl-avatar" style="${p.avatar_url ? `background-image:url(${p.avatar_url})` : ''}">${p.avatar_url ? '' : initial}</div>
+      <div style="flex:1;min-width:0">
+        <div class="wl-name">${p.faceit_nickname || '—'}</div>
+        <div class="wl-meta">${meta}</div>
+      </div>
+      ${p.faceit_elo ? `<div class="wl-elo">${p.faceit_elo}<span style="color:var(--text3);font-weight:400;font-size:10px;margin-left:3px">ELO</span></div>` : ''}
+      <a class="wl-btn" href="compare.html?player=${encodeURIComponent(p.faceit_nickname)}">Analyser</a>
+    </div>`;
+}
+
 async function loadWatchlist() {
-  const {data} = await sb.from('watchlist').select('*').eq('user_id',currentUser.id).order('added_at',{ascending:false});
-  const el = document.getElementById('watchlistContent'); if (!data||data.length===0) return;
-  el.innerHTML = data.map(p=>`<div class="wl-card"><div class="wl-avatar" style="${p.avatar_url?`background-image:url(${p.avatar_url});background-size:cover;background-position:center`:''}"></div><div style="flex:1"><div class="wl-name">${p.faceit_nickname}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${p.note||''}</div></div><div class="wl-elo">${p.faceit_elo?p.faceit_elo+' ELO':''}</div><button class="wl-btn" onclick="window.location.href='index.html?analyse=${encodeURIComponent(p.faceit_nickname)}'">Analyser</button></div>`).join('');
+  const { data } = await sb.from('watchlist').select('*').eq('user_id', currentUser.id).order('added_at', { ascending: false });
+  if (!data || data.length === 0) return;
+  const el = document.getElementById('watchlistContent');
+  el.innerHTML = `
+    <div class="wl-header">
+      <div class="wl-count">${data.length} ${data.length > 1 ? 'joueurs suivis' : 'joueur suivi'}</div>
+      <a href="compare.html" class="wl-add-btn">+ Ajouter un joueur</a>
+    </div>
+    ${data.map(p => renderPlayerCard(p)).join('')}
+  `;
 }
 
 async function loadRoster() {
-  const {data:rosters} = await sb.from('rosters').select('*').eq('user_id',currentUser.id).limit(1);
-  if (!rosters||rosters.length===0) return;
-  const {data:players} = await sb.from('roster_players').select('*').eq('roster_id',rosters[0].id);
-  if (!players||players.length===0) return;
-  document.getElementById('rosterContent').innerHTML = `<div style="font-size:14px;font-weight:600;margin-bottom:14px">${rosters[0].team_name}</div>${players.map(p=>`<div class="wl-card"><div class="wl-avatar" style="${p.avatar_url?`background-image:url(${p.avatar_url});background-size:cover`:''}"></div><div style="flex:1"><div class="wl-name">${p.faceit_nickname}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${p.role||'Role non défini'} · Level ${p.faceit_level||'?'}</div></div><div class="wl-elo">${p.faceit_elo?p.faceit_elo+' ELO':''}</div><button class="wl-btn" onclick="window.location.href='index.html?analyse=${encodeURIComponent(p.faceit_nickname)}'">Analyser</button></div>`).join('')}`;
+  const { data: rosters } = await sb.from('rosters').select('*').eq('user_id', currentUser.id).limit(1);
+  if (!rosters || rosters.length === 0) return;
+  const { data: players } = await sb.from('roster_players').select('*').eq('roster_id', rosters[0].id);
+  if (!players || players.length === 0) return;
+  document.getElementById('rosterContent').innerHTML = `
+    <div class="wl-header">
+      <div class="wl-team-name">${rosters[0].team_name}</div>
+      <div class="wl-count">${players.length}/5 joueurs</div>
+    </div>
+    ${players.map(p => renderPlayerCard(p, { isRoster: true })).join('')}
+  `;
 }
 
 // MOTEUR D'AMÉLIORATION
