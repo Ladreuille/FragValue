@@ -5,34 +5,24 @@
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
   <meta name="description" content="FragValue — CS2 Match Analytics">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FragValue — Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <title>FragValue · Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --bg:#08090D;--surface:#0F1119;--card:#141720;--border:#1E2233;--border2:#252B3B;
-      --accent:#3B7FF5;--accent-dim:rgba(59,127,245,.10);
-      --text:#EDF0F7;--text2:#7A8499;--text3:#3D4459;
-      --success:#2DD4A0;--danger:#F06B6B;--gold:#F5C842;
-      --font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+      --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
+      --accent:#b8ff57;--accent2:#7ddd1a;--accent-dim:rgba(184,255,87,.10);
+      --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+      --font:'Space Mono',monospace;--mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+      --radius:6px;--radius2:12px;
     }
     html{scroll-behavior:smooth}
     body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
     ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,13,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
-    .logo{font-size:16px;font-weight:700;letter-spacing:-.3px;text-decoration:none;color:var(--text)}
-    .logo span{color:var(--accent)}
-    .nav-center{display:flex;align-items:center;gap:2px}
-    .nav-link{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 14px;border-radius:6px;transition:all .15s;font-weight:500}
-    .nav-link:hover{color:var(--text);background:rgba(255,255,255,.04)}
-    .nav-right{display:flex;align-items:center;gap:8px}
-    .nav-user{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:8px;border:1px solid var(--border)}
-    .nav-avatar{width:26px;height:26px;border-radius:6px;background:var(--card);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
-    .nav-username{font-size:13px;font-weight:500;font-family:var(--mono)}
-    .nav-logout{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;padding:6px 10px;border-radius:6px;transition:all .15s;font-family:var(--mono)}
-    .nav-logout:hover{color:var(--danger)}
+    /* Nav styles injected by nav.js */
     .page{max-width:1200px;margin:0 auto;padding:28px 32px 80px;display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start}
     @media(max-width:900px){.page{grid-template-columns:1fr;padding:16px}}
     .sidebar{position:sticky;top:76px;display:flex;flex-direction:column;gap:4px}
@@ -44,14 +34,14 @@
     .sidebar-btn.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
     .sidebar-btn svg{flex-shrink:0;opacity:.5;transition:opacity .15s}
     .sidebar-btn.active svg,.sidebar-btn:hover svg{opacity:1}
-    .sidebar-badge{font-family:var(--mono);font-size:9px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(59,127,245,.2);padding:1px 5px;border-radius:3px;margin-left:auto}
+    .sidebar-badge{font-family:var(--mono);font-size:9px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(184,255,87,.2);padding:1px 5px;border-radius:3px;margin-left:auto}
     .main{min-width:0}
     .tab-panel{display:none}.tab-panel.active{display:block;animation:fadeUp .25s ease}
     @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
     .sec-label{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:0 0 12px;display:flex;align-items:center;gap:10px;font-family:var(--mono)}
     .sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
     .hero-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:16px;position:relative;overflow:hidden}
-    .hero-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 0% 50%,rgba(59,127,245,.06),transparent);pointer-events:none}
+    .hero-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 0% 50%,rgba(184,255,87,.06),transparent);pointer-events:none}
     .hero-top{display:flex;align-items:center;gap:16px;margin-bottom:18px;position:relative;z-index:1}
     .hero-avatar{width:60px;height:60px;border-radius:11px;background:var(--card);border:1px solid var(--border);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
     .hero-info{flex:1;min-width:0}
@@ -64,10 +54,10 @@
     .badge-lvl4,.badge-lvl5,.badge-lvl6{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
     .badge-lvl1,.badge-lvl2,.badge-lvl3{background:rgba(35,196,78,.1);color:#23C44E;border:1px solid rgba(35,196,78,.2)}
     .badge-fv-elite{background:rgba(45,212,160,.1);color:#2DD4A0;border:1px solid rgba(45,212,160,.2)}
-    .badge-fv-great{background:rgba(59,127,245,.1);color:#60A5FA;border:1px solid rgba(59,127,245,.2)}
+    .badge-fv-great{background:rgba(184,255,87,.1);color:#b8ff57;border:1px solid rgba(184,255,87,.2)}
     .badge-fv-good{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
     .badge-fv-avg{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
-    .badge-fv-low{background:rgba(240,107,107,.1);color:#F06B6B;border:1px solid rgba(240,107,107,.2)}
+    .badge-fv-low{background:rgba(240,107,107,.1);color:#ff4444;border:1px solid rgba(240,107,107,.2)}
     .badge-challenger{background:linear-gradient(135deg,rgba(245,200,66,.15),rgba(237,160,32,.15));color:var(--gold);border:1px solid rgba(245,200,66,.3)}
     .hero-elo{text-align:right;flex-shrink:0}
     .hero-elo-val{font-size:28px;font-weight:700;letter-spacing:-1.5px;font-family:var(--mono);color:var(--accent);line-height:1}
@@ -114,16 +104,16 @@
     .impr-col-header{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);margin-bottom:4px;padding:6px 10px;border-radius:6px}
     .impr-col-header.strength{color:var(--success);background:rgba(45,212,160,.06);border:1px solid rgba(45,212,160,.12)}
     .impr-col-header.warning{color:var(--gold);background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.12)}
-    .impr-col-header.improvement{color:#60A5FA;background:rgba(59,127,245,.06);border:1px solid rgba(59,127,245,.12)}
+    .impr-col-header.improvement{color:#b8ff57;background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.12)}
     .impr-item{display:flex;gap:10px;padding:12px;border-radius:8px;border:1px solid transparent}
     .impr-item.strength{background:rgba(45,212,160,.04);border-color:rgba(45,212,160,.1)}
     .impr-item.warning{background:rgba(245,200,66,.04);border-color:rgba(245,200,66,.1)}
-    .impr-item.improvement{background:rgba(59,127,245,.04);border-color:rgba(59,127,245,.1)}
+    .impr-item.improvement{background:rgba(184,255,87,.04);border-color:rgba(184,255,87,.1)}
     .impr-item.improvement.high{background:rgba(240,107,107,.04);border-color:rgba(240,107,107,.12)}
     .impr-item-icon{width:30px;height:30px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
     .impr-item-icon.strength{background:rgba(45,212,160,.12);color:var(--success)}
     .impr-item-icon.warning{background:rgba(245,200,66,.12);color:var(--gold)}
-    .impr-item-icon.improvement{background:rgba(59,127,245,.12);color:#60A5FA}
+    .impr-item-icon.improvement{background:rgba(184,255,87,.12);color:#b8ff57}
     .impr-item-content{flex:1;min-width:0}
     .impr-item-header-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px}
     .impr-item-label{font-size:13px;font-weight:600;letter-spacing:-.2px}
@@ -133,20 +123,33 @@
     .impr-priority-badge{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0}
     .impr-priority-badge.high{background:rgba(240,107,107,.12);color:var(--danger)}
     .impr-priority-badge.medium{background:rgba(245,200,66,.1);color:var(--gold)}
-    .impr-priority-badge.low{background:rgba(59,127,245,.1);color:#60A5FA}
+    .impr-priority-badge.low{background:rgba(184,255,87,.1);color:#b8ff57}
     .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px}
     .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px}
     .kpi-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:7px;font-family:var(--mono)}
     .kpi-val{font-size:22px;font-weight:700;letter-spacing:-.8px;font-family:var(--mono);line-height:1}
     .kpi-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
-    .kpi-good{color:var(--success)}.kpi-bad{color:var(--danger)}.kpi-warn{color:var(--gold)}.kpi-blue{color:#60A5FA}.kpi-neutral{color:var(--accent)}
+    .kpi-good{color:var(--success)}.kpi-bad{color:var(--danger)}.kpi-warn{color:var(--gold)}.kpi-blue{color:#b8ff57}.kpi-neutral{color:var(--accent)}.kpi-muted{color:var(--text3)}
+    .kpi-card.teaser{opacity:.6;border-style:dashed}
+    .teaser-note{font-size:12px;color:var(--text3);font-family:var(--mono);margin:6px 0 16px;text-align:center}
+    .teaser-link{color:var(--accent);text-decoration:none;font-weight:700}
+    .teaser-link:hover{text-decoration:underline}
+    .badge-pro{font-size:8px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;padding:2px 6px;border-radius:40px;letter-spacing:.08em;margin-left:6px;vertical-align:middle}
+    .coach-cta{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.25);border-radius:12px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px}
+    @media(max-width:600px){.coach-cta{flex-direction:column;text-align:center}}
+    .coach-cta-icon{width:44px;height:44px;border-radius:10px;background:rgba(184,255,87,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .coach-cta-body{flex:1;min-width:0}
+    .coach-cta-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.2px}
+    .coach-cta-sub{font-size:12px;color:var(--text2);line-height:1.5}
+    .coach-cta-btn{background:var(--accent);color:#000;border:none;padding:9px 16px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.04em;text-transform:uppercase;transition:all .15s;flex-shrink:0}
+    .coach-cta-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
     .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}
     .chart-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;font-family:var(--mono)}
     .chart-wrap{height:180px;position:relative}
     .match-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
     .match-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
     .match-table th{background:var(--card);padding:9px 12px;text-align:left;color:var(--text3);letter-spacing:.5px;font-weight:500;border-bottom:1px solid var(--border)}
-    .match-table td{padding:9px 12px;border-bottom:1px solid rgba(30,34,51,.5);color:var(--text2)}
+    .match-table td{padding:9px 12px;border-bottom:1px solid rgba(28,30,30,.5);color:var(--text2)}
     .match-table tr:last-child td{border-bottom:none}
     .match-table tr:hover td{background:rgba(255,255,255,.015)}
     .td-win{color:var(--success);font-weight:600}.td-loss{color:var(--danger);font-weight:600}
@@ -162,20 +165,20 @@
     .empty-state{text-align:center;padding:48px 24px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
     .empty-title{font-size:15px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px}
     .empty-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:18px;max-width:300px;margin-left:auto;margin-right:auto}
-    .empty-btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:opacity .15s}
+    .empty-btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#000;border:none;padding:9px 18px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:opacity .15s}
     .empty-btn:hover{opacity:.9}
     #loadingOverlay{display:none;position:fixed;inset:0;background:rgba(8,9,13,.85);z-index:300;backdrop-filter:blur(8px);flex-direction:column;align-items:center;justify-content:center;gap:14px}
     .load-spinner{width:34px;height:34px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
     .load-text{font-family:var(--mono);font-size:12px;color:var(--text3)}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .link-prompt{background:var(--surface);border:1px solid rgba(59,127,245,.2);border-radius:12px;padding:28px;text-align:center;margin-bottom:20px}
+    .link-prompt{background:var(--surface);border:1px solid rgba(184,255,87,.2);border-radius:12px;padding:28px;text-align:center;margin-bottom:20px}
     .link-prompt-title{font-size:18px;font-weight:700;letter-spacing:-.4px;margin-bottom:8px}
     .link-prompt-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px}
     .link-form{display:flex;gap:0;max-width:380px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:9px;overflow:hidden;transition:border-color .15s}
     .link-form:focus-within{border-color:var(--accent)}
     .link-input{flex:1;background:transparent;border:none;padding:12px 16px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none}
     .link-input::placeholder{color:var(--text3)}
-    .link-btn{background:var(--accent);color:#fff;border:none;padding:12px 18px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+    .link-btn{background:var(--accent);color:#000;border:none;padding:12px 18px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
     .link-btn:hover{opacity:.9}
     .link-msg{font-family:var(--mono);font-size:12px;text-align:center;margin-top:10px;min-height:16px}
     @media(max-width:768px){nav{padding:0 16px}.page{padding:16px}.hero-kpis{grid-template-columns:repeat(3,1fr)}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
@@ -188,21 +191,7 @@
   <div class="load-text" id="loadText">Chargement...</div>
 </div>
 
-<nav>
-  <a href="index.html" class="logo">Frag<span>Value</span></a>
-  <div class="nav-center">
-    <a href="index.html" class="nav-link">Scout</a>
-    <a href="compare.html" class="nav-link">Comparer</a>
-    <a href="demo.html" class="nav-link">Démo</a>
-  </div>
-  <div class="nav-right">
-    <div class="nav-user">
-      <div class="nav-avatar" id="navAvatar"></div>
-      <span class="nav-username" id="navUsername">...</span>
-    </div>
-    <button class="nav-logout" onclick="logout()">Déconnexion</button>
-  </div>
-</nav>
+<nav></nav>
 
 <div class="page">
   <!-- SIDEBAR -->
@@ -267,8 +256,31 @@
       </div>
       <div class="sec-label">Stats clés (20 matchs)</div>
       <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="sec-label">KPIs avancés <span class="badge-pro">PRO</span></div>
+      <div class="kpi-grid" id="kpiAdvanced">
+        <div class="kpi-card teaser"><div class="kpi-label">Entry success</div><div class="kpi-val kpi-muted">—</div><div class="kpi-sub">Duels d'ouverture gagnés</div></div>
+        <div class="kpi-card teaser"><div class="kpi-label">Trade rate</div><div class="kpi-val kpi-muted">—</div><div class="kpi-sub">Kills après mort allié</div></div>
+        <div class="kpi-card teaser"><div class="kpi-label">Flash eff</div><div class="kpi-val kpi-muted">—</div><div class="kpi-sub">Adversaires flashés / flash</div></div>
+        <div class="kpi-card teaser"><div class="kpi-label">Util damage</div><div class="kpi-val kpi-muted">—</div><div class="kpi-sub">Dégâts de grenades / round</div></div>
+      </div>
+      <div class="teaser-note">Ces KPIs nécessitent l'analyse d'une démo uploadée. <a href="demo.html" class="teaser-link">Analyser une démo →</a></div>
+
       <div class="sec-label">Évolution FV Rating</div>
       <div class="chart-card"><div class="chart-title">FV Rating sur 20 matchs</div><div class="chart-wrap"><canvas id="chartFvRating"></canvas></div></div>
+
+      <div class="sec-label">Coach IA</div>
+      <div class="coach-cta">
+        <div class="coach-cta-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="coach-cta-body">
+          <div class="coach-cta-title">Bilan round-by-round type coach</div>
+          <div class="coach-cta-sub">Analyse ton dernier match comme un analyste pro : top moments, patterns, conseils actionnables.</div>
+        </div>
+        <a href="matches.html" class="coach-cta-btn">Voir mes matchs</a>
+      </div>
+
       <div class="sec-label">Dernier match</div>
       <div id="lastMatchSection"></div>
       <div class="sec-label">20 derniers matchs</div>
@@ -323,8 +335,6 @@ async function init() {
   const { data:{ session } } = await sb.auth.getSession();
   if (!session) { window.location.href = 'login.html'; return; }
   currentUser = session.user;
-  // Nav : placeholder en attendant les infos FACEIT
-  document.getElementById('navUsername').textContent = '...';
   const { data:profile } = await sb.from('profiles').select('*').eq('id',currentUser.id).single();
   // Chercher le pseudo FACEIT dans profiles puis dans user_metadata comme fallback
   const nick = profile?.faceit_nickname
@@ -347,17 +357,17 @@ function showLinkPrompt() {
     <div class="link-prompt" style="text-align:center;padding:32px">
       <div style="font-size:32px;margin-bottom:16px">
         <svg width="48" height="48" viewBox="0 0 48 48" style="margin:0 auto;display:block">
-          <rect width="48" height="48" rx="12" fill="rgba(59,127,245,.1)"/>
-          <rect x="10" y="10" width="6" height="28" rx="2" fill="#3B7FF5"/>
-          <rect x="10" y="10" width="18" height="6" rx="2" fill="#3B7FF5"/>
-          <rect x="10" y="21" width="13" height="6" rx="2" fill="#3B7FF5"/>
+          <rect width="48" height="48" rx="12" fill="rgba(184,255,87,.1)"/>
+          <rect x="10" y="10" width="6" height="28" rx="2" fill="#b8ff57"/>
+          <rect x="10" y="10" width="18" height="6" rx="2" fill="#b8ff57"/>
+          <rect x="10" y="21" width="13" height="6" rx="2" fill="#b8ff57"/>
           <path d="M24 14 L31 34 L38 14" stroke="url(#dg)" stroke-width="4" stroke-linecap="round" fill="none"/>
-          <defs><linearGradient id="dg" x1="24" y1="14" x2="38" y2="34" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3B7FF5"/><stop offset="100%" stop-color="#2DD4A0"/></linearGradient></defs>
+          <defs><linearGradient id="dg" x1="24" y1="14" x2="38" y2="34" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b8ff57"/><stop offset="100%" stop-color="#2DD4A0"/></linearGradient></defs>
         </svg>
       </div>
       <div class="link-prompt-title">Configure ton profil</div>
       <p class="link-prompt-sub">Ton compte FACEIT n'est pas encore lié. Complète ton profil pour accéder à tes stats et à l'analyse d'amélioration.</p>
-      <a href="onboarding.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;transition:opacity .15s" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+      <a href="onboarding.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;transition:opacity .15s" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
         Compléter mon profil →
       </a>
     </div>`;
@@ -419,17 +429,7 @@ async function loadFaceitData(nick) {
 function renderProfile(d) {
   const {player,cs2,recent,lifetime} = d;
 
-  // Mettre à jour la nav avec les infos FACEIT
-  document.getElementById('navUsername').textContent = player.nickname;
-  const navAv = document.getElementById('navAvatar');
-  if (player.avatar) {
-    navAv.style.backgroundImage    = `url(${player.avatar})`;
-    navAv.style.backgroundSize     = 'cover';
-    navAv.style.backgroundPosition = 'center';
-    navAv.textContent = '';
-  } else {
-    navAv.textContent = player.nickname.charAt(0).toUpperCase();
-  }
+  // Avatar + pseudo FACEIT sont affiches dans hero-card (nav.js gere le bouton compte)
   const lvl = cs2.level||1;
   const fvR = parseFloat(recent.fvRating);
   const fvBadge = fvR>=1.2?'badge-fv-elite':fvR>=1.05?'badge-fv-great':fvR>=0.9?'badge-fv-good':fvR>=0.75?'badge-fv-avg':'badge-fv-low';
@@ -456,7 +456,7 @@ function renderProfile(d) {
     <div class="hero-kpis">
       ${[
         {label:'K/D',val:recent.avgKd,c:parseFloat(recent.avgKd)>=1.3?'var(--success)':parseFloat(recent.avgKd)>=1?'var(--gold)':'var(--danger)'},
-        {label:'ADR',val:recent.avgAdr,c:'#60A5FA'},
+        {label:'ADR',val:recent.avgAdr,c:'#b8ff57'},
         {label:'HS%',val:recent.avgHs+'%',c:'var(--text)'},
         {label:'KAST',val:recent.avgKast+'%',c:parseFloat(recent.avgKast)>=70?'var(--success)':'var(--gold)'},
         {label:'Win%',val:recent.winRate+'%',c:parseFloat(recent.winRate)>=55?'var(--success)':'var(--gold)'},
@@ -469,7 +469,7 @@ function renderFvScore(d) {
   const t = s.total||0;
   document.getElementById('fvScoreVal').textContent = t;
   document.getElementById('fvScoreLabel').textContent = s.label||'';
-  const c = t>=80?'#2DD4A0':t>=60?'#3B7FF5':t>=40?'#F5C842':'#F06B6B';
+  const c = t>=80?'#2DD4A0':t>=60?'#b8ff57':t>=40?'#F5C842':'#ff4444';
   const fill = document.getElementById('fvDonutFill');
   fill.style.strokeDashoffset = 345 - (t/100)*345;
   fill.style.stroke = c;
@@ -484,7 +484,7 @@ function renderFvScore(d) {
   }
   if (s.breakdown) {
     document.getElementById('fvDims').innerHTML = [
-      {key:'performance',label:'Performance',color:'#3B7FF5'},
+      {key:'performance',label:'Performance',color:'#b8ff57'},
       {key:'consistency',label:'Consistance',color:'#2DD4A0'},
       {key:'impact',label:'Impact',color:'#F5C842'},
       {key:'utility',label:'Utilité',color:'#EDA020'},
@@ -520,14 +520,14 @@ function renderChart(d) {
   if (fvChart) { fvChart.destroy(); fvChart=null; }
   const ctx = document.getElementById('chartFvRating'); if (!ctx) return;
   fvChart = new Chart(ctx,{type:'line',data:{labels:ms.map((_,i)=>`M${i+1}`),datasets:[{
-    data:ms.map(m=>m.fvRating),fill:true,backgroundColor:'rgba(59,127,245,.07)',borderColor:'#3B7FF5',
+    data:ms.map(m=>m.fvRating),fill:true,backgroundColor:'rgba(184,255,87,.07)',borderColor:'#b8ff57',
     borderWidth:1.5,pointRadius:3,tension:.4,
-    pointBackgroundColor:ms.map(m=>m.fvRating>=1.05?'#2DD4A0':m.fvRating>=0.9?'#F5C842':'#F06B6B'),
+    pointBackgroundColor:ms.map(m=>m.fvRating>=1.05?'#2DD4A0':m.fvRating>=0.9?'#F5C842':'#ff4444'),
   }]},options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false},tooltip:{backgroundColor:'#141720',borderColor:'#1E2233',borderWidth:1,
-      titleColor:'#EDF0F7',bodyColor:'#7A8499',titleFont:{family:'JetBrains Mono',size:11},bodyFont:{family:'JetBrains Mono',size:11}}},
-    scales:{x:{ticks:{color:'#3D4459',font:{family:'JetBrains Mono',size:10}},grid:{color:'#1E2233'}},
-            y:{ticks:{color:'#3D4459',font:{family:'JetBrains Mono',size:10}},grid:{color:'#1E2233'},suggestedMin:.3}}}});
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#131414',borderColor:'#1c1e1e',borderWidth:1,
+      titleColor:'#e8eaea',bodyColor:'#7a8080',titleFont:{family:'Space Mono',size:11},bodyFont:{family:'Space Mono',size:11}}},
+    scales:{x:{ticks:{color:'#4a5050',font:{family:'Space Mono',size:10}},grid:{color:'#1c1e1e'}},
+            y:{ticks:{color:'#4a5050',font:{family:'Space Mono',size:10}},grid:{color:'#1c1e1e'},suggestedMin:.3}}}});
 }
 
 function renderLastMatch(d) {
