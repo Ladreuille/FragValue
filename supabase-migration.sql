@@ -109,3 +109,58 @@ SELECT
 GRANT SELECT ON scout_waitlist_progress TO anon, authenticated;
 
 -- Pour launcher : quand unlocked devient true, le frontend bascule en mode live
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- ROSTER SYSTEM (equipes, invitations, parametres)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- Extension table rosters : metadata de l'equipe
+ALTER TABLE rosters ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE rosters ADD COLUMN IF NOT EXISTS region TEXT;
+ALTER TABLE rosters ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE rosters ADD COLUMN IF NOT EXISTS visibility TEXT DEFAULT 'team'; -- 'private' (owner seul) | 'team' (membres) | 'public' (SEO)
+ALTER TABLE rosters ADD COLUMN IF NOT EXISTS looking_for_players BOOLEAN DEFAULT false;
+ALTER TABLE rosters ADD COLUMN IF NOT EXISTS looking_for_roles TEXT[]; -- ['entry','awp'] si recrutement cible
+ALTER TABLE rosters ADD COLUMN IF NOT EXISTS tag TEXT; -- ex: 'FVT' (team tag style pro)
+
+-- Extension roster_players : role team-specific + invitation metadata
+ALTER TABLE roster_players ADD COLUMN IF NOT EXISTS team_role TEXT; -- role dans l'equipe (captain, igl, entry, etc)
+ALTER TABLE roster_players ADD COLUMN IF NOT EXISTS is_captain BOOLEAN DEFAULT false;
+ALTER TABLE roster_players ADD COLUMN IF NOT EXISTS is_sub BOOLEAN DEFAULT false; -- remplacant ou titulaire
+ALTER TABLE roster_players ADD COLUMN IF NOT EXISTS joined_at TIMESTAMPTZ DEFAULT now();
+ALTER TABLE roster_players ADD COLUMN IF NOT EXISTS invited_by UUID REFERENCES auth.users(id);
+ALTER TABLE roster_players ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id); -- link au compte FragValue si match
+
+-- Table invitations : workflow invite -> accept/decline
+CREATE TABLE IF NOT EXISTS roster_invitations (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  roster_id       UUID REFERENCES rosters(id) ON DELETE CASCADE,
+  inviter_id      UUID REFERENCES auth.users(id),
+  invitee_user_id UUID REFERENCES auth.users(id),     -- si on connait le user FragValue
+  invitee_nickname TEXT,                                -- FACEIT nickname (pour matching)
+  invitee_email   TEXT,                                 -- alternative : email direct
+  proposed_role   TEXT,                                 -- role suggere ('entry', 'awp', etc)
+  message         TEXT,                                 -- message optionnel de l'inviteur
+  status          TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined', 'expired', 'cancelled')),
+  token           TEXT UNIQUE DEFAULT replace(gen_random_uuid()::text, '-', ''), -- token URL-safe pour lien direct
+  created_at      TIMESTAMPTZ DEFAULT now(),
+  responded_at    TIMESTAMPTZ,
+  expires_at      TIMESTAMPTZ DEFAULT (now() + INTERVAL '14 days')
+);
+CREATE INDEX IF NOT EXISTS idx_roster_invitations_invitee_user ON roster_invitations (invitee_user_id, status);
+CREATE INDEX IF NOT EXISTS idx_roster_invitations_nickname ON roster_invitations (lower(invitee_nickname), status);
+CREATE INDEX IF NOT EXISTS idx_roster_invitations_roster ON roster_invitations (roster_id, status);
+
+ALTER TABLE roster_invitations ENABLE ROW LEVEL SECURITY;
+-- L'inviteur voit ses invitations emises, l'invite voit ses invitations recues
+CREATE POLICY "Inviter read own invitations" ON roster_invitations FOR SELECT
+  USING (auth.uid() = inviter_id OR auth.uid() = invitee_user_id);
+-- Lookup par token (pour flow accept via lien direct)
+CREATE POLICY "Public token lookup" ON roster_invitations FOR SELECT USING (true);
+-- Seul l'inviteur peut creer (le backend verifie)
+CREATE POLICY "Inviter can insert" ON roster_invitations FOR INSERT WITH CHECK (auth.uid() = inviter_id);
+-- L'invite peut update son status (accept/decline)
+CREATE POLICY "Invitee can respond" ON roster_invitations FOR UPDATE
+  USING (auth.uid() = invitee_user_id)
+  WITH CHECK (auth.uid() = invitee_user_id);

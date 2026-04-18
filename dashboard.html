@@ -275,6 +275,76 @@
     .filter-toggle:hover{color:var(--text)}
     .filter-toggle.active{background:var(--accent);color:#000}
 
+    /* ── Modals ────────────────────────────────────────── */
+    .modal{display:none;position:fixed;inset:0;background:rgba(8,9,9,.8);backdrop-filter:blur(8px);z-index:500;align-items:center;justify-content:center;padding:20px}
+    .modal.open{display:flex}
+    .modal-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:480px;max-height:90vh;overflow:auto;box-shadow:0 16px 48px rgba(0,0,0,.6),0 0 0 1px rgba(184,255,87,.05)}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border)}
+    .modal-title{font-family:var(--display);font-size:22px;letter-spacing:.02em;color:var(--text)}
+    .modal-close{background:none;border:none;color:var(--text3);font-size:28px;cursor:pointer;line-height:1;padding:0;transition:color .15s}
+    .modal-close:hover{color:var(--text)}
+    .modal-body{padding:20px 24px}
+    .modal-field{margin-bottom:14px}
+    .modal-field label{display:block;font-family:var(--mono);font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:700}
+    .modal-field input,.modal-field textarea,.modal-field select{width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:6px;outline:none;transition:border-color .15s;resize:vertical}
+    .modal-field input:focus,.modal-field textarea:focus,.modal-field select:focus{border-color:var(--accent)}
+    .modal-footer{display:flex;gap:10px;justify-content:flex-end;padding:16px 24px 20px;border-top:1px solid var(--border)}
+    .modal-btn-secondary{background:transparent;color:var(--text2);border:1px solid var(--border2);padding:9px 16px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .modal-btn-secondary:hover{color:var(--text);border-color:var(--text2)}
+    .modal-btn-primary{background:var(--accent);color:#000;border:none;padding:9px 18px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .modal-btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    .modal-btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .modal-err{font-family:var(--mono);font-size:11px;color:var(--danger);margin-top:8px;min-height:14px}
+
+    /* ── Roster ─────────────────────────────────────────── */
+    .roster-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:16px;position:relative;overflow:hidden}
+    .roster-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 50% 80% at 100% 0%,rgba(184,255,87,.08),transparent);pointer-events:none}
+    .roster-head{display:flex;align-items:center;gap:16px;margin-bottom:20px;position:relative;z-index:1;flex-wrap:wrap}
+    .roster-logo{width:56px;height:56px;border-radius:12px;background:var(--card);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:22px;color:var(--accent);letter-spacing:.02em;flex-shrink:0}
+    .roster-info{flex:1;min-width:0}
+    .roster-title{font-family:var(--display);font-size:28px;color:var(--text);letter-spacing:.02em;line-height:1.1;margin-bottom:3px}
+    .roster-title small{font-family:var(--mono);font-size:13px;color:var(--text3);margin-left:8px;letter-spacing:.04em;font-weight:400}
+    .roster-meta{font-family:var(--mono);font-size:11px;color:var(--text2);display:flex;flex-wrap:wrap;gap:12px}
+    .roster-meta-item{display:flex;align-items:center;gap:5px}
+    .roster-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .roster-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 14px;border-radius:6px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border2);background:transparent;color:var(--text)}
+    .roster-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .roster-btn.primary{background:var(--accent);color:#000;border-color:var(--accent)}
+    .roster-btn.primary:hover{filter:brightness(1.08);color:#000}
+    .roster-btn.danger{color:var(--danger);border-color:rgba(255,68,68,.3)}
+    .roster-btn.danger:hover{background:rgba(255,68,68,.08);color:var(--danger)}
+    .roster-desc{font-size:13px;color:var(--text2);font-family:var(--mono);line-height:1.5;margin-bottom:16px;position:relative;z-index:1}
+    .roster-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;position:relative;z-index:1}
+    .roster-stat{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+    .roster-stat-label{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+    .roster-stat-val{font-family:var(--display);font-size:20px;color:var(--accent);line-height:1}
+    .roster-stat-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px}
+
+    .members-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .members-title{font-family:var(--display);font-size:18px;color:var(--text);letter-spacing:.02em}
+    .member-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;transition:border-color .15s}
+    .member-row:hover{border-color:var(--border2)}
+    .member-avatar{width:36px;height:36px;border-radius:8px;background:var(--card);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;font-family:var(--display);color:var(--accent)}
+    .member-info{flex:1;min-width:0}
+    .member-name{font-size:14px;font-weight:700;color:var(--text)}
+    .member-role{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px}
+    .member-role .captain-tag{background:rgba(245,200,66,.15);color:var(--gold);padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-right:6px}
+    .member-role .sub-tag{background:rgba(122,128,128,.12);color:var(--text2);padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-right:6px}
+    .member-elo{font-family:var(--mono);font-size:12px;color:var(--gold);font-weight:700}
+    .member-remove{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:6px;border-radius:4px;transition:all .15s}
+    .member-remove:hover{color:var(--danger);background:rgba(255,68,68,.08)}
+
+    .pending-inv{background:rgba(245,200,66,.04);border:1px solid rgba(245,200,66,.18);border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--text2)}
+    .pending-inv-tag{background:rgba(245,200,66,.15);color:var(--gold);padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+    .pending-inv-cancel{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:4px;font-size:16px;line-height:1;margin-left:auto}
+    .pending-inv-cancel:hover{color:var(--danger)}
+
+    .invitation-card{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .invitation-info{flex:1;min-width:200px}
+    .invitation-title{font-family:var(--display);font-size:18px;color:var(--text);margin-bottom:4px}
+    .invitation-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5}
+    .invitation-msg{font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:6px;padding:8px 10px;background:rgba(0,0,0,.2);border-left:2px solid var(--accent);border-radius:0 4px 4px 0}
+
     /* ── Watchlist / Roster : enhanced card layout ────────── */
     .wl-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
     .wl-team-name{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em}
@@ -442,18 +512,96 @@
     <div class="tab-panel" id="panelRoster">
       <div class="tab-intro">
         <h1 class="tab-title">Mon équipe</h1>
-        <p class="tab-sub">Configure ton roster pour suivre les stats de toute ton équipe en un coup d'œil. Parfait pour les IGL et coaches.</p>
+        <p class="tab-sub">Ton roster pour suivre les stats collectives, inviter des coéquipiers et structurer ton équipe compétitive. Jusqu'à 7 joueurs (5 titulaires + 2 subs).</p>
       </div>
+      <div id="rosterInvitations"></div>
       <div id="rosterContent">
         <div class="empty-state">
-          <div class="empty-title">Aucune équipe configurée</div>
-          <div class="empty-sub">Crée ton roster (jusqu'à 5 joueurs) depuis Mon espace pour suivre les stats collectives.</div>
-          <a href="account.html" class="empty-btn">Configurer mon roster</a>
+          <div class="empty-title">Aucune équipe pour l'instant</div>
+          <div class="empty-sub">Crée ton équipe pour inviter des coéquipiers et suivre les stats collectives. Tu peux aussi attendre une invitation d'un ami.</div>
+          <button class="empty-btn" onclick="openCreateRosterModal()">Créer mon équipe</button>
         </div>
       </div>
     </div>
 
   </main>
+</div>
+
+<!-- Modals roster -->
+<div class="modal" id="modalCreateRoster">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Créer mon équipe</div>
+      <button class="modal-close" onclick="closeModal('modalCreateRoster')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label>Nom de l'équipe</label>
+        <input id="rosterName" type="text" placeholder="Ex: FragValue Elite" maxlength="40"/>
+      </div>
+      <div class="modal-field">
+        <label>Tag (3-6 caractères, optionnel)</label>
+        <input id="rosterTag" type="text" placeholder="Ex: FVT" maxlength="6" style="text-transform:uppercase"/>
+      </div>
+      <div class="modal-field">
+        <label>Description (optionnel)</label>
+        <textarea id="rosterDesc" rows="3" placeholder="Équipe compétitive FACEIT 10, prep ESEA Open..." maxlength="200"></textarea>
+      </div>
+      <div class="modal-field">
+        <label>Région</label>
+        <select id="rosterRegion">
+          <option value="">—</option>
+          <option value="EU">Europe</option>
+          <option value="NA">North America</option>
+          <option value="SA">South America</option>
+          <option value="OCE">Oceania</option>
+          <option value="SEA">SE Asia</option>
+        </select>
+      </div>
+      <div class="modal-err" id="rosterCreateErr"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn-secondary" onclick="closeModal('modalCreateRoster')">Annuler</button>
+      <button class="modal-btn-primary" onclick="submitCreateRoster()" id="rosterCreateBtn">Créer l'équipe</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modalInvitePlayer">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Inviter un joueur</div>
+      <button class="modal-close" onclick="closeModal('modalInvitePlayer')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label>Pseudo FACEIT du joueur</label>
+        <input id="inviteNickname" type="text" placeholder="Ex: s1mple"/>
+      </div>
+      <div class="modal-field">
+        <label>Rôle proposé (optionnel)</label>
+        <select id="inviteRole">
+          <option value="">Libre de choisir</option>
+          <option value="entry">Entry fragger</option>
+          <option value="awp">AWPer</option>
+          <option value="support">Support</option>
+          <option value="lurker">Lurker</option>
+          <option value="igl">IGL</option>
+          <option value="rifler">Rifler</option>
+          <option value="coach">Coach</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Message (optionnel)</label>
+        <textarea id="inviteMsg" rows="3" placeholder="Salut ! On cherche un support pour ESEA Open..." maxlength="200"></textarea>
+      </div>
+      <div class="modal-err" id="inviteErr"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn-secondary" onclick="closeModal('modalInvitePlayer')">Annuler</button>
+      <button class="modal-btn-primary" onclick="submitInvite()" id="inviteBtn">Envoyer l'invitation</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1022,18 +1170,256 @@ async function loadWatchlist() {
   `;
 }
 
+let _currentRoster = null;
+
 async function loadRoster() {
-  const { data: rosters } = await sb.from('rosters').select('*').eq('user_id', currentUser.id).limit(1);
-  if (!rosters || rosters.length === 0) return;
-  const { data: players } = await sb.from('roster_players').select('*').eq('roster_id', rosters[0].id);
-  if (!players || players.length === 0) return;
-  document.getElementById('rosterContent').innerHTML = `
-    <div class="wl-header">
-      <div class="wl-team-name">${rosters[0].team_name}</div>
-      <div class="wl-count">${players.length}/5 joueurs</div>
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const headers = { 'Authorization': 'Bearer ' + session.access_token };
+
+    // Mes invitations recues
+    const invRes = await fetch('/api/roster?view=my_invitations', { headers });
+    const invData = await invRes.json();
+    renderInvitations(invData.invitations || []);
+
+    // Mon roster (owner ou membre)
+    const rosterRes = await fetch('/api/roster?view=my_roster', { headers });
+    const rosterData = await rosterRes.json();
+    if (!rosterData.roster) {
+      _currentRoster = null;
+      return;
+    }
+    _currentRoster = rosterData;
+    renderRoster(rosterData);
+  } catch (e) {
+    console.warn('Roster load error:', e.message);
+  }
+}
+
+function renderInvitations(invitations) {
+  const el = document.getElementById('rosterInvitations');
+  if (!el || invitations.length === 0) { if (el) el.innerHTML = ''; return; }
+  el.innerHTML = invitations.map(inv => `
+    <div class="invitation-card">
+      <div class="invitation-info">
+        <div class="invitation-title">${inv.rosters?.team_name || 'Équipe'}${inv.rosters?.tag ? ` <small style="color:var(--text3);font-size:14px">[${inv.rosters.tag}]</small>` : ''}</div>
+        <div class="invitation-sub">T'invite ${inv.proposed_role ? `en tant que <strong style="color:var(--accent)">${inv.proposed_role}</strong>` : 'à rejoindre leur équipe'}${inv.rosters?.region ? ` · Région ${inv.rosters.region}` : ''}</div>
+        ${inv.message ? `<div class="invitation-msg">"${inv.message}"</div>` : ''}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="roster-btn" onclick="respondInvitation('${inv.id}','decline')">Décliner</button>
+        <button class="roster-btn primary" onclick="respondInvitation('${inv.id}','accept')">Accepter</button>
+      </div>
     </div>
-    ${players.map(p => renderPlayerCard(p, { isRoster: true })).join('')}
+  `).join('');
+}
+
+function renderRoster(data) {
+  const { roster, players, invitations, is_owner } = data;
+  const titulaires = (players || []).filter(p => !p.is_sub);
+  const subs = (players || []).filter(p => p.is_sub);
+  const tag = roster.tag ? `[${roster.tag}]` : '';
+  const logoInitial = roster.team_name.charAt(0).toUpperCase();
+
+  // Stats agregees basiques (on pourra brancher les stats FACEIT reelles plus tard)
+  const statsHtml = `
+    <div class="roster-stats-grid">
+      <div class="roster-stat"><div class="roster-stat-label">Titulaires</div><div class="roster-stat-val">${titulaires.length}<span style="color:var(--text3);font-size:14px">/5</span></div></div>
+      <div class="roster-stat"><div class="roster-stat-label">Remplaçants</div><div class="roster-stat-val">${subs.length}<span style="color:var(--text3);font-size:14px">/2</span></div></div>
+      <div class="roster-stat"><div class="roster-stat-label">Invitations</div><div class="roster-stat-val">${(invitations || []).length}</div><div class="roster-stat-sub">en attente</div></div>
+      <div class="roster-stat"><div class="roster-stat-label">Visibilité</div><div class="roster-stat-val" style="font-size:14px;color:var(--text);text-transform:capitalize">${roster.visibility || 'team'}</div></div>
+    </div>`;
+
+  const ownerActions = is_owner ? `
+    <div class="roster-actions">
+      <button class="roster-btn primary" onclick="openInvitePlayerModal()">Inviter un joueur</button>
+      <button class="roster-btn" onclick="toggleLookingForPlayers()" id="lfpBtn">${roster.looking_for_players ? 'Fermer le recrutement' : 'Ouvrir le recrutement'}</button>
+      <button class="roster-btn danger" onclick="deleteRoster()">Supprimer l'équipe</button>
+    </div>
+  ` : `
+    <div class="roster-actions">
+      <button class="roster-btn danger" onclick="leaveRoster()">Quitter l'équipe</button>
+    </div>
   `;
+
+  const membersList = (players || []).map(p => `
+    <div class="member-row">
+      <div class="member-avatar">${(p.faceit_nickname || '?').charAt(0).toUpperCase()}</div>
+      <div class="member-info">
+        <div class="member-name">${p.faceit_nickname || 'Joueur'}</div>
+        <div class="member-role">
+          ${p.is_captain ? '<span class="captain-tag">Captain</span>' : ''}
+          ${p.is_sub ? '<span class="sub-tag">Sub</span>' : ''}
+          ${p.team_role ? p.team_role.charAt(0).toUpperCase() + p.team_role.slice(1) : 'Rôle non défini'}
+          ${p.faceit_level ? ` · Lvl ${p.faceit_level}` : ''}
+        </div>
+      </div>
+      ${p.faceit_elo ? `<div class="member-elo">${p.faceit_elo} ELO</div>` : ''}
+      ${is_owner && !p.is_captain ? `<button class="member-remove" onclick="removeMember('${p.id}')" title="Retirer ce joueur"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ''}
+    </div>
+  `).join('');
+
+  const pendingInvList = (invitations || []).length > 0 && is_owner ? `
+    <div class="members-header" style="margin-top:20px"><div class="members-title">Invitations en attente</div></div>
+    ${invitations.map(i => `
+      <div class="pending-inv">
+        <span class="pending-inv-tag">Pending</span>
+        <span><strong style="color:var(--text)">${i.invitee_nickname}</strong>${i.proposed_role ? ` · ${i.proposed_role}` : ''}</span>
+        <button class="pending-inv-cancel" onclick="cancelInvitation('${i.id}')" title="Annuler">&times;</button>
+      </div>
+    `).join('')}
+  ` : '';
+
+  document.getElementById('rosterContent').innerHTML = `
+    <div class="roster-card">
+      <div class="roster-head">
+        <div class="roster-logo">${logoInitial}</div>
+        <div class="roster-info">
+          <div class="roster-title">${roster.team_name}${tag ? ` <small>${tag}</small>` : ''}</div>
+          <div class="roster-meta">
+            ${roster.region ? `<span class="roster-meta-item">📍 ${roster.region}</span>` : ''}
+            <span class="roster-meta-item">${titulaires.length + subs.length} membre${titulaires.length + subs.length > 1 ? 's' : ''}</span>
+            ${roster.looking_for_players ? '<span class="roster-meta-item" style="color:var(--accent)">🔥 Recrutement ouvert</span>' : ''}
+          </div>
+        </div>
+        ${ownerActions}
+      </div>
+      ${roster.description ? `<div class="roster-desc">${roster.description}</div>` : ''}
+      ${statsHtml}
+    </div>
+    <div class="members-header"><div class="members-title">Membres (${players.length}/7)</div></div>
+    ${membersList}
+    ${pendingInvList}
+  `;
+}
+
+// ══ Modals ═══════════════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openCreateRosterModal() {
+  document.getElementById('rosterName').value = '';
+  document.getElementById('rosterTag').value = '';
+  document.getElementById('rosterDesc').value = '';
+  document.getElementById('rosterRegion').value = '';
+  document.getElementById('rosterCreateErr').textContent = '';
+  openModal('modalCreateRoster');
+}
+function openInvitePlayerModal() {
+  document.getElementById('inviteNickname').value = '';
+  document.getElementById('inviteRole').value = '';
+  document.getElementById('inviteMsg').value = '';
+  document.getElementById('inviteErr').textContent = '';
+  openModal('modalInvitePlayer');
+}
+
+// ══ Actions roster ════════════════════════════════════════════════════════
+async function callRosterAPI(body) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return { error: 'Non authentifie' };
+  const res = await fetch('/api/roster', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+async function submitCreateRoster() {
+  const btn = document.getElementById('rosterCreateBtn');
+  const errEl = document.getElementById('rosterCreateErr');
+  btn.disabled = true; errEl.textContent = '';
+  const r = await callRosterAPI({
+    action: 'create',
+    team_name: document.getElementById('rosterName').value.trim(),
+    tag: document.getElementById('rosterTag').value.trim(),
+    description: document.getElementById('rosterDesc').value.trim(),
+    region: document.getElementById('rosterRegion').value || null,
+  });
+  btn.disabled = false;
+  if (r.error) { errEl.textContent = r.error; return; }
+  closeModal('modalCreateRoster');
+  await loadRoster();
+}
+
+async function submitInvite() {
+  if (!_currentRoster) return;
+  const btn = document.getElementById('inviteBtn');
+  const errEl = document.getElementById('inviteErr');
+  btn.disabled = true; errEl.textContent = '';
+  const r = await callRosterAPI({
+    action: 'invite',
+    roster_id: _currentRoster.roster.id,
+    nickname: document.getElementById('inviteNickname').value.trim(),
+    proposed_role: document.getElementById('inviteRole').value || null,
+    message: document.getElementById('inviteMsg').value.trim() || null,
+  });
+  btn.disabled = false;
+  if (r.error) { errEl.textContent = r.error; return; }
+  closeModal('modalInvitePlayer');
+  await loadRoster();
+}
+
+async function respondInvitation(id, response) {
+  const r = await callRosterAPI({ action: 'respond', invitation_id: id, response });
+  if (r.error) { alert(r.error); return; }
+  await loadRoster();
+}
+
+async function cancelInvitation(id) {
+  if (!confirm('Annuler cette invitation ?')) return;
+  const r = await callRosterAPI({ action: 'cancel_invite', invitation_id: id });
+  if (r.error) { alert(r.error); return; }
+  await loadRoster();
+}
+
+async function removeMember(playerId) {
+  if (!_currentRoster || !confirm('Retirer ce joueur de l\'équipe ?')) return;
+  const r = await callRosterAPI({ action: 'remove_player', roster_id: _currentRoster.roster.id, player_id: playerId });
+  if (r.error) { alert(r.error); return; }
+  await loadRoster();
+}
+
+async function leaveRoster() {
+  if (!_currentRoster || !confirm('Quitter cette équipe ?')) return;
+  const r = await callRosterAPI({ action: 'leave', roster_id: _currentRoster.roster.id });
+  if (r.error) { alert(r.error); return; }
+  _currentRoster = null;
+  await loadRoster();
+  // Reset a l'empty state
+  document.getElementById('rosterContent').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-title">Aucune équipe pour l'instant</div>
+      <div class="empty-sub">Crée ton équipe pour inviter des coéquipiers et suivre les stats collectives.</div>
+      <button class="empty-btn" onclick="openCreateRosterModal()">Créer mon équipe</button>
+    </div>`;
+}
+
+async function deleteRoster() {
+  if (!_currentRoster) return;
+  if (!confirm(`Supprimer définitivement "${_currentRoster.roster.team_name}" ? Tous les membres seront éjectés et les invitations annulées.`)) return;
+  const r = await callRosterAPI({ action: 'delete', roster_id: _currentRoster.roster.id });
+  if (r.error) { alert(r.error); return; }
+  _currentRoster = null;
+  document.getElementById('rosterContent').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-title">Aucune équipe pour l'instant</div>
+      <div class="empty-sub">Crée ton équipe pour inviter des coéquipiers et suivre les stats collectives.</div>
+      <button class="empty-btn" onclick="openCreateRosterModal()">Créer mon équipe</button>
+    </div>`;
+  document.getElementById('rosterInvitations').innerHTML = '';
+}
+
+async function toggleLookingForPlayers() {
+  if (!_currentRoster) return;
+  const newVal = !_currentRoster.roster.looking_for_players;
+  const r = await callRosterAPI({
+    action: 'update',
+    roster_id: _currentRoster.roster.id,
+    fields: { looking_for_players: newVal },
+  });
+  if (r.error) { alert(r.error); return; }
+  await loadRoster();
 }
 
 // MOTEUR D'AMÉLIORATION

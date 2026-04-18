@@ -97,6 +97,13 @@
     .settings-select{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:6px;cursor:pointer}
     .settings-input{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:6px;width:120px;outline:none;transition:border-color .15s}
     .settings-input:focus{border-color:var(--accent)}
+    /* Scout rows : controle a gauche, label + description a droite */
+    .scout-row{align-items:flex-start;gap:18px}
+    .scout-row > .toggle,.scout-row > .settings-select,.scout-row > .settings-input{flex-shrink:0;margin-top:2px}
+    .scout-row > .settings-select,.scout-row > .settings-input{min-width:140px}
+    .scout-row-text{flex:1;min-width:0}
+    .scout-row-text .settings-label{margin-bottom:3px;min-width:0}
+    .scout-row-text .settings-value{font-family:var(--mono);color:var(--text3);font-size:11px;line-height:1.4}
     .settings-msg{font-family:var(--mono);font-size:11px;padding:8px 0;min-height:14px}
     .settings-msg.ok{color:var(--success)}
     .settings-msg.err{color:var(--danger)}
@@ -248,15 +255,15 @@
       </div>
 
       <div class="sec-label">Profil Scout</div>
-      <div class="settings-card">
-        <div class="settings-row">
-          <div class="settings-label">Apparaître dans les classements</div>
-          <div class="settings-value">Tes stats FACEIT seront publiques dans les leaderboards Scout dès le déblocage (1000 users). Tu peux désactiver à tout moment.</div>
+      <div class="settings-card scout-card">
+        <div class="settings-row scout-row">
           <label class="toggle"><input type="checkbox" id="scoutOptIn"/><span class="toggle-slider"></span></label>
+          <div class="scout-row-text">
+            <div class="settings-label">Apparaître dans les classements</div>
+            <div class="settings-value">Tes stats FACEIT seront publiques dans les leaderboards Scout dès le déblocage (1000 users). Tu peux désactiver à tout moment.</div>
+          </div>
         </div>
-        <div class="settings-row" data-requires-optin style="display:none">
-          <div class="settings-label">Rôle principal</div>
-          <div class="settings-value">Détermine ton classement dans "Best Entry", "Best AWPer", etc.</div>
+        <div class="settings-row scout-row" data-requires-optin style="display:none">
           <select class="settings-select" id="scoutRolePrimary">
             <option value="">—</option>
             <option value="entry">Entry fragger</option>
@@ -266,9 +273,12 @@
             <option value="igl">IGL</option>
             <option value="rifler">Rifler</option>
           </select>
+          <div class="scout-row-text">
+            <div class="settings-label">Rôle principal</div>
+            <div class="settings-value">Détermine ton classement dans "Best Entry", "Best AWPer", etc.</div>
+          </div>
         </div>
-        <div class="settings-row" data-requires-optin style="display:none">
-          <div class="settings-label">Rôle secondaire</div>
+        <div class="settings-row scout-row" data-requires-optin style="display:none">
           <select class="settings-select" id="scoutRoleSecondary">
             <option value="">—</option>
             <option value="entry">Entry fragger</option>
@@ -278,19 +288,26 @@
             <option value="igl">IGL</option>
             <option value="rifler">Rifler</option>
           </select>
+          <div class="scout-row-text">
+            <div class="settings-label">Rôle secondaire</div>
+            <div class="settings-value">Facultatif · second classement où tu apparais</div>
+          </div>
         </div>
-        <div class="settings-row" data-requires-optin style="display:none">
-          <div class="settings-label">Année de naissance</div>
-          <div class="settings-value">Permet le classement "Rookie Gems" (talents &lt; 22 ans). Non visible publiquement.</div>
+        <div class="settings-row scout-row" data-requires-optin style="display:none">
           <input class="settings-input" id="scoutBirthYear" type="number" min="1970" max="2015" placeholder="Ex: 2003"/>
+          <div class="scout-row-text">
+            <div class="settings-label">Année de naissance</div>
+            <div class="settings-value">Permet le classement "Rookie Gems" (talents &lt; 22 ans). Non visible publiquement.</div>
+          </div>
         </div>
-        <div class="settings-row" data-requires-optin style="display:none">
-          <div class="settings-label">Années de pratique CS</div>
-          <div class="settings-value">Depuis quand tu joues à Counter-Strike (CS2, CSGO, CS 1.6, tout compris)</div>
+        <div class="settings-row scout-row" data-requires-optin style="display:none">
           <input class="settings-input" id="scoutYearsPlaying" type="number" min="0" max="25" placeholder="Ex: 5"/>
+          <div class="scout-row-text">
+            <div class="settings-label">Années de pratique CS</div>
+            <div class="settings-value">Depuis quand tu joues à Counter-Strike (CS2, CSGO, CS 1.6, tout compris)</div>
+          </div>
         </div>
-        <div class="settings-row" data-requires-optin style="display:none">
-          <div class="settings-label">Région</div>
+        <div class="settings-row scout-row" data-requires-optin style="display:none">
           <select class="settings-select" id="scoutRegion">
             <option value="">—</option>
             <option value="EU">Europe</option>
@@ -299,11 +316,17 @@
             <option value="OCE">Oceania</option>
             <option value="SEA">SE Asia</option>
           </select>
+          <div class="scout-row-text">
+            <div class="settings-label">Région</div>
+            <div class="settings-value">Filtre principal utilisé par les recruteurs</div>
+          </div>
         </div>
-        <div class="settings-row" data-requires-optin style="display:none">
-          <div class="settings-label">Ouvert aux offres</div>
-          <div class="settings-value">Apparais dans le filtre "Free Agent" pour les équipes en recrutement</div>
+        <div class="settings-row scout-row" data-requires-optin style="display:none">
           <label class="toggle"><input type="checkbox" id="scoutOpenToOffers"/><span class="toggle-slider"></span></label>
+          <div class="scout-row-text">
+            <div class="settings-label">Ouvert aux offres</div>
+            <div class="settings-value">Apparais dans le filtre "Free Agent" pour les équipes en recrutement</div>
+          </div>
         </div>
       </div>
     </div>

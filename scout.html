@@ -227,6 +227,34 @@ async function checkOptinStatus() {
   } catch(e) {}
 }
 
+// ══ Helper : ajouter a la watchlist (utilisé quand rankings sont live) ════
+async function followPlayer(nickname, meta) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; return false; }
+  try {
+    const res = await fetch('/api/watchlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ action: 'add', nickname, ...(meta || {}) }),
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(d.already ? `${nickname} est déjà dans ta watchlist` : `${nickname} ajouté à ta watchlist`);
+      return true;
+    }
+    showToast('Erreur : ' + (d.error || 'action échouée'));
+    return false;
+  } catch (e) { showToast('Erreur réseau'); return false; }
+}
+
+function showToast(text) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:12px;padding:10px 18px;border-radius:6px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.4)';
+  t.textContent = text;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
 loadWaitlist();
 renderBoards();
 checkOptinStatus();
