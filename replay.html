@@ -986,19 +986,26 @@ function recalcRoundBoundaries() {
   });
   console.log(`[Replay] HE samples: ${heSamples.join(' | ')}`);
   console.log(`[Replay] Molo samples: ${moloSamples.join(' | ')}`);
-  // Dump paths : 1 flash et 1 HE avec >= 20 pts, pour voir si anomalies restent
-  ['flash', 'hegre'].forEach(targetKey => {
-    const g = (demoData.grenades || []).find(gg => {
-      const k = typeKey(gg.type || '');
-      return k === targetKey && gg.path && gg.path.length >= 40 && gg.detonTick;
-    });
-    if (g) {
-      const n = g.path.length / 2;
-      const pts = [];
-      for (let i = 0; i < n; i++) pts.push(`(${Math.round(g.path[i*2])},${Math.round(g.path[i*2+1])})`);
-      console.log(`[Replay] ${targetKey.toUpperCase()} path (${n}pts, tick=${g.tick}→${g.detonTick}, thrower=${g.thrower}): ${pts.join(' ')}`);
+  // Detection de paires de grenades par meme thrower en <= 50 ticks =
+  // suspect de merge parser (pop flash par exemple).
+  const byThrower = {};
+  (demoData.grenades || []).forEach(g => {
+    if (!g.thrower || !g.tick) return;
+    (byThrower[g.thrower] = byThrower[g.thrower] || []).push(g);
+  });
+  let mergedPairs = 0;
+  Object.entries(byThrower).forEach(([thrower, list]) => {
+    list.sort((a, b) => a.tick - b.tick);
+    for (let i = 1; i < list.length; i++) {
+      if (list[i].tick - list[i - 1].tick <= 50) {
+        mergedPairs++;
+        if (mergedPairs <= 3) {
+          console.log(`[Replay] Grenades rapprochees (< 50 ticks): ${thrower} ${list[i-1].type}@${list[i-1].tick} + ${list[i].type}@${list[i].tick}`);
+        }
+      }
     }
   });
+  console.log(`[Replay] Total paires suspicieuses (< 50 ticks, meme thrower): ${mergedPairs}`);
 }
 
 // ══ ROUNDS BAR ═══════════════════════════════════════════════════════════════
