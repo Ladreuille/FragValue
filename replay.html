@@ -1418,14 +1418,6 @@ function buildFrames(round) {
   const startTick = roundData.startTick || 0;
   const endTick = roundData.gameplayEnd ?? (roundData.endTick || 0);
   const killsR = roundData.killsRound ?? (round + 1);
-  // DEBUG TEMPORAIRE : dump detail grenades R23 pour analyser
-  if (round === 23) {
-    const _grens23 = (demoData.grenades || []).filter(g => g.tick >= startTick && g.tick <= (roundData.endTick || endTick));
-    console.log(`[R23-grenades-detail]`);
-    _grens23.forEach(g => {
-      console.log(`  ${g.thrower} ${g.type} tick=${g.tick}→${g.detonTick} (span=${g.detonTick-g.tick}t, path=${g.path?.length/2 || 0}pts) detonXY=(${g.detonX},${g.detonY}) throwXY=(${g.x},${g.y}) endTick=${g.endTick}`);
-    });
-  }
 
   const roundKills = kills.filter(k => {
     const t = k.tick || 0;
@@ -2763,9 +2755,10 @@ function drawEffects(frame, W, H) {
     const impDy = dy2 - ly;
     const impDist = Math.sqrt(impDx * impDx + impDy * impDy);
     if (impDist <= 20) return;
-    // Garde supplementaire pour les fallbacks : si pas de path ET distance
-    // > 350px, probablement un mauvais match d'un autre joueur.
-    if (!hasPathData && impDist > 350) return;
+    // NOTE : ancienne garde "pas de path + distance > 350px = bogus" retiree
+    // car empechait les smokes/grenades a longue portee de rendre quand le
+    // parser n'a pas fourni de trajectoire. Le thrower filter + claim flag
+    // du parser garantit maintenant que detonX/Y est fiable meme sans path.
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
 
