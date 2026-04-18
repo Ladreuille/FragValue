@@ -833,18 +833,6 @@ function recalcRoundBoundaries() {
   // premier saut anormal pour eviter les trajectoires zigzag a travers les murs.
   // Pour HE/flash : detecter aussi les renversements de direction multiples
   // (path zigzague = parser a recupere des samples d'entites differentes).
-  // DEBUG TEMPORAIRE : dump -Izo grenades + rounds avec score
-  const _dbgRounds = demoData.rounds || [];
-  console.log('[DEBUG] Rounds:', _dbgRounds.map(r => `R${r.round}(k${r.killsRound}):w${r.winner}:${r.startTick}-${r.endTick}`).join(' | '));
-  const izoGren = (demoData.grenades || []).filter(g => g.thrower === '-Izo').sort((a,b) => a.tick - b.tick);
-  izoGren.forEach((g, i) => {
-    const r = _dbgRounds.find(r => g.tick >= r.startTick && g.tick <= r.endTick);
-    const sec = r ? ((g.tick - r.startTick) / 128).toFixed(1) : '?';
-    const n = g.path ? g.path.length / 2 : 0;
-    const pts = [];
-    if (g.path) for (let j = 0; j < n; j++) pts.push(`(${Math.round(g.path[j*2])},${Math.round(g.path[j*2+1])})`);
-    console.log(`[-Izo #${i+1}] R${r?.displayNum || '?'} @${sec}s ${g.type} tick=${g.tick}→${g.detonTick} span=${g.detonTick-g.tick}t (${n}pts) detonXY=(${g.detonX},${g.detonY}) throwXY=(${g.x},${g.y})`);
-  });
   let reversalTruncated = 0;
   (demoData.grenades || []).forEach(g => {
     if (!g.tick || !g.detonTick) return;  // Apres passe 1, detonTick est normalise
@@ -1249,7 +1237,15 @@ function updatePlayerStates(frame) {
     if (!row) return;
 
     const state = frame.players[p.name];
-    const alive = state ? state.alive : true;
+    // Detection joueur deconnecte : aucun sample de position dans la fenetre
+    // du round courant -> absent du match. Eviter de le montrer comme "vivant"
+    // a sa derniere position connue qui date d'un round precedent.
+    const posPts = (demoData.positions || {})[p.name] || [];
+    const hasRoundData = rdData.startTick !== undefined && posPts.some(pt =>
+      (pt.tick || 0) >= rdData.startTick && (pt.tick || 0) <= (rdData.endTick || rdData.gameplayEnd || Infinity)
+    );
+    const disconnected = !hasRoundData;
+    const alive = disconnected ? false : (state ? state.alive : true);
     const hp = alive ? (state?.hp ?? 100) : 0;
     const team = state?.team === 3 ? 'CT' : (state?.team === 2 ? 'T' : (window._ctNames && window._ctNames.includes(p.name) ? 'CT' : 'T'));
     const color = team === 'CT' ? '#4A9EFF' : '#F5C842';
@@ -1280,7 +1276,8 @@ function updatePlayerStates(frame) {
     // Joueur mort : aucune arme / gear / inventaire. On affiche juste un
     // indicateur visuel mort pour garder la ligne stable.
     if (!alive) {
-      const deadHtml = '<span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em">— dead —</span>';
+      const label = disconnected ? '— disconnected —' : '— dead —';
+      const deadHtml = `<span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em">${label}</span>`;
       if (gear._prevHtml !== deadHtml) { gear.innerHTML = deadHtml; gear._prevHtml = deadHtml; }
     } else {
       let html = '';
@@ -2229,14 +2226,9 @@ function drawScoreboard(frame, W, H) {
 // ══ MOVEMENT TRAILS ══════════════════════════════════════════════════════════
 function drawTrails(frame, W, H) {
   const tick = frame.tick || 0;
-  // Style SCL : trainees courtes (~1.5s reelles a 128 tick/s = 200 ticks)
-  // Avant 400 tick = 3s : trop long, bruite visuellement.
   const TRAIL_TICKS = 200;
   const scaleX = W / 1024;
   const scaleY = H / 1024;
-
-  // Use the same per-round filtered positions that buildFrames used. This
-  // guarantees trails can never include samples from another round.
   const roundPos = currentRoundPos || {};
 
   Object.entries(frame.players).forEach(([name, p]) => {
@@ -2249,18 +2241,33 @@ function drawTrails(frame, W, H) {
     });
     if (trail.length < 2) return;
 
-    // Fading trail : segments avec opacite decroissante (alpha plus fin pour
-    // un rendu plus subtil, a la SCL).
+    // Trail lisse via quadratic bezier : chaque segment utilise le point
+    // MILIEU entre deux samples comme control point, donnant une courbe
+    // continue au lieu d'une polyline brute angulaire.
+    ctx.lineWidth = 1.3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     for (let i = 1; i < trail.length; i++) {
       const age = (tick - (trail[i].tick || 0)) / TRAIL_TICKS;
-      const alpha = Math.max(0, 0.28 * (1 - age));
+      const alpha = Math.max(0, 0.3 * (1 - age));
       const prev = w2c(trail[i-1].x, trail[i-1].y);
       const cur = w2c(trail[i].x, trail[i].y);
+      const px = prev.x * scaleX, py = prev.y * scaleY;
+      const cx = cur.x * scaleX, cy = cur.y * scaleY;
       ctx.beginPath();
-      ctx.moveTo(prev.x * scaleX, prev.y * scaleY);
-      ctx.lineTo(cur.x * scaleX, cur.y * scaleY);
+      if (i >= 2) {
+        const p2 = w2c(trail[i - 2].x, trail[i - 2].y);
+        const pp = w2c(trail[i - 1].x, trail[i - 1].y);
+        // Control point = midpoint du segment precedent -> lissage Catmull-Rom simplifie
+        const midX = (p2.x + pp.x) / 2 * scaleX;
+        const midY = (p2.y + pp.y) / 2 * scaleY;
+        ctx.moveTo(midX, midY);
+        ctx.quadraticCurveTo(px, py, (px + cx) / 2, (py + cy) / 2);
+      } else {
+        ctx.moveTo(px, py);
+        ctx.lineTo(cx, cy);
+      }
       ctx.strokeStyle = `rgba(${color.rgb},${alpha.toFixed(2)})`;
-      ctx.lineWidth = 1.2;
       ctx.stroke();
     }
   });
