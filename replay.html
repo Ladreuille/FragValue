@@ -834,11 +834,11 @@ function recalcRoundBoundaries() {
   // Pour HE/flash : detecter aussi les renversements de direction multiples
   // (path zigzague = parser a recupere des samples d'entites differentes).
   // DEBUG TEMPORAIRE : dump -Izo grenades + rounds avec score
-  const rounds = demoData.rounds || [];
-  console.log('[DEBUG] Rounds:', rounds.map(r => `R${r.round}(k${r.killsRound}):w${r.winner}:${r.startTick}-${r.endTick}`).join(' | '));
+  const _dbgRounds = demoData.rounds || [];
+  console.log('[DEBUG] Rounds:', _dbgRounds.map(r => `R${r.round}(k${r.killsRound}):w${r.winner}:${r.startTick}-${r.endTick}`).join(' | '));
   const izoGren = (demoData.grenades || []).filter(g => g.thrower === '-Izo').sort((a,b) => a.tick - b.tick);
   izoGren.forEach((g, i) => {
-    const r = rounds.find(r => g.tick >= r.startTick && g.tick <= r.endTick);
+    const r = _dbgRounds.find(r => g.tick >= r.startTick && g.tick <= r.endTick);
     const sec = r ? ((g.tick - r.startTick) / 128).toFixed(1) : '?';
     const n = g.path ? g.path.length / 2 : 0;
     const pts = [];
