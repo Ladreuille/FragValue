@@ -807,16 +807,24 @@ function recalcRoundBoundaries() {
                       : t.includes('molotov') ? 'molotov'
                       : t.includes('decoy') ? 'decoy' : null;
       g.endTick = g.detonTick + (effectKey ? EFFECT_TICKS[effectKey] : 0);
-      // Tronquer path au premier point stationnaire : le parser continue a
-      // tracker smoke cloud / inferno / debris apres la vraie detonation,
-      // ajoutant des points qui font visuellement "s'arreter puis repartir"
-      // la grenade vers une coord anormale.
-      if (g.path && g.path.length >= 4) {
+      // Tronquer path au premier stretch de samples stationnaires :
+      // le parser continue a tracker smoke cloud / inferno / debris apres la
+      // vraie detonation, ajoutant des points qui font visuellement la grenade
+      // "teleporter" vers une coord anormale. On exige un RUN de samples
+      // stationnaires pour eviter de couper sur un simple ralenti de vol
+      // (apex de trajectoire, rebond, etc.) ET on saute les premiers points
+      // pour ignorer un throw a faible velocite initiale.
+      const SKIP_START = 3, MIN_STATIONARY_RUN = 3;
+      if (g.path && g.path.length / 2 >= SKIP_START + MIN_STATIONARY_RUN + 1) {
         const n = g.path.length / 2;
-        for (let i = 1; i < n; i++) {
-          const ddx = g.path[i * 2] - g.path[(i - 1) * 2];
-          const ddy = g.path[i * 2 + 1] - g.path[(i - 1) * 2 + 1];
-          if (ddx * ddx + ddy * ddy < STATIONARY_SQ) {
+        for (let i = SKIP_START; i + MIN_STATIONARY_RUN <= n; i++) {
+          let allStationary = true;
+          for (let j = 0; j < MIN_STATIONARY_RUN; j++) {
+            const ddx = g.path[(i + j) * 2] - g.path[(i + j - 1) * 2];
+            const ddy = g.path[(i + j) * 2 + 1] - g.path[(i + j - 1) * 2 + 1];
+            if (ddx * ddx + ddy * ddy >= STATIONARY_SQ) { allStationary = false; break; }
+          }
+          if (allStationary) {
             g.path = g.path.slice(0, i * 2);
             g.detonX = g.path[g.path.length - 2];
             g.detonY = g.path[g.path.length - 1];
