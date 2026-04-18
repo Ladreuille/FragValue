@@ -989,18 +989,17 @@ function recalcRoundBoundaries() {
   });
   console.log(`[Replay] HE samples: ${heSamples.join(' | ')}`);
   console.log(`[Replay] Molo samples: ${moloSamples.join(' | ')}`);
-  // Dump SPECIFIQUE : Stuval flashes + koko12121 HE dans round 4
-  ['Stuval', 'koko12121'].forEach(name => {
-    const nades = (demoData.grenades || []).filter(g =>
-      g.thrower === name &&
-      (g.tick || 0) >= 21000 && (g.tick || 0) <= 27500
-    );
-    nades.forEach((g, i) => {
-      const n = g.path ? g.path.length / 2 : 0;
-      const pts = [];
-      if (g.path) for (let j = 0; j < n; j++) pts.push(`(${Math.round(g.path[j*2])},${Math.round(g.path[j*2+1])})`);
-      console.log(`[R4-${name}-${g.type}#${i+1}] tick=${g.tick}→${g.detonTick} span=${g.detonTick-g.tick}t (${n}pts) detonXY=(${g.detonX},${g.detonY}) throwXY=(${g.x},${g.y}) path=${pts.join(' ')}`);
-    });
+  // Dump TOUTES les grenades round 4 avec timeline secondes
+  const R4_START = 21360;
+  const r4Nades = (demoData.grenades || [])
+    .filter(g => (g.tick || 0) >= R4_START && (g.tick || 0) <= 27500)
+    .sort((a, b) => a.tick - b.tick);
+  r4Nades.forEach((g, i) => {
+    const sec = ((g.tick - R4_START) / 128).toFixed(1);
+    const n = g.path ? g.path.length / 2 : 0;
+    const pts = [];
+    if (g.path) for (let j = 0; j < n; j++) pts.push(`(${Math.round(g.path[j*2])},${Math.round(g.path[j*2+1])})`);
+    console.log(`[R4-${sec}s-${g.thrower}-${g.type}] tick=${g.tick}→${g.detonTick} span=${g.detonTick-g.tick}t (${n}pts) detonXY=(${g.detonX},${g.detonY}) throwXY=(${g.x},${g.y}) path=${pts.join(' ')}`);
   });
 
   // Detection de paires de grenades par meme thrower en <= 50 ticks =
