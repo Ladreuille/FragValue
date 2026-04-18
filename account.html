@@ -95,6 +95,8 @@
     .settings-btn.danger-btn{color:var(--danger);border-color:rgba(255,68,68,.3)}
     .settings-btn.danger-btn:hover{background:rgba(255,68,68,.08);color:var(--danger)}
     .settings-select{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:6px;cursor:pointer}
+    .settings-input{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:6px;width:120px;outline:none;transition:border-color .15s}
+    .settings-input:focus{border-color:var(--accent)}
     .settings-msg{font-family:var(--mono);font-size:11px;padding:8px 0;min-height:14px}
     .settings-msg.ok{color:var(--success)}
     .settings-msg.err{color:var(--danger)}
@@ -249,11 +251,12 @@
       <div class="settings-card">
         <div class="settings-row">
           <div class="settings-label">Apparaître dans les classements</div>
-          <div class="settings-value">Tes stats FACEIT seront publiques dans les leaderboards Scout dès le déblocage (1000 users). Opt-out à tout moment.</div>
+          <div class="settings-value">Tes stats FACEIT seront publiques dans les leaderboards Scout dès le déblocage (1000 users). Tu peux désactiver à tout moment.</div>
           <label class="toggle"><input type="checkbox" id="scoutOptIn"/><span class="toggle-slider"></span></label>
         </div>
         <div class="settings-row" data-requires-optin style="display:none">
           <div class="settings-label">Rôle principal</div>
+          <div class="settings-value">Détermine ton classement dans "Best Entry", "Best AWPer", etc.</div>
           <select class="settings-select" id="scoutRolePrimary">
             <option value="">—</option>
             <option value="entry">Entry fragger</option>
@@ -275,6 +278,16 @@
             <option value="igl">IGL</option>
             <option value="rifler">Rifler</option>
           </select>
+        </div>
+        <div class="settings-row" data-requires-optin style="display:none">
+          <div class="settings-label">Année de naissance</div>
+          <div class="settings-value">Permet le classement "Rookie Gems" (talents &lt; 22 ans). Non visible publiquement.</div>
+          <input class="settings-input" id="scoutBirthYear" type="number" min="1970" max="2015" placeholder="Ex: 2003"/>
+        </div>
+        <div class="settings-row" data-requires-optin style="display:none">
+          <div class="settings-label">Années de pratique CS</div>
+          <div class="settings-value">Depuis quand tu joues à Counter-Strike (CS2, CSGO, CS 1.6, tout compris)</div>
+          <input class="settings-input" id="scoutYearsPlaying" type="number" min="0" max="25" placeholder="Ex: 5"/>
         </div>
         <div class="settings-row" data-requires-optin style="display:none">
           <div class="settings-label">Région</div>
@@ -487,6 +500,8 @@ async function loadSettings() {
       if (profile.scout_role_primary)   document.getElementById('scoutRolePrimary').value = profile.scout_role_primary;
       if (profile.scout_role_secondary) document.getElementById('scoutRoleSecondary').value = profile.scout_role_secondary;
       if (profile.scout_region)         document.getElementById('scoutRegion').value = profile.scout_region;
+      if (profile.birth_year)           document.getElementById('scoutBirthYear').value = profile.birth_year;
+      if (profile.years_playing_cs)     document.getElementById('scoutYearsPlaying').value = profile.years_playing_cs;
       document.getElementById('scoutOpenToOffers').checked = !!profile.scout_open_to_offers;
       toggleScoutFields(profile.scout_opt_in);
     }
@@ -496,6 +511,9 @@ async function loadSettings() {
     });
     ['scoutRolePrimary','scoutRoleSecondary','scoutRegion','scoutOpenToOffers'].forEach(id => {
       document.getElementById(id).addEventListener('change', saveScoutProfile);
+    });
+    ['scoutBirthYear','scoutYearsPlaying'].forEach(id => {
+      document.getElementById(id).addEventListener('blur', saveScoutProfile);
     });
   } catch(e) { console.warn('Settings load error:', e.message); }
 }
@@ -509,12 +527,16 @@ function toggleScoutFields(show) {
 async function saveScoutProfile() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return;
+  const birthYearRaw = document.getElementById('scoutBirthYear').value;
+  const yearsRaw     = document.getElementById('scoutYearsPlaying').value;
   await sb.from('profiles').update({
     scout_opt_in:          document.getElementById('scoutOptIn').checked,
     scout_role_primary:    document.getElementById('scoutRolePrimary').value || null,
     scout_role_secondary:  document.getElementById('scoutRoleSecondary').value || null,
     scout_region:          document.getElementById('scoutRegion').value || null,
     scout_open_to_offers:  document.getElementById('scoutOpenToOffers').checked,
+    birth_year:            birthYearRaw ? parseInt(birthYearRaw, 10) : null,
+    years_playing_cs:      yearsRaw ? parseInt(yearsRaw, 10) : null,
   }).eq('id', session.user.id);
 }
 

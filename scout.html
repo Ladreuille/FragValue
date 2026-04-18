@@ -68,7 +68,7 @@
     .board-overlay-text{font-family:var(--mono);font-size:11px;color:var(--text2);text-align:center;letter-spacing:.04em;line-height:1.5}
     .board-overlay-text strong{color:var(--accent);display:block;margin-bottom:3px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
 
-    /* ── CTA opt-in ───────────────────────────────────── */
+    /* ── CTA profil Scout ─────────────────────────────── */
     .optin-card{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:16px;padding:32px;margin-top:40px;text-align:center;position:relative;overflow:hidden}
     .optin-title{font-family:var(--display);font-size:28px;color:var(--text);letter-spacing:.02em;margin-bottom:12px}
     .optin-sub{font-size:13px;color:var(--text2);font-family:var(--mono);line-height:1.6;margin-bottom:24px;max-width:560px;margin-left:auto;margin-right:auto}
@@ -78,7 +78,7 @@
     .optin-anon a{color:var(--accent);text-decoration:none;font-weight:700}
     .optin-anon a:hover{text-decoration:underline}
 
-    /* ── Status pills (pour l'user deja opt-in) ───────── */
+    /* ── Status pills (profil Scout actif) ────────────── */
     .optin-ok{background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.3);border-radius:10px;padding:14px 18px;margin-top:24px;display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--success);font-weight:700}
   </style>
 </head>
@@ -103,7 +103,7 @@
     <div class="counter-bar"><div class="counter-fill" id="counterFill" style="width:0%"></div></div>
     <div class="counter-sub" id="counterSub">Chargement du compteur...</div>
     <div class="counter-unlock" id="counterUnlock" style="display:none">
-      <a href="#optin" class="counter-unlock-btn">Opt-in maintenant · sois prêt au lancement →</a>
+      <a href="#optin" class="counter-unlock-btn">Active mon profil Scout · sois prêt au lancement →</a>
     </div>
   </div>
 
@@ -116,7 +116,7 @@
   <!-- OPT-IN CTA -->
   <div class="optin-card" id="optin">
     <h2 class="optin-title">Sois dans les classements au lancement</h2>
-    <p class="optin-sub">Opt-in maintenant pour apparaître dans les leaderboards dès le déblocage. Tes stats FACEIT sont analysées sur tes 20 derniers matchs. Tu peux opt-out à tout moment depuis Mon espace.</p>
+    <p class="optin-sub">Active ton profil Scout maintenant pour apparaître dans les classements dès le déblocage. Tes stats FACEIT sont analysées sur tes 20 derniers matchs. Tu peux désactiver à tout moment depuis Mon espace.</p>
     <a href="account.html#settings" class="optin-btn" id="optinBtn">
       Activer mon profil Scout
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
@@ -136,31 +136,32 @@ window._sb = sb;
 
 const BOARDS = [
   { type: 'global',     title: 'Global Talent',      tag: 'pro',   desc: 'FV Score composite · le meilleur all-around' },
-  { type: 'entry',      title: 'Best Entry fragger', tag: 'pro',   desc: 'Entry WR × volume · les plus dangereux en duel d\'ouverture' },
-  { type: 'awp',        title: 'Best AWPer',         tag: 'pro',   desc: 'Snipe rate × impact · les meilleurs snipers' },
+  { type: 'entry',      title: 'Best Entry fragger', tag: 'pro',   desc: 'Entry WR × volume · pour les joueurs définis en entry' },
+  { type: 'awp',        title: 'Best AWPer',         tag: 'pro',   desc: 'Snipe rate × impact · pour les joueurs définis en AWPer' },
   { type: 'clutch',     title: 'Best Clutcher',      tag: 'pro',   desc: 'Taux de conversion 1vN · les sang-froid' },
-  { type: 'support',    title: 'Best Support',       tag: 'pro',   desc: 'Util dmg + Flash eff + Assists · les faiseurs de jeu' },
-  { type: 'igl',        title: 'Best IGL (prédit)',  tag: 'elite', desc: 'Consistency + KAST · profil tacticien' },
-  { type: 'rising',     title: 'Rising Stars 🔥',     tag: 'pro',   desc: 'Plus grosse hausse FV Rating sur 30j' },
+  { type: 'support',    title: 'Best Support',       tag: 'pro',   desc: 'Util dmg + Flash eff + Assists · pour les joueurs support' },
+  { type: 'igl',        title: 'Best IGL',           tag: 'elite', desc: 'Pour les joueurs définis IGL · consistency + KAST + leadership' },
+  { type: 'rising',     title: 'Rising Stars',       tag: 'pro',   desc: 'Plus grosse hausse FV Rating sur 30j' },
   { type: 'consistent', title: 'Most Consistent',    tag: 'pro',   desc: 'Variance la plus faible · la fiabilité incarnée' },
-  { type: 'rookie',     title: 'Rookie Gems',        tag: 'pro',   desc: '<50 matchs mais FV >1.10 · le talent brut' },
-  { type: 'freeagent',  title: 'Free Agents',        tag: 'elite', desc: 'Sans roster actif · recrutables immédiatement' },
+  { type: 'rookie',     title: 'Rookie Gems',        tag: 'pro',   desc: 'Moins de 22 ans avec FV >1.10 · le talent brut' },
+  { type: 'freeagent',  title: 'Free Agents',        tag: 'elite', desc: 'Ouverts aux offres · recrutables immédiatement' },
 ];
 
 async function loadWaitlist() {
   try {
     const res = await fetch('/api/scout-waitlist-status');
     const d = await res.json();
-    const total = d.total_users || 0;
-    const threshold = d.threshold || 1000;
-    const pct = d.progress_pct || 0;
+    const total = Number(d.total_users) || 0;
+    const threshold = Number(d.threshold) || 1000;
+    const optedIn = Number(d.opted_in_users) || 0;
+    const pct = Number(d.progress_pct) || 0;
     // Animate counter
     animateNumber('counterVal', total);
     document.getElementById('counterFill').style.width = pct + '%';
     const remaining = Math.max(0, threshold - total);
     document.getElementById('counterSub').innerHTML = d.unlocked
       ? '<strong style="color:var(--success)">Débloqué ! Tous les classements sont live.</strong>'
-      : `<strong style="color:var(--text)">${remaining}</strong> utilisateurs restants · déjà <strong style="color:var(--accent)">${d.opted_in_users}</strong> opt-in`;
+      : `<strong style="color:var(--text)">${remaining}</strong> utilisateurs restants · déjà <strong style="color:var(--accent)">${optedIn}</strong> profils Scout actifs`;
     if (!d.unlocked) document.getElementById('counterUnlock').style.display = '';
   } catch(e) {
     document.getElementById('counterSub').textContent = 'Compteur indisponible pour le moment.';
@@ -219,7 +220,7 @@ async function checkOptinStatus() {
       document.getElementById('optinStatus').innerHTML = `
         <div class="optin-ok">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Tu es opt-in · ${profile.faceit_nickname || 'FACEIT non lié'} apparaitra au lancement
+          Profil Scout actif · ${profile.faceit_nickname || 'FACEIT non lié'} apparaîtra au lancement
         </div>
       `;
     }

@@ -57,13 +57,17 @@ WHERE u.email = 'qdreuillet@gmail.com';
 -- Execute apres avoir verifie que les tables precedentes existent.
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Extensions profiles pour opt-in Scout + recrutement
+-- Extensions profiles pour Scout + recrutement
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS scout_opt_in BOOLEAN DEFAULT false;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS scout_role_primary TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS scout_role_secondary TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS scout_bio TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS scout_open_to_offers BOOLEAN DEFAULT false;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS scout_region TEXT;
+-- Donnees biographiques pour classifications auto (Rookie = <22 ans, etc.)
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS birth_year INT;       -- annee de naissance
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS years_playing_cs INT; -- experience CS (annees)
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS country_code TEXT;    -- ISO 3166-1 alpha-2
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS notification_prefs JSONB;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS locale TEXT DEFAULT 'fr';
 
