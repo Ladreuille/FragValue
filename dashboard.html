@@ -61,6 +61,14 @@
     .badge-fv-avg{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
     .badge-fv-low{background:rgba(240,107,107,.1);color:#ff4444;border:1px solid rgba(240,107,107,.2)}
     .badge-challenger{background:linear-gradient(135deg,rgba(245,200,66,.15),rgba(237,160,32,.15));color:var(--gold);border:1px solid rgba(245,200,66,.3)}
+    .badge-role{background:linear-gradient(135deg,rgba(184,255,87,.12),rgba(184,255,87,.04));color:var(--accent);border:1px solid rgba(184,255,87,.25);font-weight:700;letter-spacing:.06em}
+    .hero-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .hero-pill{font-family:var(--mono);font-size:10px;font-weight:700;padding:4px 10px;border-radius:12px;letter-spacing:.04em}
+    .streak-w{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.25)}
+    .streak-l{background:rgba(255,68,68,.08);color:var(--danger);border:1px solid rgba(255,68,68,.22)}
+    .momentum-up{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.25)}
+    .momentum-down{background:rgba(255,68,68,.08);color:var(--danger);border:1px solid rgba(255,68,68,.22)}
+    .momentum-flat{background:var(--card);color:var(--text3);border:1px solid var(--border2)}
     .hero-elo{text-align:right;flex-shrink:0}
     .hero-elo-val{font-size:28px;font-weight:700;letter-spacing:-1.5px;font-family:var(--mono);color:var(--accent);line-height:1}
     .hero-elo-label{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px}
@@ -184,6 +192,69 @@
     .link-btn{background:var(--accent);color:#000;border:none;padding:12px 18px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
     .link-btn:hover{opacity:.9}
     .link-msg{font-family:var(--mono);font-size:12px;text-align:center;margin-top:10px;min-height:16px}
+    /* ── Cette semaine ───────────────────────────────────────── */
+    .weekly-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;display:flex;align-items:center;gap:20px;position:relative;overflow:hidden;flex-wrap:wrap}
+    .weekly-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 50% 80% at 100% 0%,rgba(184,255,87,.06),transparent);pointer-events:none}
+    .weekly-item{position:relative;z-index:1;text-align:center;flex:1;min-width:90px}
+    .weekly-val{font-family:var(--display);font-size:26px;color:var(--text);line-height:1;letter-spacing:.01em}
+    .weekly-label{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+    .weekly-divider{width:1px;height:32px;background:var(--border)}
+    .weekly-empty{color:var(--text3);font-size:13px;font-family:var(--mono);padding:18px 22px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px}
+
+    /* ── CT vs T split ───────────────────────────────────────── */
+    .ct-t-split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    @media(max-width:600px){.ct-t-split{grid-template-columns:1fr}}
+    .side-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
+    .side-card.ct::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 0% 0%,rgba(184,255,87,.08),transparent);pointer-events:none}
+    .side-card.t::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 0% 0%,rgba(245,200,66,.08),transparent);pointer-events:none}
+    .side-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;position:relative;z-index:1}
+    .side-label{font-family:var(--display);font-size:18px;letter-spacing:.04em}
+    .side-card.ct .side-label{color:var(--accent)}
+    .side-card.t .side-label{color:var(--gold)}
+    .side-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:1}
+    .side-metric-val{font-family:var(--display);font-size:24px;color:var(--text);line-height:1}
+    .side-metric-label{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+    .side-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:10px;position:relative;z-index:1}
+    .side-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+    .side-card.ct .side-bar-fill{background:var(--accent)}
+    .side-card.t .side-bar-fill{background:var(--gold)}
+    .side-verdict{font-size:11px;color:var(--text2);font-family:var(--mono);text-align:center;margin-top:6px;padding:8px;background:var(--card);border:1px solid var(--border);border-radius:6px}
+    .side-verdict strong{color:var(--text)}
+
+    /* ── Maps grid ───────────────────────────────────────────── */
+    .maps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px}
+    .map-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;transition:border-color .2s}
+    .map-card:hover{border-color:rgba(184,255,87,.3)}
+    .map-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .map-name{font-family:var(--display);font-size:18px;color:var(--text);letter-spacing:.02em}
+    .map-matches{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+    .map-wr-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:8px}
+    .map-wr-fill{height:100%;transition:width .6s ease}
+    .map-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+    .map-stat{text-align:center}
+    .map-stat-val{font-family:var(--mono);font-size:14px;font-weight:700;line-height:1}
+    .map-stat-label{font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+    .map-sides{display:flex;gap:8px;font-family:var(--mono);font-size:10px}
+    .map-side{flex:1;padding:6px 8px;border-radius:4px;display:flex;justify-content:space-between;align-items:center}
+    .map-side.ct{background:rgba(184,255,87,.06);color:var(--accent)}
+    .map-side.t{background:rgba(245,200,66,.06);color:var(--gold)}
+    .map-side-label{font-weight:700}
+
+    /* ── Best match highlight ────────────────────────────────── */
+    .best-match{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.25);border-radius:12px;padding:18px 22px;margin-bottom:16px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+    .best-match-crown{width:44px;height:44px;border-radius:10px;background:rgba(184,255,87,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .best-match-info{flex:1;min-width:180px}
+    .best-match-title{font-family:var(--display);font-size:18px;color:var(--text);letter-spacing:.02em;margin-bottom:4px}
+    .best-match-sub{font-size:12px;color:var(--text2);font-family:var(--mono)}
+    .best-match-stats{display:flex;gap:18px;flex-wrap:wrap}
+    .best-match-stat{text-align:center}
+    .best-match-stat-val{font-family:var(--display);font-size:22px;color:var(--accent);line-height:1}
+    .best-match-stat-label{font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+
+    /* ── Baseline comparison ─────────────────────────────────── */
+    .kpi-baseline{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px}
+    .kpi-baseline.up{color:var(--success)}.kpi-baseline.down{color:var(--danger)}
+
     @media(max-width:768px){nav{padding:0 16px}.page{padding:16px}.hero-kpis{grid-template-columns:repeat(3,1fr)}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
@@ -252,11 +323,23 @@
         </div>
         <div style="flex:1"><div id="fvSubLevel"></div><div class="fvscore-dims" id="fvDims"></div></div>
       </div>
+      <div class="sec-label">Cette semaine</div>
+      <div id="weeklyInsights"></div>
+
       <div class="sec-label">Stats clés (20 matchs)</div>
       <div class="kpi-grid" id="kpiGrid"></div>
 
       <div class="sec-label">KPIs avancés (moyennes 20 matchs FACEIT)</div>
       <div class="kpi-grid" id="kpiAdvanced"></div>
+
+      <div class="sec-label">Côté CT vs Côté T</div>
+      <div id="ctTSplit"></div>
+
+      <div class="sec-label">Stats par map</div>
+      <div id="mapStatsGrid"></div>
+
+      <div class="sec-label">Meilleur match récent</div>
+      <div id="bestMatch"></div>
 
       <div class="sec-label">Évolution FV Rating</div>
       <div class="chart-card"><div class="chart-title">FV Rating sur 20 matchs</div><div class="chart-wrap"><canvas id="chartFvRating"></canvas></div></div>
@@ -413,7 +496,8 @@ async function loadFaceitData(nick) {
     const d = await res.json();
     if (!res.ok||!d.player) { showLinkPrompt(); return; }
     playerData = d;
-    renderProfile(d); renderFvScore(d); renderKpis(d); renderAdvancedKpis(d); renderChart(d);
+    renderProfile(d); renderFvScore(d); renderWeeklyInsights(d); renderKpis(d); renderAdvancedKpis(d);
+    renderCtTSplit(d); renderMapStats(d); renderBestMatch(d); renderChart(d);
     renderLastMatch(d); renderMatches(d); renderImprovements(d);
   } catch(e) { console.error(e); } finally { showLoading(false); }
 }
@@ -421,11 +505,38 @@ async function loadFaceitData(nick) {
 function renderProfile(d) {
   const {player,cs2,recent,lifetime} = d;
 
-  // Avatar + pseudo FACEIT sont affiches dans hero-card (nav.js gere le bouton compte)
   const lvl = cs2.level||1;
   const fvR = parseFloat(recent.fvRating);
   const fvBadge = fvR>=1.2?'badge-fv-elite':fvR>=1.05?'badge-fv-great':fvR>=0.9?'badge-fv-good':fvR>=0.75?'badge-fv-avg':'badge-fv-low';
   const fvLbl = fvR>=1.2?'Élite':fvR>=1.05?'Excellent':fvR>=0.9?'Bon':fvR>=0.75?'Moyen':'Faible';
+
+  // Role badge (calcule par scout.js : AWPer / Entry fragger / Support / Clutch player / Rifler)
+  const roleEmoji = {'AWPer':'AWP','Entry fragger':'ENTRY','Support':'SUPPORT','Clutch player':'CLUTCH','Rifler':'RIFLE'}[recent.role] || 'RIFLE';
+
+  // Streak (utilise recentResults pour calculer la streak actuelle)
+  const results = lifetime.recentResults || [];
+  let streakCount = 0, streakType = null;
+  for (const r of results) {
+    const isWin = r === '1';
+    if (streakType === null) { streakType = isWin ? 'W' : 'L'; streakCount = 1; }
+    else if ((streakType === 'W' && isWin) || (streakType === 'L' && !isWin)) streakCount++;
+    else break;
+  }
+  const streakPill = streakCount >= 2
+    ? `<span class="hero-pill streak-${streakType.toLowerCase()}">${streakCount} ${streakType === 'W' ? 'wins' : 'defaites'} d'affilee</span>`
+    : '';
+
+  // Momentum : derniere 5 matchs vs 5 precedents (FV rating)
+  const ratings = (recent.matches || []).map(m => parseFloat(m.fvRating)).filter(v => v > 0);
+  const last5 = ratings.slice(0, 5).reduce((a, b) => a + b, 0) / (Math.min(5, ratings.length) || 1);
+  const prev5 = ratings.slice(5, 10).reduce((a, b) => a + b, 0) / (Math.min(5, Math.max(0, ratings.length - 5)) || 1);
+  const delta = last5 - prev5;
+  const momentumPill = ratings.length >= 10
+    ? (delta >= 0.05 ? `<span class="hero-pill momentum-up">↗ En progression</span>`
+      : delta <= -0.05 ? `<span class="hero-pill momentum-down">↘ En baisse</span>`
+      : `<span class="hero-pill momentum-flat">→ Stable</span>`)
+    : '';
+
   document.getElementById('profileHeroCard').innerHTML = `
     <div class="hero-top">
       <div class="hero-avatar" style="${player.avatar?`background-image:url(${player.avatar});background-size:cover;background-position:center`:''}">
@@ -436,7 +547,12 @@ function renderProfile(d) {
         <div class="hero-badges">
           <span class="badge badge-lvl${lvl}">Level ${lvl}</span>
           <span class="badge ${fvBadge}">FV ${recent.fvRating} · ${fvLbl}</span>
+          <span class="badge badge-role">${roleEmoji}</span>
           ${player.country?`<span class="badge" style="background:var(--card);color:var(--text3);border:1px solid var(--border)">${player.country.toUpperCase()}</span>`:''}
+        </div>
+        <div class="hero-pills">
+          ${streakPill}
+          ${momentumPill}
         </div>
       </div>
       <div class="hero-elo">
@@ -495,16 +611,164 @@ function renderFvScore(d) {
 function renderKpis(d) {
   const {recent,cs2,lifetime} = d;
   const kd = parseFloat(recent.avgKd);
+  // Medianes reference Lvl 10 FACEIT CS2 (source : agregats FragValue sur base DB)
+  const LVL10_BASELINE = { fvRating:1.10, kd:1.15, hs:52, adr:85, kast:72, winRate:55, opening:1.0 };
+  // Delta vs baseline : arrow + couleur. Decimal val pour K/D, FV, opening ; entier % pour les autres
+  const delta = (val, base, isPercent, decimals) => {
+    const v = parseFloat(val);
+    if (isNaN(v) || !base) return '';
+    const d = v - base;
+    if (Math.abs(d) < (isPercent ? 1 : 0.02)) return '';
+    const sign = d > 0 ? '↑' : '↓';
+    const cls = d > 0 ? 'up' : 'down';
+    const formatted = isPercent ? Math.abs(Math.round(d)) + 'pt' : Math.abs(d).toFixed(decimals || 2);
+    return `<div class="kpi-baseline ${cls}">${sign} ${formatted} vs lvl 10</div>`;
+  };
   document.getElementById('kpiGrid').innerHTML = [
-    {label:'FV Rating',val:recent.fvRating,cls:parseFloat(recent.fvRating)>=1.05?'kpi-good':'kpi-warn',sub:'2.0 style'},
-    {label:'K/D moyen',val:recent.avgKd,cls:kd>=1.3?'kpi-good':kd>=1?'kpi-warn':'kpi-bad',sub:'20 matchs'},
-    {label:'HS%',val:recent.avgHs+'%',cls:'kpi-blue',sub:'headshots'},
-    {label:'ADR',val:recent.avgAdr,cls:'kpi-warn',sub:'dmg/round'},
-    {label:'KAST',val:recent.avgKast+'%',cls:parseFloat(recent.avgKast)>=70?'kpi-good':'kpi-warn',sub:'présence'},
-    {label:'Win rate',val:recent.winRate+'%',cls:parseFloat(recent.winRate)>=55?'kpi-good':'kpi-warn',sub:'victoires'},
-    {label:'Opening',val:recent.openingRatio,cls:parseFloat(recent.openingRatio)>=1?'kpi-good':'kpi-bad',sub:'duels ouv.'},
-    {label:'Matchs',val:lifetime.matches,cls:'kpi-neutral',sub:`${lifetime.wins} wins`},
-  ].map(k=>`<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val ${k.cls}">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+    {label:'FV Rating',val:recent.fvRating,cls:parseFloat(recent.fvRating)>=1.05?'kpi-good':'kpi-warn',sub:'2.0 style',base:delta(recent.fvRating, LVL10_BASELINE.fvRating, false, 2)},
+    {label:'K/D moyen',val:recent.avgKd,cls:kd>=1.3?'kpi-good':kd>=1?'kpi-warn':'kpi-bad',sub:'20 matchs',base:delta(recent.avgKd, LVL10_BASELINE.kd, false, 2)},
+    {label:'HS%',val:recent.avgHs+'%',cls:'kpi-blue',sub:'headshots',base:delta(recent.avgHs, LVL10_BASELINE.hs, true)},
+    {label:'ADR',val:recent.avgAdr,cls:parseFloat(recent.avgAdr)>=85?'kpi-good':parseFloat(recent.avgAdr)>=70?'kpi-warn':'kpi-bad',sub:'dmg/round',base:delta(recent.avgAdr, LVL10_BASELINE.adr, true)},
+    {label:'KAST',val:recent.avgKast+'%',cls:parseFloat(recent.avgKast)>=70?'kpi-good':'kpi-warn',sub:'présence',base:delta(recent.avgKast, LVL10_BASELINE.kast, true)},
+    {label:'Win rate',val:recent.winRate+'%',cls:parseFloat(recent.winRate)>=55?'kpi-good':'kpi-warn',sub:'victoires',base:delta(recent.winRate, LVL10_BASELINE.winRate, true)},
+    {label:'Opening',val:recent.openingRatio,cls:parseFloat(recent.openingRatio)>=1?'kpi-good':'kpi-bad',sub:'duels ouv.',base:delta(recent.openingRatio, LVL10_BASELINE.opening, false, 2)},
+    {label:'Matchs',val:lifetime.matches,cls:'kpi-neutral',sub:`${lifetime.wins} wins`,base:''},
+  ].map(k=>`<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val ${k.cls}">${k.val}</div><div class="kpi-sub">${k.sub}</div>${k.base}</div>`).join('');
+}
+
+function renderWeeklyInsights(d) {
+  const matches = d.recent.matches || [];
+  // Filtre les matchs joues dans les 7 derniers jours (date format FR dd/mm/yyyy)
+  const parseDate = s => {
+    if (!s) return null;
+    const parts = s.split('/');
+    if (parts.length !== 3) return null;
+    return new Date(+parts[2], +parts[1] - 1, +parts[0]);
+  };
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
+  const weekMatches = matches.filter(m => {
+    const dt = parseDate(m.date);
+    return dt && dt >= oneWeekAgo;
+  });
+  const el = document.getElementById('weeklyInsights');
+  if (weekMatches.length === 0) {
+    el.innerHTML = `<div class="weekly-empty">Aucun match joué cette semaine — reviens après ta prochaine session.</div>`;
+    return;
+  }
+  const wins = weekMatches.filter(m => m.result === 1).length;
+  const winRate = Math.round((wins / weekMatches.length) * 100);
+  const avgKd = (weekMatches.reduce((s, m) => s + (m.kd || 0), 0) / weekMatches.length).toFixed(2);
+  const avgFv = (weekMatches.reduce((s, m) => s + (m.fvRating || 0), 0) / weekMatches.length).toFixed(2);
+  const avgAdr = Math.round(weekMatches.reduce((s, m) => s + (m.adr || 0), 0) / weekMatches.length);
+  const kdColor = parseFloat(avgKd) >= 1.1 ? 'var(--success)' : parseFloat(avgKd) >= 0.95 ? 'var(--gold)' : 'var(--danger)';
+  const wrColor = winRate >= 55 ? 'var(--success)' : winRate >= 45 ? 'var(--gold)' : 'var(--danger)';
+  const fvColor = parseFloat(avgFv) >= 1.05 ? 'var(--success)' : parseFloat(avgFv) >= 0.9 ? 'var(--gold)' : 'var(--danger)';
+  el.innerHTML = `
+    <div class="weekly-card">
+      <div class="weekly-item"><div class="weekly-val" style="color:var(--accent)">${weekMatches.length}</div><div class="weekly-label">matchs</div></div>
+      <div class="weekly-divider"></div>
+      <div class="weekly-item"><div class="weekly-val" style="color:${wrColor}">${winRate}%</div><div class="weekly-label">win rate · ${wins}W/${weekMatches.length - wins}L</div></div>
+      <div class="weekly-divider"></div>
+      <div class="weekly-item"><div class="weekly-val" style="color:${kdColor}">${avgKd}</div><div class="weekly-label">K/D moyen</div></div>
+      <div class="weekly-divider"></div>
+      <div class="weekly-item"><div class="weekly-val" style="color:${fvColor}">${avgFv}</div><div class="weekly-label">FV Rating</div></div>
+      <div class="weekly-divider"></div>
+      <div class="weekly-item"><div class="weekly-val">${avgAdr}</div><div class="weekly-label">ADR</div></div>
+    </div>`;
+}
+
+function renderCtTSplit(d) {
+  const r = d.recent || {};
+  const ctWR = parseFloat(r.ctWinRate) || 0;
+  const tWR  = parseFloat(r.tWinRate)  || 0;
+  const ctKd = parseFloat(r.ctKd) || 0;
+  const tKd  = parseFloat(r.tKd)  || 0;
+  const verdict = ctWR > tWR + 5 ? `Tu es plus solide côté <strong style="color:var(--accent)">CT</strong> (${ctWR}% vs ${tWR}%)`
+                : tWR > ctWR + 5 ? `Tu es plus solide côté <strong style="color:var(--gold)">T</strong> (${tWR}% vs ${ctWR}%)`
+                : `Équilibré entre CT et T (écart < 5 pts)`;
+  document.getElementById('ctTSplit').innerHTML = `
+    <div class="ct-t-split">
+      <div class="side-card ct">
+        <div class="side-header"><div class="side-label">CT</div></div>
+        <div class="side-metrics">
+          <div><div class="side-metric-val">${ctWR || '—'}${ctWR ? '%' : ''}</div><div class="side-metric-label">Win rate</div></div>
+          <div><div class="side-metric-val">${ctKd || '—'}</div><div class="side-metric-label">K/D</div></div>
+        </div>
+        <div class="side-bar"><div class="side-bar-fill" style="width:${ctWR}%"></div></div>
+      </div>
+      <div class="side-card t">
+        <div class="side-header"><div class="side-label">T</div></div>
+        <div class="side-metrics">
+          <div><div class="side-metric-val">${tWR || '—'}${tWR ? '%' : ''}</div><div class="side-metric-label">Win rate</div></div>
+          <div><div class="side-metric-val">${tKd || '—'}</div><div class="side-metric-label">K/D</div></div>
+        </div>
+        <div class="side-bar"><div class="side-bar-fill" style="width:${tWR}%"></div></div>
+      </div>
+    </div>
+    ${ctWR > 0 || tWR > 0 ? `<div class="side-verdict">${verdict}</div>` : ''}`;
+}
+
+function renderMapStats(d) {
+  const maps = (d.mapStats || []).filter(m => m.matches >= 2).sort((a, b) => b.matches - a.matches);
+  const el = document.getElementById('mapStatsGrid');
+  if (maps.length === 0) {
+    el.innerHTML = `<div class="weekly-empty">Pas assez de matchs par map pour un breakdown (minimum 2 matchs).</div>`;
+    return;
+  }
+  const mapDisplay = m => (m || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
+  el.innerHTML = `
+    <div class="maps-grid">
+      ${maps.map(m => {
+        const wr = parseFloat(m.winRate) || 0;
+        const wrColor = wr >= 55 ? 'var(--success)' : wr >= 45 ? 'var(--gold)' : 'var(--danger)';
+        const kd = parseFloat(m.kd) || 0;
+        const kdColor = kd >= 1.2 ? 'var(--success)' : kd >= 0.95 ? 'var(--gold)' : 'var(--danger)';
+        const fv = parseFloat(m.avgFvRating) || 0;
+        const fvColor = fv >= 1.05 ? 'var(--success)' : fv >= 0.9 ? 'var(--gold)' : 'var(--danger)';
+        return `
+          <div class="map-card">
+            <div class="map-card-head">
+              <div class="map-name">${mapDisplay(m.map)}</div>
+              <div class="map-matches">${m.matches} matchs</div>
+            </div>
+            <div class="map-wr-bar"><div class="map-wr-fill" style="width:${wr}%;background:${wrColor}"></div></div>
+            <div class="map-stats-row">
+              <div class="map-stat"><div class="map-stat-val" style="color:${wrColor}">${m.winRate}%</div><div class="map-stat-label">Win</div></div>
+              <div class="map-stat"><div class="map-stat-val" style="color:${kdColor}">${m.kd}</div><div class="map-stat-label">K/D</div></div>
+              <div class="map-stat"><div class="map-stat-val" style="color:${fvColor}">${m.avgFvRating}</div><div class="map-stat-label">FV</div></div>
+            </div>
+            <div class="map-sides">
+              <div class="map-side ct"><span class="map-side-label">CT</span><span>${m.ctWinRate || '—'}${m.ctWinRate ? '%' : ''}</span></div>
+              <div class="map-side t"><span class="map-side-label">T</span><span>${m.tWinRate || '—'}${m.tWinRate ? '%' : ''}</span></div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>`;
+}
+
+function renderBestMatch(d) {
+  const matches = d.recent.matches || [];
+  if (matches.length === 0) { document.getElementById('bestMatch').innerHTML = ''; return; }
+  const best = matches.reduce((b, m) => (m.fvRating || 0) > (b.fvRating || 0) ? m : b, matches[0]);
+  const mapDisplay = (m || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
+  document.getElementById('bestMatch').innerHTML = `
+    <div class="best-match">
+      <div class="best-match-crown">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6.3 6.9 1-5 4.8 1.2 6.9L12 18l-6.1 3 1.2-6.9-5-4.8 6.9-1z"/></svg>
+      </div>
+      <div class="best-match-info">
+        <div class="best-match-title">${mapDisplay(best.map)} · ${best.score || ''}</div>
+        <div class="best-match-sub">${best.result === 1 ? 'Victoire' : 'Défaite'} · ${best.date || ''}</div>
+      </div>
+      <div class="best-match-stats">
+        <div class="best-match-stat"><div class="best-match-stat-val">${best.fvRating?.toFixed(2) || '—'}</div><div class="best-match-stat-label">FV Rating</div></div>
+        <div class="best-match-stat"><div class="best-match-stat-val">${best.kills || 0}/${best.deaths || 0}</div><div class="best-match-stat-label">K/D</div></div>
+        <div class="best-match-stat"><div class="best-match-stat-val">${(best.adr || 0).toFixed(0)}</div><div class="best-match-stat-label">ADR</div></div>
+        <div class="best-match-stat"><div class="best-match-stat-val">${(best.hsPct || 0).toFixed(0)}%</div><div class="best-match-stat-label">HS%</div></div>
+      </div>
+    </div>`;
 }
 
 function renderAdvancedKpis(d) {
