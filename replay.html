@@ -785,18 +785,22 @@ function recalcRoundBoundaries() {
 
   console.log('[Replay] Boundaries recalculated for', rounds.length, 'rounds');
 
-  // Diagnostic trajectoires grenades : verifier span (detonTick - tick) pour HE/smoke.
-  // Attendu HE ~200 ticks (1.5s fuse), smoke ~100-300 ticks. > 500 = trop lent.
-  const nades = demoData.grenades || [];
-  const samples = { HE: [], SMK: [], FL: [], MOLO: [] };
-  nades.forEach(g => {
+  // Clamp des detonTick anormaux : le parser override echoue parfois (quand un
+  // joueur throw plusieurs grenades, les events se melangent) et detonTick
+  // reste sur lastPoint.tick du debris/inferno/smoke cloud (10s-60s apres throw).
+  // Real fuse max = ~4s (HE 1.5s, FL 1.5s, smoke flight 3s, molo flight 3s).
+  // On clamp a 500 ticks (~4s) pour les grenades anormales seulement.
+  const MAX_SPAN = 1000, CLAMP_SPAN = 500;
+  let clamped = 0;
+  (demoData.grenades || []).forEach(g => {
     if (!g.tick || !g.detonTick) return;
     const span = g.detonTick - g.tick;
-    const t = g.type || '';
-    const label = t.includes('hegre') ? 'HE' : t.includes('smoke') ? 'SMK' : t.includes('flash') ? 'FL' : (t.includes('molotov') || t.includes('incgren')) ? 'MOLO' : null;
-    if (label && samples[label].length < 5) samples[label].push(span);
+    if (span > MAX_SPAN || span < 0) {
+      g.detonTick = g.tick + CLAMP_SPAN;
+      clamped++;
+    }
   });
-  console.log('[Replay] Grenade span samples (ticks, want ~100-300): HE=' + samples.HE.join(',') + ' | SMK=' + samples.SMK.join(',') + ' | FL=' + samples.FL.join(',') + ' | MOLO=' + samples.MOLO.join(','));
+  console.log(`[Replay] Grenades clamped: ${clamped} / ${(demoData.grenades || []).length}`);
 }
 
 // ══ ROUNDS BAR ═══════════════════════════════════════════════════════════════
