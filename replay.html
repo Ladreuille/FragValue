@@ -922,7 +922,9 @@ function recalcRoundBoundaries() {
   // shockwave (parser laisse endTick <= detonTick -> isActive fires 0 tick).
   // Capper aussi la longueur de path par type : filet de securite si les
   // truncations stationnaire/jump/reversal ratent un cas.
-  const MAX_PATH_PTS = { hegre: 80, flash: 80, smoke: 150, molotov: 150, incgren: 150, decoy: 100 };
+  // Cap path length tres eleve : parser downsample deja a ~100 points, pas
+  // besoin de re-cap cote frontend (on coupait les bounces finaux avant).
+  const MAX_PATH_PTS = { hegre: 300, flash: 300, smoke: 300, molotov: 300, incgren: 300, decoy: 300 };
   let skipped = 0;
   (demoData.grenades || []).forEach(g => {
     if (!g.tick || !g.detonTick) return;
