@@ -1326,8 +1326,26 @@ function buildFrames(round) {
   // prevRd.endTick car ce champ parser vaut ~startTick - 1 (pas round_end
   // comme attendu), ce qui collapse la fenetre a 1 tick.
   const BUY_WINDOW_TICKS = 20 * 128;  // 20s de buy time max (128 tick/s)
-  const rdStart = Math.max(0, (roundData.startTick || 0) - BUY_WINDOW_TICKS);
+  let rdStart = Math.max(0, (roundData.startTick || 0) - BUY_WINDOW_TICKS);
   const rdEnd = roundData.endTick || Infinity;
+  // Round 0 : detecter match_start via le money reset ($16000 warmup -> $800
+  // pistol). Les pickups warmup sont contamines sinon et faussent le HUD
+  // (grenades achetees pendant warmup qui n'existent pas en pistol).
+  if (round === 0) {
+    const candidates = [];
+    Object.keys(positions).forEach(name => {
+      const pts = positions[name] || [];
+      let sawHigh = false;
+      for (const p of pts) {
+        const t = p.tick || 0;
+        if (t > (roundData.startTick || 0)) break;
+        const m = p.money || 0;
+        if (m > 5000) sawHigh = true;
+        else if (sawHigh && m > 0 && m <= 1000) { candidates.push(t); break; }
+      }
+    });
+    if (candidates.length) rdStart = Math.max(rdStart, Math.min(...candidates));
+  }
   // Priorite des armes (normalisation compact : enleve tirets/espaces).
   const WEAPON_PRIORITY = (w) => {
     if (!w) return 0;
@@ -1372,7 +1390,8 @@ function buildFrames(round) {
     };
   });
   const _firstName = Object.keys(currentRoundPeakStats)[0];
-  console.log(`[FreezeSnap R${round}] window=${freezeStart}-${freezeEnd} | ${_firstName}: money=${currentRoundPeakStats[_firstName]?.money} armor=${currentRoundPeakStats[_firstName]?.armor} weapon=${currentRoundBestWeapon[_firstName]}`);
+  const _peak = currentRoundPeak[_firstName] || {};
+  console.log(`[FreezeSnap R${round}] window=${freezeStart}-${freezeEnd} rdStart=${rdStart} | ${_firstName}: m=${currentRoundPeakStats[_firstName]?.money} a=${currentRoundPeakStats[_firstName]?.armor} w=${currentRoundBestWeapon[_firstName]} nades=smk${_peak.smk}/fl${_peak.fl}/heg${_peak.heg}/mol${_peak.mol}`);
 
   frames = [];
   for (let f = 0; f <= N; f++) {
