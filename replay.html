@@ -794,6 +794,7 @@ function recalcRoundBoundaries() {
   // (sinon le "Xs restant" du smoke reste sur la valeur anormale parser).
   const MAX_SPAN = 1000, CLAMP_SPAN = 500;
   const EFFECT_TICKS = { smoke: 2304, molotov: 896, incgren: 896, decoy: 5760 };  // 18s/7s/7s/45s
+  const STATIONARY_SQ = 100;  // (10 units)^2 : seuil pour considerer la grenade au sol
   let clamped = 0;
   (demoData.grenades || []).forEach(g => {
     if (!g.tick || !g.detonTick) return;
@@ -806,6 +807,23 @@ function recalcRoundBoundaries() {
                       : t.includes('molotov') ? 'molotov'
                       : t.includes('decoy') ? 'decoy' : null;
       g.endTick = g.detonTick + (effectKey ? EFFECT_TICKS[effectKey] : 0);
+      // Tronquer path au premier point stationnaire : le parser continue a
+      // tracker smoke cloud / inferno / debris apres la vraie detonation,
+      // ajoutant des points qui font visuellement "s'arreter puis repartir"
+      // la grenade vers une coord anormale.
+      if (g.path && g.path.length >= 4) {
+        const n = g.path.length / 2;
+        for (let i = 1; i < n; i++) {
+          const ddx = g.path[i * 2] - g.path[(i - 1) * 2];
+          const ddy = g.path[i * 2 + 1] - g.path[(i - 1) * 2 + 1];
+          if (ddx * ddx + ddy * ddy < STATIONARY_SQ) {
+            g.path = g.path.slice(0, i * 2);
+            g.detonX = g.path[g.path.length - 2];
+            g.detonY = g.path[g.path.length - 1];
+            break;
+          }
+        }
+      }
       clamped++;
     }
   });
