@@ -2369,12 +2369,14 @@ function drawNadeInFlight(cx, cy, img, hasImg, throwColor) {
 function getRoundBounds(buffer = 2000) {
   const _rd = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
   const b = { start: _rd.startTick || 0, end: (_rd.endTick || 999999) + buffer };
-  // DEBUG : log une fois par round pour verifier qu'on a des grenades
   if (!_rd._dbgLogged) {
     _rd._dbgLogged = true;
     const gAll = (demoData.grenades || []);
     const gInRound = gAll.filter(g => g.tick >= b.start && g.tick <= b.end);
-    console.log(`[Round ${currentRound}] bounds=[${b.start}, ${b.end}] | ${gAll.length} grenades total, ${gInRound.length} dans le round. Sample:`, gInRound.slice(0,3).map(g => `${g.thrower}@${g.tick}(${g.type})`).join(' | '));
+    console.log(`[Round ${currentRound}] startTick=${_rd.startTick} endTick=${_rd.endTick} bounds=[${b.start}, ${b.end}] | ${gAll.length} grenades total, ${gInRound.length} dans le round`);
+    // Toutes les grenades entre tick 0 et 15000 (R0 area)
+    const early = gAll.filter(g => g.tick < 15000).sort((a,b) => a.tick - b.tick);
+    console.log(`[Round ${currentRound}] ${early.length} grenades avec tick<15000:`, early.map(g => `${g.thrower}@${g.tick}`).join(' | '));
   }
   return b;
 }
