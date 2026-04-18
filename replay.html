@@ -1321,19 +1321,12 @@ function buildFrames(round) {
   currentRoundPeak = {};
   currentRoundBestWeapon = {};
   const pickupsAll = demoData.grenadePickups || {};
-  // Fenetre de pickup pour ce round :
-  // - Debut : fin du round precedent (= debut du freeze de ce round).
-  // - Pour round 0 (pas de round precedent) : on plafonne a 20s avant le
-  //   startTick pour NE PAS inclure les pickups de warmup (les joueurs peuvent
-  //   grab des grenades pendant warmup, ce qui fausse le peak pistol round).
-  // - Fin : fin du round (inclut pickups pendant le play).
-  const sortedRounds = (demoData.rounds || []).slice().sort((a, b) => (a.round ?? 0) - (b.round ?? 0));
-  const curIdx = sortedRounds.findIndex(r => (r.round ?? -1) === round);
-  const prevRd = curIdx > 0 ? sortedRounds[curIdx - 1] : null;
+  // Fenetre de pickup/buy pour ce round : 20s avant le startTick (= tout le
+  // freeze phase + quelques ticks de marge). NB : on ne peut pas utiliser
+  // prevRd.endTick car ce champ parser vaut ~startTick - 1 (pas round_end
+  // comme attendu), ce qui collapse la fenetre a 1 tick.
   const BUY_WINDOW_TICKS = 20 * 128;  // 20s de buy time max (128 tick/s)
-  const rdStart = prevRd
-    ? (prevRd.endTick || 0)
-    : Math.max(0, (roundData.startTick || 0) - BUY_WINDOW_TICKS);
+  const rdStart = Math.max(0, (roundData.startTick || 0) - BUY_WINDOW_TICKS);
   const rdEnd = roundData.endTick || Infinity;
   // Priorite des armes (normalisation compact : enleve tirets/espaces).
   const WEAPON_PRIORITY = (w) => {
