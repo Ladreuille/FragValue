@@ -704,17 +704,18 @@ function renderPersonalRoadmap(profile, level, scoutData) {
   const currentElo = (scoutData && scoutData.cs2 && scoutData.cs2.elo) || profile.faceit_elo || 0;
 
   // Calcule les valeurs réelles de l'utilisateur (parseFloat safe)
-  const récent = (scoutData && scoutData.récent) || {};
+  // NB : l'API scout retourne `recent` (sans accent), pas `récent`.
+  const recent = (scoutData && scoutData.recent) || {};
   const fvScore = (scoutData && scoutData.fvScore) || {};
+  const fk = parseFloat(recent.totalFirstKills) || 0;
+  const fd = parseFloat(recent.totalFirstDeaths) || 0;
   const userStats = {
-    kd:        parseFloat(récent.avgKd) || 0,
-    adr:       parseFloat(récent.avgAdr) || 0,
-    kast:      parseFloat(récent.avgKast) || 0,
-    openingWr: récent.totalFirstKills + récent.totalFirstDeaths > 0
-                 ? (récent.totalFirstKills / (récent.totalFirstKills + récent.totalFirstDeaths)) * 100
-                 : 0,
-    hs:        parseFloat(récent.avgHs) || 0,
-    winRate:   parseFloat(récent.winRate) || 0,
+    kd:        parseFloat(recent.avgKd) || 0,
+    adr:       parseFloat(recent.avgAdr) || 0,
+    kast:      parseFloat(recent.avgKast) || 0,
+    openingWr: (fk + fd) > 0 ? (fk / (fk + fd)) * 100 : 0,
+    hs:        parseFloat(recent.avgHs) || 0,
+    winRate:   parseFloat(recent.winRate) || 0,
     fvScore:   parseFloat(fvScore.total) || 0,
   };
 
