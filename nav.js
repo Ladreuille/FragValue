@@ -156,27 +156,46 @@
     navEl.querySelectorAll('.fv-section-btn').forEach(b => b.setAttribute('aria-expanded', 'false'));
   });
 
-  // ── Auth state : lit window._sb si présent ──────────────────────────────
-  async function refreshAuth() {
+  // ── Auth state : check Supabase session via localStorage ────────────────
+  // Supabase stocke la session dans localStorage avec une cle `sb-<ref>-auth-token`.
+  // On lit directement sans avoir besoin du client SDK (evite de dependre de la
+  // page hote d'exposer window._sb).
+  function hasSession() {
+    try {
+      // Prefer existing client if page already created one
+      if (window._sb && window._sb.auth) {
+        // Best-effort sync check : si la session est en memoire, l'indicateur
+        // localStorage existe aussi. On privilegie le check localStorage ci-dessous
+        // qui est sync, mais on considere la presence du client comme hint positif.
+      }
+      // Supabase project ref dans notre URL : xmyruycvvkmcwysfygcq
+      const key = 'sb-xmyruycvvkmcwysfygcq-auth-token';
+      const raw = localStorage.getItem(key);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      // Check expiry
+      const expiresAt = parsed?.expires_at || 0;
+      if (expiresAt && expiresAt * 1000 < Date.now()) return false;
+      return !!parsed?.access_token;
+    } catch { return false; }
+  }
+  function refreshAuth() {
     const loginBtn = document.getElementById('navLoginBtn');
     const accountBtn = document.getElementById('navAccountBtn');
     if (!loginBtn || !accountBtn) return;
-
-    try {
-      if (!window._sb || !window._sb.auth) return;
-      const { data } = await window._sb.auth.getSession();
-      if (data && data.session) {
-        loginBtn.style.display = 'none';
-        accountBtn.style.display = '';
-      }
-    } catch (_) {}
+    if (hasSession()) {
+      loginBtn.style.display = 'none';
+      accountBtn.style.display = '';
+    } else {
+      loginBtn.style.display = '';
+      accountBtn.style.display = 'none';
+    }
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', refreshAuth);
   } else {
     refreshAuth();
   }
-  // Retry après 500ms au cas où _sb est défini plus tard par la page
-  setTimeout(refreshAuth, 500);
-  setTimeout(refreshAuth, 1500);
+  // Retry si localStorage pas encore ecrit au moment du 1er check (login flow)
+  setTimeout(refreshAuth, 300);
 })();
