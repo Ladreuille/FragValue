@@ -130,11 +130,6 @@
     .kpi-val{font-size:22px;font-weight:700;letter-spacing:-.8px;font-family:var(--mono);line-height:1}
     .kpi-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
     .kpi-good{color:var(--success)}.kpi-bad{color:var(--danger)}.kpi-warn{color:var(--gold)}.kpi-blue{color:#b8ff57}.kpi-neutral{color:var(--accent)}.kpi-muted{color:var(--text3)}
-    .kpi-card.teaser{opacity:.6;border-style:dashed}
-    .teaser-note{font-size:12px;color:var(--text3);font-family:var(--mono);margin:6px 0 16px;text-align:center}
-    .teaser-link{color:var(--accent);text-decoration:none;font-weight:700}
-    .teaser-link:hover{text-decoration:underline}
-    .badge-pro{font-size:8px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;padding:2px 6px;border-radius:40px;letter-spacing:.08em;margin-left:6px;vertical-align:middle}
     .coach-cta{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.25);border-radius:12px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px}
     @media(max-width:600px){.coach-cta{flex-direction:column;text-align:center}}
     .coach-cta-icon{width:44px;height:44px;border-radius:10px;background:rgba(184,255,87,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -257,14 +252,8 @@
       <div class="sec-label">Stats clés (20 matchs)</div>
       <div class="kpi-grid" id="kpiGrid"></div>
 
-      <div class="sec-label">KPIs avancés <span class="badge-pro">PRO</span></div>
-      <div class="kpi-grid" id="kpiAdvanced">
-        <div class="kpi-card teaser"><div class="kpi-label">Entry success</div><div class="kpi-val kpi-muted">—</div><div class="kpi-sub">Duels d'ouverture gagnés</div></div>
-        <div class="kpi-card teaser"><div class="kpi-label">Trade rate</div><div class="kpi-val kpi-muted">—</div><div class="kpi-sub">Kills après mort allié</div></div>
-        <div class="kpi-card teaser"><div class="kpi-label">Flash eff</div><div class="kpi-val kpi-muted">—</div><div class="kpi-sub">Adversaires flashés / flash</div></div>
-        <div class="kpi-card teaser"><div class="kpi-label">Util damage</div><div class="kpi-val kpi-muted">—</div><div class="kpi-sub">Dégâts de grenades / round</div></div>
-      </div>
-      <div class="teaser-note">Ces KPIs nécessitent l'analyse d'une démo uploadée. <a href="demo.html" class="teaser-link">Analyser une démo →</a></div>
+      <div class="sec-label">KPIs avancés (moyennes 20 matchs FACEIT)</div>
+      <div class="kpi-grid" id="kpiAdvanced"></div>
 
       <div class="sec-label">Évolution FV Rating</div>
       <div class="chart-card"><div class="chart-title">FV Rating sur 20 matchs</div><div class="chart-wrap"><canvas id="chartFvRating"></canvas></div></div>
@@ -421,7 +410,7 @@ async function loadFaceitData(nick) {
     const d = await res.json();
     if (!res.ok||!d.player) { showLinkPrompt(); return; }
     playerData = d;
-    renderProfile(d); renderFvScore(d); renderKpis(d); renderChart(d);
+    renderProfile(d); renderFvScore(d); renderKpis(d); renderAdvancedKpis(d); renderChart(d);
     renderLastMatch(d); renderMatches(d); renderImprovements(d);
   } catch(e) { console.error(e); } finally { showLoading(false); }
 }
@@ -513,6 +502,40 @@ function renderKpis(d) {
     {label:'Opening',val:recent.openingRatio,cls:parseFloat(recent.openingRatio)>=1?'kpi-good':'kpi-bad',sub:'duels ouv.'},
     {label:'Matchs',val:lifetime.matches,cls:'kpi-neutral',sub:`${lifetime.wins} wins`},
   ].map(k=>`<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val ${k.cls}">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+}
+
+function renderAdvancedKpis(d) {
+  const r = d.recent || {};
+  const n = (r.matches || []).length || 1;
+  const fk = r.totalFirstKills || 0;
+  const fd = r.totalFirstDeaths || 0;
+  const openingWR = (fk + fd) > 0 ? Math.round(fk / (fk + fd) * 100) : null;
+  const tk = r.totalTradeKills || 0;
+  const td = r.totalTradeDeaths || 0;
+  const totalDeaths = (r.matches || []).reduce((s, m) => s + (m.deaths || 0), 0);
+  const tradeRate = totalDeaths > 0 ? Math.round((td / totalDeaths) * 100) : null;
+  const flThr = r.totalFlashesThrown || 0;
+  const flHit = r.totalEnemiesFlashed || 0;
+  const flashEff = flThr > 0 ? (flHit / flThr).toFixed(2) : null;
+  const utilDmg = r.avgUtilDmg && parseFloat(r.avgUtilDmg) > 0 ? parseFloat(r.avgUtilDmg).toFixed(0) : null;
+  const totalMulti = (r.totalDoubles || 0) + (r.totalTriples || 0) + (r.totalQuads || 0) + (r.totalAces || 0);
+  const multiPerMatch = (totalMulti / n).toFixed(1);
+  const clutchTotal = (r.totalClutch1v1 || 0) + (r.totalClutch1v2 || 0) + (r.totalClutch1v3 || 0) + (r.totalClutch1v4 || 0) + (r.totalClutch1v5 || 0);
+  const pistolWR = r.pistolWinRate || null;
+
+  const fmt = (v, suffix) => v == null ? '—' : v + (suffix || '');
+  const cls = (v, g, w) => v == null ? 'kpi-muted' : (v >= g ? 'kpi-good' : v >= w ? 'kpi-warn' : 'kpi-bad');
+
+  document.getElementById('kpiAdvanced').innerHTML = [
+    { label: 'Entry WR', val: fmt(openingWR, '%'), cls: cls(openingWR, 52, 45), sub: `${fk}FK · ${fd}FD` },
+    { label: 'Trade dmg', val: fmt(tradeRate, '%'), cls: cls(tradeRate, 20, 12), sub: `${td} morts tradées / ${totalDeaths}` },
+    { label: 'Flash eff', val: fmt(flashEff, ''), cls: flashEff == null ? 'kpi-muted' : (parseFloat(flashEff) >= 0.8 ? 'kpi-good' : parseFloat(flashEff) >= 0.5 ? 'kpi-warn' : 'kpi-bad'), sub: 'ennemis / flash' },
+    { label: 'Util dmg', val: fmt(utilDmg, ''), cls: cls(utilDmg, 70, 40), sub: 'dégâts / match' },
+    { label: 'Multi-kills', val: multiPerMatch, cls: 'kpi-neutral', sub: `${totalMulti} total (2K+)` },
+    { label: 'Clutches', val: clutchTotal, cls: clutchTotal >= 8 ? 'kpi-good' : clutchTotal >= 4 ? 'kpi-warn' : 'kpi-muted', sub: 'wins 1vN' },
+    { label: 'Pistol WR', val: fmt(pistolWR, '%'), cls: cls(pistolWR, 55, 45), sub: 'rounds pistolet' },
+    { label: 'Sniper', val: r.sniperKillRate || '0.0', cls: 'kpi-neutral', sub: 'kills sniper / match' },
+  ].map(k => `<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val ${k.cls}">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
 }
 
 function renderChart(d) {
