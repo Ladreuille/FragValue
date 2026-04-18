@@ -809,9 +809,12 @@ function recalcRoundBoundaries() {
                        : t.includes('hegre') ? 'hegre' : null;
   let clamped = 0, jumpTruncated = 0;
   (demoData.grenades || []).forEach(g => {
-    if (!g.tick || !g.detonTick) return;
-    const span = g.detonTick - g.tick;
-    if (span > MAX_SPAN || span < 0) {
+    if (!g.tick) return;
+    const span = (g.detonTick || 0) - g.tick;
+    // Clamp si detonTick manquant/0 (span negatif/enorme), span anormal, ou
+    // span negatif. Evite les grenades fantomes rendues comme post-detonation
+    // persistante (detonTick=0 -> isActive true en permanence).
+    if (!g.detonTick || span > MAX_SPAN || span < 0) {
       const key = typeKey(g.type || '');
       const clampSpan = key ? (CLAMP_SPAN_BY_TYPE[key] || 256) : 256;
       g.detonTick = g.tick + clampSpan;
@@ -854,6 +857,7 @@ function recalcRoundBoundaries() {
   // (path zigzague = parser a recupere des samples d'entites differentes).
   let reversalTruncated = 0;
   (demoData.grenades || []).forEach(g => {
+    if (!g.tick || !g.detonTick) return;  // Apres passe 1, detonTick est normalise
     if (!g.path || g.path.length < 4) return;
     const n = g.path.length / 2;
     let cut = -1;
