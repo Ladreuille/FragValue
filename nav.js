@@ -15,30 +15,32 @@
 
   // ── Styles injectés (scope navbar) ──────────────────────────────────────
   const css = `
-    nav.fv-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.92);backdrop-filter:blur(12px);border-bottom:1px solid #1c1e1e}
-    nav.fv-nav .logo{font-family:'Anton',sans-serif;font-size:20px;letter-spacing:.04em;text-decoration:none;color:#e8eaea}
-    nav.fv-nav .logo-accent{color:#b8ff57}
-    nav.fv-nav .fv-sections{display:flex;align-items:center;gap:4px}
+    nav.fv-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:linear-gradient(180deg,rgba(12,14,10,.94) 0%,rgba(8,9,9,.92) 100%);backdrop-filter:blur(12px);border-bottom:1px solid rgba(184,255,87,.15);box-shadow:0 1px 0 rgba(184,255,87,.08),0 4px 24px rgba(0,0,0,.3)}
+    nav.fv-nav .logo{font-family:'Anton',sans-serif;font-size:20px;letter-spacing:.04em;text-decoration:none;color:#e8eaea;transition:text-shadow .2s}
+    nav.fv-nav .logo:hover{text-shadow:0 0 18px rgba(184,255,87,.4)}
+    nav.fv-nav .logo-accent{color:#b8ff57;text-shadow:0 0 12px rgba(184,255,87,.3)}
+    nav.fv-nav .fv-sections{display:flex;align-items:center;gap:2px}
     nav.fv-nav .fv-section{position:relative}
-    nav.fv-nav .fv-section-btn{background:none;border:none;cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;color:#7a8080;text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;border-radius:6px;transition:all .15s;display:flex;align-items:center;gap:4px}
-    nav.fv-nav .fv-section-btn:hover{color:#e8eaea;background:rgba(255,255,255,.04)}
+    nav.fv-nav .fv-section-btn{background:none;border:none;cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#a8b0b0;text-transform:uppercase;letter-spacing:.09em;padding:8px 14px;border-radius:6px;transition:all .18s;display:flex;align-items:center;gap:5px;position:relative}
+    nav.fv-nav .fv-section-btn::after{content:'';position:absolute;bottom:-3px;left:50%;transform:translateX(-50%) scaleX(0);width:60%;height:2px;background:#b8ff57;border-radius:2px;transition:transform .2s;box-shadow:0 0 8px rgba(184,255,87,.6)}
+    nav.fv-nav .fv-section-btn:hover{color:#b8ff57;background:rgba(184,255,87,.06)}
     nav.fv-nav .fv-section-btn.active{color:#b8ff57}
-    nav.fv-nav .fv-section-btn .chevron{width:10px;height:10px;transition:transform .15s}
-    nav.fv-nav .fv-section.open .fv-section-btn .chevron{transform:rotate(180deg)}
-    nav.fv-nav .fv-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:240px;background:#0f1010;border:1px solid #1c1e1e;border-radius:8px;padding:6px;opacity:0;visibility:hidden;transform:translateY(-4px);transition:all .15s;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    nav.fv-nav .fv-section-btn.active::after{transform:translateX(-50%) scaleX(1)}
+    nav.fv-nav .fv-section-btn .chevron{width:10px;height:10px;transition:transform .2s;opacity:.7}
+    nav.fv-nav .fv-section.open .fv-section-btn{color:#b8ff57;background:rgba(184,255,87,.06)}
+    nav.fv-nav .fv-section.open .fv-section-btn .chevron{transform:rotate(180deg);opacity:1}
+    nav.fv-nav .fv-dropdown{position:absolute;top:calc(100% + 6px);left:0;min-width:240px;background:linear-gradient(180deg,#111313 0%,#0d0e0e 100%);border:1px solid rgba(184,255,87,.18);border-top:2px solid #b8ff57;border-radius:8px;padding:6px;opacity:0;visibility:hidden;transform:translateY(-4px);transition:all .18s;box-shadow:0 12px 32px rgba(0,0,0,.6),0 0 0 1px rgba(184,255,87,.04)}
     nav.fv-nav .fv-section.open .fv-dropdown{opacity:1;visibility:visible;transform:translateY(0)}
-    nav.fv-nav .fv-dropdown a{display:flex;align-items:center;gap:10px;padding:9px 12px;font-family:'Space Mono',monospace;font-size:12px;color:#e8eaea;text-decoration:none;border-radius:6px;transition:all .15s}
-    nav.fv-nav .fv-dropdown a:hover{background:rgba(184,255,87,.08);color:#b8ff57}
-    nav.fv-nav .fv-dropdown a.locked{color:#4a5050;pointer-events:auto;cursor:pointer}
-    nav.fv-nav .fv-dropdown a.locked:hover{background:rgba(255,255,255,.02);color:#7a8080}
+    nav.fv-nav .fv-dropdown a{display:flex;align-items:center;gap:10px;padding:10px 12px;font-family:'Space Mono',monospace;font-size:12px;color:#d8dcdc;text-decoration:none;border-radius:6px;transition:all .15s}
+    nav.fv-nav .fv-dropdown a:hover{background:rgba(184,255,87,.1);color:#b8ff57;padding-left:14px}
     nav.fv-nav .fv-badge{font-size:8px;font-family:'Space Mono',monospace;font-weight:700;padding:2px 6px;border-radius:40px;letter-spacing:.08em;margin-left:auto}
-    nav.fv-nav .fv-badge.pro{background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000}
-    nav.fv-nav .fv-badge.elite{background:linear-gradient(135deg,#f5c842,#d4a52a);color:#000}
-    nav.fv-nav .fv-right{display:flex;align-items:center;gap:12px}
-    nav.fv-nav .fv-login{font-family:'Space Mono',monospace;font-size:11px;color:#7a8080;text-decoration:none;text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;border-radius:6px;transition:all .15s}
-    nav.fv-nav .fv-login:hover{color:#e8eaea;background:rgba(255,255,255,.04)}
-    nav.fv-nav .fv-cta{background:#b8ff57;color:#000;padding:7px 16px;border-radius:6px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.04em;transition:all .15s}
-    nav.fv-nav .fv-cta:hover{filter:brightness(1.1);transform:translateY(-1px)}
+    nav.fv-nav .fv-badge.pro{background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;box-shadow:0 0 8px rgba(184,255,87,.3)}
+    nav.fv-nav .fv-badge.elite{background:linear-gradient(135deg,#f5c842,#d4a52a);color:#000;box-shadow:0 0 8px rgba(245,200,66,.3)}
+    nav.fv-nav .fv-right{display:flex;align-items:center;gap:10px}
+    nav.fv-nav .fv-login{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#a8b0b0;text-decoration:none;text-transform:uppercase;letter-spacing:.09em;padding:8px 14px;border-radius:6px;transition:all .18s}
+    nav.fv-nav .fv-login:hover{color:#b8ff57;background:rgba(184,255,87,.06)}
+    nav.fv-nav .fv-cta{background:#b8ff57;color:#000;padding:8px 18px;border-radius:6px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .18s;box-shadow:0 0 0 0 rgba(184,255,87,.5)}
+    nav.fv-nav .fv-cta:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 20px rgba(184,255,87,.4)}
     @media (max-width: 768px){
       nav.fv-nav{padding:0 16px}
       nav.fv-nav .fv-sections{display:none}
