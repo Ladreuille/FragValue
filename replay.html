@@ -174,9 +174,9 @@
       overflow:hidden;
     }
     .player-hp-fill{height:100%;border-radius:2px;transition:width .3s}
-    .player-kit{flex-shrink:0;width:14px;height:12px;display:flex;align-items:center;justify-content:center}
-    .player-kit img{width:12px;height:12px;filter:invert(82%) sepia(64%) saturate(1254%) hue-rotate(32deg) brightness(108%) contrast(99%)}
-    .player-kit.inactive img{filter:brightness(0.3)}
+    .player-kit{flex-shrink:0;width:14px;height:12px;display:none;align-items:center;justify-content:center}
+    .player-kit.visible{display:flex}
+    .player-kit img{width:12px;height:12px;filter:brightness(1.2)}
     .player-gear{display:flex;align-items:center;gap:4px;min-height:13px;flex-wrap:wrap}
     .player-gear .icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0;height:12px}
     .player-gear .icon svg{display:block;height:12px;width:auto}
@@ -1043,7 +1043,7 @@ function renderTeamPlayers(containerId, players) {
       </div>
       <div class="player-hp-row">
         <div class="player-hp-bar"><div class="player-hp-fill" data-field="hp" style="width:100%;background:${hpColor}"></div></div>
-        <span class="player-kit inactive" data-field="kit"><img src="icons/defuser.svg" alt="kit"></span>
+        <span class="player-kit" data-field="kit"><img src="icons/defuser.svg" alt="kit"></span>
       </div>
       <div class="player-gear" data-field="gear"></div>
     </div>`;
@@ -1297,11 +1297,12 @@ function updatePlayerStates(frame) {
     // joueur a un kit, dimme (sombre) sinon.
     const kitEl = row.querySelector('[data-field="kit"]');
     if (kitEl) {
-      const showKit = team === 'CT' && alive && !disconnected;
       const _peakStats = currentRoundPeakStats[p.name] || {};
       const hasDefuser = state?.hasDefuser || _peakStats.defuser || false;
-      kitEl.style.visibility = showKit ? 'visible' : 'hidden';
-      kitEl.classList.toggle('inactive', !hasDefuser);
+      // Affiche le kit seulement si CT vivant AVEC kit (comme kevlar/casque :
+      // rien si pas equipe, blanc sinon).
+      const showKit = team === 'CT' && alive && !disconnected && hasDefuser;
+      kitEl.classList.toggle('visible', showKit);
     }
 
     // Money : preferer le peak du round (stable) sinon state courant
