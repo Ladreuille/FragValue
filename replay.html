@@ -2233,6 +2233,7 @@ function drawTrails(frame, W, H) {
   const scaleX = W / 1024;
   const scaleY = H / 1024;
   const roundPos = currentRoundPos || {};
+  const SUB_STEPS = 6; // Interpolation Catmull-Rom : 6 points par segment = smooth fade
 
   Object.entries(frame.players).forEach(([name, p]) => {
     if (!p.alive || hiddenPlayers.has(name)) return;
@@ -2244,36 +2245,41 @@ function drawTrails(frame, W, H) {
     });
     if (trail.length < 2) return;
 
-    // Trail = UNE seule polyline continue lissee via quadratic bezier.
-    // On utilise les midpoints des segments comme control points pour
-    // Catmull-Rom-like smoothing. Alpha constante pour eviter le clignotement
-    // entre segments. Fade via lineargradient applique sur tout le path.
-    const canvasPts = trail.map(pt => {
-      const c = w2c(pt.x, pt.y);
-      return { x: c.x * scaleX, y: c.y * scaleY };
-    });
-    ctx.beginPath();
-    ctx.moveTo(canvasPts[0].x, canvasPts[0].y);
-    for (let i = 1; i < canvasPts.length - 1; i++) {
-      const cp = canvasPts[i];
-      const next = canvasPts[i + 1];
-      const midX = (cp.x + next.x) / 2;
-      const midY = (cp.y + next.y) / 2;
-      ctx.quadraticCurveTo(cp.x, cp.y, midX, midY);
+    // Densifier le trail via interpolation Catmull-Rom : chaque segment
+    // original devient SUB_STEPS petits segments avec tick interpole.
+    // Alpha change d'un pas minime entre chaque petit segment = fade smooth.
+    const densePts = [];
+    for (let i = 0; i < trail.length - 1; i++) {
+      const p0 = trail[Math.max(0, i - 1)];
+      const p1 = trail[i];
+      const p2 = trail[i + 1];
+      const p3 = trail[Math.min(trail.length - 1, i + 2)];
+      for (let s = 0; s < SUB_STEPS; s++) {
+        const t = s / SUB_STEPS;
+        const t2 = t * t, t3 = t2 * t;
+        // Catmull-Rom : interpolation smooth C1 (slopes continus aux endpoints)
+        const x = 0.5 * ((2*p1.x) + (-p0.x + p2.x)*t + (2*p0.x - 5*p1.x + 4*p2.x - p3.x)*t2 + (-p0.x + 3*p1.x - 3*p2.x + p3.x)*t3);
+        const y = 0.5 * ((2*p1.y) + (-p0.y + p2.y)*t + (2*p0.y - 5*p1.y + 4*p2.y - p3.y)*t2 + (-p0.y + 3*p1.y - 3*p2.y + p3.y)*t3);
+        const tickInterp = (p1.tick || 0) + t * ((p2.tick || 0) - (p1.tick || 0));
+        densePts.push({ x, y, tick: tickInterp });
+      }
     }
-    const last = canvasPts[canvasPts.length - 1];
-    ctx.lineTo(last.x, last.y);
-    // Gradient alpha : le trail fade progressivement de 0 (tete ancienne)
-    // vers 0.35 (tete actuelle). Appliqué comme strokeStyle gradient.
-    const first = canvasPts[0];
-    const grad = ctx.createLinearGradient(first.x, first.y, last.x, last.y);
-    grad.addColorStop(0, `rgba(${color.rgb},0)`);
-    grad.addColorStop(1, `rgba(${color.rgb},0.35)`);
-    ctx.strokeStyle = grad;
+    densePts.push(trail[trail.length - 1]);
+
     ctx.lineWidth = 1.4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.stroke();
+    for (let i = 1; i < densePts.length; i++) {
+      const age = (tick - densePts[i].tick) / TRAIL_TICKS;
+      const alpha = Math.max(0, 0.4 * (1 - age));
+      const prev = w2c(densePts[i-1].x, densePts[i-1].y);
+      const cur = w2c(densePts[i].x, densePts[i].y);
+      ctx.beginPath();
+      ctx.moveTo(prev.x * scaleX, prev.y * scaleY);
+      ctx.lineTo(cur.x * scaleX, cur.y * scaleY);
+      ctx.strokeStyle = `rgba(${color.rgb},${alpha.toFixed(3)})`;
+      ctx.stroke();
+    }
   });
 }
 
@@ -2362,7 +2368,15 @@ function drawNadeInFlight(cx, cy, img, hasImg, throwColor) {
 // Bornes du round courant (utilise par drawEffects, drawKillfeed, drawWeaponDrops).
 function getRoundBounds(buffer = 2000) {
   const _rd = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
-  return { start: _rd.startTick || 0, end: (_rd.endTick || 999999) + buffer };
+  const b = { start: _rd.startTick || 0, end: (_rd.endTick || 999999) + buffer };
+  // DEBUG : log une fois par round pour verifier qu'on a des grenades
+  if (!_rd._dbgLogged) {
+    _rd._dbgLogged = true;
+    const gAll = (demoData.grenades || []);
+    const gInRound = gAll.filter(g => g.tick >= b.start && g.tick <= b.end);
+    console.log(`[Round ${currentRound}] bounds=[${b.start}, ${b.end}] | ${gAll.length} grenades total, ${gInRound.length} dans le round. Sample:`, gInRound.slice(0,3).map(g => `${g.thrower}@${g.tick}(${g.type})`).join(' | '));
+  }
+  return b;
 }
 // Echantillon de position le plus proche d'un tick (<=). Retourne null si aucun.
 function findSampleAt(pts, tick) {
