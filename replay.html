@@ -744,37 +744,9 @@ function getFirstRealRound() {
 // which naturally excludes the previous round's walk-back samples (their tick
 // is < freeze_end(N)).
 function recalcRoundBoundaries() {
-  let rounds = demoData.rounds || [];
+  const rounds = demoData.rounds || [];
   const kills = demoData.kills || [];
   const POST_ROUND_BUFFER = 128; // ~2s after last kill
-
-  // Filtre frontend : drop les rounds phantom avec tres peu de position samples.
-  // On compte les samples par round via tick range et on drop si < 50 samples
-  // (un vrai round en a 150+). Utile quand le parser n'a pas applique le filtre.
-  const positions = demoData.positions || {};
-  const samplesPerRound = rounds.map(rd => {
-    const st = rd.startTick || 0;
-    const et = rd.endTick || (st + 115 * 64);
-    let count = 0;
-    Object.values(positions).forEach(pts => {
-      for (const pt of pts) {
-        const t = pt.tick || 0;
-        if (t >= st && t <= et) count++;
-      }
-    });
-    return count;
-  });
-  const phantomIdx = samplesPerRound
-    .map((c, i) => ({ c, i }))
-    .filter(({ c, i }) => c < 50 && !rounds[i].isKnife);
-  if (phantomIdx.length > 0) {
-    const phantomRounds = new Set(phantomIdx.map(({ i }) => rounds[i].round));
-    rounds = rounds.filter(r => !phantomRounds.has(r.round));
-    // Recompute displayNum
-    let dn = 0;
-    rounds.forEach(r => { if (!r.isKnife) dn++; r.displayNum = r.isKnife ? 0 : dn; });
-    demoData.rounds = rounds;
-  }
 
   rounds.forEach((rd, i) => {
     const st = rd.startTick || 0;
@@ -1446,10 +1418,19 @@ function buildFrames(round) {
   const startTick = roundData.startTick || 0;
   const endTick = roundData.gameplayEnd ?? (roundData.endTick || 0);
   const killsR = roundData.killsRound ?? (round + 1);
-  // DEBUG TEMPORAIRE round
-  const _grens = (demoData.grenades || []).filter(g => g.tick >= startTick && g.tick <= endTick);
-  const _withPath = _grens.filter(g => g.path && g.path.length >= 4);
-  console.log(`[ROUND ${round}] startTick=${startTick} endTick=${endTick} gameplayEnd=${roundData.gameplayEnd} rawEnd=${roundData.endTick} winner=${roundData.winner} | ${_grens.length} grenades, ${_withPath.length} avec path`);
+  // DEBUG : dump tous les events dans la plage R
+  const rawEnd = roundData.endTick || endTick;
+  const _grens = (demoData.grenades || []).filter(g => g.tick >= startTick && g.tick <= rawEnd);
+  const _kills = (demoData.kills || []).filter(k => (k.tick || 0) >= startTick && (k.tick || 0) <= rawEnd);
+  const _shots = (demoData.shots || []).filter(s => (s.tick || 0) >= startTick && (s.tick || 0) <= rawEnd);
+  const _posByPlayer = Object.entries(demoData.positions || {}).map(([name, pts]) => {
+    const inRange = pts.filter(pt => (pt.tick || 0) >= startTick && (pt.tick || 0) <= rawEnd);
+    return `${name}:${inRange.length}`;
+  }).join(',');
+  console.log(`[ROUND ${round}] range=[${startTick},${rawEnd}] winner=${roundData.winner} | ${_kills.length} kills, ${_shots.length} shots, ${_grens.length} grenades`);
+  console.log(`[ROUND ${round}] positions: ${_posByPlayer}`);
+  if (_kills.length > 0) console.log(`[ROUND ${round}] kills:`, _kills.map(k => `${k.attacker}→${k.victim}@${k.tick}`).join(' | '));
+  if (_grens.length > 0) console.log(`[ROUND ${round}] grenades:`, _grens.slice(0, 5).map(g => `${g.thrower}@${g.tick}(${g.type}, path=${g.path?.length/2 || 0})`).join(' | '));
 
   const roundKills = kills.filter(k => {
     const t = k.tick || 0;
