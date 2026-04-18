@@ -2,205 +2,197 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="description" content="FragValue — CS2 Match Analytics">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
-  <title>FragValue : Comparaison joueurs</title>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <meta name="description" content="FragValue · Comparer les stats de 2 à 5 joueurs FACEIT CS2 côte à côte">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FragValue · Comparer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --bg:#0C0E13;--surface:#131620;--card:#191D27;--border:#252A38;--border2:#2C3245;
-      --accent:#3B7FF5;--accent-dim:rgba(59,127,245,.12);
-      --text:#EDF0F7;--text2:#8892A4;--text3:#4A5568;
-      --success:#2DD4A0;--danger:#F06B6B;--gold:#F5C842;
-      --font:'Instrument Sans',sans-serif;--mono:'JetBrains Mono',monospace;
-      /* Player colors */
-      --p1:#3B7FF5;--p2:#2DD4A0;--p3:#F5C842;--p4:#F06B6B;--p5:#A78BFA;
+      --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
+      --accent:#b8ff57;--accent2:#7ddd1a;--accent-dim:rgba(184,255,87,.10);
+      --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+      --font:'Space Mono',monospace;--mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+      --p1:#b8ff57;--p2:#2dd4a0;--p3:#f5c842;--p4:#ff6b9d;--p5:#a78bfa;
     }
+    html{scroll-behavior:smooth}
     body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
     ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
-    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:52px;background:rgba(12,14,19,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
-    .logo{font-size:16px;font-weight:700;letter-spacing:-.2px;text-decoration:none;color:var(--text)}
-    .logo-accent{color:var(--accent)}
-    .nav-link{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all .15s;font-weight:500}
-    .nav-link:hover{color:var(--text);background:var(--card)}
-    .nav-link.active{color:var(--text)}
+    .page{max-width:1200px;margin:0 auto;padding:28px 32px 80px;position:relative;z-index:1}
+    @media(max-width:768px){.page{padding:20px 16px 60px}}
 
-    .page{max-width:1200px;margin:0 auto;padding:32px 32px 80px}
+    /* ── Tab intro header ───────────────────────────────── */
+    .tab-intro{margin-bottom:22px}
+    .tab-title{font-family:var(--display);font-size:36px;color:var(--text);letter-spacing:.02em;margin-bottom:6px;line-height:1.1}
+    .tab-sub{font-size:13px;color:var(--text2);font-family:var(--mono);line-height:1.5;max-width:720px}
 
-    /* Header */
-    .page-header{margin-bottom:32px}
-    .page-eyebrow{font-size:11px;font-weight:600;letter-spacing:1.2px;color:var(--accent);text-transform:uppercase;margin-bottom:10px}
-    .page-title{font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-.8px;margin-bottom:8px}
-    .page-sub{font-size:14px;color:var(--text2);line-height:1.6}
+    /* ── Section labels ─────────────────────────────────── */
+    .sec-label{font-family:var(--display);font-size:20px;color:var(--text);letter-spacing:.02em;margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+    .sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(184,255,87,.2),transparent)}
 
-    /* Search section */
-    .search-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px}
-    .search-section-title{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;font-family:var(--mono);margin-bottom:16px}
-    .players-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:16px}
-    .player-input-wrap{position:relative}
-    .player-color-dot{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%}
-    .player-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px 12px 10px 28px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color .15s}
-    .player-input:focus{border-color:var(--accent)}
-    .player-input::placeholder{color:var(--text3)}
-    .player-input.filled{border-color:var(--border2)}
-    .search-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .compare-btn{background:var(--accent);color:#fff;border:none;padding:11px 24px;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}
-    .compare-btn:hover{opacity:.9}
-    .compare-btn:disabled{opacity:.5;cursor:not-allowed}
-    .add-player-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:11px 16px;border-radius:8px;font-family:var(--font);font-size:13px;cursor:pointer;transition:all .15s}
-    .add-player-btn:hover{border-color:var(--accent);color:var(--accent)}
-    .add-player-btn:disabled{opacity:.3;cursor:not-allowed}
-    .clear-btn{background:transparent;border:none;color:var(--text3);font-size:13px;font-family:var(--mono);cursor:pointer;transition:color .15s}
-    .clear-btn:hover{color:var(--danger)}
-    .search-hint{font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:auto}
+    /* ── Search inputs ──────────────────────────────────── */
+    .search-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:20px;position:relative;overflow:hidden}
+    .search-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 50% 80% at 100% 0%,rgba(184,255,87,.05),transparent);pointer-events:none}
+    .search-title{font-family:var(--mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:14px;position:relative;z-index:1}
+    .players-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px;position:relative;z-index:1}
+    .player-input-wrap{position:relative;display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0 14px;transition:border-color .15s}
+    .player-input-wrap:focus-within{border-color:var(--accent)}
+    .player-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor}
+    .player-input{flex:1;background:none;border:none;color:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;padding:12px 0;outline:none}
+    .player-input::placeholder{color:var(--text3);font-weight:400}
+    .player-remove{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;font-size:18px;line-height:1;transition:color .15s}
+    .player-remove:hover{color:var(--danger)}
+    .search-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
+    .btn-primary{background:var(--accent);color:#000;border:none;padding:10px 22px;border-radius:6px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+    .btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 16px rgba(184,255,87,.3)}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+    .btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border2);padding:10px 16px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+    .btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-secondary:disabled{opacity:.4;cursor:not-allowed}
+    .search-hint{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto}
 
-    /* Loading */
-    .loading-bar{display:none;height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-bottom:20px}
-    .loading-bar-fill{height:100%;background:var(--accent);border-radius:1px;animation:loading 1.5s ease-in-out infinite}
-    @keyframes loading{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
+    /* ── Loading + Error ────────────────────────────────── */
+    .loading-bar{height:2px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:16px;display:none}
+    .loading-bar.active{display:block}
+    .loading-bar-fill{height:100%;width:30%;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:loading 1.4s ease-in-out infinite}
+    @keyframes loading{0%,100%{transform:translateX(-100%)}50%{transform:translateX(400%)}}
+    .error-card{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.3);color:var(--danger);padding:12px 16px;border-radius:8px;font-family:var(--mono);font-size:12px;margin-bottom:16px;display:none}
+    .error-card.warn{background:rgba(245,200,66,.08);border-color:rgba(245,200,66,.3);color:var(--gold)}
 
-    /* Error */
-    .error-card{display:none;background:rgba(240,107,107,.06);border:1px solid rgba(240,107,107,.2);border-radius:8px;padding:12px 16px;font-family:var(--mono);font-size:12px;color:var(--danger);margin-bottom:16px}
-
-    /* Results */
-    #results{display:none}
-
-    /* Player cards row */
-    .players-row{display:grid;gap:10px;margin-bottom:24px}
-    .player-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;transition:border-color .15s}
-    .player-avatar{width:44px;height:44px;border-radius:7px;background:var(--card);border:1px solid var(--border);flex-shrink:0;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:18px}
-    .player-card-info{flex:1;min-width:0}
-    .player-card-name{font-size:15px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
-    .player-card-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-    .badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px}
-    .player-card-elo{font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:-.5px}
-    .player-color-bar{width:3px;border-radius:2px;align-self:stretch;flex-shrink:0}
-
-    /* Section label */
-    .section-label{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:28px 0 14px;display:flex;align-items:center;gap:10px;font-family:var(--mono)}
-    .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
-
-    /* Charts row */
-    .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-    @media(max-width:700px){.charts-row{grid-template-columns:1fr}}
-    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px}
-    .chart-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;font-family:var(--mono)}
-    .chart-wrap{position:relative;height:280px}
-    .radar-wrap{position:relative;height:320px}
-
-    /* Stats comparison table */
-    .compare-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
-    .compare-table{width:100%;border-collapse:collapse}
-    .compare-table th{background:var(--card);padding:10px 16px;text-align:left;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;border-bottom:1px solid var(--border);font-weight:500}
-    .compare-table th.player-col{text-align:center}
-    .compare-table td{padding:11px 16px;border-bottom:1px solid rgba(37,42,56,.4);font-family:var(--mono);font-size:12px}
-    .compare-table tr:last-child td{border-bottom:none}
-    .compare-table tr:hover td{background:rgba(255,255,255,.015)}
-    .stat-name{color:var(--text2);font-weight:500}
-    .stat-val{text-align:center;font-weight:600}
-    .stat-best{color:var(--success)}
-    .stat-worst{color:var(--danger)}
-    .stat-mid{color:var(--text)}
-    .stat-group-header td{background:var(--card);color:var(--text3);font-size:10px;letter-spacing:.8px;text-transform:uppercase;padding:7px 16px;border-bottom:1px solid var(--border)}
-
-    /* Bar comparison */
-    .bar-compare{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
-    .bar-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
-    .bar-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-    .bar-item-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
-    .bar-item-bars{display:flex;flex-direction:column;gap:6px}
-    .bar-row{display:flex;align-items:center;gap:10px}
-    .bar-player-name{font-family:var(--mono);font-size:11px;color:var(--text2);width:100px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
-    .bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
-    .bar-value{font-family:var(--mono);font-size:11px;font-weight:600;width:50px;text-align:right;flex-shrink:0}
-
-    /* Share button */
-    .share-bar{display:flex;align-items:center;gap:10px;margin-bottom:24px}
-    .share-btn{display:flex;align-items:center;gap:7px;padding:9px 16px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+    /* ── Share bar ──────────────────────────────────────── */
+    .share-bar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px 8px 16px;margin-bottom:20px}
+    .share-url{flex:1;background:none;border:none;color:var(--text2);font-family:var(--mono);font-size:11px;outline:none;min-width:0}
+    .share-btn{background:transparent;color:var(--text);border:1px solid var(--border2);padding:7px 14px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
     .share-btn:hover{border-color:var(--accent);color:var(--accent)}
-    .share-url{flex:1;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:9px 14px;font-family:var(--mono);font-size:11px;color:var(--text3);outline:none;cursor:text}
 
+    /* ── Player cards ───────────────────────────────────── */
+    .players-row{display:grid;gap:12px;margin-bottom:20px}
+    .player-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;transition:transform .15s}
+    .player-card:hover{transform:translateY(-2px)}
+    .player-card-bar{position:absolute;left:0;top:0;bottom:0;width:3px}
+    .player-avatar{width:52px;height:52px;border-radius:10px;background:var(--card);border:1px solid var(--border2);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:22px;flex-shrink:0}
+    .player-name-block{flex:1;min-width:0}
+    .player-name{font-family:var(--display);font-size:22px;letter-spacing:.02em;line-height:1.1;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .player-meta{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+    .mini-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.4px;text-transform:uppercase}
+    .lvl-badge{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.25)}
+    .fv-badge{background:var(--card);border:1px solid var(--border2);color:var(--text2)}
+    .fv-badge.elite{color:var(--success);border-color:rgba(45,212,160,.3);background:rgba(45,212,160,.08)}
+    .fv-badge.great{color:var(--accent);border-color:rgba(184,255,87,.3);background:rgba(184,255,87,.08)}
+    .fv-badge.good{color:var(--gold);border-color:rgba(245,200,66,.3);background:rgba(245,200,66,.08)}
+    .fv-badge.low{color:var(--danger);border-color:rgba(255,68,68,.25);background:rgba(255,68,68,.06)}
+    .country-mini{font-family:var(--mono);font-size:10px;color:var(--text3);font-weight:700}
+    .player-elo-block{text-align:right;flex-shrink:0}
+    .player-elo{font-family:var(--display);font-size:24px;line-height:1}
+    .player-elo-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+    .player-actions{display:flex;gap:6px;margin-top:8px}
+    .player-act-btn{background:transparent;color:var(--text2);border:1px solid var(--border);padding:4px 8px;border-radius:4px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+    .player-act-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+    /* ── Charts ─────────────────────────────────────────── */
+    .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+    @media(max-width:800px){.charts-row{grid-template-columns:1fr}}
+    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+    .chart-title{font-family:var(--mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-bottom:12px}
+    .chart-wrap{height:240px;position:relative}
+    .radar-wrap{height:300px;position:relative}
+
+    /* ── Bar compare ────────────────────────────────────── */
+    .bar-compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+    @media(max-width:800px){.bar-compare{grid-template-columns:1fr}}
+    .bar-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+    .bar-item-header{font-family:var(--mono);font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:10px}
+    .bar-rows{display:flex;flex-direction:column;gap:6px}
+    .bar-row{display:grid;grid-template-columns:120px 1fr 70px;gap:10px;align-items:center;font-family:var(--mono);font-size:11px}
+    .bar-player-name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar-track{height:6px;background:var(--card);border-radius:3px;overflow:hidden}
+    .bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+    .bar-value{font-weight:700;text-align:right;font-size:12px}
+
+    /* ── Compare table ──────────────────────────────────── */
+    .compare-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow-x:auto;margin-bottom:16px}
+    .compare-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;min-width:640px}
+    .compare-table th{background:var(--card);padding:11px 12px;text-align:left;color:var(--text2);letter-spacing:.06em;font-weight:700;text-transform:uppercase;font-size:10px;border-bottom:1px solid var(--border2)}
+    .compare-table th.player-col{font-family:var(--display);font-size:14px;letter-spacing:.02em;text-transform:none}
+    .compare-table td{padding:10px 12px;border-bottom:1px solid rgba(28,30,30,.6)}
+    .compare-table tr:last-child td{border-bottom:none}
+    .stat-group-header td{background:var(--card);color:var(--accent);font-family:var(--display);font-size:13px;letter-spacing:.04em;padding:9px 12px;font-weight:400}
+    .stat-name{color:var(--text2);white-space:nowrap}
+    .stat-val{font-weight:700;text-align:right}
+    .stat-val.best{color:var(--success)}
+    .stat-val.worst{color:var(--danger)}
+    .stat-val.mid{color:var(--text2)}
+
+    /* ── Empty state ────────────────────────────────────── */
+    .empty-state{text-align:center;padding:60px 24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px}
+    .empty-title{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em;margin-bottom:8px}
+    .empty-sub{font-family:var(--mono);font-size:13px;color:var(--text2);max-width:380px;margin:0 auto;line-height:1.5}
+
+    /* ── Pro gate ───────────────────────────────────────── */
+    .pro-gate{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:14px;padding:40px 32px;text-align:center;margin:20px auto;max-width:520px}
+    .pro-gate-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.12);color:var(--accent);padding:5px 12px;border-radius:40px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px}
+    .pro-gate-title{font-family:var(--display);font-size:26px;color:var(--text);letter-spacing:.02em;margin-bottom:10px}
+    .pro-gate-sub{font-family:var(--mono);font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:24px}
+    .pro-gate-btn{display:inline-block;background:var(--accent);color:#000;padding:12px 28px;border-radius:6px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s}
+    .pro-gate-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+
+    .fade-in{animation:fadeUp .3s ease}
     @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-    .fade-in{animation:fadeUp .3s ease forwards}
-
-    /* Level colors */
-    .lvl-1{color:#7A7A7A}.lvl-2,.lvl-3{color:#23C44E}.lvl-4,.lvl-5,.lvl-6{color:#F5C842}.lvl-7,.lvl-8{color:#EDA020}.lvl-9{color:#E05C2A}.lvl-10{color:#D93535}
-    .badge-fv-elite{background:rgba(45,212,160,.1);color:#2DD4A0;border:1px solid rgba(45,212,160,.2)}
-    .badge-fv-great{background:rgba(59,127,245,.1);color:#60A5FA;border:1px solid rgba(59,127,245,.2)}
-    .badge-fv-good{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
-    .badge-fv-avg{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
-    .badge-fv-low{background:rgba(240,107,107,.1);color:#F06B6B;border:1px solid rgba(240,107,107,.2)}
   </style>
 </head>
 <body>
 
-<nav>
-  <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
-  <div style="display:flex;gap:4px">
-    <a href="index.html" class="nav-link">Scout</a>
-    <a href="compare.html" class="nav-link active">Comparer</a>
-    <a href="demo.html" class="nav-link">Démo</a>
-  </div>
-</nav>
+<nav></nav>
 
 <div class="page">
-  <div class="page-header">
-    <div class="page-eyebrow">Analyse comparative</div>
-    <h1 class="page-title">Comparer les joueurs</h1>
-    <p class="page-sub">Compare les stats de 2 à 5 joueurs FACEIT : FV Rating, K/D, HS%, ADR, CT/T split, multi-kills et plus.</p>
+  <div class="tab-intro">
+    <h1 class="tab-title">Comparer les joueurs</h1>
+    <p class="tab-sub">Compare côte à côte les stats FACEIT de 2 à 5 joueurs. Radar global, breakdown par KPI, full stats par rôle — tout ce qu'il faut pour benchmarker un adversaire ou un recrue potentielle.</p>
   </div>
+
+  <!-- Pro gate (injected si non Pro) -->
+  <div id="proGateContainer"></div>
 
   <!-- Search -->
-  <div class="search-section">
-    <div class="search-section-title">Pseudos FACEIT</div>
-    <div class="players-inputs" id="playersInputs">
-      <div class="player-input-wrap">
-        <div class="player-color-dot" style="background:var(--p1)"></div>
-        <input class="player-input" type="text" placeholder="Joueur 1..." autocomplete="off" spellcheck="false"/>
-      </div>
-      <div class="player-input-wrap">
-        <div class="player-color-dot" style="background:var(--p2)"></div>
-        <input class="player-input" type="text" placeholder="Joueur 2..." autocomplete="off" spellcheck="false"/>
+  <div id="searchSection">
+    <div class="search-card">
+      <div class="search-title">Pseudos FACEIT</div>
+      <div class="players-inputs" id="playersInputs"></div>
+      <div class="search-actions">
+        <button class="btn-primary" id="compareBtn" onclick="startComparison()">Comparer</button>
+        <button class="btn-secondary" id="addPlayerBtn" onclick="addPlayerInput()">+ Ajouter un joueur</button>
+        <button class="btn-secondary" onclick="clearAll()">Réinitialiser</button>
+        <span class="search-hint" id="searchHint">2 joueurs minimum · 5 maximum</span>
       </div>
     </div>
-    <div class="search-actions">
-      <button class="compare-btn" id="compareBtn" onclick="startComparison()">Comparer</button>
-      <button class="add-player-btn" id="addPlayerBtn" onclick="addPlayerInput()">+ Ajouter un joueur</button>
-      <button class="clear-btn" onclick="clearAll()">Réinitialiser</button>
-      <span class="search-hint" id="searchHint">2 joueurs minimum · 5 maximum</span>
-    </div>
+
+    <div class="loading-bar" id="loadingBar"><div class="loading-bar-fill"></div></div>
+    <div class="error-card" id="errorCard"></div>
   </div>
 
-  <div class="loading-bar" id="loadingBar"><div class="loading-bar-fill"></div></div>
-  <div class="error-card" id="errorCard"></div>
-
   <!-- Results -->
-  <div id="results">
-
-    <!-- Share -->
+  <div id="results" style="display:none">
     <div class="share-bar">
-      <button class="share-btn" onclick="copyShareUrl()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+      <input class="share-url" id="shareUrl" readonly/>
+      <button class="share-btn" onclick="copyShareUrl()" id="shareBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
         Partager
       </button>
-      <input class="share-url" id="shareUrl" readonly/>
     </div>
 
-    <!-- Player cards -->
-    <div class="section-label">Profils</div>
+    <div class="sec-label">Profils</div>
     <div class="players-row" id="playersRow"></div>
 
-    <!-- Spider chart + Bar chart -->
-    <div class="section-label">Vue d'ensemble</div>
+    <div class="sec-label">Vue d'ensemble</div>
     <div class="charts-row">
       <div class="chart-card">
-        <div class="chart-title">Spider chart : profil global</div>
+        <div class="chart-title">Profil global (normalisé)</div>
         <div class="radar-wrap"><canvas id="radarChart"></canvas></div>
       </div>
       <div class="chart-card">
@@ -209,427 +201,460 @@
       </div>
     </div>
 
-    <!-- Bar comparisons -->
-    <div class="section-label">Stats principales</div>
+    <div class="sec-label">Breakdown KPI</div>
     <div class="bar-compare" id="barCompare"></div>
 
-    <!-- Full stats table -->
-    <div class="section-label">Tableau complet</div>
+    <div class="sec-label">Tableau complet</div>
     <div class="compare-table-wrap">
       <table class="compare-table">
         <thead><tr id="tableHead"></tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
-
   </div>
 </div>
 
 <script>
-// ══ PRO GATING ═════════════════════════════════════════════════════════════
-const _fvSbUrl  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
-const _fvSbAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
-const FV_PLAN_CACHE_KEY='fv_user_plan', FV_PLAN_TTL=5*60*1000;
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+window._sb = sb;
 
-async function fvGetPlan(){
-  try{
-    const raw=sessionStorage.getItem(FV_PLAN_CACHE_KEY);
-    if(raw){const c=JSON.parse(raw);if(c&&c.ts&&(Date.now()-c.ts)<FV_PLAN_TTL)return c.plan||'free';}
-  }catch(_){}
-  try{
-    const _sbPlan=supabase.createClient(_fvSbUrl,_fvSbAnon);
-    const {data:{session}}=await _sbPlan.auth.getSession();
-    if(!session){sessionStorage.setItem(FV_PLAN_CACHE_KEY,JSON.stringify({plan:'free',ts:Date.now()}));return 'free';}
-    const res=await fetch('/api/check-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token}});
-    if(!res.ok)return 'free';
-    const d=await res.json();const plan=d.plan||'free';
-    sessionStorage.setItem(FV_PLAN_CACHE_KEY,JSON.stringify({plan,ts:Date.now()}));
+const PLAYER_COLORS = ['#b8ff57', '#2dd4a0', '#f5c842', '#ff6b9d', '#a78bfa'];
+let playersData = [], playerCount = 2;
+let radarInst = null, barInst = null;
+
+// ══ Pro gate ══════════════════════════════════════════════════════════════
+const PLAN_CACHE_KEY = 'fv_user_plan', PLAN_TTL = 5 * 60 * 1000;
+async function getPlan() {
+  try {
+    const raw = sessionStorage.getItem(PLAN_CACHE_KEY);
+    if (raw) { const c = JSON.parse(raw); if (c && c.ts && Date.now() - c.ts < PLAN_TTL) return c.plan || 'free'; }
+  } catch(_) {}
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return 'free';
+    const res = await fetch('/api/check-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (!res.ok) return 'free';
+    const d = await res.json();
+    const plan = d.plan || 'free';
+    sessionStorage.setItem(PLAN_CACHE_KEY, JSON.stringify({ plan, ts: Date.now() }));
     return plan;
-  }catch(_){return 'free';}
+  } catch(_) { return 'free'; }
 }
-async function fvIsPro(){const p=await fvGetPlan();return p==='pro'||p==='team';}
+async function isPro() {
+  const p = await getPlan();
+  return p === 'pro' || p === 'team' || p === 'elite';
+}
 
 function showProGate() {
-  const host = document.querySelector('.page');
-  if (!host || document.getElementById('fvCompareGate')) return;
-  const gate = document.createElement('div');
-  gate.id = 'fvCompareGate';
-  gate.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:48px 32px;margin:24px auto;max-width:520px;text-align:center';
-  gate.innerHTML =
-    '<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.12);color:#b8ff57;padding:5px 12px;border-radius:40px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;margin-bottom:18px">' +
-      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' +
-      'RESERVE AUX ABONNES PRO' +
-    '</div>' +
-    '<h2 style="font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:12px;color:var(--text)">Comparaison multi-joueurs</h2>' +
-    '<p style="font-size:13px;color:var(--text2);line-height:1.7;max-width:380px;margin:0 auto 24px">Compare jusqu\'a 5 joueurs FACEIT sur leurs stats avancees (FV Rating, KAST, Opening WR, etc.). Fonctionnalite disponible sur le plan Pro.</p>' +
-    '<a href="pricing.html" style="display:inline-block;background:#b8ff57;color:#000;padding:12px 28px;border-radius:6px;font-family:var(--mono);font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.06em">Voir les plans Pro</a>';
-  // Replace search + results sections
-  const search = document.querySelector('.search-section');
-  const results = document.getElementById('results');
-  if (search) search.style.display = 'none';
-  if (results) results.style.display = 'none';
-  host.insertBefore(gate, host.querySelector('.page-header') ? host.querySelector('.page-header').nextSibling : host.firstChild);
+  document.getElementById('searchSection').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('proGateContainer').innerHTML = `
+    <div class="pro-gate">
+      <div class="pro-gate-tag">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Réservé aux abonnés Pro
+      </div>
+      <h2 class="pro-gate-title">Comparaison multi-joueurs</h2>
+      <p class="pro-gate-sub">Compare jusqu'à 5 joueurs FACEIT sur toutes leurs stats avancées : FV Rating, KAST, Opening, CT/T split, multi-kills, clutches, utility. Analyse ton prochain adversaire ou recrue potentielle en 30 secondes.</p>
+      <a href="pricing.html" class="pro-gate-btn">Voir les plans Pro</a>
+    </div>`;
 }
 
-const PLAYER_COLORS = ['#3B7FF5','#2DD4A0','#F5C842','#F06B6B','#A78BFA'];
-let playersData  = [];
-let playerCount  = 2;
-let radarChartInst = null, barChartInst = null;
+// ══ Input management ══════════════════════════════════════════════════════
+function buildInitialInputs() {
+  const grid = document.getElementById('playersInputs');
+  grid.innerHTML = '';
+  for (let i = 0; i < playerCount; i++) appendInputRow(i);
+}
 
-// ── Input management ───────────────────────────────────────────────────────
-function addPlayerInput() {
-  if (playerCount >= 5) return;
-  playerCount++;
+function appendInputRow(i) {
   const wrap = document.createElement('div');
   wrap.className = 'player-input-wrap';
+  wrap.dataset.idx = i;
   wrap.innerHTML = `
-    <div class="player-color-dot" style="background:${PLAYER_COLORS[playerCount-1]}"></div>
-    <input class="player-input" type="text" placeholder="Joueur ${playerCount}..." autocomplete="off" spellcheck="false"/>`;
+    <span class="player-dot" style="background:${PLAYER_COLORS[i]};color:${PLAYER_COLORS[i]}"></span>
+    <input class="player-input" type="text" placeholder="Joueur ${i + 1}" autocomplete="off" spellcheck="false"/>
+    ${i >= 2 ? `<button class="player-remove" onclick="removeInput(${i})" title="Retirer">×</button>` : ''}
+  `;
   document.getElementById('playersInputs').appendChild(wrap);
-  if (playerCount >= 5) document.getElementById('addPlayerBtn').disabled = true;
-  document.getElementById('searchHint').textContent = `${playerCount} joueurs · 5 maximum`;
+}
+
+function addPlayerInput() {
+  if (playerCount >= 5) return;
+  appendInputRow(playerCount);
+  playerCount++;
+  document.getElementById('addPlayerBtn').disabled = playerCount >= 5;
+  updateHint();
+}
+
+function removeInput(idx) {
+  const wraps = [...document.querySelectorAll('.player-input-wrap')];
+  const values = wraps.map(w => w.querySelector('.player-input').value);
+  values.splice(idx, 1);
+  playerCount = Math.max(2, values.length);
+  buildInitialInputs();
+  values.forEach((v, i) => { const input = document.querySelectorAll('.player-input')[i]; if (input) input.value = v; });
+  document.getElementById('addPlayerBtn').disabled = playerCount >= 5;
+  updateHint();
+}
+
+function updateHint() {
+  document.getElementById('searchHint').textContent = `${playerCount} joueur${playerCount > 1 ? 's' : ''} · 5 maximum`;
 }
 
 function clearAll() {
-  document.querySelectorAll('.player-input').forEach(i => i.value = '');
+  playerCount = 2;
+  buildInitialInputs();
+  document.getElementById('addPlayerBtn').disabled = false;
   document.getElementById('results').style.display = 'none';
   document.getElementById('errorCard').style.display = 'none';
   playersData = [];
-  // Reset URL
+  updateHint();
   window.history.replaceState({}, '', 'compare.html');
 }
 
-// ── Pre-fill from URL params ───────────────────────────────────────────────
+// ══ Initial load ══════════════════════════════════════════════════════════
 window.addEventListener('load', async () => {
-  // Pro gate check first
-  const isP = await fvIsPro();
-  if (!isP) {
-    showProGate();
-    return;
-  }
+  if (!(await isPro())) { showProGate(); return; }
 
-  const params  = new URLSearchParams(window.location.search);
-  const players = params.getAll('p');
-  if (players.length >= 2) {
+  const params = new URLSearchParams(window.location.search);
+  // Accepte ?p=X&p=Y OU ?player=X (pour le flow depuis watchlist)
+  let players = params.getAll('p');
+  if (players.length === 0 && params.get('player')) players = [params.get('player')];
+
+  // Par defaut 2 inputs
+  playerCount = Math.max(2, Math.min(5, players.length));
+  buildInitialInputs();
+  document.getElementById('addPlayerBtn').disabled = playerCount >= 5;
+  updateHint();
+
+  if (players.length > 0) {
     const inputs = document.querySelectorAll('.player-input');
-    players.forEach((p, i) => {
-      if (i < inputs.length) {
-        inputs[i].value = p;
-      } else if (i < 5) {
-        addPlayerInput();
-        document.querySelectorAll('.player-input')[i].value = p;
-      }
-    });
-    startComparison();
+    players.forEach((p, i) => { if (i < 5) inputs[i].value = p; });
+    if (players.length >= 2) startComparison();
   }
 
-  // Enter key
   document.addEventListener('keydown', e => {
-    if (e.key === 'Enter') startComparison();
+    if (e.key === 'Enter' && document.activeElement?.classList?.contains('player-input')) {
+      e.preventDefault();
+      startComparison();
+    }
   });
 });
 
-// ── Main comparison ────────────────────────────────────────────────────────
+// ══ Comparison flow ═══════════════════════════════════════════════════════
 async function startComparison() {
-  // Defense en profondeur : re-check plan avant tout appel API
-  const isP = await fvIsPro();
-  if (!isP) { showProGate(); return; }
+  if (!(await isPro())) { showProGate(); return; }
 
   const inputs = [...document.querySelectorAll('.player-input')];
-  const nicks  = inputs.map(i => i.value.trim()).filter(Boolean);
-
+  const nicks = inputs.map(i => i.value.trim()).filter(Boolean);
   if (nicks.length < 2) { showError('Entre au moins 2 pseudos FACEIT.'); return; }
 
   document.getElementById('compareBtn').disabled = true;
-  document.getElementById('loadingBar').style.display = 'block';
-  document.getElementById('errorCard').style.display  = 'none';
-  document.getElementById('results').style.display    = 'none';
-
+  document.getElementById('loadingBar').classList.add('active');
+  document.getElementById('errorCard').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
   document.getElementById('searchHint').textContent = `Chargement de ${nicks.length} profils...`;
 
   try {
-    // Ajouter le token pour que check-subscription voie que l'user est Pro
-    const headersScout = {};
+    const headers = {};
     try {
-      const sbCmp = supabase.createClient(_fvSbUrl, _fvSbAnon);
-      const { data: { session } } = await sbCmp.auth.getSession();
-      if (session) headersScout['Authorization'] = 'Bearer ' + session.access_token;
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
     } catch(_) {}
 
-    // Appels API parallèles
     const results = await Promise.allSettled(
-      nicks.map(nick => fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`, { headers: headersScout }).then(r => r.json()))
+      nicks.map(n => fetch(`/api/scout?nickname=${encodeURIComponent(n)}`, { headers }).then(r => r.json()))
     );
 
     playersData = [];
     const errors = [];
-
-    results.forEach((result, i) => {
-      if (result.status === 'fulfilled' && result.value.player) {
-        playersData.push({ ...result.value, color: PLAYER_COLORS[i] });
-      } else {
-        errors.push(nicks[i]);
-      }
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled' && r.value.player) playersData.push({ ...r.value, color: PLAYER_COLORS[i] });
+      else errors.push(nicks[i]);
     });
 
     if (playersData.length < 2) {
       showError(`Impossible de charger les profils. Vérifie les pseudos : ${errors.join(', ')}`);
       return;
     }
+    if (errors.length > 0) showError(`Ignorés (introuvables) : ${errors.join(', ')}`, 'warn');
 
-    if (errors.length > 0) {
-      showError(`Joueurs introuvables ignorés : ${errors.join(', ')}`, 'warn');
-    }
-
-    renderResults();
+    renderAll();
     updateShareUrl(nicks);
-
   } catch(err) {
-    showError('Erreur de connexion. Vérifie ta connexion internet.');
+    showError('Erreur de connexion. Réessaye.');
   } finally {
     document.getElementById('compareBtn').disabled = false;
-    document.getElementById('loadingBar').style.display = 'none';
-    document.getElementById('searchHint').textContent = `${playersData.length} joueurs comparés`;
+    document.getElementById('loadingBar').classList.remove('active');
+    document.getElementById('searchHint').textContent = `${playersData.length} joueur${playersData.length > 1 ? 's' : ''} comparé${playersData.length > 1 ? 's' : ''}`;
   }
 }
 
-// ── Render results ─────────────────────────────────────────────────────────
-function renderResults() {
+function renderAll() {
   renderPlayerCards();
-  renderRadarChart();
-  renderBarChart();
+  renderRadar();
+  renderBar();
   renderBarCompare();
   renderTable();
-  document.getElementById('results').style.display = 'block';
-  document.getElementById('results').classList.add('fade-in');
-  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const r = document.getElementById('results');
+  r.style.display = 'block';
+  r.classList.add('fade-in');
+  setTimeout(() => r.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
 }
 
-// ── Player cards ───────────────────────────────────────────────────────────
+// ══ Player cards ══════════════════════════════════════════════════════════
 function renderPlayerCards() {
-  const cols = playersData.length;
-  const row  = document.getElementById('playersRow');
-  row.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  const row = document.getElementById('playersRow');
+  row.style.gridTemplateColumns = `repeat(${Math.min(playersData.length, 3)}, 1fr)`;
   row.innerHTML = playersData.map(p => {
     const { player, cs2, recent, color } = p;
     const lvl = cs2.level || 1;
-    const fvC = fvBadgeClass(recent.fvRating);
-    return `<div class="player-card" style="border-color:${color}30">
-      <div class="player-color-bar" style="background:${color}"></div>
-      <div class="player-avatar" style="${player.avatar ? `background-image:url(${player.avatar});background-size:cover;background-position:center` : ''}">
-        ${player.avatar ? '' : '👤'}
-      </div>
-      <div class="player-card-info">
-        <div class="player-card-name" style="color:${color}">${player.nickname}</div>
-        <div class="player-card-meta">
-          <span class="badge lvl-${lvl}" style="font-family:var(--mono);font-size:10px">Lvl ${lvl}</span>
-          <span class="badge ${fvC}">FV ${recent.fvRating}</span>
-          <span style="font-size:11px;color:var(--text3)">${player.country?.toUpperCase()||''}</span>
+    const fvR = parseFloat(recent.fvRating);
+    const fvCls = fvR >= 1.2 ? 'elite' : fvR >= 1.05 ? 'great' : fvR >= 0.9 ? 'good' : 'low';
+    const initial = (player.nickname || '?').charAt(0).toUpperCase();
+    return `<div class="player-card">
+      <div class="player-card-bar" style="background:${color}"></div>
+      <div class="player-avatar" style="${player.avatar ? `background-image:url(${player.avatar});color:transparent` : `color:${color}`}">${player.avatar ? '' : initial}</div>
+      <div class="player-name-block">
+        <div class="player-name" style="color:${color}">${player.nickname}</div>
+        <div class="player-meta">
+          <span class="mini-badge lvl-badge">Lvl ${lvl}</span>
+          <span class="mini-badge fv-badge ${fvCls}">FV ${recent.fvRating}</span>
+          ${player.country ? `<span class="country-mini">${player.country.toUpperCase()}</span>` : ''}
+        </div>
+        <div class="player-actions">
+          <button class="player-act-btn" onclick="addToWatchlist('${escapeAttr(player.nickname)}', ${cs2.elo || 0}, ${cs2.level || 0}, '${escapeAttr(player.avatar || '')}')">+ Watchlist</button>
         </div>
       </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div class="player-card-elo" style="color:${color}">${cs2.elo.toLocaleString()}</div>
-        <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">ELO</div>
+      <div class="player-elo-block">
+        <div class="player-elo" style="color:${color}">${(cs2.elo || 0).toLocaleString('fr-FR')}</div>
+        <div class="player-elo-label">ELO FACEIT</div>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── Radar chart ────────────────────────────────────────────────────────────
-function renderRadarChart() {
-  if (radarChartInst) { radarChartInst.destroy(); radarChartInst = null; }
-
-  const labels = ['FV Score','K/D','HS%','ADR','KAST','ELO'];
-
-  // Normalize values to 0-100
-  const normalize = (val, min, max) => Math.min(100, Math.max(0, ((val - min) / (max - min)) * 100));
+// ══ Radar chart ═══════════════════════════════════════════════════════════
+function renderRadar() {
+  if (radarInst) { radarInst.destroy(); radarInst = null; }
+  const labels = ['FV Rating', 'K/D', 'HS%', 'ADR', 'KAST', 'ELO'];
+  const normalize = (v, min, max) => Math.min(100, Math.max(0, ((v - min) / (max - min)) * 100));
 
   const datasets = playersData.map(p => {
     const r = p.recent;
     return {
       label: p.player.nickname,
       data: [
-        normalize(p.fvScore?.total ?? parseFloat(r.fvRating)*60, 0, 100),
-        normalize(parseFloat(r.avgKd),    0.3, 2.5),
-        normalize(parseFloat(r.avgHs),    10,  80),
-        normalize(parseFloat(r.avgAdr),   40,  130),
-        normalize(parseFloat(r.avgKast),  40,  95),
-        normalize(p.cs2.elo,              500, 3500),
+        normalize(parseFloat(r.fvRating), 0.5, 1.5),
+        normalize(parseFloat(r.avgKd), 0.5, 2),
+        normalize(parseFloat(r.avgHs), 20, 75),
+        normalize(parseFloat(r.avgAdr), 50, 120),
+        normalize(parseFloat(r.avgKast), 50, 90),
+        normalize(p.cs2.elo || 0, 500, 3500),
       ],
-      backgroundColor: p.color + '18',
-      borderColor:     p.color,
-      borderWidth: 1.5,
+      backgroundColor: p.color + '22',
+      borderColor: p.color,
+      borderWidth: 2,
       pointBackgroundColor: p.color,
-      pointRadius: 3,
+      pointRadius: 4,
     };
   });
 
-  radarChartInst = new Chart(document.getElementById('radarChart'), {
+  radarInst = new Chart(document.getElementById('radarChart'), {
     type: 'radar',
     data: { labels, datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'bottom', labels: { color: '#8892A4', font: { family: 'JetBrains Mono', size: 11 }, padding: 16, boxWidth: 10 } },
-        tooltip: { backgroundColor: '#191D27', borderColor: '#252A38', borderWidth: 1, titleColor: '#EDF0F7', bodyColor: '#8892A4', titleFont: { family: 'JetBrains Mono', size: 11 }, bodyFont: { family: 'JetBrains Mono', size: 11 } },
+        legend: { display: true, position: 'bottom', labels: { color: '#7a8080', font: { family: 'Space Mono', size: 10 }, padding: 14, boxWidth: 10 } },
+        tooltip: chartTooltipOpts(),
       },
       scales: { r: {
         backgroundColor: 'transparent',
-        grid:       { color: '#252A38' },
-        angleLines: { color: '#252A38' },
-        pointLabels:{ color: '#8892A4', font: { family: 'JetBrains Mono', size: 11 } },
-        ticks:      { display: false, stepSize: 20 },
+        grid: { color: '#1c1e1e' },
+        angleLines: { color: '#1c1e1e' },
+        pointLabels: { color: '#7a8080', font: { family: 'Space Mono', size: 11, weight: 700 } },
+        ticks: { display: false, stepSize: 20 },
         min: 0, max: 100,
       }},
     },
   });
 }
 
-// ── Bar chart FV Rating ────────────────────────────────────────────────────
-function renderBarChart() {
-  if (barChartInst) { barChartInst.destroy(); barChartInst = null; }
-  barChartInst = new Chart(document.getElementById('barChart'), {
+// ══ Bar chart ═════════════════════════════════════════════════════════════
+function renderBar() {
+  if (barInst) { barInst.destroy(); barInst = null; }
+  barInst = new Chart(document.getElementById('barChart'), {
     type: 'bar',
     data: {
       labels: playersData.map(p => p.player.nickname),
       datasets: [{
         data: playersData.map(p => parseFloat(p.recent.fvRating)),
-        backgroundColor: playersData.map(p => p.color + '40'),
-        borderColor:     playersData.map(p => p.color),
-        borderWidth: 1.5, borderRadius: 6,
-      }]
+        backgroundColor: playersData.map(p => p.color + '60'),
+        borderColor: playersData.map(p => p.color),
+        borderWidth: 2,
+        borderRadius: 6,
+      }],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { backgroundColor:'#191D27', borderColor:'#252A38', borderWidth:1, titleColor:'#EDF0F7', bodyColor:'#8892A4', titleFont:{family:'JetBrains Mono',size:11}, bodyFont:{family:'JetBrains Mono',size:11} } },
+      plugins: { legend: { display: false }, tooltip: chartTooltipOpts() },
       scales: {
-        x: { ticks: { color:'#8892A4', font:{family:'JetBrains Mono',size:11} }, grid:{color:'#252A38'} },
-        y: { ticks: { color:'#8892A4', font:{family:'JetBrains Mono',size:11} }, grid:{color:'#252A38'}, min:0 },
+        x: { ticks: { color: '#7a8080', font: { family: 'Space Mono', size: 11 } }, grid: { color: '#1c1e1e' } },
+        y: { ticks: { color: '#7a8080', font: { family: 'Space Mono', size: 11 } }, grid: { color: '#1c1e1e' }, min: 0 },
       },
     },
   });
 }
 
-// ── Bar compare ────────────────────────────────────────────────────────────
+function chartTooltipOpts() {
+  return {
+    backgroundColor: '#131414', borderColor: '#252727', borderWidth: 1,
+    titleColor: '#e8eaea', bodyColor: '#a8b0b0',
+    titleFont: { family: 'Space Mono', size: 11, weight: 700 },
+    bodyFont: { family: 'Space Mono', size: 11 },
+    padding: 10, cornerRadius: 6,
+  };
+}
+
+// ══ Bar compare ═══════════════════════════════════════════════════════════
 function renderBarCompare() {
   const stats = [
-    { key: (r,p) => p.fvScore?.total ?? 0,          label: 'FV Score /100',  fmt: v => v+'/100', max: 100 },
-    { key: r => parseFloat(r.fvRating),              label: 'FV Rating',      fmt: v => v.toFixed(2), max: 1.5 },
-    { key: r => parseFloat(r.avgKd),                 label: 'K/D moyen',      fmt: v => v.toFixed(2), max: 3 },
-    { key: r => parseFloat(r.avgHs),                 label: 'HS%',            fmt: v => v.toFixed(1)+'%', max: 80 },
-    { key: r => parseFloat(r.avgAdr),                label: 'ADR',            fmt: v => v.toFixed(0), max: 130 },
-    { key: r => parseFloat(r.avgKast),               label: 'KAST',           fmt: v => v.toFixed(0)+'%', max: 100 },
-    { key: r => parseFloat(r.winRate),               label: 'Win rate',       fmt: v => v.toFixed(0)+'%', max: 100 },
-    { key: (r,p) => p.cs2.elo,                       label: 'ELO FACEIT',     fmt: v => v.toLocaleString(), max: 3500 },
-    { key: r => parseFloat(r.openingRatio)||0,       label: 'Opening ratio',  fmt: v => v.toFixed(2), max: 3 },
-    { key: r => r.totalClutch1v1+r.totalClutch1v2||0,label: 'Clutches totaux',fmt: v => v, max: 20 },
+    { label: 'FV Rating',     get: p => parseFloat(p.recent.fvRating),       fmt: v => v.toFixed(2),             max: 1.5 },
+    { label: 'K/D moyen',     get: p => parseFloat(p.recent.avgKd),          fmt: v => v.toFixed(2),             max: 2 },
+    { label: 'HS%',           get: p => parseFloat(p.recent.avgHs),          fmt: v => v.toFixed(1) + '%',       max: 80 },
+    { label: 'ADR',           get: p => parseFloat(p.recent.avgAdr),         fmt: v => v.toFixed(0),             max: 130 },
+    { label: 'KAST',          get: p => parseFloat(p.recent.avgKast),        fmt: v => v.toFixed(0) + '%',       max: 90 },
+    { label: 'Win rate',      get: p => parseFloat(p.recent.winRate),        fmt: v => v.toFixed(0) + '%',       max: 100 },
+    { label: 'ELO FACEIT',    get: p => p.cs2.elo || 0,                      fmt: v => v.toLocaleString('fr-FR'), max: 3500 },
+    { label: 'Opening ratio', get: p => parseFloat(p.recent.openingRatio)||0,fmt: v => v.toFixed(2),             max: 3 },
   ];
 
   document.getElementById('barCompare').innerHTML = stats.map(stat => {
-    const values = playersData.map(p => stat.key(p.recent, p));
-    const maxVal = Math.max(...values);
-    const minVal = Math.min(...values);
-
-    const bars = playersData.map(p => {
-      const val   = stat.key(p.recent, p);
-      const pct   = Math.min(100, (val / stat.max) * 100);
-      const isBest  = val === maxVal;
-      const isWorst = val === minVal && playersData.length > 1 && minVal !== maxVal;
+    const values = playersData.map(stat.get);
+    const maxV = Math.max(...values), minV = Math.min(...values);
+    const rows = playersData.map(p => {
+      const v = stat.get(p);
+      const pct = Math.min(100, (v / stat.max) * 100);
+      const isBest = v === maxV && playersData.length > 1 && maxV !== minV;
+      const isWorst = v === minV && playersData.length > 1 && minV !== maxV;
+      const color = isBest ? 'var(--success)' : isWorst ? 'var(--danger)' : 'var(--text2)';
       return `<div class="bar-row">
         <div class="bar-player-name" style="color:${p.color}">${p.player.nickname}</div>
         <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${p.color}"></div></div>
-        <div class="bar-value" style="color:${isBest?'var(--success)':isWorst?'var(--danger)':'var(--text2)'}">${stat.fmt(val)}</div>
+        <div class="bar-value" style="color:${color}">${stat.fmt(v)}</div>
       </div>`;
     }).join('');
-
     return `<div class="bar-item">
-      <div class="bar-item-header"><span class="bar-item-label">${stat.label}</span></div>
-      <div class="bar-item-bars">${bars}</div>
+      <div class="bar-item-header">${stat.label}</div>
+      <div class="bar-rows">${rows}</div>
     </div>`;
   }).join('');
 }
 
-// ── Stats table ────────────────────────────────────────────────────────────
+// ══ Stats table ═══════════════════════════════════════════════════════════
 function renderTable() {
-  const head = document.getElementById('tableHead');
-  head.innerHTML = `<th>Statistique</th>` + playersData.map(p =>
-    `<th class="player-col" style="color:${p.color}">${p.player.nickname}</th>`
-  ).join('');
+  document.getElementById('tableHead').innerHTML = `<th>Statistique</th>` +
+    playersData.map(p => `<th class="player-col" style="color:${p.color}">${p.player.nickname}</th>`).join('');
 
   const groups = [
     { title: 'Stats générales', rows: [
-      { label:'FV Rating',    get: p => p.recent.fvRating,              higher: true },
-      { label:'K/D moyen',    get: p => p.recent.avgKd,                 higher: true },
-      { label:'HS%',          get: p => p.recent.avgHs + '%',           higher: true },
-      { label:'ADR',          get: p => p.recent.avgAdr,                higher: true },
-      { label:'KAST',         get: p => p.recent.avgKast + '%',         higher: true },
-      { label:'Win rate',     get: p => p.recent.winRate + '%',         higher: true },
-      { label:'ELO FACEIT',   get: p => p.cs2.elo.toLocaleString(),     higher: true },
-      { label:'Level',        get: p => p.cs2.level,                    higher: true },
+      { label: 'FV Rating',  get: p => p.recent.fvRating,               higher: true },
+      { label: 'K/D moyen',  get: p => p.recent.avgKd,                   higher: true },
+      { label: 'HS%',        get: p => p.recent.avgHs + '%',             higher: true },
+      { label: 'ADR',        get: p => p.recent.avgAdr,                  higher: true },
+      { label: 'KAST',       get: p => p.recent.avgKast + '%',           higher: true },
+      { label: 'Win rate',   get: p => p.recent.winRate + '%',           higher: true },
+      { label: 'ELO FACEIT', get: p => (p.cs2.elo || 0).toLocaleString('fr-FR'), higher: true },
+      { label: 'Level',      get: p => p.cs2.level,                      higher: true },
     ]},
     { title: 'CT / T split', rows: [
-      { label:'CT Win rate',  get: p => p.recent.ctWinRate + '%',       higher: true },
-      { label:'CT K/D',       get: p => p.recent.ctKd,                  higher: true },
-      { label:'T Win rate',   get: p => p.recent.tWinRate + '%',        higher: true },
-      { label:'T K/D',        get: p => p.recent.tKd,                   higher: true },
+      { label: 'CT Win rate', get: p => p.recent.ctWinRate + '%', higher: true },
+      { label: 'CT K/D',      get: p => p.recent.ctKd,            higher: true },
+      { label: 'T Win rate',  get: p => p.recent.tWinRate + '%',  higher: true },
+      { label: 'T K/D',       get: p => p.recent.tKd,             higher: true },
     ]},
     { title: 'Utility', rows: [
-      { label:'Flashes lancées',    get: p => p.recent.totalFlashesThrown,  higher: true },
-      { label:'Ennemis flashés',    get: p => p.recent.totalEnemiesFlashed, higher: true },
-      { label:'Flash / round',      get: p => p.recent.avgFlashPerRound,    higher: true },
-      { label:'Util. DMG total',    get: p => p.recent.totalUtilDmg,        higher: true },
-      { label:'Sniper kills',       get: p => p.recent.totalSniperKills,    higher: true },
+      { label: 'Flashes lancées', get: p => p.recent.totalFlashesThrown,  higher: true },
+      { label: 'Ennemis flashés', get: p => p.recent.totalEnemiesFlashed, higher: true },
+      { label: 'Flash / round',   get: p => p.recent.avgFlashPerRound,    higher: true },
+      { label: 'Util. DMG total', get: p => p.recent.totalUtilDmg,        higher: true },
+      { label: 'Sniper kills',    get: p => p.recent.totalSniperKills,    higher: true },
     ]},
     { title: 'Multi-kills & clutches', rows: [
-      { label:'Doubles (2K)',  get: p => p.recent.totalDoubles,   higher: true },
-      { label:'Triples (3K)',  get: p => p.recent.totalTriples,   higher: true },
-      { label:'Quadros (4K)',  get: p => p.recent.totalQuads,     higher: true },
-      { label:'Aces (5K)',     get: p => p.recent.totalAces,      higher: true },
-      { label:'Clutch 1v1',   get: p => p.recent.totalClutch1v1, higher: true },
-      { label:'Clutch 1v2',   get: p => p.recent.totalClutch1v2, higher: true },
-      { label:'Clutch 1v3',   get: p => p.recent.totalClutch1v3, higher: true },
+      { label: 'Doubles (2K)', get: p => p.recent.totalDoubles,   higher: true },
+      { label: 'Triples (3K)', get: p => p.recent.totalTriples,   higher: true },
+      { label: 'Quadros (4K)', get: p => p.recent.totalQuads,     higher: true },
+      { label: 'Aces (5K)',    get: p => p.recent.totalAces,      higher: true },
+      { label: 'Clutch 1v1',  get: p => p.recent.totalClutch1v1, higher: true },
+      { label: 'Clutch 1v2',  get: p => p.recent.totalClutch1v2, higher: true },
+      { label: 'Clutch 1v3',  get: p => p.recent.totalClutch1v3, higher: true },
     ]},
-    { title: 'Duels d\'ouverture', rows: [
-      { label:'Opening kills',  get: p => p.recent.totalFirstKills,  higher: true },
-      { label:'Opening deaths', get: p => p.recent.totalFirstDeaths, higher: false },
-      { label:'Opening ratio',  get: p => p.recent.openingRatio,     higher: true },
-      { label:'Trade kills',    get: p => p.recent.totalTradeKills,  higher: true },
-      { label:'Saves',          get: p => p.recent.totalSaves,       higher: true },
-      { label:'Pistol win%',    get: p => p.recent.pistolWinRate+'%', higher: true },
+    { title: "Duels d'ouverture", rows: [
+      { label: 'Opening kills',  get: p => p.recent.totalFirstKills,   higher: true },
+      { label: 'Opening deaths', get: p => p.recent.totalFirstDeaths,  higher: false },
+      { label: 'Opening ratio',  get: p => p.recent.openingRatio,      higher: true },
+      { label: 'Trade kills',    get: p => p.recent.totalTradeKills,   higher: true },
+      { label: 'Saves',          get: p => p.recent.totalSaves,        higher: true },
+      { label: 'Pistol win%',    get: p => (p.recent.pistolWinRate || '—') + (p.recent.pistolWinRate ? '%' : ''), higher: true },
     ]},
   ];
 
   const tbody = document.getElementById('tableBody');
   tbody.innerHTML = groups.map(group => {
-    const headerRow = `<tr class="stat-group-header"><td colspan="${playersData.length + 1}">${group.title}</td></tr>`;
-
     const dataRows = group.rows.map(row => {
-      const rawVals  = playersData.map(p => parseFloat(row.get(p)) || 0);
+      const rawVals = playersData.map(p => parseFloat(String(row.get(p)).replace(/[^\d.-]/g,'')) || 0);
       const dispVals = playersData.map(p => row.get(p));
-
-      // Masquer la ligne si toutes les valeurs sont 0 ou '-' (donnée non disponible)
-      const allEmpty = dispVals.every(v => !v || v === '0' || v === '-' || v === '0%' || v === '%' || parseFloat(v) === 0);
+      const allEmpty = dispVals.every(v => !v || v === '0' || v === '-' || v === '0%' || v === '—' || parseFloat(v) === 0);
       if (allEmpty) return '';
 
       const best  = row.higher ? Math.max(...rawVals) : Math.min(...rawVals);
       const worst = row.higher ? Math.min(...rawVals) : Math.max(...rawVals);
-      const cells = playersData.map((p, i) => {
-        const raw = rawVals[i];
-        const cls = raw === best && playersData.length > 1 ? 'stat-best'
-                  : raw === worst && playersData.length > 1 && best !== worst ? 'stat-worst'
-                  : 'stat-mid';
+      const cells = rawVals.map((raw, i) => {
+        const cls = playersData.length > 1 && best !== worst
+          ? (raw === best ? 'best' : raw === worst ? 'worst' : 'mid')
+          : 'mid';
         return `<td class="stat-val ${cls}">${dispVals[i]}</td>`;
       }).join('');
       return `<tr><td class="stat-name">${row.label}</td>${cells}</tr>`;
-    }).join('');
+    }).filter(Boolean).join('');
 
-    // Masquer le groupe entier si toutes ses lignes sont vides
-    if (!dataRows.trim()) return '';
+    if (!dataRows) return '';
+    const headerRow = `<tr class="stat-group-header"><td colspan="${playersData.length + 1}">${group.title}</td></tr>`;
     return headerRow + dataRows;
   }).join('');
 }
 
-// ── Share URL ──────────────────────────────────────────────────────────────
+// ══ Watchlist ═════════════════════════════════════════════════════════════
+async function addToWatchlist(nickname, elo, level, avatar_url) {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+    const res = await fetch('/api/watchlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ action: 'add', nickname, elo, level, avatar_url }),
+    });
+    const d = await res.json();
+    showToast(d.ok ? (d.already ? `${nickname} est déjà dans ta watchlist` : `${nickname} ajouté à ta watchlist`) : 'Erreur : ' + (d.error || ''));
+  } catch { showToast('Erreur réseau'); }
+}
+
+function showToast(text) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700;padding:10px 18px;border-radius:6px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.5)';
+  t.textContent = text;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ══ Share URL ═════════════════════════════════════════════════════════════
 function updateShareUrl(nicks) {
   const params = new URLSearchParams();
   nicks.forEach(n => params.append('p', n));
@@ -641,27 +666,25 @@ function updateShareUrl(nicks) {
 function copyShareUrl() {
   const url = document.getElementById('shareUrl').value;
   navigator.clipboard.writeText(url).then(() => {
-    const btn = document.querySelector('.share-btn');
-    btn.textContent = '✓ Copié !';
-    setTimeout(() => { btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg> Partager'; }, 2000);
+    const btn = document.getElementById('shareBtn');
+    const orig = btn.innerHTML;
+    btn.textContent = '✓ Copié';
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.color = 'var(--accent)';
+    setTimeout(() => { btn.innerHTML = orig; btn.style.borderColor = ''; btn.style.color = ''; }, 2000);
   });
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-function fvBadgeClass(r) {
-  const v = parseFloat(r);
-  if (v >= 1.20) return 'badge badge-fv-elite';
-  if (v >= 1.05) return 'badge badge-fv-great';
-  if (v >= 0.90) return 'badge badge-fv-good';
-  if (v >= 0.75) return 'badge badge-fv-avg';
-  return 'badge badge-fv-low';
-}
-
+// ══ Utilities ═════════════════════════════════════════════════════════════
 function showError(msg, type = 'error') {
   const el = document.getElementById('errorCard');
-  el.textContent   = msg;
+  el.textContent = msg;
   el.style.display = 'block';
-  if (type === 'warn') el.style.cssText += 'color:var(--gold);background:rgba(245,200,66,.06);border-color:rgba(245,200,66,.2)';
+  el.className = 'error-card' + (type === 'warn' ? ' warn' : '');
+}
+
+function escapeAttr(s) {
+  return String(s || '').replace(/"/g, '&quot;').replace(/'/g, "\\'");
 }
 </script>
 <script src="/nav.js"></script>
