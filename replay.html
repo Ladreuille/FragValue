@@ -960,22 +960,19 @@ function recalcRoundBoundaries() {
   });
   console.log(`[Replay] HE samples: ${heSamples.join(' | ')}`);
   console.log(`[Replay] Molo samples: ${moloSamples.join(' | ')}`);
-  // Dump path d'un molo CLAMPE (span = CLAMP_SPAN_BY_TYPE.molotov = 512)
-  // pour voir si le path lui-meme est chaotique vs etendu au-dela du vrai landing.
-  const clampedMolo = (demoData.grenades || []).find(g => {
-    const k = typeKey(g.type || '');
-    return (k === 'molotov' || k === 'incgren')
-        && g.path && g.path.length >= 20
-        && g.detonTick && (g.detonTick - g.tick) === 512;  // signature du clamp molo
+  // Dump paths : 1 flash et 1 HE avec >= 20 pts, pour voir si anomalies restent
+  ['flash', 'hegre'].forEach(targetKey => {
+    const g = (demoData.grenades || []).find(gg => {
+      const k = typeKey(gg.type || '');
+      return k === targetKey && gg.path && gg.path.length >= 40 && gg.detonTick;
+    });
+    if (g) {
+      const n = g.path.length / 2;
+      const pts = [];
+      for (let i = 0; i < n; i++) pts.push(`(${Math.round(g.path[i*2])},${Math.round(g.path[i*2+1])})`);
+      console.log(`[Replay] ${targetKey.toUpperCase()} path (${n}pts, tick=${g.tick}→${g.detonTick}, thrower=${g.thrower}): ${pts.join(' ')}`);
+    }
   });
-  if (clampedMolo) {
-    const n = clampedMolo.path.length / 2;
-    const pts = [];
-    for (let i = 0; i < n; i++) pts.push(`(${Math.round(clampedMolo.path[i*2])},${Math.round(clampedMolo.path[i*2+1])})`);
-    console.log(`[Replay] CLAMPED molo path (${n}pts, tick=${clampedMolo.tick}→${clampedMolo.detonTick}): ${pts.join(' ')}`);
-  } else {
-    console.log(`[Replay] Pas de molo clampe avec >= 20 pts trouve`);
-  }
 }
 
 // ══ ROUNDS BAR ═══════════════════════════════════════════════════════════════
