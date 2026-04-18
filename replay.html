@@ -1479,6 +1479,17 @@ function buildFrames(round) {
   const _firstName = Object.keys(currentRoundPeakStats)[0];
   const _peak = currentRoundPeak[_firstName] || {};
   console.log(`[FreezeSnap R${round}] window=${freezeStart}-${freezeEnd} rdStart=${rdStart} | ${_firstName}: m=${currentRoundPeakStats[_firstName]?.money} a=${currentRoundPeakStats[_firstName]?.armor} w=${currentRoundBestWeapon[_firstName]} nades=smk${_peak.smk}/fl${_peak.fl}/heg${_peak.heg}/mol${_peak.mol}`);
+  // Diagnostic : pour round 0, lister les pickups par joueur pour comprendre
+  // d'ou viennent les grenades impossibles au pistol round.
+  if (round === 0) {
+    Object.keys(positions).slice(0, 3).forEach(name => {
+      const pks = (pickupsAll[name] || []).filter(pk => pk.tick >= rdStart && pk.tick <= rdEnd);
+      if (pks.length) {
+        const summary = pks.map(pk => `${pk.type}@${pk.tick}`).join(',');
+        console.log(`[PickupsR0] ${name}: ${summary}`);
+      }
+    });
+  }
 
   frames = [];
   for (let f = 0; f <= N; f++) {
