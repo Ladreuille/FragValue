@@ -792,22 +792,29 @@ function recalcRoundBoundaries() {
   // On clamp a 500 ticks (~4s) pour les grenades anormales seulement.
   // Apres clamp on recalcule endTick = detonTick + duree de l'effet par type
   // (sinon le "Xs restant" du smoke reste sur la valeur anormale parser).
-  const MAX_SPAN = 1000, CLAMP_SPAN = 500;
-  const EFFECT_TICKS = { smoke: 2304, molotov: 896, incgren: 896, decoy: 5760 };  // 18s/7s/7s/45s
+  const MAX_SPAN = 1000;
+  // Clamp span par type : flash fuse 1.5s, HE 1.5s-2s, smoke/molo flight peut
+  // aller jusqu'a 3-4s. Appliquer 500 ticks (4s) uniforme rendait les flashes
+  // 2.5x trop lentes visuellement.
+  const CLAMP_SPAN_BY_TYPE = { hegre: 256, flash: 192, smoke: 512, molotov: 512, incgren: 512, decoy: 192 };
+  const EFFECT_TICKS = { smoke: 2304, molotov: 896, incgren: 896, decoy: 5760, flash: 128 };  // 18s/7s/45s/1s pulse
   const STATIONARY_SQ = 100;   // (10 units)^2 : seuil pour considerer la grenade au sol
   const MAX_JUMP_SQ = 1000000; // (1000 units)^2 : saut anormal entre deux samples (teleport)
+  const typeKey = (t) => t.includes('smoke') ? 'smoke'
+                       : t.includes('incgren') ? 'incgren'
+                       : t.includes('molotov') ? 'molotov'
+                       : t.includes('decoy') ? 'decoy'
+                       : t.includes('flash') ? 'flash'
+                       : t.includes('hegre') ? 'hegre' : null;
   let clamped = 0, jumpTruncated = 0;
   (demoData.grenades || []).forEach(g => {
     if (!g.tick || !g.detonTick) return;
     const span = g.detonTick - g.tick;
     if (span > MAX_SPAN || span < 0) {
-      g.detonTick = g.tick + CLAMP_SPAN;
-      const t = g.type || '';
-      const effectKey = t.includes('smoke') ? 'smoke'
-                      : t.includes('incgren') ? 'incgren'
-                      : t.includes('molotov') ? 'molotov'
-                      : t.includes('decoy') ? 'decoy' : null;
-      g.endTick = g.detonTick + (effectKey ? EFFECT_TICKS[effectKey] : 0);
+      const key = typeKey(g.type || '');
+      const clampSpan = key ? (CLAMP_SPAN_BY_TYPE[key] || 256) : 256;
+      g.detonTick = g.tick + clampSpan;
+      g.endTick = g.detonTick + (key && EFFECT_TICKS[key] ? EFFECT_TICKS[key] : 0);
       // Tronquer path au premier stretch de samples stationnaires :
       // le parser continue a tracker smoke cloud / inferno / debris apres la
       // vraie detonation, ajoutant des points qui font visuellement la grenade
