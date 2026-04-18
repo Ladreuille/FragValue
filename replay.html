@@ -869,15 +869,18 @@ function recalcRoundBoundaries() {
       jumpTruncated++;
       return;
     }
-    // Renversements de direction : HE/flash ne zigzaguent pas, max 1-2 rebonds.
+    // Renversements de direction : HE/flash/molo/incgren ne zigzaguent pas.
+    // Un HE/flash a max 1-2 bounces avant explosion, un molo/inc peut rouler
+    // apres landing mais rarement > 3 reversals dramatiques.
     const key = typeKey(g.type || '');
-    if (key === 'hegre' || key === 'flash') {
+    const maxReversals = { hegre: 2, flash: 2, molotov: 3, incgren: 3 }[key];
+    if (maxReversals !== undefined) {
       let reversals = 0, prevDx = 0, prevDy = 0;
       for (let i = 1; i < n; i++) {
         const dx = g.path[i * 2] - g.path[(i - 1) * 2];
         const dy = g.path[i * 2 + 1] - g.path[(i - 1) * 2 + 1];
         if (i > 1 && (prevDx * dx + prevDy * dy) < 0) reversals++;
-        if (reversals >= 3) {
+        if (reversals > maxReversals) {
           g.path = g.path.slice(0, i * 2);
           g.detonX = g.path[g.path.length - 2];
           g.detonY = g.path[g.path.length - 1];
