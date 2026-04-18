@@ -1043,20 +1043,40 @@ function renderTeamPlayers(containerId, players) {
   }).join('');
 }
 
-function updateScores() {
-  if (!demoData) return;
+// Calcule scores par TEAM (pas par side) en tenant compte du halftime switch.
+// MR12 standard CS2 : halftime apres 12 rounds joues (displayNum 1-12 = 1ere
+// mi-temps, displayNum 13+ = 2eme mi-temps ou les teams ont switch de side).
+// Team A = commence CT. Team B = commence T.
+// Team A's score = (1ere mi CT wins) + (2eme mi T wins).
+// Team B's score = (1ere mi T wins) + (2eme mi CT wins).
+function computeTeamScores(untilDisplayNum) {
   const rounds = demoData.rounds || [];
-  let ctScore = 0, tScore = 0;
-
-  // Count wins strictly BEFORE current round (current round not yet decided)
+  const HALFTIME = 12;
+  let firstCT = 0, firstT = 0, secondCT = 0, secondT = 0;
   rounds.forEach(rd => {
     if (rd.isKnife) return;
-    const freezeR = rd.round ?? 0;
-    if (currentRound !== null && freezeR >= currentRound) return;
-    if (rd.winner === 2) tScore++; // team 2 = T wins
-    else if (rd.winner === 3) ctScore++; // team 3 = CT wins
+    const dn = rd.displayNum || 0;
+    if (untilDisplayNum !== null && dn >= untilDisplayNum) return;
+    const isFirst = dn <= HALFTIME;
+    if (rd.winner === 2) { if (isFirst) firstT++; else secondT++; }
+    else if (rd.winner === 3) { if (isFirst) firstCT++; else secondCT++; }
   });
+  const teamA = firstCT + secondT; // commence CT
+  const teamB = firstT + secondCT; // commence T
+  return { teamA, teamB, HALFTIME };
+}
 
+function updateScores() {
+  if (!demoData) return;
+  const currentDisplay = currentRound !== null
+    ? ((demoData.rounds || []).find(r => (r.round ?? -1) === currentRound)?.displayNum ?? 0)
+    : 0;
+  const { teamA, teamB, HALFTIME } = computeTeamScores(currentDisplay);
+  // Apres halftime, teams switchent de side : team A (commence CT) est maintenant
+  // sur T panel, team B (commence T) est maintenant sur CT panel.
+  const afterHalftime = currentDisplay > HALFTIME;
+  const ctScore = afterHalftime ? teamB : teamA;
+  const tScore = afterHalftime ? teamA : teamB;
   document.getElementById('ctScore').textContent = ctScore;
   document.getElementById('tScore').textContent = tScore;
 }
@@ -2128,15 +2148,13 @@ function drawKillfeed(frame, W, H) {
 
 // ══ CANVAS SCOREBOARD ═══════════════════════════════════════════════════════
 function drawScoreboard(frame, W, H) {
-  const rounds = demoData.rounds || [];
-  let ctScore = 0, tScore = 0;
-  rounds.forEach(rd => {
-    if (rd.isKnife) return;
-    // Strictly BEFORE current round: round in progress is not yet decided
-    if (currentRound !== null && (rd.round ?? 0) >= currentRound) return;
-    if (rd.winner === 2) tScore++;
-    else if (rd.winner === 3) ctScore++;
-  });
+  const _currentDisp = currentRound !== null
+    ? ((demoData.rounds || []).find(r => (r.round ?? -1) === currentRound)?.displayNum ?? 0)
+    : 0;
+  const { teamA, teamB, HALFTIME } = computeTeamScores(_currentDisp);
+  const _afterHalf = _currentDisp > HALFTIME;
+  const ctScore = _afterHalf ? teamB : teamA;
+  const tScore = _afterHalf ? teamA : teamB;
 
   const secs = Math.round((frame.tick - (frames[0]?.tick || 0)) / 64);
   const timeStr = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
