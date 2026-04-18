@@ -1409,7 +1409,11 @@ function buildFrames(round) {
   // comme attendu), ce qui collapse la fenetre a 1 tick.
   const BUY_WINDOW_TICKS = 20 * 128;  // 20s de buy time max (128 tick/s)
   let rdStart = Math.max(0, (roundData.startTick || 0) - BUY_WINDOW_TICKS);
-  const rdEnd = roundData.endTick || Infinity;
+  // IMPORTANT : utiliser gameplayEnd (lastKill + buffer) et NON endTick.
+  // Le champ parser endTick s'etend jusqu'au freeze_end du round suivant,
+  // donc les pickups du buy phase du round N+1 seraient comptes comme
+  // round N (explique les smoke/HE/flash impossibles au pistol round).
+  const rdEnd = roundData.gameplayEnd || roundData.endTick || Infinity;
   // Round 0 : detecter match_start via le money reset ($16000 warmup -> $800
   // pistol). Les pickups warmup sont contamines sinon et faussent le HUD
   // (grenades achetees pendant warmup qui n'existent pas en pistol).
