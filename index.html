@@ -190,25 +190,30 @@ nav{
 
 /* ── DEMO PREVIEW ── */
 .demo-preview{
-  position:absolute;right:0;top:50%;transform:translateY(-50%);
-  width:50%;max-width:520px;
-  background:var(--surface);
-  border:1px solid var(--border2);
-  border-radius:var(--radius2);
-  overflow:hidden;
-  box-shadow:0 32px 80px rgba(0,0,0,.6);
+  position:absolute;right:80px;top:50%;transform:translateY(-50%);
+  width:46%;max-width:500px;
   animation:fadeLeft .8s .2s ease both
 }
 @media(max-width:1100px){.demo-preview{position:relative;right:auto;top:auto;transform:none;width:100%;max-width:none;margin-top:40px}}
-.demo-topbar{
-  display:flex;align-items:center;gap:8px;
-  padding:12px 16px;border-bottom:1px solid var(--border);
-  background:rgba(255,255,255,.02)
+.demo-label{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:10px;color:var(--accent);
+  letter-spacing:.14em;text-transform:uppercase;font-weight:700;
+  padding:5px 12px;border-radius:40px;
+  background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.22);
+  margin-bottom:14px
 }
-.demo-dot{width:10px;height:10px;border-radius:50%;background:var(--border2)}
-.demo-dot:first-child{background:var(--border2)}.demo-dot:nth-child(2){background:var(--border2)}.demo-dot:nth-child(3){background:var(--border2)}
-.demo-title{font-size:11px;color:var(--text3);letter-spacing:.06em;margin-left:8px}
-.demo-body{padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.demo-live-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 8px var(--accent);animation:pulse 1.8s ease-in-out infinite
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.demo-context{
+  font-family:var(--mono);font-size:11px;color:var(--text3);
+  letter-spacing:.04em;margin-bottom:14px;padding-left:2px
+}
+.demo-context strong{color:var(--text);font-weight:700}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .demo-card{
   background:var(--bg);border:1px solid var(--border);
   border-radius:var(--radius);padding:14px;
@@ -560,12 +565,13 @@ footer{
     </div>
   </div>
 
-  <!-- DEMO PREVIEW -->
+  <!-- DEMO PREVIEW : teaser authentique de ce que FragValue delivre -->
   <div class="demo-preview">
-    <div class="demo-topbar">
-      <div class="demo-dot"></div><div class="demo-dot"></div><div class="demo-dot"></div>
-      <span class="demo-title">de_dust2 · 18 rounds · FLoBYque</span>
+    <div class="demo-label">
+      <span class="demo-live-dot"></span>
+      Ce que tu obtiens après un match
     </div>
+    <div class="demo-context"><strong>Dust2 · 18 rounds</strong> · analyse FACEIT live</div>
     <div class="demo-body">
       <div class="demo-card">
         <div class="demo-card-label">FV Rating</div>
