@@ -13,6 +13,11 @@ function getSbClient() {
 
 // ── Cache helpers ─────────────────────────────────────────────────────────────
 const CACHE_TTL_H = 24; // heures
+// Version du schema cache. Bump quand le mapping des stats avancees change
+// (nouveau champ, fix de mapping FACEIT). Un cache sans __v ou avec ancien __v
+// est considere comme stale et sera refetch.
+//   v2 : fix Entry Count/Entry Wins (mapping CS2 au lieu de First Kills legacy)
+const CACHE_SCHEMA_VERSION = 2;
 
 async function readCache(playerId) {
   try {
@@ -25,8 +30,11 @@ async function readCache(playerId) {
       .single();
     if (!data) return null;
     const age = (Date.now() - new Date(data.cached_at).getTime()) / 3600000;
-    if (age > CACHE_TTL_H) return null; // expiré
-    return data.advanced_stats;
+    if (age > CACHE_TTL_H) return null;
+    const stats = data.advanced_stats;
+    if (!stats || stats.__v !== CACHE_SCHEMA_VERSION) return null;
+    const { __v, ...clean } = stats;
+    return clean;
   } catch { return null; }
 }
 
@@ -37,7 +45,7 @@ async function writeCache(playerId, nickname, advancedStats) {
     await sb.from('player_advanced_cache').upsert({
       player_id:      playerId,
       nickname:       nickname,
-      advanced_stats: advancedStats,
+      advanced_stats: { ...advancedStats, __v: CACHE_SCHEMA_VERSION },
       cached_at:      new Date().toISOString(),
     }, { onConflict: 'player_id' });
   } catch(e) { console.warn('Cache write error:', e.message); }
