@@ -59,16 +59,16 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .stat-card.tier-teal::before{background:var(--success)}
 .stat-card.tier-red::before{background:var(--danger)}
 
-.stat-card:nth-child(1){animation-delay:.08s}
-.stat-card:nth-child(2){animation-delay:.12s}
-.stat-card:nth-child(3){animation-delay:.16s}
-.stat-card:nth-child(4){animation-delay:.20s}
-.stat-card:nth-child(5){animation-delay:.24s}
-.stat-card:nth-child(6){animation-delay:.28s}
-.stat-card:nth-child(7){animation-delay:.32s}
-.stat-card:nth-child(8){animation-delay:.36s}
-.stat-card:nth-child(9){animation-delay:.40s}
-.stat-card:nth-child(10){animation-delay:.44s}
+.stat-card:nth-of-type(1){animation-delay:.06s}
+.stat-card:nth-of-type(2){animation-delay:.08s}
+.stat-card:nth-of-type(3){animation-delay:.10s}
+.stat-card:nth-of-type(4){animation-delay:.12s}
+.stat-card:nth-of-type(5){animation-delay:.14s}
+.stat-card:nth-of-type(6){animation-delay:.16s}
+.stat-card:nth-of-type(7){animation-delay:.18s}
+.stat-card:nth-of-type(8){animation-delay:.20s}
+.stat-card:nth-of-type(9){animation-delay:.22s}
+.stat-card:nth-of-type(n+10){animation-delay:.24s}
 
 .stat-name{font-family:var(--display);font-size:26px;letter-spacing:.02em;line-height:1;margin-bottom:14px;padding-left:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .pro-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(184,255,87,.12);color:var(--accent);border:1px solid rgba(184,255,87,.25);padding:3px 9px;border-radius:40px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;vertical-align:middle}
@@ -196,7 +196,29 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     </div>
   </div>
 
-  <!-- 3. KAST% -->
+  <!-- 3. K/D RATIO -->
+  <div class="stat-card tier-gold">
+    <h2 class="stat-name">K/D Ratio <span class="free-badge">FREE</span></h2>
+    <p class="stat-desc">Le rapport kills / deaths. La stat de base du FPS : au dessus de 1, tu fais plus de frags que tu ne meurs. Utile comme indicateur rapide, mais ne raconte rien du contexte : un K/D élevé en farmant des exits vaut moins qu'un K/D correct en entry frag.</p>
+    <div class="range-bar">
+      <div class="range-seg bad" style="flex:85">&lt; 0.85</div>
+      <div class="range-seg avg" style="flex:25">0.85 · 1.10</div>
+      <div class="range-seg good" style="flex:20">1.10 · 1.30</div>
+      <div class="range-seg elite" style="flex:20">&gt; 1.30</div>
+    </div>
+    <div class="range-labels">
+      <span class="range-label"><span class="range-dot bad"></span>En dessous</span>
+      <span class="range-label"><span class="range-dot avg"></span>Niveau 6 à 8</span>
+      <span class="range-label"><span class="range-dot good"></span>Niveau 9 à 10</span>
+      <span class="range-label"><span class="range-dot elite"></span>Challenger / Pro</span>
+    </div>
+    <div class="stat-improve">
+      <svg class="stat-improve-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      <span class="stat-improve-text">Un K/D qui stagne vient souvent de morts évitables : peeks solo, retake en 1vX, exits inutiles. Regarde tes heatmaps de deaths pour identifier les zones à risque et privilégie les trades.</span>
+    </div>
+  </div>
+
+  <!-- 4. KAST% -->
   <div class="stat-card tier-teal">
     <h2 class="stat-name">KAST% <span class="pro-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>PRO</span></h2>
     <p class="stat-desc">Pourcentage de rounds avec au moins un Kill, une Assist, un Survived ou un Traded. C'est la métrique la plus fiable pour mesurer l'impact global par round. Un joueur avec un bon KAST contribue a presque chaque round de la partie.</p>
@@ -350,7 +372,117 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     </div>
   </div>
 
-  <!-- 10. CT vs T PERFORMANCE -->
+  <!-- HS% -->
+  <div class="stat-card tier-green">
+    <h2 class="stat-name">HS% (Headshots) <span class="free-badge">FREE</span></h2>
+    <p class="stat-desc">Pourcentage de kills obtenus en headshot. Témoigne de la qualité du crosshair placement et de la visée en général. Un HS% élevé signifie que tu vises la tête par défaut, ce qui raccourcit les duels et augmente tes chances dans les échanges.</p>
+    <div class="range-bar">
+      <div class="range-seg bad" style="flex:35">&lt; 35%</div>
+      <div class="range-seg avg" style="flex:10">35% · 45%</div>
+      <div class="range-seg good" style="flex:10">45% · 55%</div>
+      <div class="range-seg elite" style="flex:45">&gt; 55%</div>
+    </div>
+    <div class="range-labels">
+      <span class="range-label"><span class="range-dot bad"></span>Body shooter</span>
+      <span class="range-label"><span class="range-dot avg"></span>Moyen</span>
+      <span class="range-label"><span class="range-dot good"></span>Bon crosshair</span>
+      <span class="range-label"><span class="range-dot elite"></span>Headshot machine</span>
+    </div>
+    <div class="stat-improve">
+      <svg class="stat-improve-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      <span class="stat-improve-text">Règle le crosshair à hauteur de tête en permanence et bouge la souris à plat pendant les rotations. Pratique les maps aim_botz / aim_redline 10 minutes avant chaque session. Un spray AK à courte distance doit s'aligner sur la tête.</span>
+    </div>
+  </div>
+
+  <!-- MULTI-KILL ROUNDS -->
+  <div class="stat-card tier-green">
+    <h2 class="stat-name">Multi-Kill Rounds <span class="pro-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>PRO</span></h2>
+    <p class="stat-desc">Part des rounds où tu réalises au moins 2 kills (doubles, triples, quads, aces). Une stat puissante : c'est dans les multi-kills que se gagnent les rounds déséquilibrés. Un joueur avec un bon ratio tourne souvent les 3v5 en 3v3 voire en clutch.</p>
+    <div class="range-bar">
+      <div class="range-seg bad" style="flex:18">&lt; 18%</div>
+      <div class="range-seg avg" style="flex:7">18% · 25%</div>
+      <div class="range-seg good" style="flex:7">25% · 32%</div>
+      <div class="range-seg elite" style="flex:25">&gt; 32%</div>
+    </div>
+    <div class="range-labels">
+      <span class="range-label"><span class="range-dot bad"></span>Solo frag</span>
+      <span class="range-label"><span class="range-dot avg"></span>Correct</span>
+      <span class="range-label"><span class="range-dot good"></span>Clutch potential</span>
+      <span class="range-label"><span class="range-dot elite"></span>Carry régulier</span>
+    </div>
+    <div class="stat-improve">
+      <svg class="stat-improve-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      <span class="stat-improve-text">Les multi-kills viennent d'un bon réset de position après le premier kill : recentre la souris, wallbang / pre-aim la seconde position probable avant de te repositionner. Joue des spots avec une ligne de sight longue pour enchaîner.</span>
+    </div>
+  </div>
+
+  <!-- CLUTCHES -->
+  <div class="stat-card tier-teal">
+    <h2 class="stat-name">Clutches gagnés <span class="pro-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>PRO</span></h2>
+    <p class="stat-desc">Nombre de situations 1vX gagnées sur les 20 derniers matchs (1v1, 1v2, 1v3, 1v4, 1v5). Les 1v1 et 1v2 sont les plus fréquents ; les 1v3+ révèlent le vrai clutcher. Chaque clutch vaut un round entier, souvent décisif sur la MR12.</p>
+    <div class="range-bar">
+      <div class="range-seg bad" style="flex:4">&lt; 4</div>
+      <div class="range-seg avg" style="flex:4">4 à 8</div>
+      <div class="range-seg good" style="flex:4">8 à 12</div>
+      <div class="range-seg elite" style="flex:10">&gt; 12</div>
+    </div>
+    <div class="range-labels">
+      <span class="range-label"><span class="range-dot bad"></span>Stresse en 1vX</span>
+      <span class="range-label"><span class="range-dot avg"></span>Correct</span>
+      <span class="range-label"><span class="range-dot good"></span>Clutcher fiable</span>
+      <span class="range-label"><span class="range-dot elite"></span>Clutch god</span>
+    </div>
+    <div class="stat-improve">
+      <svg class="stat-improve-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      <span class="stat-improve-text">Dans un 1vX, joue le temps : isole les adversaires, utilise le son, et prends un duel à la fois. Garde toujours une utility (flash, smoke) pour déplacer l'angle d'attaque. Ne dry peek jamais quand tu as l'avantage du timer.</span>
+    </div>
+  </div>
+
+  <!-- UTILITY DAMAGE -->
+  <div class="stat-card tier-teal">
+    <h2 class="stat-name">Utility Damage <span class="pro-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>PRO</span></h2>
+    <p class="stat-desc">Dégâts moyens infligés par round avec les grenades (HE, molotovs, incendiaires). Mesure la valeur offensive de ton utility game. Un bon util damage vient de HE précises, de molos sur les positions obvious et de lineups appris.</p>
+    <div class="range-bar">
+      <div class="range-seg bad" style="flex:3">&lt; 3</div>
+      <div class="range-seg avg" style="flex:3">3 · 6</div>
+      <div class="range-seg good" style="flex:4">6 · 10</div>
+      <div class="range-seg elite" style="flex:6">&gt; 10</div>
+    </div>
+    <div class="range-labels">
+      <span class="range-label"><span class="range-dot bad"></span>Util perdu</span>
+      <span class="range-label"><span class="range-dot avg"></span>Occasionnel</span>
+      <span class="range-label"><span class="range-dot good"></span>Solide</span>
+      <span class="range-label"><span class="range-dot elite"></span>Expert</span>
+    </div>
+    <div class="stat-improve">
+      <svg class="stat-improve-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      <span class="stat-improve-text">Apprends 3 lineups de HE par map (une par bombsite + une pour les rotations). Lance les molotovs systématiquement sur les default positions adverses au lieu d'attendre les infos. Une grenade bien placée fait 30 à 70 points.</span>
+    </div>
+  </div>
+
+  <!-- SNIPER KILLS -->
+  <div class="stat-card tier-gold">
+    <h2 class="stat-name">AWP / Sniper Kills <span class="pro-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>PRO</span></h2>
+    <p class="stat-desc">Nombre moyen de kills par match obtenus à l'AWP (ou Scout). Révèle si tu es snipeur principal, secondaire ou rifler exclusif. Le profil AWPer demande une économie maîtrisée (save smart) et un positionnement spécifique : long sightlines, pick holes, info plays.</p>
+    <div class="range-bar">
+      <div class="range-seg bad" style="flex:2">&lt; 2</div>
+      <div class="range-seg avg" style="flex:3">2 · 5</div>
+      <div class="range-seg good" style="flex:3">5 · 8</div>
+      <div class="range-seg elite" style="flex:5">&gt; 8</div>
+    </div>
+    <div class="range-labels">
+      <span class="range-label"><span class="range-dot bad"></span>Rifler exclusif</span>
+      <span class="range-label"><span class="range-dot avg"></span>AWP occasionnel</span>
+      <span class="range-label"><span class="range-dot good"></span>AWPer secondaire</span>
+      <span class="range-label"><span class="range-dot elite"></span>AWPer principal</span>
+    </div>
+    <div class="stat-improve">
+      <svg class="stat-improve-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      <span class="stat-improve-text">Travaille les peeks courts (0.3s) et les quickscopes au workshop (training_aim_csgo2). Apprends les peeks répertoriés de chaque map (CT mid Dust2, A site long, banana Inferno). L'AWP récompense la discipline : ne dry peek jamais un spot où l'ennemi peut être pré-aimé.</span>
+    </div>
+  </div>
+
+  <!-- CT vs T PERFORMANCE -->
   <div class="stat-card tier-gold">
     <h2 class="stat-name">CT vs T Performance <span class="free-badge">FREE</span></h2>
     <p class="stat-desc">Comparaison des statistiques entre les côtés CT et T. Permet d'identifier les forces et faiblesses selon le côté joue. Un desequilibre important (plus de 15% d'ecart en win rate) peut indiquer un problème de jeu spécifique a un côté.</p>
