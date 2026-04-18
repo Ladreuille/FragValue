@@ -850,22 +850,45 @@ function recalcRoundBoundaries() {
   // samples consecutifs = teleport = parser a mixte deux entites/grenades).
   // Applique a TOUTES les grenades, pas juste les clampees. Tronquer au
   // premier saut anormal pour eviter les trajectoires zigzag a travers les murs.
+  // Pour HE/flash : detecter aussi les renversements de direction multiples
+  // (path zigzague = parser a recupere des samples d'entites differentes).
+  let reversalTruncated = 0;
   (demoData.grenades || []).forEach(g => {
     if (!g.path || g.path.length < 4) return;
     const n = g.path.length / 2;
+    let cut = -1;
     for (let i = 1; i < n; i++) {
       const ddx = g.path[i * 2] - g.path[(i - 1) * 2];
       const ddy = g.path[i * 2 + 1] - g.path[(i - 1) * 2 + 1];
-      if (ddx * ddx + ddy * ddy > MAX_JUMP_SQ) {
-        g.path = g.path.slice(0, i * 2);
-        g.detonX = g.path[g.path.length - 2];
-        g.detonY = g.path[g.path.length - 1];
-        jumpTruncated++;
-        break;
+      if (ddx * ddx + ddy * ddy > MAX_JUMP_SQ) { cut = i; break; }
+    }
+    if (cut > 0) {
+      g.path = g.path.slice(0, cut * 2);
+      g.detonX = g.path[g.path.length - 2];
+      g.detonY = g.path[g.path.length - 1];
+      jumpTruncated++;
+      return;
+    }
+    // Renversements de direction : HE/flash ne zigzaguent pas, max 1-2 rebonds.
+    const key = typeKey(g.type || '');
+    if (key === 'hegre' || key === 'flash') {
+      let reversals = 0, prevDx = 0, prevDy = 0;
+      for (let i = 1; i < n; i++) {
+        const dx = g.path[i * 2] - g.path[(i - 1) * 2];
+        const dy = g.path[i * 2 + 1] - g.path[(i - 1) * 2 + 1];
+        if (i > 1 && (prevDx * dx + prevDy * dy) < 0) reversals++;
+        if (reversals >= 3) {
+          g.path = g.path.slice(0, i * 2);
+          g.detonX = g.path[g.path.length - 2];
+          g.detonY = g.path[g.path.length - 1];
+          reversalTruncated++;
+          break;
+        }
+        prevDx = dx; prevDy = dy;
       }
     }
   });
-  console.log(`[Replay] Grenades clamped: ${clamped}, jump-truncated: ${jumpTruncated} / ${(demoData.grenades || []).length}`);
+  console.log(`[Replay] Grenades clamped: ${clamped}, jump-truncated: ${jumpTruncated}, reversal-truncated: ${reversalTruncated} / ${(demoData.grenades || []).length}`);
 }
 
 // ══ ROUNDS BAR ═══════════════════════════════════════════════════════════════
