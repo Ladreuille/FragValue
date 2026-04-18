@@ -345,6 +345,14 @@
     .invitation-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5}
     .invitation-msg{font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:6px;padding:8px 10px;background:rgba(0,0,0,.2);border-left:2px solid var(--accent);border-radius:0 4px 4px 0}
 
+    /* Pending invites banner (from compare) */
+    .pending-invites-banner{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:24px;text-align:center;margin-bottom:16px}
+    .pending-invites-title{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em;margin-bottom:10px}
+    .pending-invites-title strong{color:var(--accent)}
+    .pending-invites-list{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px}
+    .pending-nick{font-family:var(--mono);font-size:11px;color:var(--accent);padding:5px 11px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.2);border-radius:40px;font-weight:700}
+    .pending-invites-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5}
+
     /* ── Team aggregated stats ────────────────────────── */
     .team-score-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-top:14px;position:relative;z-index:1}
     .team-score-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}
@@ -647,6 +655,17 @@ async function init() {
     showLinkPrompt();
   }
   loadWatchlist(); loadRoster();
+
+  // Deep link par hash : #roster ouvre le tab Roster, #matches le Matchs, etc.
+  const hashToTab = {
+    'overview': 'overview', 'improve': 'improve', 'matches': 'matches',
+    'watchlist': 'watchlist', 'roster': 'roster',
+  };
+  const hash = (window.location.hash || '').replace('#', '');
+  if (hashToTab[hash]) {
+    const btn = document.querySelector(`[onclick*="'${hashToTab[hash]}'"]`);
+    if (btn) setTab(hashToTab[hash], btn);
+  }
 }
 
 function showLinkPrompt() {
@@ -1207,6 +1226,8 @@ async function loadRoster() {
     const rosterData = await rosterRes.json();
     if (!rosterData.roster) {
       _currentRoster = null;
+      // Si on arrive depuis Compare avec ?createRoster=1, ouvre direct le modal
+      handlePendingRosterFlow();
       return;
     }
     _currentRoster = rosterData;
@@ -1214,6 +1235,43 @@ async function loadRoster() {
   } catch (e) {
     console.warn('Roster load error:', e.message);
   }
+}
+
+// Flow depuis compare.html : ?createRoster=1 + sessionStorage.pendingRosterInvites
+function handlePendingRosterFlow() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('createRoster') !== '1') return;
+    const raw = sessionStorage.getItem('pendingRosterInvites');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    // Banner informatif dans l'empty state
+    const container = document.getElementById('rosterContent');
+    if (container) {
+      container.innerHTML = `
+        <div class="pending-invites-banner">
+          <div class="pending-invites-title">Créer une équipe avec <strong>${data.nicknames.length}</strong> joueur${data.nicknames.length > 1 ? 's' : ''}</div>
+          <div class="pending-invites-list">${data.nicknames.map(n => `<span class="pending-nick">${n}</span>`).join('')}</div>
+          <div class="pending-invites-sub">Les invitations seront envoyées automatiquement après la création du roster.</div>
+          <div style="display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap">
+            <button class="empty-btn" onclick="openCreateRosterModal()">Créer l'équipe</button>
+            <button class="roster-btn" onclick="dismissPendingRoster()">Annuler</button>
+          </div>
+        </div>`;
+    }
+    // Nettoyer le param URL
+    window.history.replaceState({}, '', 'dashboard.html#roster');
+  } catch (e) { console.warn('pending roster flow error:', e.message); }
+}
+
+function dismissPendingRoster() {
+  sessionStorage.removeItem('pendingRosterInvites');
+  document.getElementById('rosterContent').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-title">Aucune équipe pour l'instant</div>
+      <div class="empty-sub">Crée ton équipe pour inviter des coéquipiers et suivre les stats collectives.</div>
+      <button class="empty-btn" onclick="openCreateRosterModal()">Créer mon équipe</button>
+    </div>`;
 }
 
 function renderInvitations(invitations) {
@@ -1427,7 +1485,43 @@ async function submitCreateRoster() {
   btn.disabled = false;
   if (r.error) { errEl.textContent = r.error; return; }
   closeModal('modalCreateRoster');
+
+  // Auto-invite les joueurs en attente (flow depuis compare)
+  await processPendingInvites(r.roster && r.roster.id);
+
   await loadRoster();
+}
+
+async function processPendingInvites(rosterId) {
+  if (!rosterId) return;
+  try {
+    const raw = sessionStorage.getItem('pendingRosterInvites');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    sessionStorage.removeItem('pendingRosterInvites');
+    if (!Array.isArray(data.nicknames)) return;
+    // Filtre le nickname du user courant (owner deja auto-ajoute comme captain)
+    const { data: profile } = await sb.from('profiles').select('faceit_nickname').eq('id', currentUser.id).maybeSingle();
+    const ownNick = (profile?.faceit_nickname || '').toLowerCase();
+    const toInvite = data.nicknames.filter(n => n && n.toLowerCase() !== ownNick);
+    let sent = 0, failed = 0;
+    for (const nickname of toInvite) {
+      const r = await callRosterAPI({ action: 'invite', roster_id: rosterId, nickname });
+      if (r.error) failed++; else sent++;
+    }
+    if (sent > 0 || failed > 0) {
+      const msg = sent > 0 ? `${sent} invitation${sent > 1 ? 's' : ''} envoyée${sent > 1 ? 's' : ''}${failed > 0 ? ` · ${failed} échec${failed > 1 ? 's' : ''}` : ''}` : `${failed} invitation${failed > 1 ? 's' : ''} échouée${failed > 1 ? 's' : ''}`;
+      showRosterToast(msg);
+    }
+  } catch (e) { console.warn('processPendingInvites error:', e.message); }
+}
+
+function showRosterToast(text) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700;padding:10px 18px;border-radius:6px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.5)';
+  t.textContent = text;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
 }
 
 async function submitInvite() {
