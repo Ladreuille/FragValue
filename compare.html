@@ -142,8 +142,9 @@
     .map-matrix td.matrix-cell{font-weight:700;font-size:13px;position:relative}
     .map-matrix td.matrix-cell .matrix-sub{font-size:10px;font-weight:400;opacity:.7;margin-left:3px}
     .map-matrix td.matrix-cell.empty{color:var(--text3);font-weight:400}
-    .map-matrix td.matrix-cell.best::before{content:'⭐';position:absolute;left:4px;top:50%;transform:translateY(-50%);font-size:10px}
-    .map-matrix td.matrix-cell.worst::before{content:'⚠';position:absolute;left:4px;top:50%;transform:translateY(-50%);font-size:10px}
+    .map-matrix td.matrix-cell .cell-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:14px;height:14px;opacity:.95}
+    .map-matrix td.matrix-cell.best{padding-left:28px}
+    .map-matrix td.matrix-cell.worst{padding-left:28px}
     .map-matrix tr:last-child td{border-bottom:none}
     .map-matrix tr:hover td{background:rgba(184,255,87,.02)}
     .map-matrix-empty{padding:24px;text-align:center;color:var(--text3);font-family:var(--mono);font-size:12px}
@@ -486,6 +487,11 @@ function renderMapMatrix() {
   });
 
   const mapName = m => (m || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
+  // Icone trophee : best map (pick recommande)
+  const trophySvg = `<svg class="cell-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Best map · à pick"><path d="M4 6H2.5a1.5 1.5 0 010-3H4"/><path d="M12 6h1.5a1.5 1.5 0 000-3H12"/><path d="M3 14h10"/><path d="M6.5 10v1c0 .5-.5.8-1 .9-.9.3-1.5 1-1.5 2.1"/><path d="M9.5 10v1c0 .5.5.8 1 .9.9.3 1.5 1 1.5 2.1"/><path d="M12 2H4v4.5a4 4 0 008 0V2z"/></svg>`;
+  // Icone cercle-barré : worst map (ban recommande)
+  const banSvg = `<svg class="cell-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-label="Worst map · à ban"><circle cx="8" cy="8" r="6"/><line x1="3.76" y1="3.76" x2="12.24" y2="12.24"/></svg>`;
+
   const head = `<th class="map-col">Map</th>` + playersData.map(p => `<th class="player-col" style="color:${p.color}">${p.player.nickname}</th>`).join('');
   const body = rows.map(({ map, byP, totalMatches }) => {
     const cells = playersData.map(p => {
@@ -495,7 +501,9 @@ function renderMapMatrix() {
       const color = wr >= 55 ? 'var(--success)' : wr >= 45 ? 'var(--gold)' : 'var(--danger)';
       const bw = bestWorst[p.player.nickname] || {};
       const cls = bw.bestMap === map ? 'best' : bw.worstMap === map ? 'worst' : '';
-      return `<td class="matrix-cell ${cls}" style="color:${color}">${wr}%<span class="matrix-sub">${s.matches}M</span></td>`;
+      const icon = cls === 'best' ? trophySvg : cls === 'worst' ? banSvg : '';
+      const title = cls === 'best' ? 'Best map de ce joueur · à pick' : cls === 'worst' ? 'Worst map de ce joueur · à ban' : '';
+      return `<td class="matrix-cell ${cls}" style="color:${color}" ${title ? `title="${title}"` : ''}>${icon}${wr}%<span class="matrix-sub">${s.matches}M</span></td>`;
     }).join('');
     return `<tr><td class="map-cell">${mapName(map)}<span class="matches-total">${totalMatches}M total</span></td>${cells}</tr>`;
   }).join('');
