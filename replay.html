@@ -1401,6 +1401,10 @@ function buildFrames(round) {
   const startTick = roundData.startTick || 0;
   const endTick = roundData.gameplayEnd ?? (roundData.endTick || 0);
   const killsR = roundData.killsRound ?? (round + 1);
+  // DEBUG TEMPORAIRE round
+  const _grens = (demoData.grenades || []).filter(g => g.tick >= startTick && g.tick <= endTick);
+  const _withPath = _grens.filter(g => g.path && g.path.length >= 4);
+  console.log(`[ROUND ${round}] startTick=${startTick} endTick=${endTick} gameplayEnd=${roundData.gameplayEnd} rawEnd=${roundData.endTick} winner=${roundData.winner} | ${_grens.length} grenades, ${_withPath.length} avec path`);
 
   const roundKills = kills.filter(k => {
     const t = k.tick || 0;
