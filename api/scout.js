@@ -80,8 +80,16 @@ async function fetchAdvancedMatchStats(matchIds, playerId, headers) {
               clutch1v3:  parseInt(s['1v3Wins'])  || parseInt(s['1v3 Wins'])  || 0,
               clutch1v4:  parseInt(s['1v4Wins'])  || parseInt(s['1v4 Wins'])  || 0,
               clutch1v5:  parseInt(s['1v5Wins'])  || parseInt(s['1v5 Wins'])  || 0,
-              firstKills: parseInt(s['First Kills'])  || parseInt(s['Opening Kills'])  || 0,
-              firstDeaths:parseInt(s['First Deaths']) || parseInt(s['Opening Deaths']) || 0,
+              // FACEIT CS2 expose `Entry Count` (total entries) et `Entry Wins` (entries
+              // gagnees). Les champs `First Kills`/`First Deaths` sont des fallbacks
+              // CSGO legacy. Pour les deaths on derive : entry perdues = count - wins.
+              firstKills: parseInt(s['Entry Wins'])   || parseInt(s['First Kills'])  || parseInt(s['Opening Kills'])  || 0,
+              firstDeaths:(() => {
+                const entryCount = parseInt(s['Entry Count']) || 0;
+                const entryWins  = parseInt(s['Entry Wins'])  || 0;
+                if (entryCount > 0 && entryCount >= entryWins) return entryCount - entryWins;
+                return parseInt(s['First Deaths']) || parseInt(s['Opening Deaths']) || 0;
+              })(),
               ctKills:    parseInt(s['Kills - CT'])  || parseInt(s['CT Kills'])  || 0,
               ctDeaths:   parseInt(s['Deaths - CT']) || parseInt(s['CT Deaths']) || 0,
               ctWins:     parseInt(s['Wins - CT'])   || parseInt(s['CT Wins'])   || 0,
@@ -338,9 +346,15 @@ module.exports = async function handler(req, res) {
       const clutch1v4 = parseInt(s['1v4Wins'])  || parseInt(s['1v4 Wins'])  || 0;
       const clutch1v5 = parseInt(s['1v5Wins'])  || parseInt(s['1v5 Wins'])  || 0;
 
-      // Opening duels
-      const firstKills  = parseInt(s['First Kills'])  || parseInt(s['Opening Kills'])  || 0;
-      const firstDeaths = parseInt(s['First Deaths']) || parseInt(s['Opening Deaths']) || 0;
+      // Opening duels. FACEIT CS2 : `Entry Wins` + `Entry Count`.
+      // Entry deaths deriv.es : count - wins.
+      const entryCount = parseInt(s['Entry Count']) || 0;
+      const entryWins  = parseInt(s['Entry Wins'])  || 0;
+      const firstKills  = entryWins > 0 ? entryWins
+                        : (parseInt(s['First Kills']) || parseInt(s['Opening Kills']) || 0);
+      const firstDeaths = (entryCount > 0 && entryCount >= entryWins)
+                        ? entryCount - entryWins
+                        : (parseInt(s['First Deaths']) || parseInt(s['Opening Deaths']) || 0);
 
       // CT / T side splits
       const ctKills  = parseInt(s['Kills - CT'])    || parseInt(s['CT Kills'])    || 0;
@@ -565,10 +579,16 @@ module.exports = async function handler(req, res) {
     const totalClutch1v5 = sumClutch1v5 > 0 ? sumClutch1v5 : lifetimeClutch1v5;
 
     // ── Opening duels ─────────────────────────────────────────────────────
+    // FACEIT CS2 lifetime : Entry Wins + Entry Count. Fallback CSGO legacy.
     const sumFirstKills  = sum('firstKills');
     const sumFirstDeaths = sum('firstDeaths');
-    const lifetimeFirstKills  = parseInt(lifetime['First Kills'])  || parseInt(lifetime['Opening Kills'])  || 0;
-    const lifetimeFirstDeaths = parseInt(lifetime['First Deaths']) || parseInt(lifetime['Opening Deaths']) || 0;
+    const ltEntryCount = parseInt(lifetime['Entry Count']) || 0;
+    const ltEntryWins  = parseInt(lifetime['Entry Wins'])  || 0;
+    const lifetimeFirstKills = ltEntryWins > 0 ? ltEntryWins
+                             : (parseInt(lifetime['First Kills']) || parseInt(lifetime['Opening Kills']) || 0);
+    const lifetimeFirstDeaths = (ltEntryCount > 0 && ltEntryCount >= ltEntryWins)
+                              ? ltEntryCount - ltEntryWins
+                              : (parseInt(lifetime['First Deaths']) || parseInt(lifetime['Opening Deaths']) || 0);
 
     const totalFirstKills  = sumFirstKills  > 0 ? sumFirstKills  : lifetimeFirstKills;
     const totalFirstDeaths = sumFirstDeaths > 0 ? sumFirstDeaths : lifetimeFirstDeaths;

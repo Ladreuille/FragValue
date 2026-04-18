@@ -509,11 +509,14 @@ function renderAdvancedKpis(d) {
   const n = (r.matches || []).length || 1;
   const fk = r.totalFirstKills || 0;
   const fd = r.totalFirstDeaths || 0;
-  const openingWR = (fk + fd) > 0 ? Math.round(fk / (fk + fd) * 100) : null;
-  const tk = r.totalTradeKills || 0;
+  // Entry WR uniquement si on a des donnees credibles (total entries > 0 ET
+  // au moins une defaite, sinon c'est probablement un bug de mapping API)
+  const openingWR = (fk + fd) > 0 && fd > 0 ? Math.round(fk / (fk + fd) * 100) : null;
   const td = r.totalTradeDeaths || 0;
   const totalDeaths = (r.matches || []).reduce((s, m) => s + (m.deaths || 0), 0);
-  const tradeRate = totalDeaths > 0 ? Math.round((td / totalDeaths) * 100) : null;
+  // Trade rate : seulement si on a des trades detectes (FACEIT CS2 n'expose
+  // pas toujours Trade Kills/Deaths -> fallback null)
+  const tradeRate = (td > 0 && totalDeaths > 0) ? Math.round((td / totalDeaths) * 100) : null;
   const flThr = r.totalFlashesThrown || 0;
   const flHit = r.totalEnemiesFlashed || 0;
   const flashEff = flThr > 0 ? (flHit / flThr).toFixed(2) : null;
