@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
-  <meta name="description" content="FragValue — Mon espace : abonnement, paramètres et sécurité">
+  <meta name="description" content="FragValue · Mon espace : abonnement, paramètres et sécurité">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FragValue · Mon espace</title>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
@@ -205,16 +205,16 @@
       <div class="settings-card">
         <div class="settings-row">
           <div class="settings-label">Email</div>
-          <div class="settings-value" id="settingsEmail">—</div>
+          <div class="settings-value" id="settingsEmail">-</div>
         </div>
         <div class="settings-row">
           <div class="settings-label">Pseudo FACEIT</div>
-          <div class="settings-value" id="settingsFaceit">—</div>
+          <div class="settings-value" id="settingsFaceit">-</div>
           <button class="settings-btn" onclick="window.location.href='onboarding.html'">Modifier</button>
         </div>
         <div class="settings-row">
           <div class="settings-label">Membre depuis</div>
-          <div class="settings-value" id="settingsCreated">—</div>
+          <div class="settings-value" id="settingsCreated">-</div>
         </div>
       </div>
 
@@ -230,15 +230,15 @@
       <div class="sec-label">Notifications</div>
       <div class="settings-card">
         <div class="settings-row">
-          <div class="settings-label">Email — nouveau match analysé</div>
+          <div class="settings-label">Email · nouveau match analysé</div>
           <label class="toggle"><input type="checkbox" id="notifMatches"/><span class="toggle-slider"></span></label>
         </div>
         <div class="settings-row">
-          <div class="settings-label">Email — rapport hebdo</div>
+          <div class="settings-label">Email · rapport hebdo</div>
           <label class="toggle"><input type="checkbox" id="notifWeekly"/><span class="toggle-slider"></span></label>
         </div>
         <div class="settings-row">
-          <div class="settings-label">Email — annonces produit</div>
+          <div class="settings-label">Email · annonces produit</div>
           <label class="toggle"><input type="checkbox" id="notifProduct"/><span class="toggle-slider"></span></label>
         </div>
       </div>
@@ -265,7 +265,7 @@
         </div>
         <div class="settings-row scout-row" data-requires-optin style="display:none">
           <select class="settings-select" id="scoutRolePrimary">
-            <option value="">—</option>
+            <option value="">-</option>
             <option value="entry">Entry fragger</option>
             <option value="awp">AWPer</option>
             <option value="support">Support</option>
@@ -280,7 +280,7 @@
         </div>
         <div class="settings-row scout-row" data-requires-optin style="display:none">
           <select class="settings-select" id="scoutRoleSecondary">
-            <option value="">—</option>
+            <option value="">-</option>
             <option value="entry">Entry fragger</option>
             <option value="awp">AWPer</option>
             <option value="support">Support</option>
@@ -309,7 +309,7 @@
         </div>
         <div class="settings-row scout-row" data-requires-optin style="display:none">
           <select class="settings-select" id="scoutRegion">
-            <option value="">—</option>
+            <option value="">-</option>
             <option value="EU">Europe</option>
             <option value="NA">North America</option>
             <option value="SA">South America</option>
@@ -425,7 +425,7 @@ async function loadSubscription() {
     const nextBilling = d.current_period_end
       ? new Date(d.current_period_end * 1000).toLocaleDateString('fr-FR')
       : null;
-    const status = d.status || (plan === 'free' ? 'actif' : '—');
+    const status = d.status || (plan === 'free' ? 'actif' : '-');
     const cancelAt = d.cancel_at_period_end
       ? `Se termine le ${new Date(d.current_period_end * 1000).toLocaleDateString('fr-FR')}`
       : null;
@@ -496,7 +496,7 @@ async function loadSettings() {
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return;
-    document.getElementById('settingsEmail').textContent = session.user.email || '—';
+    document.getElementById('settingsEmail').textContent = session.user.email || '-';
     const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
     if (profile) {
       document.getElementById('settingsFaceit').textContent = profile.faceit_nickname || 'Non lié';

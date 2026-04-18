@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
-  <meta name="description" content="FragValue — CS2 Match Analytics">
+  <meta name="description" content="FragValue · CS2 Match Analytics">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FragValue · Mon jeu</title>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
@@ -577,7 +577,7 @@
       <div class="modal-field">
         <label>Région</label>
         <select id="rosterRegion">
-          <option value="">—</option>
+          <option value="">-</option>
           <option value="EU">Europe</option>
           <option value="NA">North America</option>
           <option value="SA">South America</option>
@@ -650,7 +650,7 @@ async function init() {
   if (nick) {
     loadFaceitData(nick);
   } else {
-    // Pas de pseudo lié — vérifier si l'onboarding a sauvegardé dans une autre colonne
+    // Pas de pseudo lié : verifier si l'onboarding a sauvegarde dans une autre colonne
     // ou afficher le prompt de liaison
     showLinkPrompt();
   }
@@ -669,7 +669,7 @@ async function init() {
 }
 
 function showLinkPrompt() {
-  // Pas de pseudo FACEIT lié — rediriger vers l'onboarding
+  // Pas de pseudo FACEIT lie : rediriger vers l'onboarding
   document.getElementById('profileHeroCard').innerHTML = `
     <div class="link-prompt" style="text-align:center;padding:32px">
       <div style="font-size:32px;margin-bottom:16px">
@@ -895,7 +895,7 @@ function renderWeeklyInsights(d) {
   });
   const el = document.getElementById('weeklyInsights');
   if (weekMatches.length === 0) {
-    el.innerHTML = `<div class="weekly-empty">Aucun match joué cette semaine — reviens après ta prochaine session.</div>`;
+    el.innerHTML = `<div class="weekly-empty">Aucun match joué cette semaine. Reviens après ta prochaine session.</div>`;
     return;
   }
   const wins = weekMatches.filter(m => m.result === 1).length;
@@ -934,16 +934,16 @@ function renderCtTSplit(d) {
       <div class="side-card ct">
         <div class="side-header"><div class="side-label">CT</div></div>
         <div class="side-metrics">
-          <div><div class="side-metric-val">${ctWR || '—'}${ctWR ? '%' : ''}</div><div class="side-metric-label">Win rate</div></div>
-          <div><div class="side-metric-val">${ctKd || '—'}</div><div class="side-metric-label">K/D</div></div>
+          <div><div class="side-metric-val">${ctWR || '-'}${ctWR ? '%' : ''}</div><div class="side-metric-label">Win rate</div></div>
+          <div><div class="side-metric-val">${ctKd || '-'}</div><div class="side-metric-label">K/D</div></div>
         </div>
         <div class="side-bar"><div class="side-bar-fill" style="width:${ctWR}%"></div></div>
       </div>
       <div class="side-card t">
         <div class="side-header"><div class="side-label">T</div></div>
         <div class="side-metrics">
-          <div><div class="side-metric-val">${tWR || '—'}${tWR ? '%' : ''}</div><div class="side-metric-label">Win rate</div></div>
-          <div><div class="side-metric-val">${tKd || '—'}</div><div class="side-metric-label">K/D</div></div>
+          <div><div class="side-metric-val">${tWR || '-'}${tWR ? '%' : ''}</div><div class="side-metric-label">Win rate</div></div>
+          <div><div class="side-metric-val">${tKd || '-'}</div><div class="side-metric-label">K/D</div></div>
         </div>
         <div class="side-bar"><div class="side-bar-fill" style="width:${tWR}%"></div></div>
       </div>
@@ -981,8 +981,8 @@ function renderMapStats(d) {
               <div class="map-stat"><div class="map-stat-val" style="color:${fvColor}">${m.avgFvRating}</div><div class="map-stat-label">FV</div></div>
             </div>
             <div class="map-sides">
-              <div class="map-side ct"><span class="map-side-label">CT</span><span>${m.ctWinRate || '—'}${m.ctWinRate ? '%' : ''}</span></div>
-              <div class="map-side t"><span class="map-side-label">T</span><span>${m.tWinRate || '—'}${m.tWinRate ? '%' : ''}</span></div>
+              <div class="map-side ct"><span class="map-side-label">CT</span><span>${m.ctWinRate || '-'}${m.ctWinRate ? '%' : ''}</span></div>
+              <div class="map-side t"><span class="map-side-label">T</span><span>${m.tWinRate || '-'}${m.tWinRate ? '%' : ''}</span></div>
             </div>
           </div>
         `;
@@ -1001,11 +1001,11 @@ function renderBestMatch(d) {
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6.3 6.9 1-5 4.8 1.2 6.9L12 18l-6.1 3 1.2-6.9-5-4.8 6.9-1z"/></svg>
       </div>
       <div class="best-match-info">
-        <div class="best-match-title">${mapName || '—'} · ${best.score || ''}</div>
+        <div class="best-match-title">${mapName || '-'} · ${best.score || ''}</div>
         <div class="best-match-sub">${best.result === 1 ? 'Victoire' : 'Défaite'} · ${best.date || ''}</div>
       </div>
       <div class="best-match-stats">
-        <div class="best-match-stat"><div class="best-match-stat-val">${best.fvRating ? best.fvRating.toFixed(2) : '—'}</div><div class="best-match-stat-label">FV Rating</div></div>
+        <div class="best-match-stat"><div class="best-match-stat-val">${best.fvRating ? best.fvRating.toFixed(2) : '-'}</div><div class="best-match-stat-label">FV Rating</div></div>
         <div class="best-match-stat"><div class="best-match-stat-val">${best.kills || 0}/${best.deaths || 0}</div><div class="best-match-stat-label">K/D</div></div>
         <div class="best-match-stat"><div class="best-match-stat-val">${(best.adr || 0).toFixed(0)}</div><div class="best-match-stat-label">ADR</div></div>
         <div class="best-match-stat"><div class="best-match-stat-val">${(best.hsPct || 0).toFixed(0)}%</div><div class="best-match-stat-label">HS%</div></div>
@@ -1032,7 +1032,7 @@ function renderAdvancedKpis(d) {
   const sumMvps = matches.reduce((s, m) => s + (m.mvp || 0), 0);
   const mvpsPerMatch = (sumMvps / n).toFixed(1);
 
-  const fmt = (v, suffix) => v == null ? '—' : v + (suffix || '');
+  const fmt = (v, suffix) => v == null ? '-' : v + (suffix || '');
   const cls = (v, g, w) => v == null ? 'kpi-muted' : (v >= g ? 'kpi-good' : v >= w ? 'kpi-warn' : 'kpi-bad');
 
   document.getElementById('kpiAdvanced').innerHTML = [
@@ -1149,7 +1149,7 @@ function renderMatchesSummary(matches) {
       <div class="matches-summary-card"><div class="matches-summary-label">K/D moyen</div><div class="matches-summary-val" style="color:${kdColor}">${avgKd}</div><div class="matches-summary-sub">kills / deaths</div></div>
       <div class="matches-summary-card"><div class="matches-summary-label">FV Rating</div><div class="matches-summary-val" style="color:${fvColor}">${avgFv}</div><div class="matches-summary-sub">moyen</div></div>
       <div class="matches-summary-card"><div class="matches-summary-label">ADR moyen</div><div class="matches-summary-val">${avgAdr}</div><div class="matches-summary-sub">dmg/round</div></div>
-      <div class="matches-summary-card"><div class="matches-summary-label">Map favorite</div><div class="matches-summary-val" style="font-size:16px">${topMap ? topMap[0].replace('de_','').replace(/^\w/,c=>c.toUpperCase()) : '—'}</div><div class="matches-summary-sub">${topMap ? topMap[1] + ' matchs' : ''}</div></div>
+      <div class="matches-summary-card"><div class="matches-summary-label">Map favorite</div><div class="matches-summary-val" style="font-size:16px">${topMap ? topMap[0].replace('de_','').replace(/^\w/,c=>c.toUpperCase()) : '-'}</div><div class="matches-summary-sub">${topMap ? topMap[1] + ' matchs' : ''}</div></div>
     </div>`;
 }
 
@@ -1187,7 +1187,7 @@ function renderPlayerCard(p, opts) {
     <div class="wl-card">
       <div class="wl-avatar" style="${p.avatar_url ? `background-image:url(${p.avatar_url})` : ''}">${p.avatar_url ? '' : initial}</div>
       <div style="flex:1;min-width:0">
-        <div class="wl-name">${p.faceit_nickname || '—'}</div>
+        <div class="wl-name">${p.faceit_nickname || '-'}</div>
         <div class="wl-meta">${meta}</div>
       </div>
       ${p.faceit_elo ? `<div class="wl-elo">${p.faceit_elo}<span style="color:var(--text3);font-weight:400;font-size:10px;margin-left:3px">ELO</span></div>` : ''}
@@ -1299,7 +1299,7 @@ function renderRoster(data) {
   const tag = roster.tag ? `[${roster.tag}]` : '';
   const logoInitial = roster.team_name.charAt(0).toUpperCase();
 
-  // Stats basiques (structure) — les agregats FACEIT sont charges async via renderTeamStats
+  // Stats basiques (structure) : les agregats FACEIT sont charges async via renderTeamStats
   const statsHtml = `
     <div class="roster-stats-grid">
       <div class="roster-stat"><div class="roster-stat-label">Titulaires</div><div class="roster-stat-val">${titulaires.length}<span style="color:var(--text3);font-size:14px">/5</span></div></div>

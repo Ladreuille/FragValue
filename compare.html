@@ -187,7 +187,7 @@
 <div class="page">
   <div class="tab-intro">
     <h1 class="tab-title">Comparer les joueurs</h1>
-    <p class="tab-sub">Compare côte à côte les stats FACEIT de 2 à 5 joueurs. Radar global, breakdown par KPI, full stats par rôle — tout ce qu'il faut pour benchmarker un adversaire ou un recrue potentielle.</p>
+    <p class="tab-sub">Compare côte à côte les stats FACEIT de 2 à 5 joueurs. Radar global, breakdown par KPI, full stats par rôle. Tout ce qu'il faut pour benchmarker un adversaire ou une recrue potentielle.</p>
   </div>
 
   <!-- Pro gate (injected si non Pro) -->
@@ -496,7 +496,7 @@ function renderMapMatrix() {
   const body = rows.map(({ map, byP, totalMatches }) => {
     const cells = playersData.map(p => {
       const s = byP[p.player.nickname];
-      if (!s) return `<td class="matrix-cell empty">—</td>`;
+      if (!s) return `<td class="matrix-cell empty">-</td>`;
       const wr = parseFloat(s.winRate);
       const color = wr >= 55 ? 'var(--success)' : wr >= 45 ? 'var(--gold)' : 'var(--danger)';
       const bw = bestWorst[p.player.nickname] || {};
@@ -782,7 +782,7 @@ function renderTable() {
       { label: 'Opening ratio',  get: p => p.recent.openingRatio,      higher: true },
       { label: 'Trade kills',    get: p => p.recent.totalTradeKills,   higher: true },
       { label: 'Saves',          get: p => p.recent.totalSaves,        higher: true },
-      { label: 'Pistol win%',    get: p => (p.recent.pistolWinRate || '—') + (p.recent.pistolWinRate ? '%' : ''), higher: true },
+      { label: 'Pistol win%',    get: p => (p.recent.pistolWinRate || '-') + (p.recent.pistolWinRate ? '%' : ''), higher: true },
     ]},
   ];
 
@@ -791,7 +791,7 @@ function renderTable() {
     const dataRows = group.rows.map(row => {
       const rawVals = playersData.map(p => parseFloat(String(row.get(p)).replace(/[^\d.-]/g,'')) || 0);
       const dispVals = playersData.map(p => row.get(p));
-      const allEmpty = dispVals.every(v => !v || v === '0' || v === '-' || v === '0%' || v === '—' || parseFloat(v) === 0);
+      const allEmpty = dispVals.every(v => !v || v === '0' || v === '-' || v === '0%' || v === '-' || parseFloat(v) === 0);
       if (allEmpty) return '';
 
       const best  = row.higher ? Math.max(...rawVals) : Math.min(...rawVals);

@@ -84,7 +84,7 @@
     }
     .sl-tool:hover{background:var(--card);border-color:var(--border2);color:var(--text)}
     .sl-tool.active{background:var(--accent-dim);border-color:rgba(184,255,87,.3);color:var(--accent)}
-    /* Tooltip au survol — affiche raccourci + description */
+    /* Tooltip au survol : affiche raccourci + description */
     .sl-tool[data-tip]::after{
       content:attr(data-tip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
       background:#0b0c0c;border:1px solid var(--border2);border-radius:6px;
@@ -147,7 +147,7 @@
     .tp-team-score{font-family:var(--display);font-size:24px;line-height:1}
     .tp-players{flex:1;overflow-y:auto;padding:3px 5px}
 
-    /* Player row — compact SCL-style */
+    /* Player row : compact SCL-style */
     .player-row{
       display:flex;flex-direction:column;gap:0;
       padding:5px 9px 6px;border-radius:5px;
@@ -364,16 +364,16 @@
     <div class="sidebar-left">
       <div class="sl-tools-top">
         <!-- Raccourcis en mode icon + tooltip -->
-        <div class="sl-tool" data-tip="Z / X — Ralentir / Accelerer">
+        <div class="sl-tool" data-tip="Z / X · Ralentir / Accelerer">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg>
         </div>
-        <div class="sl-tool" data-tip="J / K — Round precedent / suivant">
+        <div class="sl-tool" data-tip="J / K · Round precedent / suivant">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
         </div>
-        <div class="sl-tool" data-tip="Space — Play / Pause">
+        <div class="sl-tool" data-tip="Space · Play / Pause">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         </div>
-        <div class="sl-tool" data-tip="&larr; / &rarr; — Reculer / Avancer">
+        <div class="sl-tool" data-tip="&larr; / &rarr; · Reculer / Avancer">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </div>
         <div class="sl-divider"></div>
@@ -1327,7 +1327,7 @@ function updatePlayerStates(frame) {
     // Joueur mort : aucune arme / gear / inventaire. On affiche juste un
     // indicateur visuel mort pour garder la ligne stable.
     if (!alive) {
-      const label = disconnected ? '— disconnected —' : '— dead —';
+      const label = disconnected ? 'disconnected' : 'dead';
       const deadHtml = `<span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em">${label}</span>`;
       if (gear._prevHtml !== deadHtml) { gear.innerHTML = deadHtml; gear._prevHtml = deadHtml; }
     } else {

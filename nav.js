@@ -1,4 +1,4 @@
-// ═══ FragValue — Navbar partagée ══════════════════════════════════════════
+// ═══ FragValue : Navbar partagée ══════════════════════════════════════════
 // Remplace la navbar existante par la structure 4 sections : MON JEU,
 // PROGRESSER, PROS, ÉQUIPE. Détecte la page courante pour highlight la
 // section active. Gère le state auth (Connexion vs Mon espace) et le plan

@@ -672,17 +672,17 @@ function analyzeLastMatch(m, recent) {
   if (kd >= 0.8 && kd < 1.0) warnings.push({
     icon: 'kd', label: 'K/D légèrement négatif',
     detail: `${kd.toFixed(2)} ce match`,
-    advice: 'Privilégie les duels favorables — recule si ta position est compromise.'
+    advice: 'Privilégie les duels favorables. Recule si ta position est compromise.'
   });
   if (hs < 35 && kd < 1.2) warnings.push({
     icon: 'hs', label: 'HS% faible',
     detail: `${hs.toFixed(0)}% de headshots`,
-    advice: 'Travaille le positionnement de ta mire — vise naturellement à hauteur de tête.'
+    advice: 'Travaille le positionnement de ta mire : vise naturellement à hauteur de tête.'
   });
   if (adr < 65) warnings.push({
     icon: 'dmg', label: 'Peu de dégâts infligés',
     detail: `${adr.toFixed(0)} ADR seulement`,
-    advice: 'Essaie de damage checker les ennemis avant les duels — chaque point comptes.'
+    advice: 'Essaie de damage checker les ennemis avant les duels : chaque point compte.'
   });
   if (kast < 60) warnings.push({
     icon: 'pres', label: 'Faible présence dans les rounds',
@@ -757,7 +757,7 @@ function analyzeGlobal(recent, cs2, fvScore, matches) {
   if (ctWR > 0 && tWR > 0 && ctWR - tWR >= 12) improvements.push({
     icon: 'tside', label: 'Côté T sous-performant',
     detail: `CT ${ctWR}% vs T ${tWR}% de win rate`,
-    advice: 'Travaille les exécutions en équipe côté T. Utilise ta utility avant d'entrer — smokes, flashes et molotovs font la différence.',
+    advice: 'Travaille les exécutions en équipe côté T. Utilise ta utility avant d\'entrer : smokes, flashes et molotovs font la différence.',
     priority: 'high',
     metric: `${(ctWR - tWR).toFixed(0)}pt d'écart`,
   });
@@ -801,7 +801,7 @@ function analyzeGlobal(recent, cs2, fvScore, matches) {
   // HS% trop élevé (dépendance headshot)
   if (hs >= 72 && kd < 1.3) improvements.push({
     icon: 'hs', label: 'Dépendance aux headshots',
-    detail: `${hs.toFixed(0)}% de HS — attention aux angles fermés`,
+    detail: `${hs.toFixed(0)}% de HS · attention aux angles fermés`,
     advice: 'Un HS% très élevé indique parfois que tu vises trop haut sur des angles difficiles. Spray sur le torse sur les duels lointains.',
     priority: 'low',
     metric: `${hs.toFixed(0)}% HS`,

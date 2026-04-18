@@ -1,4 +1,4 @@
-// maps.js — FragValue CS2 Map Renderer
+// maps.js : FragValue CS2 Map Renderer
 // Dessine les maps CS2 en Canvas avec polygones précis style CS Demo Manager
 
 const CS2_MAPS = {
@@ -246,7 +246,7 @@ const CS2_MAPS = {
 function drawMapBackground(ctx, mapName, W, H) {
   const map = CS2_MAPS[mapName];
   if (!map) {
-    // Map inconnue — fond simple
+    // Map inconnue : fond simple
     ctx.fillStyle = '#0D1117';
     ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = '#2A3040';
