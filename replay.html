@@ -794,8 +794,9 @@ function recalcRoundBoundaries() {
   // (sinon le "Xs restant" du smoke reste sur la valeur anormale parser).
   const MAX_SPAN = 1000, CLAMP_SPAN = 500;
   const EFFECT_TICKS = { smoke: 2304, molotov: 896, incgren: 896, decoy: 5760 };  // 18s/7s/7s/45s
-  const STATIONARY_SQ = 100;  // (10 units)^2 : seuil pour considerer la grenade au sol
-  let clamped = 0;
+  const STATIONARY_SQ = 100;   // (10 units)^2 : seuil pour considerer la grenade au sol
+  const MAX_JUMP_SQ = 1000000; // (1000 units)^2 : saut anormal entre deux samples (teleport)
+  let clamped = 0, jumpTruncated = 0;
   (demoData.grenades || []).forEach(g => {
     if (!g.tick || !g.detonTick) return;
     const span = g.detonTick - g.tick;
@@ -835,7 +836,26 @@ function recalcRoundBoundaries() {
       clamped++;
     }
   });
-  console.log(`[Replay] Grenades clamped: ${clamped} / ${(demoData.grenades || []).length}`);
+  // Passe 2 : detecter sauts anormaux dans g.path (> 1000 units entre deux
+  // samples consecutifs = teleport = parser a mixte deux entites/grenades).
+  // Applique a TOUTES les grenades, pas juste les clampees. Tronquer au
+  // premier saut anormal pour eviter les trajectoires zigzag a travers les murs.
+  (demoData.grenades || []).forEach(g => {
+    if (!g.path || g.path.length < 4) return;
+    const n = g.path.length / 2;
+    for (let i = 1; i < n; i++) {
+      const ddx = g.path[i * 2] - g.path[(i - 1) * 2];
+      const ddy = g.path[i * 2 + 1] - g.path[(i - 1) * 2 + 1];
+      if (ddx * ddx + ddy * ddy > MAX_JUMP_SQ) {
+        g.path = g.path.slice(0, i * 2);
+        g.detonX = g.path[g.path.length - 2];
+        g.detonY = g.path[g.path.length - 1];
+        jumpTruncated++;
+        break;
+      }
+    }
+  });
+  console.log(`[Replay] Grenades clamped: ${clamped}, jump-truncated: ${jumpTruncated} / ${(demoData.grenades || []).length}`);
 }
 
 // ══ ROUNDS BAR ═══════════════════════════════════════════════════════════════
