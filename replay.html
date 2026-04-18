@@ -912,6 +912,19 @@ function recalcRoundBoundaries() {
     }
   });
   console.log(`[Replay] Grenades clamped: ${clamped}, jump-truncated: ${jumpTruncated}, reversal-truncated: ${reversalTruncated} / ${(demoData.grenades || []).length}`);
+  // Diagnostic : lister les 5 premiers HE + 5 molos avec leur path length
+  // et span detonTick - tick, pour diagnostiquer les trajectoires bizarres.
+  const heSamples = [], moloSamples = [];
+  (demoData.grenades || []).forEach(g => {
+    const key = typeKey(g.type || '');
+    const pathLen = g.path ? g.path.length / 2 : 0;
+    const span = g.detonTick - g.tick;
+    const info = `path=${pathLen}pts span=${span}t`;
+    if (key === 'hegre' && heSamples.length < 5) heSamples.push(info);
+    if ((key === 'molotov' || key === 'incgren') && moloSamples.length < 5) moloSamples.push(info);
+  });
+  console.log(`[Replay] HE samples: ${heSamples.join(' | ')}`);
+  console.log(`[Replay] Molo samples: ${moloSamples.join(' | ')}`);
 }
 
 // ══ ROUNDS BAR ═══════════════════════════════════════════════════════════════
