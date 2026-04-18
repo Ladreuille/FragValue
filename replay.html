@@ -1006,6 +1006,28 @@ function recalcRoundBoundaries() {
     }
   });
   console.log(`[Replay] Total paires suspicieuses (< 50 ticks, meme thrower): ${mergedPairs}`);
+  // Dump TOUS les flashes avec >= 30 points + stats
+  let flashCount = 0;
+  (demoData.grenades || []).forEach(g => {
+    const k = typeKey(g.type || '');
+    if (k !== 'flash' || !g.path || g.path.length < 60 || !g.detonTick) return;
+    if (flashCount >= 3) return;
+    flashCount++;
+    const n = g.path.length / 2;
+    let revs = 0, prevDx = 0, prevDy = 0;
+    let maxJump = 0;
+    for (let i = 1; i < n; i++) {
+      const dx = g.path[i*2] - g.path[(i-1)*2];
+      const dy = g.path[i*2+1] - g.path[(i-1)*2+1];
+      const d2 = dx*dx + dy*dy;
+      if (d2 > maxJump) maxJump = d2;
+      if (i > 1 && (prevDx*dx + prevDy*dy) < 0) revs++;
+      prevDx = dx; prevDy = dy;
+    }
+    const pts = [];
+    for (let i = 0; i < n; i++) pts.push(`(${Math.round(g.path[i*2])},${Math.round(g.path[i*2+1])})`);
+    console.log(`[Replay] FLASH #${flashCount} ${g.thrower} tick=${g.tick}→${g.detonTick} (${n}pts, ${revs}rev, maxJump=${Math.round(Math.sqrt(maxJump))}): ${pts.join(' ')}`);
+  });
 }
 
 // ══ ROUNDS BAR ═══════════════════════════════════════════════════════════════
