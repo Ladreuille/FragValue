@@ -1344,11 +1344,11 @@ function buildFrames(round) {
     if (/knife|bayonet|karambit|butterfly|falchion|huntsman|gut|flip|ursus|stiletto|kukri|skeleton|talon|paracord|survival|outdoor|nomad|shadow|daggers|navaja|canis|cord|widowmaker/i.test(n)) return 1;
     return 0;
   };
-  // Peak buy-state calcule sur la fenetre freeze [rdStart, roundData.startTick]
-  // (= post-buy, pre-play). Evite la pollution des kill bonus accumules pendant
-  // le play qui ferait un peak money = stack post-kill au lieu du buy.
-  // Fallback sur rdEnd si startTick invalide : retour au comportement d'avant
-  // (couvre tout le round) plutot que de casser silencieusement le HUD.
+  // Buy-state au dernier tick <= freezeEnd (= etat post-buy juste avant play).
+  // Money/armor/helmet/defuser = snapshot au plus proche de freezeEnd : pas de
+  // pollution du warmup ($16000 reset a $800 au match_start) ni des kill bonus.
+  // Weapon = peak sur la fenetre pour capter l'intent meme si knife equipe
+  // au dernier tick.
   currentRoundPeakStats = {};
   const freezeStart = rdStart;
   const freezeEnd = (roundData.startTick && roundData.startTick > rdStart) ? roundData.startTick : rdEnd;
@@ -1362,22 +1362,24 @@ function buildFrames(round) {
     currentRoundPeak[name] = peak;
     const allPts = positions[name] || [];
     let bestPrio = 0, bestName = null;
-    let peakMoney = 0, peakArmor = 0, peakHelmet = false, peakDefuser = false;
+    let snap = null;
     allPts.forEach(p => {
       const t = p.tick || 0;
       if (t < freezeStart || t > freezeEnd) return;
       const prio = WEAPON_PRIORITY(p.weapon);
       if (prio > bestPrio) { bestPrio = prio; bestName = p.weapon; }
-      if ((p.money || 0) > peakMoney) peakMoney = p.money;
-      if ((p.armor || 0) > peakArmor) peakArmor = p.armor;
-      if (p.hasHelmet) peakHelmet = true;
-      if (p.hasDefuser) peakDefuser = true;
+      if (!snap || t > (snap.tick || 0)) snap = p;
     });
     if (bestName) currentRoundBestWeapon[name] = bestName;
-    currentRoundPeakStats[name] = { money: peakMoney, armor: peakArmor, helmet: peakHelmet, defuser: peakDefuser };
+    currentRoundPeakStats[name] = {
+      money: (snap && snap.money) || 0,
+      armor: (snap && snap.armor) || 0,
+      helmet: !!(snap && snap.hasHelmet),
+      defuser: !!(snap && snap.hasDefuser),
+    };
   });
   const _firstName = Object.keys(currentRoundPeakStats)[0];
-  console.log(`[FreezePeak R${round}] window=${freezeStart}-${freezeEnd} | ${_firstName}: money=${currentRoundPeakStats[_firstName]?.money} armor=${currentRoundPeakStats[_firstName]?.armor} weapon=${currentRoundBestWeapon[_firstName]}`);
+  console.log(`[FreezeSnap R${round}] window=${freezeStart}-${freezeEnd} | ${_firstName}: money=${currentRoundPeakStats[_firstName]?.money} armor=${currentRoundPeakStats[_firstName]?.armor} weapon=${currentRoundBestWeapon[_firstName]}`);
 
   frames = [];
   for (let f = 0; f <= N; f++) {
