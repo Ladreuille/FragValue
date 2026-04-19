@@ -22,33 +22,34 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const missing = [];
-  if (!process.env.STRIPE_SECRET_KEY) missing.push('STRIPE_SECRET_KEY');
-  if (!process.env.STRIPE_PRICE_PRO_MONTHLY) missing.push('STRIPE_PRICE_PRO_MONTHLY');
-  if (!process.env.STRIPE_PRICE_PRO_ANNUEL) missing.push('STRIPE_PRICE_PRO_ANNUEL');
-  if (!process.env.STRIPE_PRICE_TEAM_MONTHLY) missing.push('STRIPE_PRICE_TEAM_MONTHLY');
-  if (!process.env.STRIPE_PRICE_TEAM_ANNUEL) missing.push('STRIPE_PRICE_TEAM_ANNUEL');
-  if (missing.length > 0) return res.status(503).json({ error: 'Variables manquantes : ' + missing.join(', ') });
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(503).json({ error: 'Variables manquantes : STRIPE_SECRET_KEY' });
+  }
 
   try {
     const Stripe = (await import('stripe')).default;
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
 
-    const PLANS = {
-      pro_monthly:  process.env.STRIPE_PRICE_PRO_MONTHLY,
-      pro_yearly:   process.env.STRIPE_PRICE_PRO_ANNUEL,
-      team_monthly: process.env.STRIPE_PRICE_TEAM_MONTHLY,
-      team_yearly:  process.env.STRIPE_PRICE_TEAM_ANNUEL,
+    // Mapping plan logique → env var. On valide UNIQUEMENT le plan demande
+    // pour qu'un Team Annuel pas configure ne bloque pas un checkout Pro.
+    const PLAN_ENV = {
+      pro_monthly:  'STRIPE_PRICE_PRO_MONTHLY',
+      pro_yearly:   'STRIPE_PRICE_PRO_ANNUEL',
+      team_monthly: 'STRIPE_PRICE_TEAM_MONTHLY',
+      team_yearly:  'STRIPE_PRICE_TEAM_ANNUEL',
     };
 
     const body = req.body || {};
     const plan = body.plan;
-    if (!plan || !PLANS[plan]) return res.status(400).json({ error: 'Plan invalide : ' + (plan || 'undefined') });
+    if (!plan || !PLAN_ENV[plan]) return res.status(400).json({ error: 'Plan invalide : ' + (plan || 'undefined') });
+
+    const priceId = process.env[PLAN_ENV[plan]];
+    if (!priceId) return res.status(503).json({ error: 'Variable manquante : ' + PLAN_ENV[plan] });
 
     const siteOrigin = originFrom(req);
     const sessionParams = {
       mode: 'subscription',
-      line_items: [{ price: PLANS[plan], quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: siteOrigin + '/account.html?checkout=success',
       cancel_url: siteOrigin + '/pricing.html',
       allow_promotion_codes: true,
