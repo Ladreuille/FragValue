@@ -164,3 +164,51 @@ CREATE POLICY "Inviter can insert" ON roster_invitations FOR INSERT WITH CHECK (
 CREATE POLICY "Invitee can respond" ON roster_invitations FOR UPDATE
   USING (auth.uid() = invitee_user_id)
   WITH CHECK (auth.uid() = invitee_user_id);
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- FEATURE WAITLIST (interets sur les teasers Bientôt/Pro/Elite)
+-- 5 pages teasers : lineup-library, pro-demos, pro-benchmarks, prep-veto,
+-- anti-strat. On stocke qui a exprime un interet, pour :
+--   1. Afficher un compteur live par feature
+--   2. Notifier au lancement
+--   3. Prioriser les features selon la demande
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS feature_interests (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  feature_slug   TEXT NOT NULL,           -- 'lineup-library' | 'pro-demos' | etc.
+  user_id        UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  anon_id        TEXT,                    -- hash(ip + user_agent) pour anon dedup
+  source         TEXT DEFAULT 'teaser',   -- 'teaser' | 'homepage' | 'email'
+  created_at     TIMESTAMPTZ DEFAULT now(),
+  notified_at    TIMESTAMPTZ              -- timestamp d'envoi mail de lancement
+);
+
+-- Un user (ou anon_id) ne peut s'inscrire qu'une fois par feature
+CREATE UNIQUE INDEX IF NOT EXISTS idx_feature_interests_user_unique
+  ON feature_interests (feature_slug, user_id)
+  WHERE user_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_feature_interests_anon_unique
+  ON feature_interests (feature_slug, anon_id)
+  WHERE user_id IS NULL AND anon_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_feature_interests_feature ON feature_interests (feature_slug);
+
+ALTER TABLE feature_interests ENABLE ROW LEVEL SECURITY;
+-- L'utilisateur voit uniquement ses propres entrees (pour afficher "tu es deja inscrit")
+CREATE POLICY "User reads own interests" ON feature_interests FOR SELECT
+  USING (auth.uid() = user_id);
+-- Insert via backend uniquement (on veut controler la dedup ip + headers)
+-- Pas de policy INSERT grand public : API endpoint utilise la service_key
+
+-- Vue agregee exposee publiquement (compteur par feature)
+CREATE OR REPLACE VIEW feature_interests_counts AS
+SELECT
+  feature_slug,
+  COUNT(*) AS total,
+  COUNT(*) FILTER (WHERE user_id IS NOT NULL) AS users,
+  COUNT(*) FILTER (WHERE user_id IS NULL) AS anons
+FROM feature_interests
+GROUP BY feature_slug;
+
+GRANT SELECT ON feature_interests_counts TO anon, authenticated;

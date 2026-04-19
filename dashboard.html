@@ -42,6 +42,47 @@
     @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
     .sec-label{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:0 0 12px;display:flex;align-items:center;gap:10px;font-family:var(--mono)}
     .sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+    .sec-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;padding:2px 8px;border-radius:40px}
+    .sec-badge.pro{background:rgba(184,255,87,.1);color:#b8ff57;border:1px solid rgba(184,255,87,.25)}
+    .sec-badge.elite{background:rgba(245,200,66,.1);color:#f5c842;border:1px solid rgba(245,200,66,.25)}
+
+    /* Coach IA card sur overview */
+    .coach-ai-card{background:var(--surface);border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:24px 28px;margin-bottom:24px;position:relative;overflow:hidden}
+    .coach-ai-card::before{content:'';position:absolute;top:0;right:0;width:280px;height:100%;background:radial-gradient(ellipse 60% 80% at 100% 0%,rgba(184,255,87,.06),transparent);pointer-events:none}
+    .coach-ai-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+    .coach-ai-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .coach-ai-title{flex:1;min-width:0}
+    .coach-ai-title-main{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text)}
+    .coach-ai-title-sub{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em;margin-top:2px}
+    .coach-ai-pill{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;padding:4px 10px;border-radius:40px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;flex-shrink:0}
+    .coach-ai-quote{font-size:13px;color:var(--text);line-height:1.7;padding:12px 16px;background:var(--bg);border-left:2px solid var(--accent);border-radius:0 6px 6px 0;margin-bottom:16px;position:relative;z-index:1}
+    .coach-ai-highlights{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;position:relative;z-index:1}
+    @media(max-width:640px){.coach-ai-highlights{grid-template-columns:1fr}}
+    .coach-ai-col{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+    .coach-ai-col-label{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+    .coach-ai-col.force .coach-ai-col-label{color:#2dd4a0}
+    .coach-ai-col.axe .coach-ai-col-label{color:#f06b6b}
+    .coach-ai-col-text{font-size:11px;color:var(--text2);line-height:1.6}
+    .coach-ai-goal{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg);border-radius:8px;border:1px solid var(--border);position:relative;z-index:1}
+    .coach-ai-goal-icon{color:#f5c842;flex-shrink:0}
+    .coach-ai-goal-text{flex:1;font-family:var(--mono);font-size:12px;color:var(--text);line-height:1.5}
+    .coach-ai-goal-text strong{color:var(--accent);font-family:var(--display);font-size:14px;display:inline}
+    .coach-ai-cta{display:inline-flex;align-items:center;gap:6px;margin-top:14px;color:var(--accent);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;padding:8px 0;position:relative;z-index:1}
+    .coach-ai-cta:hover{gap:10px}
+    .coach-ai-loading{display:flex;align-items:center;gap:10px;color:var(--text3);font-family:var(--mono);font-size:11px;letter-spacing:.04em}
+    .coach-ai-loading-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:coach-ai-pulse 1.4s ease-in-out infinite}
+    @keyframes coach-ai-pulse{0%,100%{opacity:.4}50%{opacity:1}}
+    .coach-ai-locked{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 0;gap:14px}
+    .coach-ai-locked-title{font-family:var(--mono);font-size:13px;color:var(--text);font-weight:700}
+    .coach-ai-locked-sub{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.6;max-width:400px}
+    .coach-ai-locked-btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s}
+    .coach-ai-locked-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+
+    /* Section locked pour users Free : blur + overlay upgrade */
+    body[data-plan="free"] .sec-locked{position:relative;overflow:hidden}
+    body[data-plan="free"] .sec-locked::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,9,9,.2) 0%,rgba(8,9,9,.88) 100%);z-index:3;pointer-events:none;border-radius:12px}
+    body[data-plan="free"] .sec-locked::after{content:'Débloquer avec Pro';position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:4;background:#b8ff57;color:#000;padding:10px 20px;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;box-shadow:0 8px 24px rgba(184,255,87,.3);cursor:pointer}
+    body[data-plan="free"] .sec-locked > *{filter:blur(3px);pointer-events:none;user-select:none}
     .hero-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:16px;position:relative;overflow:hidden}
     .hero-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 0% 50%,rgba(184,255,87,.06),transparent);pointer-events:none}
     .hero-top{display:flex;align-items:center;gap:16px;margin-bottom:18px;position:relative;z-index:1}
@@ -388,7 +429,7 @@
     @media(max-width:768px){nav{padding:0 16px}.page{padding:16px}.hero-kpis{grid-template-columns:repeat(3,1fr)}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
-<body>
+<body data-plan="free">
 
 <div id="loadingOverlay" style="display:none">
   <div class="load-spinner"></div>
@@ -436,8 +477,8 @@
           <div class="hero-info"><div class="hero-name">Chargement...</div></div>
         </div>
       </div>
-      <div class="sec-label">FV Score</div>
-      <div class="fvscore-card" id="fvScoreCard">
+      <div class="sec-label">FV Score <span class="sec-badge pro">PRO</span></div>
+      <div class="fvscore-card sec-locked" id="fvScoreCard">
         <div style="text-align:center">
           <div class="fvscore-donut-wrap">
             <svg class="fvscore-donut-svg" viewBox="0 0 120 120">
@@ -459,31 +500,27 @@
       <div class="sec-label">Stats clés (20 matchs)</div>
       <div class="kpi-grid" id="kpiGrid"></div>
 
-      <div class="sec-label">KPIs avancés (moyennes 20 matchs FACEIT)</div>
-      <div class="kpi-grid" id="kpiAdvanced"></div>
+      <div class="sec-label">KPIs avancés <span class="sec-badge pro">PRO</span></div>
+      <div class="kpi-grid sec-locked" id="kpiAdvanced"></div>
 
-      <div class="sec-label">Côté CT vs Côté T</div>
-      <div id="ctTSplit"></div>
+      <div class="sec-label">Côté CT vs Côté T <span class="sec-badge pro">PRO</span></div>
+      <div class="sec-locked" id="ctTSplit"></div>
 
-      <div class="sec-label">Stats par map</div>
-      <div id="mapStatsGrid"></div>
+      <div class="sec-label">Stats par map <span class="sec-badge pro">PRO</span></div>
+      <div class="sec-locked" id="mapStatsGrid"></div>
 
-      <div class="sec-label">Meilleur match récent</div>
-      <div id="bestMatch"></div>
+      <div class="sec-label">Meilleur match récent <span class="sec-badge pro">PRO</span></div>
+      <div class="sec-locked" id="bestMatch"></div>
 
-      <div class="sec-label">Évolution FV Rating</div>
-      <div class="chart-card"><div class="chart-title">FV Rating sur 20 matchs</div><div class="chart-wrap"><canvas id="chartFvRating"></canvas></div></div>
+      <div class="sec-label">Évolution FV Rating <span class="sec-badge pro">PRO</span></div>
+      <div class="chart-card sec-locked"><div class="chart-title">FV Rating sur 20 matchs</div><div class="chart-wrap"><canvas id="chartFvRating"></canvas></div></div>
 
-      <div class="sec-label">Coach IA</div>
-      <div class="coach-cta">
-        <div class="coach-cta-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <div class="sec-label">Coach IA <span class="sec-badge pro">PRO</span></div>
+      <div id="coachAiCard" class="coach-ai-card">
+        <div class="coach-ai-loading">
+          <div class="coach-ai-loading-dot"></div>
+          <span>Chargement de ton diagnostic...</span>
         </div>
-        <div class="coach-cta-body">
-          <div class="coach-cta-title">Bilan round-by-round type coach</div>
-          <div class="coach-cta-sub">Analyse ton dernier match comme un analyste pro : top moments, patterns, conseils actionnables.</div>
-        </div>
-        <a href="matches.html" class="coach-cta-btn">Voir mes matchs</a>
       </div>
 
       <div class="sec-label">Dernier match</div>
@@ -741,22 +778,108 @@ async function loadFaceitData(nick) {
     renderProfile(d); renderFvScore(d); renderWeeklyInsights(d); renderKpis(d); renderAdvancedKpis(d);
     renderCtTSplit(d); renderMapStats(d); renderBestMatch(d); renderChart(d);
     renderLastMatch(d); renderMatches(d); renderImprovements(d);
-    renderPlanNudge();
+    // Plan check + Coach IA en parallele (2 auth fetches, ~800ms saved)
+    Promise.all([renderPlanNudge(), renderCoachAi()]);
   } catch(e) { console.error(e); } finally { showLoading(false); }
 }
 
-// Pro upgrade nudge · s'affiche uniquement si l'user est free (ou pas auth)
-async function renderPlanNudge() {
+// Fetch + render du diagnostic Coach IA depuis /api/ai-roadmap.
+// Si free : affiche un preview + CTA. Si pro/team : rendu complet avec CTA detail.
+async function renderCoachAi() {
+  const card = document.getElementById('coachAiCard');
+  if (!card) return;
   try {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) return;
+    if (!session) {
+      card.innerHTML = coachLockedHtml('Connecte-toi pour obtenir ton diagnostic', 'Le Coach IA analyse tes 20 derniers matchs FACEIT et te sort forces, faiblesses et objectif hebdo.', '/login.html', 'Se connecter');
+      return;
+    }
+    const res = await fetch('/api/ai-roadmap', {
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (res.status === 400) {
+      card.innerHTML = coachLockedHtml('Pseudo FACEIT non lié', 'Configure ton pseudo FACEIT dans ton espace pour que le Coach IA puisse analyser tes 20 derniers matchs.', '/account.html', 'Lier mon compte FACEIT');
+      return;
+    }
+    if (!res.ok) throw new Error('ai-roadmap ' + res.status);
+    const data = await res.json();
+    const d = data.diagnosis || {};
+    if (!d.summary) throw new Error('diagnostic vide');
+
+    const force = (d.strengths || [])[0] || '-';
+    const axe   = (d.weaknesses || [])[0] || '-';
+    const goal  = d.weeklyGoal || '-';
+    card.innerHTML = ''
+      + '<div class="coach-ai-head">'
+      + '  <div class="coach-ai-icon">'
+      + '    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>'
+      + '  </div>'
+      + '  <div class="coach-ai-title">'
+      + '    <div class="coach-ai-title-main">Ton diagnostic IA</div>'
+      + '    <div class="coach-ai-title-sub">Analyse des 20 derniers matchs · mise à jour il y a ' + cacheAge(data.cachedAt) + '</div>'
+      + '  </div>'
+      + '  <div class="coach-ai-pill">COACH IA</div>'
+      + '</div>'
+      + '<div class="coach-ai-quote">' + escapeHtml(d.summary) + '</div>'
+      + '<div class="coach-ai-highlights">'
+      + '  <div class="coach-ai-col force"><div class="coach-ai-col-label">TOP FORCE</div><div class="coach-ai-col-text">' + escapeHtml(force) + '</div></div>'
+      + '  <div class="coach-ai-col axe"><div class="coach-ai-col-label">AXE PRINCIPAL</div><div class="coach-ai-col-text">' + escapeHtml(axe) + '</div></div>'
+      + '</div>'
+      + '<div class="coach-ai-goal">'
+      + '  <svg class="coach-ai-goal-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>'
+      + '  <div class="coach-ai-goal-text"><strong>Objectif hebdo · </strong>' + escapeHtml(goal) + '</div>'
+      + '</div>'
+      + '<a href="/levels.html" class="coach-ai-cta">Voir le diagnostic complet <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></a>';
+  } catch (e) {
+    console.warn('Coach IA render failed', e);
+    card.innerHTML = coachLockedHtml('Diagnostic indisponible', 'Lie ton pseudo FACEIT dans ton profil pour activer le Coach IA.', '/account.html', 'Compléter mon profil');
+  }
+}
+
+function coachLockedHtml(title, sub, href, cta) {
+  return ''
+    + '<div class="coach-ai-locked">'
+    + '  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#b8ff57" stroke-width="1.5"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>'
+    + '  <div class="coach-ai-locked-title">' + escapeHtml(title) + '</div>'
+    + '  <div class="coach-ai-locked-sub">' + escapeHtml(sub) + '</div>'
+    + '  <a href="' + href + '" class="coach-ai-locked-btn">' + escapeHtml(cta) + ' <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></a>'
+    + '</div>';
+}
+
+function cacheAge(iso) {
+  if (!iso) return '-';
+  const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 1) return 'quelques secondes';
+  if (mins < 60) return mins + ' min';
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return hours + ' h';
+  const days = Math.floor(hours / 24);
+  return days + ' j';
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// Pro upgrade nudge · s'affiche uniquement si l'user est free (ou pas auth)
+// + set body[data-plan=...] pour activer les blur overlays sur .sec-locked
+async function renderPlanNudge() {
+  // body[data-plan="free"] est set des le HTML pour eviter le flash unlocked.
+  // On met a jour le plan ici : si pro/team, on retire l'attribut (tout se deverrouille).
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { wireUnlockClicks(); return; }
     const res = await fetch('/api/check-subscription', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
     });
-    if (!res.ok) return;
+    if (!res.ok) { wireUnlockClicks(); return; }
     const d = await res.json();
-    if (d.plan && d.plan !== 'free') return; // pro/team : pas de nudge
+    const plan = d.plan || 'free';
+    document.body.dataset.plan = plan;
+    wireUnlockClicks();
+    if (plan !== 'free') return; // pro/team : pas de nudge
+
     const panel = document.getElementById('panelOverview');
     if (!panel || document.getElementById('planNudge')) return;
     const nudge = document.createElement('div');
@@ -776,6 +899,18 @@ async function renderPlanNudge() {
     if (insertBefore) insertBefore.parentNode.insertBefore(nudge, insertBefore);
     else panel.appendChild(nudge);
   } catch(_) { /* silencieux */ }
+}
+
+// Click sur le pseudo-element "Débloquer avec Pro" des sections locked.
+// On detecte le clic dans la zone de l'overlay et on redirige.
+function wireUnlockClicks() {
+  if (document.body.dataset.plan !== 'free') return;
+  document.querySelectorAll('.sec-locked').forEach(el => {
+    if (el.dataset.unlockWired) return;
+    el.dataset.unlockWired = '1';
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', () => { window.location.href = '/pricing.html'; });
+  });
 }
 
 function renderProfile(d) {
