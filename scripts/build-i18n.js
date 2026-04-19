@@ -1,0 +1,218 @@
+#!/usr/bin/env node
+/* FragValue : générateur de pages anglaises depuis les pages FR.
+ *
+ * Principe :
+ *   - Les pages HTML restent en FR (zéro modif des fichiers existants requise).
+ *   - locales/translations.json contient les paires { "Texte FR": "Text EN" }.
+ *   - Pour chaque page listée dans PAGES, on copie de root → /en/, en remplaçant
+ *     toutes les occurrences FR par leur traduction EN.
+ *   - On ajoute aussi : <html lang="en">, hreflang tags, lang attr sur la page.
+ *
+ * Usage :
+ *   node scripts/build-i18n.js              # build toutes les pages
+ *   node scripts/build-i18n.js index.html   # build une seule page
+ *
+ * Idempotent : peut être re-run autant de fois que nécessaire.
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+const ROOT = path.join(__dirname, '..');
+const EN_DIR = path.join(ROOT, 'en');
+const TRANSLATIONS = path.join(ROOT, 'locales', 'translations.json');
+
+// Liste des pages à traduire (Standard scope = 14 pages)
+const PAGES = [
+  'index.html',
+  'pricing.html',
+  'demo.html',
+  'login.html',
+  'cgv.html',
+  'mentions-legales.html',
+  'privacy.html',
+  'lineup-library.html',
+  'pro-demos.html',
+  'pro-benchmarks.html',
+  'prep-veto.html',
+  'anti-strat.html',
+  'levels.html',
+  'stats-guide.html',
+];
+
+// Strings à NE JAMAIS traduire (noms propres, brand, technical)
+const PROTECTED_PATTERNS = [
+  /\bFragValue\b/g,
+  /\bCS2\b/g,
+  /\bCounter-Strike\b/g,
+  /\bFACEIT\b/g,
+  /\bHLTV\b/g,
+  /\bStripe\b/g,
+  /\bSupabase\b/g,
+  /\bAnthropic\b/g,
+  /\bClaude\b/g,
+  /\bResend\b/g,
+  /\bVercel\b/g,
+];
+
+// Charge le dictionnaire (objet plat { "fr": "en" })
+function loadDictionary() {
+  if (!fs.existsSync(TRANSLATIONS)) {
+    console.error(`[i18n] Dictionnaire manquant : ${TRANSLATIONS}`);
+    process.exit(1);
+  }
+  const raw = fs.readFileSync(TRANSLATIONS, 'utf8');
+  return JSON.parse(raw);
+}
+
+// Échappe les regex specials
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Remplace dans le HTML toutes les occurrences FR par EN.
+// Trie par longueur décroissante pour matcher les phrases longues d'abord.
+function translateHtml(html, dict) {
+  const entries = Object.entries(dict).sort((a, b) => b[0].length - a[0].length);
+  let out = html;
+  for (const [fr, en] of entries) {
+    if (!fr || fr === en) continue;
+    const re = new RegExp(escapeRegex(fr), 'g');
+    out = out.replace(re, en);
+  }
+  return out;
+}
+
+// Rewrite les liens internes pour pointer vers /en/* quand on est sur la version EN.
+// - href="/page.html" → href="/en/page.html" SEULEMENT si page.html est dans PAGES
+// - href="page.html" (relatif) : laisse tel quel (résolu auto vers /en/page.html)
+// - href="/api/...", "/dashboard.html" (pages non traduites) : laisse tel quel (fallback FR)
+// - src="..." (assets js/css/img) : jamais touché
+function rewriteInternalLinks(html, pages) {
+  let out = html;
+  for (const page of pages) {
+    // Match href="/page.html" ou href='/page.html' (absolu uniquement)
+    const re = new RegExp(`(href=["'])/(${escapeRegex(page)})(["'])`, 'g');
+    out = out.replace(re, '$1/en/$2$3');
+  }
+  return out;
+}
+
+// Ajoute / remplace les meta i18n dans le <head>
+function addI18nHeaders(html, pageName) {
+  let out = html;
+
+  // 1. lang="fr" → lang="en"
+  out = out.replace(/<html\s+lang=["']fr["']/i, '<html lang="en"');
+
+  // 2. Canonical : /page.html → https://fragvalue.com/en/page.html
+  out = out.replace(
+    /<link\s+rel=["']canonical["']\s+href=["']https:\/\/fragvalue\.com\/([^"']+)["']/i,
+    `<link rel="canonical" href="https://fragvalue.com/en/$1"`
+  );
+
+  // 3. Inject hreflang juste apres la canonical (si pas deja la)
+  if (!/hreflang=["']en["']/i.test(out)) {
+    const hreflangBlock = `
+  <link rel="alternate" hreflang="fr" href="https://fragvalue.com/${pageName}">
+  <link rel="alternate" hreflang="en" href="https://fragvalue.com/en/${pageName}">
+  <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/${pageName}">`;
+    out = out.replace(
+      /(<link\s+rel=["']canonical["'][^>]*>)/i,
+      `$1${hreflangBlock}`
+    );
+  }
+
+  // 4. og:locale fr_FR → en_US
+  if (/<meta\s+property=["']og:locale["']/i.test(out)) {
+    out = out.replace(
+      /(<meta\s+property=["']og:locale["']\s+content=["'])fr_FR(["'])/i,
+      '$1en_US$2'
+    );
+  } else {
+    // ajoute si absent
+    out = out.replace(
+      /(<meta\s+property=["']og:type["'][^>]*>)/i,
+      `$1\n  <meta property="og:locale" content="en_US">`
+    );
+  }
+
+  // 5. og:url : ajouter /en/
+  out = out.replace(
+    /(<meta\s+property=["']og:url["']\s+content=["'])https:\/\/fragvalue\.com\/([^"']+)(["'])/i,
+    `$1https://fragvalue.com/en/$2$3`
+  );
+
+  return out;
+}
+
+// Inverse aussi : ajoute hreflang au fichier FR original pour SEO bilingue.
+// Idempotent : ne touche pas si déjà présent.
+function injectHreflangInFrSource(pageName) {
+  const frPath = path.join(ROOT, pageName);
+  if (!fs.existsSync(frPath)) return;
+  let html = fs.readFileSync(frPath, 'utf8');
+  if (/hreflang=["']en["']/i.test(html)) return; // déjà fait
+
+  const hreflangBlock = `
+  <link rel="alternate" hreflang="fr" href="https://fragvalue.com/${pageName}">
+  <link rel="alternate" hreflang="en" href="https://fragvalue.com/en/${pageName}">
+  <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/${pageName}">`;
+
+  if (/<link\s+rel=["']canonical["']/i.test(html)) {
+    html = html.replace(
+      /(<link\s+rel=["']canonical["'][^>]*>)/i,
+      `$1${hreflangBlock}`
+    );
+    fs.writeFileSync(frPath, html);
+    console.log(`  + hreflang injecté dans ${pageName} (FR)`);
+  }
+}
+
+function buildPage(pageName, dict) {
+  const srcPath = path.join(ROOT, pageName);
+  const dstPath = path.join(EN_DIR, pageName);
+
+  if (!fs.existsSync(srcPath)) {
+    console.warn(`  [skip] ${pageName} : source introuvable`);
+    return;
+  }
+
+  const src = fs.readFileSync(srcPath, 'utf8');
+
+  // 1. Traduit le contenu
+  let translated = translateHtml(src, dict);
+
+  // 2. Rewrite les liens internes (href absolus → /en/...)
+  translated = rewriteInternalLinks(translated, PAGES);
+
+  // 3. Ajoute les meta i18n
+  translated = addI18nHeaders(translated, pageName);
+
+  // 4. Ecrit le fichier
+  fs.writeFileSync(dstPath, translated);
+  console.log(`  ✓ ${pageName} -> en/${pageName} (${translated.length} chars)`);
+
+  // 4. Inject hreflang dans la version FR (pour SEO bilingue cross-references)
+  injectHreflangInFrSource(pageName);
+}
+
+function main() {
+  const dict = loadDictionary();
+  console.log(`[i18n] Dictionnaire chargé : ${Object.keys(dict).length} entrées`);
+
+  if (!fs.existsSync(EN_DIR)) {
+    fs.mkdirSync(EN_DIR, { recursive: true });
+  }
+
+  const arg = process.argv[2];
+  const pages = arg ? [arg] : PAGES;
+
+  console.log(`[i18n] Build de ${pages.length} page(s) :`);
+  for (const page of pages) {
+    buildPage(page, dict);
+  }
+  console.log(`[i18n] Terminé. Pages générées dans ${EN_DIR}`);
+}
+
+main();

@@ -1,19 +1,20 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
   <meta name="description" content="FragValue Pro Demos · Scorecards HLTV détaillés des matchs Major, Blast, ESL Pro League. Ratings, ADR, KAST, opening duels par joueur.">
   <meta name="keywords" content="CS2, HLTV, pro demos, scorecard, tactique, Major, ESL, Blast, BLAST, Vitality, NAVI, G2, FaZe, Spirit">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="canonical" href="https://fragvalue.com/pro-demos.html">
+  <link rel="canonical" href="https://fragvalue.com/en/pro-demos.html">
   <link rel="alternate" hreflang="fr" href="https://fragvalue.com/pro-demos.html">
   <link rel="alternate" hreflang="en" href="https://fragvalue.com/en/pro-demos.html">
   <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/pro-demos.html">
   <meta property="og:title" content="FragValue · Pro Demos Viewer">
   <meta property="og:description" content="Scorecards HLTV détaillés des matchs des pros, filtrables par tournoi, équipe et map.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://fragvalue.com/pro-demos.html">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://fragvalue.com/en/pro-demos.html">
   <meta property="og:image" content="https://fragvalue.com/og/pro-demos.png">
   <meta property="og:image:alt" content="FragValue">
   <meta property="og:image:width" content="1200">
@@ -71,7 +72,7 @@
 
 <div class="page">
   <div class="hero">
-    <div class="hero-tag" id="heroTag">● Bientôt · chargement...</div>
+    <div class="hero-tag" id="heroTag">● Soon · chargement...</div>
     <h1 class="hero-title">Les matchs pros<br><span>décryptés round par round</span></h1>
     <p class="hero-sub">Scorecard HLTV complète pour chaque match : ratings, ADR, KAST, opening duels par joueur. Filtre par tournoi, équipe ou map pour explorer comment les meilleurs gagnent leurs rounds.</p>
   </div>
@@ -79,14 +80,14 @@
   <div class="stats-row">
     <div class="stat-card"><div class="stat-val" id="statMatches">-</div><div class="stat-label">Matchs analysés</div></div>
     <div class="stat-card"><div class="stat-val" id="statEvents">-</div><div class="stat-label">Tournois S-tier</div></div>
-    <div class="stat-card"><div class="stat-val" id="statTeams">-</div><div class="stat-label">Équipes top 20</div></div>
+    <div class="stat-card"><div class="stat-val" id="statTeams">-</div><div class="stat-label">Teams top 20</div></div>
     <div class="stat-card"><div class="stat-val">128t</div><div class="stat-label">Tickrate serveurs</div></div>
   </div>
 
   <div class="filters locked">
     <span class="filter-label">Tournoi</span>
     <select class="filter-select" id="eventFilter" disabled><option value="">Tous</option></select>
-    <span class="filter-label">Équipe</span>
+    <span class="filter-label">Team</span>
     <input class="filter-input" id="teamFilter" placeholder="NAVI, Vitality, G2..." disabled />
     <span class="filter-label">Map</span>
     <select class="filter-select" id="mapFilter" disabled>
@@ -102,24 +103,24 @@
     <button class="filter-clear" disabled>Réinitialiser</button>
   </div>
 
-  <div class="sec-label">Aperçu · derniers matchs ingérés</div>
+  <div class="sec-label">Overview · derniers matchs ingérés</div>
   <div style="position:relative">
     <div id="matchGrid"><div class="loading">Chargement des matchs...</div></div>
     <div class="teaser-overlay"></div>
-    <div class="teaser-badge">● Pro demos en préparation · Early access bientôt</div>
+    <div class="teaser-badge">● Pro demos in preparation · Early access soon</div>
   </div>
 
   <div class="cta-card">
-    <h2 class="cta-title">Sois notifié au lancement</h2>
+    <h2 class="cta-title">Be notified at launch</h2>
     <p class="cta-sub">Le viewer sera ouvert dès qu'on aura assez de scorecards complets sur les tournois S-tier pour rendre l'exploration vraiment utile. En attendant, active ton intérêt pour passer en early access dès l'ouverture.</p>
     <a href="account.html#settings" class="cta-btn" data-teaser-cta="pro-demos">
-      Activer les notifications
+      Enable notifications
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </a>
     <div class="cta-waitlist">
       <span class="cta-waitlist-dot"></span>
       <strong data-teaser-counter="pro-demos">-</strong>
-      <span>joueurs ont activé leur intérêt</span>
+      <span>players activated their interest</span>
     </div>
   </div>
 
@@ -211,7 +212,7 @@ async function load() {
     const data = await res.json();
 
     const totalMatches = data.total || data.matches.length;
-    document.getElementById('heroTag').textContent = '● Bientôt · ' + totalMatches + ' matchs en préparation';
+    document.getElementById('heroTag').textContent = '● Soon · ' + totalMatches + ' matchs en préparation';
     document.getElementById('statMatches').textContent = totalMatches;
     document.getElementById('statEvents').textContent = data.events?.length || '-';
     const teams = new Set();
@@ -219,7 +220,7 @@ async function load() {
     document.getElementById('statTeams').textContent = teams.size + '+';
 
     if (!data.matches.length) {
-      grid.innerHTML = '<div class="empty"><div class="empty-title">Aperçu indisponible</div><div>Les premiers matchs arrivent bientôt.</div></div>';
+      grid.innerHTML = '<div class="empty"><div class="empty-title">Overview indisponible</div><div>Les premiers matchs arrivent bientôt.</div></div>';
       return;
     }
     grid.innerHTML = '<div class="match-grid">' + data.matches.map(renderMatchCard).join('') + '</div>';

@@ -40,6 +40,8 @@
     nav.fv-nav .fv-right{display:flex;align-items:center;gap:10px}
     nav.fv-nav .fv-login{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#a8b0b0;text-decoration:none;text-transform:uppercase;letter-spacing:.09em;padding:8px 14px;border-radius:6px;transition:all .18s}
     nav.fv-nav .fv-login:hover{color:#b8ff57;background:rgba(184,255,87,.06)}
+    nav.fv-nav .fv-lang{background:transparent;color:#a8b0b0;padding:6px 10px;border-radius:6px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid #1c1e1e;transition:all .15s}
+    nav.fv-nav .fv-lang:hover{color:#b8ff57;border-color:rgba(184,255,87,.4)}
     nav.fv-nav .fv-cta{background:#b8ff57;color:#000;padding:8px 18px;border-radius:6px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .18s;box-shadow:0 0 0 0 rgba(184,255,87,.5);position:relative}
     nav.fv-nav .fv-cta:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 20px rgba(184,255,87,.4)}
     nav.fv-nav .fv-account-dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#ff8a3d;border:2px solid #080909;animation:fv-dot-pulse 1.8s ease-in-out infinite;display:none}
@@ -127,6 +129,7 @@
     <a href="/index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
     <div class="fv-sections">${sections.map(buildSectionHTML).join('')}</div>
     <div class="fv-right">
+      <button class="fv-lang" id="navLangSwitch" type="button" title="Switch language"></button>
       <a href="/pricing.html" class="fv-login">Tarifs</a>
       <a href="/login.html" class="fv-login" id="navLoginBtn">Connexion</a>
       <a href="/account.html#feedback" class="fv-cta" id="navAccountBtn" style="display:none">Mon espace<span class="fv-account-dot" id="navFeedbackDot" title="Tu as une réponse à ton feedback"></span></a>
@@ -234,5 +237,29 @@
     fbScript.src = '/feedback-widget.js';
     fbScript.defer = true;
     document.head.appendChild(fbScript);
+  }
+
+  // ── Switch FR/EN ───────────────────────────────────────────────────────
+  // Detecte si on est sur /en/ → bouton affiche FR (cliquer = retour FR)
+  // Sinon → bouton affiche EN (cliquer = passer EN)
+  // Set cookie fv_lang persistant 1 an pour memoriser le choix.
+  const langBtn = document.getElementById('navLangSwitch');
+  if (langBtn) {
+    const isOnEn = /^\/en\//.test(window.location.pathname);
+    langBtn.textContent = isOnEn ? 'FR' : 'EN';
+    langBtn.addEventListener('click', () => {
+      const newLang = isOnEn ? 'fr' : 'en';
+      document.cookie = `fv_lang=${newLang}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+      const path = window.location.pathname;
+      let target;
+      if (isOnEn) {
+        // /en/page.html → /page.html
+        target = path.replace(/^\/en\//, '/');
+      } else {
+        // /page.html → /en/page.html
+        target = '/en' + (path === '/' ? '/index.html' : path);
+      }
+      window.location.href = target + window.location.hash;
+    });
   }
 })();

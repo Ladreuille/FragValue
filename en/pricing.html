@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="FragValue. Pricing. Analyse CS2 FACEIT gratuite ou illimitée avec le plan Pro.">
+<meta name="theme-color" content="#080909">
+<meta property="og:title" content="FragValue. Pricing">
+<meta property="og:description" content="Plans Free et Pro pour analyser tes matchs CS2 FACEIT.">
+<meta property="og:type" content="website">
+  <meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://fragvalue.com/en/pricing.html">
+<meta property="og:image" content="https://fragvalue.com/fragvalue_icon.svg">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<title>FragValue · Pricing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;
+  --border:#1c1e1e;--border2:#252727;
+  --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --danger:#ff4444;--success:#2dd4a0;--gold:#f5c842;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  --r:6px;--r2:12px
+}
+
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.6;overflow-x:hidden}
+
+/* NOISE TEXTURE */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.4
+}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:56px;
+  background:rgba(8,9,9,.92);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px)
+}
+.nav-logo{
+  font-family:var(--display);font-size:20px;letter-spacing:.04em;
+  color:var(--text);text-decoration:none
+}
+.nav-logo span{color:var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-link{
+  font-size:11px;color:var(--text2);letter-spacing:.08em;
+  text-transform:uppercase;text-decoration:none;
+  font-family:var(--mono);transition:color .15s
+}
+.nav-link:hover{color:var(--accent)}
+.nav-cta{
+  background:var(--accent);color:#000;
+  padding:8px 16px;border-radius:var(--r);
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  text-decoration:none;letter-spacing:.06em;
+  transition:all .15s;border:none;cursor:pointer;
+  display:flex;align-items:center;gap:6px
+}
+.nav-cta:hover{background:var(--accent2)}
+
+/* HERO */
+.pricing-hero{
+  padding:140px 80px 80px;text-align:center;
+  position:relative;overflow:hidden
+}
+.pricing-hero-glow{
+  position:absolute;top:-30%;left:50%;transform:translateX(-50%);
+  width:800px;height:500px;
+  background:radial-gradient(ellipse,rgba(184,255,87,.05) 0%,transparent 70%);
+  pointer-events:none
+}
+.pricing-hero h1{
+  font-family:var(--display);
+  font-size:clamp(40px,5.5vw,72px);
+  line-height:.95;letter-spacing:.01em;
+  margin-bottom:20px;
+  opacity:0;animation:up .4s ease forwards
+}
+.pricing-hero-sub{
+  font-size:15px;color:var(--text2);line-height:1.8;
+  max-width:520px;margin:0 auto 48px;
+  opacity:0;animation:up .4s .1s ease forwards
+}
+
+/* BILLING TOGGLE */
+.billing-toggle{
+  display:flex;align-items:center;justify-content:center;gap:16px;
+  opacity:0;animation:up .4s .2s ease forwards
+}
+.billing-label{font-size:12px;color:var(--text2);letter-spacing:.06em;transition:color .2s}
+.billing-label.active{color:var(--text)}
+.toggle-track{
+  width:52px;height:28px;border-radius:14px;
+  background:var(--border2);cursor:pointer;
+  position:relative;transition:background .2s;
+  flex-shrink:0
+}
+.toggle-track.on{background:var(--accent)}
+.toggle-knob{
+  position:absolute;top:3px;left:3px;
+  width:22px;height:22px;border-radius:50%;
+  background:#fff;transition:transform .2s ease;
+  box-shadow:0 1px 4px rgba(0,0,0,.3)
+}
+.toggle-track.on .toggle-knob{transform:translateX(24px)}
+.yearly-badge{
+  font-size:10px;font-weight:700;letter-spacing:.08em;
+  background:var(--accent);color:#000;
+  padding:4px 12px;border-radius:40px;
+  white-space:nowrap;opacity:0;transform:scale(.8);
+  transition:opacity .2s,transform .2s
+}
+.yearly-badge.show{opacity:1;transform:scale(1)}
+
+/* SECTIONS */
+section{padding:80px 80px;position:relative;z-index:1}
+.section-tag{
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:16px
+}
+.section-title{
+  font-family:var(--display);font-size:clamp(36px,4vw,56px);
+  line-height:1;letter-spacing:.01em;margin-bottom:16px
+}
+.section-sub{font-size:14px;color:var(--text2);max-width:520px;line-height:1.8}
+
+/* PRICING CARDS */
+.pricing-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+  max-width:1160px;margin:0 auto;
+  opacity:0;animation:up .4s .3s ease forwards
+}
+.pricing-card.soon{
+  border-color:var(--border);opacity:.78;
+  background:repeating-linear-gradient(135deg,var(--card),var(--card) 10px,rgba(255,255,255,.012) 10px,rgba(255,255,255,.012) 20px)
+}
+.pricing-card.soon:hover{transform:none;border-color:var(--border)}
+.soon-badge{
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:var(--border2);color:var(--text2);
+  font-size:10px;font-weight:700;padding:4px 14px;
+  border-radius:40px;letter-spacing:.1em;white-space:nowrap
+}
+.pricing-tag{
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:10px
+}
+.pricing-tag.pro{color:var(--accent)}
+.pricing-cta-sub{
+  font-size:10px;color:var(--text3);text-align:center;
+  margin-top:10px;letter-spacing:.04em;line-height:1.5
+}
+.pricing-trust-row{
+  max-width:1160px;margin:32px auto 0;
+  display:flex;align-items:center;justify-content:center;
+  gap:28px;flex-wrap:wrap;opacity:0;
+  animation:up .4s .5s ease forwards
+}
+.pricing-trust-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;color:var(--text2);letter-spacing:.04em
+}
+.pricing-trust-item svg{color:var(--accent);flex-shrink:0}
+.pricing-card{
+  border:1px solid var(--border2);border-radius:var(--r2);
+  padding:36px 32px;position:relative;
+  transition:all .2s;background:var(--card)
+}
+.pricing-card:hover{border-color:var(--border2);transform:translateY(-4px)}
+.pricing-card.featured{
+  border-color:var(--accent);
+  background:linear-gradient(160deg,rgba(184,255,87,.06) 0%,rgba(184,255,87,.01) 40%,var(--card) 100%)
+}
+.pricing-card.featured:hover{border-color:var(--accent)}
+.pricing-badge{
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:var(--accent);color:#000;
+  font-size:10px;font-weight:700;padding:4px 14px;
+  border-radius:40px;letter-spacing:.1em;white-space:nowrap
+}
+.pricing-name{
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text2);margin-bottom:16px
+}
+.pricing-price{
+  font-family:var(--display);font-size:52px;line-height:1;margin-bottom:4px
+}
+.pricing-price span{font-size:16px;color:var(--text2)}
+.pricing-period{font-size:11px;color:var(--text3);margin-bottom:28px;min-height:16px}
+.pricing-divider{border:none;border-top:1px solid var(--border);margin:24px 0}
+.pricing-features{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.pricing-feature{
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:12px;color:var(--text2)
+}
+.pricing-check{flex-shrink:0;margin-top:2px}
+.pricing-btn{
+  display:block;width:100%;text-align:center;
+  padding:14px;border-radius:var(--r);
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  text-decoration:none;letter-spacing:.06em;
+  transition:all .15s;border:1px solid var(--border2);
+  color:var(--text2);cursor:pointer;background:none
+}
+.pricing-btn:hover{border-color:var(--text3);color:var(--text)}
+.pricing-btn.featured{
+  background:var(--accent);color:#000;border:none
+}
+.pricing-btn.featured:hover{background:var(--accent2)}
+.pricing-btn[data-state="saved"]{background:var(--border2);color:var(--text);cursor:default}
+.pricing-btn[data-state="saved"]:hover{background:var(--border2);transform:none}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+
+/* COMPARISON TABLE */
+.compare-section{
+  border-top:1px solid var(--border);overflow-x:auto
+}
+.compare-table{
+  width:100%;max-width:1100px;margin:48px auto 0;
+  border:1px solid var(--border);border-radius:var(--r2);
+  overflow:hidden;border-collapse:separate;border-spacing:0
+}
+.compare-table thead th{
+  background:var(--surface);
+  padding:16px 20px;
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text3);text-align:center;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0
+}
+.compare-table thead th:first-child{text-align:left;color:var(--text2)}
+.compare-table thead th.col-pro{color:var(--accent)}
+.compare-table tbody td{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  font-size:12px;color:var(--text2);text-align:center;
+  vertical-align:middle
+}
+.compare-table tbody td:first-child{
+  text-align:left;color:var(--text);font-size:12px
+}
+.compare-table tbody tr:last-child td{border-bottom:none}
+.compare-table tbody tr:nth-child(even) td{background:rgba(255,255,255,.01)}
+.compare-table tbody tr:hover td{background:rgba(184,255,87,.02)}
+.compare-cat td{
+  font-size:10px !important;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent) !important;
+  background:var(--surface) !important;
+  padding:12px 20px !important;
+  font-weight:700
+}
+.check-icon{color:var(--accent)}
+.x-icon{color:var(--text3)}
+.val-text{font-size:11px;color:var(--text2)}
+
+/* FAQ */
+.faq-section{border-top:1px solid var(--border)}
+.faq-list{
+  max-width:800px;margin:48px auto 0;
+  display:flex;flex-direction:column;gap:2px
+}
+.faq-item{
+  border:1px solid var(--border);border-radius:var(--r);
+  overflow:hidden;transition:border-color .2s
+}
+.faq-item:hover{border-color:var(--border2)}
+.faq-item.open{border-color:var(--accent)}
+.faq-q{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 24px;cursor:pointer;
+  font-size:13px;color:var(--text);
+  transition:background .15s;gap:16px
+}
+.faq-q:hover{background:rgba(255,255,255,.02)}
+.faq-chevron{
+  flex-shrink:0;transition:transform .3s ease;
+  color:var(--text3)
+}
+.faq-item.open .faq-chevron{transform:rotate(180deg);color:var(--accent)}
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height .3s ease,padding .3s ease
+}
+.faq-a-inner{
+  padding:0 24px 20px;
+  font-size:12px;color:var(--text2);line-height:1.8
+}
+
+/* CTA FINAL */
+.cta-section{
+  padding:120px 80px;text-align:center;
+  border-top:1px solid var(--border);
+  position:relative;overflow:hidden
+}
+.cta-glow{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:600px;height:300px;
+  background:radial-gradient(ellipse,rgba(184,255,87,.06) 0%,transparent 70%);
+  pointer-events:none
+}
+.cta-section h2{
+  font-family:var(--display);font-size:clamp(40px,5vw,72px);
+  line-height:.95;margin-bottom:20px
+}
+.cta-section p{font-size:14px;color:var(--text2);max-width:400px;margin:0 auto 40px}
+.btn-primary{
+  background:var(--accent);color:#000;
+  padding:16px 32px;border-radius:var(--r);
+  font-family:var(--mono);font-size:14px;font-weight:700;
+  text-decoration:none;letter-spacing:.04em;
+  display:inline-flex;align-items:center;gap:8px;
+  transition:all .15s
+}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(184,255,87,.15)}
+
+/* FOOTER */
+footer{
+  border-top:1px solid var(--border);
+  padding:40px 80px;
+  display:flex;align-items:center;justify-content:space-between
+}
+.footer-logo{font-family:var(--display);font-size:16px;color:var(--text3)}
+.footer-logo span{color:var(--accent)}
+.footer-links{display:flex;gap:24px}
+.footer-links a{font-size:11px;color:var(--text3);text-decoration:none;letter-spacing:.06em;transition:color .15s}
+.footer-links a:hover{color:var(--text2)}
+.footer-copy{font-size:11px;color:var(--text3)}
+
+/* ANIMATIONS */
+@keyframes up{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.fade-in{
+  opacity:0;transform:translateY(16px);
+  transition:opacity .6s ease,transform .6s ease
+}
+.fade-in.visible{opacity:1;transform:none}
+
+/* RESPONSIVE */
+@media(max-width:1100px){
+  .pricing-grid{grid-template-columns:1fr;max-width:420px}
+  .pricing-card.featured{order:-1}
+}
+@media(max-width:960px){
+  .compare-table{font-size:11px}
+  .compare-table thead th,
+  .compare-table tbody td{padding:10px 12px}
+}
+@media(max-width:768px){
+  .pricing-hero{padding:120px 24px 60px}
+  section{padding:60px 24px}
+  .cta-section{padding:80px 24px}
+  footer{padding:32px 24px;flex-direction:column;gap:16px;text-align:center}
+  nav{padding:0 16px}
+  .nav-right{gap:10px}
+  .nav-link{display:none}
+  .compare-section{padding-left:16px;padding-right:16px}
+}
+@media(max-width:600px){
+  .compare-table thead th:first-child,
+  .compare-table tbody td:first-child{
+    position:sticky;left:0;z-index:2;background:var(--bg)
+  }
+  .compare-table tbody tr:nth-child(even) td:first-child{background:var(--bg)}
+  .compare-cat td:first-child{background:var(--surface) !important}
+  .faq-q{padding:16px 18px;font-size:12px}
+  .faq-a-inner{padding:0 18px 16px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
+  <div class="nav-right">
+    <a href="levels.html" class="nav-link">ROADMAP</a>
+    <a href="stats-guide.html" class="nav-link">GUIDE STATS</a>
+    <a href="matches.html" class="nav-link">MES MATCHS</a>
+    <a href="demo.html" class="nav-cta">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Nouvelle demo
+    </a>
+    <a href="account.html" class="nav-link">MON ESPACE</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="pricing-hero">
+  <div class="pricing-hero-glow"></div>
+  <h1>Choose your<br>level</h1>
+  <p class="pricing-hero-sub">From curious player to pro coach. Start for free today. <strong style="color:var(--accent)">Pro launching very soon</strong> &middot; enable notifications to get early access.</p>
+
+  <!-- BILLING TOGGLE -->
+  <div class="billing-toggle">
+    <span class="billing-label active" id="labelMonthly">Monthly</span>
+    <div class="toggle-track" id="billingToggle" onclick="toggleBilling()">
+      <div class="toggle-knob"></div>
+    </div>
+    <span class="billing-label" id="labelYearly">Yearly</span>
+    <span class="yearly-badge" id="yearlyBadge">2 months free</span>
+  </div>
+</div>
+
+<!-- PRICING CARDS -->
+<section style="padding-top:0">
+  <div class="pricing-grid">
+
+    <!-- FREE : DECOUVRIR -->
+    <div class="pricing-card">
+      <div class="pricing-tag">Discover</div>
+      <div class="pricing-name">Free</div>
+      <div class="pricing-price">0<span>&euro;</span></div>
+      <div class="pricing-period">Pour toujours &middot; sans carte</div>
+      <hr class="pricing-divider">
+      <div class="pricing-features">
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>3 analyses</strong> de demos / mois
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>3 scouts</strong> de joueur / jour
+        </div>
+        <div class="pricing-feature" style="position:relative;padding:8px 10px 8px 0;background:linear-gradient(90deg,rgba(184,255,87,.08) 0%,transparent 100%);border-radius:var(--r);margin:2px 0">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>1 diagnostic IA</strong> / mois <span style="font-size:8px;background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;padding:1px 5px;border-radius:40px;letter-spacing:.08em;font-weight:700;margin-left:4px">NEW</span>
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          FV Rating per match
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Kills & deaths heatmaps
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Basic FACEIT stats (K/D, ADR, HS%)
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Historique des 5 derniers matchs
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Lineup library (read-only)
+        </div>
+      </div>
+      <a href="demo.html" class="pricing-btn">Start for free</a>
+      <div class="pricing-cta-sub">No credit card required</div>
+    </div>
+
+    <!-- PRO : PROGRESSER -->
+    <div class="pricing-card featured">
+      <div class="pricing-badge">MOST POPULAR</div>
+      <div class="pricing-tag pro">Improve</div>
+      <div class="pricing-name">Pro</div>
+      <div class="pricing-price" id="proPrice">9<span>€/month</span></div>
+      <div class="pricing-period" id="proPeriod">soit 108&euro;/an &middot; facturé mensuellement</div>
+      <hr class="pricing-divider">
+      <div class="pricing-features">
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>Tout Free,</strong> sans les limites
+        </div>
+        <div class="pricing-feature" style="position:relative;padding:10px 12px;background:linear-gradient(90deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);margin:4px 0">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>Unlimited AI Coach</strong> · diagnostic after every match <span style="display:inline-block;font-size:8px;background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;padding:2px 6px;border-radius:40px;letter-spacing:.08em;font-weight:700;margin-left:4px;vertical-align:middle">NEW</span>
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Analyses de démos <strong>illimitées</strong>
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          2D Replay interactif complet
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Heatmaps grenades (smoke, flash, HE, molotov)
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>KPIs avancés</strong> : entry, trade, flash eff, util dmg
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>Match Report round-by-round</strong> + top moments
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Stats exclusives (KAST, KPR, Opening WR, Flash Eff.)
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          FV Score /100 avec breakdown détaillé
+        </div>
+        <div class="pricing-feature" style="position:relative;padding:10px 12px;background:linear-gradient(90deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);margin:4px 0">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>Pro demos viewer</strong> · regarde les matchs HLTV en 2D <span style="display:inline-block;font-size:8px;background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;padding:2px 6px;border-radius:40px;letter-spacing:.08em;font-weight:700;margin-left:4px;vertical-align:middle">NEW</span>
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Filterable lineup library + favorites
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Map control + pre-aim analysis
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Comparaison multi-joueurs (jusqu'a 5)
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Export PDF des analyses
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Scouts de joueurs <strong>illimités</strong>
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Synchro auto FACEIT via extension
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Support prioritaire (&lt; 24h)
+        </div>
+      </div>
+      <a href="account.html#settings" class="pricing-btn featured" id="proCta" data-teaser-cta="pro-launch">Enable notifications</a>
+      <div class="pricing-cta-sub" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <span style="display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);padding:5px 12px;border-radius:40px">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulseDot 1.8s ease-in-out infinite"></span>
+          <strong data-teaser-counter="pro-launch" style="color:var(--accent)">-</strong>
+          <span>waiting</span>
+        </span>
+      </div>
+      <div class="pricing-cta-sub" style="margin-top:8px;font-size:11px;color:var(--text3)">Official launch imminent &middot; 7 days free at launch</div>
+    </div>
+
+    <!-- ELITE : DOMINER (BIENTOT) -->
+    <div class="pricing-card soon">
+      <div class="soon-badge">SOON</div>
+      <div class="pricing-tag">Dominate</div>
+      <div class="pricing-name">Elite</div>
+      <div class="pricing-price" id="elitePrice" style="color:var(--text2)">?<span style="color:var(--text3)">&euro;/mois</span></div>
+      <div class="pricing-period" id="elitePeriod">Pricing announced at launch &middot; Coachs et équipes</div>
+      <hr class="pricing-divider">
+      <div class="pricing-features">
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>Tout Pro,</strong> plus les outils équipe
+        </div>
+        <div class="pricing-feature" style="position:relative;padding:10px 12px;background:linear-gradient(90deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);margin:4px 0">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>AI Coach for the team</strong> + rapport hebdo par email <span style="display:inline-block;font-size:8px;background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;padding:2px 6px;border-radius:40px;letter-spacing:.08em;font-weight:700;margin-left:4px;vertical-align:middle">NEW</span>
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Dashboard équipe (jusqu'a 5 joueurs)
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Analyse tactique par round
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Preparation veto (ban/pick maps)
+        </div>
+        <div class="pricing-feature" style="position:relative;padding:10px 12px;background:linear-gradient(90deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);margin:4px 0">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>Anti-strat tool</strong> · patterns opponent sur N matchs <span style="display:inline-block;font-size:8px;background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;padding:2px 6px;border-radius:40px;letter-spacing:.08em;font-weight:700;margin-left:4px;vertical-align:middle">NEW</span>
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>Pro benchmarks</strong> · your gameplay vs HLTV top 20
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <strong>Pro strats DB</strong> · setups clustered par map/side
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Coaching 1h/mois avec analyse commentée
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Accès API pour integrations
+        </div>
+        <div class="pricing-feature">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Support prioritaire (&lt; 4h)
+        </div>
+      </div>
+      <a href="mailto:contact@fragvalue.com?subject=Interet%20plan%20Elite" class="pricing-btn">Notify me at launch</a>
+      <div class="pricing-cta-sub">Accès anticipe pour les early backers</div>
+    </div>
+
+  </div>
+
+  <!-- TRUST INDICATORS -->
+  <div class="pricing-trust-row">
+    <div class="pricing-trust-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Paiement sécurisé Stripe
+    </div>
+    <div class="pricing-trust-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Cancel in 1 click
+    </div>
+    <div class="pricing-trust-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Money back guarantee 14j
+    </div>
+    <div class="pricing-trust-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Support français prioritaire
+    </div>
+  </div>
+
+</section>
+
+<!-- FEATURE COMPARISON TABLE -->
+<section class="compare-section fade-in">
+  <div class="section-tag">Comparaison détaillée</div>
+  <h2 class="section-title">Tout ce qui est inclus</h2>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th style="width:40%">Fonctionnalité</th>
+        <th style="width:20%">Free</th>
+        <th style="width:20%" class="col-pro">Pro</th>
+        <th style="width:20%">Elite</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- COACH IA (USP FragValue) -->
+      <tr class="compare-cat" style="color:var(--accent) !important"><td colspan="4">Coach IA personnalisé &middot; exclusivité FragValue</td></tr>
+      <tr>
+        <td>Diagnostic IA sur tes 20 derniers matchs</td>
+        <td><span class="val-text">1/mois</span></td>
+        <td><span class="val-text" style="color:var(--accent)">illimité</span></td>
+        <td><span class="val-text" style="color:var(--accent)">illimité</span></td>
+      </tr>
+      <tr>
+        <td>Refresh manuel du diagnostic</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Coach IA par joueur de l'équipe</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Rapport IA hebdomadaire par email</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+
+      <!-- ANALYSE DE DÉMOS -->
+      <tr class="compare-cat"><td colspan="4">Analyse de démos</td></tr>
+      <tr>
+        <td>Upload et parsing de démos</td>
+        <td><span class="val-text">3/mois</span></td>
+        <td><span class="val-text" style="color:var(--accent)">illimité</span></td>
+        <td><span class="val-text" style="color:var(--accent)">illimité</span></td>
+      </tr>
+      <tr>
+        <td>FV Rating per match</td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Heatmaps kills et deaths</td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Heatmaps grenades (smoke, flash, HE, molotov)</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>2D Replay interactif</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Export PDF des analyses</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+
+      <!-- STATS FACEIT -->
+      <tr class="compare-cat"><td colspan="4">Stats FACEIT</td></tr>
+      <tr>
+        <td>Stats de base (K/D, ADR, HS%)</td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Stats exclusives (KAST, KPR, Opening WR, Flash Eff.)</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>FV Score /100 avec breakdown</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Historique des matchs</td>
+        <td><span class="val-text">5 derniers</span></td>
+        <td><span class="val-text" style="color:var(--accent)">complet</span></td>
+        <td><span class="val-text" style="color:var(--accent)">complet</span></td>
+      </tr>
+      <tr>
+        <td>Synchro auto via extension</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+
+      <!-- COMPARAISON ET SCOUTING -->
+      <tr class="compare-cat"><td colspan="4">Comparaison et scouting</td></tr>
+      <tr>
+        <td>Scout d'un joueur FACEIT</td>
+        <td><span class="val-text">3/jour</span></td>
+        <td><span class="val-text" style="color:var(--accent)">illimité</span></td>
+        <td><span class="val-text" style="color:var(--accent)">illimité</span></td>
+      </tr>
+      <tr>
+        <td>Comparaison multi-joueurs (jusqu'à 5)</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Comparaison vs références pros HLTV</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+
+      <!-- EQUIPE ET COACHING -->
+      <tr class="compare-cat"><td colspan="4">Team et coaching</td></tr>
+      <tr>
+        <td>Dashboard équipe (jusqu'à 5 joueurs)</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Analyse tactique par round</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Préparation veto (ban/pick maps)</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Coaching 1h/mois avec analyse commentée</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+      <tr>
+        <td>Accès API</td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+      </tr>
+
+      <!-- SUPPORT ET GARANTIES -->
+      <tr class="compare-cat"><td colspan="4">Support et garanties</td></tr>
+      <tr>
+        <td>Support par email</td>
+        <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
+        <td><span class="val-text" style="color:var(--accent)">&lt; 24h</span></td>
+        <td><span class="val-text" style="color:var(--accent)">&lt; 4h</span></td>
+      </tr>
+      <tr>
+        <td>Essai gratuit</td>
+        <td><span class="val-text" style="color:var(--text3)">-</span></td>
+        <td><span class="val-text" style="color:var(--accent)">7 jours</span></td>
+        <td><span class="val-text" style="color:var(--text3)">bêta</span></td>
+      </tr>
+      <tr>
+        <td>Money back guarantee</td>
+        <td><span class="val-text" style="color:var(--text3)">-</span></td>
+        <td><span class="val-text" style="color:var(--accent)">14 jours</span></td>
+        <td><span class="val-text" style="color:var(--accent)">14 jours</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section fade-in">
+  <div class="section-tag">Questions fréquentes</div>
+  <h2 class="section-title">Besoin de précisions ?</h2>
+
+  <div class="faq-list">
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Puis-je changer de plan à tout moment ?
+        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Oui, tu peux upgrader ou downgrader à tout moment. Le changement est effectif immédiatement et le prorata est calculé automatiquement.</div></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Y a-t-il un engagement ?
+        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Non, tous les abonnements sont sans engagement. Tu peux annuler à tout moment depuis ton espace compte.</div></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Le Coach IA, c'est quoi exactement ?
+        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Notre Coach IA analyse tes 20 derniers matchs FACEIT et génère un diagnostic personnalisé : 2-3 phrases sur ton profil, tes 3 forces chiffrées, tes 3 faiblesses avec delta précis, 4 actions sur-mesure adaptées à ton niveau, un objectif hebdo mesurable, et la map à travailler en priorité. C'est un vrai coach personnel 24/7, et aucun autre outil CS2 sur le marché ne le propose. Propulsé par Claude d'Anthropic. En Free tu as 1 diagnostic par mois pour goûter, en Pro c'est illimité avec refresh à volonté après chaque match.</div></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Comment fonctionne l'essai gratuit de Pro ?
+        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Tu as 7 jours gratuits pour tester toutes les fonctionnalités Pro. Aucun prélèvement pendant l'essai. Tu peux annuler à tout moment en 1 clic depuis ton espace compte, sans justification. Si tu n'annules pas, l'abonnement Pro continue automatiquement au tarif affiché.</div></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Comment marche la garantie satisfait ou remboursé 14 jours ?
+        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Si dans les 14 jours suivant ton paiement tu n'es pas satisfait du plan Pro, tu nous écris à contact@fragvalue.com et on te rembourse intégralement sans te poser de question. Sans condition, sans engagement.</div></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Le plan Free est vraiment gratuit ?
+        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Oui, Free est gratuit pour toujours avec 3 analyses de démos par mois, 3 scouts par jour, et l'essentiel des stats FACEIT. No credit card required. Tu peux utiliser FragValue sans jamais payer un centime si Free te suffit.</div></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Quels moyens de paiement acceptez-vous ?
+        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Carte bancaire (Visa, Mastercard, Amex), Apple Pay, Google Pay via notre partenaire Stripe. Tous les paiements sont sécurisés.</div></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Qu'est-ce que le FV Score ?
+        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Le FV Score /100 est notre indice de talent propriétaire. Il combine 4 piliers : Performance (35pts), Consistance (28pts), Impact (25pts) et Utilité (15pts). Plus de détails sur notre page <a href="stats-guide.html" style="color:var(--accent);text-decoration:underline">Guide des statistiques</a>.</div></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Les démos sont-elles stockées ?
+        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Les fichiers demo sont traités en temps réel puis supprimés de nos serveurs. Seules les statistiques extraites sont conservées dans ton compte.</div></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        L'extension Chrome est-elle nécessaire ?
+        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">L'extension est optionnelle mais recommandée pour les utilisateurs Pro. Elle permet la synchronisation automatique de tes matchs FACEIT sans upload manuel.</div></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        Le plan Elite est déjà disponible ?
+        <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a"><div class="faq-a-inner">Elite est en bêta privée pour les coachs et équipes esport. Le dashboard équipe, l'analyse tactique par round, la préparation veto et la comparaison vs références pros sont en développement actif. Si tu es coach ou club esport, écris à contact@fragvalue.com pour rejoindre la bêta et bénéficier d'un tarif early backer à vie.</div></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section fade-in">
+  <div class="cta-glow"></div>
+  <div class="section-tag">C'est le moment</div>
+  <h2>Prêt à progresser ?</h2>
+  <p>Start for free, upgrade whenever you want. Your stats are waiting for you.</p>
+  <a href="demo.html" class="btn-primary">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+    Analyze ma demo
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Frag<span>Value</span></div>
+  <div class="footer-links">
+    <a href="index.html#features">Features</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="stats-guide.html">Stats guide</a>
+    <a href="levels.html">FACEIT roadmap</a>
+    <a href="cgv.html">Terms</a>
+    <a href="mentions-legales.html">Legal notice</a>
+    <a href="privacy.html">Privacy</a>
+  </div>
+  <div class="footer-copy">&copy; 2026 FragValue</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ── Supabase init ── */
+const SUPABASE_URL = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+window._sb = _sb;
+
+/* ── Billing toggle ── */
+let isYearly = false;
+
+function toggleBilling() {
+  isYearly = !isYearly;
+  const track = document.getElementById('billingToggle');
+  const badge = document.getElementById('yearlyBadge');
+  const labelM = document.getElementById('labelMonthly');
+  const labelY = document.getElementById('labelYearly');
+  const proPrice = document.getElementById('proPrice');
+  const proPeriod = document.getElementById('proPeriod');
+  const elitePrice = document.getElementById('elitePrice');
+  const elitePeriod = document.getElementById('elitePeriod');
+
+  track.classList.toggle('on', isYearly);
+  badge.classList.toggle('show', isYearly);
+  labelM.classList.toggle('active', !isYearly);
+  labelY.classList.toggle('active', isYearly);
+
+  if (isYearly) {
+    proPrice.innerHTML = '79<span>\u20ac/an</span>';
+    proPeriod.textContent = 'soit 6,58\u20ac/mois \u00b7 2 months free';
+  } else {
+    proPrice.innerHTML = '9<span>\u20ac/mois</span>';
+    proPeriod.textContent = 'soit 108\u20ac/an';
+  }
+  // Elite : prix masqué tant que plan pas lancé. Le tarif sera communiqué
+  // aux early backers par email une fois la beta ouverte.
+  if (elitePrice) elitePrice.innerHTML = '?<span style="color:var(--text3)">\u20ac/mois</span>';
+  if (elitePeriod) elitePeriod.textContent = 'Tarif communiqu\u00e9 au lancement \u00b7 Coachs et \u00e9quipes';
+}
+
+/* ── Checkout (desactive pendant la phase waitlist Pro) ──
+   Reactive le bouton "Essayer Pro 7 jours" + change le href ci-dessus dans le
+   markup (data-teaser-cta="pro-launch" → onclick="startCheckout(...)") quand
+   Stripe Live est setup et que le SIRET est obtenu.
+   Code conserve pour reactivation rapide en 1 commit. */
+async function startCheckout(plan) {
+  const { data: { session } } = await _sb.auth.getSession();
+
+  if (!session) {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + session.access_token
+  };
+
+  try {
+    const res = await fetch('/api/stripe-checkout', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ plan })
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      showError(data.error || 'Erreur inconnue');
+    }
+  } catch (err) {
+    showError('Erreur reseau. Réessaye.');
+  }
+}
+
+function showError(msg) {
+  const banner = document.getElementById('checkout-error') || document.createElement('div');
+  banner.id = 'checkout-error';
+  banner.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a0000;border:1px solid #ff4444;color:#ff6666;font-family:var(--mono);font-size:13px;padding:12px 24px;z-index:9999;border-radius:6px;';
+  banner.textContent = msg;
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 5000);
+}
+
+/* ── FAQ accordion ── */
+function toggleFaq(el) {
+  const item = el.parentElement;
+  const answer = item.querySelector('.faq-a');
+  const inner = answer.querySelector('.faq-a-inner');
+  const wasOpen = item.classList.contains('open');
+
+  // Close all others
+  document.querySelectorAll('.faq-item.open').forEach(other => {
+    if (other !== item) {
+      other.classList.remove('open');
+      other.querySelector('.faq-a').style.maxHeight = '0';
+    }
+  });
+
+  if (wasOpen) {
+    item.classList.remove('open');
+    answer.style.maxHeight = '0';
+  } else {
+    item.classList.add('open');
+    answer.style.maxHeight = inner.scrollHeight + 20 + 'px';
+  }
+}
+
+/* ── Scroll fade-in ── */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.classList.add('visible');
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+<script src="/nav.js"></script>
+<script src="/teaser.js"></script>
+<script>
+  // Pendant que Stripe Live n'est pas encore active : on capture les emails
+  // des prospects chauds qui veulent passer Pro. Au lancement (jour J du
+  // SIRET), on enverra une vague d'emails de notif via /admin/waitlist.html.
+  FVTeaser.initCTA('pro-launch', { base: 12, perDay: 0.7 });
+</script>
+</body>
+</html>

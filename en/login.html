@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="description" content="FragValue · CS2 Match Analytics">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<title>FragValue · Sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;
+  --border:#1c1e1e;--border2:#252727;
+  --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --danger:#ff4444;--success:#2dd4a0;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  --r:6px;--r2:12px
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.88);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.nav-logo{font-family:var(--display);font-size:20px;letter-spacing:.04em;color:var(--text);text-decoration:none}
+.nav-logo span{color:var(--accent)}
+.nav-back{font-size:11px;color:var(--text2);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .15s}
+.nav-back:hover{color:var(--text)}
+
+.wrapper{flex:1;display:flex;align-items:center;justify-content:center;padding:48px 24px;position:relative;z-index:1}
+
+.card{
+  width:100%;max-width:400px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);padding:40px 36px;
+}
+
+.card-title{font-family:var(--display);font-size:32px;letter-spacing:.02em;margin-bottom:6px}
+.card-sub{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:32px}
+
+/* TABS */
+.tabs{display:flex;gap:1px;background:var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:28px}
+.tab{flex:1;padding:9px;text-align:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;background:var(--card);color:var(--text2);border:none;font-family:var(--mono);transition:all .15s}
+.tab.active{background:var(--bg);color:var(--accent)}
+
+/* SOCIAL BUTTONS */
+.social-btn{
+  width:100%;display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-radius:var(--r);
+  border:1px solid var(--border2);background:var(--card);
+  color:var(--text);font-family:var(--mono);font-size:12px;
+  cursor:pointer;transition:all .15s;margin-bottom:8px;
+  letter-spacing:.02em
+}
+.social-btn:hover{border-color:var(--border);background:rgba(255,255,255,.04);transform:translateY(-1px)}
+.social-btn svg{flex-shrink:0}
+
+/* DIVIDER */
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0}
+.divider-line{flex:1;height:1px;background:var(--border)}
+.divider-text{font-size:10px;color:var(--text3);letter-spacing:.1em}
+
+/* FORM */
+.field{margin-bottom:14px}
+.field-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;display:block}
+.field-input{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:11px 14px;
+  font-family:var(--mono);font-size:12px;color:var(--text);
+  outline:none;transition:border-color .15s;letter-spacing:.02em
+}
+.field-input:focus{border-color:var(--accent)}
+.field-input::placeholder{color:var(--text3)}
+
+/* SUBMIT */
+.submit-btn{
+  width:100%;padding:13px;
+  background:var(--accent);color:#000;
+  border:none;border-radius:var(--r);
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  cursor:pointer;letter-spacing:.06em;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:6px
+}
+.submit-btn:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(184,255,87,.15)}
+.submit-btn:disabled{background:var(--border2);color:var(--text3);cursor:not-allowed;transform:none;box-shadow:none}
+
+/* MESSAGE */
+.msg{font-size:11px;padding:11px 14px;border-radius:var(--r);margin-top:14px;display:none;letter-spacing:.02em}
+.msg.success{background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);color:var(--success)}
+.msg.error{background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.2);color:var(--danger)}
+
+/* FACEIT BUTTON */
+.faceit-btn{
+  width:100%;display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-radius:var(--r);
+  border:1px solid rgba(255,85,0,.3);background:rgba(255,85,0,.08);
+  color:#ff5500;font-family:var(--mono);font-size:12px;
+  cursor:pointer;transition:all .15s;margin-bottom:8px;
+  letter-spacing:.02em
+}
+.faceit-btn:hover{border-color:rgba(255,85,0,.5);background:rgba(255,85,0,.12);transform:translateY(-1px)}
+
+.switch-link{text-align:center;font-size:11px;color:var(--text3);margin-top:20px}
+.switch-link a{color:var(--accent);text-decoration:none}
+.switch-link a:hover{text-decoration:underline}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card{opacity:0;animation:fadeUp .4s .05s ease forwards}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
+  <a href="index.html" class="nav-back">← Retour</a>
+</nav>
+
+<div class="wrapper">
+  <div class="card">
+    <div class="card-title">Sign in</div>
+    <p class="card-sub">Accède à ton historique de démos et tes stats de progression.</p>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login',this)">Sign in</button>
+      <button class="tab" onclick="switchTab('signup',this)">Créer un compte</button>
+    </div>
+
+    <!-- SOCIAL PROVIDERS -->
+    <button class="faceit-btn" onclick="loginFaceit()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/>
+      </svg>
+      Continuer avec FACEIT
+    </button>
+
+    <button class="social-btn" onclick="loginGoogle()">
+      <svg width="18" height="18" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Continuer avec Google
+    </button>
+
+    <!-- DIVIDER -->
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-text">OU PAR EMAIL</div>
+      <div class="divider-line"></div>
+    </div>
+
+    <!-- EMAIL FORM -->
+    <div id="loginForm">
+      <div class="field">
+        <label class="field-label">Adresse email</label>
+        <input type="email" class="field-input" id="emailInput" placeholder="ton@email.com" autocomplete="email"/>
+      </div>
+      <div class="field" id="passwordField">
+        <label class="field-label">Mot de passe</label>
+        <input type="password" class="field-input" id="passwordInput" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <div class="field" id="passwordConfirmField" style="display:none">
+        <label class="field-label">Confirmer le mot de passe</label>
+        <input type="password" class="field-input" id="passwordConfirmInput" placeholder="••••••••"/>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <span id="submitLabel">Sign in</span>
+      </button>
+
+      <div id="magicLinkRow" style="text-align:center;margin-top:12px">
+        <a href="#" onclick="sendMagicLink(event)" style="font-size:11px;color:var(--text3);text-decoration:none;letter-spacing:.04em;transition:color .15s" onmouseover="this.style.color='var(--text2)'" onmouseout="this.style.color='var(--text3)'">
+          Recevoir un lien magique par email →
+        </a>
+      </div>
+    </div>
+
+    <div class="msg" id="msgBox"></div>
+
+    <div class="switch-link" id="switchText">
+      Pas encore de compte ? <a href="#" onclick="switchTab('signup',null);return false">Créer un compte</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// Rediriger si déjà connecté + lier FACEIT waiting
+_sb.auth.getSession().then(async ({ data }) => {
+  if (data.session) {
+    await linkPendingFaceit(data.session.user.id);
+    window.location.href = 'account.html';
+  }
+});
+
+// Auto-link FACEIT si pending après login via onAuthStateChange
+_sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    await linkPendingFaceit(session.user.id);
+  }
+});
+
+async function linkPendingFaceit(userId) {
+  const raw = sessionStorage.getItem('pending_faceit_link');
+  if (!raw) return;
+  try {
+    const faceit = JSON.parse(raw);
+    await _sb.from('profiles').upsert({
+      id: userId,
+      faceit_nickname: faceit.nickname,
+      faceit_id: faceit.playerId,
+      faceit_avatar: faceit.avatar || null,
+      faceit_elo: faceit.elo || null,
+      faceit_level: faceit.level || null,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' });
+    sessionStorage.removeItem('pending_faceit_link');
+    console.log('[FragValue] FACEIT lie:', faceit.nickname);
+  } catch (e) {
+    console.warn('Auto-link FACEIT error:', e.message);
+  }
+}
+
+let mode = 'login';
+
+function switchTab(m, btn) {
+  mode = m;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  else document.querySelectorAll('.tab')[m==='login'?0:1].classList.add('active');
+
+  const isSignup = m === 'signup';
+  document.getElementById('passwordConfirmField').style.display = isSignup ? '' : 'none';
+  document.getElementById('submitLabel').textContent = isSignup ? 'Créer mon compte' : 'Sign in';
+  document.getElementById('magicLinkRow').style.display = isSignup ? 'none' : '';
+  document.getElementById('switchText').innerHTML = isSignup
+    ? 'Déjà un compte ? <a href="#" onclick="switchTab(\'login\',null);return false">Sign in</a>'
+    : 'Pas encore de compte ? <a href="#" onclick="switchTab(\'signup\',null);return false">Créer un compte</a>';
+  hideMsg();
+}
+
+async function handleSubmit() {
+  const email = document.getElementById('emailInput').value.trim();
+  const pass  = document.getElementById('passwordInput').value;
+  if (!email) { showMsg('Saisis ton adresse email.', 'error'); return; }
+  if (!pass)  { showMsg('Saisis ton mot de passe.', 'error'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+
+  try {
+    if (mode === 'signup') {
+      const confirm = document.getElementById('passwordConfirmInput').value;
+      if (pass !== confirm) { showMsg('Les mots de passe ne correspondent pas.', 'error'); btn.disabled=false; return; }
+      const { error } = await _sb.auth.signUp({ email, password: pass });
+      if (error) throw error;
+      showMsg('Compte créé. Vérifie ta boite mail pour confirmer.', 'success');
+    } else {
+      const { error } = await _sb.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
+      window.location.href = 'account.html';
+    }
+  } catch(e) {
+    showMsg(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function sendMagicLink(e) {
+  e.preventDefault();
+  const email = document.getElementById('emailInput').value.trim();
+  if (!email) { showMsg('Saisis ton adresse email d\'abord.', 'error'); return; }
+  try {
+    const { error } = await _sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + '/account.html' } });
+    if (error) throw error;
+    showMsg('Lien envoyé. Vérifie ta boite mail.', 'success');
+  } catch(e) { showMsg(e.message, 'error'); }
+}
+
+function loginGoogle() {
+  _sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/account.html' } });
+}
+
+
+function showMsg(txt, type) {
+  const el = document.getElementById('msgBox');
+  el.textContent = txt; el.className = 'msg ' + type; el.style.display = 'block';
+}
+function hideMsg() { document.getElementById('msgBox').style.display = 'none'; }
+
+// FACEIT OAuth Authorization Code Flow + PKCE (S256) via popup.
+// PKCE est OBLIGATOIRE pour le client OAuth FragValue : FACEIT repond
+// {"errors":[{"message":"pkce_required"}]} si code_challenge est absent.
+async function loginFaceit() {
+  try {
+    let clientId = '141a2533-b3b9-45e7-8c98-8cb683871f74';
+    try {
+      const res = await fetch('/api/faceit-config');
+      const cfg = await res.json();
+      if (cfg.clientId || cfg.client_id) clientId = cfg.clientId || cfg.client_id;
+    } catch (_) {}
+
+    const redirectUri = window.location.origin + '/faceit-callback.html';
+
+    // ── PKCE : code_verifier + code_challenge (SHA-256) ─────────────────
+    const verifierBytes = new Uint8Array(32);
+    crypto.getRandomValues(verifierBytes);
+    const codeVerifier = btoa(String.fromCharCode(...verifierBytes))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
+    const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+    // State aleatoire pour CSRF (complementaire a PKCE).
+    const stateBytes = new Uint8Array(16);
+    crypto.getRandomValues(stateBytes);
+    const state = btoa(String.fromCharCode(...stateBytes))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+    // localStorage pour partage entre popup et parent (sessionStorage est
+    // isole par contexte de navigation).
+    localStorage.setItem('faceit_code_verifier', codeVerifier);
+    localStorage.setItem('faceit_code_verifier_ts', String(Date.now()));
+    localStorage.setItem('faceit_oauth_state', state);
+    localStorage.setItem('faceit_redirect_uri', redirectUri);
+    // Fallback sessionStorage pour redirection same-tab
+    sessionStorage.setItem('faceit_code_verifier', codeVerifier);
+    sessionStorage.setItem('faceit_oauth_state', state);
+
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: 'openid profile email',
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256',
+      state,
+    });
+
+    // URL officielle depuis openid_configuration : pas de /accounts en path.
+    const authUrl = 'https://accounts.faceit.com/?' + params.toString();
+
+    const w = 500, h = 700;
+    const left = Math.round(screen.width / 2 - w / 2);
+    const top = Math.round(screen.height / 2 - h / 2);
+    const popup = window.open(authUrl, 'faceit_auth', 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
+
+    if (!popup) {
+      window.location.href = authUrl;
+      return;
+    }
+
+    const handler = async (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (!event.data || event.data.type !== 'FACEIT_AUTH_SUCCESS') return;
+      window.removeEventListener('message', handler);
+      clearInterval(checkClosed);
+      popup.close();
+      setTimeout(() => { window.location.href = '/account.html'; }, 200);
+    };
+    window.addEventListener('message', handler);
+
+    const checkClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkClosed);
+        window.removeEventListener('message', handler);
+      }
+    }, 500);
+
+  } catch (err) {
+    console.error('FACEIT login error:', err);
+  }
+}
+
+// Enter key
+document.addEventListener('keydown', e => { if(e.key==='Enter') handleSubmit(); });
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>
