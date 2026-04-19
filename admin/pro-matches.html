@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<title>FragValue · Admin · Pro Matches</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+  --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;font-size:13px}
+.page{max-width:1200px;margin:0 auto;padding:40px 32px 80px}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.logo{font-family:var(--display);font-size:22px;color:var(--text);text-decoration:none;letter-spacing:.04em}
+.logo span{color:var(--accent)}
+.admin-tag{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);padding:3px 9px;border-radius:40px;font-weight:700}
+.nav-actions{display:flex;gap:10px}
+.nav-actions a{font-family:var(--mono);font-size:11px;color:var(--text2);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px}
+.nav-actions a:hover{color:var(--accent)}
+
+h1{font-family:var(--display);font-size:32px;letter-spacing:.02em;line-height:1;margin-bottom:8px}
+h1 span{color:var(--accent)}
+.page-sub{font-size:12px;color:var(--text2);margin-bottom:28px;line-height:1.6;max-width:720px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 26px;margin-bottom:20px}
+.card-title{font-family:var(--display);font-size:20px;letter-spacing:.02em;margin-bottom:12px}
+.card-sub{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:16px;line-height:1.6}
+
+.form-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.form-row label{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:700;display:block;margin-bottom:4px}
+.form-field{flex:1;min-width:140px}
+.form-field.wide{flex-basis:100%;min-width:100%}
+.inp,select.inp,textarea.inp{width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:12px;padding:9px 12px;border-radius:6px;font-weight:700;outline:none}
+.inp:focus{border-color:rgba(184,255,87,.4)}
+textarea.inp{resize:vertical;min-height:70px;font-weight:400}
+
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#000;border:none;font-family:var(--mono);font-size:11px;font-weight:700;padding:10px 18px;border-radius:6px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;text-decoration:none}
+.btn:hover{filter:brightness(1.08)}
+.btn.sec{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn.sec:hover{color:var(--accent);border-color:rgba(184,255,87,.4)}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid rgba(255,68,68,.3)}
+.btn.danger:hover{color:#fff;background:rgba(255,68,68,.15);border-color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:wait}
+
+.status-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:40px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.status-pill.parsed{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.25)}
+.status-pill.manual{background:rgba(91,155,213,.1);color:#5b9bd5;border:1px solid rgba(91,155,213,.25)}
+.status-pill.failed{background:rgba(255,68,68,.1);color:var(--danger);border:1px solid rgba(255,68,68,.25)}
+.status-pill.fetching{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.25)}
+.status-pill.pending{background:var(--card);color:var(--text3);border:1px solid var(--border2)}
+
+.toggle-tabs{display:flex;gap:4px;margin-bottom:16px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px}
+.toggle-tab{flex:1;background:transparent;border:none;color:var(--text2);font-family:var(--mono);font-size:11px;font-weight:700;padding:10px 12px;border-radius:8px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase}
+.toggle-tab.active{background:rgba(184,255,87,.1);color:var(--accent)}
+
+.alert{padding:12px 16px;border-radius:8px;font-family:var(--mono);font-size:12px;margin-bottom:16px;line-height:1.5}
+.alert.err{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.3);color:var(--danger)}
+.alert.warn{background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.3);color:var(--gold)}
+.alert.ok{background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.3);color:var(--accent)}
+
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+thead th{background:var(--card);color:var(--text3);text-align:left;padding:10px 14px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+.match-score{font-family:var(--display);font-size:15px;letter-spacing:.02em;color:var(--text)}
+.match-score .win{color:var(--accent)}
+.date-cell{color:var(--text3);white-space:nowrap;font-size:11px}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid rgba(184,255,87,.3);color:var(--text);padding:12px 20px;border-radius:8px;z-index:100;font-size:12px;max-width:460px;text-align:center}
+.toast.err{border-color:rgba(255,68,68,.4)}
+
+/* Maps array editor */
+.maps-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.map-row{display:grid;grid-template-columns:minmax(100px,1fr) 60px 60px minmax(90px,140px);gap:8px;align-items:end}
+.map-row .inp{padding:7px 10px;font-size:11px}
+.map-row-del{background:transparent;border:1px solid var(--border2);color:var(--text3);font-family:var(--mono);font-size:10px;padding:7px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.map-row-del:hover{color:var(--danger);border-color:rgba(255,68,68,.3)}
+
+.empty,.denied,.loading{text-align:center;padding:60px 24px;color:var(--text2)}
+.denied h2{font-family:var(--display);font-size:28px;color:var(--danger);margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="/" class="logo">Frag<span>Value</span></a>
+      <span class="admin-tag">● Admin</span>
+    </div>
+    <div class="nav-actions">
+      <a href="/admin/waitlist.html">Waitlist</a>
+      <a href="/dashboard.html">← Dashboard</a>
+    </div>
+  </div>
+
+  <div id="content"><div class="loading">Vérification des droits...</div></div>
+</div>
+
+<script>
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+let session = null;
+let state = { matches: [], jobs: [] };
+let mode = 'auto'; // 'auto' | 'manual'
+
+async function init() {
+  const s = await sb.auth.getSession();
+  session = s.data.session;
+  if (!session) {
+    document.getElementById('content').innerHTML =
+      '<div class="denied"><h2>403</h2><p>Connecte-toi en admin.</p><p style="margin-top:16px"><a href="/login.html?redirect=/admin/pro-matches.html" class="btn">Se connecter</a></p></div>';
+    return;
+  }
+  await load();
+}
+
+async function load() {
+  try {
+    const res = await fetch('/api/admin-pro-match', { headers: { 'Authorization': 'Bearer ' + session.access_token } });
+    if (res.status === 403) {
+      document.getElementById('content').innerHTML = '<div class="denied"><h2>403</h2><p>Compte pas admin.</p></div>';
+      return;
+    }
+    if (!res.ok) throw new Error('status ' + res.status);
+    state = await res.json();
+    render();
+  } catch (e) {
+    document.getElementById('content').innerHTML = '<div class="empty">Erreur : ' + e.message + '</div>';
+  }
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+function fmtDate(iso) {
+  if (!iso) return '-';
+  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' });
+}
+
+function render() {
+  const matchesRows = (state.matches || []).map(m => {
+    const winA = m.team_a_score > m.team_b_score;
+    return `<tr>
+      <td>
+        <a href="/pro-match.html?id=${m.id}" style="color:var(--accent);text-decoration:none">
+          <span class="${winA ? 'win' : ''}">${escapeHtml(m.team_a)}</span>
+          <span class="match-score">${m.team_a_score} - ${m.team_b_score}</span>
+          <span class="${!winA ? 'win' : ''}">${escapeHtml(m.team_b)}</span>
+        </a>
+      </td>
+      <td><span class="match-score">${escapeHtml(m.pro_events?.short_name || '-')}</span> ${m.stage ? '<span style="color:var(--text3)">· ' + escapeHtml(m.stage) + '</span>' : ''}</td>
+      <td class="date-cell">${fmtDate(m.match_date)}</td>
+      <td>${m.hltv_match_id ? '<span class="status-pill parsed">HLTV #' + m.hltv_match_id + '</span>' : '<span class="status-pill manual">Manuel</span>'}</td>
+      <td><button class="btn danger" onclick="delMatch('${m.id}')">Supprimer</button></td>
+    </tr>`;
+  }).join('');
+
+  const jobsRows = (state.jobs || []).map(j => `<tr>
+    <td><span class="status-pill ${j.status}">${j.status}</span></td>
+    <td><a href="${escapeHtml(j.hltv_url)}" target="_blank" style="color:var(--text2);text-decoration:none">${escapeHtml((j.hltv_url || '').slice(0, 60))}...</a></td>
+    <td class="date-cell">${fmtDate(j.created_at)}</td>
+    <td style="color:var(--danger);font-size:10px">${j.error_msg ? escapeHtml(j.error_msg.slice(0, 100)) : ''}</td>
+  </tr>`).join('');
+
+  document.getElementById('content').innerHTML = `
+    <h1>Pro Matches · <span>${state.matches.length}</span> ingérés</h1>
+    <p class="page-sub">Ajoute des matchs HLTV manuellement ou tente l'auto-fetch (peut échouer : Cloudflare bloque les datacenters). Les matchs apparaissent immédiatement dans <a href="/pro-demos.html" style="color:var(--accent)">/pro-demos.html</a>.</p>
+
+    <div class="card">
+      <div class="card-title">Ajouter un match</div>
+      <div class="toggle-tabs">
+        <button class="toggle-tab ${mode === 'auto' ? 'active' : ''}" onclick="setMode('auto')">Auto-fetch HLTV</button>
+        <button class="toggle-tab ${mode === 'manual' ? 'active' : ''}" onclick="setMode('manual')">Entrée manuelle</button>
+      </div>
+      <div id="formArea">${mode === 'auto' ? autoForm() : manualForm()}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Derniers matchs ingérés</div>
+      ${matchesRows ? '<table><thead><tr><th>Match</th><th>Event</th><th>Date</th><th>Source</th><th></th></tr></thead><tbody>' + matchesRows + '</tbody></table>' : '<div class="empty">Aucun match. Ajoute le premier ↑</div>'}
+    </div>
+
+    ${jobsRows ? '<div class="card"><div class="card-title">Jobs récents (20 derniers)</div><table><thead><tr><th>Statut</th><th>URL</th><th>Date</th><th>Erreur</th></tr></thead><tbody>' + jobsRows + '</tbody></table></div>' : ''}
+  `;
+}
+
+function autoForm() {
+  return `
+    <div class="form-row">
+      <div class="form-field wide">
+        <label>URL HLTV du match</label>
+        <input id="hltvUrl" class="inp" placeholder="https://www.hltv.org/matches/2383803/vitality-vs-navi-blast-open-spring-2025" />
+      </div>
+    </div>
+    <button class="btn" onclick="submitAuto()">Fetcher depuis HLTV</button>
+    <div class="card-sub" style="margin-top:12px;margin-bottom:0">⚠ Si le fetch échoue (Cloudflare bloque), bascule en "Entrée manuelle".</div>
+  `;
+}
+
+function manualForm() {
+  return `
+    <div class="form-row">
+      <div class="form-field"><label>Event</label><input id="event_name" class="inp" placeholder="IEM Katowice 2026" /></div>
+      <div class="form-field"><label>Stage</label><input id="stage" class="inp" placeholder="Grand Final" /></div>
+      <div class="form-field"><label>Format</label><select id="format" class="inp"><option>BO1</option><option selected>BO3</option><option>BO5</option></select></div>
+      <div class="form-field"><label>Date (ISO)</label><input id="match_date" class="inp" type="datetime-local" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-field"><label>Team A</label><input id="team_a" class="inp" placeholder="Spirit" /></div>
+      <div class="form-field"><label>Score A (maps)</label><input id="team_a_score" class="inp" type="number" value="0" /></div>
+      <div class="form-field"><label>Team B</label><input id="team_b" class="inp" placeholder="FaZe" /></div>
+      <div class="form-field"><label>Score B (maps)</label><input id="team_b_score" class="inp" type="number" value="0" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-field"><label>Best Player (MVP)</label><input id="best_player" class="inp" placeholder="donk" /></div>
+      <div class="form-field"><label>Best Rating</label><input id="best_rating" class="inp" type="number" step="0.01" placeholder="1.52" /></div>
+      <div class="form-field"><label>HLTV URL (ref)</label><input id="hltv_url" class="inp" placeholder="optionnel, pour trace" /></div>
+    </div>
+    <label style="margin-top:14px;display:block">Maps jouées</label>
+    <div id="mapsList" class="maps-list"></div>
+    <button class="btn sec" style="margin-top:10px" onclick="addMap()">+ Ajouter une map</button>
+    <div style="margin-top:16px">
+      <button class="btn" onclick="submitManual()">Enregistrer le match</button>
+    </div>
+  `;
+}
+
+function addMap() {
+  const list = document.getElementById('mapsList');
+  const idx = list.children.length;
+  const row = document.createElement('div');
+  row.className = 'map-row';
+  row.innerHTML = `
+    <div><label>Map</label><select class="inp map-name">
+      <option>Mirage</option><option>Inferno</option><option>Nuke</option>
+      <option>Ancient</option><option>Anubis</option><option>Dust2</option><option>Vertigo</option>
+    </select></div>
+    <div><label>A</label><input type="number" class="inp map-score-a" value="16" /></div>
+    <div><label>B</label><input type="number" class="inp map-score-b" value="0" /></div>
+    <div style="display:flex;align-items:flex-end;gap:6px">
+      <select class="inp map-picked-by" style="flex:1"><option value="">Pick</option><option value="a">Pick A</option><option value="b">Pick B</option><option value="decider">Decider</option></select>
+      <button class="map-row-del" onclick="this.closest('.map-row').remove()">✕</button>
+    </div>
+  `;
+  list.appendChild(row);
+}
+
+function setMode(m) { mode = m; render(); }
+
+async function submitAuto() {
+  const url = document.getElementById('hltvUrl').value.trim();
+  if (!url || !url.includes('hltv.org/matches/')) return toast('URL HLTV invalide', 'err');
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Fetch en cours...';
+  try {
+    const res = await fetch('/api/admin-pro-match', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ hltvUrl: url }),
+    });
+    const d = await res.json();
+    if (d.ok) {
+      toast('Match importé ✓');
+      setTimeout(load, 600);
+    } else {
+      toast('Auto-fetch échoué : ' + (d.message || d.error) + ' · passe en manuel', 'err');
+      if (d.blocked) setMode('manual');
+    }
+  } catch (e) { toast('Erreur : ' + e.message, 'err'); }
+  btn.disabled = false; btn.textContent = 'Fetcher depuis HLTV';
+}
+
+async function submitManual() {
+  const gv = (id) => document.getElementById(id)?.value.trim();
+  const maps = Array.from(document.querySelectorAll('.map-row')).map((r, i) => {
+    return {
+      map_order: i + 1,
+      map_name: r.querySelector('.map-name').value,
+      team_a_score: parseInt(r.querySelector('.map-score-a').value) || 0,
+      team_b_score: parseInt(r.querySelector('.map-score-b').value) || 0,
+      picked_by: r.querySelector('.map-picked-by').value || null,
+    };
+  });
+  const teamAScore = parseInt(gv('team_a_score')) || 0;
+  const teamBScore = parseInt(gv('team_b_score')) || 0;
+  const payload = {
+    manual: true,
+    event_name: gv('event_name'),
+    stage: gv('stage') || null,
+    format: gv('format'),
+    match_date: gv('match_date') ? new Date(gv('match_date')).toISOString() : new Date().toISOString(),
+    team_a: gv('team_a'),
+    team_b: gv('team_b'),
+    team_a_score: teamAScore,
+    team_b_score: teamBScore,
+    winner: teamAScore > teamBScore ? 'a' : (teamBScore > teamAScore ? 'b' : null),
+    best_player: gv('best_player') || null,
+    best_rating: gv('best_rating') || null,
+    hltv_url: gv('hltv_url') || null,
+    maps,
+  };
+  if (!payload.event_name || !payload.team_a || !payload.team_b) return toast('Event et teams obligatoires', 'err');
+  try {
+    const res = await fetch('/api/admin-pro-match', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify(payload),
+    });
+    const d = await res.json();
+    if (d.ok) { toast('Match ajouté ✓'); setTimeout(load, 500); }
+    else toast('Erreur : ' + (d.error || d.detail), 'err');
+  } catch (e) { toast('Erreur : ' + e.message, 'err'); }
+}
+
+async function delMatch(id) {
+  if (!confirm('Supprimer ce match et ses scorecards ?')) return;
+  try {
+    const res = await fetch('/api/admin-pro-match?id=' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    const d = await res.json();
+    if (d.ok) { toast('Supprimé'); load(); }
+    else toast('Erreur : ' + d.error, 'err');
+  } catch (e) { toast('Erreur : ' + e.message, 'err'); }
+}
+
+function toast(msg, kind) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (kind ? ' ' + kind : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+init();
+</script>
+</body>
+</html>
