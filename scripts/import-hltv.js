@@ -262,8 +262,14 @@ async function importOne(hltvId) {
   if (replaced) console.log(`  ↻ match existant supprime pour re-import`);
 
   const { matchId, mapsCount } = await insertMatch(normalized);
+  const hasScorecards = totalPlayers > 0;
   console.log(`✓ inseré match ${matchId} · ${mapsCount} maps · MVP ${normalized.best_player || '-'} (rating ${normalized.best_rating || '-'})`);
-  return { ok: true, matchId };
+  if (!hasScorecards) {
+    console.log(`  ⚠ Scorecards non recuperees (Cloudflare bloque les pages stats HLTV).`);
+    console.log(`     Pour completer : https://fragvalue.com/admin/pro-matches.html`);
+    console.log(`     -> click "Scorecards" sur la ligne du match -> saisie manuelle (~5 min/map)`);
+  }
+  return { ok: true, matchId, hasScorecards };
 }
 
 // ── Main ────────────────────────────────────────────────────────────────
@@ -280,7 +286,7 @@ async function importOne(hltvId) {
     process.exit(0);
   }
 
-  let ok = 0, fail = 0;
+  let ok = 0, fail = 0, partial = 0;
   for (let i = 0; i < args.length; i++) {
     const id = parseIdFromArg(args[i]);
     if (!id) {
@@ -289,8 +295,9 @@ async function importOne(hltvId) {
       continue;
     }
     try {
-      await importOne(id);
+      const r = await importOne(id);
       ok++;
+      if (!r.hasScorecards) partial++;
     } catch (e) {
       console.error(`✗ Match ${id} échoué : ${e.message}`);
       fail++;
@@ -302,6 +309,6 @@ async function importOne(hltvId) {
     }
   }
 
-  console.log(`\nTerminé : ${ok} réussi(s), ${fail} échoué(s)`);
+  console.log(`\nTerminé : ${ok} réussi(s), ${fail} échoué(s)${partial > 0 ? `, ${partial} sans scorecards (à compléter dans /admin/pro-matches.html)` : ''}`);
   process.exit(fail > 0 ? 1 : 0);
 })();
