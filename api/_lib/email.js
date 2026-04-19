@@ -3,7 +3,11 @@
 // Si RESEND_API_KEY n'est pas configuree, l'envoi est no-op (log warn).
 // Le reste du systeme fonctionne normalement sans email.
 
-const FROM_DEFAULT = 'FragValue <notifications@fragvalue.com>';
+// Adresse expediteur : doit correspondre au domaine verifie dans Resend.
+// Par convention on utilise un sous-domaine dedie (send.fragvalue.com) pour
+// isoler la reputation des emails transactionnels du domaine principal.
+// Override possible via EMAIL_FROM env var.
+const FROM_DEFAULT = process.env.EMAIL_FROM || 'FragValue <notifications@send.fragvalue.com>';
 
 // Envoi email via Resend API (fetch direct, pas de SDK).
 // https://resend.com/docs/api-reference/emails/send-email
