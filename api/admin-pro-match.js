@@ -53,46 +53,98 @@ function parseHltvId(url) {
 }
 
 // Mapping hltv package → notre schema DB
-// (package retourne {team1, team2, maps: [{name, result: '16-13'}], ...})
+// Structure reelle du package :
+// {
+//   team1: {name, id, rank}, team2: {...}, winnerTeam: {name, id},
+//   maps: [{name, result: {team1TotalRounds, team2TotalRounds, halfResults}, statsId}],
+//   event: {name, id}, date: unix_ms, format: {type: 'bo3'|...},
+//   players: {team1: [{name, id}], team2: [...]},  // roster uniquement
+//   playerOfTheMatch, vetoes, ...
+// }
 function normalizeHltvMatch(data, hltvMatchId, hltvUrl) {
-  const teamA = data.team1?.name;
-  const teamB = data.team2?.name;
-  const scoreA = parseInt(data.team1?.result || 0, 10);
-  const scoreB = parseInt(data.team2?.result || 0, 10);
-  const winner = scoreA > scoreB ? 'a' : (scoreB > scoreA ? 'b' : null);
+  const teamA = data.team1?.name || 'Team A';
+  const teamB = data.team2?.name || 'Team B';
 
-  // Parse maps
-  const maps = (data.maps || []).map((mp, i) => {
-    let a = 0, b = 0;
-    if (typeof mp.result === 'string') {
-      const parts = mp.result.split(/[-\s]/).filter(Boolean).map(n => parseInt(n, 10));
-      a = parts[0] || 0; b = parts[1] || 0;
+  // Score series = count maps won par equipe
+  const mapsRaw = data.maps || [];
+  const playedMaps = mapsRaw.filter(m => m.result && !isNaN(m.result.team1TotalRounds));
+  const scoreA = playedMaps.filter(m => m.result.team1TotalRounds > m.result.team2TotalRounds).length;
+  const scoreB = playedMaps.filter(m => m.result.team2TotalRounds > m.result.team1TotalRounds).length;
+
+  // Winner : si le package fournit winnerTeam, on l'utilise
+  let winner = null;
+  if (data.winnerTeam?.name === teamA) winner = 'a';
+  else if (data.winnerTeam?.name === teamB) winner = 'b';
+  else if (scoreA > scoreB) winner = 'a';
+  else if (scoreB > scoreA) winner = 'b';
+
+  // Maps normalisees
+  const vetoesByMap = new Map();
+  (data.vetoes || []).forEach(v => {
+    if (v.type === 'picked' && v.map && v.team?.name) {
+      const pickedBy = v.team.name === teamA ? 'a' : v.team.name === teamB ? 'b' : null;
+      vetoesByMap.set(v.map, pickedBy);
+    } else if (v.type === 'leftover' && v.map) {
+      vetoesByMap.set(v.map, 'decider');
     }
+  });
+
+  const maps = playedMaps.map((mp, i) => {
+    const mapName = mp.name ? mp.name.charAt(0).toUpperCase() + mp.name.slice(1) : 'Unknown';
     return {
       map_order: i + 1,
-      map_name: mp.name || 'Unknown',
-      team_a_score: a,
-      team_b_score: b,
-      picked_by: mp.pickedBy === 1 ? 'a' : (mp.pickedBy === 2 ? 'b' : 'decider'),
+      map_name: mapName,
+      team_a_score: mp.result.team1TotalRounds || 0,
+      team_b_score: mp.result.team2TotalRounds || 0,
+      picked_by: vetoesByMap.get(mp.name) || null,
       duration_min: null,
+      stats_id: mp.statsId || null, // pour le fetch per-map apres
     };
   });
 
+  // Format : 'bo1' | 'bo3' | 'bo5' → 'BO1' | 'BO3' | 'BO5'
+  const formatStr = String(data.format?.type || '').toUpperCase()
+    || (maps.length === 1 ? 'BO1' : maps.length <= 3 ? 'BO3' : 'BO5');
+
+  // Date : package retourne unix ms
+  const matchDate = data.date ? new Date(Number(data.date)).toISOString() : new Date().toISOString();
+
+  // MVP
+  const mvp = data.playerOfTheMatch?.name || null;
+
+  // Stage (title) : peut etre "Grand Final", "Upper Bracket Semi", etc.
+  const stage = (data.title && data.title.length < 80) ? data.title : null;
+
   return {
     event_name: data.event?.name || 'Event inconnu',
-    stage: data.title || null,
-    format: data.format?.type || (maps.length === 1 ? 'BO1' : maps.length <= 3 ? 'BO3' : 'BO5'),
+    stage,
+    format: formatStr,
     team_a: teamA,
     team_b: teamB,
     team_a_score: scoreA,
     team_b_score: scoreB,
     winner,
-    best_player: null,
-    best_rating: null,
-    match_date: data.date ? new Date(data.date).toISOString() : new Date().toISOString(),
+    best_player: mvp,
+    best_rating: null, // rempli apres via getMatchMapStats si dispo
+    match_date: matchDate,
     hltv_match_id: hltvMatchId,
     maps,
   };
+}
+
+// Fetch per-map stats pour populer pro_match_players
+async function fetchMapStats(HLTV, statsId) {
+  if (!statsId) return null;
+  try {
+    const data = await Promise.race([
+      HLTV.getMatchMapStats({ id: statsId }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
+    ]);
+    return data;
+  } catch (e) {
+    console.warn('fetchMapStats failed for', statsId, e.message);
+    return null;
+  }
 }
 
 async function upsertEvent(s, eventName) {
@@ -111,7 +163,7 @@ async function upsertEvent(s, eventName) {
   return data?.id;
 }
 
-async function insertMatch(s, payload) {
+async function insertMatch(s, payload, teamsA, teamsB) {
   const eventId = await upsertEvent(s, payload.event_name);
   if (!eventId) throw new Error('Impossible de créer/trouver l\'event');
 
@@ -132,18 +184,60 @@ async function insertMatch(s, payload) {
   }).select('id').single();
   if (matchErr || !match) throw new Error('Insert match failed: ' + (matchErr?.message || 'unknown'));
 
-  // Insert maps
+  // Insert maps (chacune avec stats per-player si dispo)
+  const mapIds = [];
   if (payload.maps?.length) {
-    const mapsRows = payload.maps.map(m => ({
-      match_id: match.id,
-      map_order: m.map_order,
-      map_name: m.map_name,
-      team_a_score: m.team_a_score,
-      team_b_score: m.team_b_score,
-      picked_by: m.picked_by || null,
-      duration_min: m.duration_min || null,
-    }));
-    await s.from('pro_match_maps').insert(mapsRows);
+    for (const m of payload.maps) {
+      const { data: mapRow, error: mapErr } = await s.from('pro_match_maps').insert({
+        match_id: match.id,
+        map_order: m.map_order,
+        map_name: m.map_name,
+        team_a_score: m.team_a_score,
+        team_b_score: m.team_b_score,
+        picked_by: m.picked_by || null,
+        duration_min: m.duration_min || null,
+      }).select('id').single();
+      if (mapErr || !mapRow) continue;
+      mapIds.push({ id: mapRow.id, map_order: m.map_order, stats: m.players_stats });
+
+      // Insert players per map si on a les stats fetchees via getMatchMapStats
+      if (m.players_stats?.team1?.length || m.players_stats?.team2?.length) {
+        const playerRows = [];
+        for (const p of (m.players_stats.team1 || [])) {
+          playerRows.push({
+            match_map_id: mapRow.id,
+            nickname: p.player?.name || 'unknown',
+            team: 'a',
+            country: null,
+            kills: p.kills || 0,
+            deaths: p.deaths || 0,
+            assists: p.assists || 0,
+            adr: p.ADR || null,
+            kast_pct: p.KAST || null,
+            hltv_rating: p.rating2 || p.rating1 || null,
+            first_kills: null,
+            first_deaths: null,
+          });
+        }
+        for (const p of (m.players_stats.team2 || [])) {
+          playerRows.push({
+            match_map_id: mapRow.id,
+            nickname: p.player?.name || 'unknown',
+            team: 'b',
+            country: null,
+            kills: p.kills || 0,
+            deaths: p.deaths || 0,
+            assists: p.assists || 0,
+            adr: p.ADR || null,
+            kast_pct: p.KAST || null,
+            hltv_rating: p.rating2 || p.rating1 || null,
+            first_kills: null,
+            first_deaths: null,
+          });
+        }
+        if (playerRows.length) await s.from('pro_match_players').insert(playerRows);
+      }
+    }
   }
 
   return match.id;
@@ -259,9 +353,35 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Normalise + insert
+    // Normalise + fetch per-map stats + insert
     try {
       const normalized = normalizeHltvMatch(fetchResult.data, hltvId, body.hltvUrl);
+
+      // Fetch stats per map en parallele (plus rapide qu'en sequentiel)
+      const HLTV = require('hltv').default;
+      const mapStatsResults = await Promise.all(
+        normalized.maps.map(m => fetchMapStats(HLTV, m.stats_id))
+      );
+      // Attache les player stats a chaque map
+      normalized.maps.forEach((m, i) => {
+        m.players_stats = mapStatsResults[i]?.playerStats || null;
+      });
+
+      // Extract best rating du MVP si on l'a dans les stats
+      if (normalized.best_player) {
+        for (const st of mapStatsResults) {
+          if (!st?.playerStats) continue;
+          const all = [...(st.playerStats.team1 || []), ...(st.playerStats.team2 || [])];
+          const mvp = all.find(p => p.player?.name === normalized.best_player);
+          if (mvp) {
+            const r = mvp.rating2 || mvp.rating1;
+            if (r && (!normalized.best_rating || r > normalized.best_rating)) {
+              normalized.best_rating = r;
+            }
+          }
+        }
+      }
+
       const matchId = await insertMatch(s, normalized);
       if (job?.id) {
         await s.from('pro_ingest_jobs').update({
