@@ -386,6 +386,9 @@ async function init() {
   }
   if (window.location.search.includes('checkout=success')) {
     showBanner('Bienvenue dans Pro. Ton abonnement est actif.', 'ok');
+    // Force re-fetch : le webhook Stripe peut prendre 2-5s pour peupler la DB
+    // apres le redirect. On retry une fois apres 3s pour catch l'update.
+    setTimeout(() => { _subLoaded = false; loadSubscription(); }, 3000);
   }
 }
 
@@ -417,7 +420,8 @@ async function loadSubscription() {
     const { data: { session } } = await sb.auth.getSession();
     const headers = { 'Content-Type': 'application/json' };
     if (session?.access_token) headers['Authorization'] = 'Bearer ' + session.access_token;
-    const res = await fetch('/api/check-subscription', { headers });
+    // POST imposé par l'API (check-subscription rejette les GET avec 405)
+    const res = await fetch('/api/check-subscription', { method: 'POST', headers });
     const d = await res.json();
     const plan = (d.plan || 'free').toLowerCase();
     const planLabel = plan === 'pro' ? 'Pro' : plan === 'team' || plan === 'elite' ? 'Elite' : 'Free';
