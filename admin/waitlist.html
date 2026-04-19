@@ -33,14 +33,21 @@ h1{font-family:var(--display);font-size:32px;letter-spacing:.02em;line-height:1;
 h1 span{color:var(--accent)}
 .page-sub{font-size:12px;color:var(--text2);margin-bottom:28px;line-height:1.6;max-width:640px}
 
-.cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:32px}
-.feat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;cursor:pointer;transition:all .15s}
-.feat-card:hover{border-color:rgba(184,255,87,.3);transform:translateY(-1px)}
+.cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:32px}
+.feat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px 14px;transition:all .15s;position:relative;display:flex;flex-direction:column;gap:10px}
+.feat-card:hover{border-color:rgba(184,255,87,.25)}
 .feat-card.active{border-color:var(--accent);background:linear-gradient(180deg,rgba(184,255,87,.06),var(--surface))}
-.feat-slug{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
-.feat-total{font-family:var(--display);font-size:32px;color:var(--accent);line-height:1;margin-bottom:4px}
+.feat-slug{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+.feat-total{font-family:var(--display);font-size:32px;color:var(--accent);line-height:1}
 .feat-breakdown{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em}
 .feat-breakdown strong{color:var(--text2)}
+.feat-actions{display:flex;gap:6px;margin-top:4px;padding-top:10px;border-top:1px solid var(--border)}
+.feat-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;background:transparent;border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:9px;font-weight:700;padding:7px 8px;border-radius:6px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.feat-btn:hover:not(:disabled){color:var(--accent);border-color:rgba(184,255,87,.4);background:rgba(184,255,87,.05)}
+.feat-btn.launch{color:var(--gold);border-color:rgba(245,200,66,.3)}
+.feat-btn.launch:hover:not(:disabled){color:#fff;background:rgba(245,200,66,.15);border-color:var(--gold)}
+.feat-btn:disabled{opacity:.35;cursor:not-allowed}
+.feat-card.active .feat-btn.filter{color:var(--accent);border-color:var(--accent)}
 
 .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .toolbar-title{font-family:var(--display);font-size:18px;letter-spacing:.02em;flex:1}
@@ -129,13 +136,26 @@ async function load() {
 function render() {
   const totalAll = (allData.features || []).reduce((s, f) => s + Number(f.total || 0), 0);
 
-  const featureCards = (allData.features || []).map(f => `
-    <div class="feat-card ${currentFilter === f.feature_slug ? 'active' : ''}" onclick="toggleFilter('${f.feature_slug}')">
+  const featureCards = (allData.features || []).map(f => {
+    const hasUsers = Number(f.users || 0) > 0;
+    const isActive = currentFilter === f.feature_slug;
+    return `
+    <div class="feat-card ${isActive ? 'active' : ''}">
       <div class="feat-slug">${f.feature_slug}</div>
       <div class="feat-total">${Number(f.total).toLocaleString('fr-FR')}</div>
       <div class="feat-breakdown"><strong>${f.users || 0}</strong> users · ${f.anons || 0} anon</div>
-    </div>
-  `).join('');
+      <div class="feat-actions">
+        <button class="feat-btn filter" onclick="toggleFilter('${f.feature_slug}')" title="Filtrer la table sur cette feature">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.5 10 19 14 21 14 12.5 22 3"/></svg>
+          ${isActive ? 'Filtré' : 'Filtrer'}
+        </button>
+        <button class="feat-btn launch" ${hasUsers ? '' : 'disabled title="Aucun user à notifier (anons only)"'} onclick="launchFeature('${f.feature_slug}')">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Lancer
+        </button>
+      </div>
+    </div>`;
+  }).join('');
 
   const rows = (allData.interests || []).map(i => {
     const type = i.user_id ? '<span class="pill user">user</span>' : '<span class="pill anon">anon</span>';
@@ -158,14 +178,13 @@ function render() {
 
   document.getElementById('content').innerHTML = `
     <h1>Waitlist · <span>${totalAll.toLocaleString('fr-FR')}</span> intérêts</h1>
-    <p class="page-sub">Interests enregistrés sur les teasers. Clique une carte feature pour filtrer la table. Export CSV conservé pour le batch email au lancement.</p>
+    <p class="page-sub">Interests enregistrés sur les teasers. Chaque card a un bouton <strong style="color:#b8ff57">Filtrer</strong> (table) et <strong style="color:#f5c842">Lancer</strong> (envoi email). Lancer est désactivé si la feature n'a que des anons (pas d'email à notifier).</p>
 
     <div class="cards-row">${featureCards || '<div class="empty">Aucune donnée encore. Les premiers intérêts apparaîtront ici dès qu\'un visiteur cliquera sur une CTA teaser.</div>'}</div>
 
     <div class="toolbar">
       <div class="toolbar-title">${currentFilter ? 'Intérêts · ' + currentFilter : 'Derniers intérêts (500 max)'}</div>
       ${currentFilter ? `<button class="btn" onclick="toggleFilter(null)">Effacer le filtre</button>` : ''}
-      ${currentFilter ? `<button class="btn danger" onclick="launchFeature('${currentFilter}')">Lancer cette feature</button>` : ''}
       <a class="btn primary" href="${exportUrl}" id="csvBtn">Export CSV</a>
     </div>
 
