@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<title>FragValue · Admin · Waitlist</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
+  --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;font-size:13px}
+.page{max-width:1200px;margin:0 auto;padding:40px 32px 80px}
+@media(max-width:768px){.page{padding:24px 16px}}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.logo{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.04em;text-decoration:none}
+.logo span{color:var(--accent)}
+.admin-tag{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);padding:3px 9px;border-radius:40px;font-weight:700}
+.topbar a{font-family:var(--mono);font-size:11px;color:var(--text2);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
+.topbar a:hover{color:var(--accent)}
+
+h1{font-family:var(--display);font-size:32px;letter-spacing:.02em;line-height:1;margin-bottom:8px}
+h1 span{color:var(--accent)}
+.page-sub{font-size:12px;color:var(--text2);margin-bottom:28px;line-height:1.6;max-width:640px}
+
+.cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:32px}
+.feat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;cursor:pointer;transition:all .15s}
+.feat-card:hover{border-color:rgba(184,255,87,.3);transform:translateY(-1px)}
+.feat-card.active{border-color:var(--accent);background:linear-gradient(180deg,rgba(184,255,87,.06),var(--surface))}
+.feat-slug{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.feat-total{font-family:var(--display);font-size:32px;color:var(--accent);line-height:1;margin-bottom:4px}
+.feat-breakdown{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em}
+.feat-breakdown strong{color:var(--text2)}
+
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.toolbar-title{font-family:var(--display);font-size:18px;letter-spacing:.02em;flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:10px;font-weight:700;padding:7px 12px;border-radius:6px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:all .15s}
+.btn:hover{color:var(--accent);border-color:rgba(184,255,87,.4)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08);color:#000}
+.btn.danger{color:var(--danger);border-color:rgba(255,68,68,.3)}
+.btn.danger:hover{color:#fff;background:rgba(255,68,68,.15);border-color:var(--danger)}
+
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--card);color:var(--text3);text-align:left;padding:10px 14px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+.pill{display:inline-flex;align-items:center;padding:2px 7px;border-radius:40px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.pill.user{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.25)}
+.pill.anon{background:rgba(122,128,128,.1);color:var(--text3);border:1px solid var(--border2)}
+.pill.paying{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.25)}
+.mono{font-family:var(--mono);color:var(--text3);font-size:11px}
+.date{white-space:nowrap;color:var(--text3);font-size:11px}
+
+.empty,.loading,.denied{text-align:center;padding:80px 24px;color:var(--text2);font-size:13px}
+.denied h2{font-family:var(--display);font-size:28px;color:var(--danger);margin-bottom:8px}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid rgba(184,255,87,.3);color:var(--text);padding:12px 20px;border-radius:8px;z-index:100;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:440px;text-align:center}
+.toast.err{border-color:rgba(255,68,68,.4)}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="/" class="logo">Frag<span>Value</span></a>
+      <span class="admin-tag">● Admin</span>
+    </div>
+    <a href="/dashboard.html">← Dashboard</a>
+  </div>
+
+  <div id="content">
+    <div class="loading">Vérification des droits...</div>
+  </div>
+</div>
+
+<script>
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+
+let session = null;
+let allData = { features: [], interests: [] };
+let currentFilter = null;
+
+async function init() {
+  const s = await sb.auth.getSession();
+  session = s.data.session;
+  if (!session) {
+    document.getElementById('content').innerHTML =
+      '<div class="denied"><h2>403</h2><p>Tu dois être connecté en admin pour voir cette page.</p><p style="margin-top:16px"><a href="/login.html?redirect=/admin/waitlist.html" class="btn primary">Se connecter</a></p></div>';
+    return;
+  }
+  await load();
+}
+
+async function load() {
+  try {
+    const res = await fetch('/api/admin-waitlist' + (currentFilter ? '?feature=' + encodeURIComponent(currentFilter) : ''), {
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (res.status === 403) {
+      document.getElementById('content').innerHTML =
+        '<div class="denied"><h2>403</h2><p>Ton compte n\'est pas admin. Cette page est réservée.</p></div>';
+      return;
+    }
+    if (!res.ok) throw new Error('status ' + res.status);
+    allData = await res.json();
+    render();
+  } catch (e) {
+    document.getElementById('content').innerHTML =
+      '<div class="empty">Erreur de chargement : ' + e.message + '</div>';
+  }
+}
+
+function render() {
+  const totalAll = (allData.features || []).reduce((s, f) => s + Number(f.total || 0), 0);
+
+  const featureCards = (allData.features || []).map(f => `
+    <div class="feat-card ${currentFilter === f.feature_slug ? 'active' : ''}" onclick="toggleFilter('${f.feature_slug}')">
+      <div class="feat-slug">${f.feature_slug}</div>
+      <div class="feat-total">${Number(f.total).toLocaleString('fr-FR')}</div>
+      <div class="feat-breakdown"><strong>${f.users || 0}</strong> users · ${f.anons || 0} anon</div>
+    </div>
+  `).join('');
+
+  const rows = (allData.interests || []).map(i => {
+    const type = i.user_id ? '<span class="pill user">user</span>' : '<span class="pill anon">anon</span>';
+    const paying = i.is_paying ? '<span class="pill paying">Pro/Elite</span>' : '';
+    const emailOrAnon = i.user_id ? (i.email || '<span class="mono">-</span>') : `<span class="mono">${(i.anon_id || '').slice(0, 12)}…</span>`;
+    const nick = i.nickname ? '<span class="mono">@' + escapeHtml(i.nickname) + '</span>' : '-';
+    const date = i.created_at ? new Date(i.created_at).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-';
+    const notified = i.notified_at ? '<span class="pill paying">✓ notifié</span>' : '-';
+    return `<tr>
+      <td><span class="mono">${i.feature_slug}</span></td>
+      <td>${type}${paying ? ' ' + paying : ''}</td>
+      <td>${emailOrAnon}</td>
+      <td>${nick}</td>
+      <td class="date">${date}</td>
+      <td>${notified}</td>
+    </tr>`;
+  }).join('');
+
+  const exportUrl = '/api/admin-waitlist?format=csv' + (currentFilter ? '&feature=' + encodeURIComponent(currentFilter) : '');
+
+  document.getElementById('content').innerHTML = `
+    <h1>Waitlist · <span>${totalAll.toLocaleString('fr-FR')}</span> intérêts</h1>
+    <p class="page-sub">Interests enregistrés sur les teasers. Clique une carte feature pour filtrer la table. Export CSV conservé pour le batch email au lancement.</p>
+
+    <div class="cards-row">${featureCards || '<div class="empty">Aucune donnée encore. Les premiers intérêts apparaîtront ici dès qu\'un visiteur cliquera sur une CTA teaser.</div>'}</div>
+
+    <div class="toolbar">
+      <div class="toolbar-title">${currentFilter ? 'Intérêts · ' + currentFilter : 'Derniers intérêts (500 max)'}</div>
+      ${currentFilter ? `<button class="btn" onclick="toggleFilter(null)">Effacer le filtre</button>` : ''}
+      ${currentFilter ? `<button class="btn danger" onclick="launchFeature('${currentFilter}')">Lancer cette feature</button>` : ''}
+      <a class="btn primary" href="${exportUrl}" id="csvBtn">Export CSV</a>
+    </div>
+
+    <div class="table-wrap">
+      ${rows ? `<table>
+        <thead><tr>
+          <th>Feature</th><th>Type</th><th>Email / anon_id</th><th>Nickname</th><th>Date</th><th>Notifié ?</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>` : '<div class="empty">Aucun intérêt pour ce filtre.</div>'}
+    </div>
+  `;
+
+  // CSV : ajouter Auth header via fetch manuel + blob download
+  const csvBtn = document.getElementById('csvBtn');
+  if (csvBtn) csvBtn.onclick = async (ev) => {
+    ev.preventDefault();
+    try {
+      const res = await fetch(exportUrl, {
+        headers: { 'Authorization': 'Bearer ' + session.access_token },
+      });
+      if (!res.ok) throw new Error('status ' + res.status);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (currentFilter ? `waitlist-${currentFilter}` : 'waitlist-all') + '-' + Date.now() + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Export CSV téléchargé');
+    } catch (e) { toast('Export échoué : ' + e.message, 'err'); }
+  };
+}
+
+function toggleFilter(slug) {
+  currentFilter = (currentFilter === slug) ? null : slug;
+  load();
+}
+
+async function launchFeature(slug) {
+  if (!confirm(`Envoyer un email de lancement à tous les users inscrits sur "${slug}" ?\n\nLes anons sans email ne seront pas notifiés. Les déjà-notifiés seront skip.`)) return;
+  try {
+    const res = await fetch('/api/feature-launch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ feature: slug }),
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || 'status ' + res.status);
+    toast(`${d.sent || 0} email${(d.sent || 0) > 1 ? 's' : ''} envoyé${(d.sent || 0) > 1 ? 's' : ''}, ${d.skipped || 0} skip (deja notifiés ou sans email)`);
+    setTimeout(load, 800);
+  } catch (e) { toast('Échec du lancement : ' + e.message, 'err'); }
+}
+
+function toast(msg, kind) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (kind ? ' ' + kind : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+init();
+</script>
+</body>
+</html>

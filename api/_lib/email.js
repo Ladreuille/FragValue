@@ -135,6 +135,23 @@ export function emailInviteAccepted({ team_name, invitee_nickname, team_url }) {
   };
 }
 
+// Feature launch : email envoye aux users waitlistes quand une feature passe live
+export function emailFeatureLaunch({ feature_slug, feature_title, feature_tagline, feature_url, user_nickname }) {
+  const hi = user_nickname ? `Yo <strong style="color:#b8ff57">${escapeHtml(user_nickname)}</strong>,` : 'Yo,';
+  return {
+    subject: `${feature_title} est live sur FragValue`,
+    html: wrapEmail(`
+      <div style="display:inline-block;background:rgba(184,255,87,.1);color:#b8ff57;border:1px solid rgba(184,255,87,.3);padding:3px 10px;border-radius:40px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px">Feature lancée</div>
+      <h2 style="margin:0 0 12px;color:#e8eaea;font-size:22px;letter-spacing:-.3px">${escapeHtml(feature_title)}</h2>
+      <p style="margin:0 0 16px;color:#a8b0b0;font-size:14px;line-height:1.6">${hi} La feature sur laquelle tu avais activé ton intérêt est maintenant disponible.</p>
+      <p style="margin:0 0 20px;color:#a8b0b0;font-size:14px;line-height:1.6">${escapeHtml(feature_tagline)}</p>
+      <a href="${feature_url}" style="${btnStyle}">Ouvrir ${escapeHtml(feature_title)} →</a>
+      <p style="margin:28px 0 0;color:#4a5050;font-size:11px;line-height:1.5">Tu reçois ce message parce que tu as activé les notifications pour <strong style="color:#7a8080">${feature_slug}</strong>. Tu peux <a href="https://fragvalue.com/account.html" style="color:#7a8080">gérer tes préférences</a> depuis ton espace.</p>
+    `),
+    text: `${feature_title} est live sur FragValue. ${feature_tagline} Ouvre : ${feature_url}`,
+  };
+}
+
 export function emailInviteDeclined({ team_name, invitee_nickname, team_url }) {
   return {
     subject: `${invitee_nickname} a décliné ton invitation`,

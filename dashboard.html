@@ -77,6 +77,17 @@
     .coach-ai-locked-sub{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.6;max-width:400px}
     .coach-ai-locked-btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s}
     .coach-ai-locked-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    .coach-ai-refresh{display:inline-flex;align-items:center;gap:5px;background:transparent;color:var(--text3);border:1px solid var(--border2);padding:5px 10px;border-radius:6px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:all .15s;flex-shrink:0}
+    .coach-ai-refresh:hover:not(:disabled){color:var(--accent);border-color:rgba(184,255,87,.4)}
+    .coach-ai-refresh:disabled{cursor:not-allowed;opacity:.5}
+    .coach-ai-refresh svg{transition:transform .4s}
+    .coach-ai-refresh[data-state="loading"] svg,
+    .coach-ai-refreshing .coach-ai-refresh svg{animation:coach-ai-spin 1s linear infinite}
+    .coach-ai-refreshing .coach-ai-refresh{color:var(--accent);border-color:rgba(184,255,87,.4);opacity:.8;cursor:wait}
+    @keyframes coach-ai-spin{to{transform:rotate(360deg)}}
+    .coach-ai-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid rgba(184,255,87,.3);color:var(--text);font-family:var(--mono);font-size:12px;padding:12px 20px;border-radius:8px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:440px;text-align:center}
+    .coach-ai-toast.warn{border-color:rgba(245,200,66,.4)}
+    .coach-ai-toast.err{border-color:rgba(255,68,68,.4)}
 
     /* Section locked pour users Free : blur + overlay upgrade */
     body[data-plan="free"] .sec-locked{position:relative;overflow:hidden}
@@ -785,7 +796,7 @@ async function loadFaceitData(nick) {
 
 // Fetch + render du diagnostic Coach IA depuis /api/ai-roadmap.
 // Si free : affiche un preview + CTA. Si pro/team : rendu complet avec CTA detail.
-async function renderCoachAi() {
+async function renderCoachAi(forceRefresh = false) {
   const card = document.getElementById('coachAiCard');
   if (!card) return;
   try {
@@ -794,46 +805,90 @@ async function renderCoachAi() {
       card.innerHTML = coachLockedHtml('Connecte-toi pour obtenir ton diagnostic', 'Le Coach IA analyse tes 20 derniers matchs FACEIT et te sort forces, faiblesses et objectif hebdo.', '/login.html', 'Se connecter');
       return;
     }
-    const res = await fetch('/api/ai-roadmap', {
+    const qs = forceRefresh ? '?refresh=1' : '';
+    const res = await fetch('/api/ai-roadmap' + qs, {
       headers: { 'Authorization': 'Bearer ' + session.access_token },
     });
     if (res.status === 400) {
       card.innerHTML = coachLockedHtml('Pseudo FACEIT non lié', 'Configure ton pseudo FACEIT dans ton espace pour que le Coach IA puisse analyser tes 20 derniers matchs.', '/account.html', 'Lier mon compte FACEIT');
       return;
     }
+    if (res.status === 429) {
+      const body = await res.json().catch(() => ({}));
+      const nextAt = body.nextAvailableAt ? new Date(body.nextAvailableAt) : null;
+      const nextStr = nextAt ? nextAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' }) : 'bientôt';
+      showCoachToast(`Limite atteinte : prochain refresh dispo le ${nextStr}. Passe Pro pour refresh illimité.`, 'warn');
+      // On re-render avec le cache existant pour que l'UI reste utile
+      if (body.currentDiagnosis) renderCoachDiagnosis(card, { diagnosis: body.currentDiagnosis, cachedAt: null, plan: 'free' });
+      return;
+    }
     if (!res.ok) throw new Error('ai-roadmap ' + res.status);
     const data = await res.json();
-    const d = data.diagnosis || {};
-    if (!d.summary) throw new Error('diagnostic vide');
-
-    const force = (d.strengths || [])[0] || '-';
-    const axe   = (d.weaknesses || [])[0] || '-';
-    const goal  = d.weeklyGoal || '-';
-    card.innerHTML = ''
-      + '<div class="coach-ai-head">'
-      + '  <div class="coach-ai-icon">'
-      + '    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>'
-      + '  </div>'
-      + '  <div class="coach-ai-title">'
-      + '    <div class="coach-ai-title-main">Ton diagnostic IA</div>'
-      + '    <div class="coach-ai-title-sub">Analyse des 20 derniers matchs · mise à jour il y a ' + cacheAge(data.cachedAt) + '</div>'
-      + '  </div>'
-      + '  <div class="coach-ai-pill">COACH IA</div>'
-      + '</div>'
-      + '<div class="coach-ai-quote">' + escapeHtml(d.summary) + '</div>'
-      + '<div class="coach-ai-highlights">'
-      + '  <div class="coach-ai-col force"><div class="coach-ai-col-label">TOP FORCE</div><div class="coach-ai-col-text">' + escapeHtml(force) + '</div></div>'
-      + '  <div class="coach-ai-col axe"><div class="coach-ai-col-label">AXE PRINCIPAL</div><div class="coach-ai-col-text">' + escapeHtml(axe) + '</div></div>'
-      + '</div>'
-      + '<div class="coach-ai-goal">'
-      + '  <svg class="coach-ai-goal-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>'
-      + '  <div class="coach-ai-goal-text"><strong>Objectif hebdo · </strong>' + escapeHtml(goal) + '</div>'
-      + '</div>'
-      + '<a href="/levels.html" class="coach-ai-cta">Voir le diagnostic complet <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></a>';
+    if (!data.diagnosis?.summary) throw new Error('diagnostic vide');
+    renderCoachDiagnosis(card, data);
+    if (forceRefresh) showCoachToast('Diagnostic régénéré ✓', 'ok');
   } catch (e) {
     console.warn('Coach IA render failed', e);
-    card.innerHTML = coachLockedHtml('Diagnostic indisponible', 'Lie ton pseudo FACEIT dans ton profil pour activer le Coach IA.', '/account.html', 'Compléter mon profil');
+    if (forceRefresh) showCoachToast('Échec de la régénération. Réessaye dans un instant.', 'err');
+    else card.innerHTML = coachLockedHtml('Diagnostic indisponible', 'Lie ton pseudo FACEIT dans ton profil pour activer le Coach IA.', '/account.html', 'Compléter mon profil');
   }
+}
+
+function renderCoachDiagnosis(card, data) {
+  const d = data.diagnosis || {};
+  const force = (d.strengths || [])[0] || '-';
+  const axe   = (d.weaknesses || [])[0] || '-';
+  const goal  = d.weeklyGoal || '-';
+  const refreshLabel = (data.plan === 'pro' || data.plan === 'team') ? 'Régénérer' : '1/mois';
+  card.innerHTML = ''
+    + '<div class="coach-ai-head">'
+    + '  <div class="coach-ai-icon">'
+    + '    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>'
+    + '  </div>'
+    + '  <div class="coach-ai-title">'
+    + '    <div class="coach-ai-title-main">Ton diagnostic IA</div>'
+    + '    <div class="coach-ai-title-sub">Analyse des 20 derniers matchs · mise à jour il y a ' + cacheAge(data.cachedAt) + '</div>'
+    + '  </div>'
+    + '  <button type="button" class="coach-ai-refresh" id="coachAiRefreshBtn" title="Régénérer le diagnostic">'
+    + '    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>'
+    + '    ' + refreshLabel
+    + '  </button>'
+    + '  <div class="coach-ai-pill">COACH IA</div>'
+    + '</div>'
+    + '<div class="coach-ai-quote">' + escapeHtml(d.summary) + '</div>'
+    + '<div class="coach-ai-highlights">'
+    + '  <div class="coach-ai-col force"><div class="coach-ai-col-label">TOP FORCE</div><div class="coach-ai-col-text">' + escapeHtml(force) + '</div></div>'
+    + '  <div class="coach-ai-col axe"><div class="coach-ai-col-label">AXE PRINCIPAL</div><div class="coach-ai-col-text">' + escapeHtml(axe) + '</div></div>'
+    + '</div>'
+    + '<div class="coach-ai-goal">'
+    + '  <svg class="coach-ai-goal-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>'
+    + '  <div class="coach-ai-goal-text"><strong>Objectif hebdo · </strong>' + escapeHtml(goal) + '</div>'
+    + '</div>'
+    + '<a href="/levels.html" class="coach-ai-cta">Voir le diagnostic complet <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></a>';
+
+  const btn = document.getElementById('coachAiRefreshBtn');
+  if (btn) btn.addEventListener('click', async () => {
+    if (btn.dataset.state === 'loading') return;
+    btn.dataset.state = 'loading';
+    btn.disabled = true;
+    // Marque la card entiere pour qu'on sache que c'est en cours meme
+    // apres le re-render (innerHTML reset le btn mais pas la classe card)
+    card.classList.add('coach-ai-refreshing');
+    const minSpin = new Promise(r => setTimeout(r, 400));
+    await Promise.all([renderCoachAi(true), minSpin]);
+    card.classList.remove('coach-ai-refreshing');
+  });
+}
+
+function showCoachToast(msg, kind) {
+  const existing = document.querySelector('.coach-ai-toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'coach-ai-toast' + (kind ? ' ' + kind : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; }, 3500);
+  setTimeout(() => t.remove(), 4000);
 }
 
 function coachLockedHtml(title, sub, href, cta) {
