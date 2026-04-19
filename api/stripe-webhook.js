@@ -60,14 +60,25 @@ export default async function handler(req, res) {
           .select('user_id')
           .eq('stripe_subscription_id', sub.id)
           .single();
-        if (!existing) break;
 
-        await sb.from('subscriptions').update({
+        // Si pas en DB (ex: webhook race avant checkout.session.completed),
+        // fallback via metadata.supabase_user_id propagee depuis stripe-checkout.
+        const userId = existing?.user_id || sub.metadata?.supabase_user_id;
+        if (!userId) {
+          console.warn(`[Stripe] subscription.updated ${sub.id} : aucun user_id (DB ni metadata)`);
+          break;
+        }
+
+        await sb.from('subscriptions').upsert({
+          user_id: userId,
+          stripe_subscription_id: sub.id,
+          stripe_customer_id: sub.customer,
+          plan: sub.metadata?.plan || 'pro_monthly',
           status: sub.status,
           current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
           current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
           updated_at: new Date().toISOString(),
-        }).eq('stripe_subscription_id', sub.id);
+        }, { onConflict: 'user_id' });
 
         console.log(`[Stripe] Subscription updated: ${sub.id} -> ${sub.status}`);
         break;

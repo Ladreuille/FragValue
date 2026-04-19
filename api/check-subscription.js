@@ -1,18 +1,15 @@
-// api/check-subscription.js
-// Verifie le plan Stripe de l'utilisateur via son stripe_customer_id
-import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+// api/check-subscription.js — FragValue
+// Endpoint client : retourne le plan/statut courant de l'utilisateur.
+// Source of truth : helper _lib/subscription.js (DB en priorite, Stripe fallback).
+//
+// Cet endpoint est appele depuis le front (account.html, dashboard.html, etc.).
+// Il ne touche plus directement Stripe : le webhook se charge de tenir la DB
+// a jour. Ca evite un round-trip Stripe API a chaque pageview (quota + cout).
+const { getUserPlan } = require('./_lib/subscription');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
-
-// CORS multi-origin : prod fragvalue.com + alias/previews Vercel
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   const origin = req.headers.origin || '';
   if (ALLOWED_ORIGIN_RE.test(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Vary', 'Origin');
@@ -25,57 +22,32 @@ export default async function handler(req, res) {
   if (!authHeader) return res.status(401).json({ error: 'Non authentifie' });
 
   try {
-    // Verifier le JWT Supabase
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) return res.status(401).json({ error: 'Token invalide' });
+    const result = await getUserPlan(authHeader);
+    if (!result.user) return res.status(401).json({ error: 'Token invalide' });
 
-    // Admin bypass : acces Team permanent
-    const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
-
-    if (user && ADMIN_EMAILS.includes(user.email)) {
+    // Recupere les details de la subscription pour current_period_end + cancel_at_period_end
+    // depuis la DB (peuplee par le webhook). Pour l'admin on retourne juste { active }.
+    if (result.source === 'admin') {
       return res.status(200).json({ plan: 'team', status: 'active', isAdmin: true });
     }
 
-    // Recuperer le profil
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('stripe_customer_id')
-      .eq('id', user.id)
+    const { createClient } = await import('@supabase/supabase-js');
+    const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+    const { data: sub } = await sb
+      .from('subscriptions')
+      .select('current_period_end, status')
+      .eq('user_id', result.user.id)
       .single();
 
-    const customerId = profile?.stripe_customer_id;
-    if (!customerId) {
-      return res.status(200).json({ plan: 'free', status: 'none' });
-    }
-
-    // Chercher un abonnement actif
-    const subs = await stripe.subscriptions.list({
-      customer: customerId,
-      status: 'active',
-      limit: 1,
-    });
-
-    if (!subs.data.length) {
-      return res.status(200).json({ plan: 'free', status: 'none' });
-    }
-
-    const sub = subs.data[0];
-    const priceId = sub.items.data[0]?.price?.id || '';
-
-    // Determiner le plan depuis le price ID
-    let plan = 'free';
-    if (priceId.includes('team')) plan = 'team';
-    else if (priceId.includes('pro') || sub.items.data[0]?.price?.unit_amount >= 500) plan = 'pro';
-
     return res.status(200).json({
-      plan,
-      status: sub.status,
-      current_period_end: sub.current_period_end,
-      cancel_at_period_end: sub.cancel_at_period_end || false,
+      plan: result.plan,
+      status: result.status,
+      current_period_end: sub?.current_period_end ? Math.floor(new Date(sub.current_period_end).getTime() / 1000) : null,
+      cancel_at_period_end: false, // TODO : ajouter ce flag au webhook + DB schema si besoin UI
+      _source: result.source,
     });
   } catch (err) {
     console.error('check-subscription error:', err);
     return res.status(500).json({ error: 'Erreur serveur' });
   }
-}
+};

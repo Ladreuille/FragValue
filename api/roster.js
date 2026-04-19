@@ -192,9 +192,27 @@ async function handleGet(req, res, supabase, user) {
 }
 
 // ── POST ───────────────────────────────────────────────────────────────────
+// Actions qui creent / modifient une equipe (require Team).
+// Les autres actions (respond, leave, remove_player, cancel_invite) restent
+// accessibles aux Free pour qu'un user Free puisse rejoindre une equipe Team.
+const TEAM_OWNER_ACTIONS = new Set(['create', 'update', 'invite', 'delete']);
+
 async function handlePost(req, res, supabase, user) {
   const body = req.body || {};
   const action = body.action;
+
+  if (TEAM_OWNER_ACTIONS.has(action)) {
+    const { getUserPlan } = await import('./_lib/subscription.js');
+    const { plan } = await getUserPlan(req.headers.authorization);
+    if (plan !== 'team') {
+      return res.status(403).json({
+        error: 'Abonnement Team requis pour cette action',
+        action,
+        plan,
+        upgrade_url: '/pricing.html',
+      });
+    }
+  }
 
   if (action === 'create') {
     const { team_name, description, region, tag } = body;

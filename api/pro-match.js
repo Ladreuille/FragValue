@@ -10,62 +10,12 @@
 // Pour un user Free ou anon : on retourne le match meta mais pas les players.
 
 const { createClient } = require('@supabase/supabase-js');
+const { getUserPlan } = require('./_lib/subscription');
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
-const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
 
 function sb() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-}
-
-async function getUserPlan(authHeader) {
-  if (!authHeader) {
-    console.log('[pro-match] no auth header');
-    return { plan: 'free', user: null, reason: 'no-auth-header' };
-  }
-  const token = String(authHeader).replace(/^Bearer\s+/i, '').trim();
-  if (!token) return { plan: 'free', user: null, reason: 'empty-token' };
-
-  const s = sb();
-  const { data, error } = await s.auth.getUser(token);
-  if (error) console.warn('[pro-match] auth.getUser error:', error.message);
-  const user = data?.user;
-  if (!user) {
-    console.log('[pro-match] token valid but no user returned');
-    return { plan: 'free', user: null, reason: 'no-user' };
-  }
-
-  console.log('[pro-match] user resolved email=' + user.email);
-
-  // Admin bypass
-  if (user.email && ADMIN_EMAILS.includes(user.email)) {
-    return { plan: 'team', user, reason: 'admin' };
-  }
-
-  // Resolve plan via stripe_customer_id (source of truth Stripe)
-  try {
-    const { data: profile } = await s
-      .from('profiles')
-      .select('stripe_customer_id')
-      .eq('id', user.id)
-      .single();
-    if (!profile?.stripe_customer_id) return { plan: 'free', user };
-    if (!process.env.STRIPE_SECRET_KEY) return { plan: 'free', user };
-    const Stripe = (await import('stripe')).default;
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    const subs = await stripe.subscriptions.list({
-      customer: profile.stripe_customer_id,
-      status: 'active',
-      limit: 1,
-    });
-    if (!subs.data.length) return { plan: 'free', user };
-    const priceId = subs.data[0].items.data[0]?.price?.id || '';
-    let plan = 'pro';
-    if (priceId.includes('team') || priceId.includes('elite')) plan = 'team';
-    return { plan, user };
-  } catch {
-    return { plan: 'free', user };
-  }
 }
 
 module.exports = async function handler(req, res) {
@@ -84,9 +34,8 @@ module.exports = async function handler(req, res) {
 
   try {
     const s = sb();
-    const { plan, reason } = await getUserPlan(req.headers.authorization);
+    const { plan, source } = await getUserPlan(req.headers.authorization);
     const isPaid = plan === 'pro' || plan === 'team';
-    console.log('[pro-match] plan=' + plan + ' isPaid=' + isPaid + ' reason=' + reason);
 
     // 1. Match meta + event
     const { data: match, error: matchErr } = await s
@@ -141,7 +90,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       plan,
       isPaid,
-      _debug: { reason, hasAuth: !!req.headers.authorization },
+      _debug: { source, hasAuth: !!req.headers.authorization },
       match: {
         id: match.id,
         stage: match.stage,

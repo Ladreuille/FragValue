@@ -27,6 +27,7 @@ export default async function handler(req, res) {
   if (!process.env.STRIPE_PRICE_PRO_MONTHLY) missing.push('STRIPE_PRICE_PRO_MONTHLY');
   if (!process.env.STRIPE_PRICE_PRO_ANNUEL) missing.push('STRIPE_PRICE_PRO_ANNUEL');
   if (!process.env.STRIPE_PRICE_TEAM_MONTHLY) missing.push('STRIPE_PRICE_TEAM_MONTHLY');
+  if (!process.env.STRIPE_PRICE_TEAM_ANNUEL) missing.push('STRIPE_PRICE_TEAM_ANNUEL');
   if (missing.length > 0) return res.status(503).json({ error: 'Variables manquantes : ' + missing.join(', ') });
 
   try {
@@ -51,11 +52,17 @@ export default async function handler(req, res) {
       success_url: siteOrigin + '/account.html?checkout=success',
       cancel_url: siteOrigin + '/pricing.html',
       allow_promotion_codes: true,
+      // Metadata pour le webhook : sans supabase_user_id, le checkout.session.completed
+      // ne peut pas associer la subscription au bon user en DB.
+      metadata: { plan },
       // 7 jours d'essai gratuit sur les plans Pro (claim marketing sur pricing.html).
       // Pendant le trial, aucun prelevement. L'abonnement commence automatiquement
       // apres 7 jours si l'utilisateur n'a pas annule (cancel en 1 clic depuis Stripe).
       subscription_data: {
         trial_period_days: 7,
+        // Propage le plan sur la subscription pour les webhooks de renew/update
+        // (subscription.updated ne contient pas la metadata de session).
+        metadata: { plan },
       },
     };
 
@@ -75,6 +82,9 @@ export default async function handler(req, res) {
             await supabase.from('profiles').upsert({ id: user.id, stripe_customer_id: customer.id }, { onConflict: 'id' });
             sessionParams.customer = customer.id;
           }
+          // Critical : sans supabase_user_id, le webhook ne peut pas peupler la DB.
+          sessionParams.metadata.supabase_user_id = user.id;
+          sessionParams.subscription_data.metadata.supabase_user_id = user.id;
         }
       } catch (_) { /* proceed without customer */ }
     }
