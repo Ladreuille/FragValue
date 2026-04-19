@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="robots" content="index,follow">
+  <meta name="description" content="Scorecard détaillé d'un match pro CS2 : ratings HLTV, ADR, KAST, opening duels par joueur sur chaque map.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="FragValue · Pro Match Scorecard">
+  <meta property="og:description" content="Match pro CS2 analysé round par round, scorecards HLTV joueur par joueur.">
+  <meta property="og:image" content="https://fragvalue.com/og/pro-demos.png">
+  <title>FragValue · Pro Match</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/teaser.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Breadcrumb */
+    .breadcrumb{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:18px;letter-spacing:.04em}
+    .breadcrumb a{color:var(--text2);text-decoration:none}
+    .breadcrumb a:hover{color:var(--accent)}
+
+    /* Match header */
+    .match-hero{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;margin-bottom:28px;position:relative;overflow:hidden}
+    .match-hero::before{content:'';position:absolute;top:0;right:0;width:40%;height:100%;background:radial-gradient(ellipse 60% 80% at 100% 0%,rgba(184,255,87,.04),transparent);pointer-events:none}
+    .match-event-row{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:14px}
+    .tier-pill{background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);color:var(--gold);padding:2px 8px;border-radius:40px;font-size:9px}
+    .match-stage{color:var(--text3);font-weight:400}
+    .match-teams-big{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px;flex-wrap:wrap}
+    .team-big{flex:1;min-width:180px}
+    .team-big-name{font-family:var(--display);font-size:38px;letter-spacing:.02em;line-height:1;margin-bottom:6px}
+    .team-big.win .team-big-name{color:var(--accent)}
+    .team-big.loss .team-big-name{color:var(--text2)}
+    .team-big-score{font-family:var(--display);font-size:64px;line-height:1}
+    .team-big.win .team-big-score{color:var(--accent)}
+    .team-big.loss .team-big-score{color:var(--text3)}
+    .team-big.right{text-align:right}
+    .team-big-score-wrap{display:flex;align-items:center;justify-content:center}
+    .match-vs-big{font-family:var(--mono);font-size:16px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;font-weight:700;padding:0 18px}
+    .match-meta-big{display:flex;gap:20px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.04em}
+    .match-meta-big strong{color:var(--text);font-weight:700}
+    .mvp-chip{background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;padding:3px 10px;border-radius:40px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em}
+
+    /* Map tabs */
+    .map-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px}
+    .map-tab{flex:1;min-width:120px;background:transparent;border:none;color:var(--text2);font-family:var(--mono);font-size:11px;font-weight:700;padding:10px 12px;border-radius:8px;cursor:pointer;letter-spacing:.04em;transition:all .15s;display:flex;flex-direction:column;gap:4px;align-items:center}
+    .map-tab:hover{color:var(--text);background:var(--surface)}
+    .map-tab.active{background:rgba(184,255,87,.1);color:var(--accent)}
+    .map-tab-name{font-family:var(--display);font-size:14px;letter-spacing:.02em}
+    .map-tab-score{font-size:10px;color:var(--text3);font-weight:400}
+    .map-tab.active .map-tab-score{color:var(--text2)}
+
+    /* Scorecard table */
+    .scorecard{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+    .scorecard-head{background:var(--card);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+    .scorecard-team{font-family:var(--display);font-size:18px;letter-spacing:.02em}
+    .scorecard-team-score{font-family:var(--display);font-size:22px}
+    .scorecard-team-score.win{color:var(--accent)}
+    .scorecard-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+    .scorecard-table thead th{background:var(--bg);color:var(--text3);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:10px 14px;text-align:right;border-bottom:1px solid var(--border)}
+    .scorecard-table thead th:first-child{text-align:left}
+    .scorecard-table tbody td{padding:12px 14px;text-align:right;border-bottom:1px solid var(--border)}
+    .scorecard-table tbody td:first-child{text-align:left;font-weight:700}
+    .scorecard-table tbody tr:last-child td{border-bottom:none}
+    .scorecard-table tbody tr:hover{background:rgba(255,255,255,.02)}
+    .player-nick{display:flex;align-items:center;gap:8px}
+    .player-flag{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;background:var(--card);border:1px solid var(--border2);padding:2px 6px;border-radius:4px}
+    .rating-cell{color:var(--text)}
+    .rating-cell.top{color:var(--accent);font-weight:700}
+    .rating-cell.low{color:var(--danger)}
+
+    /* Paywall card */
+    .paywall{background:linear-gradient(135deg,rgba(184,255,87,.06),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:14px;padding:44px 32px;text-align:center;margin:24px 0}
+    .paywall-icon{width:56px;height:56px;border-radius:14px;background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.25);display:inline-flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:16px}
+    .paywall-title{font-family:var(--display);font-size:26px;letter-spacing:.02em;margin-bottom:10px}
+    .paywall-sub{font-family:var(--mono);font-size:13px;color:var(--text2);line-height:1.6;max-width:560px;margin:0 auto 22px}
+    .paywall-feats{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:0 auto 24px;max-width:720px;font-family:var(--mono);font-size:12px;color:var(--text2)}
+    .paywall-feats li{list-style:none;display:flex;align-items:center;gap:6px}
+    .paywall-feats svg{color:var(--accent);flex-shrink:0}
+    .paywall-cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:12px 26px;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none}
+    .paywall-cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+
+    /* Teaser banner : 2D replay coming */
+    .coming-soon{background:var(--surface);border:1px dashed var(--border2);border-radius:12px;padding:24px 28px;text-align:center;margin-top:28px;margin-bottom:16px}
+    .coming-soon-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);color:var(--gold);padding:3px 10px;border-radius:40px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+    .coming-soon-title{font-family:var(--display);font-size:20px;color:var(--text);margin-bottom:6px;letter-spacing:.02em}
+    .coming-soon-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.6;max-width:520px;margin:0 auto}
+
+    .loading,.empty{padding:80px 20px;text-align:center;font-family:var(--mono);font-size:13px;color:var(--text2)}
+    .empty h2{font-family:var(--display);font-size:28px;color:var(--text);margin-bottom:8px}
+  </style>
+</head>
+<body>
+
+<nav></nav>
+
+<div class="page">
+  <div class="breadcrumb">
+    <a href="pro-demos.html">← Pro demos</a>
+  </div>
+
+  <div id="content">
+    <div class="loading">Chargement du match...</div>
+  </div>
+</div>
+
+<script src="/nav.js"></script>
+<script>
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtDate(iso){return new Date(iso).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});}
+
+async function loadMatch() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if (!id) {
+    document.getElementById('content').innerHTML = '<div class="empty"><h2>404</h2><p>Aucun match spécifié.</p><p style="margin-top:14px"><a href="pro-demos.html" class="paywall-cta">Voir les matchs</a></p></div>';
+    return;
+  }
+
+  try {
+    // Récupère le JWT Supabase si le user est connecté (pour gater le scorecard)
+    const { data: { session } } = await sb.auth.getSession();
+    const headers = {};
+    if (session?.access_token) headers['Authorization'] = 'Bearer ' + session.access_token;
+
+    const res = await fetch('/api/pro-match?id=' + encodeURIComponent(id), { headers });
+    if (res.status === 404) throw new Error('Match introuvable');
+    if (!res.ok) throw new Error('API ' + res.status);
+    const data = await res.json();
+    renderMatch(data);
+  } catch (e) {
+    document.getElementById('content').innerHTML = '<div class="empty"><h2>Erreur</h2><p>' + escapeHtml(e.message) + '</p><p style="margin-top:14px"><a href="pro-demos.html">← Retour aux matchs</a></p></div>';
+  }
+}
+
+function renderMatch(data) {
+  const m = data.match;
+  const isPaid = data.isPaid;
+  const winA = m.winner === 'a';
+  const winB = m.winner === 'b';
+
+  // Map tabs
+  const mapTabs = m.maps.map((mp, i) => `
+    <button class="map-tab ${i === 0 ? 'active' : ''}" data-idx="${i}">
+      <span class="map-tab-name">${escapeHtml(mp.name)}</span>
+      <span class="map-tab-score">${mp.score_a} · ${mp.score_b}</span>
+    </button>
+  `).join('');
+
+  // Scorecards container (one per map, only first visible)
+  const scorecards = m.maps.map((mp, i) => {
+    if (!isPaid) return renderPaywall();
+    return renderScorecard(mp, m, i === 0);
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="match-hero">
+      <div class="match-event-row">
+        <span>${escapeHtml(m.event?.short_name || 'Match pro')}</span>
+        ${m.event?.tier ? '<span class="tier-pill">' + m.event.tier + '-tier</span>' : ''}
+        ${m.stage ? '<span class="match-stage">· ' + escapeHtml(m.stage) + '</span>' : ''}
+        <span class="match-stage" style="margin-left:auto">${fmtDate(m.match_date)}</span>
+      </div>
+      <div class="match-teams-big">
+        <div class="team-big ${winA ? 'win' : 'loss'}">
+          <div class="team-big-name">${escapeHtml(m.team_a)}</div>
+        </div>
+        <div class="team-big-score-wrap">
+          <div class="team-big ${winA ? 'win' : 'loss'}"><div class="team-big-score">${m.team_a_score}</div></div>
+          <span class="match-vs-big">vs</span>
+          <div class="team-big ${winB ? 'win' : 'loss'}"><div class="team-big-score">${m.team_b_score}</div></div>
+        </div>
+        <div class="team-big right ${winB ? 'win' : 'loss'}">
+          <div class="team-big-name">${escapeHtml(m.team_b)}</div>
+        </div>
+      </div>
+      <div class="match-meta-big">
+        <span>${escapeHtml(m.format)} · <strong>${m.maps.length} map${m.maps.length > 1 ? 's' : ''}</strong></span>
+        ${m.best_player ? '<span><span class="mvp-chip">MVP</span> <strong>' + escapeHtml(m.best_player) + '</strong> · ' + (m.best_rating != null ? m.best_rating.toFixed(2) : '-') + '</span>' : ''}
+        ${m.event?.prize_pool ? '<span>Prize pool · <strong>$' + m.event.prize_pool.toLocaleString('fr-FR') + '</strong></span>' : ''}
+        <span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px">${isPaid
+          ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span style="color:var(--accent)">Scorecard débloqué</span>'
+          : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span style="color:var(--gold)">Scorecard Pro</span>'
+        }</span>
+      </div>
+    </div>
+
+    <div class="map-tabs">${mapTabs}</div>
+
+    <div id="mapContent">
+      ${scorecards}
+    </div>
+
+    <div class="coming-soon">
+      <div class="coming-soon-pill">● Bientôt</div>
+      <div class="coming-soon-title">2D Replay interactif</div>
+      <div class="coming-soon-sub">Positions tick par tick, kills, grenades, timeline round par round. La pipeline de parsing des demos HLTV est en préparation · disponible dans les semaines à venir pour tous les abonnés Pro.</div>
+    </div>
+  `;
+
+  // Tab switching
+  document.querySelectorAll('.map-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.map-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const idx = parseInt(tab.dataset.idx);
+      document.querySelectorAll('.scorecard-wrap').forEach((el, i) => {
+        el.style.display = (i === idx) ? 'block' : 'none';
+      });
+    });
+  });
+}
+
+function renderScorecard(mp, match, visible) {
+  const playersA = mp.players.filter(p => p.team === 'a');
+  const playersB = mp.players.filter(p => p.team === 'b');
+  const sortByRating = (a, b) => (b.hltv_rating || 0) - (a.hltv_rating || 0);
+  playersA.sort(sortByRating);
+  playersB.sort(sortByRating);
+  const allRatings = mp.players.map(p => p.hltv_rating || 0).filter(r => r > 0);
+  const maxRating = allRatings.length ? Math.max(...allRatings) : 0;
+  const minRating = allRatings.length ? Math.min(...allRatings) : 0;
+
+  const renderRow = (p) => {
+    const ratingClass = p.hltv_rating === maxRating ? 'top' : (p.hltv_rating === minRating ? 'low' : '');
+    return `
+      <tr>
+        <td>
+          <span class="player-nick">
+            ${escapeHtml(p.nickname)}
+            ${p.country ? '<span class="player-flag">' + escapeHtml(p.country) + '</span>' : ''}
+          </span>
+        </td>
+        <td>${p.kills}</td>
+        <td>${p.deaths}</td>
+        <td>${p.assists}</td>
+        <td>${p.adr != null ? p.adr.toFixed(1) : '-'}</td>
+        <td>${p.kast_pct != null ? p.kast_pct.toFixed(1) + '%' : '-'}</td>
+        <td class="rating-cell ${ratingClass}">${p.hltv_rating != null ? p.hltv_rating.toFixed(2) : '-'}</td>
+      </tr>
+    `;
+  };
+
+  return `
+    <div class="scorecard-wrap" style="display:${visible ? 'block' : 'none'}">
+      <div class="scorecard">
+        <div class="scorecard-head">
+          <span class="scorecard-team">${escapeHtml(match.team_a)}</span>
+          <span class="scorecard-team-score ${mp.score_a > mp.score_b ? 'win' : ''}">${mp.score_a}</span>
+        </div>
+        <table class="scorecard-table">
+          <thead><tr>
+            <th>Joueur</th><th>K</th><th>D</th><th>A</th><th>ADR</th><th>KAST</th><th>Rating 2.1</th>
+          </tr></thead>
+          <tbody>${playersA.map(renderRow).join('')}</tbody>
+        </table>
+      </div>
+      <div class="scorecard">
+        <div class="scorecard-head">
+          <span class="scorecard-team">${escapeHtml(match.team_b)}</span>
+          <span class="scorecard-team-score ${mp.score_b > mp.score_a ? 'win' : ''}">${mp.score_b}</span>
+        </div>
+        <table class="scorecard-table">
+          <thead><tr>
+            <th>Joueur</th><th>K</th><th>D</th><th>A</th><th>ADR</th><th>KAST</th><th>Rating 2.1</th>
+          </tr></thead>
+          <tbody>${playersB.map(renderRow).join('')}</tbody>
+        </table>
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em;text-align:right;margin-top:6px">
+        ${mp.duration_min ? mp.duration_min + ' min · ' : ''}${mp.picked_by === 'a' ? 'Pick ' + escapeHtml(match.team_a) : (mp.picked_by === 'b' ? 'Pick ' + escapeHtml(match.team_b) : (mp.picked_by === 'decider' ? 'Decider' : ''))}
+      </div>
+    </div>
+  `;
+}
+
+function renderPaywall() {
+  return `
+    <div class="scorecard-wrap" style="display:block">
+      <div class="paywall">
+        <div class="paywall-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="paywall-title">Scorecards débloqués en Pro</div>
+        <div class="paywall-sub">Ratings HLTV 2.1, ADR, KAST, opening duels, multi-kills et clutches pour chaque joueur sur chaque map du match. Accès illimité à tous les matchs S-tier.</div>
+        <ul class="paywall-feats">
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Scorecards complets</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>500+ matchs S-tier</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>2D Replay (bientôt)</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>7 jours gratuits</li>
+        </ul>
+        <a href="pricing.html" class="paywall-cta">
+          Passer en Pro
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+    </div>
+  `;
+}
+
+loadMatch();
+</script>
+</body>
+</html>
