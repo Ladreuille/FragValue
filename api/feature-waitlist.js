@@ -22,6 +22,10 @@ const ALLOWED_SLUGS = new Set([
   'pro-benchmarks',
   'prep-veto',
   'anti-strat',
+  // pro-launch : waitlist pendant que Stripe Live n'est pas encore active
+  // (en attente du SIRET). Une fois live, on supprime ce slug et on remet
+  // les boutons checkout sur pricing.html.
+  'pro-launch',
 ]);
 
 function sb() {

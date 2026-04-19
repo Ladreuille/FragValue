@@ -217,6 +217,9 @@ section{padding:80px 80px;position:relative;z-index:1}
   background:var(--accent);color:#000;border:none
 }
 .pricing-btn.featured:hover{background:var(--accent2)}
+.pricing-btn[data-state="saved"]{background:var(--border2);color:var(--text);cursor:default}
+.pricing-btn[data-state="saved"]:hover{background:var(--border2);transform:none}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
 
 /* COMPARISON TABLE */
 .compare-section{
@@ -396,7 +399,7 @@ footer{
 <div class="pricing-hero">
   <div class="pricing-hero-glow"></div>
   <h1>Choisis ton<br>niveau de jeu</h1>
-  <p class="pricing-hero-sub">Du joueur curieux au coach pro. Commence gratuitement, upgrade quand tu veux. Pas d'engagement, annulation en 1 clic.</p>
+  <p class="pricing-hero-sub">Du joueur curieux au coach pro. Commence gratuitement aujourd'hui. <strong style="color:var(--accent)">Pro arrive très bientôt</strong> &middot; active les notifs pour être alerté en early access.</p>
 
   <!-- BILLING TOGGLE -->
   <div class="billing-toggle">
@@ -536,8 +539,15 @@ footer{
           Support prioritaire (&lt; 24h)
         </div>
       </div>
-      <button class="pricing-btn featured" id="proCta" onclick="startCheckout(isYearly?'pro_yearly':'pro_monthly')">Essayer Pro 7 jours gratuits</button>
-      <div class="pricing-cta-sub">Annulation en 1 clic &middot; Satisfait ou remboursé 14 jours</div>
+      <a href="account.html#settings" class="pricing-btn featured" id="proCta" data-teaser-cta="pro-launch">Activer les notifications</a>
+      <div class="pricing-cta-sub" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <span style="display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);padding:5px 12px;border-radius:40px">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulseDot 1.8s ease-in-out infinite"></span>
+          <strong data-teaser-counter="pro-launch" style="color:var(--accent)">-</strong>
+          <span>en attente</span>
+        </span>
+      </div>
+      <div class="pricing-cta-sub" style="margin-top:8px;font-size:11px;color:var(--text3)">Lancement officiel imminent &middot; 7 jours gratuits dès l'ouverture</div>
     </div>
 
     <!-- ELITE : DOMINER (BIENTOT) -->
@@ -932,6 +942,9 @@ footer{
     <a href="pricing.html">Tarifs</a>
     <a href="stats-guide.html">Guide stats</a>
     <a href="levels.html">Roadmap FACEIT</a>
+    <a href="cgv.html">CGV</a>
+    <a href="mentions-legales.html">Mentions legales</a>
+    <a href="privacy.html">Confidentialite</a>
   </div>
   <div class="footer-copy">&copy; 2026 FragValue</div>
 </footer>
@@ -976,7 +989,11 @@ function toggleBilling() {
   if (elitePeriod) elitePeriod.textContent = 'Tarif communiqu\u00e9 au lancement \u00b7 Coachs et \u00e9quipes';
 }
 
-/* ── Checkout ── */
+/* ── Checkout (desactive pendant la phase waitlist Pro) ──
+   Reactive le bouton "Essayer Pro 7 jours" + change le href ci-dessus dans le
+   markup (data-teaser-cta="pro-launch" → onclick="startCheckout(...)") quand
+   Stripe Live est setup et que le SIRET est obtenu.
+   Code conserve pour reactivation rapide en 1 commit. */
 async function startCheckout(plan) {
   const { data: { session } } = await _sb.auth.getSession();
 
@@ -1049,5 +1066,12 @@ const observer = new IntersectionObserver(entries => {
 document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 </script>
 <script src="/nav.js"></script>
+<script src="/teaser.js"></script>
+<script>
+  // Pendant que Stripe Live n'est pas encore active : on capture les emails
+  // des prospects chauds qui veulent passer Pro. Au lancement (jour J du
+  // SIRET), on enverra une vague d'emails de notif via /admin/waitlist.html.
+  FVTeaser.initCTA('pro-launch', { base: 12, perDay: 0.7 });
+</script>
 </body>
 </html>

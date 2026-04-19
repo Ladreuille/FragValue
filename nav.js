@@ -201,4 +201,13 @@
   }
   // Retry si localStorage pas encore ecrit au moment du 1er check (login flow)
   setTimeout(refreshAuth, 300);
+
+  // ── Feedback widget : injection auto sur toutes les pages avec nav.js ──
+  // Skip pages admin (l'admin a sa propre vue / ne veut pas se feedback lui-meme)
+  if (!/\/admin\//.test(window.location.pathname)) {
+    const fbScript = document.createElement('script');
+    fbScript.src = '/feedback-widget.js';
+    fbScript.defer = true;
+    document.head.appendChild(fbScript);
+  }
 })();
