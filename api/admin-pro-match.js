@@ -153,7 +153,12 @@ async function tryFetchHltv(hltvMatchId) {
   // Le package hltv utilise fetch avec User-Agent browser. Peut etre bloque
   // par Cloudflare selon l'IP. On timeout court pour eviter de bloquer le user.
   try {
-    const HLTV = (await import('hltv')).default;
+    // Le module est CJS avec exports.default = hltvInstance.
+    // require().default nous donne directement l'instance avec getMatch.
+    const HLTV = require('hltv').default;
+    if (!HLTV || typeof HLTV.getMatch !== 'function') {
+      return { ok: false, error: 'package hltv mal charge : getMatch indisponible' };
+    }
     const timeoutMs = 12000;
     const result = await Promise.race([
       HLTV.getMatch({ id: hltvMatchId }),
@@ -161,10 +166,11 @@ async function tryFetchHltv(hltvMatchId) {
     ]);
     return { ok: true, data: result };
   } catch (e) {
+    const msg = e.message || String(e) || 'fetch failed';
     return {
       ok: false,
-      error: e.message || 'fetch failed',
-      blocked: /cloudflare|403|access denied/i.test(e.message || ''),
+      error: msg,
+      blocked: /cloudflare|403|access denied|restrict/i.test(msg),
     };
   }
 }
