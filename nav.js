@@ -36,6 +36,7 @@
     nav.fv-nav .fv-badge{font-size:8px;font-family:'Space Mono',monospace;font-weight:700;padding:2px 6px;border-radius:40px;letter-spacing:.08em;margin-left:auto}
     nav.fv-nav .fv-badge.pro{background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;box-shadow:0 0 8px rgba(184,255,87,.3)}
     nav.fv-nav .fv-badge.elite{background:linear-gradient(135deg,#f5c842,#d4a52a);color:#000;box-shadow:0 0 8px rgba(245,200,66,.3)}
+    nav.fv-nav .fv-badge.soon{background:rgba(184,255,87,.08);color:#b8ff57;border:1px solid rgba(184,255,87,.25);box-shadow:none}
     nav.fv-nav .fv-right{display:flex;align-items:center;gap:10px}
     nav.fv-nav .fv-login{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#a8b0b0;text-decoration:none;text-transform:uppercase;letter-spacing:.09em;padding:8px 14px;border-radius:6px;transition:all .18s}
     nav.fv-nav .fv-login:hover{color:#b8ff57;background:rgba(184,255,87,.06)}
@@ -77,7 +78,7 @@
       key: 'pros',
       label: 'Pros',
       items: [
-        { href: '/pro-demos.html', label: 'Pro demos (HLTV)', badge: 'pro' },
+        { href: '/pro-demos.html', label: 'Pro demos (HLTV)', badge: 'soon' },
         { href: '/pro-benchmarks.html', label: 'Pro benchmarks', badge: 'elite' },
       ],
     },
@@ -104,8 +105,9 @@
   // ── Construction du HTML ────────────────────────────────────────────────
   function buildSectionHTML(section) {
     const activeCls = section.key === activeKey ? ' active' : '';
+    const badgeLabels = { pro: 'PRO', elite: 'ELITE', soon: 'BIENTÔT' };
     const items = section.items.map(it => {
-      const badge = it.badge ? `<span class="fv-badge ${it.badge}">${it.badge.toUpperCase()}</span>` : '';
+      const badge = it.badge ? `<span class="fv-badge ${it.badge}">${badgeLabels[it.badge] || it.badge.toUpperCase()}</span>` : '';
       return `<a href="${it.href}">${it.label}${badge}</a>`;
     }).join('');
     return `

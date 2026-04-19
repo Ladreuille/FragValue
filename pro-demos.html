@@ -30,7 +30,6 @@
 </script>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="/teaser.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     .filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px}
     .filter-label{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
@@ -40,9 +39,9 @@
     .filter-clear{background:transparent;color:var(--text3);border:1px solid var(--border2);font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 12px;border-radius:6px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;margin-left:auto}
     .filter-clear:hover{color:var(--accent);border-color:rgba(184,255,87,.4)}
 
-    .match-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
-    .match-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;transition:all .2s;cursor:pointer;overflow:hidden;text-decoration:none;color:inherit;display:block}
-    .match-card:hover{border-color:rgba(184,255,87,.3);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+    .match-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;filter:blur(1.5px) saturate(.85);pointer-events:none;user-select:none}
+    .match-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;overflow:hidden;text-decoration:none;color:inherit;display:block;cursor:not-allowed}
+    .match-card:hover{border-color:rgba(184,255,87,.3)}
     .match-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
     .match-event{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;font-weight:700}
     .match-date{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.04em}
@@ -69,7 +68,7 @@
 
 <div class="page">
   <div class="hero">
-    <div class="hero-tag" id="heroTag">● Pro · chargement...</div>
+    <div class="hero-tag" id="heroTag">● Bientôt · chargement...</div>
     <h1 class="hero-title">Les matchs pros<br><span>décryptés round par round</span></h1>
     <p class="hero-sub">Scorecard HLTV complète pour chaque match : ratings, ADR, KAST, opening duels par joueur. Filtre par tournoi, équipe ou map pour explorer comment les meilleurs gagnent leurs rounds.</p>
   </div>
@@ -81,13 +80,13 @@
     <div class="stat-card"><div class="stat-val">128t</div><div class="stat-label">Tickrate serveurs</div></div>
   </div>
 
-  <div class="filters">
+  <div class="filters locked">
     <span class="filter-label">Tournoi</span>
-    <select class="filter-select" id="eventFilter"><option value="">Tous</option></select>
+    <select class="filter-select" id="eventFilter" disabled><option value="">Tous</option></select>
     <span class="filter-label">Équipe</span>
-    <input class="filter-input" id="teamFilter" placeholder="NAVI, Vitality, G2..." />
+    <input class="filter-input" id="teamFilter" placeholder="NAVI, Vitality, G2..." disabled />
     <span class="filter-label">Map</span>
-    <select class="filter-select" id="mapFilter">
+    <select class="filter-select" id="mapFilter" disabled>
       <option value="">Toutes</option>
       <option>Mirage</option>
       <option>Inferno</option>
@@ -97,11 +96,29 @@
       <option>Dust2</option>
       <option>Vertigo</option>
     </select>
-    <button class="filter-clear" onclick="clearFilters()">Réinitialiser</button>
+    <button class="filter-clear" disabled>Réinitialiser</button>
   </div>
 
-  <div class="sec-label">Derniers matchs analysés</div>
-  <div id="matchGrid"><div class="loading">Chargement des matchs...</div></div>
+  <div class="sec-label">Aperçu · derniers matchs ingérés</div>
+  <div style="position:relative">
+    <div id="matchGrid"><div class="loading">Chargement des matchs...</div></div>
+    <div class="teaser-overlay"></div>
+    <div class="teaser-badge">● Pro demos en préparation · Early access bientôt</div>
+  </div>
+
+  <div class="cta-card">
+    <h2 class="cta-title">Sois notifié au lancement</h2>
+    <p class="cta-sub">Le viewer sera ouvert dès qu'on aura assez de scorecards complets sur les tournois S-tier pour rendre l'exploration vraiment utile. En attendant, active ton intérêt pour passer en early access dès l'ouverture.</p>
+    <a href="account.html#settings" class="cta-btn" data-teaser-cta="pro-demos">
+      Activer les notifications
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+    <div class="cta-waitlist">
+      <span class="cta-waitlist-dot"></span>
+      <strong data-teaser-counter="pro-demos">-</strong>
+      <span>joueurs ont activé leur intérêt</span>
+    </div>
+  </div>
 
   <div class="sec-label" style="margin-top:48px">Ce qui arrive bientôt</div>
   <div class="features">
@@ -138,12 +155,6 @@
 
 <script src="/nav.js"></script>
 <script>
-const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
-const sb = supabase.createClient(SB_URL, SB_ANON);
-
-let state = { event: '', team: '', map: '' };
-
 function fmtDate(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -163,7 +174,7 @@ function renderMatchCard(m) {
     ? '<span>MVP ' + escapeHtml(m.best_player) + ' <strong style="color:var(--accent)">' + (m.best_rating != null ? m.best_rating.toFixed(2) : '-') + '</strong></span>'
     : '';
   return `
-    <a class="match-card" href="pro-match.html?id=${m.id}">
+    <div class="match-card" aria-disabled="true">
       <div class="match-head">
         <span class="match-event">${escapeHtml(m.event?.short_name || '-')}</span>
         <span class="match-date">${stage}</span>
@@ -184,43 +195,28 @@ function renderMatchCard(m) {
         ${best}
       </div>
       <div class="match-maps">${maps}</div>
-    </a>
+    </div>
   `;
 }
 
 async function load() {
   const grid = document.getElementById('matchGrid');
   grid.innerHTML = '<div class="loading">Chargement...</div>';
-  const qs = new URLSearchParams();
-  if (state.event) qs.set('event', state.event);
-  if (state.team) qs.set('team', '%' + state.team + '%');
-  if (state.map) qs.set('map', state.map);
-  qs.set('limit', '60');
   try {
-    const res = await fetch('/api/pro-matches?' + qs.toString());
+    const res = await fetch('/api/pro-matches?limit=12');
     if (!res.ok) throw new Error('API ' + res.status);
     const data = await res.json();
 
-    const eventSel = document.getElementById('eventFilter');
-    if (eventSel.options.length <= 1 && data.events?.length) {
-      for (const ev of data.events) {
-        const opt = document.createElement('option');
-        opt.value = ev.short_name;
-        opt.textContent = ev.short_name + (ev.tier ? ' (' + ev.tier + '-tier)' : '');
-        eventSel.appendChild(opt);
-      }
-      if (state.event) eventSel.value = state.event;
-    }
-
-    document.getElementById('heroTag').textContent = '● Pro · ' + (data.total || data.matches.length) + ' matchs disponibles';
-    document.getElementById('statMatches').textContent = data.total || data.matches.length;
+    const totalMatches = data.total || data.matches.length;
+    document.getElementById('heroTag').textContent = '● Bientôt · ' + totalMatches + ' matchs en préparation';
+    document.getElementById('statMatches').textContent = totalMatches;
     document.getElementById('statEvents').textContent = data.events?.length || '-';
     const teams = new Set();
     for (const m of data.matches) { teams.add(m.team_a); teams.add(m.team_b); }
     document.getElementById('statTeams').textContent = teams.size + '+';
 
     if (!data.matches.length) {
-      grid.innerHTML = '<div class="empty"><div class="empty-title">Aucun match</div><div>Essaye de réinitialiser les filtres ou choisir un autre tournoi.</div></div>';
+      grid.innerHTML = '<div class="empty"><div class="empty-title">Aperçu indisponible</div><div>Les premiers matchs arrivent bientôt.</div></div>';
       return;
     }
     grid.innerHTML = '<div class="match-grid">' + data.matches.map(renderMatchCard).join('') + '</div>';
@@ -229,23 +225,9 @@ async function load() {
   }
 }
 
-function clearFilters() {
-  state = { event: '', team: '', map: '' };
-  document.getElementById('eventFilter').value = '';
-  document.getElementById('teamFilter').value = '';
-  document.getElementById('mapFilter').value = '';
-  load();
-}
-
-document.getElementById('eventFilter').addEventListener('change', (e) => { state.event = e.target.value; load(); });
-document.getElementById('mapFilter').addEventListener('change', (e) => { state.map = e.target.value; load(); });
-let teamDebounce;
-document.getElementById('teamFilter').addEventListener('input', (e) => {
-  clearTimeout(teamDebounce);
-  teamDebounce = setTimeout(() => { state.team = e.target.value.trim(); load(); }, 300);
-});
-
 load();
 </script>
+<script src="/teaser.js"></script>
+<script>FVTeaser.initCTA("pro-demos", { base: 84, perDay: 0.9 });</script>
 </body>
 </html>
