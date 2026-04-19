@@ -212,3 +212,97 @@ FROM feature_interests
 GROUP BY feature_slug;
 
 GRANT SELECT ON feature_interests_counts TO anon, authenticated;
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- PRO DEMOS VIEWER (Phase 1 : metadata + scorecards HLTV)
+-- Applique via MCP Supabase. Schema seulement, le seed (matchs 2025-2026)
+-- est gere separement via scripts/seed-pro-matches.sql ou MCP direct.
+-- Phase 2 (a venir) : table pro_round_positions pour 2D replay tick-by-tick.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS pro_events (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name         TEXT NOT NULL,
+  short_name   TEXT,
+  tier         TEXT DEFAULT 'S',
+  prize_pool   INT,
+  start_date   DATE,
+  end_date     DATE,
+  hltv_event_id INT UNIQUE,
+  logo_url     TEXT,
+  created_at   TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS pro_matches (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id        UUID REFERENCES pro_events(id) ON DELETE CASCADE,
+  stage           TEXT,
+  format          TEXT DEFAULT 'BO3',
+  team_a          TEXT NOT NULL,
+  team_b          TEXT NOT NULL,
+  team_a_logo     TEXT,
+  team_b_logo     TEXT,
+  team_a_score    INT DEFAULT 0,
+  team_b_score    INT DEFAULT 0,
+  winner          TEXT,
+  best_player     TEXT,
+  best_rating     NUMERIC(4,2),
+  match_date      TIMESTAMPTZ NOT NULL,
+  hltv_match_id   BIGINT UNIQUE,
+  demo_available  BOOLEAN DEFAULT false,
+  created_at      TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_pro_matches_date ON pro_matches (match_date DESC);
+CREATE INDEX IF NOT EXISTS idx_pro_matches_event ON pro_matches (event_id);
+CREATE INDEX IF NOT EXISTS idx_pro_matches_teams ON pro_matches (team_a, team_b);
+
+CREATE TABLE IF NOT EXISTS pro_match_maps (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  match_id        UUID REFERENCES pro_matches(id) ON DELETE CASCADE,
+  map_order       INT NOT NULL,
+  map_name        TEXT NOT NULL,
+  team_a_score    INT NOT NULL,
+  team_b_score    INT NOT NULL,
+  team_a_ct_rounds INT,
+  team_a_t_rounds  INT,
+  picked_by       TEXT,
+  duration_min    INT,
+  created_at      TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_pro_match_maps_match ON pro_match_maps (match_id, map_order);
+
+CREATE TABLE IF NOT EXISTS pro_match_players (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  match_map_id    UUID REFERENCES pro_match_maps(id) ON DELETE CASCADE,
+  nickname        TEXT NOT NULL,
+  team            TEXT NOT NULL,
+  country         TEXT,
+  kills           INT DEFAULT 0,
+  deaths          INT DEFAULT 0,
+  assists         INT DEFAULT 0,
+  adr             NUMERIC(5,1),
+  kast_pct        NUMERIC(4,1),
+  hltv_rating     NUMERIC(4,2),
+  first_kills     INT DEFAULT 0,
+  first_deaths    INT DEFAULT 0,
+  clutches        INT DEFAULT 0,
+  multi_kills     INT DEFAULT 0,
+  created_at      TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_pro_match_players_map ON pro_match_players (match_map_id);
+CREATE INDEX IF NOT EXISTS idx_pro_match_players_nickname ON pro_match_players (lower(nickname));
+
+ALTER TABLE pro_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pro_matches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pro_match_maps ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pro_match_players ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "pro_events public read" ON pro_events;
+CREATE POLICY "pro_events public read" ON pro_events FOR SELECT USING (true);
+DROP POLICY IF EXISTS "pro_matches public read" ON pro_matches;
+CREATE POLICY "pro_matches public read" ON pro_matches FOR SELECT USING (true);
+DROP POLICY IF EXISTS "pro_match_maps public read" ON pro_match_maps;
+CREATE POLICY "pro_match_maps public read" ON pro_match_maps FOR SELECT USING (true);
+DROP POLICY IF EXISTS "pro_match_players public read" ON pro_match_players;
+CREATE POLICY "pro_match_players public read" ON pro_match_players FOR SELECT USING (true);
