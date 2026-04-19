@@ -165,7 +165,10 @@ function render() {
       <td><span class="match-score">${escapeHtml(m.pro_events?.short_name || '-')}</span> ${m.stage ? '<span style="color:var(--text3)">· ' + escapeHtml(m.stage) + '</span>' : ''}</td>
       <td class="date-cell">${fmtDate(m.match_date)}</td>
       <td>${m.hltv_match_id ? '<span class="status-pill parsed">HLTV #' + m.hltv_match_id + '</span>' : '<span class="status-pill manual">Manuel</span>'}</td>
-      <td><button class="btn danger" onclick="delMatch('${m.id}')">Supprimer</button></td>
+      <td style="display:flex;gap:6px;justify-content:flex-end">
+        <button class="btn sec" onclick="openScorecardsForMatch('${m.id}')" title="Compléter/remplacer les scorecards">Scorecards</button>
+        <button class="btn danger" onclick="delMatch('${m.id}')">Supprimer</button>
+      </td>
     </tr>`;
   }).join('');
 
@@ -274,14 +277,112 @@ async function submitAuto() {
     });
     const d = await res.json();
     if (d.ok) {
-      toast('Match importé ✓');
-      setTimeout(load, 600);
+      toast('Méta importées ✓ · complète les scorecards ci-dessous');
+      // Affiche la section scorecards pour ce match qui vient d'etre cree
+      showScorecardsSection(d.matchId, d.preview);
+      load(); // refresh la liste
     } else {
       toast('Auto-fetch échoué : ' + (d.message || d.error) + ' · passe en manuel', 'err');
       if (d.blocked) setMode('manual');
     }
   } catch (e) { toast('Erreur : ' + e.message, 'err'); }
   btn.disabled = false; btn.textContent = 'Fetcher depuis HLTV';
+}
+
+// Section scorecards : affiche un textarea par map (team A / team B) pour coller
+// le scoreboard HLTV depuis la page stats.
+function showScorecardsSection(matchId, preview) {
+  const container = document.getElementById('scorecardsSection') || (() => {
+    const div = document.createElement('div');
+    div.id = 'scorecardsSection';
+    div.className = 'card';
+    document.querySelector('#formArea').after(div);
+    return div;
+  })();
+
+  const maps = preview?.maps || [];
+  if (!maps.length) { container.innerHTML = ''; return; }
+
+  container.innerHTML = `
+    <div class="card-title">Compléter les scorecards · ${escapeHtml(preview.team_a)} vs ${escapeHtml(preview.team_b)}</div>
+    <div class="card-sub">Pour chaque map, va sur la page stats HLTV correspondante, sélectionne la table du scoreboard et colle-la ci-dessous. Un textarea par équipe. <br>Format attendu par ligne : <code>nickname  K  A  D  +/-  ADR  KAST%  Rating</code> (tab ou espaces multiples).</div>
+    ${maps.map(m => `
+      <div style="margin-top:18px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-family:var(--display);font-size:18px;letter-spacing:.02em">
+            ${escapeHtml(m.map_name)} <span style="color:var(--text3);font-size:12px;font-family:var(--mono)">${m.team_a_score} · ${m.team_b_score}</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>Scoreboard ${escapeHtml(preview.team_a)}</label>
+            <textarea class="inp scorecard-a" data-order="${m.map_order}" rows="6" placeholder="ZywOo	30 (17)	3 (1)	14	+16	95.2	85.2%	1.75
+apEX	22 (15)	4 (2)	15	+7	84.1	84.6%	1.42
+..."></textarea>
+          </div>
+          <div class="form-field">
+            <label>Scoreboard ${escapeHtml(preview.team_b)}</label>
+            <textarea class="inp scorecard-b" data-order="${m.map_order}" rows="6" placeholder="KSCERATO	25	5	15	+10	82.1	78.4%	1.32
+yuurih	22	4	16	+6	78.5	76.0%	1.18
+..."></textarea>
+          </div>
+        </div>
+      </div>
+    `).join('')}
+    <div style="margin-top:18px">
+      <button class="btn" onclick="submitScorecards('${matchId}')">Enregistrer les scorecards</button>
+    </div>
+  `;
+  container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function submitScorecards(matchId) {
+  const scorecards = [];
+  document.querySelectorAll('.scorecard-a').forEach(ta => {
+    const order = parseInt(ta.dataset.order, 10);
+    const other = document.querySelector('.scorecard-b[data-order="' + order + '"]');
+    const aText = ta.value.trim();
+    const bText = other ? other.value.trim() : '';
+    if (aText || bText) scorecards.push({ map_order: order, team_a_text: aText, team_b_text: bText });
+  });
+  if (!scorecards.length) return toast('Aucun scorecard rempli', 'err');
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Enregistrement...';
+  try {
+    const res = await fetch('/api/admin-pro-scorecard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ match_id: matchId, scorecards }),
+    });
+    const d = await res.json();
+    if (d.ok) {
+      toast(`${d.inserted} joueurs insérés sur ${scorecards.length} map(s)`);
+      document.getElementById('scorecardsSection').innerHTML = '';
+      load();
+    } else {
+      toast('Erreur : ' + (d.error || 'inconnue'), 'err');
+    }
+  } catch (e) { toast('Erreur : ' + e.message, 'err'); }
+  btn.disabled = false; btn.textContent = 'Enregistrer les scorecards';
+}
+
+// Depuis la liste des matchs : bouton "Compléter scorecards" sur un match deja importe
+async function openScorecardsForMatch(matchId) {
+  try {
+    const res = await fetch('/api/pro-match?id=' + matchId);
+    const d = await res.json();
+    if (!d.match) return toast('Match introuvable', 'err');
+    const preview = {
+      team_a: d.match.team_a,
+      team_b: d.match.team_b,
+      maps: d.match.maps.map(m => ({
+        map_order: m.order, map_name: m.name,
+        team_a_score: m.score_a, team_b_score: m.score_b,
+      })),
+    };
+    showScorecardsSection(matchId, preview);
+  } catch (e) { toast('Erreur : ' + e.message, 'err'); }
 }
 
 async function submitManual() {
