@@ -37,8 +37,13 @@ export async function sendEmail({ to, subject, html, text, from }) {
     });
     const data = await res.json();
     if (!res.ok) {
-      console.warn('[email] resend error', data);
-      return { error: data.message || 'send failed' };
+      // Log verbeux pour diagnostic Vercel (les logs tronquent apres 40 chars)
+      console.warn('[email] resend error status=' + res.status + ' name=' + (data.name || 'unknown') + ' message=' + (data.message || ''));
+      return {
+        error: data.message || 'send failed',
+        status: res.status,
+        name: data.name,
+      };
     }
     return { ok: true, id: data.id };
   } catch (e) {

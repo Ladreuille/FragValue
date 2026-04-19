@@ -134,6 +134,7 @@ module.exports = async function handler(req, res) {
 
   let sent = 0, skipped = 0, rateLimited = 0, pendingResend = 0;
   const notifiedIds = [];
+  let firstError = null; // Premier message d'erreur Resend pour surface admin
 
   // 4. Boucle envoi sequentielle rate-limitee (~8 rq/s, marge Resend free tier)
   const THROTTLE_MS = 120;
@@ -153,7 +154,11 @@ module.exports = async function handler(req, res) {
       if (result?.ok) { sent++; notifiedIds.push(r.id); }
       else if (result?.skipped) { pendingResend++; } // RESEND pas configure : on NE marque PAS (permet retry plus tard)
       else if (/rate|429/i.test(result?.error || '')) { rateLimited++; console.warn('Resend rate-limit hit for', email); }
-      else { skipped++; console.warn('feature-launch error:', email, result?.error); }
+      else {
+        skipped++;
+        if (!firstError) firstError = { status: result?.status, name: result?.name, message: result?.error };
+        console.warn('feature-launch error:', email, result?.status, result?.name, result?.error);
+      }
     } catch (e) {
       console.warn('feature-launch send error for', r.user_id, e.message);
       skipped++;
@@ -176,5 +181,6 @@ module.exports = async function handler(req, res) {
     pendingResend,
     total: rows.length,
     resendConfigured: !!process.env.RESEND_API_KEY,
+    firstError,
   });
 };

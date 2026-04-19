@@ -236,6 +236,9 @@ async function launchFeature(slug) {
     if (!res.ok) throw new Error(d.error || 'status ' + res.status);
     if (d.resendConfigured === false || d.pendingResend > 0) {
       toast(`⚠ Resend pas configuré. ${d.pendingResend || 0} emails en attente (rien envoyé). Configure RESEND_API_KEY + domaine vérifié.`, 'err');
+    } else if (d.sent === 0 && d.firstError) {
+      const err = d.firstError;
+      toast(`⚠ Resend rejette l'envoi : [${err.status} ${err.name || ''}] ${err.message || 'erreur inconnue'}`, 'err');
     } else {
       const s = d.sent || 0;
       toast(`${s} email${s > 1 ? 's envoyés' : ' envoyé'}, ${d.skipped || 0} skip${d.rateLimited ? ', ' + d.rateLimited + ' rate-limit' : ''}`);
