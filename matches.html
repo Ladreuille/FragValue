@@ -151,6 +151,26 @@ a.match-card:hover .mc-col-chevron{color:var(--accent);transform:translateX(3px)
 .ov-close-btn:hover{border-color:var(--text2);color:var(--text2)}
 
 @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══ FACEIT sync en attente (teaser) ═══════════════════════════════════ */
+.faceit-pending{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:14px;padding:36px 32px;margin-bottom:32px;text-align:center}
+.fp-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.35);color:var(--accent);padding:5px 12px;border-radius:40px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px}
+.fp-title{font-family:var(--display);font-size:clamp(28px,4vw,42px);line-height:1.05;letter-spacing:.02em;margin-bottom:10px;color:var(--text)}
+.fp-title span{color:var(--accent);text-shadow:0 0 18px rgba(184,255,87,.3)}
+.fp-sub{font-family:var(--mono);font-size:13px;color:var(--text2);line-height:1.65;max-width:580px;margin:0 auto 22px}
+.fp-cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:12px 22px;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s;border:none;cursor:pointer}
+.fp-cta:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,255,87,.3)}
+.fp-cta[data-state="saved"]{background:var(--border2);color:var(--text);cursor:default}
+.fp-cta[data-state="saved"]:hover{transform:none;filter:none;box-shadow:none}
+.fp-counter{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:5px 14px;background:var(--card);border:1px solid var(--border);border-radius:40px;font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.04em}
+.fp-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:fpPulse 1.8s ease-in-out infinite}
+.fp-counter strong{color:var(--accent);font-weight:700}
+@keyframes fpPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+
+/* Blur du contenu matches (apercu derriere le teaser) */
+.matches-blur{position:relative}
+.matches-blur-content{filter:blur(2px) saturate(.85);pointer-events:none;user-select:none;opacity:.7}
+.matches-blur-veil{position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,rgba(8,9,9,.6) 50%,var(--bg) 100%);pointer-events:none;z-index:2;border-radius:12px}
 </style>
 </head>
 <body>
@@ -175,20 +195,44 @@ a.match-card:hover .mc-col-chevron{color:var(--accent);transform:translateX(3px)
 </nav>
 
 <div class="page">
-  <div class="page-head">
-    <div>
-      <div class="page-title">MES <span>MATCHS</span></div>
-      <div class="page-sub">Analyse automatique de tes matchs FACEIT</div>
+
+  <!-- Hero "FACEIT sync en attente" : tant que l'API officielle FACEIT n'a
+       pas valide notre demande d'acces, la synchro auto n'est pas encore
+       fonctionnelle. Waitlist pour etre prevenu en priorite. -->
+  <div class="faceit-pending">
+    <div class="fp-badge">● Synchronisation FACEIT en attente</div>
+    <h1 class="fp-title">L'API FACEIT<br><span>arrive bientôt</span></h1>
+    <p class="fp-sub">Notre demande d'accès à l'API officielle FACEIT est en cours de validation. Dès qu'on a le feu vert, ton historique de matchs se synchronisera automatiquement (FV Rating, KAST, ADR, heatmaps par match).<br><br>Active les notifications pour être prévenu en priorité dès l'ouverture.</p>
+    <a href="account.html#settings" class="fp-cta" data-teaser-cta="faceit-sync">
+      Activer les notifications
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+    <div class="fp-counter">
+      <span class="fp-dot"></span>
+      <strong data-teaser-counter="faceit-sync">-</strong>
+      <span>joueurs en attente</span>
     </div>
-    <button class="btn-import" id="importBtn" onclick="importHistory()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-      Importer mes 5 derniers matchs
-    </button>
   </div>
 
-  <div class="sl">Historique</div>
-  <div id="matchesContainer">
-    <div style="text-align:center;padding:60px 20px;font-size:11px;color:var(--text3)">Chargement...</div>
+  <!-- Aperçu de ce qui s'affichera une fois la sync active (floute) -->
+  <div class="matches-blur">
+    <div class="matches-blur-content">
+      <div class="page-head">
+        <div>
+          <div class="page-title">MES <span>MATCHS</span></div>
+          <div class="page-sub">Analyse automatique de tes matchs FACEIT</div>
+        </div>
+        <button class="btn-import" id="importBtn" disabled>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Importer mes 5 derniers matchs
+        </button>
+      </div>
+      <div class="sl">Historique</div>
+      <div id="matchesContainer">
+        <div style="text-align:center;padding:60px 20px;font-size:11px;color:var(--text3)">Aperçu indisponible pendant la période d'attente.</div>
+      </div>
+    </div>
+    <div class="matches-blur-veil"></div>
   </div>
 </div>
 
@@ -226,10 +270,10 @@ async function init() {
   const { data:{ session } } = await _sb.auth.getSession();
   if (!session) { window.location.href = 'login.html'; return; }
   _session = session;
-  await loadMatches();
+  // Tant que l'API FACEIT n'est pas active (waitlist mode), on ne
+  // charge pas les matchs et on ne poll pas. On garde juste les notifs
+  // pour que le bell nav continue de marcher.
   await loadNotifs();
-  // Poll toutes les 10s si au moins un match est en pending/parsing
-  schedulePoll();
 }
 
 function schedulePoll() {
@@ -630,5 +674,11 @@ document.addEventListener('click', (e) => {
 init();
 </script>
 <script src="/nav.js"></script>
+<script src="/teaser.js"></script>
+<script>
+  // Waitlist FACEIT sync : en attendant l'API officielle, on capture
+  // les emails des users qui veulent la sync des leur dispo.
+  FVTeaser.initCTA('faceit-sync', { base: 18, perDay: 0.6 });
+</script>
 </body>
 </html>
