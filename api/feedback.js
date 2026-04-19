@@ -13,6 +13,33 @@ const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-v
 const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
 const VALID_TYPES = new Set(['positive', 'negative', 'idea', 'bug']);
 const VALID_STATUSES = new Set(['new', 'read', 'responded', 'closed']);
+const MAX_TAGS = 8;
+const MAX_TAG_LENGTH = 30;
+
+// Normalise un tag : lowercase + kebab-case + strip caracteres exotiques.
+// Accepte uniquement [a-z0-9-]. Tag invalide ou trop long → null.
+function normalizeTag(raw) {
+  if (typeof raw !== 'string') return null;
+  const t = raw.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  if (!t || t.length > MAX_TAG_LENGTH) return null;
+  return t;
+}
+
+// Filtre + dedup + cap : retourne un array TEXT[] propre pour Postgres
+function normalizeTags(rawTags) {
+  if (!Array.isArray(rawTags)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const t of rawTags) {
+    const n = normalizeTag(t);
+    if (n && !seen.has(n)) {
+      seen.add(n);
+      out.push(n);
+      if (out.length >= MAX_TAGS) break;
+    }
+  }
+  return out;
+}
 
 function sb() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -112,6 +139,10 @@ async function handleCreate(req, res) {
     if (e && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 200) anonEmail = e;
   }
 
+  // Tags : meme logique que pour PATCH. L'user lambda peut envoyer des tags
+  // (ex: depuis un widget custom plus tard), mais on les normalise + capw.
+  const tags = normalizeTags(body.tags);
+
   const row = {
     user_id: user?.id || null,
     anon_email: anonEmail,
@@ -123,6 +154,7 @@ async function handleCreate(req, res) {
     user_tier: userTier,
     ip_hash: ipHash,
     status: 'new',
+    tags,
   };
 
   const { data, error } = await sb()
@@ -180,13 +212,51 @@ async function notifyAdmin({ feedbackId, ticketNumber, type, message, user_email
   });
 }
 
-// ── GET : list feedbacks (admin only) ────────────────────────────────────
+// ── GET : list feedbacks
+//   ?mine=1                  → user authentifie : ses propres feedbacks
+//   (sans param ou autre)    → admin only : tous les feedbacks
+//   ?status= ?type= ?tag=    → filtres (admin et user)
+// ─────────────────────────────────────────────────────────────────────────
 async function handleList(req, res) {
+  const { status, type, tag, limit, mine } = req.query || {};
+
+  // Mode "mine" : user authentifie liste ses propres feedbacks
+  if (mine === '1' || mine === 'true') {
+    const user = await resolveUser(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'Authentification requise' });
+
+    let q = sb()
+      .from('user_feedback')
+      .select('id, ticket_number, type, message, page_url, status, admin_response, responded_at, created_at, tags')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(Math.min(Number(limit) || 50, 200));
+
+    if (status && VALID_STATUSES.has(status)) q = q.eq('status', status);
+    if (type && VALID_TYPES.has(type)) q = q.eq('type', type);
+
+    const { data: feedbacks, error } = await q;
+    if (error) return res.status(500).json({ error: error.message });
+
+    const unread = (feedbacks || []).filter(f => f.admin_response && (!f.responded_at || true)).length;
+    const withResponse = (feedbacks || []).filter(f => f.admin_response).length;
+
+    res.setHeader('Cache-Control', 'private, no-cache');
+    return res.status(200).json({
+      feedbacks: feedbacks || [],
+      stats: {
+        total: (feedbacks || []).length,
+        with_response: withResponse,
+        unread_responses: unread,
+      },
+    });
+  }
+
+  // Mode admin : tous les feedbacks
   if (!(await isAdmin(req.headers.authorization))) {
     return res.status(403).json({ error: 'Admin only' });
   }
 
-  const { status, type, limit } = req.query || {};
   let q = sb()
     .from('user_feedback')
     .select('*')
@@ -195,6 +265,10 @@ async function handleList(req, res) {
 
   if (status && VALID_STATUSES.has(status)) q = q.eq('status', status);
   if (type && VALID_TYPES.has(type)) q = q.eq('type', type);
+  if (tag) {
+    const normalizedTag = normalizeTag(tag);
+    if (normalizedTag) q = q.contains('tags', [normalizedTag]);
+  }
 
   const { data: feedbacks, error } = await q;
   if (error) return res.status(500).json({ error: error.message });
@@ -216,17 +290,22 @@ async function handleList(req, res) {
     user_email: f.user_id ? (usersById[f.user_id] || null) : f.anon_email,
   }));
 
-  // Stats agregees
+  // Stats agregees (sur l'ensemble, pas filtre, pour les cards top de la page admin)
+  const { data: all } = await sb().from('user_feedback').select('type, status, tags');
   const stats = {
-    total: feedbacks.length,
+    total: (all || []).length,
     by_type: {},
     by_status: {},
+    by_tag: {},
     new_count: 0,
   };
-  for (const f of feedbacks) {
+  for (const f of (all || [])) {
     stats.by_type[f.type] = (stats.by_type[f.type] || 0) + 1;
     stats.by_status[f.status] = (stats.by_status[f.status] || 0) + 1;
     if (f.status === 'new') stats.new_count++;
+    for (const t of (f.tags || [])) {
+      stats.by_tag[t] = (stats.by_tag[t] || 0) + 1;
+    }
   }
 
   res.setHeader('Cache-Control', 'private, no-cache');
@@ -258,6 +337,9 @@ async function handleUpdate(req, res) {
       updates.responded_at = new Date().toISOString();
       if (!updates.status) updates.status = 'responded';
     }
+  }
+  if (body.tags !== undefined) {
+    updates.tags = normalizeTags(body.tags);
   }
   if (!Object.keys(updates).length) {
     return res.status(400).json({ error: 'Rien a mettre a jour' });

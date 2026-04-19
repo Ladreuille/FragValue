@@ -40,8 +40,10 @@
     nav.fv-nav .fv-right{display:flex;align-items:center;gap:10px}
     nav.fv-nav .fv-login{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#a8b0b0;text-decoration:none;text-transform:uppercase;letter-spacing:.09em;padding:8px 14px;border-radius:6px;transition:all .18s}
     nav.fv-nav .fv-login:hover{color:#b8ff57;background:rgba(184,255,87,.06)}
-    nav.fv-nav .fv-cta{background:#b8ff57;color:#000;padding:8px 18px;border-radius:6px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .18s;box-shadow:0 0 0 0 rgba(184,255,87,.5)}
+    nav.fv-nav .fv-cta{background:#b8ff57;color:#000;padding:8px 18px;border-radius:6px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .18s;box-shadow:0 0 0 0 rgba(184,255,87,.5);position:relative}
     nav.fv-nav .fv-cta:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 20px rgba(184,255,87,.4)}
+    nav.fv-nav .fv-account-dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#ff8a3d;border:2px solid #080909;animation:fv-dot-pulse 1.8s ease-in-out infinite;display:none}
+    @keyframes fv-dot-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,138,61,.5)}50%{box-shadow:0 0 0 6px rgba(255,138,61,0)}}
     @media (max-width: 768px){
       nav.fv-nav{padding:0 16px}
       nav.fv-nav .fv-sections{display:none}
@@ -127,7 +129,7 @@
     <div class="fv-right">
       <a href="/pricing.html" class="fv-login">Tarifs</a>
       <a href="/login.html" class="fv-login" id="navLoginBtn">Connexion</a>
-      <a href="/account.html" class="fv-cta" id="navAccountBtn" style="display:none">Mon espace</a>
+      <a href="/account.html#feedback" class="fv-cta" id="navAccountBtn" style="display:none">Mon espace<span class="fv-account-dot" id="navFeedbackDot" title="Tu as une réponse à ton feedback"></span></a>
     </div>
   `;
 
@@ -189,10 +191,33 @@
     if (hasSession()) {
       loginBtn.style.display = 'none';
       accountBtn.style.display = '';
+      checkUnreadFeedback();
     } else {
       loginBtn.style.display = '';
       accountBtn.style.display = 'none';
     }
+  }
+
+  // Verifie si l'user a des reponses admin non lues, affiche un dot orange.
+  // Lit le meme localStorage 'fv_feedback_seen_v1' que account.html.
+  async function checkUnreadFeedback() {
+    const dot = document.getElementById('navFeedbackDot');
+    if (!dot) return;
+    try {
+      const raw = localStorage.getItem('sb-xmyruycvvkmcwysfygcq-auth-token');
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const token = parsed?.access_token;
+      if (!token) return;
+      const res = await fetch('/api/feedback?mine=1&limit=50', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (!res.ok) return;
+      const d = await res.json();
+      let seen;
+      try { seen = new Set(JSON.parse(localStorage.getItem('fv_feedback_seen_v1') || '[]')); }
+      catch { seen = new Set(); }
+      const unread = (d.feedbacks || []).filter(f => f.admin_response && !seen.has(f.id)).length;
+      dot.style.display = unread > 0 ? 'block' : 'none';
+    } catch {}
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', refreshAuth);

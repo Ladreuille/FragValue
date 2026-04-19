@@ -33,6 +33,27 @@
     .sidebar-btn.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
     .sidebar-btn svg{flex-shrink:0;opacity:.6;transition:opacity .15s}
     .sidebar-btn.active svg,.sidebar-btn:hover svg{opacity:1}
+    .sidebar-badge{margin-left:auto;background:var(--accent);color:#000;font-size:9px;font-weight:700;padding:2px 7px;border-radius:40px;letter-spacing:.04em;min-width:16px;text-align:center;line-height:1.4}
+
+    /* Feedback list */
+    .fb-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;transition:border-color .15s}
+    .fb-card:hover{border-color:var(--border2)}
+    .fb-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+    .fb-card-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:1;min-width:0}
+    .fb-ticket{font-family:var(--mono);font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.04em;background:rgba(184,255,87,.06);padding:2px 8px;border-radius:6px;border:1px solid rgba(184,255,87,.2)}
+    .fb-type-pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:40px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .fb-type-pill.positive{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.25)}
+    .fb-type-pill.negative{background:rgba(255,68,68,.1);color:var(--danger);border:1px solid rgba(255,68,68,.25)}
+    .fb-type-pill.idea{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.25)}
+    .fb-type-pill.bug{background:rgba(255,138,61,.1);color:#ff8a3d;border:1px solid rgba(255,138,61,.25)}
+    .fb-status{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase}
+    .fb-status.responded{color:var(--accent)}
+    .fb-card-date{font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap}
+    .fb-card-msg{font-size:13px;color:var(--text2);line-height:1.55;white-space:pre-wrap;background:var(--card);border-left:2px solid var(--border2);border-radius:0 6px 6px 0;padding:10px 14px;margin:6px 0}
+    .fb-card-response{margin-top:10px;padding:10px 14px;background:rgba(184,255,87,.04);border-left:2px solid var(--accent);border-radius:0 6px 6px 0}
+    .fb-card-response-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+    .fb-card-response-content{font-size:13px;color:var(--text);line-height:1.55;white-space:pre-wrap}
+    .fb-empty{padding:60px 20px;text-align:center;color:var(--text2);font-size:13px;background:var(--surface);border:1px dashed var(--border2);border-radius:10px}
     .main{min-width:0}
     .tab-panel{display:none}.tab-panel.active{display:block;animation:fadeUp .25s ease}
     @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
@@ -145,6 +166,11 @@
     <button class="sidebar-btn" onclick="setTab('security',this)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
       Sécurité
+    </button>
+    <button class="sidebar-btn" onclick="setTab('feedback',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Mes feedbacks
+      <span id="feedbackBadge" class="sidebar-badge" style="display:none">0</span>
     </button>
   </aside>
 
@@ -362,6 +388,18 @@
       </div>
     </div>
 
+    <!-- ══ FEEDBACK ══════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="panelFeedback">
+      <div class="sec-label">Mes feedbacks</div>
+      <div id="feedbackList">
+        <div style="color:var(--text2);font-size:13px;padding:40px 20px;text-align:center">Chargement...</div>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:18px;text-align:center;line-height:1.6">
+        Tu peux envoyer un nouveau feedback via le bouton vert en bas à droite de chaque page.<br>
+        On répond généralement sous 48h ouvrées.
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -376,14 +414,16 @@ async function init() {
   const { data:{ session } } = await sb.auth.getSession();
   if (!session) { window.location.href = 'login.html'; return; }
   currentUser = session.user;
-  // Gere query params : ?checkout=success apres Stripe, #settings pour deep-link
+  // Gere query params : ?checkout=success apres Stripe, #settings/#feedback pour deep-link
   const hash = (window.location.hash || '').replace('#','');
-  if (hash === 'settings' || hash === 'security') {
+  if (['settings', 'security', 'feedback'].includes(hash)) {
     const btn = document.querySelector(`[onclick*="${hash}"]`);
     if (btn) setTab(hash, btn);
   } else {
     loadSubscription();
   }
+  // Toujours fetch les feedbacks au load (pour le badge non-lu, meme si on est sur un autre tab)
+  refreshFeedbackBadge();
   if (window.location.search.includes('checkout=success')) {
     showBanner('Bienvenue dans Pro. Ton abonnement est actif.', 'ok');
     // Force re-fetch : le webhook Stripe peut prendre 2-5s pour peupler la DB
@@ -399,6 +439,7 @@ function setTab(tab, btn) {
   if (btn) btn.classList.add('active');
   if (tab === 'subscription') loadSubscription();
   if (tab === 'settings')     loadSettings();
+  if (tab === 'feedback')     loadFeedbacks();
   window.history.replaceState(null, '', '#' + tab);
 }
 
@@ -408,6 +449,109 @@ function showBanner(text, type) {
   b.textContent = text;
   document.body.appendChild(b);
   setTimeout(() => b.remove(), 5000);
+}
+
+// ══ FEEDBACK ═══════════════════════════════════════════════════════════════
+// Cle localStorage pour tracker quels admin_response l'user a deja vus
+const FB_SEEN_KEY = 'fv_feedback_seen_v1';
+function readSeenIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(FB_SEEN_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+function writeSeenIds(set) {
+  try { localStorage.setItem(FB_SEEN_KEY, JSON.stringify([...set])); } catch {}
+}
+
+const TYPE_LABELS_FR = { positive: 'Positif', negative: 'Negatif', idea: 'Idee', bug: 'Bug' };
+const STATUS_LABELS_FR = { new: 'Recu', read: 'Lu', responded: 'Repondu', closed: 'Ferme' };
+
+let _fbLoaded = false;
+async function loadFeedbacks() {
+  if (_fbLoaded) return;
+  _fbLoaded = true;
+  const target = document.getElementById('feedbackList');
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const headers = session?.access_token ? { 'Authorization': 'Bearer ' + session.access_token } : {};
+    const res = await fetch('/api/feedback?mine=1', { headers });
+    if (!res.ok) throw new Error('status ' + res.status);
+    const d = await res.json();
+    renderFeedbacks(d.feedbacks || []);
+
+    // Marque tous les admin_response visibles comme vus
+    const seen = readSeenIds();
+    let changed = false;
+    for (const f of (d.feedbacks || [])) {
+      if (f.admin_response && !seen.has(f.id)) { seen.add(f.id); changed = true; }
+    }
+    if (changed) writeSeenIds(seen);
+    refreshFeedbackBadge(); // recompute
+  } catch (e) {
+    target.innerHTML = `<div class="fb-empty">Erreur de chargement : ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderFeedbacks(feedbacks) {
+  const target = document.getElementById('feedbackList');
+  if (!feedbacks.length) {
+    target.innerHTML = `<div class="fb-empty">Tu n'as pas encore envoyé de feedback. Le bouton vert en bas à droite est là pour ça.</div>`;
+    return;
+  }
+  target.innerHTML = feedbacks.map(f => {
+    const ticket = f.ticket_number ? 'FB-' + String(f.ticket_number).padStart(4, '0') : '';
+    const date = f.created_at ? new Date(f.created_at).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-';
+    const typeLabel = TYPE_LABELS_FR[f.type] || f.type;
+    const statusClass = f.status === 'responded' ? 'responded' : '';
+    const statusLabel = STATUS_LABELS_FR[f.status] || f.status;
+    const responseBlock = f.admin_response
+      ? `<div class="fb-card-response">
+           <div class="fb-card-response-label">
+             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+             Réponse FragValue
+           </div>
+           <div class="fb-card-response-content">${escapeHtml(f.admin_response)}</div>
+         </div>`
+      : '';
+    return `
+      <div class="fb-card">
+        <div class="fb-card-head">
+          <div class="fb-card-meta">
+            ${ticket ? `<span class="fb-ticket">${ticket}</span>` : ''}
+            <span class="fb-type-pill ${f.type}">${typeLabel}</span>
+            <span class="fb-status ${statusClass}">${statusLabel}</span>
+          </div>
+          <span class="fb-card-date">${date}</span>
+        </div>
+        <div class="fb-card-msg">${escapeHtml(f.message)}</div>
+        ${responseBlock}
+      </div>
+    `;
+  }).join('');
+}
+
+// Refresh juste le badge (sans render le panel) : lance par init() et apres loadFeedbacks
+async function refreshFeedbackBadge() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.access_token) return;
+    const res = await fetch('/api/feedback?mine=1&limit=50', { headers: { 'Authorization': 'Bearer ' + session.access_token } });
+    if (!res.ok) return;
+    const d = await res.json();
+    const seen = readSeenIds();
+    const unread = (d.feedbacks || []).filter(f => f.admin_response && !seen.has(f.id)).length;
+    const badge = document.getElementById('feedbackBadge');
+    if (!badge) return;
+    if (unread > 0) {
+      badge.textContent = String(unread);
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch {}
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
 // ══ ABONNEMENT ═════════════════════════════════════════════════════════════
