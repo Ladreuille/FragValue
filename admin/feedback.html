@@ -8,6 +8,7 @@
 <title>FragValue · Admin · Feedback</title>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/tag-colors.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -85,7 +86,8 @@ h1 span{color:var(--accent)}
 .fb-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:10px;border-top:1px solid var(--border)}
 .fb-action{background:transparent;border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:9px;font-weight:700;padding:6px 12px;border-radius:6px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
 .fb-action:hover{color:var(--accent);border-color:rgba(184,255,87,.4)}
-.fb-action.danger:hover{color:var(--danger);border-color:rgba(255,68,68,.4)}
+.fb-action.danger{color:var(--text3);border-color:var(--border)}
+.fb-action.danger:hover{color:var(--danger);border-color:rgba(255,68,68,.4);background:rgba(255,68,68,.06)}
 
 .fb-response-area{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
 .fb-response-textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 12px;border-radius:6px;resize:vertical;min-height:70px;outline:none;line-height:1.5}
@@ -94,23 +96,23 @@ h1 span{color:var(--accent)}
 .fb-response-saved-label{font-size:9px;color:var(--success);letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:4px;display:block}
 
 .fb-tags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px;align-items:center}
-.fb-tag{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 8px;border-radius:40px;background:var(--card);border:1px solid var(--border2);color:var(--text2);letter-spacing:.04em}
-.fb-tag.removable{cursor:pointer;transition:all .15s}
-.fb-tag.removable:hover{color:var(--danger);border-color:rgba(255,68,68,.4)}
+.fb-tag{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 8px;border-radius:40px;letter-spacing:.04em}
+.fb-tag.removable{cursor:pointer;transition:filter .15s,opacity .15s}
+.fb-tag.removable:hover{filter:brightness(1.15)}
+.fb-tag.removable:hover .fb-tag-x{opacity:1;color:#ff8a8a}
 .fb-tag-x{font-size:12px;line-height:1;opacity:.5}
 .fb-tag-add{background:transparent;border:1px dashed var(--border2);color:var(--text3);font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:40px;cursor:pointer;letter-spacing:.04em;transition:all .15s}
 .fb-tag-add:hover{color:var(--accent);border-color:rgba(184,255,87,.4)}
 .fb-tag-input{background:var(--bg);border:1px solid rgba(184,255,87,.4);color:var(--text);font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:40px;outline:none;width:120px;letter-spacing:.04em}
 .tag-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0 0}
-.tag-suggestion{font-family:var(--mono);font-size:9px;background:rgba(184,255,87,.06);color:var(--accent);border:1px solid rgba(184,255,87,.2);padding:3px 8px;border-radius:40px;cursor:pointer;letter-spacing:.04em;transition:all .15s}
-.tag-suggestion:hover{background:rgba(184,255,87,.15)}
+.tag-suggestion{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:40px;cursor:pointer;letter-spacing:.04em;transition:filter .15s}
+.tag-suggestion:hover{filter:brightness(1.15)}
 
 .tag-filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-.tag-filter-pill{font-family:var(--mono);font-size:10px;background:var(--card);color:var(--text2);border:1px solid var(--border);padding:5px 10px;border-radius:40px;cursor:pointer;letter-spacing:.04em;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
-.tag-filter-pill:hover{color:var(--accent);border-color:rgba(184,255,87,.3)}
-.tag-filter-pill.active{background:rgba(184,255,87,.1);color:var(--accent);border-color:var(--accent)}
-.tag-filter-pill .tag-count{background:rgba(255,255,255,.05);padding:1px 6px;border-radius:40px;font-size:9px}
-.tag-filter-pill.active .tag-count{background:rgba(0,0,0,.25);color:var(--accent)}
+.tag-filter-pill{font-family:var(--mono);font-size:10px;padding:5px 10px;border-radius:40px;cursor:pointer;letter-spacing:.04em;transition:filter .15s,outline .15s;display:inline-flex;align-items:center;gap:5px;outline:1px solid transparent}
+.tag-filter-pill:hover{filter:brightness(1.15)}
+.tag-filter-pill.active{outline:1px solid currentColor;filter:brightness(1.2)}
+.tag-filter-pill .tag-count{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:40px;font-size:9px;color:inherit}
 
 .empty,.loading,.denied{text-align:center;padding:80px 24px;color:var(--text2);font-size:13px}
 .denied h2{font-family:var(--display);font-size:28px;color:var(--danger);margin-bottom:8px}
@@ -238,18 +240,18 @@ function render() {
 
   const items = (allData.feedbacks || []).map(renderItem).join('');
 
-  // Tags filter row : top 12 tags les plus utilises + active tag
+  // Tags filter row : top 12 tags les plus utilises + active tag (couleurs semantiques)
   const byTag = stats.by_tag || {};
   const sortedTags = Object.entries(byTag).sort((a, b) => b[1] - a[1]).slice(0, 12);
   const tagFilterRow = sortedTags.length ? `
     <div class="tag-filter-row">
       ${sortedTags.map(([t, n]) => `
-        <span class="tag-filter-pill ${tagFilter === t ? 'active' : ''}" onclick="setTagFilter('${escapeAttr(t)}')">
+        <span class="tag-filter-pill ${tagFilter === t ? 'active' : ''}" style="${window.fvTagStyle(t)}" onclick="setTagFilter('${escapeAttr(t)}')">
           #${escapeHtml(t)}
           <span class="tag-count">${n}</span>
         </span>
       `).join('')}
-      ${tagFilter ? `<span class="tag-filter-pill" onclick="setTagFilter(null)" style="border-style:dashed">Effacer #${escapeHtml(tagFilter)}</span>` : ''}
+      ${tagFilter ? `<span class="tag-filter-pill" onclick="setTagFilter(null)" style="background:transparent;color:var(--text3);border:1px dashed var(--border2)">Effacer #${escapeHtml(tagFilter)}</span>` : ''}
     </div>
   ` : '';
 
@@ -295,12 +297,12 @@ function renderItem(f) {
          <textarea class="fb-response-textarea" id="resp-${f.id}" placeholder="Repondre a cet utilisateur (envoye par email s'il a fourni son adresse)..." maxlength="2000"></textarea>
        </div>`;
 
-  // Tags : chips supprimables + bouton "+" qui ouvre un input + suggestions
+  // Tags : chips colores supprimables + bouton "+" qui ouvre un input + suggestions
   const currentTags = Array.isArray(f.tags) ? f.tags : [];
   const tagsBlock = `
     <div class="fb-tags" id="tags-${f.id}">
       ${currentTags.map(t => `
-        <span class="fb-tag removable" onclick="removeTag('${f.id}', '${escapeAttr(t)}')" title="Cliquer pour retirer">
+        <span class="fb-tag removable" style="${window.fvTagStyle(t)}" onclick="removeTag('${f.id}', '${escapeAttr(t)}')" title="Cliquer pour retirer">
           #${escapeHtml(t)} <span class="fb-tag-x">×</span>
         </span>
       `).join('')}
@@ -308,7 +310,7 @@ function renderItem(f) {
     </div>
     <div class="tag-suggestions" id="tag-suggestions-${f.id}" style="display:none">
       ${TAG_SUGGESTIONS.filter(s => !currentTags.includes(s)).map(s => `
-        <span class="tag-suggestion" onclick="addTag('${f.id}', '${escapeAttr(s)}')">#${escapeHtml(s)}</span>
+        <span class="tag-suggestion" style="${window.fvTagStyle(s)}" onclick="addTag('${f.id}', '${escapeAttr(s)}')">#${escapeHtml(s)}</span>
       `).join('')}
     </div>
   `;
@@ -341,6 +343,7 @@ function renderItem(f) {
         ${respondBtn}
         ${f.status !== 'read' && f.status === 'new' ? `<button class="fb-action" onclick="setStatus('${f.id}', 'read')">Marquer comme lu</button>` : ''}
         ${f.status !== 'closed' ? `<button class="fb-action" onclick="setStatus('${f.id}', 'closed')">Fermer</button>` : `<button class="fb-action" onclick="setStatus('${f.id}', 'new')">Reouvrir</button>`}
+        <button class="fb-action danger" onclick="deleteFeedback('${f.id}', '${ticket}')">Supprimer</button>
       </div>
     </div>
   `;
@@ -355,6 +358,22 @@ function shortUrl(u) {
 
 async function setStatus(id, status) {
   await patch({ id, status });
+}
+
+async function deleteFeedback(id, ticketLabel) {
+  if (!confirm(`Supprimer definitivement ${ticketLabel || 'ce ticket'} ?\nCette action est irreversible.`)) return;
+  try {
+    const res = await fetch('/api/feedback?id=' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Erreur ' + res.status);
+    showToast('Ticket supprime');
+    await load();
+  } catch (e) {
+    showToast(e.message, true);
+  }
 }
 
 async function sendResponse(id) {

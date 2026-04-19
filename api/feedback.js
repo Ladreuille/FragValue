@@ -93,7 +93,7 @@ module.exports = async function handler(req, res) {
   const origin = req.headers.origin || '';
   if (ALLOWED_ORIGIN_RE.test(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -105,6 +105,7 @@ module.exports = async function handler(req, res) {
     if (req.method === 'POST') return handleCreate(req, res);
     if (req.method === 'GET') return handleList(req, res);
     if (req.method === 'PATCH') return handleUpdate(req, res);
+    if (req.method === 'DELETE') return handleDelete(req, res);
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (e) {
     console.error('feedback error', e);
@@ -312,18 +313,45 @@ async function handleList(req, res) {
   return res.status(200).json({ feedbacks: enriched, stats });
 }
 
-// ── PATCH : update status / response (admin only) ────────────────────────
+// ── PATCH : update status / response / tags
+//   Admin : full power (status, admin_response, tags)
+//   User loggé : peut fermer (status='closed') son propre feedback uniquement
+// ─────────────────────────────────────────────────────────────────────────
 async function handleUpdate(req, res) {
-  if (!(await isAdmin(req.headers.authorization))) {
-    return res.status(403).json({ error: 'Admin only' });
-  }
-
   const body = req.body || {};
   const id = body.id;
   if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
     return res.status(400).json({ error: 'id invalide (uuid attendu)' });
   }
 
+  const adminFlag = await isAdmin(req.headers.authorization);
+
+  // Mode user : seul status='closed' autorise sur son propre feedback
+  if (!adminFlag) {
+    const user = await resolveUser(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'Authentification requise' });
+    if (body.status !== 'closed') {
+      return res.status(403).json({ error: 'Action reservee : seul "fermer" est autorise pour les users' });
+    }
+    const { data: own } = await sb()
+      .from('user_feedback')
+      .select('id, user_id, status')
+      .eq('id', id)
+      .single();
+    if (!own || own.user_id !== user.id) {
+      return res.status(403).json({ error: 'Tu ne peux fermer que tes propres feedbacks' });
+    }
+    const { data, error } = await sb()
+      .from('user_feedback')
+      .update({ status: 'closed' })
+      .eq('id', id)
+      .select('id, status')
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json({ feedback: data });
+  }
+
+  // Mode admin : full
   const updates = {};
   if (body.status !== undefined) {
     if (!VALID_STATUSES.has(body.status)) return res.status(400).json({ error: 'status invalide' });
@@ -405,4 +433,42 @@ async function notifyUserResponse({ recipientEmail, feedbackType, ticketNumber, 
     html: tpl.html,
     text: tpl.text,
   });
+}
+
+// ── DELETE : suppression dure d'un feedback
+//   Admin : peut supprimer n'importe quel feedback
+//   User loggé : peut supprimer son propre feedback (effet RGPD)
+//   id passe en query string ou body : ?id=xxx ou { id: xxx }
+// ─────────────────────────────────────────────────────────────────────────
+async function handleDelete(req, res) {
+  const id = req.query?.id || req.body?.id;
+  if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
+    return res.status(400).json({ error: 'id invalide (uuid attendu)' });
+  }
+
+  const adminFlag = await isAdmin(req.headers.authorization);
+
+  if (adminFlag) {
+    const { error } = await sb().from('user_feedback').delete().eq('id', id);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json({ ok: true, deleted: id, by: 'admin' });
+  }
+
+  // User mode : verifie que c'est bien son feedback
+  const user = await resolveUser(req.headers.authorization);
+  if (!user) return res.status(401).json({ error: 'Authentification requise' });
+
+  const { data: own } = await sb()
+    .from('user_feedback')
+    .select('id, user_id')
+    .eq('id', id)
+    .single();
+  if (!own) return res.status(404).json({ error: 'Feedback introuvable' });
+  if (own.user_id !== user.id) {
+    return res.status(403).json({ error: 'Tu ne peux supprimer que tes propres feedbacks' });
+  }
+
+  const { error } = await sb().from('user_feedback').delete().eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.status(200).json({ ok: true, deleted: id, by: 'user' });
 }

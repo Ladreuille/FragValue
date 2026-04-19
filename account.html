@@ -8,6 +8,7 @@
   <title>FragValue · Mon espace</title>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/tag-colors.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -53,6 +54,12 @@
     .fb-card-response{margin-top:10px;padding:10px 14px;background:rgba(184,255,87,.04);border-left:2px solid var(--accent);border-radius:0 6px 6px 0}
     .fb-card-response-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px}
     .fb-card-response-content{font-size:13px;color:var(--text);line-height:1.55;white-space:pre-wrap}
+    .fb-card-tags{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 0}
+    .fb-card-tag{display:inline-flex;align-items:center;font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:40px;letter-spacing:.04em}
+    .fb-card-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+    .fb-card-action{background:transparent;border:1px solid var(--border2);color:var(--text3);font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 11px;border-radius:6px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .fb-card-action:hover{color:var(--text);border-color:var(--text3)}
+    .fb-card-action.danger:hover{color:var(--danger);border-color:rgba(255,68,68,.4);background:rgba(255,68,68,.06)}
     .fb-empty{padding:60px 20px;text-align:center;color:var(--text2);font-size:13px;background:var(--surface);border:1px dashed var(--border2);border-radius:10px}
     .main{min-width:0}
     .tab-panel{display:none}.tab-panel.active{display:block;animation:fadeUp .25s ease}
@@ -503,6 +510,11 @@ function renderFeedbacks(feedbacks) {
     const typeLabel = TYPE_LABELS_FR[f.type] || f.type;
     const statusClass = f.status === 'responded' ? 'responded' : '';
     const statusLabel = STATUS_LABELS_FR[f.status] || f.status;
+    const tagStyle = (typeof window.fvTagStyle === 'function') ? window.fvTagStyle : (() => '');
+    const tagsBlock = (Array.isArray(f.tags) && f.tags.length) ? `
+      <div class="fb-card-tags">
+        ${f.tags.map(t => `<span class="fb-card-tag" style="${tagStyle(t)}">#${escapeHtml(t)}</span>`).join('')}
+      </div>` : '';
     const responseBlock = f.admin_response
       ? `<div class="fb-card-response">
            <div class="fb-card-response-label">
@@ -511,6 +523,9 @@ function renderFeedbacks(feedbacks) {
            </div>
            <div class="fb-card-response-content">${escapeHtml(f.admin_response)}</div>
          </div>`
+      : '';
+    const closeBtn = f.status !== 'closed'
+      ? `<button class="fb-card-action" onclick="closeMyFeedback('${f.id}', '${ticket}')">Fermer</button>`
       : '';
     return `
       <div class="fb-card">
@@ -523,10 +538,55 @@ function renderFeedbacks(feedbacks) {
           <span class="fb-card-date">${date}</span>
         </div>
         <div class="fb-card-msg">${escapeHtml(f.message)}</div>
+        ${tagsBlock}
         ${responseBlock}
+        <div class="fb-card-actions">
+          ${closeBtn}
+          <button class="fb-card-action danger" onclick="deleteMyFeedback('${f.id}', '${ticket}')">Supprimer</button>
+        </div>
       </div>
     `;
   }).join('');
+}
+
+async function closeMyFeedback(id, ticketLabel) {
+  if (!confirm(`Fermer ${ticketLabel || 'ce feedback'} ?\nIl restera dans ton historique mais marqué comme résolu.`)) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.access_token) throw new Error('Session expirée');
+    const res = await fetch('/api/feedback', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ id, status: 'closed' }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Erreur ' + res.status);
+    showBanner('Feedback fermé', 'ok');
+    _fbLoaded = false;
+    loadFeedbacks();
+  } catch (e) {
+    showBanner(e.message, 'err');
+  }
+}
+
+async function deleteMyFeedback(id, ticketLabel) {
+  if (!confirm(`Supprimer définitivement ${ticketLabel || 'ce feedback'} ?\nCette action est irréversible.`)) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.access_token) throw new Error('Session expirée');
+    const res = await fetch('/api/feedback?id=' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Erreur ' + res.status);
+    showBanner('Feedback supprimé', 'ok');
+    _fbLoaded = false;
+    loadFeedbacks();
+    refreshFeedbackBadge();
+  } catch (e) {
+    showBanner(e.message, 'err');
+  }
 }
 
 // Refresh juste le badge (sans render le panel) : lance par init() et apres loadFeedbacks
