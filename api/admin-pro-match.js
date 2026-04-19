@@ -89,11 +89,16 @@ function normalizeHltvMatch(data, hltvMatchId, hltvUrl) {
     }
   });
 
+  // Strip le prefixe "de_" que le package retourne (ex: "de_overpass" -> "Overpass")
+  const cleanMapName = (n) => {
+    if (!n) return 'Unknown';
+    const stripped = String(n).replace(/^de_/i, '');
+    return stripped.charAt(0).toUpperCase() + stripped.slice(1).toLowerCase();
+  };
   const maps = playedMaps.map((mp, i) => {
-    const mapName = mp.name ? mp.name.charAt(0).toUpperCase() + mp.name.slice(1) : 'Unknown';
     return {
       map_order: i + 1,
-      map_name: mapName,
+      map_name: cleanMapName(mp.name),
       team_a_score: mp.result.team1TotalRounds || 0,
       team_b_score: mp.result.team2TotalRounds || 0,
       picked_by: vetoesByMap.get(mp.name) || null,
@@ -138,11 +143,17 @@ async function fetchMapStats(HLTV, statsId) {
   try {
     const data = await Promise.race([
       HLTV.getMatchMapStats({ id: statsId }),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout after 12s')), 12000)),
     ]);
+    // Log succes avec nb de players trouves pour diagnostic
+    const t1Count = data?.playerStats?.team1?.length || 0;
+    const t2Count = data?.playerStats?.team2?.length || 0;
+    console.log('fetchMapStats ok statsId=' + statsId + ' team1=' + t1Count + ' team2=' + t2Count);
     return data;
   } catch (e) {
-    console.warn('fetchMapStats failed for', statsId, e.message);
+    // Log verbeux explicite avec status et type d'erreur
+    const msg = e.message || String(e);
+    console.warn('fetchMapStats FAIL statsId=' + statsId + ' error=' + msg.slice(0, 300));
     return null;
   }
 }
