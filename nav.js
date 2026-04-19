@@ -56,43 +56,119 @@
   styleTag.textContent = css;
   document.head.appendChild(styleTag);
 
-  // ── Définition des 4 sections ───────────────────────────────────────────
+  // ── Detection de langue : path /en/* OU cookie fv_lang=en ───────────────
+  const isEn = (() => {
+    if (/^\/en\//.test(window.location.pathname)) return true;
+    try {
+      const m = document.cookie.match(/(?:^|;\s*)fv_lang=([^;]+)/);
+      if (m && m[1] === 'en') return true;
+    } catch {}
+    return false;
+  })();
+
+  // Helper : retourne la version EN d'une URL si on est en EN
+  // /dashboard.html -> /en/dashboard.html (uniquement pour pages traduites)
+  const TRANSLATED_PAGES_NAV = new Set([
+    '/index.html', '/pricing.html', '/demo.html', '/login.html',
+    '/cgv.html', '/mentions-legales.html', '/privacy.html',
+    '/lineup-library.html', '/pro-demos.html', '/pro-benchmarks.html',
+    '/prep-veto.html', '/anti-strat.html', '/levels.html', '/stats-guide.html',
+  ]);
+  function localize(href) {
+    if (!isEn) return href;
+    if (TRANSLATED_PAGES_NAV.has(href)) return '/en' + href;
+    return href; // page non traduite (account.html, dashboard.html, etc.)
+  }
+
+  // ── Définition des 4 sections (i18n-aware) ──────────────────────────────
+  const NAV_LABELS = {
+    fr: {
+      monJeu: 'Mon jeu',
+      apercu: 'Aperçu',
+      mesMatchs: 'Mes matchs',
+      nouvelleDemo: 'Nouvelle démo',
+      scout: 'Scout',
+      comparer: 'Comparer',
+      progresser: 'Progresser',
+      roadmap: 'Roadmap',
+      guideStats: 'Guide des stats',
+      lineupLibrary: 'Lineup library',
+      pros: 'Pros',
+      proDemos: 'Pro demos (HLTV)',
+      proBenchmarks: 'Pro benchmarks',
+      equipe: 'Équipe',
+      teamDashboard: 'Team dashboard',
+      prepVeto: 'Prep veto',
+      antiStrat: 'Anti-strat',
+      tarifs: 'Tarifs',
+      connexion: 'Connexion',
+      monEspace: 'Mon espace',
+      feedbackTitle: 'Tu as une réponse à ton feedback',
+      badgeSoon: 'BIENTÔT',
+    },
+    en: {
+      monJeu: 'My game',
+      apercu: 'Overview',
+      mesMatchs: 'My matches',
+      nouvelleDemo: 'New demo',
+      scout: 'Scout',
+      comparer: 'Compare',
+      progresser: 'Improve',
+      roadmap: 'Roadmap',
+      guideStats: 'Stats guide',
+      lineupLibrary: 'Lineup library',
+      pros: 'Pros',
+      proDemos: 'Pro demos (HLTV)',
+      proBenchmarks: 'Pro benchmarks',
+      equipe: 'Team',
+      teamDashboard: 'Team dashboard',
+      prepVeto: 'Veto prep',
+      antiStrat: 'Anti-strat',
+      tarifs: 'Pricing',
+      connexion: 'Sign in',
+      monEspace: 'My account',
+      feedbackTitle: 'You have a reply to your feedback',
+      badgeSoon: 'SOON',
+    },
+  };
+  const L = NAV_LABELS[isEn ? 'en' : 'fr'];
+
   const sections = [
     {
       key: 'mon-jeu',
-      label: 'Mon jeu',
+      label: L.monJeu,
       items: [
-        { href: '/dashboard.html', label: 'Aperçu' },
-        { href: '/matches.html', label: 'Mes matchs' },
-        { href: '/demo.html', label: 'Nouvelle démo' },
-        { href: '/scout.html', label: 'Scout', badge: 'pro' },
-        { href: '/compare.html', label: 'Comparer' },
+        { href: localize('/dashboard.html'), label: L.apercu },
+        { href: localize('/matches.html'), label: L.mesMatchs },
+        { href: localize('/demo.html'), label: L.nouvelleDemo },
+        { href: localize('/scout.html'), label: L.scout, badge: 'pro' },
+        { href: localize('/compare.html'), label: L.comparer },
       ],
     },
     {
       key: 'progresser',
-      label: 'Progresser',
+      label: L.progresser,
       items: [
-        { href: '/levels.html', label: 'Roadmap' },
-        { href: '/stats-guide.html', label: 'Guide des stats' },
-        { href: '/lineup-library.html', label: 'Lineup library' },
+        { href: localize('/levels.html'), label: L.roadmap },
+        { href: localize('/stats-guide.html'), label: L.guideStats },
+        { href: localize('/lineup-library.html'), label: L.lineupLibrary },
       ],
     },
     {
       key: 'pros',
-      label: 'Pros',
+      label: L.pros,
       items: [
-        { href: '/pro-demos.html', label: 'Pro demos (HLTV)', badge: 'soon' },
-        { href: '/pro-benchmarks.html', label: 'Pro benchmarks', badge: 'elite' },
+        { href: localize('/pro-demos.html'), label: L.proDemos, badge: 'soon' },
+        { href: localize('/pro-benchmarks.html'), label: L.proBenchmarks, badge: 'elite' },
       ],
     },
     {
       key: 'equipe',
-      label: 'Équipe',
+      label: L.equipe,
       items: [
-        { href: '/team.html', label: 'Team dashboard', badge: 'elite' },
-        { href: '/prep-veto.html', label: 'Prep veto', badge: 'elite' },
-        { href: '/anti-strat.html', label: 'Anti-strat', badge: 'elite' },
+        { href: localize('/team.html'), label: L.teamDashboard, badge: 'elite' },
+        { href: localize('/prep-veto.html'), label: L.prepVeto, badge: 'elite' },
+        { href: localize('/anti-strat.html'), label: L.antiStrat, badge: 'elite' },
       ],
     },
   ];
@@ -109,7 +185,7 @@
   // ── Construction du HTML ────────────────────────────────────────────────
   function buildSectionHTML(section) {
     const activeCls = section.key === activeKey ? ' active' : '';
-    const badgeLabels = { pro: 'PRO', elite: 'ELITE', soon: 'BIENTÔT' };
+    const badgeLabels = { pro: 'PRO', elite: 'ELITE', soon: L.badgeSoon };
     const items = section.items.map(it => {
       const badge = it.badge ? `<span class="fv-badge ${it.badge}">${badgeLabels[it.badge] || it.badge.toUpperCase()}</span>` : '';
       return `<a href="${it.href}">${it.label}${badge}</a>`;
@@ -126,13 +202,13 @@
   }
 
   const navHTML = `
-    <a href="/index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
+    <a href="${localize('/index.html')}" class="logo">Frag<span class="logo-accent">Value</span></a>
     <div class="fv-sections">${sections.map(buildSectionHTML).join('')}</div>
     <div class="fv-right">
       <button class="fv-lang" id="navLangSwitch" type="button" title="Switch language"></button>
-      <a href="/pricing.html" class="fv-login">Tarifs</a>
-      <a href="/login.html" class="fv-login" id="navLoginBtn">Connexion</a>
-      <a href="/account.html#feedback" class="fv-cta" id="navAccountBtn" style="display:none">Mon espace<span class="fv-account-dot" id="navFeedbackDot" title="Tu as une réponse à ton feedback"></span></a>
+      <a href="${localize('/pricing.html')}" class="fv-login">${L.tarifs}</a>
+      <a href="${localize('/login.html')}" class="fv-login" id="navLoginBtn">${L.connexion}</a>
+      <a href="/account.html#feedback" class="fv-cta" id="navAccountBtn" style="display:none">${L.monEspace}<span class="fv-account-dot" id="navFeedbackDot" title="${L.feedbackTitle}"></span></a>
     </div>
   `;
 
