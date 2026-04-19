@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FragValue · Résultats démo</title>
-  <meta name="description" content="FragValue · CS2 Match Analytics">
+  <meta name="description" content="Heatmaps de tes kills, deaths et duels CS2 par map et par côté. Replay 2D round par round avec timeline et trajectoires de grenades.">
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
@@ -1348,7 +1348,7 @@ function buildReplayFrames(round){
   const el=document.getElementById('replayTimeTotal');
   if(el)el.textContent=`${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;
   const killsRow=document.getElementById('replayKillsRow');
-  if(killsRow)killsRow.innerHTML=roundKills.slice(0,8).map(k=>`<div class="rp-kill ${k.isHeadshot?'hs':''}">${k.attacker} → ${k.victim}${k.isHeadshot?' 💥':''}</div>`).join('');
+  if(killsRow)killsRow.innerHTML=roundKills.slice(0,8).map(k=>`<div class="rp-kill ${k.isHeadshot?'hs':''}">${k.attacker} → ${k.victim}${k.isHeadshot?' <strong style="color:var(--gold);font-size:.85em">HS</strong>':''}</div>`).join('');
   const markers=document.getElementById('replayKillMarkers');
   if(markers)markers.innerHTML=roundKills.map(k=>{const pct=Math.min(100,Math.max(0,((k.tick||0)-minTick)/span*100));return `<div class="rp-kill-mark" style="left:${pct}%"></div>`;}).join('');
 }
@@ -2169,7 +2169,7 @@ function rfBuildFrames(round){
 
   // Kill chips
   document.getElementById('rfKillChips').innerHTML=roundKills.slice(0,8).map(k=>
-    `<div class="rfc ${k.isHeadshot?'hs':''}">${k.attacker}→${k.victim}${k.isHeadshot?' 💥':''}</div>`
+    `<div class="rfc ${k.isHeadshot?'hs':''}">${k.attacker}→${k.victim}${k.isHeadshot?' <strong style="color:var(--gold);font-size:.85em">HS</strong>':''}</div>`
   ).join('');
 
   // Kill markers

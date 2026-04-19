@@ -1006,7 +1006,7 @@ function renderProfile(d) {
   document.getElementById('profileHeroCard').innerHTML = `
     <div class="hero-top">
       <div class="hero-avatar" style="${player.avatar?`background-image:url(${player.avatar});background-size:cover;background-position:center`:''}">
-        ${player.avatar?'':'👤'}
+        ${player.avatar?'':'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'}
       </div>
       <div class="hero-info">
         <div class="hero-name">${player.nickname}</div>
@@ -1585,9 +1585,9 @@ function renderRoster(data) {
         <div class="roster-info">
           <div class="roster-title">${roster.team_name}${tag ? ` <small>${tag}</small>` : ''}</div>
           <div class="roster-meta">
-            ${roster.region ? `<span class="roster-meta-item">📍 ${roster.region}</span>` : ''}
+            ${roster.region ? `<span class="roster-meta-item"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${roster.region}</span>` : ''}
             <span class="roster-meta-item">${titulaires.length + subs.length} membre${titulaires.length + subs.length > 1 ? 's' : ''}</span>
-            ${roster.looking_for_players ? '<span class="roster-meta-item" style="color:var(--accent)">🔥 Recrutement ouvert</span>' : ''}
+            ${roster.looking_for_players ? '<span class="roster-meta-item" style="color:var(--accent)"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);margin-right:6px;vertical-align:middle"></span>Recrutement ouvert</span>' : ''}
           </div>
         </div>
         ${ownerActions}
@@ -1651,7 +1651,7 @@ async function loadTeamStats(rosterId) {
                 const isWorst = a.worst_map && m.map === a.worst_map.map;
                 const color = m.team_win_rate >= 55 ? 'var(--success)' : m.team_win_rate >= 45 ? 'var(--gold)' : 'var(--danger)';
                 return `<div class="team-map-pill" style="border-color:${color};color:${color}">
-                  ${isBest ? '<span title="Meilleure map">⭐</span>' : ''}${isWorst ? '<span title="À travailler">⚠️</span>' : ''}
+                  ${isBest ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px" title="Meilleure map"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>' : ''}${isWorst ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px" title="A travailler"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : ''}
                   ${name} · ${m.team_win_rate}% · ${m.total_matches}M
                 </div>`;
               }).join('')}
