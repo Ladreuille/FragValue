@@ -5,7 +5,7 @@
 <meta name="description" content="FragValue · CS2 Match Analytics">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
-<title>FragValue · Analyze une démo</title>
+<title>FragValue · Analyze a demo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -329,7 +329,7 @@ nav{
     <a href="index.html">Home</a>
     <a href="levels.html">Roadmap</a>
     <a href="pricing.html">Pricing</a>
-    <a href="demo.html" class="active">Analyse</a>
+    <a href="demo.html" class="active">Analysis</a>
     <a href="matches.html" id="navMatchesBtn" style="display:none">My matches</a>
     <a href="login.html" id="navLoginBtn">Sign in</a>
     <a href="account.html" class="nav-cta" id="navAccountBtn" style="display:none">My account</a>
@@ -344,34 +344,34 @@ nav{
     <div class="left-glow"></div>
     <div class="left-inner">
       <div class="left-tag">Demo Analyzer</div>
-      <h1 class="left-title">Upload.<br><em>Analyse.</em><br>Progresse.</h1>
-      <p class="left-sub">Dépose ton fichier .dem FACEIT et reçois une analyse complète en moins de 2 minutes. Positions, kills, grenades et FV Rating.</p>
+      <h1 class="left-title">Upload.<br><em>Analysis.</em><br>Progresse.</h1>
+      <p class="left-sub">Drop your FACEIT .dem file and get a full analysis in under 2 minutes. Positions, kills, grenades and FV Rating.</p>
       <div class="feat-list">
         <div class="feat">
           <div class="feat-dot"></div>
-          <span><strong>Heatmaps</strong> · Kills, morts et zones de duels</span>
+          <span><strong>Heatmaps</strong> · Kills, deaths and duel zones</span>
         </div>
         <div class="feat">
           <div class="feat-dot"></div>
-          <span><strong>2D Replay</strong> · Chaque round frame par frame</span>
+          <span><strong>2D Replay</strong> · Every round frame by frame</span>
         </div>
         <div class="feat">
           <div class="feat-dot"></div>
-          <span><strong>FV Rating</strong> · Ton impact réel sur chaque round</span>
+          <span><strong>FV Rating</strong> · Your real impact on each round</span>
         </div>
         <div class="feat">
           <div class="feat-dot"></div>
-          <span><strong>Utility Map</strong> · Trajectoires grenades et smokes</span>
+          <span><strong>Utility Map</strong> · Grenade and smoke trajectories</span>
         </div>
         <div class="feat">
           <div class="feat-dot"></div>
-          <span><strong>Stats équipes</strong> · KAST, ADR, opening duels</span>
+          <span><strong>Team Stats</strong> · KAST, ADR, opening duels</span>
         </div>
       </div>
 
       <!-- MINI RÉSULTAT PREVIEW -->
       <div class="result-preview">
-        <div class="rp-label">Exemple de résultat</div>
+        <div class="rp-label">Example result</div>
         <div class="rp-row">
           <div class="rp-card">
             <div class="rp-val">1.42</div>
@@ -418,10 +418,10 @@ nav{
           <line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
       </div>
-      <div class="upload-title">Dépose ta démo</div>
-      <div class="upload-sub">Glisse-dépose ton fichier .dem ici<br>ou clique pour parcourir</div>
+      <div class="upload-title">Drop your demo</div>
+      <div class="upload-sub">Drag and drop your .dem file here<br>or click to browse</div>
       <button class="upload-btn" onclick="document.getElementById('fileInput').click();event.stopPropagation()">
-        Choisir un fichier
+        Choose a file
       </button>
       <div class="upload-hints">
         <span>
@@ -450,14 +450,14 @@ nav{
         <div class="file-bar-name" id="fileName"></div>
         <div class="file-bar-size" id="fileSize"></div>
       </div>
-      <button class="file-bar-rm" onclick="removeFile()">Retirer</button>
+      <button class="file-bar-rm" onclick="removeFile()">Remove</button>
     </div>
 
     <div class="error-card" id="errorCard"></div>
 
     <button class="submit-btn" id="analyseBtn" disabled onclick="startAnalysis()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-      Lancer l'analyse
+      Start analysis
     </button>
 
     <div id="progressSection">
@@ -465,26 +465,26 @@ nav{
         <div class="progress-hd">
           <div class="progress-spin"></div>
           <div>
-            <div class="progress-title" id="progressTitle">Initialisation</div>
-            <div class="progress-sub" id="progressSub">Préparation...</div>
+            <div class="progress-title" id="progressTitle">Initialization</div>
+            <div class="progress-sub" id="progressSub">Preparing...</div>
           </div>
         </div>
         <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
         <div class="progress-steps">
-          <div class="ps" id="step0"><div class="ps-dot"></div>Envoi du fichier</div>
-          <div class="ps" id="step1"><div class="ps-dot"></div>Parsing CS2 · Extraction des ticks</div>
-          <div class="ps" id="step2"><div class="ps-dot"></div>Calcul des positions et zones</div>
-          <div class="ps" id="step3"><div class="ps-dot"></div>Génération des heatmaps</div>
+          <div class="ps" id="step0"><div class="ps-dot"></div>Uploading file</div>
+          <div class="ps" id="step1"><div class="ps-dot"></div>Parsing CS2 · Extracting ticks</div>
+          <div class="ps" id="step2"><div class="ps-dot"></div>Computing positions and zones</div>
+          <div class="ps" id="step3"><div class="ps-dot"></div>Generating heatmaps</div>
           <div class="ps" id="step4"><div class="ps-dot"></div>FV Rating · KPIs</div>
-          <div class="ps" id="step5"><div class="ps-dot"></div>Finalisation</div>
+          <div class="ps" id="step5"><div class="ps-dot"></div>Finalizing</div>
         </div>
       </div>
     </div>
 
     <div class="stats-row">
-      <div class="sc"><div class="sc-val">134</div><div class="sc-lbl">Métriques</div></div>
-      <div class="sc"><div class="sc-val">&lt;2min</div><div class="sc-lbl">Analyse</div></div>
-      <div class="sc"><div class="sc-val">Free</div><div class="sc-lbl">Gratuit</div></div>
+      <div class="sc"><div class="sc-val">134</div><div class="sc-lbl">Metrics</div></div>
+      <div class="sc"><div class="sc-val">&lt;2min</div><div class="sc-lbl">Analysis</div></div>
+      <div class="sc"><div class="sc-val">Free</div><div class="sc-lbl">Free</div></div>
     </div>
 
   </div>
@@ -515,8 +515,8 @@ document.getElementById('fileInput').addEventListener('change', e => {
 
 function handleFile(f) {
   hideError();
-  if (!f.name.endsWith('.dem')) { showError('Seuls les fichiers .dem sont acceptés.'); return; }
-  if (f.size > 500*1024*1024) { showError('Fichier trop volumineux (' + fmt(f.size) + ') · max 500 MB.'); return; }
+  if (!f.name.endsWith('.dem')) { showError('Only .dem files are accepted.'); return; }
+  if (f.size > 500*1024*1024) { showError('File too large (' + fmt(f.size) + ') · max 500 MB.'); return; }
   selectedFile = f;
   document.getElementById('fileName').textContent = f.name;
   document.getElementById('fileSize').textContent = fmt(f.size);
@@ -585,13 +585,13 @@ function showUpgradeModal() {
   modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(6px)';
   modal.innerHTML = `
     <div style="background:#0f1010;border:1px solid #1c1e1e;border-radius:12px;padding:36px 32px;max-width:420px;width:90%;text-align:center">
-      <div style="font-family:'Anton',sans-serif;font-size:22px;letter-spacing:.02em;margin-bottom:6px">Limite atteinte</div>
+      <div style="font-family:'Anton',sans-serif;font-size:22px;letter-spacing:.02em;margin-bottom:6px">Limit reached</div>
       <p style="font-size:11px;color:#7a8080;line-height:1.7;margin-bottom:20px">
         Tu as utilise tes 3 analyses gratuites ce mois ci.<br>
         Passe a Pro pour des analyses illimitees, le 2D Replay complet, et l'export PDF.
       </p>
-      <a href="index.html#pricing" style="display:inline-block;background:#b8ff57;color:#000;padding:10px 24px;border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">Voir les plans</a>
-      <button onclick="document.getElementById('upgradeModal').style.display='none'" style="display:block;margin:14px auto 0;background:none;border:none;color:#4a5050;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer">Fermer</button>
+      <a href="index.html#pricing" style="display:inline-block;background:#b8ff57;color:#000;padding:10px 24px;border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">See plans</a>
+      <button onclick="document.getElementById('upgradeModal').style.display='none'" style="display:block;margin:14px auto 0;background:none;border:none;color:#4a5050;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer">Close</button>
     </div>`;
   document.body.appendChild(modal);
 }
@@ -627,16 +627,16 @@ async function startAnalysis() {
   // Progression animée pendant le fetch (avance lentement jusqu'à 88%)
   // Chaque étape a un timing réaliste basé sur ce que fait réellement le parser
   const autoSteps = [
-    { delay:800,  step:0, pct:8,  title:'Envoi du fichier',            sub:'Transfert en cours...' },
+    { delay:800,  step:0, pct:8,  title:'Uploading file',            sub:'Transfert en cours...' },
     { delay:3000, step:1, pct:20, title:'Parsing CS2',                 sub:'Lecture des ticks bruts...' },
     { delay:5000, step:1, pct:32, title:'Parsing CS2',                 sub:'Extraction des positions...' },
-    { delay:8000, step:2, pct:44, title:'Calcul des zones',            sub:'Analyse des rounds...' },
+    { delay:8000, step:2, pct:44, title:'Calcul des zones',            sub:'Analysis des rounds...' },
     { delay:12000,step:2, pct:54, title:'Calcul des zones',            sub:'Mapping grenades et shots...' },
-    { delay:18000,step:3, pct:63, title:'Génération des heatmaps',     sub:'Kill zones et duel areas...' },
-    { delay:25000,step:3, pct:70, title:'Génération des heatmaps',     sub:'Calcul des trajectoires...' },
+    { delay:18000,step:3, pct:63, title:'Generating heatmaps',     sub:'Kill zones et duel areas...' },
+    { delay:25000,step:3, pct:70, title:'Generating heatmaps',     sub:'Calcul des trajectoires...' },
     { delay:35000,step:4, pct:76, title:'FV Rating',                   sub:'Calcul de l\'impact par round...' },
     { delay:50000,step:4, pct:82, title:'FV Rating',                   sub:'Pondération des KPIs...' },
-    { delay:70000,step:4, pct:87, title:'Finalisation',                sub:'Presque terminé...' },
+    { delay:70000,step:4, pct:87, title:'Finalizing',                sub:'Presque terminé...' },
   ];
 
   const timers = autoSteps.map(s =>
@@ -644,11 +644,11 @@ async function startAnalysis() {
   );
 
   try {
-    go(0, 3, 'Sign in au serveur', 'Initialisation...');
-    go(0, 6, 'Envoi du fichier', selectedFile.name);
+    go(0, 3, 'Connecting to server', 'Initialization...');
+    go(0, 6, 'Uploading file', selectedFile.name);
     const fd = new FormData();
     fd.append('demo', selectedFile);
-    fd.append('options', JSON.stringify(['Heatmaps','2D Replay','Utility Map','Stats équipes']));
+    fd.append('options', JSON.stringify(['Heatmaps','2D Replay','Utility Map','Team Stats']));
 
     // Timeout 5 minutes
     const controller = new AbortController();
@@ -659,11 +659,11 @@ async function startAnalysis() {
     // Fetch terminé  - annuler les timers et finir proprement
     timers.forEach(t => clearTimeout(t));
 
-    if (!res.ok) { const e = await res.json().catch(()=>({error:'Erreur serveur'})); throw new Error(e.error||'Erreur serveur'); }
+    if (!res.ok) { const e = await res.json().catch(()=>({error:'Error serveur'})); throw new Error(e.error||'Error serveur'); }
 
-    go(5, 92, 'Finalisation', 'Traitement des résultats...');
+    go(5, 92, 'Finalizing', 'Traitement des résultats...');
     const data = await res.json();
-    go(5, 97, 'Finalisation', 'Sauvegarde...');
+    go(5, 97, 'Finalizing', 'Sauvegarde...');
 
     try {
       sessionStorage.setItem('demoData', JSON.stringify(data.data));
@@ -714,7 +714,7 @@ async function startAnalysis() {
     }
     await saveDemoAnalysis(data.data);
 
-    go(5, 100, 'Analyse complète', 'Redirection...');
+    go(5, 100, 'Analysis complète', 'Redirection...');
     bar.style.background = 'var(--success)';
     await new Promise(r => setTimeout(r, 600));
     window.location.href = 'heatmap-results.html';
@@ -724,8 +724,8 @@ async function startAnalysis() {
     prog.style.display = 'none';
     document.getElementById('analyseBtn').disabled = false;
     const msg = err.name === 'AbortError'
-      ? 'Délai dépassé (5 min). Le fichier est peut-être trop lourd ou le serveur est surchargé. Réessaie dans quelques minutes.'
-      : 'Erreur : ' + err.message;
+      ? 'Timeout (5 min). File may be too large or server overloaded. Try again in a few minutes.'
+      : 'Error : ' + err.message;
     showError(msg);
   }
 }
