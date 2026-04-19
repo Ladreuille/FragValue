@@ -98,13 +98,18 @@ async function resolvePlanFromStripe(customerId) {
   }
 }
 
-async function getUserPlan(authHeader) {
+async function getUserPlan(authHeader, opts = {}) {
   if (!authHeader) return { plan: 'free', user: null, status: 'none', source: 'no-auth' };
   const token = String(authHeader).replace(/^Bearer\s+/i, '').trim();
   if (!token) return { plan: 'free', user: null, status: 'none', source: 'empty-token' };
 
-  const cached = getCached(token);
-  if (cached) return cached;
+  // bypassCache : utilise par check-subscription (drive l'UI, doit etre fresh
+  // immediatement apres un webhook). Le cache 5 min reste actif pour les
+  // endpoints de gating (pro-match, roster) qui peuvent tolerer un delai.
+  if (!opts.bypassCache) {
+    const cached = getCached(token);
+    if (cached) return cached;
+  }
 
   const { data: { user }, error } = await sb().auth.getUser(token);
   if (error || !user) {

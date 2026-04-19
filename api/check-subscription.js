@@ -22,7 +22,10 @@ module.exports = async function handler(req, res) {
   if (!authHeader) return res.status(401).json({ error: 'Non authentifie' });
 
   try {
-    const result = await getUserPlan(authHeader);
+    // bypassCache : cet endpoint drive l'UI (badge Pro sur account.html, etc.)
+    // donc il doit voir l'etat fresh immediatement apres un webhook
+    // (sinon l'user paye → DB mise a jour → mais UI affiche encore Free).
+    const result = await getUserPlan(authHeader, { bypassCache: true });
     if (!result.user) return res.status(401).json({ error: 'Token invalide' });
 
     // Recupere les details de la subscription pour current_period_end + cancel_at_period_end
