@@ -7,17 +7,28 @@ sont référencés dans les `<meta property="og:image">` du HTML.
 
 `/og/<slug>.png` où `<slug>` = basename du fichier HTML (sans `.html`).
 
-| Page                | Fichier attendu           | Statut       |
-| ------------------- | ------------------------- | ------------ |
-| index.html          | `/og/home.png`            | À créer      |
-| stats-guide.html    | `/og/stats-guide.png`     | À créer      |
-| lineup-library.html | `/og/lineup-library.png`  | À créer      |
-| pro-demos.html      | `/og/pro-demos.png`       | À créer      |
-| pro-benchmarks.html | `/og/pro-benchmarks.png`  | À créer      |
-| prep-veto.html      | `/og/prep-veto.png`       | À créer      |
-| anti-strat.html     | `/og/anti-strat.png`      | À créer      |
+| Page                | Fichier                   |
+| ------------------- | ------------------------- |
+| index.html          | `/og/home.png`            |
+| stats-guide.html    | `/og/stats-guide.png`     |
+| lineup-library.html | `/og/lineup-library.png`  |
+| pro-demos.html      | `/og/pro-demos.png`       |
+| pro-benchmarks.html | `/og/pro-benchmarks.png`  |
+| prep-veto.html      | `/og/prep-veto.png`       |
+| anti-strat.html     | `/og/anti-strat.png`      |
 
-Fallback pendant qu'elles ne sont pas générées : `/fragvalue_icon.svg`.
+## Régénérer
+
+Les images sont générées par `scripts/og.mjs` (satori → SVG → PNG via resvg).
+
+```bash
+npm run og              # télécharge les fonts + génère les 7 images
+npm run og:build        # rebuild sans re-télécharger les fonts
+node scripts/og.mjs home   # une seule image
+```
+
+Pour éditer les titres, sous-titres, tags ou stats bas, modifier l'objet
+`PAGES` dans `scripts/og.mjs` puis relancer.
 
 ## Spec visuelle commune
 
