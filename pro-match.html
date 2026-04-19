@@ -131,6 +131,14 @@ async function loadMatch() {
     if (res.status === 404) throw new Error('Match introuvable');
     if (!res.ok) throw new Error('API ' + res.status);
     const data = await res.json();
+    // Debug auth : si le paywall apparait alors que tu es admin, check la console
+    console.log('[pro-match] auth debug', {
+      hasSessionClient: !!session,
+      hasAccessToken: !!session?.access_token,
+      plan: data.plan,
+      isPaid: data.isPaid,
+      debug: data._debug,
+    });
     renderMatch(data);
   } catch (e) {
     document.getElementById('content').innerHTML = '<div class="empty"><h2>Erreur</h2><p>' + escapeHtml(e.message) + '</p><p style="margin-top:14px"><a href="pro-demos.html">← Retour aux matchs</a></p></div>';

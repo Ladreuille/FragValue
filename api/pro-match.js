@@ -19,18 +19,27 @@ function sb() {
 }
 
 async function getUserPlan(authHeader) {
-  if (!authHeader) return { plan: 'free', user: null };
+  if (!authHeader) {
+    console.log('[pro-match] no auth header');
+    return { plan: 'free', user: null, reason: 'no-auth-header' };
+  }
   const token = String(authHeader).replace(/^Bearer\s+/i, '').trim();
-  if (!token) return { plan: 'free', user: null };
+  if (!token) return { plan: 'free', user: null, reason: 'empty-token' };
 
   const s = sb();
-  const { data } = await s.auth.getUser(token);
+  const { data, error } = await s.auth.getUser(token);
+  if (error) console.warn('[pro-match] auth.getUser error:', error.message);
   const user = data?.user;
-  if (!user) return { plan: 'free', user: null };
+  if (!user) {
+    console.log('[pro-match] token valid but no user returned');
+    return { plan: 'free', user: null, reason: 'no-user' };
+  }
+
+  console.log('[pro-match] user resolved email=' + user.email);
 
   // Admin bypass
   if (user.email && ADMIN_EMAILS.includes(user.email)) {
-    return { plan: 'team', user };
+    return { plan: 'team', user, reason: 'admin' };
   }
 
   // Resolve plan via stripe_customer_id (source of truth Stripe)
@@ -75,8 +84,9 @@ module.exports = async function handler(req, res) {
 
   try {
     const s = sb();
-    const { plan } = await getUserPlan(req.headers.authorization);
+    const { plan, reason } = await getUserPlan(req.headers.authorization);
     const isPaid = plan === 'pro' || plan === 'team';
+    console.log('[pro-match] plan=' + plan + ' isPaid=' + isPaid + ' reason=' + reason);
 
     // 1. Match meta + event
     const { data: match, error: matchErr } = await s
@@ -124,10 +134,14 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    res.setHeader('Cache-Control', 'private, max-age=120');
+    // Cache-Control private implique qu'aucun CDN ne cachera. On desactive
+    // aussi le cache browser pour eviter qu'un user qui se logge apres
+    // l'affichage free voit toujours le paywall via cache local.
+    res.setHeader('Cache-Control', 'private, no-cache, must-revalidate');
     return res.status(200).json({
       plan,
       isPaid,
+      _debug: { reason, hasAuth: !!req.headers.authorization },
       match: {
         id: match.id,
         stage: match.stage,
