@@ -11,41 +11,26 @@
   <meta property="og:description" content="Démonte les patterns d'une équipe CS2 adverse sur N matchs. Executes, retakes, utility, timings révélés.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://fragvalue.com/anti-strat.html">
-  <meta property="og:image" content="https://fragvalue.com/fragvalue_icon.svg">
+  <meta property="og:image" content="https://fragvalue.com/og/anti-strat.png">
+  <meta property="og:image:alt" content="FragValue">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <title>FragValue · Anti-Strat Tool CS2 (opponent patterns)</title>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "FragValue Anti-Strat Tool",
+  "description": "Détecte les patterns d'une équipe CS2 adverse sur N matchs. Executes, retakes, timings et counters actionnables.",
+  "url": "https://fragvalue.com/anti-strat.html",
+  "inLanguage": "fr-FR",
+  "isPartOf": { "@type": "WebSite", "name": "FragValue", "url": "https://fragvalue.com" },
+  "publisher": { "@type": "Organization", "name": "FragValue", "logo": { "@type": "ImageObject", "url": "https://fragvalue.com/fragvalue_icon.svg" } }
+}
+</script>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/teaser.css">
   <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
-      --accent:#b8ff57;--accent2:#7ddd1a;
-      --text:#e8eaea;--text2:#7a8080;--text3:#4a5050;
-      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
-      --font:'Space Mono',monospace;--mono:'Space Mono',monospace;--display:'Anton',sans-serif;
-    }
-    html{scroll-behavior:smooth}
-    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
-    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
-
-    .page{max-width:1200px;margin:0 auto;padding:48px 32px 80px;position:relative;z-index:1}
-    @media(max-width:768px){.page{padding:24px 16px}}
-
-    .hero{text-align:center;margin-bottom:40px}
-    .hero-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);color:var(--gold);padding:5px 12px;border-radius:40px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px}
-    .hero-title{font-family:var(--display);font-size:clamp(38px,5.5vw,68px);letter-spacing:.02em;line-height:1;margin-bottom:14px}
-    .hero-title span{color:var(--accent);text-shadow:0 0 24px rgba(184,255,87,.35)}
-    .hero-sub{font-size:14px;color:var(--text2);font-family:var(--mono);line-height:1.6;max-width:640px;margin:0 auto}
-
-    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:36px}
-    @media(max-width:600px){.stats-row{grid-template-columns:repeat(2,1fr)}}
-    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;text-align:center}
-    .stat-val{font-family:var(--display);font-size:30px;color:var(--accent);line-height:1}
-    .stat-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-top:5px}
-
-    .sec-label{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em;margin:32px 0 16px;display:flex;align-items:center;gap:10px}
-    .sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(184,255,87,.2),transparent)}
-
-    /* Pattern cards */
     .pat-wrap{position:relative}
     .pat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
     .pat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;overflow:hidden}
@@ -65,21 +50,6 @@
     .pat-counter{background:rgba(184,255,87,.06);border-left:2px solid var(--accent);padding:10px 12px;border-radius:0 6px 6px 0}
     .pat-counter-label{font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:4px}
     .pat-counter-text{font-family:var(--mono);font-size:11px;color:var(--text);line-height:1.55}
-
-    .teaser-overlay{position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,rgba(8,9,9,.7) 50%,var(--bg) 100%);pointer-events:none;border-radius:12px;z-index:5}
-    .teaser-badge{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);border:1px solid rgba(184,255,87,.3);border-radius:40px;padding:8px 16px;font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.06em;text-transform:uppercase;z-index:6;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.5)}
-
-    .cta-card{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:16px;padding:40px 36px;text-align:center;margin:48px 0 24px}
-    .cta-title{font-family:var(--display);font-size:28px;color:var(--text);letter-spacing:.02em;margin-bottom:10px}
-    .cta-sub{font-family:var(--mono);font-size:13px;color:var(--text2);line-height:1.6;max-width:540px;margin:0 auto 22px}
-    .cta-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:12px 24px;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s}
-    .cta-btn:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,255,87,.3)}
-
-    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:24px}
-    .feature-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
-    .feature-icon{width:36px;height:36px;border-radius:8px;background:rgba(184,255,87,.1);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:10px}
-    .feature-title{font-family:var(--display);font-size:16px;color:var(--text);letter-spacing:.02em;margin-bottom:5px}
-    .feature-desc{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5}
   </style>
 </head>
 <body>
@@ -88,7 +58,7 @@
 
 <div class="page">
   <div class="hero">
-    <div class="hero-tag">● Elite · Outil coach</div>
+    <div class="hero-tag gold">● Elite · Outil coach</div>
     <h1 class="hero-title">Démonte<br>leurs <span>setups</span></h1>
     <p class="hero-sub">Entre un pseudo d'équipe FACEIT : FragValue analyse les N derniers matchs et détecte leurs patterns répétés. Executes A default, retakes B, utility waste, timings du plant, save behavior. Tu rentres en match en sachant à quoi t'attendre.</p>
   </div>
@@ -189,10 +159,15 @@
   <div class="cta-card">
     <h2 class="cta-title">Entre en match déjà préparé</h2>
     <p class="cta-sub">Anti-Strat arrive dans le plan Elite. Entre un pseudo FACEIT (team leader), choisis la map et la fenêtre de matchs : tu reçois les 8 patterns les plus répétés avec leurs timings, fréquences, win rates et counters actionnables. Active ton profil pour être prévenu du lancement.</p>
-    <a href="account.html#settings" class="cta-btn">
+    <a href="account.html#settings" class="cta-btn" data-teaser-cta="anti-strat">
       Activer les notifications
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </a>
+    <div class="cta-waitlist">
+      <span class="cta-waitlist-dot"></span>
+      <strong data-teaser-counter="anti-strat">—</strong>
+      <span>joueurs ont activé leur intérêt</span>
+    </div>
   </div>
 
   <div class="sec-label">Ce qui t'attend</div>
@@ -229,5 +204,7 @@
 </div>
 
 <script src="/nav.js"></script>
+<script src="/teaser.js"></script>
+<script>FVTeaser.initCTA("anti-strat", { base: 61, perDay: 0.8 });</script>
 </body>
 </html>

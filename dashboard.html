@@ -741,7 +741,41 @@ async function loadFaceitData(nick) {
     renderProfile(d); renderFvScore(d); renderWeeklyInsights(d); renderKpis(d); renderAdvancedKpis(d);
     renderCtTSplit(d); renderMapStats(d); renderBestMatch(d); renderChart(d);
     renderLastMatch(d); renderMatches(d); renderImprovements(d);
+    renderPlanNudge();
   } catch(e) { console.error(e); } finally { showLoading(false); }
+}
+
+// Pro upgrade nudge · s'affiche uniquement si l'user est free (ou pas auth)
+async function renderPlanNudge() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const res = await fetch('/api/check-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (!res.ok) return;
+    const d = await res.json();
+    if (d.plan && d.plan !== 'free') return; // pro/team : pas de nudge
+    const panel = document.getElementById('panelOverview');
+    if (!panel || document.getElementById('planNudge')) return;
+    const nudge = document.createElement('div');
+    nudge.id = 'planNudge';
+    nudge.style.cssText = 'background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:20px 24px;margin:24px 0;display:flex;align-items:center;gap:20px;flex-wrap:wrap';
+    nudge.innerHTML = ''
+      + '<div style="flex:1;min-width:240px">'
+      + '  <div style="font-family:Anton,sans-serif;font-size:18px;letter-spacing:.02em;color:#e8eaea;margin-bottom:4px">Passe en Pro pour débloquer le reste</div>'
+      + '  <div style="font-family:Space Mono,monospace;font-size:12px;color:#a8b0b0;line-height:1.5">Coach IA illimité · 2D Replay complet · Heatmaps grenades · Stats exclusives · Comparaison multi-joueurs · Roster collectif</div>'
+      + '</div>'
+      + '<a href="/pricing.html" style="display:inline-flex;align-items:center;gap:7px;background:#b8ff57;color:#000;padding:11px 22px;border-radius:8px;font-family:Space Mono,monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;flex-shrink:0">'
+      + '  Voir les plans'
+      + '  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>'
+      + '</a>';
+    const insertBefore = document.querySelector('#panelOverview .sec-label:nth-of-type(6)') // "Coach IA" label
+                      || document.querySelector('#panelOverview #lastMatchSection');
+    if (insertBefore) insertBefore.parentNode.insertBefore(nudge, insertBefore);
+    else panel.appendChild(nudge);
+  } catch(_) { /* silencieux */ }
 }
 
 function renderProfile(d) {
