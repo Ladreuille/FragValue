@@ -98,15 +98,30 @@ CREATE TABLE IF NOT EXISTS ranking_history (
 );
 CREATE INDEX IF NOT EXISTS idx_ranking_history_date ON ranking_history (snapshot_date DESC);
 
--- Waitlist progress : vue pour exposer le compteur d'users sans dump
-CREATE OR REPLACE VIEW scout_waitlist_progress AS
-SELECT
-  (SELECT COUNT(*) FROM auth.users) AS total_users,
-  (SELECT COUNT(*) FROM profiles WHERE scout_opt_in = true) AS opted_in_users,
-  1000 AS threshold,
-  (SELECT COUNT(*) FROM auth.users) >= 1000 AS unlocked;
+-- Waitlist progress : RPC SECURITY DEFINER (remplace l'ancienne view qui
+-- declenchait le lint Supabase auth_users_exposed). Le caller voit uniquement
+-- les compteurs aggreges, jamais les rows auth.users.
+CREATE OR REPLACE FUNCTION public.scout_waitlist_progress()
+RETURNS TABLE (
+  total_users bigint,
+  opted_in_users bigint,
+  threshold int,
+  unlocked boolean
+)
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT
+    (SELECT COUNT(*) FROM auth.users) AS total_users,
+    (SELECT COUNT(*) FROM public.profiles WHERE scout_opt_in = true) AS opted_in_users,
+    1000 AS threshold,
+    ((SELECT COUNT(*) FROM auth.users) >= 1000) AS unlocked;
+$$;
 
-GRANT SELECT ON scout_waitlist_progress TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.scout_waitlist_progress() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.scout_waitlist_progress() TO anon, authenticated;
 
 -- Pour launcher : quand unlocked devient true, le frontend bascule en mode live
 
@@ -201,17 +216,34 @@ CREATE POLICY "User reads own interests" ON feature_interests FOR SELECT
 -- Insert via backend uniquement (on veut controler la dedup ip + headers)
 -- Pas de policy INSERT grand public : API endpoint utilise la service_key
 
--- Vue agregee exposee publiquement (compteur par feature)
-CREATE OR REPLACE VIEW feature_interests_counts AS
-SELECT
-  feature_slug,
-  COUNT(*) AS total,
-  COUNT(*) FILTER (WHERE user_id IS NOT NULL) AS users,
-  COUNT(*) FILTER (WHERE user_id IS NULL) AS anons
-FROM feature_interests
-GROUP BY feature_slug;
+-- Aggregation publique via RPC SECURITY DEFINER (remplace l'ancienne view qui
+-- declenchait le lint Supabase security_definer_view + contournait le RLS de
+-- feature_interests). La fonction expose uniquement les compteurs agreges,
+-- jamais les rows individuelles (user_id, anon_id restent prives).
+CREATE OR REPLACE FUNCTION public.feature_interest_counts(slug text DEFAULT NULL)
+RETURNS TABLE (
+  feature_slug text,
+  total bigint,
+  users bigint,
+  anons bigint
+)
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT fi.feature_slug,
+    COUNT(*) AS total,
+    COUNT(*) FILTER (WHERE fi.user_id IS NOT NULL) AS users,
+    COUNT(*) FILTER (WHERE fi.user_id IS NULL) AS anons
+  FROM public.feature_interests fi
+  WHERE slug IS NULL OR fi.feature_slug = slug
+  GROUP BY fi.feature_slug
+  ORDER BY total DESC;
+$$;
 
-GRANT SELECT ON feature_interests_counts TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.feature_interest_counts(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.feature_interest_counts(text) TO anon, authenticated;
 
 
 -- ═══════════════════════════════════════════════════════════════════════════

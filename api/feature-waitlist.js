@@ -44,12 +44,10 @@ async function getUser(authHeader) {
 }
 
 async function countFor(feature) {
-  const { data } = await sb()
-    .from('feature_interests_counts')
-    .select('total')
-    .eq('feature_slug', feature)
-    .maybeSingle();
-  return Number(data?.total) || 0;
+  // RPC SECURITY DEFINER (remplace l'ancienne view feature_interests_counts).
+  // Retourne un array de rows (potentiellement vide si feature pas en DB).
+  const { data } = await sb().rpc('feature_interest_counts', { slug: feature });
+  return Number(data?.[0]?.total) || 0;
 }
 
 async function readBody(req) {

@@ -27,8 +27,9 @@ export default async function handler(req, res) {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-    // Check waitlist status (unlock ou teaser)
-    const { data: progress } = await supabase.from('scout_waitlist_progress').select('*').single();
+    // Check waitlist status (unlock ou teaser) via RPC SECURITY DEFINER
+    const { data: progressArr } = await supabase.rpc('scout_waitlist_progress');
+    const progress = progressArr?.[0];
     const unlocked = !!(progress && progress.unlocked);
 
     // Determine le tier du user (pour post-launch gating)

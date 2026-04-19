@@ -48,11 +48,9 @@ module.exports = async function handler(req, res) {
   const { format, feature } = req.query || {};
   const s = sb();
 
-  // Aggregate counts (from the view)
+  // Aggregate counts via RPC (la function deja ordonnee par total desc)
   const { data: featuresAgg } = await s
-    .from('feature_interests_counts')
-    .select('*')
-    .order('total', { ascending: false });
+    .rpc('feature_interest_counts', { slug: null });
 
   // Detailed rows (interests + user emails si auth)
   let q = s

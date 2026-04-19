@@ -20,11 +20,10 @@ export default async function handler(req, res) {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-    const { data, error } = await supabase
-      .from('scout_waitlist_progress')
-      .select('*')
-      .single();
+    // RPC SECURITY DEFINER (remplace l'ancienne view qui exposait auth.users)
+    const { data: rows, error } = await supabase.rpc('scout_waitlist_progress');
     if (error) throw error;
+    const data = rows?.[0] || {};
 
     // Cache leger cote CDN (refresh max toutes les 5 minutes)
     res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
