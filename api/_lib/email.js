@@ -185,30 +185,34 @@ const FEEDBACK_TYPE_LABELS = {
   bug:      { label: 'Bug',     color: '#ff8a3d', emoji: 'x' },
 };
 
-export function emailFeedbackReceived({ feedbackId, type, message, user_email, user_tier, page_url }) {
+export function emailFeedbackReceived({ feedbackId, ticketNumber, type, message, user_email, user_tier, page_url }) {
   const meta = FEEDBACK_TYPE_LABELS[type] || { label: type, color: '#7a8080', emoji: '?' };
+  const ticket = ticketNumber ? `FB-${String(ticketNumber).padStart(4, '0')}` : '';
   const tierBadge = user_tier ? `<span style="display:inline-block;font-size:10px;background:#1c1e1e;color:#b8ff57;padding:2px 8px;border-radius:40px;letter-spacing:.05em;margin-left:6px;text-transform:uppercase">${escapeHtml(user_tier)}</span>` : '';
   const emailLine = user_email ? `<p style="margin:4px 0;color:#7a8080;font-size:12px">De : <strong style="color:#e8eaea">${escapeHtml(user_email)}</strong>${tierBadge}</p>` : `<p style="margin:4px 0;color:#7a8080;font-size:12px">De : <em>anonyme</em></p>`;
   const pageLine = page_url ? `<p style="margin:4px 0;color:#7a8080;font-size:12px">Page : <a href="${escapeHtml(page_url)}" style="color:#b8ff57;text-decoration:none">${escapeHtml(page_url)}</a></p>` : '';
+  const ticketLine = ticket ? `<p style="margin:4px 0;color:#7a8080;font-size:12px">Ticket : <strong style="color:#b8ff57;font-family:monospace">${ticket}</strong></p>` : '';
   return {
-    subject: `[Feedback ${meta.label}] ${message.slice(0, 60)}${message.length > 60 ? '...' : ''}`,
+    subject: `[${ticket || 'Feedback'} ${meta.label}] ${message.slice(0, 60)}${message.length > 60 ? '...' : ''}`,
     html: wrapEmail(`
-      <h2 style="margin:0 0 12px;color:#e8eaea;font-size:20px;letter-spacing:-.3px">Nouveau feedback recu</h2>
+      <h2 style="margin:0 0 12px;color:#e8eaea;font-size:20px;letter-spacing:-.3px">Nouveau ticket ${ticket}</h2>
       <div style="display:inline-block;padding:4px 12px;background:${meta.color}1a;border:1px solid ${meta.color}40;color:${meta.color};border-radius:40px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">${meta.label}</div>
+      ${ticketLine}
       ${emailLine}
       ${pageLine}
       <div style="margin:16px 0;padding:14px 16px;background:#131414;border-left:2px solid ${meta.color};border-radius:0 6px 6px 0;font-size:13px;color:#e8eaea;white-space:pre-wrap">${escapeHtml(message)}</div>
       <a href="https://fragvalue.com/admin/feedback.html#${feedbackId}" style="${btnStyle}">Repondre →</a>
     `),
-    text: `[${meta.label}] ${message}\n\nDe : ${user_email || 'anonyme'}${user_tier ? ' (' + user_tier + ')' : ''}\nPage : ${page_url || '-'}\n\nRepondre : https://fragvalue.com/admin/feedback.html#${feedbackId}`,
+    text: `[${ticket} ${meta.label}] ${message}\n\nDe : ${user_email || 'anonyme'}${user_tier ? ' (' + user_tier + ')' : ''}\nPage : ${page_url || '-'}\n\nRepondre : https://fragvalue.com/admin/feedback.html#${feedbackId}`,
   };
 }
 
 // ── Feedback : reponse de l'admin envoyee a l'utilisateur ────────────────
-export function emailFeedbackResponse({ feedbackType, userMessage, adminResponse }) {
+export function emailFeedbackResponse({ feedbackType, ticketNumber, userMessage, adminResponse }) {
   const meta = FEEDBACK_TYPE_LABELS[feedbackType] || { label: feedbackType, color: '#7a8080' };
+  const ticket = ticketNumber ? `FB-${String(ticketNumber).padStart(4, '0')}` : '';
   return {
-    subject: `Reponse a ton feedback FragValue`,
+    subject: ticket ? `[${ticket}] Reponse a ton feedback FragValue` : `Reponse a ton feedback FragValue`,
     html: wrapEmail(`
       <h2 style="margin:0 0 12px;color:#e8eaea;font-size:20px;letter-spacing:-.3px">Merci pour ton retour</h2>
       <p style="margin:0 0 16px;color:#a8b0b0;font-size:14px">On a pris le temps de regarder ton feedback et voici notre reponse :</p>

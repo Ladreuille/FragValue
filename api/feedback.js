@@ -128,7 +128,7 @@ async function handleCreate(req, res) {
   const { data, error } = await sb()
     .from('user_feedback')
     .insert(row)
-    .select('id, type, created_at')
+    .select('id, ticket_number, type, created_at')
     .single();
 
   if (error) {
@@ -136,47 +136,48 @@ async function handleCreate(req, res) {
     return res.status(500).json({ error: 'Impossible d\'enregistrer le feedback' });
   }
 
-  // Notif email admin (non-bloquant si echoue, on ne veut pas casser le UX)
-  notifyAdminAsync({
-    feedbackId: data.id,
-    type,
-    message,
-    user_email: user?.email || anonEmail,
-    user_tier: userTier,
-    page_url: row.page_url,
-  });
+  // Notif email admin : await pour garantir l'envoi (Vercel serverless tue
+  // les promises fire-and-forget des que le handler retourne). +200-500ms
+  // mais on est sur que le mail part. timeout safety au cas ou Resend lag.
+  await Promise.race([
+    notifyAdmin({
+      feedbackId: data.id,
+      ticketNumber: data.ticket_number,
+      type,
+      message,
+      user_email: user?.email || anonEmail,
+      user_tier: userTier,
+      page_url: row.page_url,
+    }),
+    new Promise(resolve => setTimeout(resolve, 4000)),
+  ]).catch(e => console.warn('[feedback] notif admin failed:', e.message));
 
   return res.status(201).json({
     id: data.id,
+    ticket_number: data.ticket_number,
     ok: true,
     message: 'Feedback enregistre. Merci !',
   });
 }
 
-// Async fire-and-forget : on ne await pas pour que le user ait sa reponse vite
-function notifyAdminAsync({ feedbackId, type, message, user_email, user_tier, page_url }) {
-  (async () => {
-    try {
-      const lib = await import('./_lib/email.js');
-      if (!lib.emailFeedbackReceived) return;
-      const tpl = lib.emailFeedbackReceived({
-        feedbackId,
-        type,
-        message,
-        user_email,
-        user_tier,
-        page_url,
-      });
-      await lib.sendEmail({
-        to: ADMIN_EMAILS[0],
-        subject: tpl.subject,
-        html: tpl.html,
-        text: tpl.text,
-      });
-    } catch (e) {
-      console.warn('[feedback] notif admin failed:', e.message);
-    }
-  })();
+async function notifyAdmin({ feedbackId, ticketNumber, type, message, user_email, user_tier, page_url }) {
+  const lib = await import('./_lib/email.js');
+  if (!lib.emailFeedbackReceived) return;
+  const tpl = lib.emailFeedbackReceived({
+    feedbackId,
+    ticketNumber,
+    type,
+    message,
+    user_email,
+    user_tier,
+    page_url,
+  });
+  return lib.sendEmail({
+    to: ADMIN_EMAILS[0],
+    subject: tpl.subject,
+    html: tpl.html,
+    text: tpl.text,
+  });
 }
 
 // ── GET : list feedbacks (admin only) ────────────────────────────────────
@@ -264,7 +265,7 @@ async function handleUpdate(req, res) {
 
   const { data: existing } = await sb()
     .from('user_feedback')
-    .select('id, type, message, user_id, anon_email, admin_response')
+    .select('id, ticket_number, type, message, user_id, anon_email, admin_response')
     .eq('id', id)
     .single();
   if (!existing) return res.status(404).json({ error: 'Feedback introuvable' });
@@ -289,36 +290,37 @@ async function handleUpdate(req, res) {
       } catch {}
     }
     if (recipientEmail) {
-      notifyUserResponseAsync({
-        recipientEmail,
-        feedbackType: existing.type,
-        userMessage: existing.message,
-        adminResponse: newResponse,
-      });
+      // Await + timeout safety pour garantir l'envoi (Vercel serverless tue
+      // les promises fire-and-forget des que le handler retourne).
+      await Promise.race([
+        notifyUserResponse({
+          recipientEmail,
+          feedbackType: existing.type,
+          ticketNumber: existing.ticket_number,
+          userMessage: existing.message,
+          adminResponse: newResponse,
+        }),
+        new Promise(resolve => setTimeout(resolve, 4000)),
+      ]).catch(e => console.warn('[feedback] notif user response failed:', e.message));
     }
   }
 
   return res.status(200).json({ feedback: data });
 }
 
-function notifyUserResponseAsync({ recipientEmail, feedbackType, userMessage, adminResponse }) {
-  (async () => {
-    try {
-      const lib = await import('./_lib/email.js');
-      if (!lib.emailFeedbackResponse) return;
-      const tpl = lib.emailFeedbackResponse({
-        feedbackType,
-        userMessage,
-        adminResponse,
-      });
-      await lib.sendEmail({
-        to: recipientEmail,
-        subject: tpl.subject,
-        html: tpl.html,
-        text: tpl.text,
-      });
-    } catch (e) {
-      console.warn('[feedback] notif user response failed:', e.message);
-    }
-  })();
+async function notifyUserResponse({ recipientEmail, feedbackType, ticketNumber, userMessage, adminResponse }) {
+  const lib = await import('./_lib/email.js');
+  if (!lib.emailFeedbackResponse) return;
+  const tpl = lib.emailFeedbackResponse({
+    feedbackType,
+    ticketNumber,
+    userMessage,
+    adminResponse,
+  });
+  return lib.sendEmail({
+    to: recipientEmail,
+    subject: tpl.subject,
+    html: tpl.html,
+    text: tpl.text,
+  });
 }

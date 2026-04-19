@@ -338,3 +338,38 @@ DROP POLICY IF EXISTS "pro_match_maps public read" ON pro_match_maps;
 CREATE POLICY "pro_match_maps public read" ON pro_match_maps FOR SELECT USING (true);
 DROP POLICY IF EXISTS "pro_match_players public read" ON pro_match_players;
 CREATE POLICY "pro_match_players public read" ON pro_match_players FOR SELECT USING (true);
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- USER FEEDBACK (systeme de tickets)
+-- 4 types : positive | negative | idea | bug
+-- L'admin gere via /admin/feedback.html, l'user voit ses propres feedbacks
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS public.user_feedback (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  ticket_number   BIGINT GENERATED ALWAYS AS IDENTITY,
+  user_id         UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  anon_email      TEXT,
+  type            TEXT NOT NULL CHECK (type IN ('positive', 'negative', 'idea', 'bug')),
+  message         TEXT NOT NULL CHECK (length(message) > 0 AND length(message) <= 2000),
+  page_url        TEXT,
+  user_agent      TEXT,
+  viewport        TEXT,
+  user_tier       TEXT,
+  ip_hash         TEXT,
+  status          TEXT DEFAULT 'new' CHECK (status IN ('new', 'read', 'responded', 'closed')),
+  admin_response  TEXT,
+  responded_at    TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_status ON user_feedback (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_feedback_type ON user_feedback (type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_feedback_user ON user_feedback (user_id) WHERE user_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_feedback_ticket_number ON user_feedback (ticket_number DESC);
+
+ALTER TABLE user_feedback ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "User reads own feedback" ON user_feedback;
+CREATE POLICY "User reads own feedback" ON user_feedback FOR SELECT
+  USING (auth.uid() = user_id);

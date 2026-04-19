@@ -231,6 +231,7 @@ function render() {
 function renderItem(f) {
   const typeLabel = TYPE_LABELS[f.type] || f.type;
   const statusLabel = STATUS_LABELS[f.status] || f.status;
+  const ticket = f.ticket_number ? 'FB-' + String(f.ticket_number).padStart(4, '0') : '';
   const tierPill = f.user_tier ? `<span class="fb-pill tier-${f.user_tier}">${f.user_tier}</span>` : '';
   const emailDisplay = f.user_email
     ? `<span class="fb-email">${escapeHtml(f.user_email)}</span>`
@@ -255,6 +256,7 @@ function renderItem(f) {
     <div class="fb-item" id="fb-${f.id}">
       <div class="fb-head">
         <div class="fb-meta">
+          ${ticket ? `<span style="font-family:var(--mono);font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.04em;background:rgba(184,255,87,.06);padding:2px 8px;border-radius:6px;border:1px solid rgba(184,255,87,.2)">${ticket}</span>` : ''}
           <span class="fb-pill ${f.type}">${typeLabel}</span>
           <span class="fb-pill ${f.status}">${statusLabel}</span>
           ${tierPill}
