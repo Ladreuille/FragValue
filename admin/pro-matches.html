@@ -88,6 +88,16 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
 .map-row-del{background:transparent;border:1px solid var(--border2);color:var(--text3);font-family:var(--mono);font-size:10px;padding:7px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
 .map-row-del:hover{color:var(--danger);border-color:rgba(255,68,68,.3)}
 
+/* Scorecard structured input */
+.team-section{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px}
+.team-label{font-family:var(--mono);font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:8px}
+.player-head{display:grid;grid-template-columns:minmax(120px,2fr) 60px 60px 60px 80px 80px 80px;gap:6px;margin-bottom:5px;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase}
+.player-row{display:grid;grid-template-columns:minmax(120px,2fr) 60px 60px 60px 80px 80px 80px;gap:6px;margin-bottom:4px}
+.player-row .inp{padding:6px 10px;font-size:11px}
+@media(max-width:760px){
+  .player-head,.player-row{grid-template-columns:minmax(100px,2fr) repeat(6,1fr)}
+}
+
 .empty,.denied,.loading{text-align:center;padding:60px 24px;color:var(--text2)}
 .denied h2{font-family:var(--display);font-size:28px;color:var(--danger);margin-bottom:8px}
 </style>
@@ -303,49 +313,77 @@ function showScorecardsSection(matchId, preview) {
   const maps = preview?.maps || [];
   if (!maps.length) { container.innerHTML = ''; return; }
 
+  const teamRows = (mapOrder, teamKey, teamName) => {
+    return [0, 1, 2, 3, 4].map(i => `
+      <div class="player-row" data-map="${mapOrder}" data-team="${teamKey}">
+        <input class="inp pl-nick" placeholder="Nickname" />
+        <input class="inp pl-k" type="number" min="0" placeholder="K" />
+        <input class="inp pl-d" type="number" min="0" placeholder="D" />
+        <input class="inp pl-a" type="number" min="0" placeholder="A" />
+        <input class="inp pl-adr" type="number" min="0" step="0.1" placeholder="ADR" />
+        <input class="inp pl-kast" type="number" min="0" max="100" step="0.1" placeholder="KAST%" />
+        <input class="inp pl-rating" type="number" min="0" max="3" step="0.01" placeholder="Rating" />
+      </div>
+    `).join('');
+  };
+
   container.innerHTML = `
     <div class="card-title">Compléter les scorecards · ${escapeHtml(preview.team_a)} vs ${escapeHtml(preview.team_b)}</div>
-    <div class="card-sub">Pour chaque map, va sur la page stats HLTV correspondante, sélectionne la table du scoreboard et colle-la ci-dessous. Un textarea par équipe. <br>Format attendu par ligne : <code>nickname  K  A  D  +/-  ADR  KAST%  Rating</code> (tab ou espaces multiples).</div>
+    <div class="card-sub">5 joueurs par équipe par map. Saisie directe depuis la page stats HLTV : Nickname, K, D, A, ADR, KAST%, Rating 2.1.<br>Les lignes vides (pas de nickname) sont ignorées automatiquement.</div>
     ${maps.map(m => `
-      <div style="margin-top:18px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-family:var(--display);font-size:18px;letter-spacing:.02em">
-            ${escapeHtml(m.map_name)} <span style="color:var(--text3);font-size:12px;font-family:var(--mono)">${m.team_a_score} · ${m.team_b_score}</span>
-          </div>
+      <div style="margin-top:20px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:8px">
+        <div style="font-family:var(--display);font-size:18px;letter-spacing:.02em;margin-bottom:12px">
+          ${escapeHtml(m.map_name)} <span style="color:var(--text3);font-size:12px;font-family:var(--mono);margin-left:6px">${m.team_a_score} · ${m.team_b_score}</span>
         </div>
-        <div class="form-row">
-          <div class="form-field">
-            <label>Scoreboard ${escapeHtml(preview.team_a)}</label>
-            <textarea class="inp scorecard-a" data-order="${m.map_order}" rows="6" placeholder="ZywOo	30 (17)	3 (1)	14	+16	95.2	85.2%	1.75
-apEX	22 (15)	4 (2)	15	+7	84.1	84.6%	1.42
-..."></textarea>
+
+        <div class="team-section">
+          <div class="team-label">${escapeHtml(preview.team_a)}</div>
+          <div class="player-head">
+            <div>Nickname</div><div>K</div><div>D</div><div>A</div><div>ADR</div><div>KAST</div><div>Rating</div>
           </div>
-          <div class="form-field">
-            <label>Scoreboard ${escapeHtml(preview.team_b)}</label>
-            <textarea class="inp scorecard-b" data-order="${m.map_order}" rows="6" placeholder="KSCERATO	25	5	15	+10	82.1	78.4%	1.32
-yuurih	22	4	16	+6	78.5	76.0%	1.18
-..."></textarea>
+          ${teamRows(m.map_order, 'a', preview.team_a)}
+        </div>
+
+        <div class="team-section" style="margin-top:14px">
+          <div class="team-label">${escapeHtml(preview.team_b)}</div>
+          <div class="player-head">
+            <div>Nickname</div><div>K</div><div>D</div><div>A</div><div>ADR</div><div>KAST</div><div>Rating</div>
           </div>
+          ${teamRows(m.map_order, 'b', preview.team_b)}
         </div>
       </div>
     `).join('')}
-    <div style="margin-top:18px">
+    <div style="margin-top:18px;display:flex;gap:10px;align-items:center">
       <button class="btn" onclick="submitScorecards('${matchId}')">Enregistrer les scorecards</button>
+      <button class="btn sec" onclick="document.getElementById('scorecardsSection').innerHTML=''">Annuler</button>
     </div>
   `;
   container.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function submitScorecards(matchId) {
-  const scorecards = [];
-  document.querySelectorAll('.scorecard-a').forEach(ta => {
-    const order = parseInt(ta.dataset.order, 10);
-    const other = document.querySelector('.scorecard-b[data-order="' + order + '"]');
-    const aText = ta.value.trim();
-    const bText = other ? other.value.trim() : '';
-    if (aText || bText) scorecards.push({ map_order: order, team_a_text: aText, team_b_text: bText });
+  // Collecte les players par map depuis les inputs structures
+  const byMap = {};
+  document.querySelectorAll('.player-row').forEach(row => {
+    const mapOrder = parseInt(row.dataset.map, 10);
+    const team = row.dataset.team; // 'a' ou 'b'
+    const nick = row.querySelector('.pl-nick').value.trim();
+    if (!nick) return; // lignes vides ignorees
+    const player = {
+      nickname: nick,
+      kills: row.querySelector('.pl-k').value,
+      deaths: row.querySelector('.pl-d').value,
+      assists: row.querySelector('.pl-a').value,
+      adr: row.querySelector('.pl-adr').value,
+      kast_pct: row.querySelector('.pl-kast').value,
+      hltv_rating: row.querySelector('.pl-rating').value,
+    };
+    if (!byMap[mapOrder]) byMap[mapOrder] = { map_order: mapOrder, team_a_players: [], team_b_players: [] };
+    if (team === 'a') byMap[mapOrder].team_a_players.push(player);
+    else byMap[mapOrder].team_b_players.push(player);
   });
-  if (!scorecards.length) return toast('Aucun scorecard rempli', 'err');
+  const scorecards = Object.values(byMap);
+  if (!scorecards.length) return toast('Aucun joueur saisi', 'err');
 
   const btn = event.target;
   btn.disabled = true; btn.textContent = 'Enregistrement...';

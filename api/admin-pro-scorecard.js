@@ -1,7 +1,5 @@
 // api/admin-pro-scorecard.js
 // Admin-only : ajoute des scorecards par joueur sur un match existant.
-// Prend en entree le texte brut copie depuis la page stats HLTV
-// (table scoreboard) et parse les stats par joueur.
 //
 // POST /api/admin-pro-scorecard
 //   Body: {
@@ -9,16 +7,19 @@
 //     scorecards: [
 //       {
 //         map_order: 1,
-//         team_a_text: "ZywOo\t30 (17)\t3 (1)\t14\t+16\t95.2\t85.2%\t1.75\n...",
-//         team_b_text: "KSCERATO\t25\t..."
+//         team_a_players: [
+//           { nickname, kills, deaths, assists, adr, kast_pct, hltv_rating },
+//           ...
+//         ],
+//         team_b_players: [ ... ]
 //       },
 //       ...
 //     ]
 //   }
 //
-// Format HLTV scoreboard attendu (chaque ligne = 1 joueur) :
-// nickname  K(HS)  A(F)  D  +/-  ADR  KAST%  Rating
-// Les flags pays sont optionnels (prefix avant le nickname).
+// Les donnees sont saisies via un formulaire structure cote admin UI
+// (5 joueurs par equipe par map avec champs explicites). Le parsing
+// TSV/HLTV a ete retire car trop fragile (HLTV HTML varie trop).
 
 const { createClient } = require('@supabase/supabase-js');
 
@@ -50,64 +51,25 @@ async function readBody(req) {
   });
 }
 
-// ── Parser scorecard HLTV (TSV copie depuis la page stats) ──────────────
-// Accepte :
-//   - TSV (tab-separated, ce que tu obtiens en copiant la table depuis Chrome)
-//   - Lignes avec 2+ spaces entre colonnes
-// Retourne : [{nickname, kills, deaths, assists, adr, kast_pct, hltv_rating}, ...]
-function parseScorecard(text) {
-  if (!text || !text.trim()) return [];
-  const lines = String(text).split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  const players = [];
-
-  // Strip header line si detecte (mots-cles K, D, A, ADR, KAST, Rating)
-  const headerRe = /^(player|joueur)?.*\bK\b.*\b(D|ADR|KAST|Rating)\b/i;
-
-  for (const line of lines) {
-    if (headerRe.test(line)) continue; // skip header
-
-    // Split par tab ou 2+ espaces
-    const cols = line.split(/\t|\s{2,}/).map(c => c.trim()).filter(Boolean);
-    if (cols.length < 6) continue; // pas assez de colonnes pour un scorecard
-
-    // Parse : col 0 = nickname (avec eventuellement flag pays en prefixe)
-    // On isole le nickname : dernier mot avant la zone stats (numerique)
-    // HLTV ajoute parfois un flag emoji ou texte "de" avant le nom
-    let nickname = cols[0];
-    // Si la "colonne 0" contient plusieurs mots (genre "🇫🇷 ZywOo"), prendre le dernier
-    const nickParts = nickname.split(/\s+/).filter(Boolean);
-    nickname = nickParts[nickParts.length - 1];
-
-    // Extract le premier nombre (kills parfois formate "30 (17)")
-    const firstNum = (s) => {
-      const m = String(s).match(/(\d+)/);
-      return m ? parseInt(m[1], 10) : 0;
-    };
-
-    const kills = firstNum(cols[1]);
-    const assists = firstNum(cols[2]);
-    const deaths = firstNum(cols[3]);
-    // cols[4] = +/- (on skip)
-
-    // Les 3 dernieres colonnes sont ADR, KAST, Rating dans cet ordre
-    const adr = parseFloat(String(cols[5]).replace(/[^\d.]/g, '')) || null;
-    const kast = parseFloat(String(cols[6]).replace(/[^\d.]/g, '')) || null;
-    const rating = parseFloat(String(cols[cols.length - 1]).replace(/[^\d.]/g, '')) || null;
-
-    if (nickname && (kills > 0 || deaths > 0)) {
-      players.push({
-        nickname,
-        kills,
-        deaths,
-        assists,
-        adr,
-        kast_pct: kast,
-        hltv_rating: rating,
-      });
-    }
-  }
-
-  return players;
+// Sanitize un player object envoye par le formulaire.
+// Garde seulement les champs attendus, coerce les types.
+function sanitizePlayer(p, team) {
+  if (!p || !p.nickname) return null;
+  const toInt = (v) => { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; };
+  const toFloat = (v) => { const n = parseFloat(String(v).replace('%', '').replace(',', '.')); return isNaN(n) ? null : n; };
+  return {
+    nickname: String(p.nickname).trim().slice(0, 40),
+    team,
+    country: p.country ? String(p.country).trim().slice(0, 3).toUpperCase() : null,
+    kills: toInt(p.kills),
+    deaths: toInt(p.deaths),
+    assists: toInt(p.assists),
+    adr: toFloat(p.adr),
+    kast_pct: toFloat(p.kast_pct),
+    hltv_rating: toFloat(p.hltv_rating),
+    first_kills: p.first_kills != null ? toInt(p.first_kills) : null,
+    first_deaths: p.first_deaths != null ? toInt(p.first_deaths) : null,
+  };
 }
 
 module.exports = async function handler(req, res) {
@@ -149,13 +111,14 @@ module.exports = async function handler(req, res) {
     // Remove les players existants de cette map (reset pour permettre re-import propre)
     await s.from('pro_match_players').delete().eq('match_map_id', mapId);
 
-    const teamAPlayers = parseScorecard(sc.team_a_text || '');
-    const teamBPlayers = parseScorecard(sc.team_b_text || '');
+    const teamAPlayers = (sc.team_a_players || [])
+      .map(p => sanitizePlayer(p, 'a'))
+      .filter(Boolean);
+    const teamBPlayers = (sc.team_b_players || [])
+      .map(p => sanitizePlayer(p, 'b'))
+      .filter(Boolean);
 
-    const rows = [
-      ...teamAPlayers.map(p => ({ ...p, match_map_id: mapId, team: 'a' })),
-      ...teamBPlayers.map(p => ({ ...p, match_map_id: mapId, team: 'b' })),
-    ];
+    const rows = [...teamAPlayers, ...teamBPlayers].map(p => ({ ...p, match_map_id: mapId }));
 
     if (rows.length) {
       const { error } = await s.from('pro_match_players').insert(rows);
@@ -168,7 +131,7 @@ module.exports = async function handler(req, res) {
       }
     } else {
       skipped++;
-      results.push({ map_order: sc.map_order, error: 'parsing a produit 0 joueur' });
+      results.push({ map_order: sc.map_order, error: 'aucun joueur fourni' });
     }
   }
 
