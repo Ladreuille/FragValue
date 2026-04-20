@@ -713,7 +713,7 @@ async function loadSettings() {
       }
       const notifs = profile.notification_prefs || {};
       document.getElementById('notifMatches').checked = notifs.match_ready !== false;
-      document.getElementById('notifWeekly').checked  = notifs.weekly_report === true;
+      document.getElementById('notifWeekly').checked  = notifs.weekly_report !== false;
       document.getElementById('notifProduct').checked = notifs.product_news !== false;
       if (profile.locale) document.getElementById('settingsLang').value = profile.locale;
     }
@@ -771,7 +771,7 @@ async function saveScoutProfile() {
   }).eq('id', session.user.id);
 }
 
-async function saveNotifPrefs() {
+async function saveNotifPrefs(ev) {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return;
   const prefs = {
@@ -779,14 +779,31 @@ async function saveNotifPrefs() {
     weekly_report:document.getElementById('notifWeekly').checked,
     product_news: document.getElementById('notifProduct').checked,
   };
-  await sb.from('profiles').update({ notification_prefs: prefs }).eq('id', session.user.id);
+  const { error } = await sb.from('profiles').update({ notification_prefs: prefs }).eq('id', session.user.id);
+  flashSaveFeedback(ev?.target, error);
 }
 
-async function saveLocale() {
+async function saveLocale(ev) {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return;
   const locale = document.getElementById('settingsLang').value;
-  await sb.from('profiles').update({ locale }).eq('id', session.user.id);
+  const { error } = await sb.from('profiles').update({ locale }).eq('id', session.user.id);
+  flashSaveFeedback(ev?.target, error);
+}
+
+function flashSaveFeedback(el, error) {
+  if (!el) return;
+  const row = el.closest('.settings-row') || el.parentElement;
+  if (!row) return;
+  const prev = row.querySelector('.save-toast'); if (prev) prev.remove();
+  const toast = document.createElement('span');
+  toast.className = 'save-toast';
+  toast.textContent = error ? 'Erreur' : 'Enregistré';
+  toast.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);font:10px/1.2 "Space Mono",monospace;padding:3px 8px;border-radius:4px;background:'+(error?'#5b1a1a':'#1a3c1a')+';color:'+(error?'#ff8080':'#b8ff57')+';pointer-events:none;transition:opacity .4s;opacity:1;';
+  if (getComputedStyle(row).position === 'static') row.style.position = 'relative';
+  row.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; }, 1400);
+  setTimeout(() => toast.remove(), 1900);
 }
 
 // ══ SECURITE ═══════════════════════════════════════════════════════════════

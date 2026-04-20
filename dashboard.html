@@ -1150,10 +1150,24 @@ function renderCtTSplit(d) {
   const tWR  = parseFloat(r.tWinRate)  || 0;
   const ctKd = parseFloat(r.ctKd) || 0;
   const tKd  = parseFloat(r.tKd)  || 0;
+  const hasData = ctWR > 0 || tWR > 0 || ctKd > 0 || tKd > 0;
+  const el = document.getElementById('ctTSplit');
+  if (!hasData) {
+    el.innerHTML = `
+      <div class="weekly-empty" style="padding:24px;text-align:center">
+        <div style="font:700 14px 'Anton',sans-serif;color:var(--text);margin-bottom:6px">Bientôt disponible</div>
+        <div style="color:var(--text-soft);font-size:12px;line-height:1.6">
+          Le breakdown CT vs T nécessite l'analyse de tes démos.<br>
+          L'API FACEIT publique ne renvoie plus ces stats par côté en CS2.<br>
+          <a href="/demo.html" style="color:var(--accent);text-decoration:none;font-weight:700">Uploade une démo →</a>
+        </div>
+      </div>`;
+    return;
+  }
   const verdict = ctWR > tWR + 5 ? `Tu es plus solide côté <strong style="color:var(--accent)">CT</strong> (${ctWR}% vs ${tWR}%)`
                 : tWR > ctWR + 5 ? `Tu es plus solide côté <strong style="color:var(--gold)">T</strong> (${tWR}% vs ${ctWR}%)`
                 : `Équilibré entre CT et T (écart < 5 pts)`;
-  document.getElementById('ctTSplit').innerHTML = `
+  el.innerHTML = `
     <div class="ct-t-split">
       <div class="side-card ct">
         <div class="side-header"><div class="side-label">CT</div></div>
@@ -1172,7 +1186,7 @@ function renderCtTSplit(d) {
         <div class="side-bar"><div class="side-bar-fill" style="width:${tWR}%"></div></div>
       </div>
     </div>
-    ${ctWR > 0 || tWR > 0 ? `<div class="side-verdict">${verdict}</div>` : ''}`;
+    <div class="side-verdict">${verdict}</div>`;
 }
 
 function renderMapStats(d) {
