@@ -9,10 +9,28 @@
 // Override possible via EMAIL_FROM env var.
 const FROM_DEFAULT = process.env.EMAIL_FROM || 'FragValue <notifications@send.fragvalue.com>';
 
+// Adresse par defaut pour les reponses. Les users qui repondent a une notif
+// (feedback, factures, waitlist, etc.) atterrissent ici. Cette boite DOIT
+// avoir des MX records configures (ImprovMX forward ou Resend Inbound).
+// Si tu utilises seulement Resend outbound, laisse vide pour ne pas ajouter
+// de reply_to (les replies rebondiront mais c'est pas un drame initial).
+const REPLY_TO_DEFAULT = process.env.EMAIL_REPLY_TO || 'contact@fragvalue.com';
+
+// Resolve reply_to : undefined → default contact@ ; null → pas de reply_to ;
+// string/array → valeur fournie. Retourne un objet prêt à être spread dans
+// le body JSON (ex: { reply_to: ['contact@...'] } ou {} si null explicite).
+function resolveReplyTo(reply_to) {
+  if (reply_to === null) return {};
+  const val = reply_to || REPLY_TO_DEFAULT;
+  if (!val) return {};
+  return { reply_to: Array.isArray(val) ? val : [val] };
+}
+
 // Envoi email via Resend API (fetch direct, pas de SDK).
 // https://resend.com/docs/api-reference/emails/send-email
 // Options supplementaires pour threading / reply-to :
 //   reply_to      : adresse a laquelle les reponses doivent aller
+//                   (undefined = default contact@ ; null = aucun reply-to)
 //   in_reply_to   : Message-ID du mail parent (string avec < >)
 //   references    : chaine espace-separee de Message-ID (pour Gmail threading)
 export async function sendEmail({ to, subject, html, text, from, reply_to, in_reply_to, references }) {
@@ -42,7 +60,10 @@ export async function sendEmail({ to, subject, html, text, from, reply_to, in_re
         subject,
         html,
         text,
-        ...(reply_to ? { reply_to: Array.isArray(reply_to) ? reply_to : [reply_to] } : {}),
+        // reply_to explicite prime ; sinon on applique le default pour que
+        // les replies atterrissent dans la bonne boite. Passer reply_to: null
+        // explicitement supprime le default (ex : pour des mails systeme).
+        ...(resolveReplyTo(reply_to)),
         ...(Object.keys(headers).length ? { headers } : {}),
       }),
     });
