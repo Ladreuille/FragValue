@@ -131,13 +131,20 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Body JSON invalide' });
   }
 
+  // DEBUG : log la structure complete du payload pour debugger les 400
+  console.log('[email-inbound] payload keys:', Object.keys(payload));
+  console.log('[email-inbound] payload.type:', payload.type || payload.event);
+  console.log('[email-inbound] payload sample:', JSON.stringify(payload).slice(0, 2000));
+
   // Events non-inbound (delivered, bounced) : ACK 200 sans traiter
   const evtType = payload.type || payload.event || '';
   if (!/inbound|received|email\.received/i.test(evtType)) {
+    console.log('[email-inbound] skipped non-inbound event:', evtType);
     return res.status(200).json({ ok: true, skipped: true, type: evtType });
   }
 
   const data = payload.data || payload.email || payload;
+  console.log('[email-inbound] data keys:', Object.keys(data));
   const fromObj = data.from || data.sender || {};
   const fromEmail = (typeof fromObj === 'string' ? fromObj : fromObj?.email) || data.from_email || null;
   const fromName = (typeof fromObj === 'object' ? fromObj?.name : null) || null;
@@ -152,10 +159,14 @@ export default async function handler(req, res) {
   const inReplyTo = data.in_reply_to || data.inReplyTo || null;
   const references = data.references || null;
 
+  console.log('[email-inbound] extracted:', { fromEmail, toEmail, subject, hasText: !!text, hasHtml: !!html });
+
   if (!fromEmail) {
+    console.warn('[email-inbound] 400 No sender email — fromObj:', JSON.stringify(fromObj));
     return res.status(400).json({ error: 'No sender email' });
   }
   if (!text && !html) {
+    console.warn('[email-inbound] 400 Empty body');
     return res.status(400).json({ error: 'Empty body' });
   }
 
