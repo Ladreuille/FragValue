@@ -375,7 +375,7 @@ async function handleUpdate(req, res) {
 
   const { data: existing } = await sb()
     .from('user_feedback')
-    .select('id, ticket_number, type, message, user_id, anon_email, admin_response')
+    .select('id, ticket_number, type, message, user_id, anon_email, admin_response, source, subject, from_email, inbound_message_id, thread_references')
     .eq('id', id)
     .single();
   if (!existing) return res.status(404).json({ error: 'Feedback introuvable' });
@@ -400,6 +400,17 @@ async function handleUpdate(req, res) {
       } catch {}
     }
     if (recipientEmail) {
+      // Pour les tickets source=email, on utilise les headers RFC 5322 pour
+      // que la reponse atterrisse dans le MEME thread Gmail que le mail
+      // original. Pour les tickets widget, headers ignores (pas de thread
+      // pre-existant).
+      const threadOpts = existing.source === 'email' ? {
+        threadSubject: existing.subject ? ('Re: ' + existing.subject.replace(/^(Re:|Fwd:)\s*/i, '')) : null,
+        inReplyTo: existing.inbound_message_id ? '<' + existing.inbound_message_id + '>' : null,
+        references: (existing.thread_references ? existing.thread_references + ' ' : '') +
+                    (existing.inbound_message_id ? '<' + existing.inbound_message_id + '>' : ''),
+      } : {};
+
       // Await + timeout safety pour garantir l'envoi (Vercel serverless tue
       // les promises fire-and-forget des que le handler retourne).
       await Promise.race([
@@ -409,6 +420,7 @@ async function handleUpdate(req, res) {
           ticketNumber: existing.ticket_number,
           userMessage: existing.message,
           adminResponse: newResponse,
+          ...threadOpts,
         }),
         new Promise(resolve => setTimeout(resolve, 4000)),
       ]).catch(e => console.warn('[feedback] notif user response failed:', e.message));
@@ -418,7 +430,7 @@ async function handleUpdate(req, res) {
   return res.status(200).json({ feedback: data });
 }
 
-async function notifyUserResponse({ recipientEmail, feedbackType, ticketNumber, userMessage, adminResponse }) {
+async function notifyUserResponse({ recipientEmail, feedbackType, ticketNumber, userMessage, adminResponse, threadSubject, inReplyTo, references }) {
   const lib = await import('./_lib/email.js');
   if (!lib.emailFeedbackResponse) return;
   const tpl = lib.emailFeedbackResponse({
@@ -427,11 +439,16 @@ async function notifyUserResponse({ recipientEmail, feedbackType, ticketNumber, 
     userMessage,
     adminResponse,
   });
+  // Si on a un thread (ticket source=email), on override le sujet pour
+  // conserver le "Re: xxx" du thread Gmail original et on ajoute les
+  // headers In-Reply-To + References.
   return lib.sendEmail({
     to: recipientEmail,
-    subject: tpl.subject,
+    subject: threadSubject || tpl.subject,
     html: tpl.html,
     text: tpl.text,
+    in_reply_to: inReplyTo,
+    references,
   });
 }
 

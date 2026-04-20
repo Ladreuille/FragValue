@@ -11,7 +11,11 @@ const FROM_DEFAULT = process.env.EMAIL_FROM || 'FragValue <notifications@send.fr
 
 // Envoi email via Resend API (fetch direct, pas de SDK).
 // https://resend.com/docs/api-reference/emails/send-email
-export async function sendEmail({ to, subject, html, text, from }) {
+// Options supplementaires pour threading / reply-to :
+//   reply_to      : adresse a laquelle les reponses doivent aller
+//   in_reply_to   : Message-ID du mail parent (string avec < >)
+//   references    : chaine espace-separee de Message-ID (pour Gmail threading)
+export async function sendEmail({ to, subject, html, text, from, reply_to, in_reply_to, references }) {
   if (!process.env.RESEND_API_KEY) {
     console.warn('[email] RESEND_API_KEY manquant — email ignore :', subject, '->', to);
     return { skipped: true };
@@ -20,6 +24,11 @@ export async function sendEmail({ to, subject, html, text, from }) {
     console.warn('[email] champs manquants', { to, subject });
     return { error: 'missing fields' };
   }
+  // Headers de threading RFC 5322 : Gmail / Outlook les utilisent pour
+  // regrouper les reponses dans le meme thread.
+  const headers = {};
+  if (in_reply_to) headers['In-Reply-To'] = in_reply_to;
+  if (references)  headers['References']  = references;
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -33,6 +42,8 @@ export async function sendEmail({ to, subject, html, text, from }) {
         subject,
         html,
         text,
+        ...(reply_to ? { reply_to: Array.isArray(reply_to) ? reply_to : [reply_to] } : {}),
+        ...(Object.keys(headers).length ? { headers } : {}),
       }),
     });
     const data = await res.json();
