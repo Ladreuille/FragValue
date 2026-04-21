@@ -403,22 +403,24 @@ function weaponIcon(weaponName, h) {
   return '<img src="icons/' + file + '.svg" alt="' + clean + '" height="' + (h || 14) + '" style="vertical-align:middle;opacity:.85" loading="lazy">';
 }
 
-// FV Rating
-function calcFvRating(kills, deaths, assists, rounds) {
+// FV Rating : adaptation de la HLTV 2.0. Formule officielle documentee :
+// R = 0.0073 × KAST(%) + 0.3591 × KPR - 0.5329 × DPR + 0.2372 × Impact +
+//     0.0032 × ADR + 0.1587
+// ou Impact = 2.13 × KPR + 0.42 × APR - 0.41
+// Ici on accepte kastPct et adr en parametres pour les vraies valeurs parser.
+// Fallbacks : si absents, approximations conservatrices (moyenne match).
+function calcFvRating(kills, deaths, assists, rounds, kastPct, adr) {
   if (!rounds) return 0;
   const kpr = kills / rounds;
   const dpr = deaths / rounds;
   const apr = (assists || 0) / rounds;
-  const kast = Math.min(0.92, Math.max(0.50,
-    0.0073 * 75 + 0.3591 * kpr - 0.5329 * dpr +
-    0.2372 * (2.13 * kpr + 0.42 * apr - 0.41) +
-    0.0032 * 70 + 0.1587
-  ));
-  return parseFloat((
-    0.0073 * kast * 100 + 0.3591 * kpr - 0.5329 * dpr +
-    0.2372 * (2.13 * kpr + 0.42 * apr - 0.41) +
-    0.0032 * 70 + 0.1587
-  ).toFixed(2));
+  // KAST fallback : 70% (moyenne typique d'un joueur competitif)
+  const kastP = typeof kastPct === 'number' ? kastPct : 70;
+  // ADR fallback : 75 (moyenne typique)
+  const adrV = typeof adr === 'number' ? adr : 75;
+  const impact = 2.13 * kpr + 0.42 * apr - 0.41;
+  const r = 0.0073 * kastP + 0.3591 * kpr - 0.5329 * dpr + 0.2372 * impact + 0.0032 * adrV + 0.1587;
+  return parseFloat(r.toFixed(2));
 }
 
 function fvrColor(r) {
@@ -515,14 +517,26 @@ function computeAllStats(kills, rounds, playerStats) {
     if (!playerTeam[ps.name]) playerTeam[ps.name] = team2.length <= team3.length ? 2 : 3;
   });
 
+  // Index playerStats by name pour acces O(1). Ces stats viennent du parser
+  // (backend Railway) et sont la source de verite cote produit : memes valeurs
+  // sur dashboard, heatmap-results et compare. On les privilegie sur un recompute.
+  const psByName = Object.fromEntries((playerStats || []).map(ps => [ps.name, ps]));
+
   const stats = allPlayers.map(name => {
+    const ps = psByName[name] || {};
+    // Kills / deaths : on utilise les events kills (plus fiable que playerStats
+    // qui peut etre absent pour les joueurs hors de la demo)
     const k = kills.filter(x => x.attacker === name).length;
     const d = kills.filter(x => x.victim === name).length;
     const hs = kills.filter(x => x.attacker === name && x.isHeadshot).length;
-    const hsPct = k > 0 ? Math.round((hs / k) * 100) : 0;
-    const adr = Math.round((k * 80) / totalRounds);
-    const kast = calcKAST(name, kills, rounds);
-    const fvr = calcFvRating(k, d, 0, totalRounds);
+
+    // Privilegie les valeurs parsees si disponibles, sinon fallback computed
+    const hsPct = typeof ps.hsPct === 'number' ? ps.hsPct : (k > 0 ? Math.round((hs / k) * 100) : 0);
+    const adr  = typeof ps.adr === 'number' ? ps.adr : Math.round((k * 80) / totalRounds);
+    const kast = typeof ps.kast === 'number' ? ps.kast : calcKAST(name, kills, rounds);
+    const assists = typeof ps.assists === 'number' ? ps.assists : 0;
+    // Passe les vraies valeurs kast+adr a calcFvRating au lieu d'approximations
+    const fvr = typeof ps.fvr === 'number' ? ps.fvr : calcFvRating(k, d, assists, totalRounds, kast, adr);
 
     // Opening duels
     let fk = 0, fd = 0;
@@ -682,12 +696,18 @@ function renderOverview(c, rounds) {
 
   // KPIs
   const totalK = c.stats.reduce((s, p) => s + p.kills, 0);
-  const fbTeam2 = c.firstBloods.filter(f => f.attackerTeam === 2).length;
-  const fbTeam3 = c.firstBloods.filter(f => f.attackerTeam === 3).length;
+  // Taux de conversion du first blood en win de round (mesure la puissance
+  // des 1ers kills, toutes equipes confondues). Clarifie le label pour
+  // lever l'ambiguite team-level vs player-level.
   const fbWinnerPct = c.firstBloods.length > 0
     ? Math.round((c.firstBloods.filter(f => f.roundWon).length / c.firstBloods.length) * 100)
     : 0;
   const mvp = [...c.stats].sort((a, b) => b.fvr - a.fvr)[0];
+  // ADR moyen du match : reference comparative
+  const avgADR = c.stats.length ? Math.round(c.stats.reduce((s, p) => s + (p.adr || 0), 0) / c.stats.length) : 0;
+  // Tronque le nom MVP pour eviter cassage de layout si pseudo long
+  const mvpName = (mvp?.name || '-');
+  const mvpShort = mvpName.length > 14 ? mvpName.slice(0, 12) + '...' : mvpName;
 
   document.getElementById('kpiRow').innerHTML = `
     <div class="kpi-card">
@@ -698,13 +718,13 @@ function renderOverview(c, rounds) {
       <div class="kpi-value">${totalK}</div>
       <div class="kpi-label">Kills totaux</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" title="Part des rounds ou l'equipe qui a fait le 1er kill a gagne le round. Mesure l'impact du premier duel.">
       <div class="kpi-value" style="color:var(--accent)">${fbWinnerPct}%</div>
-      <div class="kpi-label">Conversion 1er kill</div>
+      <div class="kpi-label">Rounds gagnes apres 1er kill</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" title="Joueur avec le meilleur FV Rating du match">
       <div class="kpi-value" style="color:${fvrColor(mvp?.fvr || 0)}">${mvp?.fvr?.toFixed(2) || '-'}</div>
-      <div class="kpi-label">MVP - ${mvp?.name || '-'}</div>
+      <div class="kpi-label">Top impact · ${mvpShort}</div>
     </div>
   `;
 }
