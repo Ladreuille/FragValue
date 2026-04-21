@@ -112,7 +112,7 @@ async function loadTeam() {
 
   if (error || !roster) {
     contentEl.className = 'empty';
-    contentEl.innerHTML = `<div>Aucune équipe publique avec le tag <strong style="color:var(--text)">[${tag}]</strong>.</div><div style="margin-top:12px"><a href="/scout.html">Retour au Scout</a></div>`;
+    contentEl.innerHTML = `<div>Aucune équipe publique avec le tag <strong style="color:var(--text)">[${escapeHtml(tag)}]</strong>.</div><div style="margin-top:12px"><a href="/scout.html">Retour au Scout</a></div>`;
     return;
   }
 
@@ -248,7 +248,21 @@ function escapeHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-loadTeam();
+// Wrapper avec gestion d'erreur globale : si loadTeam throw (Supabase down,
+// RLS bloque, parsing erreur), on affiche un message user-friendly plutot
+// que de laisser le placeholder "Chargement..." eternellement.
+loadTeam().catch(err => {
+  console.error('[team.html] loadTeam failed:', err);
+  const contentEl = document.getElementById('content');
+  if (contentEl) {
+    contentEl.className = 'empty';
+    contentEl.innerHTML = `
+      <div style="font:700 18px 'Anton',sans-serif;color:#e8eaea;margin-bottom:12px">Impossible de charger l'équipe</div>
+      <div style="color:#7a8080;font-size:14px;margin-bottom:16px">Le service est temporairement indisponible. Réessaie dans quelques instants.</div>
+      <div><a href="/scout.html" style="color:#b8ff57;text-decoration:none">← Retour au Scout</a></div>
+    `;
+  }
+});
 </script>
 <script src="/nav.js"></script>
 </body>

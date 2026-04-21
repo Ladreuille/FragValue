@@ -13,8 +13,15 @@
 (function () {
   'use strict';
 
-  // ── Styles injectés (scope navbar) ──────────────────────────────────────
+  // ── Styles injectés (scope navbar + global focus-visible pour A11y) ──
   const css = `
+    /* Global focus-visible : bordure accent verte visible au clavier sur
+       tous les elements interactifs. Les inputs/boutons qui ont "outline:none"
+       sur :focus restent desactives pour la souris, mais le clavier garde
+       un anneau de focus visible via :focus-visible (spec WCAG AA). */
+    :focus-visible{outline:2px solid #b8ff57 !important;outline-offset:2px !important;border-radius:4px}
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[role="button"]:focus-visible,[tabindex]:focus-visible{outline:2px solid #b8ff57 !important;outline-offset:2px !important}
+
     nav.fv-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:linear-gradient(180deg,rgba(12,14,10,.94) 0%,rgba(8,9,9,.92) 100%);backdrop-filter:blur(12px);border-bottom:1px solid rgba(184,255,87,.15);box-shadow:0 1px 0 rgba(184,255,87,.08),0 4px 24px rgba(0,0,0,.3)}
     nav.fv-nav .logo{font-family:'Anton',sans-serif;font-size:20px;letter-spacing:.04em;text-decoration:none;color:#e8eaea;transition:text-shadow .2s}
     nav.fv-nav .logo:hover{text-shadow:0 0 18px rgba(184,255,87,.4)}

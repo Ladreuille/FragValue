@@ -1941,7 +1941,33 @@ function showLoading(show,text) {
 
 async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
 
-init();
+// Gestion globale des erreurs d'init : evite que les placeholders "Chargement..."
+// restent a l'ecran indefiniment si Supabase / API / parser sont down.
+init().catch(err => {
+  console.error('[dashboard] init failed:', err);
+  showLoading(false);
+  const hero = document.getElementById('profileHeroCard');
+  if (hero) {
+    hero.innerHTML = `
+      <div style="text-align:center;padding:40px 24px">
+        <div style="font:700 20px 'Anton',sans-serif;color:#e8eaea;letter-spacing:.05em;margin-bottom:12px">Service temporairement indisponible</div>
+        <div style="color:#7a8080;font-size:14px;line-height:1.6;margin-bottom:20px">Impossible de charger ton dashboard pour le moment. Réessaie dans quelques instants.</div>
+        <button onclick="window.location.reload()" style="background:#b8ff57;color:#000;padding:10px 20px;border:none;border-radius:6px;font:700 12px 'Space Mono',monospace;letter-spacing:.06em;text-transform:uppercase;cursor:pointer">Recharger</button>
+      </div>`;
+  }
+  // Remplace aussi les autres placeholders bloquants
+  const replacers = [
+    ['fvScoreVal', '-'],
+    ['fvScoreLabel', 'Indisponible'],
+    ['improvementsPanel', '<div class="empty-state"><div class="empty-title">Analyse indisponible</div><div class="empty-sub">Service temporairement hors ligne.</div></div>'],
+  ];
+  replacers.forEach(([id, html]) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+  const coach = document.getElementById('coachAiCard');
+  if (coach) coach.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-title">Diagnostic indisponible</div></div>';
+});
 </script>
 <script src="/nav.js"></script>
 </body>

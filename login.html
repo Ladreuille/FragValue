@@ -277,10 +277,28 @@ async function handleSubmit() {
       window.location.href = 'account.html';
     }
   } catch(e) {
-    showMsg(e.message, 'error');
+    showMsg(translateAuthError(e), 'error');
   } finally {
     btn.disabled = false;
   }
+}
+
+// Traduit les messages d'erreur Supabase/Auth (EN par defaut) en FR user-friendly.
+// Fallback sur le message brut si on ne reconnait pas le pattern.
+function translateAuthError(err) {
+  const msg = String(err?.message || err || '').toLowerCase();
+  if (msg.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
+  if (msg.includes('user already registered') || msg.includes('already been registered')) return 'Cet email est déjà utilisé. Connecte-toi ou utilise le lien magique.';
+  if (msg.includes('email rate limit') || msg.includes('rate limit')) return 'Trop de tentatives. Attends une minute avant de réessayer.';
+  if (msg.includes('password should be at least')) return 'Le mot de passe doit faire au moins 6 caractères.';
+  if (msg.includes('unable to validate email') || msg.includes('invalid email')) return 'Adresse email invalide.';
+  if (msg.includes('email not confirmed')) return 'Ton email n\'est pas encore confirmé. Vérifie ta boite de réception.';
+  if (msg.includes('user not found')) return 'Aucun compte associé à cet email.';
+  if (msg.includes('network') || msg.includes('fetch')) return 'Problème de connexion. Vérifie ton internet et réessaie.';
+  if (msg.includes('popup') && msg.includes('closed')) return 'Fenêtre de connexion fermée avant la fin.';
+  if (msg.includes('popup') && msg.includes('blocked')) return 'Ton navigateur a bloqué la fenêtre OAuth. Autorise les popups pour fragvalue.com.';
+  // Fallback : retourne le message original si on ne le reconnait pas
+  return err?.message || 'Une erreur est survenue. Réessaie.';
 }
 
 async function sendMagicLink(e) {
@@ -291,11 +309,16 @@ async function sendMagicLink(e) {
     const { error } = await _sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + '/account.html' } });
     if (error) throw error;
     showMsg('Lien envoyé. Vérifie ta boite mail.', 'success');
-  } catch(e) { showMsg(e.message, 'error'); }
+  } catch(e) { showMsg(translateAuthError(e), 'error'); }
 }
 
-function loginGoogle() {
-  _sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/account.html' } });
+async function loginGoogle() {
+  try {
+    const { error } = await _sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/account.html' } });
+    if (error) throw error;
+  } catch (e) {
+    showMsg(translateAuthError(e), 'error');
+  }
 }
 
 
