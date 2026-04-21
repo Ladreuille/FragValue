@@ -119,23 +119,7 @@ export default async function handler(req, res) {
   const rawBuf = await buffer(req);
   const rawBody = rawBuf.toString('utf8');
 
-  // DEBUG : snapshot complet de la requete dans Supabase (a retirer apres diag)
-  const sigOk = verifySignature(rawBody, req.headers);
-  let parsedForDebug = null;
-  try { parsedForDebug = JSON.parse(rawBody || '{}'); } catch {}
-  try {
-    await sb().from('email_inbound_debug').insert({
-      headers: Object.fromEntries(Object.entries(req.headers).filter(([k]) => !/^(authorization|cookie)$/i.test(k))),
-      body_raw: rawBody.slice(0, 20000),
-      body_parsed: parsedForDebug,
-      signature_ok: sigOk,
-      result: 'received',
-    });
-  } catch (e) {
-    console.warn('[email-inbound] debug insert error:', e.message);
-  }
-
-  if (!sigOk) {
+  if (!verifySignature(rawBody, req.headers)) {
     console.warn('[email-inbound] Signature invalide');
     return res.status(401).json({ error: 'Signature invalide' });
   }
@@ -147,43 +131,66 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Body JSON invalide' });
   }
 
-  // DEBUG : log la structure complete du payload pour debugger les 400
-  console.log('[email-inbound] payload keys:', Object.keys(payload));
-  console.log('[email-inbound] payload.type:', payload.type || payload.event);
-  console.log('[email-inbound] payload sample:', JSON.stringify(payload).slice(0, 2000));
-
   // Events non-inbound (delivered, bounced) : ACK 200 sans traiter
   const evtType = payload.type || payload.event || '';
   if (!/inbound|received|email\.received/i.test(evtType)) {
-    console.log('[email-inbound] skipped non-inbound event:', evtType);
     return res.status(200).json({ ok: true, skipped: true, type: evtType });
   }
 
+  // Le webhook Resend Inbound ne contient que les metadonnees (pas le body).
+  // On recupere le contenu complet via GET /emails/:email_id avec la RESEND_API_KEY.
   const data = payload.data || payload.email || payload;
-  console.log('[email-inbound] data keys:', Object.keys(data));
-  const fromObj = data.from || data.sender || {};
-  const fromEmail = (typeof fromObj === 'string' ? fromObj : fromObj?.email) || data.from_email || null;
-  const fromName = (typeof fromObj === 'object' ? fromObj?.name : null) || null;
+  const fromRaw = data.from || data.sender || null;
+  const fromEmail = typeof fromRaw === 'string' ? fromRaw : (fromRaw?.email || data.from_email || null);
+  const fromName = typeof fromRaw === 'object' ? fromRaw?.name : null;
   const toList = data.to || data.recipients || [];
   const toEmail = (Array.isArray(toList) && toList.length)
     ? (typeof toList[0] === 'string' ? toList[0] : (toList[0]?.email || null))
     : (typeof toList === 'string' ? toList : null);
   const subject = String(data.subject || '').slice(0, 300);
-  const text = String(data.text || '').trim();
-  const html = data.html || null;
+  const emailId = data.email_id || data.id || null;
   const messageId = data.message_id || data.messageId || data['message-id'] || null;
-  const inReplyTo = data.in_reply_to || data.inReplyTo || null;
-  const references = data.references || null;
-
-  console.log('[email-inbound] extracted:', { fromEmail, toEmail, subject, hasText: !!text, hasHtml: !!html });
 
   if (!fromEmail) {
-    console.warn('[email-inbound] 400 No sender email — fromObj:', JSON.stringify(fromObj));
     return res.status(400).json({ error: 'No sender email' });
   }
+
+  // Fetch le contenu complet du mail via l'API Resend
+  let text = '';
+  let html = null;
+  let inReplyTo = null;
+  let references = null;
+  if (emailId && process.env.RESEND_API_KEY) {
+    try {
+      const r = await fetch('https://api.resend.com/emails/' + emailId, {
+        headers: { Authorization: 'Bearer ' + process.env.RESEND_API_KEY },
+      });
+      if (r.ok) {
+        const full = await r.json();
+        text = String(full.text || '').trim();
+        html = full.html || null;
+        // Headers peut etre un objet {In-Reply-To, References} ou un tableau
+        const h = full.headers || {};
+        const getHdr = (k) => {
+          if (Array.isArray(h)) {
+            const found = h.find(x => String(x.name || '').toLowerCase() === k);
+            return found?.value || null;
+          }
+          return h[k] || h[k.replace(/\b\w/g, c => c.toUpperCase())] || null;
+        };
+        inReplyTo = getHdr('in-reply-to');
+        references = getHdr('references');
+      } else {
+        console.warn('[email-inbound] fetch email failed:', r.status, await r.text().catch(() => ''));
+      }
+    } catch (e) {
+      console.warn('[email-inbound] fetch email error:', e.message);
+    }
+  }
+
   if (!text && !html) {
-    console.warn('[email-inbound] 400 Empty body');
-    return res.status(400).json({ error: 'Empty body' });
+    // Fallback : accepte le ticket sans body (placeholder) pour ne pas perdre de l'info
+    text = '(contenu du mail non disponible - recuperation API Resend echouee)';
   }
 
   // Threading : si reply a un ticket existant, on append au lieu de creer
