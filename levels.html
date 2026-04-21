@@ -44,6 +44,25 @@ body::before{
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
   pointer-events:none;z-index:0;opacity:.4
 }
+/* Grid pattern subtil en arriere-plan */
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(184,255,87,.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(184,255,87,.02) 1px, transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse at 50% 0%, rgba(0,0,0,.8) 0%, transparent 60%);
+  -webkit-mask-image:radial-gradient(ellipse at 50% 0%, rgba(0,0,0,.8) 0%, transparent 60%);
+  pointer-events:none;z-index:0
+}
+/* Divider entre sections */
+section + section{position:relative}
+section + section::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:min(600px,80%);height:1px;
+  background:linear-gradient(90deg, transparent, rgba(184,255,87,.18), transparent);
+  pointer-events:none;z-index:1
+}
 
 /* NAV */
 nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}

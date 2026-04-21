@@ -298,8 +298,14 @@ async function loadMatches() {
 }
 
 function renderError(msg) {
-  document.getElementById('matchesContainer').innerHTML =
-    '<div class="empty-box"><div class="empty-box-title">' + msg + '</div></div>';
+  document.getElementById('matchesContainer').innerHTML = (window.FV && FV.emptyState)
+    ? FV.emptyState({
+        icon: 'error',
+        title: msg || 'Erreur',
+        message: 'Impossible de recuperer tes matchs. Reessaie dans quelques secondes.',
+        cta: { label: 'Reessayer', onclick: 'location.reload()' },
+      })
+    : '<div class="empty-box"><div class="empty-box-title">' + msg + '</div></div>';
 }
 
 function fmtFull(d) {
@@ -311,13 +317,15 @@ function fmtFull(d) {
 function renderMatches(matches) {
   const el = document.getElementById('matchesContainer');
   if (!matches.length) {
-    el.innerHTML = '<div class="empty-box">' +
-      '<div class="empty-box-title">AUCUN MATCH POUR L\'INSTANT</div>' +
-      '<div class="empty-box-sub">Lance l\'import pour récupérer tes 5 derniers matchs FACEIT de moins d\'un mois. Pour des matchs plus anciens utilisé l\'upload manuel de demo. FragValue les analysera automatiquement en arrière-plan et tu seras notifie des qu\'ils sont prêts.</div>' +
-      '<button class="btn-import" onclick="importHistory()">' +
-      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>' +
-      'Importer mes matchs</button>' +
-      '</div>';
+    el.innerHTML = (window.FV && FV.emptyState)
+      ? FV.emptyState({
+          icon: 'match',
+          title: 'Aucun match pour l\'instant',
+          message: 'Lance l\'import pour recuperer tes 5 derniers matchs FACEIT (< 30 jours). Pour des matchs plus anciens, upload la demo manuellement. FragValue analyse en arriere-plan et te notifie des que c\'est pret.',
+          cta: { label: 'Importer mes matchs', onclick: 'importHistory()' },
+          hint: 'Tu peux aussi uploader une demo .dem depuis la page Nouvelle demo',
+        })
+      : '<div class="empty-box"><div class="empty-box-title">AUCUN MATCH POUR L\'INSTANT</div></div>';
     return;
   }
   el.innerHTML = '<div class="matches-grid">' + matches.map(renderCard).join('') + '</div>';
@@ -674,6 +682,7 @@ document.addEventListener('click', (e) => {
 init();
 </script>
 <script src="/nav.js"></script>
+<script src="/empty-state.js"></script>
 <script src="/teaser.js"></script>
 <script>
   // Waitlist FACEIT sync : en attendant l'API officielle, on capture

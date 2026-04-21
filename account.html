@@ -494,14 +494,29 @@ async function loadFeedbacks() {
     if (changed) writeSeenIds(seen);
     refreshFeedbackBadge(); // recompute
   } catch (e) {
-    target.innerHTML = `<div class="fb-empty">Erreur de chargement : ${escapeHtml(e.message)}</div>`;
+    target.innerHTML = (window.FV && FV.emptyState)
+      ? FV.emptyState({
+          icon: 'error',
+          title: 'Erreur de chargement',
+          message: escapeHtml(e.message || 'Impossible de charger tes feedbacks.'),
+          cta: { label: 'Reessayer', onclick: 'location.reload()' },
+          variant: 'compact',
+        })
+      : `<div class="fb-empty">Erreur de chargement : ${escapeHtml(e.message)}</div>`;
   }
 }
 
 function renderFeedbacks(feedbacks) {
   const target = document.getElementById('feedbackList');
   if (!feedbacks.length) {
-    target.innerHTML = `<div class="fb-empty">Tu n'as pas encore envoyé de feedback. Le bouton vert en bas à droite est là pour ça.</div>`;
+    target.innerHTML = (window.FV && FV.emptyState)
+      ? FV.emptyState({
+          icon: 'feedback',
+          title: 'Pas encore de feedback',
+          message: 'Tu n\'as pas encore envoye de ticket. Bug, idee, souci de perf : le bouton vert en bas a droite ouvre le formulaire. On lit tout et on repond.',
+          hint: 'Chaque retour aide FragValue a progresser. Merci d\'avance.',
+        })
+      : `<div class="fb-empty">Tu n'as pas encore envoyé de feedback. Le bouton vert en bas à droite est là pour ça.</div>`;
     return;
   }
   target.innerHTML = feedbacks.map(f => {
@@ -866,5 +881,6 @@ async function deleteAccount() {
 init();
 </script>
 <script src="/nav.js"></script>
+<script src="/empty-state.js"></script>
 </body>
 </html>

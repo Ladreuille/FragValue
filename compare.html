@@ -179,9 +179,15 @@
     .stat-val.mid{color:var(--text2)}
 
     /* ── Empty state ────────────────────────────────────── */
-    .empty-state{text-align:center;padding:60px 24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px}
-    .empty-title{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em;margin-bottom:8px}
-    .empty-sub{font-family:var(--mono);font-size:13px;color:var(--text2);max-width:380px;margin:0 auto;line-height:1.5}
+    .empty-state{position:relative;text-align:center;padding:64px 24px;background:linear-gradient(180deg, rgba(184,255,87,.02) 0%, var(--surface) 80%);border:1px solid rgba(184,255,87,.1);border-radius:14px;margin-bottom:16px;overflow:hidden}
+    .empty-state::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(184,255,87,.03) 1px, transparent 1px),linear-gradient(90deg, rgba(184,255,87,.03) 1px, transparent 1px);background-size:28px 28px;mask-image:radial-gradient(circle at center, rgba(0,0,0,.9) 0%, transparent 65%);-webkit-mask-image:radial-gradient(circle at center, rgba(0,0,0,.9) 0%, transparent 65%);pointer-events:none}
+    .empty-state::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:280px;height:100px;background:radial-gradient(ellipse at center, rgba(184,255,87,.06) 0%, transparent 70%);pointer-events:none}
+    .empty-state > *{position:relative;z-index:1}
+    .empty-ico{display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:radial-gradient(circle, rgba(184,255,87,.12) 0%, rgba(184,255,87,.02) 70%);border:1px solid rgba(184,255,87,.18);color:var(--accent);margin-bottom:18px;animation:empty-float 3s ease-in-out infinite;box-shadow:0 0 24px rgba(184,255,87,.06)}
+    .empty-ico svg{width:34px;height:34px}
+    @keyframes empty-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    .empty-title{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em;margin-bottom:8px;text-transform:uppercase}
+    .empty-sub{font-family:var(--mono);font-size:13px;color:var(--text2);max-width:420px;margin:0 auto;line-height:1.6}
 
     /* ── Pro gate ───────────────────────────────────────── */
     .pro-gate{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:14px;padding:40px 32px;text-align:center;margin:20px auto;max-width:520px}
