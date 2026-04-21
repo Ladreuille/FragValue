@@ -815,18 +815,24 @@ async function sendPasswordReset() {
   btn.disabled = true; btn.textContent = '...';
   msg.className = 'settings-msg'; msg.textContent = '';
   try {
-    // Force prod origin pour eviter redirection vers preview Vercel
-    const authOrigin = (['localhost', '127.0.0.1'].includes(window.location.hostname) || window.location.hostname.startsWith('192.168.'))
-      ? window.location.origin : 'https://fragvalue.com';
-    const { error } = await sb.auth.resetPasswordForEmail(session.user.email, {
-      redirectTo: authOrigin + '/account.html',
+    // On passe par notre endpoint custom /api/password-reset au lieu de
+    // sb.auth.resetPasswordForEmail. Raison : le flow Supabase natif envoie
+    // un template email generique (branded Supabase) alors que notre endpoint
+    // utilise le design FragValue via Resend.
+    // L'endpoint genere le lien via supabase admin generateLink puis envoie
+    // via notre template HTML dark+lime.
+    const res = await fetch('/api/password-reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: session.user.email }),
     });
-    if (error) throw error;
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur envoi');
     msg.className = 'settings-msg ok';
-    msg.textContent = `Email envoyé à ${session.user.email}. Vérifie ta boîte de réception.`;
+    msg.textContent = `Email envoyé à ${session.user.email}. Vérifie ta boîte de réception (et tes spams si besoin).`;
   } catch(e) {
     msg.className = 'settings-msg err';
-    msg.textContent = 'Erreur : ' + e.message;
+    msg.textContent = 'Erreur : ' + (e.message || 'envoi impossible');
   } finally {
     btn.disabled = false; btn.textContent = 'Envoyer le lien';
   }
