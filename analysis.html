@@ -248,7 +248,58 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
 .empty-msg{text-align:center;padding:32px;font-size:11px;color:var(--text3)}
 
+/* PRO INSIGHTS : ce que les pros auraient fait */
+.pro-insights-card{padding:24px 28px}
+.pro-insights-intro{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:18px}
+.pro-insights-trigger{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:linear-gradient(135deg,rgba(184,255,87,.1),rgba(184,255,87,.03));border:1px solid rgba(184,255,87,.3);color:var(--accent);padding:14px 22px;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%;justify-content:center}
+.pro-insights-trigger:hover:not(:disabled){border-color:var(--accent);background:linear-gradient(135deg,rgba(184,255,87,.15),rgba(184,255,87,.05));transform:translateY(-1px)}
+.pro-insights-trigger:disabled{opacity:.5;cursor:not-allowed}
+.pro-insights-trigger.loading{animation:qa-dots 1.2s steps(4,end) infinite}
+.pro-insights-meta{font-size:9px;color:var(--text3);font-weight:400;letter-spacing:.04em;text-transform:none;margin-left:6px}
+.pro-insights-list{display:flex;flex-direction:column;gap:14px}
+.pro-insight{background:var(--card);border:1px solid var(--border2);border-left:3px solid var(--accent);border-radius:var(--r);padding:18px 22px;position:relative}
+.pro-insight-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.pro-insight-round{font-family:var(--display);font-size:22px;color:var(--accent);line-height:1}
+.pro-insight-type{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border:1px solid var(--border2);border-radius:40px}
+.pro-insight-problem{font-size:12px;color:var(--text);line-height:1.6;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--border2)}
+.pro-insight-problem::before{content:'DIAGNOSTIC';display:block;font-family:var(--mono);font-size:9px;color:var(--danger);letter-spacing:.14em;margin-bottom:6px;font-weight:700}
+.pro-insight-pro{font-size:12px;color:var(--text);line-height:1.65;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--border2)}
+.pro-insight-pro::before{content:'APPROCHE PRO';display:block;font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:.14em;margin-bottom:6px;font-weight:700}
+.pro-insight-drill{font-size:12px;color:var(--text);line-height:1.5}
+.pro-insight-drill::before{content:'EXERCICE';display:block;font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:.14em;margin-bottom:6px;font-weight:700}
+.pro-insights-footer{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:16px;padding-top:12px;border-top:1px solid var(--border);letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+
+/* COACH Q&A : pose une question */
+.qa-card{padding:24px 28px}
+.qa-intro{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:16px}
+.qa-suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.qa-chip{background:var(--card);border:1px solid var(--border2);border-radius:40px;padding:7px 14px;font-family:var(--mono);font-size:11px;color:var(--text2);cursor:pointer;transition:all .15s;letter-spacing:.02em}
+.qa-chip:hover{border-color:var(--accent);color:var(--accent);background:rgba(184,255,87,.04)}
+.qa-form{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:14px 16px;margin-bottom:12px}
+.qa-input{width:100%;background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.6;resize:vertical;min-height:48px;outline:none}
+.qa-input::placeholder{color:var(--text3)}
+.qa-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.qa-counter{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.06em}
+.qa-counter.over{color:var(--danger)}
+.qa-submit{background:var(--accent);color:#000;border:none;padding:10px 18px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .15s}
+.qa-submit:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 12px rgba(184,255,87,.25)}
+.qa-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.qa-submit.loading .qa-submit-txt{animation:qa-dots 1.2s steps(4,end) infinite}
+@keyframes qa-dots{0%{opacity:1}50%{opacity:.4}100%{opacity:1}}
+.qa-response{background:linear-gradient(180deg,rgba(184,255,87,.03) 0%,var(--card) 100%);border:1px solid rgba(184,255,87,.25);border-left:3px solid var(--accent);border-radius:var(--r);padding:18px 22px;animation:qa-fade .3s ease}
+.qa-response.error{border-color:rgba(255,68,68,.3);border-left-color:var(--danger);background:rgba(255,68,68,.03)}
+.qa-response-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.qa-response.error .qa-response-label{color:var(--danger)}
+.qa-response-label svg{width:12px;height:12px}
+.qa-response-text{font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap}
+.qa-response-meta{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:14px;padding-top:10px;border-top:1px solid var(--border);letter-spacing:.04em}
+@keyframes qa-fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
 @media(max-width:768px){
+  .qa-card{padding:18px 16px}
+  .qa-input{font-size:12px}
+  .qa-footer{flex-direction:column;gap:10px;align-items:stretch}
+  .qa-submit{justify-content:center}
   .kpi-row{grid-template-columns:repeat(2,1fr)}
   .minimaps{grid-template-columns:1fr 1fr}
   .match-summary{padding:18px 16px}
@@ -382,6 +433,39 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   <!-- 10. BILAN -->
   <div class="sl" id="section-bilan">Bilan tactique</div>
   <div class="card coach-card" id="coachCard"><div class="empty-msg">Chargement...</div></div>
+
+  <!-- 11. PRO INSIGHTS : ce que les pros auraient fait -->
+  <div class="sl" id="section-pros">Ce que les pros auraient fait</div>
+  <div class="card pro-insights-card" id="proInsightsCard">
+    <div class="pro-insights-intro">
+      Analyse des 3 moments les plus critiques de ton match : diagnostic, approche pro et exercice a travailler.
+    </div>
+    <div id="proInsightsBody">
+      <button type="button" class="pro-insights-trigger" onclick="generateProInsights()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
+        Generer l'analyse pro
+        <span class="pro-insights-meta">5 analyses par jour · Claude IA</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 12. COACH Q&A : pose une question sur ce match a Claude IA -->
+  <div class="sl" id="section-qa">Pose ta question</div>
+  <div class="card qa-card">
+    <div class="qa-intro">Une question sur ce match ? Le Coach IA te repond en se basant sur les stats et le deroulement que tu viens de voir. Limite de 10 questions par jour.</div>
+    <div class="qa-suggestions" id="qaSuggestions"></div>
+    <form class="qa-form" id="qaForm" onsubmit="return submitQuestion(event)">
+      <textarea class="qa-input" id="qaInput" placeholder="Ex : Pourquoi j'ai perdu le round 14 ? Qu'est-ce que j'aurais du faire differemment en CT ?" maxlength="500" rows="2"></textarea>
+      <div class="qa-footer">
+        <div class="qa-counter"><span id="qaCharCount">0</span>/500</div>
+        <button type="submit" class="qa-submit" id="qaSubmitBtn">
+          <span class="qa-submit-txt">Demander au Coach IA</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </form>
+    <div class="qa-response" id="qaResponse" style="display:none"></div>
+  </div>
 </div>
 
 <script>
@@ -746,6 +830,351 @@ async function init() {
   renderPerformance(kills, rounds, computed);
   renderMoments(kills, rounds, computed);
   renderCoachBilan(computed, kills, rounds);
+  initCoachQA(computed, rounds);
+}
+
+// =====================================================================
+// COACH Q&A : pose une question sur ce match a Claude IA
+// =====================================================================
+let _qaContext = null;
+
+function initCoachQA(c, rounds) {
+  // Stocke le contexte match pour construire le prompt au moment de la question
+  const you = getTargetPlayer(c);
+  _qaContext = {
+    map: (mapName || '').replace('de_', '').toUpperCase(),
+    score: [c.team3Score, c.team2Score],
+    winner: c.winner === 3 ? 'CT' : c.winner === 2 ? 'T' : '-',
+    rounds: c.totalRounds,
+    targetPlayer: you ? {
+      name: you.name,
+      fvr: you.fvr,
+      kast: you.kast,
+      adr: you.adr,
+      hsPct: you.hsPct,
+      kd: you.diff,
+      kills: you.kills,
+      deaths: you.deaths,
+      fk: you.fk,
+      fd: you.fd,
+    } : null,
+    matchStats: (c.stats || []).map(p => ({
+      name: p.name,
+      team: p.team === 3 ? 'CT' : 'T',
+      fvr: p.fvr,
+      kast: p.kast,
+      adr: p.adr,
+      hsPct: p.hsPct,
+      kills: p.kills,
+      deaths: p.deaths,
+    })),
+  };
+
+  // Suggestions de questions pre-remplies pour lever la friction de la page blanche
+  const you2 = _qaContext.targetPlayer;
+  const suggestions = [];
+  if (you2) {
+    suggestions.push("Pourquoi mon FV Rating est de " + you2.fvr.toFixed(2) + " sur ce match ?");
+    if (you2.fd > you2.fk) suggestions.push("Comment ameliorer mes duels d'ouverture ?");
+    if (you2.kast < 65) suggestions.push("Pourquoi mon KAST est bas ?");
+    suggestions.push("Sur quelle map je devrais m'entrainer d'apres ce match ?");
+    suggestions.push("Donne-moi 3 actions concretes pour progresser");
+  }
+  const sugContainer = document.getElementById('qaSuggestions');
+  if (sugContainer) {
+    sugContainer.innerHTML = suggestions.slice(0, 4).map(s =>
+      '<button type="button" class="qa-chip" onclick="fillQuestion(\'' + s.replace(/'/g, "\\'") + '\')">' + escHtml(s) + '</button>'
+    ).join('');
+  }
+
+  // Counter caracteres en live
+  const input = document.getElementById('qaInput');
+  const counter = document.getElementById('qaCharCount');
+  if (input && counter) {
+    input.addEventListener('input', () => {
+      const len = input.value.length;
+      counter.textContent = len;
+      counter.parentElement.classList.toggle('over', len > 500);
+    });
+  }
+}
+
+function fillQuestion(q) {
+  const input = document.getElementById('qaInput');
+  if (!input) return;
+  input.value = q;
+  input.focus();
+  document.getElementById('qaCharCount').textContent = q.length;
+}
+
+async function submitQuestion(e) {
+  e.preventDefault();
+  const input = document.getElementById('qaInput');
+  const btn = document.getElementById('qaSubmitBtn');
+  const resp = document.getElementById('qaResponse');
+  const question = input.value.trim();
+
+  if (!question) {
+    input.focus();
+    return false;
+  }
+  if (question.length > 500) {
+    showQAResponse('La question est trop longue (500 caracteres max).', null, true);
+    return false;
+  }
+
+  // Check session auth
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) {
+    showQAResponse('Connecte-toi pour utiliser le Coach IA.', null, true);
+    return false;
+  }
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+  const btnTxt = btn.querySelector('.qa-submit-txt');
+  const originalLabel = btnTxt.textContent;
+  btnTxt.textContent = 'Le Coach reflechit';
+  resp.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/coach-qa', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+      body: JSON.stringify({ question, context: _qaContext }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (res.status === 403) {
+        showQAResponse(data.message || 'Fonctionnalite Pro uniquement.', null, true);
+      } else if (res.status === 429) {
+        showQAResponse(data.message || 'Tu as atteint ta limite quotidienne.', null, true);
+      } else {
+        showQAResponse(data.message || data.error || 'Erreur lors de la requete.', null, true);
+      }
+      return false;
+    }
+    showQAResponse(data.answer, data.tokensUsed, false);
+  } catch (err) {
+    showQAResponse('Erreur reseau : ' + (err.message || 'inconnue'), null, true);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btnTxt.textContent = originalLabel;
+  }
+  return false;
+}
+
+function showQAResponse(text, tokens, isError) {
+  const resp = document.getElementById('qaResponse');
+  resp.className = 'qa-response' + (isError ? ' error' : '');
+  const label = isError ? 'Erreur' : 'Reponse du Coach IA';
+  const icon = isError
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>';
+  const meta = tokens ? '<div class="qa-response-meta">' + tokens + ' tokens · Claude Haiku 4.5</div>' : '';
+  resp.innerHTML = '<div class="qa-response-label">' + icon + label + '</div><div class="qa-response-text">' + escHtml(text) + '</div>' + meta;
+  resp.style.display = 'block';
+  resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// =====================================================================
+// PRO INSIGHTS : ce que les pros auraient fait (3 moments cles)
+// =====================================================================
+// Detecte les 3 situations les plus critiques du joueur cible :
+//   1) Clutches perdus (dernier en vie, contre 2+)
+//   2) Duels d'ouverture perdus
+//   3) Rounds a faible impact (0 kill + mort)
+// Envoi au backend qui appelle Claude avec prompt structure.
+function detectCriticalSituations(c, kills, rounds) {
+  const you = getTargetPlayer(c);
+  if (!you) return [];
+  const nonKnife = rounds.filter(r => !r.isKnife);
+  const youTeam = c.playerTeam[you.name] || 0;
+  const situations = [];
+
+  // Helper : side effectif au round (swap apres mi-temps)
+  function sideAtRound(roundIdx, baseTeam) {
+    return roundIdx < 12 ? baseTeam : (baseTeam === 2 ? 3 : baseTeam === 3 ? 2 : 0);
+  }
+
+  // 1) Clutches perdus : joueur seul survivant, round perdu
+  nonKnife.forEach((r, i) => {
+    const roundKills = kills.filter(k => k.round === (r.round || (i + 1)));
+    const teamDeathsThisRound = roundKills.filter(k => {
+      return (c.playerTeam[k.victim] || 0) === youTeam;
+    });
+    // Le joueur cible n'est pas mort mais tous ses coequipiers sont morts (4 deaths)
+    const youDied = roundKills.some(k => k.victim === you.name);
+    if (!youDied && teamDeathsThisRound.length === 4) {
+      const effectiveSide = sideAtRound(i, youTeam);
+      const sideLabel = effectiveSide === 3 ? 'CT' : 'T';
+      const won = r.winner === effectiveSide;
+      if (!won) {
+        situations.push({
+          roundNum: r.displayNum || r.round || (i + 1),
+          outcome: 'lost',
+          situationType: 'clutch',
+          severity: 10,
+          details: `Clutch 1v? en ${sideLabel}. Tous tes coequipiers sont tombes. Tu as perdu le round.`,
+        });
+      }
+    }
+  });
+
+  // 2) Duels d'ouverture perdus : joueur first death sur un round
+  const firstDeaths = [];
+  nonKnife.forEach((r, i) => {
+    const rNum = r.round || (i + 1);
+    const roundKills = kills.filter(k => k.round === rNum).sort((a, b) => a.tick - b.tick);
+    if (roundKills.length && roundKills[0].victim === you.name) {
+      const effectiveSide = sideAtRound(i, youTeam);
+      const sideLabel = effectiveSide === 3 ? 'CT' : 'T';
+      const attacker = roundKills[0].attacker;
+      const weapon = roundKills[0].weapon || 'arme inconnue';
+      firstDeaths.push({
+        roundNum: r.displayNum || rNum,
+        outcome: r.winner === effectiveSide ? 'won' : 'lost',
+        situationType: 'lost_opening',
+        severity: 6,
+        details: `Duel d'ouverture en ${sideLabel} perdu contre ${attacker} (${weapon}). ${r.winner === effectiveSide ? 'Tes coequipiers ont trade/gagne le round' : 'Round perdu'}.`,
+      });
+    }
+  });
+  // Prendre les 2 first deaths les plus impactants (round perdus en priorite)
+  firstDeaths.sort((a, b) => (a.outcome === 'lost' ? -1 : 1) - (b.outcome === 'lost' ? -1 : 1));
+  situations.push(...firstDeaths.slice(0, 2));
+
+  // 3) Rounds a faible impact : 0 kill + mort + round perdu (gap a combler)
+  nonKnife.forEach((r, i) => {
+    const rNum = r.round || (i + 1);
+    const yourKillsRound = kills.filter(k => k.round === rNum && k.attacker === you.name).length;
+    const youDied = kills.some(k => k.round === rNum && k.victim === you.name);
+    const effectiveSide = sideAtRound(i, youTeam);
+    const roundLost = r.winner !== effectiveSide && r.winner !== 0;
+    if (yourKillsRound === 0 && youDied && roundLost) {
+      const sideLabel = effectiveSide === 3 ? 'CT' : 'T';
+      situations.push({
+        roundNum: r.displayNum || rNum,
+        outcome: 'lost',
+        situationType: 'low_impact',
+        severity: 4,
+        details: `En ${sideLabel}, tu as finis ce round sans kill et mort. Round perdu.`,
+      });
+    }
+  });
+
+  // Prioriser par severity desc, deduplicate par round, garder max 3
+  situations.sort((a, b) => b.severity - a.severity);
+  const seen = new Set();
+  const unique = [];
+  for (const s of situations) {
+    if (seen.has(s.roundNum)) continue;
+    seen.add(s.roundNum);
+    unique.push(s);
+    if (unique.length >= 3) break;
+  }
+  return unique;
+}
+
+async function generateProInsights() {
+  const body = document.getElementById('proInsightsBody');
+  const trigger = body.querySelector('.pro-insights-trigger');
+  if (trigger) trigger.disabled = true;
+
+  // Recupere le contexte stocke par initCoachQA (appele apres renderCoachBilan)
+  if (!_qaContext) {
+    body.innerHTML = '<div class="empty-msg">Contexte match non disponible.</div>';
+    return;
+  }
+
+  // Retrouve kills et rounds depuis demoData
+  const kills = demoData?.kills || [];
+  const rounds = demoData?.rounds || [];
+  const computed = computeAllStats(kills, rounds, demoData?.playerStats);
+  const situations = detectCriticalSituations(computed, kills, rounds);
+
+  if (!situations.length) {
+    body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">
+      Aucun moment critique detecte dans ce match. Tu as bien joue !
+    </div>`;
+    return;
+  }
+
+  // Loading state
+  if (trigger) trigger.classList.add('loading');
+  const originalHtml = body.innerHTML;
+  body.innerHTML = `
+    <div style="text-align:center;padding:32px 20px;color:var(--text2);font-size:12px;font-family:var(--mono)">
+      <div style="margin-bottom:10px">Le Coach IA analyse ${situations.length} moment${situations.length > 1 ? 's' : ''} critique${situations.length > 1 ? 's' : ''}...</div>
+      <div style="color:var(--text3);font-size:10px">Peut prendre 5-10 secondes</div>
+    </div>
+  `;
+
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) {
+    body.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Connecte-toi pour utiliser Pro Insights.</div>';
+    return;
+  }
+
+  try {
+    const you = _qaContext.targetPlayer || {};
+    const res = await fetch('/api/pro-insights', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+      body: JSON.stringify({
+        context: {
+          map: _qaContext.map,
+          side: 'both',
+          targetName: you.name || 'anonyme',
+          situations,
+        },
+      }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      body.innerHTML = `<div class="empty-msg" style="color:var(--danger)">${escHtml(data.message || data.error || 'Erreur')}</div>`;
+      return;
+    }
+
+    renderProInsights(data.insights, data.cached, data.tokensUsed);
+  } catch (e) {
+    body.innerHTML = `<div class="empty-msg" style="color:var(--danger)">Erreur reseau : ${escHtml(e.message || 'inconnue')}</div>`;
+  }
+}
+
+function renderProInsights(insights, cached, tokens) {
+  const body = document.getElementById('proInsightsBody');
+  if (!insights || !insights.length) {
+    body.innerHTML = '<div class="empty-msg">Aucune analyse disponible.</div>';
+    return;
+  }
+  const cards = insights.map(ins => `
+    <div class="pro-insight">
+      <div class="pro-insight-header">
+        <div class="pro-insight-round">R${escHtml(ins.roundNum)}</div>
+        <div class="pro-insight-type">${ins.situationType === 'clutch' ? 'Clutch' : ins.situationType === 'lost_opening' ? 'Duel ouverture' : 'Impact faible'}</div>
+      </div>
+      <div class="pro-insight-problem">${escHtml(ins.problem || '')}</div>
+      <div class="pro-insight-pro">${escHtml(ins.proApproach || '')}</div>
+      <div class="pro-insight-drill">${escHtml(ins.drill || '')}</div>
+    </div>
+  `).join('');
+  const footer = `
+    <div class="pro-insights-footer">
+      <span>${insights.length} analyse${insights.length > 1 ? 's' : ''} ${cached ? '(cache 1h)' : 'fraiche' + (insights.length > 1 ? 's' : '')}</span>
+      <span>${tokens ? tokens + ' tokens · ' : ''}Claude Haiku 4.5</span>
+    </div>
+  `;
+  body.innerHTML = '<div class="pro-insights-list">' + cards + '</div>' + footer;
 }
 
 // =====================================================================
@@ -777,19 +1206,41 @@ function fmtDelta(val, isHigherBetter) {
   };
 }
 
-function renderYourMatch(c, rounds) {
+async function renderYourMatch(c, rounds) {
   const you = getTargetPlayer(c);
   if (!you) {
     document.getElementById('yourMatchBlock').innerHTML = '<div class="empty-msg">Aucun joueur ciblé pour cette démo.</div>';
     return;
   }
 
-  // Moyenne du match (tous joueurs) pour benchmarks
+  // Fetch async : moyenne perso sur les 20 derniers matchs (si dispo)
+  // Fallback sur moyenne du match si API indisponible ou nouveau joueur
+  let historical = null;
+  try {
+    const r = await fetch('/api/player-history?nickname=' + encodeURIComponent(you.name) + '&limit=20');
+    if (r.ok) {
+      const d = await r.json();
+      if (d.matchCount >= 2) historical = d;
+    }
+  } catch (_) {}
+
+  // Si on a des donnees historiques -> compare vs moyenne perso 20 matchs
+  // Sinon fallback sur moyenne du match courant
   const n = c.stats.length || 1;
-  const avgFvr  = c.stats.reduce((s, p) => s + (p.fvr || 0), 0) / n;
-  const avgAdr  = c.stats.reduce((s, p) => s + (p.adr || 0), 0) / n;
-  const avgKast = c.stats.reduce((s, p) => s + (p.kast || 0), 0) / n;
-  const avgHs   = c.stats.reduce((s, p) => s + (p.hsPct || 0), 0) / n;
+  let avgFvr, avgAdr, avgKast, avgHs, comparisonLabel;
+  if (historical && historical.averages) {
+    avgFvr  = historical.averages.fvr;
+    avgAdr  = historical.averages.adr;
+    avgKast = historical.averages.kast;
+    avgHs   = historical.averages.hsPct;
+    comparisonLabel = 'vs ta moy ' + historical.matchCount + 'M';
+  } else {
+    avgFvr  = c.stats.reduce((s, p) => s + (p.fvr || 0), 0) / n;
+    avgAdr  = c.stats.reduce((s, p) => s + (p.adr || 0), 0) / n;
+    avgKast = c.stats.reduce((s, p) => s + (p.kast || 0), 0) / n;
+    avgHs   = c.stats.reduce((s, p) => s + (p.hsPct || 0), 0) / n;
+    comparisonLabel = 'vs moy match';
+  }
 
   // Rank (1-indexed) par FV Rating descendant
   const rank = [...c.stats].sort((a, b) => b.fvr - a.fvr).findIndex(p => p.name === you.name) + 1;
@@ -804,11 +1255,17 @@ function renderYourMatch(c, rounds) {
   });
   const avgOpen = othersOpen.length ? othersOpen.reduce((s, v) => s + v, 0) / othersOpen.length : 50;
 
+  // Injecte le label de comparaison dans fmtDelta pour preciser la reference
   const deltaFvr  = fmtDelta(you.fvr - avgFvr);
+  deltaFvr.text = deltaFvr.text.replace('vs moy', comparisonLabel);
   const deltaAdr  = fmtDelta(you.adr - avgAdr);
+  deltaAdr.text = deltaAdr.text.replace('vs moy', comparisonLabel);
   const deltaKast = fmtDelta(you.kast - avgKast);
+  deltaKast.text = deltaKast.text.replace('vs moy', comparisonLabel);
   const deltaHs   = fmtDelta(you.hsPct - avgHs);
+  deltaHs.text = deltaHs.text.replace('vs moy', comparisonLabel);
   const deltaOpen = fmtDelta(openPct - avgOpen);
+  deltaOpen.text = deltaOpen.text.replace('vs moy', comparisonLabel);
 
   const kd = you.deaths > 0 ? (you.kills / you.deaths) : you.kills;
   const fvrC = fvrColor(you.fvr);
