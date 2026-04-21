@@ -2260,7 +2260,7 @@ function rfSeek(e){const rect=document.getElementById('rfTimeline').getBoundingC
 
 // ── Sauvegarde FV Rating dans Supabase (_sbUrl / _sbAnon definis plus haut) ─
 
-// ── Export PDF Pro ────────────────────────────────────────────────
+// ── Export PDF Pro (v2 : focus joueur cible + bilan 3-col + QR code) ───
 async function exportPDF() {
   const isP = await fvIsPro();
   if(!isP){
@@ -2273,211 +2273,341 @@ async function exportPDF() {
   const playerStats = demoData?.playerStats || [];
   const totalR = rounds.length || 1;
   const mapName = (meta.map || '').replace('de_', '');
-  const date = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+  const matchDate = meta.date
+    ? new Date(meta.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' })
+    : new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
 
-  // Compute per-player extended stats
+  // ── Compute per-player extended stats ────────────────────────────
   const extended = playerStats.map(p => {
     const pK = kills.filter(k => k.attacker === p.name);
-    const pD = kills.filter(k => k.victim === p.name);
     const hsCount = pK.filter(k => k.isHeadshot).length;
-    const hsPct = pK.length > 0 ? Math.round(hsCount / pK.length * 100) : 0;
-    const adr = Math.round(pK.length * 80 / totalR);
-    const fvr = calcFvRating(p.kills, p.deaths, 0, totalR);
-    const kast = calcKAST(p.name, kills, rounds);
+    const hsPct = typeof p.hsPct === 'number' ? p.hsPct : (pK.length > 0 ? Math.round(hsCount / pK.length * 100) : 0);
+    const adr  = typeof p.adr === 'number' ? p.adr : Math.round(pK.length * 80 / totalR);
+    const kast = typeof p.kast === 'number' ? p.kast : calcKAST(p.name, kills, rounds);
+    const fvr  = typeof p.fvr === 'number' ? p.fvr : calcFvRating(p.kills, p.deaths, 0, totalR);
     const kd = p.kills - p.deaths;
-    // First kills: kills with the minimum tick in each round
-    let firstKills = 0;
+    // First kills + first deaths
+    let firstKills = 0, firstDeaths = 0;
     for (let r = 1; r <= totalR; r++) {
       const roundK = kills.filter(k => k.round === r);
       if (!roundK.length) continue;
       const minTick = Math.min(...roundK.map(k => k.tick));
       const first = roundK.find(k => k.tick === minTick);
       if (first && first.attacker === p.name) firstKills++;
+      if (first && first.victim === p.name) firstDeaths++;
     }
-    // Déterminé team from kills
     let team = 0;
     const asAttacker = kills.find(k => k.attacker === p.name);
     if (asAttacker) team = asAttacker.attackerTeam;
-    return { name: p.name, kills: p.kills, deaths: p.deaths, kd, hsPct, adr, fvr, kast, firstKills, team };
+    return { name: p.name, kills: p.kills, deaths: p.deaths, kd, hsPct, adr, fvr, kast, firstKills, firstDeaths, team };
   });
 
-  // Team split
   const ctPlayers = extended.filter(p => p.team === 3).sort((a, b) => b.fvr - a.fvr);
   const tPlayers = extended.filter(p => p.team === 2).sort((a, b) => b.fvr - a.fvr);
 
-  // Win counts
   let ctWins = 0, tWins = 0;
-  rounds.forEach((r, i) => { if (r.winner === 3) ctWins++; else if (r.winner === 2) tWins++; });
-
-  const winnerTeam = ctWins >= tWins ? 'CT' : 'T';
-  const loserTeam = winnerTeam === 'CT' ? 'T' : 'CT';
-  const winnerPlayers = winnerTeam === 'CT' ? ctPlayers : tPlayers;
-  const loserPlayers = winnerTeam === 'CT' ? tPlayers : ctPlayers;
+  rounds.forEach(r => { if (r.winner === 3) ctWins++; else if (r.winner === 2) tWins++; });
+  const winnerTeam = ctWins === tWins ? '-' : (ctWins > tWins ? 'CT' : 'T');
+  const loserTeam = winnerTeam === 'CT' ? 'T' : winnerTeam === 'T' ? 'CT' : '-';
+  const winnerPlayers = winnerTeam === 'CT' ? ctPlayers : winnerTeam === 'T' ? tPlayers : ctPlayers;
+  const loserPlayers = winnerTeam === 'CT' ? tPlayers : winnerTeam === 'T' ? ctPlayers : tPlayers;
   const winScore = Math.max(ctWins, tWins);
   const loseScore = Math.min(ctWins, tWins);
+  const scoreDiff = Math.abs(ctWins - tWins);
+  const resultTag = scoreDiff === 0 ? 'Egalite' : scoreDiff <= 3 ? 'Match serre' : scoreDiff <= 7 ? 'Victoire nette' : 'Domination';
 
-  // Highlights
-  const all = extended.sort((a, b) => b.fvr - a.fvr);
-  const bestKills = [...extended].sort((a, b) => b.kills - a.kills)[0] || {};
-  const bestRating = all[0] || {};
-  const bestKAST = [...extended].sort((a, b) => b.kast - a.kast)[0] || {};
-  const bestFirstKill = [...extended].sort((a, b) => b.firstKills - a.firstKills)[0] || {};
-  const bestHS = [...extended].sort((a, b) => b.hsPct - a.hsPct)[0] || {};
-  const bestADR = [...extended].sort((a, b) => b.adr - a.adr)[0] || {};
-  const worstRating = [...extended].sort((a, b) => a.fvr - b.fvr)[0] || {};
+  // ── Target player : focus du rapport ─────────────────────────────
+  const targetName = meta.targetPlayer;
+  let you = null;
+  if (targetName) you = extended.find(p => p.name === targetName);
+  if (!you) you = [...extended].sort((a, b) => b.fvr - a.fvr)[0]; // fallback MVP
+  const n = extended.length || 1;
+  const rank = [...extended].sort((a, b) => b.fvr - a.fvr).findIndex(p => p.name === you.name) + 1;
+  const youOpenTotal = (you.firstKills || 0) + (you.firstDeaths || 0);
+  const youOpenPct = youOpenTotal > 0 ? Math.round((you.firstKills / youOpenTotal) * 100) : 0;
 
-  const avgADR_winner = winnerPlayers.length ? Math.round(winnerPlayers.reduce((s, p) => s + p.adr, 0) / winnerPlayers.length) : 0;
-  const avgADR_loser = loserPlayers.length ? Math.round(loserPlayers.reduce((s, p) => s + p.adr, 0) / loserPlayers.length) : 0;
-  const teamAvgRating = winnerPlayers.length ? (winnerPlayers.reduce((s, p) => s + p.fvr, 0) / winnerPlayers.length).toFixed(2) : '0';
-  const ratingAbovePct = teamAvgRating > 0 ? Math.round(((bestRating.fvr - parseFloat(teamAvgRating)) / parseFloat(teamAvgRating)) * 100) : 0;
+  // Moyennes match pour benchmarks
+  const avgFvr  = extended.reduce((s, p) => s + (p.fvr || 0), 0) / n;
+  const avgAdr  = Math.round(extended.reduce((s, p) => s + (p.adr || 0), 0) / n);
+  const avgKast = Math.round(extended.reduce((s, p) => s + (p.kast || 0), 0) / n);
+  const avgHs   = Math.round(extended.reduce((s, p) => s + (p.hsPct || 0), 0) / n);
 
-  // First kill win rate
-  const fkRounds = [];
+  const deltaFvr  = (you.fvr - avgFvr);
+  const deltaAdr  = (you.adr - avgAdr);
+  const deltaKast = (you.kast - avgKast);
+  const deltaHs   = (you.hsPct - avgHs);
+
+  function fmtDelta(v, decimals) {
+    if (decimals === void 0) decimals = 0;
+    if (Math.abs(v) < 0.5 && decimals === 0) return '=';
+    if (Math.abs(v) < 0.01 && decimals > 0) return '=';
+    const rounded = v.toFixed(decimals);
+    return (v > 0 ? '+' : '') + rounded;
+  }
+
+  // ── Trading + signaux pour le bilan tactique 3-col ───────────────
+  let tradedDeaths = 0, totalDeaths = 0;
+  const playerTeam = {};
+  kills.forEach(k => {
+    if (k.attacker !== 'Unknown' && !playerTeam[k.attacker]) playerTeam[k.attacker] = k.attackerTeam;
+    if (k.victim !== 'Unknown' && !playerTeam[k.victim]) playerTeam[k.victim] = k.victimTeam;
+  });
+  kills.forEach(k => {
+    if (k.victim === 'Unknown') return;
+    totalDeaths++;
+    const traded = kills.some(tk =>
+      tk.round === k.round && tk.attacker !== 'Unknown' &&
+      tk.victim === k.attacker &&
+      tk.tick > k.tick && tk.tick - k.tick <= 320 &&
+      (playerTeam[tk.attacker] || 0) === (playerTeam[k.victim] || 0)
+    );
+    if (traded) tradedDeaths++;
+  });
+  const tradePct = totalDeaths > 0 ? Math.round((tradedDeaths / totalDeaths) * 100) : 0;
+
+  // First blood conversion
+  const firstBloods = [];
   for (let r = 1; r <= totalR; r++) {
-    const roundK = kills.filter(k => k.round === r);
-    if (!roundK.length) continue;
-    const minTick = Math.min(...roundK.map(k => k.tick));
-    const first = roundK.find(k => k.tick === minTick);
-    if (first && first.attacker === bestFirstKill.name) fkRounds.push(r);
+    const roundK = kills.filter(k => k.round === r).sort((a, b) => a.tick - b.tick);
+    if (roundK.length) {
+      const fb = roundK[0];
+      const rndWinner = rounds.find(x => x.round === r || x.displayNum === r)?.winner || 0;
+      firstBloods.push({ round: r, attackerTeam: fb.attackerTeam, roundWon: rndWinner === fb.attackerTeam });
+    }
   }
-  const fkWinCount = fkRounds.filter(r => {
-    const rd = rounds[r - 1];
-    return rd && rd.winner === bestFirstKill.team;
-  }).length;
-  const fkWinPct = fkRounds.length > 0 ? Math.round(fkWinCount / fkRounds.length * 100) : 0;
+  const fbConv = firstBloods.length > 0 ? Math.round((firstBloods.filter(f => f.roundWon).length / firstBloods.length) * 100) : 0;
 
+  const mvp = [...extended].sort((a, b) => b.fvr - a.fvr)[0] || {};
+  const lowest = [...extended].sort((a, b) => a.fvr - b.fvr)[0] || {};
+  const weakOpeners = extended.filter(p => p.firstDeaths > p.firstKills && p.firstDeaths >= 3);
+  const lowKast = extended.filter(p => p.kast < 60).sort((a, b) => a.kast - b.kast);
+  const lowHsPlayers = extended.filter(p => p.kills >= 5 && p.hsPct < 30);
+  const highKast = extended.filter(p => p.kast >= 75).sort((a, b) => b.kast - a.kast);
+  const adrGap = (mvp.adr || 0) - (lowest.adr || 0);
+
+  const strengths = [];
+  const warnings = [];
+  if (mvp.fvr >= 1.20) strengths.push({ label: mvp.name + ' dominant', detail: 'FV Rating ' + mvp.fvr.toFixed(2) + ' / ' + mvp.kills + '-' + mvp.deaths + ' / ' + mvp.adr + ' ADR', score: (mvp.fvr - 1) * 100 });
+  if (highKast.length) strengths.push({ label: 'Joueur constant : ' + highKast[0].name, detail: 'KAST ' + highKast[0].kast + '% · impact sur presque chaque round', score: highKast[0].kast - 75 });
+  if (fbConv >= 65) strengths.push({ label: 'Gestion post-opening solide', detail: fbConv + '% de rounds gagnes apres le 1er kill (pro avg ~70%)', score: fbConv - 65 });
+  if (tradePct >= 25) strengths.push({ label: 'Trading discipline', detail: tradePct + '% de morts tradees · binomes coordonnes', score: tradePct - 25 });
+  if ((mvp.hsPct || 0) >= 55) strengths.push({ label: 'Precision elite', detail: mvp.name + ' a ' + mvp.hsPct + '% HS', score: mvp.hsPct - 55 });
+  if (tradePct < 20) warnings.push({ label: 'Trading insuffisant', detail: tradePct + '% de morts tradees seulement', severity: 80 - tradePct, action: 'Jouer systematiquement en binome, ne pas etre a plus de 1s de reaction d\'un coequipier sur les contacts.' });
+  if (fbConv < 50) warnings.push({ label: 'Mauvaise conversion du 1er kill', detail: fbConv + '% seulement (pro avg ~70%)', severity: 70 - fbConv, action: 'Apres le 1er kill, prendre immediatement un choke ou des infos. Interdit de camper en 5v4.' });
+  if (weakOpeners.length) warnings.push({ label: weakOpeners.map(p => p.name).join(', ') + ' perd' + (weakOpeners.length > 1 ? 'ent' : '') + ' ses duels d\'ouverture', detail: weakOpeners.map(p => p.name + ' ' + p.firstKills + 'W-' + p.firstDeaths + 'L').join(' · '), severity: weakOpeners.reduce((s, p) => s + (p.firstDeaths - p.firstKills) * 8, 0), action: 'Revoir le positionnement d\'ouverture. Eviter les peeks agressifs sur les angles pre-aimes.' });
+  if (adrGap > 40) warnings.push({ label: 'Equipe desequilibree en damage', detail: 'Ecart ADR de ' + adrGap + ' points entre ' + mvp.name + ' et ' + lowest.name, severity: adrGap - 40, action: 'Redistribuer les roles : plus de responsabilite (fragger, entry) aux joueurs en retrait.' });
+  if (lowKast.length) warnings.push({ label: lowKast[0].name + ' absent des rounds', detail: 'KAST ' + lowKast[0].kast + '% · ne contribue pas a la majorite des rounds', severity: 60 - lowKast[0].kast, action: 'Changer son role : poste plus defensif ou lurks decisifs.' });
+  if (lowHsPlayers.length) warnings.push({ label: 'Precision faible', detail: lowHsPlayers.map(p => p.name + ' ' + p.hsPct + '%').join(' · ') + ' de headshots', severity: 30, action: 'Routine quotidienne : 20 min aim_botz pre-aim angles + recoil control.' });
+
+  const topStrengths = strengths.sort((a, b) => b.score - a.score).slice(0, 3);
+  const topWarnings = warnings.sort((a, b) => b.severity - a.severity).slice(0, 3);
+  const priority = topWarnings[0];
+
+  // ── Timeline HTML (barres colorees) ──────────────────────────────
+  let timelineHtml = '<div style="display:flex;gap:1px;margin:8px 0 20px;align-items:end;padding-bottom:14px">';
+  rounds.forEach((r, i) => {
+    const rNum = r.displayNum || r.round || (i + 1);
+    const bg = r.winner === 3 ? '#2d6bb5' : r.winner === 2 ? '#c9a028' : '#ddd';
+    const leftBorder = i === 12 ? 'border-left:2px dashed #b8ff57;margin-left:6px;padding-left:6px;' : '';
+    const label = (rounds.length <= 30 && (i % 3 === 0 || rounds.length <= 12)) ? '<span style="position:absolute;bottom:-13px;left:50%;transform:translateX(-50%);font-size:7px;color:#888">' + rNum + '</span>' : '';
+    timelineHtml += '<div style="flex:1;height:20px;background:' + bg + ';border-radius:2px;position:relative;' + leftBorder + '">' + label + '</div>';
+  });
+  timelineHtml += '</div>';
+
+  // ── Team table helper ────────────────────────────────────────────
   function fvrClass(v) { return v >= 1.0 ? 'good' : v >= 0.7 ? 'avg' : 'bad'; }
-  function fvrLabel(v) { if (v >= 1.5) return 'Exceptionnel'; if (v >= 1.2) return 'Très bon'; if (v >= 1.0) return 'Bon'; if (v >= 0.8) return 'Moyen'; return 'A améliorer'; }
-
-  function teamTable(players) {
+  function fvrLabel(v) { if (v >= 1.3) return 'Elite'; if (v >= 1.2) return 'Excellent'; if (v >= 1.05) return 'Bon'; if (v >= 0.9) return 'Correct'; if (v >= 0.75) return 'Insuffisant'; return 'Faible'; }
+  function teamTable(players, label) {
     if (!players.length) return '';
-    const best = players[0];
-    return '<table><thead><tr><th>Joueur</th><th>K</th><th>D</th><th>K-D</th><th>KAST%</th><th>ADR</th><th>HS%</th><th>FV Rating</th></tr></thead><tbody>' +
+    const tAvgAdr = Math.round(players.reduce((s, p) => s + p.adr, 0) / players.length);
+    const tAvgFvr = (players.reduce((s, p) => s + p.fvr, 0) / players.length).toFixed(2);
+    const tAvgKast = Math.round(players.reduce((s, p) => s + p.kast, 0) / players.length);
+    return '<table><thead><tr><th>Joueur</th><th>K</th><th>D</th><th>+/-</th><th>KAST</th><th>ADR</th><th>HS%</th><th>FV Rating</th></tr></thead><tbody>' +
       players.map(p => {
-        const bold = p.name === best.name ? 'font-weight:700;' : '';
-        return '<tr style="' + bold + '"><td>' + p.name + '</td><td>' + p.kills + '</td><td>' + p.deaths + '</td><td>' + (p.kd >= 0 ? '+' : '') + p.kd + '</td><td>' + p.kast + '%</td><td>' + p.adr + '</td><td>' + p.hsPct + '%</td><td class="' + fvrClass(p.fvr) + '">' + p.fvr.toFixed(2) + '</td></tr>';
-      }).join('') + '</tbody></table>';
+        const bold = p.name === you.name ? 'font-weight:900;background:rgba(184,255,87,.12) !important;' : '';
+        return '<tr style="' + bold + '"><td>' + p.name + (p.name === you.name ? ' (toi)' : '') + '</td><td>' + p.kills + '</td><td>' + p.deaths + '</td><td>' + (p.kd >= 0 ? '+' : '') + p.kd + '</td><td>' + p.kast + '%</td><td>' + p.adr + '</td><td>' + p.hsPct + '%</td><td class="' + fvrClass(p.fvr) + '">' + p.fvr.toFixed(2) + '</td></tr>';
+      }).join('') +
+      '<tr style="border-top:2px solid #000;font-style:italic;color:#666"><td>Moyenne ' + label + '</td><td>-</td><td>-</td><td>-</td><td>' + tAvgKast + '%</td><td>' + tAvgAdr + '</td><td>-</td><td>' + tAvgFvr + '</td></tr>' +
+      '</tbody></table>';
   }
 
-  // Rating ranking
-  const ranked = [...extended].sort((a, b) => b.fvr - a.fvr);
-  const maxFvr = ranked.length ? ranked[0].fvr : 1;
+  // ── Share URL + QR code ──────────────────────────────────────────
+  // Essaie de reutiliser un share URL stocke. Sinon fallback generic.
+  let shareUrl = sessionStorage.getItem('lastShareUrl') || 'https://fragvalue.com';
+  const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=2&bgcolor=ffffff&color=000000&data=' + encodeURIComponent(shareUrl);
+
+  // Delta color helper
+  function deltaColor(v, higherIsBetter) {
+    if (higherIsBetter === void 0) higherIsBetter = true;
+    if (Math.abs(v) < 0.01) return '#666';
+    return (v > 0) === higherIsBetter ? '#16a34a' : '#dc2626';
+  }
 
   const pw = window.open('', '_blank');
   if (!pw) return;
 
+  const ctScoreStyle = winnerTeam === 'CT' ? 'color:#000;font-weight:900' : 'color:#888;font-weight:700';
+  const tScoreStyle = winnerTeam === 'T' ? 'color:#000;font-weight:900' : 'color:#888;font-weight:700';
+
   pw.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"/>' +
-    '<title>FragValue Report - ' + mapName.toUpperCase() + '</title>' +
+    '<title>FragValue Report - ' + you.name + ' on ' + mapName.toUpperCase() + '</title>' +
     '<style>' +
     '* { margin: 0; padding: 0; box-sizing: border-box; }' +
-    'body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 12px; }' +
+    'body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 11px; line-height: 1.5; }' +
     '.page { padding: 32px 40px; page-break-after: always; }' +
     '.page:last-child { page-break-after: auto; }' +
-    'h1 { font-size: 36px; font-weight: 900; letter-spacing: -1px; }' +
-    'h2 { font-size: 16px; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 6px; margin: 24px 0 12px; }' +
-    'h3 { font-size: 13px; font-weight: 700; margin: 16px 0 8px; }' +
-    'table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }' +
-    'th { background: #000; color: #fff; padding: 6px 8px; font-size: 10px; text-transform: uppercase; text-align: left; }' +
-    'td { padding: 6px 8px; border-bottom: 1px solid #eee; }' +
+    'h1 { font-size: 32px; font-weight: 900; letter-spacing: -1px; }' +
+    'h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 5px; margin: 20px 0 10px; letter-spacing: .04em; }' +
+    'h3 { font-size: 12px; font-weight: 700; margin: 12px 0 6px; }' +
+    'table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 10px; }' +
+    'th { background: #000; color: #fff; padding: 6px 8px; font-size: 9px; text-transform: uppercase; text-align: left; letter-spacing: .04em; }' +
+    'td { padding: 5px 8px; border-bottom: 1px solid #eee; }' +
     'tr:nth-child(even) td { background: #f9f9f9; }' +
-    '.score { font-size: 28px; font-weight: 900; margin: 12px 0; }' +
-    '.highlight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }' +
-    '.highlight-item { padding: 10px 14px; background: #f5f5f5; }' +
-    '.highlight-label { font-size: 10px; text-transform: uppercase; color: #666; }' +
-    '.highlight-value { font-size: 14px; font-weight: 700; margin-top: 2px; }' +
-    '.analysis-block { background: #f9f9f9; border-left: 4px solid #000; padding: 16px; margin: 8px 0; line-height: 1.6; font-size: 12px; }' +
-    '.bar-wrap { background: #eee; height: 6px; border-radius: 3px; display: inline-block; width: 80px; vertical-align: middle; }' +
-    '.bar-fill { background: #000; height: 6px; border-radius: 3px; }' +
+    '.hero-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; }' +
+    '.score-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; padding: 16px 0; border-top: 1px solid #000; border-bottom: 1px solid #000; margin-bottom: 20px; }' +
+    '.score-team { text-align: center; }' +
+    '.score-team .label { font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: .1em; }' +
+    '.score-team .num { font-size: 56px; font-weight: 900; line-height: 1; }' +
+    '.score-mid { text-align: center; }' +
+    '.score-mid .map { font-size: 22px; font-weight: 900; letter-spacing: 2px; }' +
+    '.score-mid .tag { font-size: 10px; color: #666; margin-top: 4px; text-transform: uppercase; letter-spacing: .08em; }' +
+    '.your-match-card { border: 2px solid #000; padding: 16px 18px; margin-bottom: 16px; }' +
+    '.your-match-card .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }' +
+    '.your-match-card .nick { font-weight: 900; font-size: 14px; }' +
+    '.your-match-card .rank { font-size: 10px; color: #666; }' +
+    '.your-match-card .fvr { font-size: 36px; font-weight: 900; line-height: 1; }' +
+    '.your-match-card .fvr-lbl { display: inline-block; padding: 3px 8px; border: 1px solid #000; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-left: 8px; vertical-align: 8px; }' +
+    '.your-match-card .kpi-line { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc; }' +
+    '.your-match-card .kpi { text-align: center; }' +
+    '.your-match-card .kpi .v { font-size: 18px; font-weight: 900; line-height: 1; }' +
+    '.your-match-card .kpi .l { font-size: 8px; text-transform: uppercase; color: #666; margin-top: 2px; letter-spacing: .06em; }' +
+    '.your-match-card .kpi .d { font-size: 9px; margin-top: 3px; font-weight: 700; }' +
+    '.bilan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0 14px; }' +
+    '.bilan-col { border: 1px solid #000; padding: 12px 14px; }' +
+    '.bilan-col.strengths { border-color: #16a34a; background: #f0fdf4; }' +
+    '.bilan-col.warnings { border-color: #d97706; background: #fefce8; }' +
+    '.bilan-col .title { font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: .08em; }' +
+    '.bilan-col.strengths .title { color: #16a34a; }' +
+    '.bilan-col.warnings .title { color: #d97706; }' +
+    '.bilan-col ul { list-style: none; padding: 0; }' +
+    '.bilan-col li { margin-bottom: 8px; font-size: 10px; line-height: 1.4; }' +
+    '.bilan-col li strong { display: block; color: #000; margin-bottom: 2px; }' +
+    '.bilan-col li span { color: #555; font-size: 9px; }' +
+    '.priority-box { background: #000; color: #fff; padding: 16px 20px; margin: 14px 0 20px; }' +
+    '.priority-box .label { font-size: 10px; color: #b8ff57; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px; }' +
+    '.priority-box .text { font-size: 12px; line-height: 1.5; }' +
+    '.priority-box .text strong { color: #b8ff57; font-size: 13px; display: block; margin-bottom: 4px; }' +
+    '.qr-row { display: flex; gap: 20px; align-items: center; border-top: 1px solid #000; padding-top: 14px; margin-top: 20px; }' +
+    '.qr-row img { width: 100px; height: 100px; }' +
+    '.qr-row .qr-text { flex: 1; font-size: 10px; color: #666; line-height: 1.5; }' +
+    '.qr-row .qr-text strong { color: #000; font-size: 11px; display: block; margin-bottom: 4px; }' +
+    '.qr-row .qr-text a { color: #000; word-break: break-all; font-family: monospace; font-size: 10px; }' +
     '.good { color: #16a34a; font-weight: 700; }' +
     '.avg { color: #d97706; font-weight: 700; }' +
     '.bad { color: #dc2626; font-weight: 700; }' +
-    '.footer { text-align: right; font-size: 10px; color: #999; margin-top: 24px; padding-top: 8px; border-top: 1px solid #eee; }' +
+    '.footer { text-align: right; font-size: 9px; color: #999; margin-top: 18px; padding-top: 6px; border-top: 1px solid #eee; }' +
     '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
     '</style></head><body>' +
 
-    // PAGE 1: Header + Highlights + Stats
+    // ══════ PAGE 1 : Match + focus joueur ══════
     '<div class="page">' +
-    '<h1>FragValue</h1>' +
-    '<hr style="border:none;height:2px;background:#000;margin:8px 0 16px"/>' +
-    '<div style="font-size:48px;font-weight:900;letter-spacing:-2px">' + mapName.toUpperCase() + '</div>' +
-    '<div style="font-size:13px;color:#444;margin:4px 0 8px">' + date + ' / ' + totalR + ' rounds</div>' +
-    '<div class="score">' +
-    (winnerTeam === 'CT' ? '<u>CT</u>' : 'CT') + ' [' + ctWins + '] - [' + tWins + '] ' +
-    (winnerTeam === 'T' ? '<u>T</u>' : 'T') +
+    '<div class="hero-head">' +
+      '<div>' +
+        '<h1>FRAGVALUE</h1>' +
+        '<div style="font-size:11px;color:#666;margin-top:2px">Rapport match CS2</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.08em">Rapport pour</div>' +
+        '<div style="font-size:16px;font-weight:900;margin-top:2px">' + you.name + '</div>' +
+        '<div style="font-size:10px;color:#666;margin-top:2px">' + matchDate + '</div>' +
+      '</div>' +
     '</div>' +
 
-    '<h2>Highlights</h2>' +
-    '<div class="highlight-grid">' +
-    '<div class="highlight-item"><div class="highlight-label">Most kills</div><div class="highlight-value">' + bestKills.name + ' (' + bestKills.kills + ' kills)</div></div>' +
-    '<div class="highlight-item"><div class="highlight-label">Most damage</div><div class="highlight-value">' + bestADR.name + ' (' + bestADR.adr + ' ADR)</div></div>' +
-    '<div class="highlight-item"><div class="highlight-label">Best FV Rating</div><div class="highlight-value">' + bestRating.name + ' (' + bestRating.fvr.toFixed(2) + ')</div></div>' +
-    '<div class="highlight-item"><div class="highlight-label">Most 1st kills</div><div class="highlight-value">' + bestFirstKill.name + ' (' + bestFirstKill.firstKills + ' rounds)</div></div>' +
-    '<div class="highlight-item"><div class="highlight-label">Best KAST</div><div class="highlight-value">' + bestKAST.name + ' (' + bestKAST.kast + '%)</div></div>' +
-    '<div class="highlight-item"><div class="highlight-label">Best HS%</div><div class="highlight-value">' + bestHS.name + ' (' + bestHS.hsPct + '%)</div></div>' +
+    // Score
+    '<div class="score-row">' +
+      '<div class="score-team"><div class="label">CT Side</div><div class="num" style="' + ctScoreStyle + '">' + ctWins + '</div></div>' +
+      '<div class="score-mid"><div class="map">' + mapName.toUpperCase() + '</div><div class="tag">' + resultTag + ' · ' + totalR + ' rounds</div></div>' +
+      '<div class="score-team"><div class="label">T Side</div><div class="num" style="' + tScoreStyle + '">' + tWins + '</div></div>' +
     '</div>' +
 
-    '<h2>Stats équipes</h2>' +
-    '<h3>' + winnerTeam + ' (Victoire)</h3>' +
-    teamTable(winnerPlayers) +
-    '<h3>' + loserTeam + '</h3>' +
-    teamTable(loserPlayers) +
-
-    '<div class="footer">Rapport généré par FragValue / fragvalue.com / ' + date + '</div>' +
+    // Ton match
+    '<h2>Ton match</h2>' +
+    '<div class="your-match-card">' +
+      '<div class="head">' +
+        '<div><span class="nick">' + you.name + '</span><span class="fvr-lbl">' + fvrLabel(you.fvr) + '</span></div>' +
+        '<div class="rank">Classe #' + rank + ' sur ' + n + ' joueurs</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:baseline;gap:14px">' +
+        '<div class="fvr ' + fvrClass(you.fvr) + '">' + you.fvr.toFixed(2) + '</div>' +
+        '<div style="font-size:10px;color:' + deltaColor(deltaFvr) + ';font-weight:700">' + fmtDelta(deltaFvr, 2) + ' vs moyenne match (' + avgFvr.toFixed(2) + ')</div>' +
+      '</div>' +
+      '<div class="kpi-line">' +
+        '<div class="kpi"><div class="v">' + you.kills + '-' + you.deaths + '</div><div class="l">K - D</div><div class="d" style="color:#666">' + (you.kd >= 0 ? '+' : '') + you.kd + '</div></div>' +
+        '<div class="kpi"><div class="v">' + you.adr + '</div><div class="l">ADR</div><div class="d" style="color:' + deltaColor(deltaAdr) + '">' + fmtDelta(deltaAdr) + ' vs ' + avgAdr + '</div></div>' +
+        '<div class="kpi"><div class="v">' + you.kast + '%</div><div class="l">KAST</div><div class="d" style="color:' + deltaColor(deltaKast) + '">' + fmtDelta(deltaKast) + ' vs ' + avgKast + '%</div></div>' +
+        '<div class="kpi"><div class="v">' + you.hsPct + '%</div><div class="l">HS%</div><div class="d" style="color:' + deltaColor(deltaHs) + '">' + fmtDelta(deltaHs) + ' vs ' + avgHs + '%</div></div>' +
+        '<div class="kpi"><div class="v">' + youOpenPct + '%</div><div class="l">Opening</div><div class="d" style="color:#666">' + you.firstKills + 'W-' + you.firstDeaths + 'L</div></div>' +
+      '</div>' +
     '</div>' +
 
-    // PAGE 2: Analysis + Ranking
+    // Timeline
+    '<h2>Deroulement des rounds</h2>' +
+    '<div style="font-size:9px;color:#666;margin-bottom:4px">Bleu = CT · Or = T · Ligne verte = mi-temps</div>' +
+    timelineHtml +
+
+    // Stats equipes
+    '<h2>Stats par equipe</h2>' +
+    '<h3>' + (winnerTeam === '-' ? 'CT' : winnerTeam) + (winnerTeam !== '-' ? ' (' + (winnerTeam === 'CT' ? 'Victoire' : 'Victoire') + ')' : '') + '</h3>' +
+    teamTable(winnerPlayers, winnerTeam === '-' ? 'CT' : winnerTeam) +
+    '<h3>' + (loserTeam === '-' ? 'T' : loserTeam) + '</h3>' +
+    teamTable(loserPlayers, loserTeam === '-' ? 'T' : loserTeam) +
+
+    '<div class="footer">FragValue · fragvalue.com · Genere le ' + new Date().toLocaleDateString('fr-FR') + '</div>' +
+    '</div>' +
+
+    // ══════ PAGE 2 : Bilan tactique + QR ══════
     '<div class="page">' +
-    '<h2>Analyse de la performance</h2>' +
-    '<div class="analysis-block">' +
-    bestRating.name + ' a domine cette partie avec un FV Rating de ' + bestRating.fvr.toFixed(2) + ', ' +
-    'soit ' + Math.abs(ratingAbovePct) + '% ' + (ratingAbovePct >= 0 ? 'au-dessus' : 'en-dessous') + ' de la moyenne de son équipe (' + teamAvgRating + ').' +
+    '<h2>Bilan tactique</h2>' +
+    '<div style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.5">Match ' + ctWins + '-' + tWins + ' pour ' + (winnerTeam === '-' ? 'egalite' : 'le side ' + winnerTeam) + ' sur ' + mapName.toUpperCase() + '. Analyse condensee en points d\'impact.</div>' +
+
+    '<div class="bilan-grid">' +
+      '<div class="bilan-col strengths">' +
+        '<div class="title">+ ' + topStrengths.length + ' force' + (topStrengths.length > 1 ? 's' : '') + '</div>' +
+        '<ul>' + (topStrengths.length ? topStrengths.map(s => '<li><strong>' + s.label + '</strong><span>' + s.detail + '</span></li>').join('') : '<li><em style="color:#999">Match difficile, peu de moments positifs.</em></li>') + '</ul>' +
+      '</div>' +
+      '<div class="bilan-col warnings">' +
+        '<div class="title">! ' + topWarnings.length + ' axe' + (topWarnings.length > 1 ? 's' : '') + ' a travailler</div>' +
+        '<ul>' + (topWarnings.length ? topWarnings.map(w => '<li><strong>' + w.label + '</strong><span>' + w.detail + '</span></li>').join('') : '<li><em style="color:#999">Bon match, aucun axe critique detecte.</em></li>') + '</ul>' +
+      '</div>' +
     '</div>' +
 
-    '<h3>Points forts</h3>' +
-    '<div class="analysis-block">' +
-    '<strong>Duels d\'ouverture :</strong> ' + bestFirstKill.name + ' a remporte ' + bestFirstKill.firstKills + ' premiers frags, ' +
-    'donnant un avantage numérique à son équipe dans ' + fkWinPct + '% des rounds concernes. ' +
-    'Un taux superieur a 50% est considere comme un indicateur de victoire dans les données professionnelles CS2.' +
-    '</div>' +
-    '<div class="analysis-block">' +
-    '<strong>Consistance :</strong> ' + bestKAST.name + ' affiché un KAST de ' + bestKAST.kast + '%, ' +
-    (bestKAST.kast >= 70 ? 'au-dessus' : 'en-dessous') + ' de la référence professionnelle de 70%. ' +
-    'Le KAST mesure la proportion de rounds ou un joueur a eu un Kill, une Assist, a Survecu ou a été Trade.' +
-    '</div>' +
-    '<div class="analysis-block">' +
-    '<strong>Impact offensif :</strong> ' + winnerTeam + ' a maintenu un ADR moyen de ' + avgADR_winner + ' contre ' + avgADR_loser + ' pour ' + loserTeam + ', ' +
-    'soit un ecart de ' + Math.abs(avgADR_winner - avgADR_loser) + ' points refletant une pression constante sur les positions adverses.' +
+    (priority ? (
+      '<div class="priority-box">' +
+        '<div class="label">Priorite numero 1</div>' +
+        '<div class="text"><strong>' + priority.label + '</strong>Action concrete : ' + priority.action + '</div>' +
+      '</div>'
+    ) : '') +
+
+    // QR code + share URL
+    '<div class="qr-row">' +
+      '<img src="' + qrSrc + '" alt="QR code"/>' +
+      '<div class="qr-text">' +
+        '<strong>Replonge sur la version interactive</strong>' +
+        'Scan le QR ou ouvre le lien ci-dessous pour revoir ce match avec ' +
+        'heatmaps, 2D replay et stats round-par-round. Le rapport PDF ' +
+        'est une capture statique, la version online est toujours a jour.' +
+        '<br/><br/>' +
+        '<a href="' + shareUrl + '">' + shareUrl + '</a>' +
+      '</div>' +
     '</div>' +
 
-    '<h3>Points d\'amélioration</h3>' +
-    '<div class="analysis-block">' +
-    worstRating.name + ' (FV Rating ' + worstRating.fvr.toFixed(2) + ') gagnerait a améliorer son positionnement et ses prises d\'info. ' +
-    'Un K/D de ' + worstRating.kills + '/' + worstRating.deaths + ' sur ' + totalR + ' rounds indiqué des engagements defavorables a corriger.' +
-    '</div>' +
-
-    '<h3>Conclusion</h3>' +
-    '<div class="analysis-block">' +
-    'Victoire ' + winnerTeam + ' ' + winScore + '-' + loseScore + ' portee par la performance de ' + bestRating.name + '. ' +
-    'L\'ecart d\'ADR (' + Math.abs(avgADR_winner - avgADR_loser) + ' points) et le contrôle des duels d\'ouverture ont été les facteurs decisifs de cette partie.' +
-    '</div>' +
-
-    '<h2>Classement FV Rating</h2>' +
-    '<table><thead><tr><th>#</th><th>Joueur</th><th>FV Rating</th><th>Barre</th><th>Évaluation</th></tr></thead><tbody>' +
-    ranked.map((p, i) => {
-      const pct = maxFvr > 0 ? Math.round((p.fvr / maxFvr) * 100) : 0;
-      return '<tr><td>' + (i + 1) + '</td><td>' + p.name + '</td><td class="' + fvrClass(p.fvr) + '">' + p.fvr.toFixed(2) + '</td>' +
-        '<td><div class="bar-wrap"><div class="bar-fill" style="width:' + pct + '%"></div></div></td>' +
-        '<td>' + fvrLabel(p.fvr) + '</td></tr>';
-    }).join('') +
-    '</tbody></table>' +
-
-    '<div class="footer">Rapport généré par FragValue / fragvalue.com / ' + date + '</div>' +
+    '<div class="footer">FragValue · fragvalue.com · Genere le ' + new Date().toLocaleDateString('fr-FR') + '</div>' +
     '</div>' +
 
     '</body></html>');
 
   pw.document.close();
-  setTimeout(() => { pw.print(); }, 400);
+  setTimeout(() => { pw.print(); }, 500);
 }
 
 // ── Partager la demo ─────────────────────────────────────────────
@@ -2506,9 +2636,11 @@ async function shareDemo() {
     const result = await res.json();
     if (res.ok && result.share_id) {
       const url = window.location.origin + '/share/' + result.share_id;
+      // Stocker pour que exportPDF puisse generer le QR code vers le match online
+      try { sessionStorage.setItem('lastShareUrl', url); } catch (_) {}
       if (navigator.clipboard) {
         navigator.clipboard.writeText(url);
-        showShareStatus('Lien copie : ' + url);
+        showShareStatus('Lien copié : ' + url);
       } else {
         showShareStatus(url);
       }
