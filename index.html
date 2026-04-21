@@ -216,7 +216,9 @@ nav{
   .hero-stats > div{flex:1;min-width:80px}
   .hero-stat-val{font-size:24px}
   .hero-stat-label{font-size:9px}
-  .demo-preview{margin-top:56px}
+  /* Espace genereux entre le CTA hero et le dashboard mockup pour eviter
+     que l'user ait l'impression que tout colle */
+  .demo-preview{margin-top:80px;padding-top:20px;border-top:1px solid var(--border)}
   .demo-body{gap:8px}
   .demo-card{padding:14px 12px}
 
@@ -225,53 +227,129 @@ nav{
   .section-title{font-size:32px}
   .section-sub{font-size:13px}
 
-  /* Grids qui passent en colonne unique (override les repeat(3/4,1fr)) */
-  .steps{grid-template-columns:1fr !important;gap:14px !important;margin-top:32px !important}
-  .metrics-grid{grid-template-columns:1fr !important;gap:12px !important}
+  /* Section-tag plus compacte sur mobile pour eviter debordements */
+  .section-tag{font-size:9px !important;letter-spacing:.16em !important;line-height:1.4;word-break:break-word}
 
-  /* ── Slider horizontal pour Features sur mobile ──────────────── */
-  /* Passe de grid 3-col vertical a carousel horizontal avec scroll-snap. */
+  /* ── Pattern commun des sliders horizontaux sur mobile ───────── */
+  .fv-mobile-slider{
+    display:flex !important;
+    grid-template-columns:unset !important;
+    overflow-x:auto !important;overflow-y:hidden;
+    scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+    touch-action:pan-x pan-y;
+    scrollbar-width:none;
+    /* Full-bleed : extend le slider au-dela du padding de la section */
+    margin:28px -20px 0 !important;
+    padding:8px 20px 16px !important;
+    max-width:none !important;
+    background:transparent !important;border:none !important;border-radius:0 !important
+  }
+  .fv-mobile-slider::-webkit-scrollbar{display:none}
+
+  /* Features : 9 cards, largeur 78% + peek de la suivante */
   .features-grid{
     display:flex !important;grid-template-columns:unset !important;
-    overflow-x:auto;overflow-y:hidden;
+    overflow-x:auto !important;overflow-y:hidden;
     scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
-    gap:12px !important;padding:4px 20px 16px;margin:32px -20px 0 !important;
+    touch-action:pan-x pan-y;
+    gap:12px !important;padding:8px 20px 16px !important;margin:28px -20px 0 !important;
     background:transparent !important;border:none !important;border-radius:0 !important;
     scrollbar-width:none
   }
   .features-grid::-webkit-scrollbar{display:none}
   .features-grid .feature-card{
-    flex:0 0 78%;min-width:240px;scroll-snap-align:center;
+    flex:0 0 78% !important;min-width:240px !important;max-width:280px;
+    scroll-snap-align:center;
     border:1px solid var(--border);border-radius:var(--radius2);
     padding:24px 20px
   }
 
-  /* ── Slider horizontal pour Pricing sur mobile ──────────────── */
+  /* Steps (Comment ca marche) : 4 cards -> slider horizontal */
+  .steps{
+    display:flex !important;grid-template-columns:unset !important;
+    overflow-x:auto !important;overflow-y:hidden;
+    scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+    touch-action:pan-x pan-y;
+    gap:12px !important;padding:8px 20px 16px !important;margin:28px -20px 0 !important;
+    scrollbar-width:none
+  }
+  .steps::-webkit-scrollbar{display:none}
+  .steps .step{
+    flex:0 0 80% !important;min-width:260px !important;max-width:320px;
+    scroll-snap-align:center;
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);
+    padding:24px 20px
+  }
+  .steps .step-arrow{display:none !important}
+
+  /* Metrics : reste en 1 col vertical */
+  .metrics-grid{grid-template-columns:1fr !important;gap:12px !important}
+
+  /* ── Pricing slider : 3 cards Free / Pro / Elite ─────────────── */
   .pricing-grid{
     display:flex !important;grid-template-columns:unset !important;
-    overflow-x:auto;overflow-y:hidden;
+    overflow-x:auto !important;overflow-y:hidden;
     scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
-    gap:16px !important;padding:8px 20px 16px;margin:32px -20px 0 !important;
+    touch-action:pan-x pan-y;
+    gap:16px !important;padding:8px 20px 16px !important;margin:28px -20px 0 !important;
     max-width:none !important;
     scrollbar-width:none
   }
   .pricing-grid::-webkit-scrollbar{display:none}
   .pricing-card{
-    flex:0 0 82%;min-width:280px;scroll-snap-align:center;
+    flex:0 0 82% !important;min-width:280px !important;max-width:340px;
+    scroll-snap-align:center;
     padding:28px 22px !important
   }
   .pricing-card.featured{order:-1}
 
-  /* Hint visuel sur les sliders : label discret sous le titre */
-  .features-grid::after,.pricing-grid::after{display:none}
+  /* ── Challengers FACEIT : restructure table en liste compacte ── */
+  .pro-table{margin-top:28px !important;border-radius:var(--radius) !important}
+  .pro-table-head{display:none !important}
+  .pro-row{
+    display:grid !important;
+    grid-template-columns:1fr auto !important;
+    grid-template-areas:"name elo" "stats stats" !important;
+    gap:6px 12px !important;padding:14px 14px !important;
+    align-items:center !important
+  }
+  .pro-row .pro-name{grid-area:name;min-width:0;flex-wrap:wrap;overflow:hidden;text-overflow:ellipsis}
+  .pro-row > div:nth-child(2){grid-area:elo;font-family:var(--display);color:var(--accent);font-size:16px;text-align:right}
+  .pro-row > div:nth-child(3),.pro-row > div:nth-child(4){
+    grid-area:stats;display:inline-block;margin-right:12px;
+    font-size:11px;color:var(--text2)
+  }
+  .pro-row > div:nth-child(3)::before{content:"K/D ";color:var(--text3)}
+  .pro-row > div:nth-child(4)::before{content:"HS ";color:var(--text3)}
 
-  /* Faq-row et pro-row de la section Challengers : reduire le padding + repeat */
+  /* ── Coach IA section : mockup padding reduit ────────────────── */
+  #ai-coach > div:nth-child(2){padding:24px 18px !important;margin:0 4px !important}
+  #ai-coach .section-tag{white-space:normal !important}
+
+  /* Faq-list */
   .faq-list{padding:0 !important}
-  .pro-row{grid-template-columns:1fr !important;gap:4px !important;padding:14px !important}
 
   /* CTA geant footer */
   .cta-section,.cta-final{padding:64px 20px !important}
   .ticker{font-size:14px}
+
+  /* ── Footer : vertical stack avec liens en 2 colonnes ────────── */
+  footer{
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    gap:20px !important;
+    padding:32px 20px !important;
+    text-align:left !important
+  }
+  .footer-logo{font-size:14px}
+  .footer-links{
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:10px 20px !important;
+    width:100%
+  }
+  .footer-links a{font-size:11px;padding:4px 0}
+  .footer-copy{font-size:10px;opacity:.7}
 }
 .demo-label{
   display:inline-flex;align-items:center;gap:8px;

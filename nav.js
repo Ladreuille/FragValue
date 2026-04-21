@@ -343,4 +343,25 @@
     fbScript.defer = true;
     document.head.appendChild(fbScript);
   }
+
+  // ── Block pinch-zoom sur iOS Safari ───────────────────────────────────
+  // iOS Safari 10+ ignore les meta viewport user-scalable=no et minimum-scale=1.
+  // Pour vraiment bloquer le zoom-out (qui cree un vide noir a droite), il
+  // faut intercepter les gesture events.
+  // On garde le double-tap zoom (accessibilite texte) mais on bloque le
+  // pinch-zoom qui de toute facon n'est pas utile sur un site responsive.
+  document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
+  document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
+  document.addEventListener('gestureend', e => e.preventDefault(), { passive: false });
+  // Prevent double-tap zoom sur les boutons/CTAs pour une UX native-like
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      // Double tap detecte : ne le bloque que si c'est sur un bouton/lien
+      const target = e.target.closest('button, a, [role="button"]');
+      if (target) e.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, { passive: false });
 })();
