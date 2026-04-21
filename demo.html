@@ -323,7 +323,7 @@ nav{
 .rp-bar-num{font-family:var(--display);font-size:13px;color:var(--accent);width:28px;text-align:right;flex-shrink:0}
 
 /* RESPONSIVE */
-@media(max-width:860px){
+@média(max-width:860px){
   .layout{grid-template-columns:1fr}
   .left{display:none}
   .right{padding:40px 20px;min-height:calc(100vh - 56px)}
@@ -506,7 +506,7 @@ nav{
 </div>
 
 <script>
-// Upload direct vers Railway (les fichiers .dem font 100-500 MB, trop gros pour le proxy Vercel qui est limite a 4.5 MB)
+// Upload direct vers Railway (les fichiers .dem font 100-500 MB, trop gros pour le proxy Vercel qui est limité a 4.5 MB)
 const PARSER_URL = 'https://fragvalue-demo-parser-production.up.railway.app';
 let selectedFile = null;
 
@@ -583,7 +583,7 @@ async function checkPlanGating() {
       .eq('user_id', session.user.id)
       .gte('analysed_at', monthStart);
 
-    // Verifier le plan
+    // Vérifier le plan
     let plan = 'free';
     try {
       const subRes = await fetch('/api/check-subscription', {
@@ -619,8 +619,8 @@ function showUpgradeModal() {
     <div style="background:#0f1010;border:1px solid #1c1e1e;border-radius:12px;padding:36px 32px;max-width:420px;width:90%;text-align:center">
       <div style="font-family:'Anton',sans-serif;font-size:22px;letter-spacing:.02em;margin-bottom:6px">Limite atteinte</div>
       <p style="font-size:11px;color:#7a8080;line-height:1.7;margin-bottom:20px">
-        Tu as utilise tes 3 analyses gratuites ce mois ci.<br>
-        Passe a Pro pour des analyses illimitees, le 2D Replay complet, et l'export PDF.
+        Tu as utilisé tes 3 analysés gratuites ce mois ci.<br>
+        Passe a Pro pour des analysés illimitees, le 2D Replay complet, et l'export PDF.
       </p>
       <a href="index.html#pricing" style="display:inline-block;background:#b8ff57;color:#000;padding:10px 24px;border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">Voir les plans</a>
       <button onclick="document.getElementById('upgradeModal').style.display='none'" style="display:block;margin:14px auto 0;background:none;border:none;color:#4a5050;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer">Fermer</button>
@@ -636,7 +636,7 @@ async function startAnalysis() {
   if (!allowed) return;
 
   // Pre-check parser availability (evite d'uploader 500 MB si Railway est down)
-  // Si le ping initial a echoue, on retry avant l'upload.
+  // Si le ping initial a échoué, on retry avant l'upload.
   if (_parserAvailable === false) {
     const btn = document.getElementById('analyseBtn');
     const originalLabel = btn.textContent;
@@ -672,7 +672,7 @@ async function startAnalysis() {
     document.getElementById('progressSub').textContent   = sub;
   }
 
-  // Progression animée pendant le fetch (avance lentement jusqu'à 88%)
+  // Progression animée pendant le fetch (avancé lentement jusqu'à 88%)
   // Chaque étape a un timing réaliste basé sur ce que fait réellement le parser
   const autoSteps = [
     { delay:800,  step:0, pct:8,  title:'Envoi du fichier',            sub:'Transfert en cours...' },
@@ -721,7 +721,7 @@ async function startAnalysis() {
       // weapon (arme active + droppee a la mort), grenades inventory (strip au-dessus
       // du pin). On strippe : armure/helmet/defuser/money (visuel HUD secondaire).
       // Strip 1 : garde TOUS les HUD essentials (weapon, armor, helmet,
-      // defuser, money, hp, yaw). Drop uniquement les champs grenade deja
+      // defuser, money, hp, yaw). Drop uniquement les champs grenade déjà
       // absents du parser (smk/fl/...) + r (round derivable depuis tick).
       const stripped = {...data.data};
       if (stripped.positions && typeof stripped.positions === 'object') {

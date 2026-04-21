@@ -114,7 +114,7 @@ a.match-card:hover .mc-col-chevron{color:var(--accent);transform:translateX(3px)
 .mc-reason{flex:1 1 260px;min-width:220px;padding:9px 12px;border:1px solid rgba(255,99,99,.25);background:rgba(255,99,99,.06);border-radius:var(--r);font-family:var(--mono);font-size:10px;line-height:1.45;color:#ff9e9e;letter-spacing:.02em}
 .mc-reason b{color:#ffb8b8;font-weight:600;margin-right:6px}
 
-@media (max-width:780px){
+@média (max-width:780px){
   .mc-row{flex-wrap:wrap;gap:14px}
   .mc-col-map{flex:1 1 100%}
   .mc-col-score{border:none;padding:0;min-height:0}
@@ -167,7 +167,7 @@ a.match-card:hover .mc-col-chevron{color:var(--accent);transform:translateX(3px)
 .fp-counter strong{color:var(--accent);font-weight:700}
 @keyframes fpPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
 
-/* Blur du contenu matches (apercu derriere le teaser) */
+/* Blur du contenu matches (aperçu derriere le teaser) */
 .matches-blur{position:relative}
 .matches-blur-content{filter:blur(2px) saturate(.85);pointer-events:none;user-select:none;opacity:.7}
 .matches-blur-veil{position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,rgba(8,9,9,.6) 50%,var(--bg) 100%);pointer-events:none;z-index:2;border-radius:12px}
@@ -197,8 +197,8 @@ a.match-card:hover .mc-col-chevron{color:var(--accent);transform:translateX(3px)
 <div class="page">
 
   <!-- Hero "FACEIT sync en attente" : tant que l'API officielle FACEIT n'a
-       pas valide notre demande d'acces, la synchro auto n'est pas encore
-       fonctionnelle. Waitlist pour etre prevenu en priorite. -->
+       pas valide notre demande d'accès, la synchro auto n'est pas encore
+       fonctionnelle. Waitlist pour etre prévenu en priorite. -->
   <div class="faceit-pending">
     <div class="fp-badge">● Synchronisation FACEIT en attente</div>
     <h1 class="fp-title">L'API FACEIT<br><span>arrive bientôt</span></h1>
@@ -247,7 +247,7 @@ a.match-card:hover .mc-col-chevron{color:var(--accent);transform:translateX(3px)
     </div>
     <div class="ov-track"><div class="ov-fill" id="ovFill"></div></div>
     <div class="ov-steps">
-      <div class="ov-step" id="ovStep0"><div class="ov-step-dot"></div>Verification du compte FACEIT</div>
+      <div class="ov-step" id="ovStep0"><div class="ov-step-dot"></div>Vérification du compte FACEIT</div>
       <div class="ov-step" id="ovStep1"><div class="ov-step-dot"></div>Recuperation des 5 derniers matchs</div>
       <div class="ov-step" id="ovStep2"><div class="ov-step-dot"></div>Mise en file pour le parser Railway</div>
       <div class="ov-step" id="ovStep3"><div class="ov-step-dot"></div>Analyse des demos en arrière plan</div>
@@ -313,7 +313,7 @@ function renderMatches(matches) {
   if (!matches.length) {
     el.innerHTML = '<div class="empty-box">' +
       '<div class="empty-box-title">AUCUN MATCH POUR L\'INSTANT</div>' +
-      '<div class="empty-box-sub">Lance l\'import pour récupérer tes 5 derniers matchs FACEIT de moins d\'un mois. Pour des matchs plus anciens utilise l\'upload manuel de demo. FragValue les analysera automatiquement en arrière-plan et tu seras notifie des qu\'ils sont prets.</div>' +
+      '<div class="empty-box-sub">Lance l\'import pour récupérer tes 5 derniers matchs FACEIT de moins d\'un mois. Pour des matchs plus anciens utilisé l\'upload manuel de demo. FragValue les analysera automatiquement en arrière-plan et tu seras notifie des qu\'ils sont prêts.</div>' +
       '<button class="btn-import" onclick="importHistory()">' +
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>' +
       'Importer mes matchs</button>' +
@@ -331,13 +331,13 @@ function friendlyReason(msg) {
     return { title: 'Demo expirée', sub: 'FACEIT purge les demos après ~30 jours' };
   }
   if (m.startsWith('demo_forbidden:')) {
-    return { title: 'Accès demo refuse', sub: 'FACEIT a bloqué le telechargement' };
+    return { title: 'Accès demo refuse', sub: 'FACEIT a bloqué le téléchargement' };
   }
   if (m.startsWith('no_demo:')) {
     return { title: 'Pas de demo disponible', sub: 'Match annulé, forfait, ou demo pas encore uploadee' };
   }
   if (m.startsWith('captcha_required:')) {
-    return { title: 'Verification requise', sub: 'FACEIT demande un captcha, ouvrez www.faceit.com' };
+    return { title: 'Vérification requise', sub: 'FACEIT demande un captcha, ouvrez www.faceit.com' };
   }
   if (m.startsWith('resolve_failed:')) {
     return { title: 'Résolution échouée', sub: "Erreur pendant la récupération de l'URL FACEIT" };
@@ -356,10 +356,10 @@ function friendlyReason(msg) {
     return { title: 'Demo supprimée par FACEIT', sub: 'Les demos FACEIT sont purgees après ~30 jours' };
   }
   if (m.includes('403') || m.includes('401')) {
-    return { title: 'Accès demo refuse', sub: 'FACEIT a bloqué le telechargement (token expiré)' };
+    return { title: 'Accès demo refuse', sub: 'FACEIT a bloqué le téléchargement (token expiré)' };
   }
   if (m.includes('zst') || m.includes('gzip') || m.includes('magic')) {
-    return { title: 'Format demo incompatible', sub: 'Le parser n\'a pas reconnu le format FACEIT' };
+    return { title: 'Format demo incompatible', sub: 'Le parser n\'à pas reconnu le format FACEIT' };
   }
   if (m.includes('timeout') || m.includes('econnreset') || m.includes('etimedout')) {
     return { title: 'Telechargement trop long', sub: 'Relancez le match' };
@@ -378,8 +378,8 @@ function renderCard(m) {
     : isFailed ? 'Échec' : 'En attente';
   const statusClass = isParsed ? 'parsed' : m.status === 'pending' ? 'pending' : isParsing ? 'parsing' : 'failed';
 
-  // Sur les rows non-parsees on n a pas encore de map ni de score réel, donc
-  // on affiche un placeholder "EN ATTENTE" a la place du nom de map et on
+  // Sur les rows non-parsees on n à pas encore de map ni de score réel, donc
+  // on affiché un placeholder "EN ATTENTE" a la place du nom de map et on
   // skippe entièrement le bloc score pour éviter un "0 : 0" disgracieux.
   const ct = m.score_ct ?? 0;
   const t = m.score_t ?? 0;
@@ -392,11 +392,11 @@ function renderCard(m) {
   const href = isParsed ? 'analysis.html?match=' + encodeURIComponent(m.faceit_match_id) : '#';
   const tag = isParsed ? 'a' : 'div';
 
-  // Date affichée a côté du nom de map. Pour un match parse on affiche la
+  // Date affichée a côté du nom de map. Pour un match parse on affiché la
   // date du match (parsed_at fait foi), sinon la date d import (created_at).
   const dateHtml = '<div class="mc-date">' + fmtFull(m.parsed_at || m.created_at) + '</div>';
 
-  // Rounds column : n affiche quelque chose que si on a un total fiable.
+  // Rounds column : n affiché quelque chose que si on a un total fiable.
   const roundsHtml = isParsed && m.rounds
     ? '<div class="mc-col-rounds">' +
         '<div class="mc-rounds-val">' + m.rounds + '</div>' +
@@ -475,7 +475,7 @@ async function retryMatch(e, matchId) {
       btn.textContent = 'Réessayer';
       return;
     }
-    // Recharge immediat pour voir le match repasser en pending
+    // Recharge immédiat pour voir le match repasser en pending
     await loadMatches();
   } catch (_) {
     btn.disabled = false;
@@ -490,7 +490,7 @@ function openOverlay() {
   document.getElementById('importOverlay').classList.add('open');
   setOvStep(0, 'active');
   setOvFill(8);
-  setOvSub('Verification du compte FACEIT');
+  setOvSub('Vérification du compte FACEIT');
   document.getElementById('ovTitle').textContent = 'Import en cours';
   document.getElementById('ovClose').style.display = 'none';
 }
@@ -519,7 +519,7 @@ async function importHistory() {
 
   openOverlay();
 
-  // Tick visuel pendant l'attente reseau (avance progressif jusqu'a 30%)
+  // Tick visuel pendant l'attente reseau (avancé progressif jusqu'à 30%)
   let fakePct = 8;
   const fakeTick = setInterval(() => {
     if (fakePct < 28) {
@@ -549,7 +549,7 @@ async function importHistory() {
     }
 
     const data = await r.json();
-    // Etapes 0-2 done
+    // Étapes 0-2 done
     markStepsDoneUntil(2);
     setOvStep(3, 'active');
     setOvFill(65);
@@ -576,14 +576,14 @@ async function importHistory() {
       window.postMessage({ type: 'FV_EXT_SYNC' }, '*');
     }
 
-    // Laisse l'overlay affiche 2s de plus puis finalise
+    // Laisse l'overlay affiché 2s de plus puis finalise
     setTimeout(() => {
       setOvFill(100);
       markStepsDoneUntil(3);
       document.getElementById('ovTitle').textContent = 'Import terminé';
       const subDone = skipped > 0
         ? skipped + ' matchs trop anciens · upload manuel pour ceux-la'
-        : 'Les analyses se finaliseront en arrière plan';
+        : 'Les analysés se finaliseront en arrière plan';
       setOvSub(subDone);
       document.getElementById('ovClose').style.display = 'flex';
       // Auto close après 3s

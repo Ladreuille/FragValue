@@ -275,7 +275,7 @@ async function handleSubmit() {
       if (pass !== confirm) { showMsg('Les mots de passe ne correspondent pas.', 'error'); btn.disabled=false; return; }
       const { error } = await _sb.auth.signUp({ email, password: pass });
       if (error) throw error;
-      showMsg('Compte créé. Vérifie ta boite mail pour confirmer.', 'success');
+      showMsg('Compte créé. Vérifie ta boîte mail pour confirmer.', 'success');
     } else {
       const { error } = await _sb.auth.signInWithPassword({ email, password: pass });
       if (error) throw error;
@@ -291,7 +291,7 @@ async function handleSubmit() {
 // Origine canonique pour les redirections OAuth et magic link.
 // Force https://fragvalue.com en prod meme si l'user est sur un deploiement
 // preview Vercel. Sans ce fix, window.location.origin = URL de preview
-// et Supabase/Google redirige apres auth vers une preview inaccessible
+// et Supabase/Google redirige après auth vers une preview inaccessible
 // publiquement (ou protegee).
 // Pour localhost (dev), on garde l'origin local.
 function getAuthOrigin() {
@@ -303,20 +303,20 @@ function getAuthOrigin() {
 }
 
 // Traduit les messages d'erreur Supabase/Auth (EN par defaut) en FR user-friendly.
-// Fallback sur le message brut si on ne reconnait pas le pattern.
+// Fallback sur le message brut si on ne reconnaît pas le pattern.
 function translateAuthError(err) {
   const msg = String(err?.message || err || '').toLowerCase();
   if (msg.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
-  if (msg.includes('user already registered') || msg.includes('already been registered')) return 'Cet email est déjà utilisé. Connecte-toi ou utilise le lien magique.';
+  if (msg.includes('user already registered') || msg.includes('already been registered')) return 'Cet email est déjà utilisé. Connecte-toi ou utilisé le lien magique.';
   if (msg.includes('email rate limit') || msg.includes('rate limit')) return 'Trop de tentatives. Attends une minute avant de réessayer.';
   if (msg.includes('password should be at least')) return 'Le mot de passe doit faire au moins 6 caractères.';
   if (msg.includes('unable to validate email') || msg.includes('invalid email')) return 'Adresse email invalide.';
-  if (msg.includes('email not confirmed')) return 'Ton email n\'est pas encore confirmé. Vérifie ta boite de réception.';
+  if (msg.includes('email not confirmed')) return 'Ton email n\'est pas encore confirmé. Vérifie ta boîte de réception.';
   if (msg.includes('user not found')) return 'Aucun compte associé à cet email.';
   if (msg.includes('network') || msg.includes('fetch')) return 'Problème de connexion. Vérifie ton internet et réessaie.';
   if (msg.includes('popup') && msg.includes('closed')) return 'Fenêtre de connexion fermée avant la fin.';
   if (msg.includes('popup') && msg.includes('blocked')) return 'Ton navigateur a bloqué la fenêtre OAuth. Autorise les popups pour fragvalue.com.';
-  // Fallback : retourne le message original si on ne le reconnait pas
+  // Fallback : retourne le message original si on ne le reconnaît pas
   return err?.message || 'Une erreur est survenue. Réessaie.';
 }
 
@@ -328,7 +328,7 @@ async function sendMagicLink(e) {
   try {
     const { error } = await _sb.auth.signInWithOtp({ email, options: { emailRedirectTo: getAuthOrigin() + '/account.html' } });
     if (error) throw error;
-    showMsg('Lien envoyé. Vérifie ta boite mail.', 'success');
+    showMsg('Lien envoyé. Vérifie ta boîte mail.', 'success');
   } catch(e) { showMsg(translateAuthError(e), 'error'); }
 }
 

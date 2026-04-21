@@ -60,17 +60,17 @@ async function handleCallback() {
   }
 
   // ── Guard anti-double-call ────────────────────────────────────────────
-  // Le code OAuth est a usage unique. Si la page est rechargee / le back
-  // button est utilise / le BFCache re-exécute le script, on relance un
+  // Le code OAuth est à usage unique. Si la page est rechargee / le back
+  // button est utilisé / le BFCache re-exécute le script, on relance un
   // POST avec le même code -> 400. Pour éviter ca, on tagge le code
   // comme "en cours" dans sessionStorage. Si on detecte un re-run, on
-  // regarde si la session Supabase a déjà été creee (cas du 2e run
+  // regarde si la session Supabase a déjà été créée (cas du 2e run
   // legitime post-redirect). Si oui, on redirige. Sinon, on bloque.
   const processedKey = 'fv_faceit_code_processed';
   const processedCode = sessionStorage.getItem(processedKey);
 
   if (processedCode === code) {
-    // Ce code a déjà été traite dans cet onglet. Vérifie la session et redirige.
+    // Ce code a déjà été traité dans cet onglet. Vérifie la session et redirige.
     try {
       const { data } = await sb.auth.getSession();
       if (data?.session) {
@@ -86,7 +86,7 @@ async function handleCallback() {
 
   sessionStorage.setItem(processedKey, code);
 
-  // Verification anti-CSRF + récupération du code_verifier PKCE.
+  // Vérification anti-CSRF + récupération du code_verifier PKCE.
   // Purge des secrets orphelins > 10 min pour éviter l'accumulation.
   const TEN_MIN = 10 * 60 * 1000;
   const verifierTs = parseInt(localStorage.getItem('faceit_code_verifier_ts') || '0', 10);
@@ -102,7 +102,7 @@ async function handleCallback() {
     '';
   const returnedState = params.get('state') || '';
   if (expectedState && returnedState && expectedState !== returnedState) {
-    showError('Etat OAuth invalide (protection CSRF). Recommence la connexion.');
+    showError('État OAuth invalide (protection CSRF). Recommence la connexion.');
     return;
   }
 
@@ -196,12 +196,12 @@ async function handleCallback() {
       await linkFaceitToProfile(session.user.id, faceitData);
       showSuccess(faceitData);
     } catch (e) {
-      // Le lien FACEIT a echoue (RLS, reseau, DB down). Ne pas montrer
+      // Le lien FACEIT a échoué (RLS, reseau, DB down). Ne pas montrer
       // showSuccess qui afficherait a tort 'Compte lie' alors qu'il ne l'est pas.
       document.getElementById('card').innerHTML = `
         <div class="error-icon" style="color:var(--danger);font-size:40px;margin-bottom:12px">!</div>
         <div class="title" style="color:var(--danger)">Liaison incomplete</div>
-        <p class="sub" style="margin-top:12px">Ton compte FACEIT n'a pas pu etre lie a ton profil FragValue. Reessaie depuis ton espace.</p>
+        <p class="sub" style="margin-top:12px">Ton compte FACEIT n'à pas pu etre lie a ton profil FragValue. Reessaie depuis ton espace.</p>
         <a href="/account.html" class="link-btn" style="margin-top:16px;display:inline-block">Retour a mon espace</a>
       `;
     }
@@ -209,7 +209,7 @@ async function handleCallback() {
     // Dernier recours : stocker les données FACEIT en attente
     sessionStorage.setItem('pending_faceit_link', JSON.stringify(faceitData));
     document.getElementById('card').innerHTML = `
-      <div class="title">Compte FACEIT verifie</div>
+      <div class="title">Compte FACEIT vérifié</div>
       <div class="faceit-badge">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>
         ${faceitData.nickname}${faceitData.level ? ' . Lvl ' + faceitData.level : ''}
@@ -222,7 +222,7 @@ async function handleCallback() {
 
 async function linkFaceitToProfile(userId, data) {
   // IMPORTANT : laisser l'erreur se propager pour que le caller puisse afficher
-  // un etat d'echec a l'user plutot que d'afficher showSuccess alors que le
+  // un état d'échec a l'user plutôt que d'afficher showSuccess alors que le
   // compte n'est PAS lie (bug P1 identifie par l'audit UX).
   const { error } = await sb.from('profiles').upsert({
     id: userId,

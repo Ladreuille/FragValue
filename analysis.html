@@ -175,7 +175,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
 .empty-msg{text-align:center;padding:32px;font-size:11px;color:var(--text3)}
 
-@media(max-width:768px){
+@média(max-width:768px){
   .kpi-row{grid-template-columns:repeat(2,1fr)}
   .minimaps{grid-template-columns:1fr 1fr}
   .score-banner{flex-direction:column;gap:0}
@@ -205,11 +205,11 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <div class="pro-overlay-title">Analyse Pro</div>
     <div class="pro-tag" style="margin:0 auto 16px;display:inline-flex">PRO</div>
     <p class="pro-overlay-sub">
-      L'analyse avancee est reservee aux abonnes Pro et Team.<br>
+      L'analyse avancée est reservee aux abonnés Pro et Team.<br>
       Rapport tactique complet, ouverture de rounds, positionnement et bilan de coach.
     </p>
     <a href="index.html#pricing" class="pro-overlay-btn">Passer a Pro</a>
-    <div style="margin-top:14px"><a href="heatmap-results.html" style="color:var(--text3);font-size:11px;text-decoration:none">Retour aux resultats</a></div>
+    <div style="margin-top:14px"><a href="heatmap-results.html" style="color:var(--text3);font-size:11px;text-decoration:none">Retour aux résultats</a></div>
   </div>
 </div>
 
@@ -414,7 +414,7 @@ function calcFvRating(kills, deaths, assists, rounds, kastPct, adr) {
   const kpr = kills / rounds;
   const dpr = deaths / rounds;
   const apr = (assists || 0) / rounds;
-  // KAST fallback : 70% (moyenne typique d'un joueur competitif)
+  // KAST fallback : 70% (moyenne typique d'un joueur compétitif)
   const kastP = typeof kastPct === 'number' ? kastPct : 70;
   // ADR fallback : 75 (moyenne typique)
   const adrV = typeof adr === 'number' ? adr : 75;
@@ -517,14 +517,14 @@ function computeAllStats(kills, rounds, playerStats) {
     if (!playerTeam[ps.name]) playerTeam[ps.name] = team2.length <= team3.length ? 2 : 3;
   });
 
-  // Index playerStats by name pour acces O(1). Ces stats viennent du parser
-  // (backend Railway) et sont la source de verite cote produit : memes valeurs
+  // Index playerStats by name pour accès O(1). Ces stats viennent du parser
+  // (backend Railway) et sont la source de verite côté produit : memes valeurs
   // sur dashboard, heatmap-results et compare. On les privilegie sur un recompute.
   const psByName = Object.fromEntries((playerStats || []).map(ps => [ps.name, ps]));
 
   const stats = allPlayers.map(name => {
     const ps = psByName[name] || {};
-    // Kills / deaths : on utilise les events kills (plus fiable que playerStats
+    // Kills / deaths : on utilisé les events kills (plus fiable que playerStats
     // qui peut etre absent pour les joueurs hors de la demo)
     const k = kills.filter(x => x.attacker === name).length;
     const d = kills.filter(x => x.victim === name).length;
@@ -720,7 +720,7 @@ function renderOverview(c, rounds) {
     </div>
     <div class="kpi-card" title="Part des rounds ou l'equipe qui a fait le 1er kill a gagne le round. Mesure l'impact du premier duel.">
       <div class="kpi-value" style="color:var(--accent)">${fbWinnerPct}%</div>
-      <div class="kpi-label">Rounds gagnes apres 1er kill</div>
+      <div class="kpi-label">Rounds gagnes après 1er kill</div>
     </div>
     <div class="kpi-card" title="Joueur avec le meilleur FV Rating du match">
       <div class="kpi-value" style="color:${fvrColor(mvp?.fvr || 0)}">${mvp?.fvr?.toFixed(2) || '-'}</div>
@@ -1132,7 +1132,7 @@ function drawPerfChart(kills, rounds, c) {
 
     // Round outcome dot
     const pTeam = c.playerTeam[name] || 0;
-    // Determine if player's team won this round
+    // Déterminé if player's team won this round
     // First half: player team is pTeam. Second half (after round 12): teams swap
     const effectiveTeam = i < 12 ? pTeam : (pTeam === 2 ? 3 : pTeam === 3 ? 2 : 0);
     const won = rnd && rnd.winner === effectiveTeam;
@@ -1279,7 +1279,7 @@ function renderCoachBilan(c, kills, rounds) {
 
   if (longestStreak) {
     const streakTeam = longestStreak.team === 3 ? 'CT' : 'T';
-    html += ` La plus longue serie de victoires consecutives est de <strong>${longestStreak.count} rounds</strong> pour le side ${streakTeam} (a partir du round ${longestStreak.start}).`;
+    html += ` La plus longue serie de victoires consecutives est de <strong>${longestStreak.count} rounds</strong> pour le side ${streakTeam} (à partir du round ${longestStreak.start}).`;
   }
 
   const halfScore3 = nonKnife.slice(0, 12).filter(r => r.winner === 3).length;
@@ -1289,12 +1289,12 @@ function renderCoachBilan(c, kills, rounds) {
 
   // MVP
   html += `<div class="coach-block">
-    <div class="coach-label">Joueur cle</div>
+    <div class="coach-label">Joueur clé</div>
     <div class="coach-text">
       <strong>${mvp.name}</strong> terminé MVP avec un FV Rating de <strong>${mvp.fvr.toFixed(2)}</strong> (${fvrLabel(mvp.fvr)}).`;
 
-  if (mvp.fk >= 3) html += ` Il est implique dans ${mvp.fk} opening duels, creant des avantages numeriques en debut de round.`;
-  if (mvp.kast >= 75) html += ` Son KAST de ${mvp.kast}% montre une presence constante a chaque round.`;
+  if (mvp.fk >= 3) html += ` Il est implique dans ${mvp.fk} opening duels, creant des avantages numeriques en début de round.`;
+  if (mvp.kast >= 75) html += ` Son KAST de ${mvp.kast}% montre une presence constante à chaque round.`;
   if (mvp.hsPct >= 55) html += ` Sa précision est remarquable avec ${mvp.hsPct}% de headshots.`;
   html += `</div></div>`;
 
@@ -1305,7 +1305,7 @@ function renderCoachBilan(c, kills, rounds) {
       Le side CT obtient <strong>${team3FB}</strong> first bloods contre <strong>${team2FB}</strong> pour le side T.
       Le taux de conversion global après un premier kill est de <strong>${fbConv}%</strong>.`;
 
-  if (fbConv >= 70) html += ` C'est un taux excellent - l'équipe qui ouvre le round controle bien les suites de round.`;
+  if (fbConv >= 70) html += ` C'est un taux excellent - l'équipe qui ouvre le round contrôle bien les suites de round.`;
   else if (fbConv >= 55) html += ` Un taux correct, mais il y a des rounds perdus malgre l'avantage initial. Il faut mieux capitaliser après le first blood.`;
   else html += ` Ce taux est trop bas. Les équipes ne convertissent pas assez après avoir pris l'avantage. Il faut revoir le jeu post-opening.`;
   html += `</div></div>`;
@@ -1316,12 +1316,12 @@ function renderCoachBilan(c, kills, rounds) {
     <div class="coach-text">
       Le taux de trade global est de <strong>${tradePct}%</strong>.`;
 
-  if (tradePct >= 30) html += ` Les joueurs se tradent correctement, limitant les situations de desavantage numerique.`;
-  else if (tradePct >= 15) html += ` Le trading est moyen. Trop de morts ne sont pas tradees, ce qui laisse l'adversaire en avantage numerique gratuitement.`;
+  if (tradePct >= 30) html += ` Les joueurs se tradent correctement, limitant les situations de desavantage numérique.`;
+  else if (tradePct >= 15) html += ` Le trading est moyen. Trop de morts ne sont pas tradees, ce qui laisse l'adversaire en avantage numérique gratuitement.`;
   else html += ` Le trading est insuffisant. Les joueurs meurent isoles sans que leurs coéquipiers puissent reagir. C'est un point critique a travailler.`;
 
   if (highKast.length) {
-    html += `<div class="coach-bullet"><strong>${highKast[0].name}</strong> est le joueur le plus constant avec un KAST de ${highKast[0].kast}%. Il contribue a chaque round par un kill, une survie ou un trade.</div>`;
+    html += `<div class="coach-bullet"><strong>${highKast[0].name}</strong> est le joueur le plus constant avec un KAST de ${highKast[0].kast}%. Il contribue à chaque round par un kill, une survie ou un trade.</div>`;
   }
   if (lowKast.length) {
     html += `<div class="coach-bullet"><strong>${lowKast[0].name}</strong> a le KAST le plus bas (${lowKast[0].kast}%). Ce joueur disparait trop souvent du jeu et doit trouver des positions ou il peut avoir plus d'impact.</div>`;
@@ -1335,7 +1335,7 @@ function renderCoachBilan(c, kills, rounds) {
 
   const weakOpeners = c.stats.filter(p => p.fd > p.fk && p.fd >= 3);
   if (weakOpeners.length) {
-    html += `<div class="coach-bullet">${weakOpeners.map(p => '<strong>' + p.name + '</strong>').join(', ')} ${weakOpeners.length > 1 ? 'perdent' : 'perd'} trop d'opening duels. Il faut revoir le positionnement en debut de round ou éviter les peeks risques.</div>`;
+    html += `<div class="coach-bullet">${weakOpeners.map(p => '<strong>' + p.name + '</strong>').join(', ')} ${weakOpeners.length > 1 ? 'perdent' : 'perd'} trop d'opening duels. Il faut revoir le positionnement en début de round ou éviter les peeks risques.</div>`;
   }
 
   const adrGap = mvp.adr - lowest.adr;
@@ -1369,7 +1369,7 @@ function renderCoachBilan(c, kills, rounds) {
 
   if (allMK.length) {
     const totalMK = allMK.reduce((s, p) => s + p.multiKills.three + p.multiKills.four + p.multiKills.ace, 0);
-    html += ` ${totalMK} multi-kills ont été realises dans ce match, montrant des pics d'impact individuel.`;
+    html += ` ${totalMK} multi-kills ont été réalisés dans ce match, montrant des pics d'impact individuel.`;
   }
 
   html += ` Pour progresser, l'accent doit être mis sur le jeu d'équipe, le trading systematique et la conversion des avantages numeriques.`;

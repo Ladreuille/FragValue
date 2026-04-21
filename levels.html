@@ -171,7 +171,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .perso-ai-goal-val{font-size:12px;color:var(--text);line-height:1.6}
 .perso-ai-goal-val strong{color:var(--accent);display:block;margin-bottom:3px;font-family:var(--display);font-size:14px}
 .perso-ai-footer{margin-top:14px;font-size:10px;color:var(--text3);letter-spacing:.04em;text-align:right}
-@media(max-width:720px){
+@média(max-width:720px){
   .perso-ai-cols,.perso-ai-goals{grid-template-columns:1fr}
   .perso-ai{padding:18px}
 }
@@ -190,7 +190,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .perso-notlinked-desc{font-size:12px;color:var(--text2);line-height:1.7;max-width:420px;margin:0 auto 18px}
 .perso-notlinked-btn{display:inline-block;background:var(--accent);color:#000;padding:10px 22px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em}
 
-@media(max-width:720px){
+@média(max-width:720px){
   .perso-stats-grid{grid-template-columns:1fr}
   .perso-head{padding:18px;gap:14px}
   .perso-diag,.perso-actions{padding:18px}
@@ -306,7 +306,7 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
 
 @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
-@media(max-width:720px){
+@média(max-width:720px){
   .level-card{grid-template-columns:48px 1fr;gap:14px;padding:18px 18px}
   .level-badge{width:48px;height:48px;font-size:22px}
   .level-right{grid-column:1 / -1;align-items:flex-start}
@@ -350,7 +350,7 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
 <!-- PERSONAL ROADMAP (affichée si user connecte + compte FACEIT lie) -->
 <div class="perso-wrap">
   <div class="perso-card" id="persoCard">
-    <!-- Etat par defaut : not linked (ecrase par JS si compte FACEIT lie) -->
+    <!-- État par defaut : not linked (ecrase par JS si compte FACEIT lie) -->
     <div class="perso-notlinked" id="persoNotLinked">
       <div class="perso-notlinked-icon">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>
@@ -391,12 +391,12 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
     <div class="leaderboard-row"><div class="lb-rank">-</div><div class="lb-name"><div class="lb-skel" style="width:120px"></div></div><div class="lb-skel" style="width:48px"></div><div class="lb-skel" style="width:32px"></div><div class="lb-skel" style="width:32px"></div></div>
     <div class="leaderboard-row"><div class="lb-rank">-</div><div class="lb-name"><div class="lb-skel" style="width:160px"></div></div><div class="lb-skel" style="width:48px"></div><div class="lb-skel" style="width:32px"></div><div class="lb-skel" style="width:32px"></div></div>
   </div>
-  <div style="margin-top:12px;font-size:10px;color:var(--text3);text-align:center;letter-spacing:.04em">Donnees issues de l'API officielle FACEIT. Cache 1h.</div>
+  <div style="margin-top:12px;font-size:10px;color:var(--text3);text-align:center;letter-spacing:.04em">Données issues de l'API officielle FACEIT. Cache 1h.</div>
 </section>
 
 <!-- CTA FINAL -->
 <section class="cta-section">
-  <h2 class="cta-title">Commence par analyser<br>ta derniere demo</h2>
+  <h2 class="cta-title">Commence par analyser<br>ta dernière demo</h2>
   <p class="cta-sub">Pour savoir quoi travailler en priorite, rien de tel qu'une analysé concrete de ton jeu actuel.</p>
   <a href="demo.html" class="btn-primary">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -452,14 +452,14 @@ const LEVEL_ELO_RANGES = {
   10:{ min: 2001, max: null }, // pas de max, challenger au dessus
 };
 
-// Actions concretes generees selon les stats en dessous du seuil.
-// Chaque entree propose jusqu'a 2 actions prioritaires par stat manquante.
+// Actions concretes générées selon les stats en dessous du seuil.
+// Chaque entrée propose jusqu'à 2 actions prioritaires par stat manquante.
 const ACTIONS_BY_STAT = {
   kd:        { title: 'Ton K/D est sous le seuil',         tips: ['Grind 30 min de DM + aim_botz avant chaque session pour stabiliser ta précision.','Évite les solo peek : chaque duel doit être trade par un coéquipier.'] },
   adr:       { title: 'Ton ADR est trop bas',              tips: ['Apprends 2-3 lineups de grenades (HE + molo) par map : +5 ADR facile.','Damage check chaque ennemi même sans le kill : les dégâts s\'accumulent.'] },
-  kast:      { title: 'Ton KAST manque de regularite',     tips: ['Ne meurs jamais isole : assure que tu es trade-able sur chaque peek.','Supporte tes coéquipiers avec des assists (flash, utility, trade kill).'] },
-  openingWr: { title: 'Tes duels d\'ouverture sont perdants', tips: ['Laisse l\'entry au lurker / lineup. Suis en second avec trade.','Utilise une flash avant de peek un angle long : +20% d\'opening WR.'] },
-  hs:        { title: 'Ton HS% freine ta progression',     tips: ['Crosshair placement : hauteur de tete sur tous les angles serres.','Spray control AK 1st mag en aim_training tous les jours (10 min).'] },
+  kast:      { title: 'Ton KAST manque de régularité',     tips: ['Ne meurs jamais isole : assuré que tu es trade-able sur chaque peek.','Supporte tes coéquipiers avec des assists (flash, utility, trade kill).'] },
+  openingWr: { title: 'Tes duels d\'ouverture sont perdants', tips: ['Laisse l\'entry au lurker / lineup. Suis en second avec trade.','Utilisé une flash avant de peek un angle long : +20% d\'opening WR.'] },
+  hs:        { title: 'Ton HS% freine ta progression',     tips: ['Crosshair placement : hauteur de tête sur tous les angles serres.','Spray control AK 1st mag en aim_training tous les jours (10 min).'] },
   winRate:   { title: 'Ton win rate doit remonter',        tips: ['Améliore ta communication : appelle tes positions en comm court.','Ne force pas les rounds eco risques : save permet de rebondir.'] },
   fvScore:   { title: 'Ton FV Score global a des lacunes', tips: ['Regarde le breakdown Performance/Consistance/Impact sur ton espace.','Corrige d\'abord la dimension la plus faible, pas la plus forte.'] },
 };
@@ -485,7 +485,7 @@ const LEVELS = [
     desc: 'Le top 1% de la playerbase FACEIT. Des joueurs sérieux qui jouent minimum 3-5 matchs par semaine, avec un temps de jeu significatif en deathmatch et aim training.',
     tips: [
       'KAST minimum 72% sur 20 matchs.',
-      'Opening win rate > 55% à cette tranche.',
+      'Opening win rate > 55% à cette tranché.',
       'Utility spend : flashs exécutées en timing avec l\'équipe, smoke lineups appris sur chaque map.',
       'Monte en Challenger : top 1000 FACEIT est remanie en temps réel, vise rating HLTV 1.15+.'
     ]
@@ -500,7 +500,7 @@ const LEVELS = [
       'Tu dois carry les rounds eco avec des positions agressives calculées.',
       'Clutch 1v1 gagne > 45% (contre 35% en Lvl 7).',
       'Pistol WR > 55% (impact disproportionne sur le ELO).',
-      'Pour monter : reduis ton CV (variance des performances). Regularite > spikes de perf.'
+      'Pour monter : reduis ton CV (variance des performances). Régularité > spikes de perf.'
     ]
   },
   {
@@ -536,7 +536,7 @@ const LEVELS = [
     populationPct: '15%',
     desc: 'Le mid pur. Decisif : commence a être constant dans tes performances. Aim solide, mais fails recurrents sur des détails tactiques.',
     tips: [
-      'Focus HS% a 45%+ : sort de la tranche duel-moyen.',
+      'Focus HS% a 45%+ : sort de la tranché duel-moyen.',
       'Travaille la gestion d\'économie (save, force buy, etc.).',
       'Un minimum de comm en micro, même en solo queue.',
       'Vise K/D > 1.05 sur 20 matchs consecutifs pour monter stable.'
@@ -575,7 +575,7 @@ const LEVELS = [
     populationPct: '15%',
     desc: 'Debutant-intermediaire. Sait shoot sur les cibles statiques, galere sur les cibles en mouvement et les crossfires.',
     tips: [
-      'Crosshair placement : mire toujours a hauteur de tete, adosse aux murs.',
+      'Crosshair placement : mire toujours à hauteur de tête, adosse aux murs.',
       'Apprends les callouts des 2 maps que tu joues le plus.',
       'Installe un config avec mouse accel OFF + sensi basse (1.5-2 a 800 DPI).',
       'Joue en FFA DM pour habituer le flick.'
@@ -601,7 +601,7 @@ const LEVELS = [
     populationPct: '8%',
     desc: 'Le point de depart. Objectif : comprendre le jeu, apprendre a tirer proprement, ne pas tilt.',
     tips: [
-      'Ne te prends pas la tete sur le ELO pour l\'instant.',
+      'Ne te prends pas la tête sur le ELO pour l\'instant.',
       'Joue pour t\'amuser et apprendre.',
       'Installe une config pro classique (video 1920x1080 black bars, raw input, sensi 2-3 a 800 DPI).',
       'Fais 15 min d\'aim_botz avant chaque session.'
@@ -875,7 +875,7 @@ async function loadAIDiagnosis(sessionToken) {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || err.error || 'API ' + res.status);
+      throw new Error(err.détail || err.error || 'API ' + res.status);
     }
     const data = await res.json();
     const d = data.diagnosis || {};
@@ -891,7 +891,7 @@ async function loadAIDiagnosis(sessionToken) {
       return ''
         + '<div class="perso-ai-action">'
         + '  <div class="perso-ai-action-num">' + (i + 1) + '</div>'
-        + '  <div class="perso-ai-action-text"><strong>' + escapeHtml(a.title || '') + '</strong><span>' + escapeHtml(a.detail || '') + '</span></div>'
+        + '  <div class="perso-ai-action-text"><strong>' + escapeHtml(a.title || '') + '</strong><span>' + escapeHtml(a.détail || '') + '</span></div>'
         + '</div>';
     }).join('');
 
@@ -924,7 +924,7 @@ async function loadAIDiagnosis(sessionToken) {
       + '</div>'
       + '<div class="perso-ai-actions">' + actionsHtml + '</div>'
       + '<div class="perso-ai-goals">' + goalsHtml + '</div>'
-      + '<div class="perso-ai-footer">Genere le ' + cachedWhen + ' &middot; Cache 7 jours &middot; Base sur tes 20 derniers matchs FACEIT</div>';
+      + '<div class="perso-ai-footer">Généré le ' + cachedWhen + ' &middot; Cache 7 jours &middot; Base sur tes 20 derniers matchs FACEIT</div>';
   } catch (err) {
     host.innerHTML = ''
       + '<div class="perso-ai-head">'
@@ -941,7 +941,7 @@ async function loadAIDiagnosis(sessionToken) {
 }
 
 // Refresh manuel (ignore le cache serveur). Si plan Free, serveur renvoie
-// 429 avec ai_limit_reached -> on affiche un modal upgrade vers Pro.
+// 429 avec ai_limit_reached -> on affiché un modal upgrade vers Pro.
 async function refreshAI(btn) {
   const originalHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Rafraichir';
   btn.disabled = true;
@@ -972,8 +972,8 @@ async function refreshAI(btn) {
   }
 }
 
-// Modal d'upgrade Pro quand un user Free tente un refresh apres avoir
-// deja consomme son diagnostic IA du mois.
+// Modal d'upgrade Pro quand un user Free tente un refresh après avoir
+// déjà consomme son diagnostic IA du mois.
 function showAILimitModal(payload) {
   const existing = document.getElementById('fvAILimitModal');
   if (existing) { existing.style.display = 'flex'; return; }
@@ -992,13 +992,13 @@ function showAILimitModal(payload) {
     + '    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>'
     + '    COACH IA &middot; LIMITE ATTEINTE'
     + '  </div>'
-    + '  <div style="font-family:\'Anton\',sans-serif;font-size:24px;line-height:1.2;letter-spacing:.01em;color:#e8eaea;margin-bottom:12px">Tu as utilise ton diagnostic IA du mois</div>'
+    + '  <div style="font-family:\'Anton\',sans-serif;font-size:24px;line-height:1.2;letter-spacing:.01em;color:#e8eaea;margin-bottom:12px">Tu as utilisé ton diagnostic IA du mois</div>'
     + '  <p style="font-family:\'Space Mono\',monospace;font-size:12px;color:#7a8080;line-height:1.7;margin-bottom:20px">'
-    + '    Le plan Free permet <strong style="color:#b8ff57">1 diagnostic IA par mois</strong>. Passe a Pro pour un coach IA illimite : rafraichis ton diagnostic apres chaque match et suis ta progression en temps reel.'
+    + '    Le plan Free permet <strong style="color:#b8ff57">1 diagnostic IA par mois</strong>. Passe a Pro pour un coach IA illimite : rafraichis ton diagnostic après chaque match et suis ta progression en temps réel.'
     + '  </p>'
     + (nextDate ? '  <div style="font-size:11px;color:#4a5050;margin-bottom:20px;letter-spacing:.04em">Prochain diagnostic gratuit le ' + nextDate + '</div>' : '')
     + '  <a href="pricing.html" style="display:inline-block;background:#b8ff57;color:#000;padding:12px 28px;border-radius:6px;font-family:\'Space Mono\',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">Passer a Pro (9&euro;/mois)</a>'
-    + '  <div style="margin-top:14px;font-size:10px;color:#4a5050;letter-spacing:.04em">7 jours d\'essai gratuit &middot; Satisfait ou rembourse 14j</div>'
+    + '  <div style="margin-top:14px;font-size:10px;color:#4a5050;letter-spacing:.04em">7 jours d\'essai gratuit &middot; Satisfait ou remboursé 14j</div>'
     + '  <div style="margin-top:12px"><button onclick="document.getElementById(\'fvAILimitModal\').style.display=\'none\'" style="background:none;border:none;color:#4a5050;font-family:\'Space Mono\',monospace;font-size:11px;cursor:pointer;letter-spacing:.04em">Plus tard</button></div>'
     + '</div>';
   ov.addEventListener('click', function(e) { if (e.target === ov) ov.style.display = 'none'; });
@@ -1044,7 +1044,7 @@ async function loadLeaderboard() {
     liveText.textContent = (data.cached ? 'Synchronise ' : 'En direct ') + when;
   } catch (_) {
     lb.innerHTML = '<div class="leaderboard-row"><div class="lb-rank">-</div><div style="grid-column:2 / -1;color:var(--text3);font-size:11px">Classement temporairement indisponible.</div></div>';
-    if (liveText) liveText.textContent = 'Donnees indisponibles';
+    if (liveText) liveText.textContent = 'Données indisponibles';
   }
 }
 

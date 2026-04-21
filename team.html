@@ -24,7 +24,7 @@
     body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
     body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
     .page{max-width:980px;margin:0 auto;padding:40px 32px 80px;position:relative;z-index:1}
-    @media(max-width:768px){.page{padding:24px 16px}}
+    @média(max-width:768px){.page{padding:24px 16px}}
 
     .team-hero{display:flex;align-items:center;gap:20px;margin-bottom:32px;flex-wrap:wrap}
     .team-logo{width:80px;height:80px;border-radius:14px;background:var(--card);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:36px;color:var(--accent);flex-shrink:0}
@@ -56,7 +56,7 @@
     .member-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
     .member-avatar{width:44px;height:44px;border-radius:10px;background:var(--card);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:20px;color:var(--accent);flex-shrink:0}
     .member-nick{font-size:15px;font-weight:700;color:var(--text)}
-    .member-role-line{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px}
+    .member-rôle-line{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px}
     .captain-tag,.sub-tag{background:rgba(245,200,66,.15);color:var(--gold);padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-right:6px}
     .sub-tag{background:rgba(122,128,128,.15);color:var(--text2)}
 
@@ -223,7 +223,7 @@ function renderTeam({ roster, players, aggregated }) {
               <div class="member-avatar">${(p.faceit_nickname || '?').charAt(0).toUpperCase()}</div>
               <div>
                 <div class="member-nick">${escapeHtml(p.faceit_nickname || 'Joueur')}</div>
-                <div class="member-role-line">
+                <div class="member-rôle-line">
                   ${p.is_captain ? '<span class="captain-tag">Captain</span>' : ''}
                   ${p.is_sub ? '<span class="sub-tag">Sub</span>' : ''}
                   ${p.team_role ? p.team_role.charAt(0).toUpperCase() + p.team_role.slice(1) : 'Rôle non défini'}
@@ -249,7 +249,7 @@ function escapeHtml(s) {
 }
 
 // Wrapper avec gestion d'erreur globale : si loadTeam throw (Supabase down,
-// RLS bloque, parsing erreur), on affiche un message user-friendly plutot
+// RLS bloque, parsing erreur), on affiché un message user-friendly plutôt
 // que de laisser le placeholder "Chargement..." eternellement.
 loadTeam().catch(err => {
   console.error('[team.html] loadTeam failed:', err);
