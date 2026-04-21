@@ -119,7 +119,23 @@ export default async function handler(req, res) {
   const rawBuf = await buffer(req);
   const rawBody = rawBuf.toString('utf8');
 
-  if (!verifySignature(rawBody, req.headers)) {
+  // DEBUG : snapshot complet de la requete dans Supabase (a retirer apres diag)
+  const sigOk = verifySignature(rawBody, req.headers);
+  let parsedForDebug = null;
+  try { parsedForDebug = JSON.parse(rawBody || '{}'); } catch {}
+  try {
+    await sb().from('email_inbound_debug').insert({
+      headers: Object.fromEntries(Object.entries(req.headers).filter(([k]) => !/^(authorization|cookie)$/i.test(k))),
+      body_raw: rawBody.slice(0, 20000),
+      body_parsed: parsedForDebug,
+      signature_ok: sigOk,
+      result: 'received',
+    });
+  } catch (e) {
+    console.warn('[email-inbound] debug insert error:', e.message);
+  }
+
+  if (!sigOk) {
     console.warn('[email-inbound] Signature invalide');
     return res.status(401).json({ error: 'Signature invalide' });
   }
