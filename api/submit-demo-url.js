@@ -127,7 +127,7 @@ export default async function handler(req, res) {
       });
     } catch (err) {
       console.error('parser fire error:', err.message);
-      // Do not fail the request — the row is already in parsing state and
+      // Do not fail the request - the row is already in parsing state and
       // the user can retry via the UI.
     }
 

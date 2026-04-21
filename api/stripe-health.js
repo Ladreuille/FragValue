@@ -1,4 +1,4 @@
-// api/stripe-health.js — FragValue
+// api/stripe-health.js - FragValue
 // Health check : verifie que toutes les variables Stripe et Supabase sont configurees.
 // Curl rapide : `curl https://fragvalue.com/api/stripe-health` doit retourner true partout.
 

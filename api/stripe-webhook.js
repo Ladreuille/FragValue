@@ -1,4 +1,4 @@
-// api/stripe-webhook.js — FragValue
+// api/stripe-webhook.js - FragValue
 // Recoit les webhooks Stripe et met a jour les abonnements dans Supabase
 
 import Stripe from 'stripe';

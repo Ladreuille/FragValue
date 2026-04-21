@@ -22,6 +22,12 @@
     :focus-visible{outline:2px solid #b8ff57 !important;outline-offset:2px !important;border-radius:4px}
     button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[role="button"]:focus-visible,[tabindex]:focus-visible{outline:2px solid #b8ff57 !important;outline-offset:2px !important}
 
+    /* Skip-to-content link : visible uniquement au focus clavier (Tab au load).
+       Permet aux users keyboard/screen reader de sauter la nav et aller direct
+       au contenu principal. Pattern WCAG 2.4.1 Bypass Blocks. */
+    .fv-skip-link{position:absolute;top:-40px;left:8px;z-index:10001;background:#b8ff57;color:#000;padding:8px 14px;border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-decoration:none;transition:top .15s;letter-spacing:.04em}
+    .fv-skip-link:focus{top:8px;outline:2px solid #080909;outline-offset:2px}
+
     nav.fv-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:linear-gradient(180deg,rgba(12,14,10,.94) 0%,rgba(8,9,9,.92) 100%);backdrop-filter:blur(12px);border-bottom:1px solid rgba(184,255,87,.15);box-shadow:0 1px 0 rgba(184,255,87,.08),0 4px 24px rgba(0,0,0,.3)}
     nav.fv-nav .logo{font-family:'Anton',sans-serif;font-size:20px;letter-spacing:.04em;text-decoration:none;color:#e8eaea;transition:text-shadow .2s}
     nav.fv-nav .logo:hover{text-shadow:0 0 18px rgba(184,255,87,.4)}
@@ -172,6 +178,26 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
     </button>
   `;
+
+  // ── Skip-to-content link (a11y WCAG 2.4.1) ─────────────────────────────
+  // Injecte un lien invisible au load, qui apparait au 1er Tab pour sauter
+  // la nav. Cherche #main, fallback sur le 1er <main>, fallback sur body.
+  if (!document.getElementById('fv-skip-link')) {
+    const skip = document.createElement('a');
+    skip.id = 'fv-skip-link';
+    skip.className = 'fv-skip-link';
+    skip.href = '#main-content';
+    skip.textContent = 'Aller au contenu principal';
+    document.body.insertBefore(skip, document.body.firstChild);
+    // Au click, cible le <main> ou le 1er h1 et lui donne le focus programmatique
+    skip.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector('main, #main-content, h1') || document.body;
+      if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+      target.focus();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 
   // ── Injection dans le <nav> existant (ou création si absent) ────────────
   let navEl = document.querySelector('nav');

@@ -1,4 +1,4 @@
-// api/faceit-profile.js — FragValue
+// api/faceit-profile.js - FragValue
 // Proxy pour recuperer le profil FACEIT public d'un joueur via FACEIT_API_KEY
 // Evite d'exposer la cle API cote client
 

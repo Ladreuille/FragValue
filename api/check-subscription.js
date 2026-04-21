@@ -1,4 +1,4 @@
-// api/check-subscription.js — FragValue
+// api/check-subscription.js - FragValue
 // Endpoint client : retourne le plan/statut courant de l'utilisateur.
 // Source of truth : helper _lib/subscription.js (DB en priorite, Stripe fallback).
 //

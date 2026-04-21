@@ -1,4 +1,4 @@
-// api/feedback.js — FragValue
+// api/feedback.js - FragValue
 // Endpoint unifie pour le systeme de feedback :
 //   POST   { type, message, page_url?, anon_email? }    public (auth optionnelle)
 //   GET    ?status=&type=&limit=                         admin only

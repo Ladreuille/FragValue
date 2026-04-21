@@ -1,4 +1,4 @@
-// api/faceit-config.js — FragValue
+// api/faceit-config.js - FragValue
 // Returns the public FACEIT OAuth client ID (safe to expose, it's a public value)
 
 export default function handler(req, res) {

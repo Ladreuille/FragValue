@@ -5,7 +5,7 @@
 // POURQUOI CES LIMITES :
 //  - FACEIT purge les fichiers .dem du CDN Backblaze apres ~30 jours. Au-dela
 //    de cette fenetre, le parser retourne systematiquement "err_nf0 file not
-//    found" et les rows finissent en failed — inutile de les queuer.
+//    found" et les rows finissent en failed - inutile de les queuer.
 //  - On cap a 5 matches pour limiter le fan-out auto et eviter de saturer
 //    l extension qui doit aller chercher une URL presignee fraiche pour
 //    chaque match (un appel api.faceit.com authentifie par match). Au-dela,

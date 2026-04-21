@@ -1,4 +1,4 @@
-// api/email-inbound.js — FragValue
+// api/email-inbound.js - FragValue
 // Webhook Resend Inbound : recoit les emails envoyes a contact@fragvalue.com
 // (et autres adresses du domaine), les transforme en tickets user_feedback.
 //
@@ -36,7 +36,7 @@ async function buffer(readable) {
 function verifySignature(rawBody, headers) {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
   if (!secret) {
-    console.warn('[email-inbound] RESEND_WEBHOOK_SECRET manquant — signature non verifiee (DEV mode)');
+    console.warn('[email-inbound] RESEND_WEBHOOK_SECRET manquant - signature non verifiee (DEV mode)');
     return true;
   }
   const svixId = headers['svix-id'];

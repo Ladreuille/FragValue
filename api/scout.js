@@ -437,7 +437,7 @@ module.exports = async function handler(req, res) {
         .filter(Boolean);
 
       if (matchIds.length > 0) {
-        // Fetch asynchrone — ne bloque pas la réponse
+        // Fetch asynchrone - ne bloque pas la réponse
         fetchAdvancedMatchStats(matchIds, playerId, headers)
           .then(results => {
             if (Object.keys(results).length > 0) {

@@ -35,7 +35,7 @@ function resolveReplyTo(reply_to) {
 //   references    : chaine espace-separee de Message-ID (pour Gmail threading)
 export async function sendEmail({ to, subject, html, text, from, reply_to, in_reply_to, references }) {
   if (!process.env.RESEND_API_KEY) {
-    console.warn('[email] RESEND_API_KEY manquant — email ignore :', subject, '->', to);
+    console.warn('[email] RESEND_API_KEY manquant - email ignore :', subject, '->', to);
     return { skipped: true };
   }
   if (!to || !subject || (!html && !text)) {

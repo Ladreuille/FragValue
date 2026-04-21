@@ -510,8 +510,25 @@ nav{
 const PARSER_URL = 'https://fragvalue-demo-parser-production.up.railway.app';
 let selectedFile = null;
 
-// Pre-warm le serveur Railway des le chargement de la page (évite le cold start)
-fetch(PARSER_URL + '/ping', { method: 'GET', mode: 'cors' }).catch(() => {});
+// Pre-warm le serveur Railway des le chargement de la page (évite le cold start).
+// On track le dernier status pour pouvoir avertir l'user avant un upload 500 MB
+// si le parser est down (evite l'attente + frustration).
+let _parserAvailable = null; // null=unknown, true=ok, false=down
+async function pingParser(timeoutMs) {
+  if (timeoutMs === void 0) timeoutMs = 6000;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    const r = await fetch(PARSER_URL + '/ping', { method: 'GET', mode: 'cors', signal: ctrl.signal });
+    clearTimeout(t);
+    _parserAvailable = r.ok;
+    return r.ok;
+  } catch (e) {
+    _parserAvailable = false;
+    return false;
+  }
+}
+pingParser();
 
 const zone = document.getElementById('uploadZone');
 zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
@@ -617,6 +634,22 @@ async function startAnalysis() {
   // Plan gating
   const allowed = await checkPlanGating();
   if (!allowed) return;
+
+  // Pre-check parser availability (evite d'uploader 500 MB si Railway est down)
+  // Si le ping initial a echoue, on retry avant l'upload.
+  if (_parserAvailable === false) {
+    const btn = document.getElementById('analyseBtn');
+    const originalLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Vérification serveur...';
+    const available = await pingParser(8000);
+    btn.textContent = originalLabel;
+    if (!available) {
+      btn.disabled = false;
+      alert('Le serveur d\'analyse est temporairement indisponible. Réessaie dans quelques minutes.');
+      return;
+    }
+  }
 
   document.getElementById('analyseBtn').disabled = true;
   const prog = document.getElementById('progressSection');

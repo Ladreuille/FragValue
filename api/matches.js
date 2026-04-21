@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ match, players: players || [] });
     }
 
-    // Liste des matches du user — union de deux sources :
+    // Liste des matches du user - union de deux sources :
     //  1) matches.user_id (rempli des l'import, couvre pending/parsing/failed)
     //  2) match_players.user_id (rempli apres parsing, couvre les matchs co-joues
     //     par d'autres users FragValue ou importes anciennement)

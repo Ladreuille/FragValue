@@ -1454,13 +1454,22 @@ async function loadRoster() {
     if (!session) return;
     const headers = { 'Authorization': 'Bearer ' + session.access_token };
 
-    // Mes invitations recues
-    const invRes = await fetch('/api/roster?view=my_invitations', { headers });
-    const invData = await invRes.json();
-    renderInvitations(invData.invitations || []);
+    // Mes invitations recues (ne bloque pas le roster si fail)
+    try {
+      const invRes = await fetch('/api/roster?view=my_invitations', { headers });
+      if (!invRes.ok) throw new Error('HTTP ' + invRes.status);
+      const invData = await invRes.json();
+      renderInvitations(invData.invitations || []);
+    } catch (e) {
+      console.warn('[loadRoster] invitations fetch failed:', e.message);
+      // Empty state silencieux, pas d'invitations visibles
+      const invSection = document.getElementById('invitationsSection');
+      if (invSection) invSection.innerHTML = '';
+    }
 
     // Mon roster (owner ou membre)
     const rosterRes = await fetch('/api/roster?view=my_roster', { headers });
+    if (!rosterRes.ok) throw new Error('HTTP ' + rosterRes.status);
     const rosterData = await rosterRes.json();
     if (!rosterData.roster) {
       _currentRoster = null;
@@ -1472,6 +1481,14 @@ async function loadRoster() {
     renderRoster(rosterData);
   } catch (e) {
     console.warn('Roster load error:', e.message);
+    // Affiche un empty state explicite au lieu de laisser le tab vide
+    const rosterPanel = document.getElementById('panelRoster');
+    if (rosterPanel) {
+      const loadingEl = rosterPanel.querySelector('.loading, .empty, .empty-state');
+      if (loadingEl) {
+        loadingEl.innerHTML = '<div class="empty-title">Roster indisponible</div><div class="empty-sub">Le service est temporairement hors ligne. Recharge la page dans quelques instants.</div>';
+      }
+    }
   }
 }
 

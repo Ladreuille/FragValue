@@ -1,4 +1,4 @@
-// api/_lib/subscription.js — FragValue
+// api/_lib/subscription.js - FragValue
 // Helper pour resoudre le plan d'un user (free | pro | team) cote backend.
 //
 // Source of truth : table `subscriptions` (peuplee par le webhook Stripe).
