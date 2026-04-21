@@ -75,9 +75,70 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
 /* KPI ROW */
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
-.kpi-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:16px;text-align:center}
+.kpi-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:16px;text-align:center;position:relative}
 .kpi-value{font-family:var(--display);font-size:28px;line-height:1;margin-bottom:4px}
 .kpi-label{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+.kpi-bench{font-size:8px;color:var(--text3);letter-spacing:.06em;margin-top:6px;opacity:.75;font-family:var(--mono)}
+.kpi-bench strong{color:var(--text2);font-weight:700}
+
+/* TON MATCH : block personnel en haut */
+.your-match{background:linear-gradient(135deg,rgba(184,255,87,.04) 0%,var(--card) 50%,var(--card) 100%);border:1px solid rgba(184,255,87,.28);border-radius:var(--r2);padding:24px;margin-bottom:16px;display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
+.your-match-hero{min-width:160px;text-align:center;padding-right:24px;border-right:1px solid var(--border2)}
+.your-match-nick{font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.06em;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.your-match-fvr{font-family:var(--display);font-size:52px;line-height:1;margin-bottom:4px}
+.your-match-fvr-lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:40px;display:inline-block;margin-bottom:8px}
+.your-match-rank{font-size:10px;color:var(--text3);letter-spacing:.06em;font-family:var(--mono)}
+.your-match-rank strong{color:var(--accent);font-size:12px}
+.your-match-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.your-stat{text-align:center}
+.your-stat-val{font-family:var(--display);font-size:22px;line-height:1;color:var(--text)}
+.your-stat-lbl{font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:4px;font-family:var(--mono)}
+.your-stat-delta{font-size:9px;margin-top:4px;font-family:var(--mono);letter-spacing:.04em;display:inline-flex;align-items:center;gap:3px}
+.your-stat-delta.up{color:var(--success)}
+.your-stat-delta.down{color:var(--danger)}
+.your-stat-delta.flat{color:var(--text3)}
+
+/* MOMENTUM CHART */
+.momentum-wrap{padding:18px 20px 12px}
+.momentum-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.momentum-legend{display:flex;gap:16px;font-size:10px;color:var(--text3);letter-spacing:.04em}
+.momentum-legend-item{display:flex;align-items:center;gap:6px}
+.momentum-legend-dot{width:9px;height:9px;border-radius:2px}
+.momentum-canvas{width:100%;height:140px;display:block}
+.momentum-hint{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.02em;margin-top:8px;line-height:1.5}
+
+/* Timeline cliquable */
+.round-tl-r{cursor:pointer;border:0;padding:0;margin:0;font:inherit}
+.round-tl-r:hover{opacity:.9;transform:translateY(-2px)}
+.round-tl-r:focus-visible{outline:2px solid var(--accent);outline-offset:2px;opacity:1}
+.round-tl-r.highlighted{box-shadow:0 0 0 2px var(--accent);transform:translateY(-3px)}
+.round-tl-tooltip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;font-size:10px;color:var(--text);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10;font-family:var(--mono);letter-spacing:.02em;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.round-tl-r:hover .round-tl-tooltip{opacity:1}
+
+/* Moments cliquables : overide pour que le <button> match l'apparence de la card */
+.moment-card{cursor:pointer;width:100%;font:inherit;color:inherit;text-align:left}
+.moment-card:hover{border-color:var(--accent);background:rgba(184,255,87,.02)}
+.moment-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* BILAN TACTIQUE 3 COLONNES */
+.bilan-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.bilan-col{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:18px}
+.bilan-col.strengths{border-color:rgba(45,212,160,.3);background:linear-gradient(180deg,rgba(45,212,160,.04),var(--card))}
+.bilan-col.warnings{border-color:rgba(245,200,66,.25);background:linear-gradient(180deg,rgba(245,200,66,.04),var(--card))}
+.bilan-col-title{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.bilan-col.strengths .bilan-col-title{color:var(--success)}
+.bilan-col.warnings .bilan-col-title{color:var(--gold)}
+.bilan-priority{margin-top:16px;background:rgba(184,255,87,.05);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);padding:18px 20px}
+.bilan-priority-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+.bilan-priority-text{font-size:13px;color:var(--text);line-height:1.6}
+.bilan-priority-text strong{color:var(--accent)}
+
+@media(max-width:768px){
+  .your-match{grid-template-columns:1fr;gap:16px;padding:18px}
+  .your-match-hero{padding-right:0;border-right:none;border-bottom:1px solid var(--border2);padding-bottom:16px}
+  .your-match-stats{grid-template-columns:repeat(3,1fr);gap:10px}
+  .bilan-grid{grid-template-columns:1fr}
+}
 
 /* STATS TABLE */
 .stat-table{width:100%;border-collapse:collapse}
@@ -225,34 +286,54 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     </div>
   </div>
 
-  <!-- 1. VUE D'ENSEMBLE -->
-  <div class="sl">Vue d'ensemble</div>
+  <!-- 1. TON MATCH (personnel, target player first) -->
+  <div class="sl" id="section-ton-match">Ton match</div>
+  <div class="your-match" id="yourMatchBlock"></div>
+
+  <!-- 2. VUE D'ENSEMBLE -->
+  <div class="sl" id="section-vue">Vue d'ensemble</div>
   <div class="score-banner" id="scoreBanner"></div>
   <div class="round-tl" id="roundTimeline"></div>
   <div class="kpi-row" id="kpiRow"></div>
 
-  <!-- 2. CLASSEMENT & STATS -->
-  <div class="sl">Classement et statistiques</div>
+  <!-- 3. MOMENTUM (courbe de probabilite de victoire) -->
+  <div class="sl" id="section-momentum">Momentum</div>
+  <div class="card">
+    <div class="momentum-wrap">
+      <div class="momentum-header">
+        <div style="font-size:11px;color:var(--text2);font-family:var(--mono);letter-spacing:.04em">Avantage au fil des rounds · fenêtre glissante 4 rounds</div>
+        <div class="momentum-legend">
+          <span class="momentum-legend-item"><span class="momentum-legend-dot" style="background:var(--ct)"></span>CT lead</span>
+          <span class="momentum-legend-item"><span class="momentum-legend-dot" style="background:var(--t)"></span>T lead</span>
+        </div>
+      </div>
+      <canvas id="momentumCanvas" class="momentum-canvas"></canvas>
+      <div class="momentum-hint" id="momentumHint"></div>
+    </div>
+  </div>
+
+  <!-- 4. CLASSEMENT -->
+  <div class="sl" id="section-classement">Classement</div>
   <div class="card" style="padding:0;overflow-x:auto">
     <table class="stat-table" id="statsTable"></table>
   </div>
 
-  <!-- 3. OUVERTURE DE ROUND -->
-  <div class="sl">Ouverture de round</div>
+  <!-- 5. OUVERTURE -->
+  <div class="sl" id="section-ouverture">Ouverture</div>
   <div class="card" id="openingCard"><div class="empty-msg">Chargement...</div></div>
 
-  <!-- 4. CONFRONTATIONS DIRECTES -->
-  <div class="sl">Confrontations directes</div>
+  <!-- 6. CONFRONTATIONS -->
+  <div class="sl" id="section-confrontations">Confrontations</div>
   <div class="card" id="duelsCard"><div class="empty-msg">Chargement...</div></div>
 
-  <!-- 5. POSITIONNEMENT -->
-  <div class="sl">Positionnement</div>
+  <!-- 7. POSITIONNEMENT -->
+  <div class="sl" id="section-positions">Positionnement</div>
   <div class="card">
     <div class="minimaps" id="minimapsGrid"></div>
   </div>
 
-  <!-- 6. PERFORMANCE PAR ROUND -->
-  <div class="sl">Performance par round</div>
+  <!-- 8. PERFORMANCE -->
+  <div class="sl" id="section-perf">Performance</div>
   <div class="card">
     <div class="player-tabs" id="playerTabs"></div>
     <div class="perf-wrap">
@@ -262,17 +343,17 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
       <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--accent)"></div>Multi-kill</div>
       <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--t)"></div>1 kill</div>
       <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--border2)"></div>0 kill</div>
-      <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--success);width:6px;height:6px;border-radius:50%"></div>Round gagne</div>
+      <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--success);width:6px;height:6px;border-radius:50%"></div>Round gagné</div>
       <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--danger);width:6px;height:6px;border-radius:50%"></div>Round perdu</div>
     </div>
   </div>
 
-  <!-- 7. MOMENTS CLES -->
-  <div class="sl">Moments clés</div>
+  <!-- 9. MOMENTS CLES -->
+  <div class="sl" id="section-moments">Moments clés</div>
   <div class="card" id="momentsCard"><div class="empty-msg">Chargement...</div></div>
 
-  <!-- 8. BILAN TACTIQUE -->
-  <div class="sl">Bilan tactique</div>
+  <!-- 10. BILAN -->
+  <div class="sl" id="section-bilan">Bilan tactique</div>
   <div class="card coach-card" id="coachCard"><div class="empty-msg">Chargement...</div></div>
 </div>
 
@@ -628,7 +709,9 @@ async function init() {
 
   document.getElementById('mainPage').style.display = 'block';
 
+  renderYourMatch(computed, rounds);
   renderOverview(computed, rounds);
+  renderMomentum(computed, rounds);
   renderStatsTable(computed);
   renderOpenings(computed);
   renderDuels(kills, computed);
@@ -636,6 +719,111 @@ async function init() {
   renderPerformance(kills, rounds, computed);
   renderMoments(kills, rounds, computed);
   renderCoachBilan(computed, kills, rounds);
+}
+
+// =====================================================================
+// 0. TON MATCH (personnel, target player first)
+// =====================================================================
+// Detecte le joueur cible (demo analysee pour LUI) via demoData.meta.targetPlayer.
+// Fallback sur le MVP si absent. Affiche ses stats vs moyenne du match.
+function getTargetPlayer(c) {
+  const targetName = demoData.meta?.targetPlayer;
+  if (targetName) {
+    const found = c.stats.find(s => s.name === targetName);
+    if (found) return found;
+  }
+  // Fallback : MVP du match (plus haut FVR)
+  return [...c.stats].sort((a, b) => b.fvr - a.fvr)[0];
+}
+
+function fmtDelta(val, isHigherBetter) {
+  if (isHigherBetter === void 0) isHigherBetter = true;
+  const rounded = Math.round(val * 100) / 100;
+  if (Math.abs(rounded) < 0.01) return { text: 'au niveau', cls: 'flat', arrow: '=' };
+  const positive = (rounded > 0) === isHigherBetter;
+  const arrow = rounded > 0 ? '↑' : '↓';
+  const sign = rounded > 0 ? '+' : '';
+  return {
+    text: `${sign}${rounded} vs moy`,
+    cls: positive ? 'up' : 'down',
+    arrow
+  };
+}
+
+function renderYourMatch(c, rounds) {
+  const you = getTargetPlayer(c);
+  if (!you) {
+    document.getElementById('yourMatchBlock').innerHTML = '<div class="empty-msg">Aucun joueur ciblé pour cette démo.</div>';
+    return;
+  }
+
+  // Moyenne du match (tous joueurs) pour benchmarks
+  const n = c.stats.length || 1;
+  const avgFvr  = c.stats.reduce((s, p) => s + (p.fvr || 0), 0) / n;
+  const avgAdr  = c.stats.reduce((s, p) => s + (p.adr || 0), 0) / n;
+  const avgKast = c.stats.reduce((s, p) => s + (p.kast || 0), 0) / n;
+  const avgHs   = c.stats.reduce((s, p) => s + (p.hsPct || 0), 0) / n;
+
+  // Rank (1-indexed) par FV Rating descendant
+  const rank = [...c.stats].sort((a, b) => b.fvr - a.fvr).findIndex(p => p.name === you.name) + 1;
+
+  // Opening duels % : FK / (FK + FD)
+  const totalOpen = (you.fk || 0) + (you.fd || 0);
+  const openPct = totalOpen > 0 ? Math.round(((you.fk || 0) / totalOpen) * 100) : 0;
+  // Moyenne opening des autres joueurs pour comparer
+  const othersOpen = c.stats.map(p => {
+    const t = (p.fk || 0) + (p.fd || 0);
+    return t > 0 ? ((p.fk || 0) / t) * 100 : 50;
+  });
+  const avgOpen = othersOpen.length ? othersOpen.reduce((s, v) => s + v, 0) / othersOpen.length : 50;
+
+  const deltaFvr  = fmtDelta(you.fvr - avgFvr);
+  const deltaAdr  = fmtDelta(you.adr - avgAdr);
+  const deltaKast = fmtDelta(you.kast - avgKast);
+  const deltaHs   = fmtDelta(you.hsPct - avgHs);
+  const deltaOpen = fmtDelta(openPct - avgOpen);
+
+  const kd = you.deaths > 0 ? (you.kills / you.deaths) : you.kills;
+  const fvrC = fvrColor(you.fvr);
+  const fvrL = fvrLabel(you.fvr);
+  const fvrBg = fvrBadgeBg(you.fvr);
+
+  const html = `
+    <div class="your-match-hero">
+      <div class="your-match-nick">${escHtml(you.name)}</div>
+      <div class="your-match-fvr" style="color:${fvrC}">${you.fvr.toFixed(2)}</div>
+      <div class="your-match-fvr-lbl" style="background:${fvrBg};color:${fvrC}">${fvrL}</div>
+      <div class="your-match-rank">Classé <strong>#${rank}</strong> sur ${n} joueurs</div>
+    </div>
+    <div class="your-match-stats">
+      <div class="your-stat">
+        <div class="your-stat-val">${you.kills}-${you.deaths}</div>
+        <div class="your-stat-lbl">K - D</div>
+        <div class="your-stat-delta flat">K/D ${kd.toFixed(2)}</div>
+      </div>
+      <div class="your-stat">
+        <div class="your-stat-val">${you.adr}</div>
+        <div class="your-stat-lbl">ADR</div>
+        <div class="your-stat-delta ${deltaAdr.cls}">${deltaAdr.arrow} ${deltaAdr.text}</div>
+      </div>
+      <div class="your-stat">
+        <div class="your-stat-val">${you.kast}%</div>
+        <div class="your-stat-lbl">KAST</div>
+        <div class="your-stat-delta ${deltaKast.cls}">${deltaKast.arrow} ${deltaKast.text}</div>
+      </div>
+      <div class="your-stat">
+        <div class="your-stat-val">${you.hsPct}%</div>
+        <div class="your-stat-lbl">HS %</div>
+        <div class="your-stat-delta ${deltaHs.cls}">${deltaHs.arrow} ${deltaHs.text}</div>
+      </div>
+      <div class="your-stat">
+        <div class="your-stat-val">${openPct}%</div>
+        <div class="your-stat-lbl">Opening</div>
+        <div class="your-stat-delta ${deltaOpen.cls}">${deltaOpen.arrow} ${deltaOpen.text}</div>
+      </div>
+    </div>
+  `;
+  document.getElementById('yourMatchBlock').innerHTML = html;
 }
 
 // =====================================================================
@@ -663,17 +851,24 @@ function renderOverview(c, rounds) {
     </div>
   `;
 
-  // Round timeline
+  // Round timeline : chaque round est un <button> cliquable (a11y keyboard)
   const tl = document.getElementById('roundTimeline');
+  tl.innerHTML = '';
   const nonKnife = rounds.filter(r => !r.isKnife);
   const halfPoint = 12;
+  // Calcule le score cumulatif au fur et a mesure pour tooltip enrichi
+  let ctScore = 0, tScore = 0;
 
   nonKnife.forEach((r, i) => {
     const rNum = r.displayNum || r.round || (i + 1);
-    const div = document.createElement('div');
-    div.className = 'round-tl-r ' + (r.winner === 3 ? 'ct-win' : r.winner === 2 ? 't-win' : 'no-data');
-    if (i === halfPoint) div.classList.add('round-tl-half');
-    div.title = 'Round ' + rNum + ' - ' + (r.winner === 3 ? 'CT' : r.winner === 2 ? 'T' : '?');
+    if (r.winner === 3) ctScore++;
+    if (r.winner === 2) tScore++;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'round-tl-r ' + (r.winner === 3 ? 'ct-win' : r.winner === 2 ? 't-win' : 'no-data');
+    if (i === halfPoint) btn.classList.add('round-tl-half');
+    btn.dataset.round = String(rNum);
+    const winnerTxt = r.winner === 3 ? 'CT win' : r.winner === 2 ? 'T win' : 'aucun';
 
     // First blood indicator
     const fb = c.firstBloods.find(f => f.round === rNum);
@@ -681,17 +876,43 @@ function renderOverview(c, rounds) {
       const dot = document.createElement('div');
       dot.className = 'round-tl-fb';
       dot.style.background = fb.attackerTeam === 3 ? 'var(--ct)' : 'var(--t)';
-      dot.title = 'FB: ' + fb.attacker;
-      div.appendChild(dot);
+      btn.appendChild(dot);
     }
+
+    // Tooltip enrichi (score + first blood)
+    const tooltip = document.createElement('span');
+    tooltip.className = 'round-tl-tooltip';
+    const fbTxt = fb ? ` · FB ${escHtml(fb.attacker).slice(0, 12)}` : '';
+    tooltip.textContent = `R${rNum} · ${ctScore}-${tScore} · ${winnerTxt}${fbTxt}`;
+    btn.setAttribute('aria-label', `Round ${rNum}, score ${ctScore}-${tScore}, ${winnerTxt}. Cliquer pour voir ce round.`);
+    btn.appendChild(tooltip);
 
     if (nonKnife.length <= 30 && (i % 2 === 0 || nonKnife.length <= 15)) {
       const lbl = document.createElement('span');
       lbl.className = 'rn';
       lbl.textContent = rNum;
-      div.appendChild(lbl);
+      btn.appendChild(lbl);
     }
-    tl.appendChild(div);
+
+    // Click : scroll vers section moments et highlight le round si trouve
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.round-tl-r.highlighted').forEach(el => el.classList.remove('highlighted'));
+      btn.classList.add('highlighted');
+      const mSection = document.getElementById('section-moments');
+      if (mSection) mSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Aussi highlight la moment-card correspondante si elle existe
+      const mCard = document.querySelector(`.moment-card[data-round="${rNum}"]`);
+      if (mCard) {
+        mCard.style.transition = 'border-color .3s, background .3s';
+        mCard.style.borderColor = 'var(--accent)';
+        mCard.style.background = 'rgba(184,255,87,.04)';
+        setTimeout(() => {
+          mCard.style.borderColor = '';
+          mCard.style.background = '';
+        }, 2000);
+      }
+    });
+    tl.appendChild(btn);
   });
 
   // KPIs
@@ -709,24 +930,176 @@ function renderOverview(c, rounds) {
   const mvpName = (mvp?.name || '-');
   const mvpShort = mvpName.length > 14 ? mvpName.slice(0, 12) + '...' : mvpName;
 
+  // Pace (rounds par heure) - indicateur de duree
+  const avgKillsPerRound = c.totalRounds > 0 ? (totalK / c.totalRounds).toFixed(1) : '0';
+
   document.getElementById('kpiRow').innerHTML = `
     <div class="kpi-card">
       <div class="kpi-value">${c.totalRounds}</div>
-      <div class="kpi-label">Rounds joues</div>
+      <div class="kpi-label">Rounds joués</div>
+      <div class="kpi-bench">Format <strong>MR12</strong> (BO1 · max 24)</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-value">${totalK}</div>
       <div class="kpi-label">Kills totaux</div>
+      <div class="kpi-bench"><strong>${avgKillsPerRound}</strong> kills/round</div>
     </div>
-    <div class="kpi-card" title="Part des rounds ou l'equipe qui a fait le 1er kill a gagne le round. Mesure l'impact du premier duel.">
+    <div class="kpi-card" title="Part des rounds où l'équipe qui a fait le 1er kill a gagné le round. Mesure l'impact du premier duel.">
       <div class="kpi-value" style="color:var(--accent)">${fbWinnerPct}%</div>
-      <div class="kpi-label">Rounds gagnes après 1er kill</div>
+      <div class="kpi-label">Conversion 1er kill</div>
+      <div class="kpi-bench">Pro avg <strong>~70%</strong></div>
     </div>
     <div class="kpi-card" title="Joueur avec le meilleur FV Rating du match">
       <div class="kpi-value" style="color:${fvrColor(mvp?.fvr || 0)}">${mvp?.fvr?.toFixed(2) || '-'}</div>
-      <div class="kpi-label">Top impact · ${mvpShort}</div>
+      <div class="kpi-label">Top impact</div>
+      <div class="kpi-bench" style="color:${fvrColor(mvp?.fvr || 0)}">${escHtml(mvpShort)}</div>
     </div>
   `;
+}
+
+// =====================================================================
+// 1b. MOMENTUM : courbe de probabilite de victoire au fil des rounds
+// =====================================================================
+// Dessine un canvas avec une courbe qui represente l'avantage relatif
+// (fenetre glissante de 4 rounds) de chaque equipe au fil du match.
+// Zone remplie positive = CT lead, negative = T lead.
+// Signature visuelle unique - differenciateur vs concurrents.
+function renderMomentum(c, rounds) {
+  const canvas = document.getElementById('momentumCanvas');
+  const hintEl = document.getElementById('momentumHint');
+  if (!canvas) return;
+  const nonKnife = rounds.filter(r => !r.isKnife);
+  if (!nonKnife.length) {
+    hintEl.textContent = 'Pas de données de rounds disponibles.';
+    return;
+  }
+
+  // Ratio retina
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const W = Math.max(rect.width, 640);
+  const H = 140;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  // Fenetre glissante de 4 rounds : pour chaque round, compte wins CT vs T
+  // dans la window [i-3, i]. Difference normalisee [-1, 1].
+  const WIN = 4;
+  const momentum = [];
+  nonKnife.forEach((r, i) => {
+    let ct = 0, t = 0;
+    const start = Math.max(0, i - WIN + 1);
+    for (let j = start; j <= i; j++) {
+      if (nonKnife[j].winner === 3) ct++;
+      if (nonKnife[j].winner === 2) t++;
+    }
+    const total = ct + t;
+    const m = total > 0 ? (ct - t) / total : 0; // -1 (T dominant) -> 1 (CT dominant)
+    momentum.push(m);
+  });
+
+  // Layout
+  const padX = 28, padY = 12;
+  const plotW = W - padX * 2;
+  const plotH = H - padY * 2;
+  const midY = padY + plotH / 2;
+  const xStep = nonKnife.length > 1 ? plotW / (nonKnife.length - 1) : 0;
+
+  // Zero axis
+  ctx.strokeStyle = 'rgba(122,128,128,.2)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 4]);
+  ctx.beginPath();
+  ctx.moveTo(padX, midY);
+  ctx.lineTo(padX + plotW, midY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Half-time divider
+  const halfIdx = Math.min(12, nonKnife.length - 1);
+  const halfX = padX + halfIdx * xStep;
+  ctx.strokeStyle = 'rgba(184,255,87,.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(halfX, padY);
+  ctx.lineTo(halfX, padY + plotH);
+  ctx.stroke();
+  ctx.font = '9px "Space Mono", monospace';
+  ctx.fillStyle = '#8a9090';
+  ctx.textAlign = 'center';
+  ctx.fillText('Mi-temps', halfX, padY - 2);
+
+  // Area fills (split above/below zero)
+  ctx.save();
+  // CT area (positive, haut)
+  ctx.beginPath();
+  ctx.moveTo(padX, midY);
+  momentum.forEach((m, i) => {
+    const x = padX + i * xStep;
+    const y = midY - (m > 0 ? m : 0) * (plotH / 2);
+    ctx.lineTo(x, y);
+  });
+  ctx.lineTo(padX + (nonKnife.length - 1) * xStep, midY);
+  ctx.closePath();
+  const gradCT = ctx.createLinearGradient(0, padY, 0, midY);
+  gradCT.addColorStop(0, 'rgba(74,158,255,.45)');
+  gradCT.addColorStop(1, 'rgba(74,158,255,0)');
+  ctx.fillStyle = gradCT;
+  ctx.fill();
+
+  // T area (negative, bas)
+  ctx.beginPath();
+  ctx.moveTo(padX, midY);
+  momentum.forEach((m, i) => {
+    const x = padX + i * xStep;
+    const y = midY - (m < 0 ? m : 0) * (plotH / 2);
+    ctx.lineTo(x, y);
+  });
+  ctx.lineTo(padX + (nonKnife.length - 1) * xStep, midY);
+  ctx.closePath();
+  const gradT = ctx.createLinearGradient(0, midY, 0, padY + plotH);
+  gradT.addColorStop(0, 'rgba(245,200,66,0)');
+  gradT.addColorStop(1, 'rgba(245,200,66,.45)');
+  ctx.fillStyle = gradT;
+  ctx.fill();
+  ctx.restore();
+
+  // Momentum line
+  ctx.strokeStyle = '#e8eaea';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  momentum.forEach((m, i) => {
+    const x = padX + i * xStep;
+    const y = midY - m * (plotH / 2);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Y labels
+  ctx.fillStyle = '#8a9090';
+  ctx.font = '8px "Space Mono", monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('CT +', padX - 4, padY + 4);
+  ctx.fillText('T  +', padX - 4, padY + plotH + 4);
+
+  // Hint texte : resume du momentum
+  const finalM = momentum[momentum.length - 1];
+  const biggestShift = (() => {
+    let maxDelta = 0, idx = 0;
+    for (let i = 1; i < momentum.length; i++) {
+      const d = Math.abs(momentum[i] - momentum[i - 1]);
+      if (d > maxDelta) { maxDelta = d; idx = i; }
+    }
+    return idx;
+  })();
+  const shiftRoundNum = (nonKnife[biggestShift]?.displayNum || nonKnife[biggestShift]?.round || biggestShift + 1);
+  const overallLeader = c.team3Score > c.team2Score ? 'CT' : c.team2Score > c.team3Score ? 'T' : 'égalité';
+  hintEl.innerHTML = `Pivot principal : <strong style="color:var(--text2)">round ${shiftRoundNum}</strong> · ${overallLeader === 'égalité' ? 'Match serré, aucun camp ne décroche' : overallLeader + ' domine la fin de match'}`;
 }
 
 // =====================================================================
@@ -1198,56 +1571,55 @@ function renderMoments(kills, rounds, c) {
     const badge = m.killCount >= 5 ? 'ace' : m.killCount >= 4 ? 'quad' : 'triple';
     const badgeText = m.killCount >= 5 ? 'ACE' : m.killCount >= 4 ? '4K' : '3K';
     const resultClass = m.won === true ? 'win' : m.won === false ? 'loss' : '';
-    const resultText = m.won === true ? 'Victoire' : m.won === false ? 'Defaite' : '?';
+    const resultText = m.won === true ? 'Victoire' : m.won === false ? 'Défaite' : '?';
 
-    html += `<div class="moment-card">
+    html += `<button type="button" class="moment-card" data-round="${m.round}" aria-label="Round ${m.round} · ${m.killCount} kills par ${escHtml(m.player)}. Cliquer pour voir sur la timeline.">
       <div class="moment-round">R${m.round}</div>
       <span class="moment-badge ${badge}">${badgeText}</span>
       <div class="moment-info">
-        <div class="moment-player" style="color:${m.team === 3 ? 'var(--ct)' : 'var(--t)'}">${m.player}</div>
+        <div class="moment-player" style="color:${m.team === 3 ? 'var(--ct)' : 'var(--t)'}">${escHtml(m.player)}</div>
         <div class="moment-detail">${m.killCount} kills (${m.hs} HS) ${m.weapons.map(w => weaponIcon(w, 14)).join(' ')}</div>
       </div>
       <span class="moment-result ${resultClass}">${resultText}</span>
-    </div>`;
+    </button>`;
   });
   html += '</div>';
   card.innerHTML = html;
+
+  // Click handler : scroll vers timeline + highlight du round correspondant
+  card.querySelectorAll('.moment-card').forEach(el => {
+    el.addEventListener('click', () => {
+      const rNum = el.dataset.round;
+      // Scroll vers la vue d'ensemble (ou la timeline vit)
+      const vue = document.getElementById('section-vue');
+      if (vue) vue.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Highlight le bouton timeline correspondant
+      document.querySelectorAll('.round-tl-r.highlighted').forEach(e => e.classList.remove('highlighted'));
+      const tlBtn = document.querySelector(`.round-tl-r[data-round="${rNum}"]`);
+      if (tlBtn) {
+        tlBtn.classList.add('highlighted');
+        setTimeout(() => tlBtn.classList.remove('highlighted'), 3000);
+      }
+    });
+  });
 }
 
 // =====================================================================
-// 8. BILAN TACTIQUE
+// BILAN TACTIQUE : format 3 colonnes Forces / Axes / Priorité #1
 // =====================================================================
 function renderCoachBilan(c, kills, rounds) {
   const card = document.getElementById('coachCard');
   const mvp = [...c.stats].sort((a, b) => b.fvr - a.fvr)[0];
   const lowest = [...c.stats].sort((a, b) => a.fvr - b.fvr)[0];
-  const totalR = c.totalRounds;
   const winnerLabel = c.winner === 3 ? 'CT' : c.winner === 2 ? 'T' : '-';
-
-  // Dynamique
-  let streaks = [];
-  let cur = { team: 0, count: 0, start: 0 };
   const nonKnife = rounds.filter(r => !r.isKnife);
-  nonKnife.forEach((r, i) => {
-    if (r.winner === cur.team) {
-      cur.count++;
-    } else {
-      if (cur.count >= 3) streaks.push({ ...cur });
-      cur = { team: r.winner, count: 1, start: i + 1 };
-    }
-  });
-  if (cur.count >= 3) streaks.push({ ...cur });
-  const longestStreak = streaks.sort((a, b) => b.count - a.count)[0];
 
-  // Opening analysis
-  const team2FB = c.firstBloods.filter(f => f.attackerTeam === 2).length;
-  const team3FB = c.firstBloods.filter(f => f.attackerTeam === 3).length;
+  // Calculs prealables
   const fbConv = c.firstBloods.length > 0
     ? Math.round((c.firstBloods.filter(f => f.roundWon).length / c.firstBloods.length) * 100) : 0;
 
   // Trading
-  let tradedDeaths = 0;
-  let totalDeaths = 0;
+  let tradedDeaths = 0, totalDeaths = 0;
   kills.forEach(k => {
     if (k.victim === 'Unknown') return;
     totalDeaths++;
@@ -1261,120 +1633,148 @@ function renderCoachBilan(c, kills, rounds) {
   });
   const tradePct = totalDeaths > 0 ? Math.round((tradedDeaths / totalDeaths) * 100) : 0;
 
-  // High/low consistency players
+  // High/low consistency
   const highKast = c.stats.filter(p => p.kast >= 75).sort((a, b) => b.kast - a.kast);
   const lowKast = c.stats.filter(p => p.kast < 60).sort((a, b) => a.kast - b.kast);
+  const weakOpeners = c.stats.filter(p => p.fd > p.fk && p.fd >= 3);
+  const lowHsPlayers = c.stats.filter(p => p.kills >= 5 && p.hsPct < 30);
+  const adrGap = mvp.adr - lowest.adr;
 
-  // Multi-kill concentration
-  const allMK = c.stats.filter(p => (p.multiKills.three + p.multiKills.four + p.multiKills.ace) > 0);
+  // ── Scoring pour extraire les 3 meilleures forces + 3 pires axes ──
+  // Chaque insight = { type, label, detail, severity (0-100) }
+  const strengths = [];
+  const warnings = [];
 
-  // Build coaching text
-  let html = '';
-
-  // Dynamique du match
-  html += `<div class="coach-block">
-    <div class="coach-label">Dynamique du match</div>
-    <div class="coach-text">
-      Le side <strong>${winnerLabel}</strong> remporte le match <strong>${c.team3Score} - ${c.team2Score}</strong> sur ${mapName.replace('de_', '').toUpperCase()}.`;
-
-  if (longestStreak) {
-    const streakTeam = longestStreak.team === 3 ? 'CT' : 'T';
-    html += ` La plus longue serie de victoires consecutives est de <strong>${longestStreak.count} rounds</strong> pour le side ${streakTeam} (à partir du round ${longestStreak.start}).`;
+  // Forces possibles
+  if (mvp.fvr >= 1.20) {
+    strengths.push({
+      label: `${mvp.name} dominant`,
+      detail: `FV Rating <strong>${mvp.fvr.toFixed(2)}</strong> (${fvrLabel(mvp.fvr)}) · ${mvp.kills} kills pour ${mvp.deaths} morts`,
+      score: Math.round((mvp.fvr - 1.0) * 100)
+    });
+  }
+  if (highKast.length) {
+    strengths.push({
+      label: `Joueur constant : ${highKast[0].name}`,
+      detail: `KAST <strong>${highKast[0].kast}%</strong> · impact sur presque chaque round`,
+      score: highKast[0].kast - 75
+    });
+  }
+  if (fbConv >= 65) {
+    strengths.push({
+      label: `Gestion post-opening solide`,
+      detail: `<strong>${fbConv}%</strong> de rounds gagnés après le 1er kill (pro avg ~70%)`,
+      score: fbConv - 65
+    });
+  }
+  if (tradePct >= 25) {
+    strengths.push({
+      label: `Trading discipliné`,
+      detail: `<strong>${tradePct}%</strong> de morts tradées · binômes bien coordonnés`,
+      score: tradePct - 25
+    });
+  }
+  if (mvp.hsPct >= 55) {
+    strengths.push({
+      label: `Précision élite`,
+      detail: `${mvp.name} à <strong>${mvp.hsPct}%</strong> HS · crosshair placement maîtrisé`,
+      score: mvp.hsPct - 55
+    });
   }
 
-  const halfScore3 = nonKnife.slice(0, 12).filter(r => r.winner === 3).length;
-  const halfScore2 = nonKnife.slice(0, 12).filter(r => r.winner === 2).length;
-  html += ` Score a la mi-temps : <strong>${halfScore3} - ${halfScore2}</strong> (CT - T).`;
-  html += `</div></div>`;
-
-  // MVP
-  html += `<div class="coach-block">
-    <div class="coach-label">Joueur clé</div>
-    <div class="coach-text">
-      <strong>${mvp.name}</strong> terminé MVP avec un FV Rating de <strong>${mvp.fvr.toFixed(2)}</strong> (${fvrLabel(mvp.fvr)}).`;
-
-  if (mvp.fk >= 3) html += ` Il est implique dans ${mvp.fk} opening duels, creant des avantages numeriques en début de round.`;
-  if (mvp.kast >= 75) html += ` Son KAST de ${mvp.kast}% montre une presence constante à chaque round.`;
-  if (mvp.hsPct >= 55) html += ` Sa précision est remarquable avec ${mvp.hsPct}% de headshots.`;
-  html += `</div></div>`;
-
-  // Ouvertures
-  html += `<div class="coach-block">
-    <div class="coach-label">Analyse des ouvertures</div>
-    <div class="coach-text">
-      Le side CT obtient <strong>${team3FB}</strong> first bloods contre <strong>${team2FB}</strong> pour le side T.
-      Le taux de conversion global après un premier kill est de <strong>${fbConv}%</strong>.`;
-
-  if (fbConv >= 70) html += ` C'est un taux excellent - l'équipe qui ouvre le round contrôle bien les suites de round.`;
-  else if (fbConv >= 55) html += ` Un taux correct, mais il y a des rounds perdus malgre l'avantage initial. Il faut mieux capitaliser après le first blood.`;
-  else html += ` Ce taux est trop bas. Les équipes ne convertissent pas assez après avoir pris l'avantage. Il faut revoir le jeu post-opening.`;
-  html += `</div></div>`;
-
-  // Trading et consistance
-  html += `<div class="coach-block">
-    <div class="coach-label">Trading et consistance</div>
-    <div class="coach-text">
-      Le taux de trade global est de <strong>${tradePct}%</strong>.`;
-
-  if (tradePct >= 30) html += ` Les joueurs se tradent correctement, limitant les situations de desavantage numérique.`;
-  else if (tradePct >= 15) html += ` Le trading est moyen. Trop de morts ne sont pas tradees, ce qui laisse l'adversaire en avantage numérique gratuitement.`;
-  else html += ` Le trading est insuffisant. Les joueurs meurent isoles sans que leurs coéquipiers puissent reagir. C'est un point critique a travailler.`;
-
-  if (highKast.length) {
-    html += `<div class="coach-bullet"><strong>${highKast[0].name}</strong> est le joueur le plus constant avec un KAST de ${highKast[0].kast}%. Il contribue à chaque round par un kill, une survie ou un trade.</div>`;
+  // Axes a travailler possibles
+  if (tradePct < 20) {
+    warnings.push({
+      label: `Trading insuffisant`,
+      detail: `Seulement <strong>${tradePct}%</strong> de morts tradées. Joue systématiquement en binôme.`,
+      severity: 80 - tradePct,
+      action: `Travailler le spacing en binôme : ne jamais être à plus de 1s de réaction d'un coéquipier sur les contacts.`
+    });
+  }
+  if (fbConv < 50) {
+    warnings.push({
+      label: `Mauvaise conversion du 1er kill`,
+      detail: `<strong>${fbConv}%</strong> seulement (pro avg ~70%). L'équipe décroche après le first blood.`,
+      severity: 70 - fbConv,
+      action: `Après le 1er kill, prendre immédiatement un choke ou infos. Interdiction de camper en 5v4.`
+    });
+  }
+  if (weakOpeners.length) {
+    warnings.push({
+      label: `${weakOpeners.map(p => p.name).join(', ')} perd${weakOpeners.length > 1 ? 'ent' : ''} ses duels d'ouverture`,
+      detail: weakOpeners.map(p => `<strong>${p.name}</strong> ${p.fk}W-${p.fd}L`).join(' · '),
+      severity: weakOpeners.reduce((s, p) => s + (p.fd - p.fk) * 8, 0),
+      action: `Revoir le positionnement d'ouverture. Éviter les peeks agressifs sur les angles pré-aimés par les adversaires.`
+    });
+  }
+  if (adrGap > 40) {
+    warnings.push({
+      label: `Équipe déséquilibrée en damage`,
+      detail: `Écart ADR de <strong>${adrGap} points</strong> entre ${mvp.name} (${mvp.adr}) et ${lowest.name} (${lowest.adr})`,
+      severity: adrGap - 40,
+      action: `Redistribuer les rôles : donner plus de responsabilité (fragger, entry) aux joueurs en retrait.`
+    });
   }
   if (lowKast.length) {
-    html += `<div class="coach-bullet"><strong>${lowKast[0].name}</strong> a le KAST le plus bas (${lowKast[0].kast}%). Ce joueur disparait trop souvent du jeu et doit trouver des positions ou il peut avoir plus d'impact.</div>`;
+    warnings.push({
+      label: `${lowKast[0].name} absent des rounds`,
+      detail: `KAST <strong>${lowKast[0].kast}%</strong> · ne contribue pas à la majorité des rounds`,
+      severity: 60 - lowKast[0].kast,
+      action: `Changer son rôle : lui donner un poste plus défensif ou plus de lurks où il peut être décisif.`
+    });
   }
-  html += `</div></div>`;
-
-  // Points a travailler
-  html += `<div class="coach-block">
-    <div class="coach-label">Points a travailler</div>
-    <div class="coach-text">`;
-
-  const weakOpeners = c.stats.filter(p => p.fd > p.fk && p.fd >= 3);
-  if (weakOpeners.length) {
-    html += `<div class="coach-bullet">${weakOpeners.map(p => '<strong>' + p.name + '</strong>').join(', ')} ${weakOpeners.length > 1 ? 'perdent' : 'perd'} trop d'opening duels. Il faut revoir le positionnement en début de round ou éviter les peeks risques.</div>`;
-  }
-
-  const adrGap = mvp.adr - lowest.adr;
-  if (adrGap > 40) {
-    html += `<div class="coach-bullet">L'ecart d'ADR entre <strong>${mvp.name}</strong> (${mvp.adr}) et <strong>${lowest.name}</strong> (${lowest.adr}) est de ${adrGap} points. L'équipe depend trop d'un seul joueur pour faire du damage.</div>`;
-  }
-
-  if (tradePct < 20) {
-    html += `<div class="coach-bullet">Le taux de trade de ${tradePct}% est critique. Il faut systematiquement jouer en binome pour pouvoir trader chaque mort.</div>`;
-  }
-
-  const lowHsPlayers = c.stats.filter(p => p.kills >= 5 && p.hsPct < 30);
   if (lowHsPlayers.length) {
-    html += `<div class="coach-bullet">${lowHsPlayers.map(p => '<strong>' + p.name + '</strong>').join(', ')} ${lowHsPlayers.length > 1 ? 'ont' : 'a'} un taux de headshots inferieur a 30%. Travailler le crosshair placement et le pre-aim sur les angles classiques.</div>`;
+    warnings.push({
+      label: `Précision faible`,
+      detail: `${lowHsPlayers.map(p => `<strong>${p.name}</strong> ${p.hsPct}%`).join(' · ')} de headshots`,
+      severity: 30,
+      action: `Routine quotidienne : 20 min aim_botz pre-aim angles + recoil control sur FPS-Freaks Hard.`
+    });
   }
 
-  html += `</div></div>`;
+  // Top 3 forces (tri par score desc) et top 3 axes (tri par severity desc)
+  const topStrengths = strengths.sort((a, b) => b.score - a.score).slice(0, 3);
+  const topWarnings = warnings.sort((a, b) => b.severity - a.severity).slice(0, 3);
+  const priority = topWarnings[0]; // le plus critique
 
-  // Conclusion
-  html += `<div class="coach-block">
-    <div class="coach-label">Conclusion</div>
-    <div class="coach-text">`;
-
-  if (Math.abs(c.team3Score - c.team2Score) <= 3) {
-    html += `Match serre (${c.team3Score} - ${c.team2Score}). Les détails font la différence dans ce type de match : ouvertures de round, trades, et utilisation des utilitaires.`;
-  } else if (Math.abs(c.team3Score - c.team2Score) >= 8) {
-    html += `Match domine par le side ${winnerLabel}. L'équipe perdante doit revoir ses fondamentaux : positionnement, communication et discipline de jeu.`;
-  } else {
-    html += `Match equilibre dans l'ensemble, avec des phases de domination des deux côtés.`;
-  }
-
-  if (allMK.length) {
-    const totalMK = allMK.reduce((s, p) => s + p.multiKills.three + p.multiKills.four + p.multiKills.ace, 0);
-    html += ` ${totalMK} multi-kills ont été réalisés dans ce match, montrant des pics d'impact individuel.`;
-  }
-
-  html += ` Pour progresser, l'accent doit être mis sur le jeu d'équipe, le trading systematique et la conversion des avantages numeriques.`;
-  html += `</div></div>`;
-
+  // Render
+  let html = `
+    <div style="font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.6">
+      Match <strong style="color:var(--text)">${c.team3Score}-${c.team2Score}</strong> pour le side <strong style="color:${c.winner === 3 ? 'var(--ct)' : 'var(--t)'}">${winnerLabel}</strong> sur ${mapName.replace('de_', '').toUpperCase()}. Analyse condensée en 3 points d'impact.
+    </div>
+    <div class="bilan-grid">
+      <div class="bilan-col strengths">
+        <div class="bilan-col-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          ${topStrengths.length} force${topStrengths.length > 1 ? 's' : ''}
+        </div>
+        ${topStrengths.length ? topStrengths.map(s =>
+          `<div class="coach-bullet"><strong>${s.label}</strong><br><span style="color:var(--text2);font-size:11px">${s.detail}</span></div>`
+        ).join('') : '<div style="color:var(--text3);font-size:11px;font-style:italic">Match difficile, peu de moments positifs à isoler.</div>'}
+      </div>
+      <div class="bilan-col warnings">
+        <div class="bilan-col-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          ${topWarnings.length} axe${topWarnings.length > 1 ? 's' : ''} à travailler
+        </div>
+        ${topWarnings.length ? topWarnings.map(w =>
+          `<div class="coach-bullet"><strong>${w.label}</strong><br><span style="color:var(--text2);font-size:11px">${w.detail}</span></div>`
+        ).join('') : '<div style="color:var(--text3);font-size:11px;font-style:italic">Bon match, aucun axe critique détecté.</div>'}
+      </div>
+    </div>
+    ${priority ? `
+    <div class="bilan-priority">
+      <div class="bilan-priority-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
+        Priorité numéro 1
+      </div>
+      <div class="bilan-priority-text">
+        <strong>${priority.label}</strong><br>
+        Action concrète : ${priority.action}
+      </div>
+    </div>
+    ` : ''}
+  `;
   card.innerHTML = html;
 }
 
