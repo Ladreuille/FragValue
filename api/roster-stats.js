@@ -82,6 +82,13 @@ export default async function handler(req, res) {
     const avgElo     = Math.round(avg(r => r.scout.cs2?.elo));
     const avgLevel   = (avg(r => r.scout.cs2?.level)).toFixed(1);
 
+    // Side split (CT/T) : moyenne des win rates de chaque membre
+    const ctRates = results.map(r => parseFloat(r.scout.recent?.ctWinRate)).filter(v => !isNaN(v) && v > 0);
+    const tRates  = results.map(r => parseFloat(r.scout.recent?.tWinRate)).filter(v => !isNaN(v) && v > 0);
+    const avgCtWinRate = ctRates.length > 0 ? Math.round(ctRates.reduce((a, b) => a + b, 0) / ctRates.length) : null;
+    const avgTWinRate  = tRates.length  > 0 ? Math.round(tRates.reduce((a, b) => a + b, 0) / tRates.length) : null;
+    const sideGap = (avgCtWinRate != null && avgTWinRate != null) ? avgCtWinRate - avgTWinRate : null;
+
     // Role distribution depuis roster_players.team_role
     const roleDist = {};
     players.forEach(p => {
@@ -115,16 +122,98 @@ export default async function handler(req, res) {
     const bestMap  = qualifiedMaps.length > 0 ? qualifiedMaps.reduce((b, m) => m.team_win_rate > b.team_win_rate ? m : b) : null;
     const worstMap = qualifiedMaps.length > 0 ? qualifiedMaps.reduce((w, m) => m.team_win_rate < w.team_win_rate ? m : w) : null;
 
-    // Top performer du roster (par FV Rating)
-    const ranked = results.map(r => ({
-      nickname: r.scout.player?.nickname,
-      fvRating: parseFloat(r.scout.recent?.fvRating) || 0,
-      kd:       parseFloat(r.scout.recent?.avgKd) || 0,
-      role:     r.player.team_role,
-      level:    r.scout.cs2?.level || 0,
-      elo:      r.scout.cs2?.elo || 0,
-    })).sort((a, b) => b.fvRating - a.fvRating);
+    // Top performer du roster (par FV Rating) + tous les membres detailles
+    const members = results.map(r => ({
+      nickname:    r.scout.player?.nickname || r.player.faceit_nickname,
+      avatar:      r.scout.player?.avatar || null,
+      role:        r.player.team_role || 'unknown',
+      is_captain:  !!r.player.is_captain,
+      is_sub:      !!r.player.is_sub,
+      level:       r.scout.cs2?.level || 0,
+      elo:         r.scout.cs2?.elo || 0,
+      fvRating:    parseFloat(r.scout.recent?.fvRating) || 0,
+      kd:          parseFloat(r.scout.recent?.avgKd) || 0,
+      adr:         parseFloat(r.scout.recent?.avgAdr) || 0,
+      hs:          parseFloat(r.scout.recent?.avgHs) || 0,
+      kast:        parseFloat(r.scout.recent?.avgKast) || 0,
+      winRate:     parseFloat(r.scout.recent?.winRate) || 0,
+      ctWinRate:   parseFloat(r.scout.recent?.ctWinRate) || null,
+      tWinRate:    parseFloat(r.scout.recent?.tWinRate)  || null,
+      firstKills:  parseInt(r.scout.recent?.totalFirstKills) || 0,
+      firstDeaths: parseInt(r.scout.recent?.totalFirstDeaths) || 0,
+      clutch1v1:   parseInt(r.scout.recent?.totalClutch1v1) || 0,
+      clutch1v2:   parseInt(r.scout.recent?.totalClutch1v2) || 0,
+      openingRatio: parseFloat(r.scout.recent?.openingRatio) || 0,
+      sniperKillRate: parseFloat(r.scout.recent?.sniperKillRate) || 0,
+      currentStreak: parseInt(r.scout.lifetime?.currentStreak) || 0,
+    }));
+    const ranked = [...members].sort((a, b) => b.fvRating - a.fvRating);
     const topPerformer = ranked[0];
+
+    // ── Collective insights : heuristiques actionnables ────────────────────
+    const insights = [];
+    const fvNum = parseFloat(avgFvRating);
+    const kastNum = parseFloat(avgKast);
+
+    // Top / bottom performer
+    if (ranked.length >= 2) {
+      const best = ranked[0]; const worst = ranked[ranked.length - 1];
+      if (best.fvRating - worst.fvRating > 0.25) {
+        insights.push({ type: 'warning', icon: 'gap', title: 'Ecart de niveau notable',
+          message: `${best.nickname} (FV ${best.fvRating.toFixed(2)}) porte l'equipe vs ${worst.nickname} (FV ${worst.fvRating.toFixed(2)}). Renforcer les bas niveaux ou reequilibrer les roles.` });
+      }
+    }
+
+    // Side balance
+    if (sideGap != null && Math.abs(sideGap) >= 8) {
+      if (sideGap > 0) {
+        insights.push({ type: 'info', icon: 'side', title: 'Equipe CT-sided',
+          message: `${avgCtWinRate}% en CT vs ${avgTWinRate}% en T (+${sideGap}pts). Forcer les gun-rounds en CT start, anti-eco plus serieux en T start.` });
+      } else {
+        insights.push({ type: 'info', icon: 'side', title: 'Equipe T-sided',
+          message: `${avgTWinRate}% en T vs ${avgCtWinRate}% en CT (${sideGap}pts). Prioriser les maps a T-side fort (Mirage, Dust2, Inferno). Travailler le setup CT.` });
+      }
+    }
+
+    // Map best/worst
+    if (bestMap && bestMap.team_win_rate >= 60) {
+      const mapName = (bestMap.map || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
+      insights.push({ type: 'success', icon: 'map', title: `${mapName} = ta map signature`,
+        message: `${bestMap.team_win_rate}% de WR collectif sur ${bestMap.total_matches} matchs. A pick systematiquement en BO3.` });
+    }
+    if (worstMap && worstMap.team_win_rate <= 40 && worstMap.total_matches >= 5) {
+      const mapName = (worstMap.map || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
+      insights.push({ type: 'danger', icon: 'map', title: `${mapName} = map a eviter`,
+        message: `${worstMap.team_win_rate}% de WR sur ${worstMap.total_matches} matchs. Ban prioritaire ou gros travail d'entrainement.` });
+    }
+
+    // Role coverage
+    const hasIgl = members.some(m => m.role === 'igl');
+    const hasAwp = members.some(m => m.role === 'awp' || m.role === 'awper');
+    if (!hasIgl) {
+      insights.push({ type: 'warning', icon: 'role', title: 'Pas d\'IGL designe',
+        message: 'Aucun membre n\'a le role IGL. Designer un joueur pour appeler les rounds ameliore la coherence tactique.' });
+    }
+    if (!hasAwp) {
+      insights.push({ type: 'warning', icon: 'role', title: 'Pas d\'AWPer designe',
+        message: 'Aucun membre n\'a le role AWP. L\'AWP est un role crucial en CS2 pro, surtout en CT side.' });
+    }
+
+    // Opening potential
+    const bestOpener = [...members].sort((a, b) => (b.firstKills - b.firstDeaths) - (a.firstKills - a.firstDeaths))[0];
+    if (bestOpener && bestOpener.firstKills > 0 && (bestOpener.firstKills - bestOpener.firstDeaths) >= 5) {
+      insights.push({ type: 'success', icon: 'opening', title: 'Entry fragger identifie',
+        message: `${bestOpener.nickname} a ${bestOpener.firstKills} opening kills vs ${bestOpener.firstDeaths} deaths. Il doit prendre les first duels prio.` });
+    }
+
+    // Team score context
+    if (fvNum >= 1.10) {
+      insights.push({ type: 'success', icon: 'trophy', title: 'Niveau competitif',
+        message: `FV Rating collectif ${avgFvRating}. Vous avez le niveau pour viser des tournois amateurs serieux.` });
+    } else if (fvNum < 0.85) {
+      insights.push({ type: 'danger', icon: 'trophy', title: 'Fondations a solidifier',
+        message: `FV Rating collectif ${avgFvRating}. Focus sur les fondamentaux (crosshair placement, utility lineups, communication) avant les strats complexes.` });
+    }
 
     // Team composite score (0-100) : moyenne ponderee FV + KAST + Win rate
     const teamScore = Math.round(
@@ -151,11 +240,16 @@ export default async function handler(req, res) {
         avg_win_rate: avgWinRate,
         avg_elo: avgElo,
         avg_level: avgLevel,
+        avg_ct_win_rate: avgCtWinRate,
+        avg_t_win_rate: avgTWinRate,
+        side_gap: sideGap,
         role_distribution: roleDist,
         top_performer: topPerformer,
         map_pool: topMaps,
         best_map: bestMap,
         worst_map: worstMap,
+        members,              // Stats detaillees par membre (pour comparaison client-side)
+        insights,             // Heuristiques actionnables
       },
     };
 

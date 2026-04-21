@@ -4,11 +4,11 @@
   <meta charset="UTF-8"/>
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
-  <title id="pageTitle">FragValue · Équipe</title>
-  <meta name="description" id="metaDesc" content="Profil d'équipe CS2 sur FragValue">
+  <title id="pageTitle">FragValue · Analyse d'equipe CS2</title>
+  <meta name="description" id="metaDesc" content="Analyse collective complete de ton equipe CS2 FACEIT : team score, side balance CT/T, map analysis, comparaison roster, insights actionnables.">
   <meta property="og:type" content="profile">
-  <meta property="og:title" id="ogTitle" content="FragValue · Équipe">
-  <meta property="og:description" id="ogDesc" content="Profil d'équipe CS2 sur FragValue">
+  <meta property="og:title" id="ogTitle" content="FragValue · Analyse d'equipe CS2">
+  <meta property="og:description" id="ogDesc" content="Analyse collective complete de ton equipe CS2 FACEIT">
   <meta property="og:image" content="https://fragvalue.com/fragvalue_icon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,63 +18,202 @@
       --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
       --accent:#b8ff57;--accent2:#7ddd1a;
       --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
-      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;--info:#5b9bd5;
       --font:'Space Mono',monospace;--mono:'Space Mono',monospace;--display:'Anton',sans-serif;
     }
+    html{scroll-behavior:smooth}
     body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
     body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
-    .page{max-width:980px;margin:0 auto;padding:40px 32px 80px;position:relative;z-index:1}
-    @media(max-width:768px){.page{padding:24px 16px}}
+    body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(184,255,87,.02) 1px, transparent 1px),linear-gradient(90deg, rgba(184,255,87,.02) 1px, transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse at 50% 10%, rgba(0,0,0,.7) 0%, transparent 60%);-webkit-mask-image:radial-gradient(ellipse at 50% 10%, rgba(0,0,0,.7) 0%, transparent 60%);pointer-events:none;z-index:0}
 
-    .team-hero{display:flex;align-items:center;gap:20px;margin-bottom:32px;flex-wrap:wrap}
-    .team-logo{width:80px;height:80px;border-radius:14px;background:var(--card);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:36px;color:var(--accent);flex-shrink:0}
-    .team-name{font-family:var(--display);font-size:42px;color:var(--text);letter-spacing:.02em;line-height:1}
-    .team-tag{font-family:var(--mono);font-size:16px;color:var(--text3);margin-left:10px;font-weight:400}
-    .team-meta{font-family:var(--mono);font-size:12px;color:var(--text2);margin-top:6px;display:flex;gap:14px;flex-wrap:wrap}
-    .team-meta-item{display:flex;align-items:center;gap:4px}
-    .team-recruit-pill{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.3);padding:4px 10px;border-radius:40px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
-    .team-desc{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:32px;max-width:640px;font-family:var(--mono)}
+    .page{max-width:1160px;margin:0 auto;padding:40px 32px 80px;position:relative;z-index:1}
+    @media(max-width:768px){.page{padding:20px 14px 60px}}
 
-    .section{margin-bottom:32px}
-    .section-title{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em;margin-bottom:14px;display:flex;align-items:center;gap:10px}
-    .section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(184,255,87,.2),transparent)}
+    /* ── Hero ───────────────────────────────────────────────────── */
+    .team-hero{
+      position:relative;
+      background:linear-gradient(135deg, rgba(184,255,87,.04) 0%, var(--surface) 60%);
+      border:1px solid rgba(184,255,87,.15);
+      border-radius:16px;padding:28px 32px;margin-bottom:22px;overflow:hidden
+    }
+    .team-hero::before{content:'';position:absolute;top:-80px;right:-80px;width:320px;height:320px;background:radial-gradient(circle, rgba(184,255,87,.08) 0%, transparent 60%);pointer-events:none}
+    .team-hero-inner{position:relative;z-index:1;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+    .team-logo{width:88px;height:88px;border-radius:16px;background:linear-gradient(135deg, var(--card), rgba(184,255,87,.04));border:1px solid rgba(184,255,87,.25);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:42px;color:var(--accent);flex-shrink:0;box-shadow:0 4px 24px rgba(0,0,0,.3), inset 0 1px 0 rgba(184,255,87,.1)}
+    .team-id{flex:1;min-width:200px}
+    .team-name{font-family:var(--display);font-size:clamp(28px,4vw,44px);color:var(--text);letter-spacing:.02em;line-height:1.05}
+    .team-tag-chip{display:inline-block;margin-left:10px;padding:4px 10px;border-radius:40px;background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.25);color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.04em;vertical-align:middle}
+    .team-meta{font-family:var(--mono);font-size:12px;color:var(--text2);margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .team-meta-item{display:flex;align-items:center;gap:5px}
+    .team-meta-item svg{opacity:.7}
+    .team-recruit-pill{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.3);padding:4px 12px;border-radius:40px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+    .team-owner-pill{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.3);padding:4px 10px;border-radius:40px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+    .team-desc{font-size:13px;color:var(--text2);line-height:1.65;margin-top:14px;max-width:720px;font-family:var(--mono)}
 
-    .score-card{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:14px;padding:24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
-    .score-donut{font-family:var(--display);font-size:56px;color:var(--accent);line-height:1;flex-shrink:0}
-    .score-donut small{font-size:20px;color:var(--text3)}
-    .score-info{flex:1;min-width:180px}
-    .score-rank{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-    .score-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5}
+    /* ── Section wrapper ───────────────────────────────────────── */
+    .section{margin-bottom:28px}
+    .section-title{font-family:var(--display);font-size:18px;color:var(--text);letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+    .section-title::before{content:'';width:3px;height:16px;background:var(--accent);border-radius:2px;box-shadow:0 0 8px rgba(184,255,87,.5)}
+    .section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(184,255,87,.15),transparent)}
+    .section-sub{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:14px;margin-top:-6px;letter-spacing:.02em}
 
-    .metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:16px}
-    .metric{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;text-align:center}
+    /* ── Score card ────────────────────────────────────────────── */
+    .score-wrap{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;background:linear-gradient(135deg, rgba(184,255,87,.08) 0%, rgba(184,255,87,.01) 80%);border:1px solid rgba(184,255,87,.3);border-radius:16px;padding:24px 28px;position:relative;overflow:hidden}
+    .score-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg, transparent, rgba(184,255,87,.4), transparent)}
+    @media(max-width:600px){.score-wrap{grid-template-columns:1fr;text-align:center}}
+    .score-ring{position:relative;width:140px;height:140px;flex-shrink:0;margin:0 auto}
+    .score-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+    .score-ring-bg{stroke:var(--border2);stroke-width:8;fill:none}
+    .score-ring-fg{stroke:var(--accent);stroke-width:8;fill:none;stroke-linecap:round;transition:stroke-dashoffset 1s ease-out;filter:drop-shadow(0 0 8px rgba(184,255,87,.5))}
+    .score-ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .score-ring-val{font-family:var(--display);font-size:44px;color:var(--accent);line-height:1}
+    .score-ring-max{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px;letter-spacing:.08em}
+    .score-info{min-width:0}
+    .score-rank{display:inline-block;padding:4px 12px;border-radius:40px;background:rgba(184,255,87,.15);color:var(--accent);border:1px solid rgba(184,255,87,.35);font-family:var(--mono);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+    .score-rank.elite{background:rgba(245,200,66,.12);color:var(--gold);border-color:rgba(245,200,66,.35)}
+    .score-rank.débutant{background:rgba(255,68,68,.1);color:var(--danger);border-color:rgba(255,68,68,.3)}
+    .score-headline{font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:6px;letter-spacing:.02em}
+    .score-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.6}
+
+    /* ── Metrics grid ──────────────────────────────────────────── */
+    .metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:16px}
+    .metric{position:relative;background:linear-gradient(180deg, rgba(184,255,87,.02), var(--card) 50%);border:1px solid var(--border);border-radius:10px;padding:16px 14px;text-align:center;overflow:hidden}
+    .metric::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:60%;height:1px;background:linear-gradient(90deg, transparent, rgba(184,255,87,.25), transparent)}
     .metric-val{font-family:var(--display);font-size:24px;color:var(--text);line-height:1}
-    .metric-lbl{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:5px}
+    .metric-val.accent{color:var(--accent)}
+    .metric-val.gold{color:var(--gold)}
+    .metric-val.success{color:var(--success)}
+    .metric-val.danger{color:var(--danger)}
+    .metric-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:6px;font-weight:700}
+    .metric-trend{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:.04em}
+    .metric-trend.up{color:var(--success)} .metric-trend.down{color:var(--danger)}
 
+    /* ── Side balance ──────────────────────────────────────────── */
+    .sides-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center}
+    @media(max-width:600px){.sides-grid{grid-template-columns:1fr;gap:10px}}
+    .side-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;position:relative;overflow:hidden}
+    .side-card.ct{border-color:rgba(91,155,213,.3);background:linear-gradient(135deg, rgba(91,155,213,.06), var(--surface) 70%)}
+    .side-card.t{border-color:rgba(245,200,66,.3);background:linear-gradient(135deg, rgba(245,200,66,.06), var(--surface) 70%)}
+    .side-label{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+    .side-card.ct .side-label{color:var(--info)}
+    .side-card.t .side-label{color:var(--gold)}
+    .side-value{font-family:var(--display);font-size:48px;line-height:1;color:var(--text)}
+    .side-value span{font-size:24px;color:var(--text3);margin-left:2px}
+    .side-gap{text-align:center;padding:14px 10px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.5}
+    .side-gap-val{font-family:var(--display);font-size:26px;color:var(--accent);margin-bottom:4px}
+    .side-card-desc{font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:10px;line-height:1.55}
+
+    /* ── Map analysis table ───────────────────────────────────── */
+    .map-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-family:var(--mono);font-size:12px}
+    .map-table th,.map-table td{padding:12px 14px;text-align:left}
+    .map-table th{background:var(--card);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border2)}
+    .map-table tr{border-bottom:1px solid var(--border)}
+    .map-table tr:last-child{border-bottom:none}
+    .map-table tr:hover{background:rgba(184,255,87,.025)}
+    .map-name-cell{font-family:var(--display);font-size:15px;color:var(--text);letter-spacing:.02em}
+    .wr-bar{position:relative;height:6px;width:100%;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px}
+    .wr-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .6s ease}
+    .wr-bar-fill.bad{background:var(--danger)}
+    .wr-bar-fill.mid{background:var(--gold)}
+    .map-reco{display:inline-flex;padding:3px 9px;border-radius:40px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid}
+    .map-reco.pick{background:rgba(184,255,87,.1);color:var(--accent);border-color:rgba(184,255,87,.3)}
+    .map-reco.ban{background:rgba(255,68,68,.1);color:var(--danger);border-color:rgba(255,68,68,.3)}
+    .map-reco.neutral{background:var(--card);color:var(--text3);border-color:var(--border2)}
+
+    /* ── Roster comparison table ─────────────────────────────── */
+    .roster-compare{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-family:var(--mono);font-size:12px}
+    .roster-compare th,.roster-compare td{padding:12px 12px;text-align:center}
+    .roster-compare th:first-child,.roster-compare td:first-child{text-align:left}
+    .roster-compare th{background:var(--card);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border2);white-space:nowrap}
+    .roster-compare tr{border-bottom:1px solid var(--border)}
+    .roster-compare tr:last-child{border-bottom:none}
+    .rc-nick{font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;font-size:13px}
+    .rc-avatar{width:26px;height:26px;border-radius:6px;background:var(--card);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:14px;color:var(--accent);flex-shrink:0}
+    .rc-avatar img{width:100%;height:100%;object-fit:cover;border-radius:5px}
+    .rc-role{display:inline-block;font-size:9px;color:var(--text3);margin-top:2px;letter-spacing:.04em;text-transform:uppercase}
+    .rc-best{color:var(--accent);font-weight:700}
+    .rc-worst{color:var(--text3)}
+    .rc-neutral{color:var(--text2)}
+    .rc-tag-captain,.rc-tag-sub{font-size:8px;padding:1px 5px;border-radius:3px;margin-left:6px;letter-spacing:.5px;text-transform:uppercase;font-weight:700}
+    .rc-tag-captain{background:rgba(245,200,66,.15);color:var(--gold)}
+    .rc-tag-sub{background:rgba(122,128,128,.15);color:var(--text2)}
+
+    /* Mobile cards pour roster comparison */
+    @media(max-width:640px){
+      .roster-compare{display:none}
+      .roster-cards{display:grid;gap:10px}
+    }
+    @media(min-width:641px){
+      .roster-cards{display:none}
+    }
+    .rc-mobile-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+    .rc-mobile-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    .rc-mobile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-family:var(--mono);font-size:11px}
+    .rc-mobile-kpi{text-align:center;padding:8px 6px;background:var(--card);border-radius:6px}
+    .rc-mobile-kpi-val{font-family:var(--display);font-size:16px;color:var(--text);line-height:1}
+    .rc-mobile-kpi-lbl{font-size:8px;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:.08em}
+
+    /* ── Insights cards ───────────────────────────────────────── */
+    .insights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+    .insight{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;border-left:3px solid var(--border2)}
+    .insight.success{border-left-color:var(--accent);background:linear-gradient(90deg, rgba(184,255,87,.03) 0%, var(--surface) 40%)}
+    .insight.warning{border-left-color:var(--gold);background:linear-gradient(90deg, rgba(245,200,66,.03) 0%, var(--surface) 40%)}
+    .insight.danger{border-left-color:var(--danger);background:linear-gradient(90deg, rgba(255,68,68,.03) 0%, var(--surface) 40%)}
+    .insight.info{border-left-color:var(--info);background:linear-gradient(90deg, rgba(91,155,213,.03) 0%, var(--surface) 40%)}
+    .insight-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+    .insight-icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .insight.success .insight-icon{background:rgba(184,255,87,.1);color:var(--accent)}
+    .insight.warning .insight-icon{background:rgba(245,200,66,.1);color:var(--gold)}
+    .insight.danger .insight-icon{background:rgba(255,68,68,.1);color:var(--danger)}
+    .insight.info .insight-icon{background:rgba(91,155,213,.1);color:var(--info)}
+    .insight-title{font-family:var(--display);font-size:13px;color:var(--text);letter-spacing:.04em;line-height:1.2;text-transform:uppercase}
+    .insight-msg{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.6}
+
+    /* ── Members detail grid ──────────────────────────────────── */
     .members-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
-    .member{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
-    .member-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-    .member-avatar{width:44px;height:44px;border-radius:10px;background:var(--card);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:20px;color:var(--accent);flex-shrink:0}
-    .member-nick{font-size:15px;font-weight:700;color:var(--text)}
-    .member-rôle-line{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px}
-    .captain-tag,.sub-tag{background:rgba(245,200,66,.15);color:var(--gold);padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-right:6px}
+    .member{position:relative;background:linear-gradient(180deg, var(--surface), var(--card) 80%);border:1px solid var(--border);border-radius:12px;padding:16px 18px;transition:all .2s;text-decoration:none;color:inherit;overflow:hidden}
+    .member:hover{border-color:rgba(184,255,87,.25);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+    .member::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg, transparent, rgba(184,255,87,.25), transparent);opacity:0;transition:opacity .2s}
+    .member:hover::before{opacity:1}
+    .member-head{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+    .member-avatar{width:42px;height:42px;border-radius:10px;background:var(--card);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:18px;color:var(--accent);flex-shrink:0;overflow:hidden}
+    .member-avatar img{width:100%;height:100%;object-fit:cover}
+    .member-nick{font-size:14px;font-weight:700;color:var(--text);line-height:1.15}
+    .member-role-line{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:.02em}
+    .member-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-top:10px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11px}
+    .member-stat{text-align:center}
+    .member-stat-val{font-family:var(--display);font-size:15px;color:var(--text);line-height:1}
+    .member-stat-val.accent{color:var(--accent)}
+    .member-stat-val.gold{color:var(--gold)}
+    .member-stat-lbl{font-size:8px;color:var(--text3);margin-top:3px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+    .captain-tag,.sub-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-right:5px;vertical-align:middle}
+    .captain-tag{background:rgba(245,200,66,.15);color:var(--gold)}
     .sub-tag{background:rgba(122,128,128,.15);color:var(--text2)}
 
-    .map-pool{display:flex;flex-wrap:wrap;gap:8px}
-    .map-pill{font-family:var(--mono);font-size:12px;padding:8px 14px;border-radius:40px;background:var(--card);border:1px solid var(--border2)}
-    .map-pill strong{color:var(--accent);margin-right:6px}
+    /* ── Recruit banner ──────────────────────────────────────── */
+    .recruit-banner{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:22px 26px;margin-bottom:24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+    .recruit-left{flex:1;min-width:240px}
+    .recruit-title{font-family:var(--display);font-size:18px;color:var(--accent);letter-spacing:.02em;margin-bottom:6px;text-transform:uppercase}
+    .recruit-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.6}
+    .recruit-btn{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#000;padding:11px 20px;border-radius:6px;text-decoration:none;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .recruit-btn:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 4px 16px rgba(184,255,87,.3)}
 
-    .recruit-banner{background:linear-gradient(135deg,rgba(184,255,87,.1),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:20px 24px;margin-bottom:24px}
-    .recruit-title{font-family:var(--display);font-size:18px;color:var(--accent);margin-bottom:6px}
-    .recruit-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5}
-    .recruit-btn{display:inline-block;margin-top:12px;background:var(--accent);color:#000;padding:10px 18px;border-radius:6px;text-decoration:none;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
-    .recruit-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+    /* ── Loading / empty ─────────────────────────────────────── */
+    .empty-big{text-align:center;padding:80px 24px;background:linear-gradient(180deg, rgba(184,255,87,.02), var(--surface));border:1px solid rgba(184,255,87,.1);border-radius:14px}
+    .empty-big-ico{display:inline-flex;align-items:center;justify-content:center;width:76px;height:76px;border-radius:50%;background:radial-gradient(circle, rgba(184,255,87,.12), rgba(184,255,87,.02) 70%);border:1px solid rgba(184,255,87,.2);color:var(--accent);margin-bottom:18px;animation:float 3s ease-in-out infinite}
+    .empty-big-ico svg{width:38px;height:38px}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+    .empty-big-title{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px}
+    .empty-big-sub{font-family:var(--mono);font-size:12px;color:var(--text2);max-width:440px;margin:0 auto 18px;line-height:1.7}
+    .empty-big-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:12px 24px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;border:none;cursor:pointer;transition:all .18s}
+    .empty-big-btn:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 16px rgba(184,255,87,.3)}
 
-    .empty{text-align:center;padding:60px 24px;color:var(--text3);font-family:var(--mono);font-size:13px}
-    .empty a{color:var(--accent);text-decoration:none}
-    .empty a:hover{text-decoration:underline}
+    .loading-state{text-align:center;padding:60px 24px;color:var(--text3);font-family:var(--mono);font-size:13px}
+    .loading-state::before{content:'';display:inline-block;width:22px;height:22px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:10px}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
-    .loading{text-align:center;padding:60px 24px;color:var(--text3);font-family:var(--mono);font-size:13px}
+    /* ── Mode switcher (si l'user a acces a plusieurs teams) ── */
+    .mode-hint{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--card);border:1px solid var(--border);border-radius:40px;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em;margin-bottom:14px}
+    .mode-hint strong{color:var(--accent);font-weight:700}
   </style>
 </head>
 <body>
@@ -82,7 +221,7 @@
 <nav></nav>
 
 <div class="page">
-  <div id="content" class="loading">Chargement de l'équipe...</div>
+  <div id="content" class="loading-state">Chargement de l'equipe...</div>
 </div>
 
 <script>
@@ -91,177 +230,547 @@ const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 const sb = supabase.createClient(SB_URL, SB_ANON);
 window._sb = sb;
 
+// ── Utilitaires ─────────────────────────────────────────────────────────
+function escHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function formatDate(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }); } catch { return ''; }
+}
+function cleanMapName(m) {
+  return (m || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
+}
+function roleLabel(r) {
+  const MAP = { captain: 'Captain', igl: 'IGL', entry: 'Entry', awp: 'AWPer', awper: 'AWPer', support: 'Support', lurker: 'Lurker', rifler: 'Rifler', unknown: 'Role non defini' };
+  return MAP[r] || (r ? r.charAt(0).toUpperCase() + r.slice(1) : 'Role non defini');
+}
+
+// ── Point d'entree : route selon presence de ?tag ou auth ─────────────
 async function loadTeam() {
   const params = new URLSearchParams(window.location.search);
   const tag = (params.get('tag') || '').toUpperCase();
-  const contentEl = document.getElementById('content');
-
-  if (!tag) {
-    contentEl.className = 'empty';
-    contentEl.innerHTML = `Tag d'équipe manquant dans l'URL. <a href="/scout.html">Retour au Scout</a>`;
-    return;
+  if (tag) {
+    return loadPublicByTag(tag);
   }
+  return loadMyTeam();
+}
 
-  // Lookup roster par tag + visibility public
-  const { data: roster, error } = await sb
+// ── Mode public par tag ────────────────────────────────────────────────
+async function loadPublicByTag(tag) {
+  const { data: roster } = await sb
     .from('rosters')
     .select('*')
     .eq('tag', tag)
     .eq('visibility', 'public')
     .maybeSingle();
-
-  if (error || !roster) {
-    contentEl.className = 'empty';
-    contentEl.innerHTML = `<div>Aucune équipe publique avec le tag <strong style="color:var(--text)">[${escapeHtml(tag)}]</strong>.</div><div style="margin-top:12px"><a href="/scout.html">Retour au Scout</a></div>`;
+  if (!roster) {
+    renderNoPublicTeam(tag);
     return;
   }
-
-  // Fetch membres (publics)
   const { data: players } = await sb
     .from('roster_players')
     .select('faceit_nickname, team_role, is_captain, is_sub, faceit_level, faceit_elo')
     .eq('roster_id', roster.id);
+  const aggregated = await fetchAggregated(roster.id);
+  setSeo(roster, aggregated);
+  renderTeam({ roster, players: players || [], aggregated, mode: 'public' });
+}
 
-  // Fetch stats agregees
-  let aggregated = null;
+// ── Mode "my team" : essaie d'auto-detecter ───────────────────────────
+async function loadMyTeam() {
+  // Recupere session
+  const { data: sessionRes } = await sb.auth.getSession();
+  const session = sessionRes?.session;
+  if (!session) {
+    renderLoginRequired();
+    return;
+  }
+  // Fetch my_roster via API authentifiee
   try {
-    const statsRes = await fetch(`/api/roster-stats?roster_id=${roster.id}`);
-    const d = await statsRes.json();
-    aggregated = d.aggregated || null;
-  } catch {}
+    const res = await fetch('/api/roster?view=my_roster', {
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    const d = await res.json();
+    if (d.error || !d.roster) {
+      renderNoTeamYet();
+      return;
+    }
+    const roster = d.roster;
+    const players = d.players || d.members || [];
+    const aggregated = await fetchAggregated(roster.id);
+    const isOwner = !!d.is_owner;
+    setSeo(roster, aggregated);
+    renderTeam({ roster, players, aggregated, mode: 'my', isOwner });
+  } catch (err) {
+    console.error('[team.html] loadMyTeam error:', err);
+    renderError(err.message || 'Connexion impossible');
+  }
+}
 
-  // SEO
-  const pageTitle = `${roster.team_name} · Équipe CS2 sur FragValue`;
+async function fetchAggregated(rosterId) {
+  try {
+    const res = await fetch('/api/roster-stats?roster_id=' + encodeURIComponent(rosterId));
+    const d = await res.json();
+    return d.aggregated || null;
+  } catch { return null; }
+}
+
+function setSeo(roster, aggregated) {
+  const pageTitle = `${roster.team_name} - Analyse d'equipe CS2 - FragValue`;
   document.title = pageTitle;
   document.getElementById('pageTitle').textContent = pageTitle;
-  const descText = `${roster.team_name} sur FragValue · ${roster.description || 'Équipe CS2 FACEIT'}.${aggregated ? ` Team Score ${aggregated.team_score}/100.` : ''}`;
+  const descText = `${roster.team_name} : analyse collective complete (Team Score ${aggregated?.team_score || '-'}/100, side balance CT/T, map analysis, comparaison roster).`;
   document.getElementById('metaDesc').setAttribute('content', descText);
   document.getElementById('ogTitle').setAttribute('content', pageTitle);
   document.getElementById('ogDesc').setAttribute('content', descText);
-
-  renderTeam({ roster, players: players || [], aggregated });
 }
 
-function renderTeam({ roster, players, aggregated }) {
+// ── Empty / error states ───────────────────────────────────────────────
+function renderNoPublicTeam(tag) {
+  document.getElementById('content').outerHTML = `
+    <div class="empty-big" id="content">
+      <div class="empty-big-ico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="28" cy="28" r="14"/><line x1="38.5" y1="38.5" x2="48" y2="48"/></svg></div>
+      <div class="empty-big-title">Aucune equipe publique</div>
+      <div class="empty-big-sub">Pas d'equipe avec le tag [${escHtml(tag)}] en visibility publique. Verifie l'URL ou retourne au scout.</div>
+      <a href="/scout.html" class="empty-big-btn">Retour au scout</a>
+    </div>`;
+}
+function renderLoginRequired() {
+  document.getElementById('content').outerHTML = `
+    <div class="empty-big" id="content">
+      <div class="empty-big-ico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="28" width="36" height="24" rx="3"/><path d="M22 28v-6a10 10 0 0 1 20 0v6"/></svg></div>
+      <div class="empty-big-title">Connecte-toi pour voir ton equipe</div>
+      <div class="empty-big-sub">L'analyse d'equipe est disponible quand tu es connecte. Si tu veux juste consulter une equipe publique, ajoute ?tag=XXX a l'URL.</div>
+      <a href="/login.html" class="empty-big-btn">Se connecter</a>
+    </div>`;
+}
+function renderNoTeamYet() {
+  document.getElementById('content').outerHTML = `
+    <div class="empty-big" id="content">
+      <div class="empty-big-ico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="20" cy="22" r="5"/><path d="M10 42c0-5.5 4.5-10 10-10s10 4.5 10 10"/><circle cx="44" cy="22" r="5"/><path d="M34 42c0-5.5 4.5-10 10-10s10 4.5 10 10"/><circle cx="32" cy="14" r="4"/></svg></div>
+      <div class="empty-big-title">Tu n'as pas encore d'equipe</div>
+      <div class="empty-big-sub">Cree ton roster FragValue depuis le dashboard pour obtenir l'analyse collective : team score, side balance, map analysis, comparaison membre par membre.</div>
+      <a href="/dashboard.html#roster" class="empty-big-btn">Creer mon equipe</a>
+    </div>`;
+}
+function renderError(msg) {
+  document.getElementById('content').outerHTML = `
+    <div class="empty-big" id="content">
+      <div class="empty-big-ico" style="color:var(--danger);border-color:rgba(255,68,68,.3);background:radial-gradient(circle, rgba(255,68,68,.1), transparent 70%)"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="32" cy="32" r="22"/><line x1="32" y1="22" x2="32" y2="34"/><circle cx="32" cy="42" r="1.5" fill="currentColor"/></svg></div>
+      <div class="empty-big-title">Impossible de charger</div>
+      <div class="empty-big-sub">${escHtml(msg)}. Reessaie dans quelques instants.</div>
+      <button class="empty-big-btn" onclick="location.reload()">Reessayer</button>
+    </div>`;
+}
+
+// ── Render principal ───────────────────────────────────────────────────
+function renderTeam({ roster, players, aggregated, mode, isOwner }) {
   const contentEl = document.getElementById('content');
-  contentEl.classList.remove('loading');
   contentEl.className = '';
 
-  const logoInitial = roster.team_name.charAt(0).toUpperCase();
-  const tag = roster.tag ? `<span class="team-tag">[${roster.tag}]</span>` : '';
-
-  let html = `
-    <div class="team-hero">
-      <div class="team-logo">${logoInitial}</div>
-      <div style="flex:1;min-width:180px">
-        <div class="team-name">${escapeHtml(roster.team_name)}${tag}</div>
-        <div class="team-meta">
-          ${roster.region ? `<span class="team-meta-item"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${roster.region}</span>` : ''}
-          <span class="team-meta-item">${players.length} membre${players.length > 1 ? 's' : ''}</span>
-          ${roster.looking_for_players ? '<span class="team-recruit-pill">Recrutement ouvert</span>' : ''}
-        </div>
-      </div>
-    </div>
-
-    ${roster.description ? `<div class="team-desc">${escapeHtml(roster.description)}</div>` : ''}
-
-    ${roster.looking_for_players ? `
-      <div class="recruit-banner">
-        <div class="recruit-title">Cette équipe recrute</div>
-        <div class="recruit-sub">${roster.looking_for_roles && roster.looking_for_roles.length ? 'Rôles recherchés : ' + roster.looking_for_roles.join(', ') : 'Rôles ouverts, candidatures bienvenues.'}</div>
-        <a href="/scout.html" class="recruit-btn">Apparaître comme candidat →</a>
-      </div>
-    ` : ''}
-  `;
-
-  if (aggregated) {
-    const rankColor = aggregated.team_score >= 75 ? 'var(--success)' : aggregated.team_score >= 60 ? 'var(--accent)' : aggregated.team_score >= 45 ? 'var(--gold)' : 'var(--danger)';
-    html += `
-      <div class="section">
-        <div class="section-title">Team Score</div>
-        <div class="score-card">
-          <div class="score-donut" style="color:${rankColor}">${aggregated.team_score}<small>/100</small></div>
-          <div class="score-info">
-            <div class="score-rank">${aggregated.team_rank}</div>
-            <div class="score-sub">Score composite basé sur FV Rating, KAST et Win Rate collectifs sur les 20 derniers matchs de chaque membre (${aggregated.members_with_stats || 0} / ${players.length} membres avec FACEIT lié).</div>
-          </div>
-        </div>
-        <div class="metrics-grid">
-          <div class="metric"><div class="metric-val" style="color:var(--accent)">${aggregated.avg_fv_rating}</div><div class="metric-lbl">FV Rating</div></div>
-          <div class="metric"><div class="metric-val">${aggregated.avg_kd}</div><div class="metric-lbl">K/D</div></div>
-          <div class="metric"><div class="metric-val">${aggregated.avg_adr}</div><div class="metric-lbl">ADR</div></div>
-          <div class="metric"><div class="metric-val">${aggregated.avg_hs}%</div><div class="metric-lbl">HS%</div></div>
-          <div class="metric"><div class="metric-val">${aggregated.avg_kast}%</div><div class="metric-lbl">KAST</div></div>
-          <div class="metric"><div class="metric-val">${aggregated.avg_win_rate}%</div><div class="metric-lbl">Win rate</div></div>
-          <div class="metric"><div class="metric-val" style="color:var(--gold)">${aggregated.avg_elo}</div><div class="metric-lbl">ELO moyen</div></div>
-        </div>
-      </div>
-    `;
-
-    if (aggregated.map_pool && aggregated.map_pool.length > 0) {
-      html += `
-        <div class="section">
-          <div class="section-title">Map pool collectif</div>
-          <div class="map-pool">
-            ${aggregated.map_pool.map(m => {
-              const name = (m.map || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
-              return `<div class="map-pill"><strong>${name}</strong> ${m.team_win_rate}% · ${m.total_matches}M</div>`;
-            }).join('')}
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  html += `
-    <div class="section">
-      <div class="section-title">Roster (${players.length})</div>
-      <div class="members-grid">
-        ${players.map(p => `
-          <div class="member">
-            <div class="member-head">
-              <div class="member-avatar">${(p.faceit_nickname || '?').charAt(0).toUpperCase()}</div>
-              <div>
-                <div class="member-nick">${escapeHtml(p.faceit_nickname || 'Joueur')}</div>
-                <div class="member-rôle-line">
-                  ${p.is_captain ? '<span class="captain-tag">Captain</span>' : ''}
-                  ${p.is_sub ? '<span class="sub-tag">Sub</span>' : ''}
-                  ${p.team_role ? p.team_role.charAt(0).toUpperCase() + p.team_role.slice(1) : 'Rôle non défini'}
-                </div>
-              </div>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--text3)">
-              ${p.faceit_level ? `<span>Lvl ${p.faceit_level}</span>` : ''}
-              ${p.faceit_elo ? `<span style="color:var(--gold);font-weight:700">${p.faceit_elo} ELO</span>` : ''}
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
+  const html = [
+    renderHero(roster, players, aggregated, mode, isOwner),
+    renderRecruitBanner(roster, mode, isOwner),
+    renderScoreSection(aggregated, players),
+    renderMetricsGrid(aggregated),
+    renderSideBalance(aggregated),
+    renderMapAnalysis(aggregated),
+    renderRosterComparison(aggregated),
+    renderInsights(aggregated),
+    renderMembersDetail(aggregated, players, mode),
+  ].filter(Boolean).join('');
 
   contentEl.innerHTML = html;
+  // Animate score ring after render
+  requestAnimationFrame(animateScoreRing);
 }
 
-function escapeHtml(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function renderHero(roster, players, aggregated, mode, isOwner) {
+  const logoInitial = (roster.team_name || '?').charAt(0).toUpperCase();
+  const tagChip = roster.tag ? `<span class="team-tag-chip">[${escHtml(roster.tag)}]</span>` : '';
+  const recruitPill = roster.looking_for_players ? '<span class="team-recruit-pill">Recrutement ouvert</span>' : '';
+  const ownerPill = (mode === 'my' && isOwner) ? '<span class="team-owner-pill">Owner</span>' : '';
+  const regionItem = roster.region ? `<span class="team-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${escHtml(roster.region)}</span>` : '';
+  const createdItem = roster.created_at ? `<span class="team-meta-item">Creee le ${formatDate(roster.created_at)}</span>` : '';
+  const modeHint = mode === 'my'
+    ? `<div class="mode-hint">Tu regardes <strong>ton equipe</strong>${isOwner ? ' (en tant qu\'owner)' : ' (en tant que membre)'}</div>`
+    : `<div class="mode-hint">Vue <strong>publique</strong> de cette equipe</div>`;
+
+  return `
+    ${modeHint}
+    <div class="team-hero">
+      <div class="team-hero-inner">
+        <div class="team-logo">${escHtml(logoInitial)}</div>
+        <div class="team-id">
+          <div class="team-name">${escHtml(roster.team_name || 'Equipe')}${tagChip}</div>
+          <div class="team-meta">
+            ${regionItem}
+            <span class="team-meta-item">${players.length} membre${players.length > 1 ? 's' : ''}</span>
+            ${aggregated ? `<span class="team-meta-item">${aggregated.members_with_stats || 0} avec FACEIT lie</span>` : ''}
+            ${createdItem}
+            ${recruitPill}
+            ${ownerPill}
+          </div>
+        </div>
+      </div>
+      ${roster.description ? `<div class="team-desc">${escHtml(roster.description)}</div>` : ''}
+    </div>
+  `;
 }
 
-// Wrapper avec gestion d'erreur globale : si loadTeam throw (Supabase down,
-// RLS bloque, parsing erreur), on affiché un message user-friendly plutôt
-// que de laisser le placeholder "Chargement..." eternellement.
-loadTeam().catch(err => {
-  console.error('[team.html] loadTeam failed:', err);
-  const contentEl = document.getElementById('content');
-  if (contentEl) {
-    contentEl.className = 'empty';
-    contentEl.innerHTML = `
-      <div style="font:700 18px 'Anton',sans-serif;color:#e8eaea;margin-bottom:12px">Impossible de charger l'équipe</div>
-      <div style="color:#7a8080;font-size:14px;margin-bottom:16px">Le service est temporairement indisponible. Réessaie dans quelques instants.</div>
-      <div><a href="/scout.html" style="color:#b8ff57;text-decoration:none">← Retour au Scout</a></div>
+function renderRecruitBanner(roster, mode, isOwner) {
+  if (!roster.looking_for_players) return '';
+  const roles = (roster.looking_for_roles && roster.looking_for_roles.length)
+    ? 'Roles cherches : ' + roster.looking_for_roles.map(escHtml).join(', ')
+    : 'Tous roles ouverts, candidatures bienvenues.';
+  const cta = (mode === 'public')
+    ? `<a href="/scout.html" class="recruit-btn">Apparaitre comme candidat</a>`
+    : `<a href="/dashboard.html#roster" class="recruit-btn">Gerer les candidatures</a>`;
+  return `
+    <div class="recruit-banner">
+      <div class="recruit-left">
+        <div class="recruit-title">Cette equipe recrute</div>
+        <div class="recruit-sub">${roles}</div>
+      </div>
+      ${cta}
+    </div>
+  `;
+}
+
+function renderScoreSection(aggregated, players) {
+  if (!aggregated) {
+    return `
+      <div class="section">
+        <div class="section-title">Team Score</div>
+        <div class="empty-big" style="padding:40px 24px">
+          <div class="empty-big-ico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="10" y="14" width="36" height="32" rx="3"/><polyline points="16,38 22,30 28,34 34,24 40,28"/></svg></div>
+          <div class="empty-big-title">Pas assez de data</div>
+          <div class="empty-big-sub">Aucun membre n'a encore de compte FACEIT lie avec stats recentes. Les analyses apparaitront des qu'au moins 1 membre aura joue ${players.length > 0 ? 'des matchs classes' : 'et rejoint l\'equipe'}.</div>
+        </div>
+      </div>
     `;
   }
+  const score = aggregated.team_score;
+  const rank = aggregated.team_rank || 'Rank inconnu';
+  const rankClass = (aggregated.team_rank || '').toLowerCase().replace(/\s+/g, '-');
+  const members = aggregated.members_with_stats || 0;
+  const totalMembers = aggregated.members_with_stats + (aggregated.total_members ? aggregated.total_members - aggregated.members_with_stats : 0);
+  const headline = (() => {
+    if (score >= 75) return 'Cette equipe joue deja un CS competitif solide.';
+    if (score >= 60) return 'Bon niveau collectif. Les bases sont la pour progresser.';
+    if (score >= 45) return 'Equipe en progression. Focus sur les gaps identifies plus bas.';
+    return 'Fondations a construire. Travail d\'equipe requis sur les fondamentaux.';
+  })();
+
+  // Circle ring values : 2*pi*r ; r=60 → circumference 377
+  const C = 377;
+  const dash = C - (score / 100) * C;
+
+  return `
+    <div class="section">
+      <div class="section-title">Team Score</div>
+      <div class="score-wrap">
+        <div class="score-ring">
+          <svg viewBox="0 0 140 140">
+            <circle class="score-ring-bg" cx="70" cy="70" r="60"></circle>
+            <circle class="score-ring-fg" cx="70" cy="70" r="60" stroke-dasharray="${C}" stroke-dashoffset="${C}" data-target="${dash}"></circle>
+          </svg>
+          <div class="score-ring-text">
+            <div class="score-ring-val">${score}</div>
+            <div class="score-ring-max">/ 100</div>
+          </div>
+        </div>
+        <div class="score-info">
+          <div class="score-rank ${rankClass}">${escHtml(rank)}</div>
+          <div class="score-headline">${headline}</div>
+          <div class="score-sub">Score compose de 50 pts FV Rating, 25 pts KAST, 25 pts Win Rate collectifs sur les 20 derniers matchs de chaque membre (${members} / ${players.length} membres avec FACEIT lie).</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMetricsGrid(aggregated) {
+  if (!aggregated) return '';
+  const topPerformer = aggregated.top_performer;
+  const top = topPerformer ? `<div class="section-sub">Top performer : <strong style="color:var(--accent)">${escHtml(topPerformer.nickname)}</strong> (FV ${topPerformer.fvRating.toFixed(2)}, K/D ${topPerformer.kd.toFixed(2)})</div>` : '';
+  return `
+    <div class="section">
+      <div class="section-title">KPIs collectifs</div>
+      ${top}
+      <div class="metrics-grid">
+        <div class="metric"><div class="metric-val accent">${aggregated.avg_fv_rating}</div><div class="metric-lbl">FV Rating</div></div>
+        <div class="metric"><div class="metric-val">${aggregated.avg_kd}</div><div class="metric-lbl">K/D</div></div>
+        <div class="metric"><div class="metric-val">${aggregated.avg_adr}</div><div class="metric-lbl">ADR</div></div>
+        <div class="metric"><div class="metric-val">${aggregated.avg_hs}%</div><div class="metric-lbl">HS%</div></div>
+        <div class="metric"><div class="metric-val">${aggregated.avg_kast}%</div><div class="metric-lbl">KAST</div></div>
+        <div class="metric"><div class="metric-val">${aggregated.avg_win_rate}%</div><div class="metric-lbl">Win rate</div></div>
+        <div class="metric"><div class="metric-val gold">${aggregated.avg_elo}</div><div class="metric-lbl">ELO moyen</div></div>
+        <div class="metric"><div class="metric-val">${aggregated.avg_level}</div><div class="metric-lbl">Level moyen</div></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderSideBalance(aggregated) {
+  if (!aggregated || aggregated.avg_ct_win_rate == null || aggregated.avg_t_win_rate == null) return '';
+  const ct = aggregated.avg_ct_win_rate;
+  const t  = aggregated.avg_t_win_rate;
+  const gap = aggregated.side_gap;
+  const gapLabel = gap > 0 ? `+${gap} en CT` : gap < 0 ? `${gap} en CT` : 'Equilibree';
+  const gapDesc = (() => {
+    const abs = Math.abs(gap);
+    if (abs < 5) return 'Side balance homogene, bon signe de solidite globale.';
+    if (gap > 0) return `CT-sided (+${abs}pts). Force vos gun rounds en CT start et adapte le setup T.`;
+    return `T-sided (+${abs}pts cote T). Prioriser les maps fortes T : Mirage, Dust2, Inferno.`;
+  })();
+  return `
+    <div class="section">
+      <div class="section-title">Side balance</div>
+      <div class="section-sub">Moyenne des win rates CT et T de chaque membre sur les 20 derniers matchs</div>
+      <div class="sides-grid">
+        <div class="side-card ct">
+          <div class="side-label">CT win rate</div>
+          <div class="side-value">${ct}<span>%</span></div>
+          <div class="side-card-desc">Moyenne collective en side CT. ${ct >= 55 ? 'Solide defense.' : ct >= 48 ? 'CT correct.' : 'CT faible, travaille anchors et retakes.'}</div>
+        </div>
+        <div class="side-gap">
+          <div class="side-gap-val">${escHtml(gapLabel)}</div>
+          <div>${escHtml(gapDesc)}</div>
+        </div>
+        <div class="side-card t">
+          <div class="side-label">T win rate</div>
+          <div class="side-value">${t}<span>%</span></div>
+          <div class="side-card-desc">Moyenne collective en side T. ${t >= 55 ? 'Executes et control mid efficaces.' : t >= 48 ? 'T correct.' : 'T faible, travaille utility lineups et entries.'}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMapAnalysis(aggregated) {
+  if (!aggregated || !aggregated.map_pool || !aggregated.map_pool.length) return '';
+  const rows = aggregated.map_pool.map(m => {
+    const wr = m.team_win_rate || 0;
+    const wrClass = wr >= 55 ? '' : wr >= 45 ? 'mid' : 'bad';
+    const reco = wr >= 58 && m.total_matches >= 5 ? { label: 'Pick', cls: 'pick' }
+              : wr <= 42 && m.total_matches >= 5 ? { label: 'Ban',  cls: 'ban' }
+              : { label: 'Neutre', cls: 'neutral' };
+    return `
+      <tr>
+        <td><div class="map-name-cell">${cleanMapName(m.map)}</div></td>
+        <td style="width:40%">
+          <div style="color:var(--text)">${wr}%</div>
+          <div class="wr-bar"><div class="wr-bar-fill ${wrClass}" style="width:${wr}%"></div></div>
+        </td>
+        <td style="text-align:center">${m.total_matches}</td>
+        <td style="text-align:center;color:var(--accent)">${m.team_avg_fv || '-'}</td>
+        <td style="text-align:center"><span class="map-reco ${reco.cls}">${reco.label}</span></td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div class="section">
+      <div class="section-title">Map analysis</div>
+      <div class="section-sub">Top ${aggregated.map_pool.length} maps jouees collectivement, avec recommandation veto</div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="map-table">
+          <thead>
+            <tr><th>Map</th><th>Team WR</th><th>Matchs</th><th>FV moyen</th><th>Recommandation</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderRosterComparison(aggregated) {
+  if (!aggregated || !aggregated.members || !aggregated.members.length) return '';
+  const members = [...aggregated.members];
+
+  // Calcul des best/worst par KPI pour highlight
+  const kpis = ['fvRating', 'kd', 'adr', 'hs', 'kast'];
+  const bests = {}; const worsts = {};
+  kpis.forEach(k => {
+    const vals = members.map(m => m[k]).filter(v => typeof v === 'number');
+    if (vals.length) {
+      bests[k] = Math.max(...vals);
+      worsts[k] = Math.min(...vals);
+    }
+  });
+
+  const cellCls = (m, k) => {
+    if (members.length < 2 || bests[k] === worsts[k]) return 'rc-neutral';
+    if (m[k] === bests[k]) return 'rc-best';
+    if (m[k] === worsts[k]) return 'rc-worst';
+    return 'rc-neutral';
+  };
+
+  const rowsDesktop = members.map(m => {
+    const avatar = m.avatar
+      ? `<div class="rc-avatar"><img src="${escHtml(m.avatar)}" alt=""></div>`
+      : `<div class="rc-avatar">${escHtml((m.nickname || '?').charAt(0).toUpperCase())}</div>`;
+    const tags = (m.is_captain ? '<span class="rc-tag-captain">C</span>' : '') + (m.is_sub ? '<span class="rc-tag-sub">Sub</span>' : '');
+    return `
+      <tr>
+        <td>
+          <div class="rc-nick">${avatar}
+            <div>
+              <div>${escHtml(m.nickname)}${tags}</div>
+              <div class="rc-role">${escHtml(roleLabel(m.role))}</div>
+            </div>
+          </div>
+        </td>
+        <td class="${cellCls(m,'fvRating')}">${m.fvRating.toFixed(2)}</td>
+        <td class="${cellCls(m,'kd')}">${m.kd.toFixed(2)}</td>
+        <td class="${cellCls(m,'adr')}">${m.adr.toFixed(0)}</td>
+        <td class="${cellCls(m,'hs')}">${m.hs.toFixed(0)}%</td>
+        <td class="${cellCls(m,'kast')}">${m.kast.toFixed(0)}%</td>
+        <td style="color:var(--gold);font-weight:700">${m.elo || '-'}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const cardsMobile = members.map(m => {
+    const avatar = m.avatar
+      ? `<div class="rc-avatar"><img src="${escHtml(m.avatar)}" alt=""></div>`
+      : `<div class="rc-avatar">${escHtml((m.nickname || '?').charAt(0).toUpperCase())}</div>`;
+    const tags = (m.is_captain ? '<span class="rc-tag-captain">C</span>' : '') + (m.is_sub ? '<span class="rc-tag-sub">Sub</span>' : '');
+    return `
+      <div class="rc-mobile-card">
+        <div class="rc-mobile-head">${avatar}
+          <div>
+            <div style="font-weight:700;color:var(--text);font-size:13px">${escHtml(m.nickname)}${tags}</div>
+            <div class="rc-role">${escHtml(roleLabel(m.role))} - lvl ${m.level || '-'}</div>
+          </div>
+        </div>
+        <div class="rc-mobile-grid">
+          <div class="rc-mobile-kpi"><div class="rc-mobile-kpi-val" style="color:var(--accent)">${m.fvRating.toFixed(2)}</div><div class="rc-mobile-kpi-lbl">FV</div></div>
+          <div class="rc-mobile-kpi"><div class="rc-mobile-kpi-val">${m.kd.toFixed(2)}</div><div class="rc-mobile-kpi-lbl">K/D</div></div>
+          <div class="rc-mobile-kpi"><div class="rc-mobile-kpi-val">${m.adr.toFixed(0)}</div><div class="rc-mobile-kpi-lbl">ADR</div></div>
+          <div class="rc-mobile-kpi"><div class="rc-mobile-kpi-val">${m.hs.toFixed(0)}%</div><div class="rc-mobile-kpi-lbl">HS</div></div>
+          <div class="rc-mobile-kpi"><div class="rc-mobile-kpi-val">${m.kast.toFixed(0)}%</div><div class="rc-mobile-kpi-lbl">KAST</div></div>
+          <div class="rc-mobile-kpi"><div class="rc-mobile-kpi-val" style="color:var(--gold)">${m.elo || '-'}</div><div class="rc-mobile-kpi-lbl">ELO</div></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="section">
+      <div class="section-title">Comparaison roster</div>
+      <div class="section-sub">Vert = meilleur du roster, gris = a travailler. Sur les 20 derniers matchs individuels.</div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="roster-compare">
+          <thead>
+            <tr><th>Joueur</th><th>FV</th><th>K/D</th><th>ADR</th><th>HS%</th><th>KAST</th><th>ELO</th></tr>
+          </thead>
+          <tbody>${rowsDesktop}</tbody>
+        </table>
+      </div>
+      <div class="roster-cards">${cardsMobile}</div>
+    </div>
+  `;
+}
+
+function renderInsights(aggregated) {
+  if (!aggregated || !aggregated.insights || !aggregated.insights.length) return '';
+  const ICONS = {
+    gap:     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><polyline points="17 8 21 12 17 16"/></svg>',
+    side:    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3h18v18H3z"/><line x1="12" y1="3" x2="12" y2="21"/></svg>',
+    map:     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+    role:    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a6 6 0 0 1 12 0v2"/></svg>',
+    opening: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 8.3 22 9.3 17 14.1 18.2 21 12 17.7 5.8 21 7 14.1 2 9.3 9 8.3 12 2"/></svg>',
+    trophy:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v6a4 4 0 0 1-8 0V4z"/><path d="M8 6h-3a2 2 0 0 0 0 4h3M16 6h3a2 2 0 0 1 0 4h-3"/><line x1="10" y1="16" x2="14" y2="16"/><line x1="12" y1="13" x2="12" y2="16"/></svg>',
+  };
+  const cards = aggregated.insights.map(i => `
+    <div class="insight ${escHtml(i.type || 'info')}">
+      <div class="insight-head">
+        <div class="insight-icon">${ICONS[i.icon] || ICONS.trophy}</div>
+        <div class="insight-title">${escHtml(i.title || '')}</div>
+      </div>
+      <div class="insight-msg">${escHtml(i.message || '')}</div>
+    </div>
+  `).join('');
+  return `
+    <div class="section">
+      <div class="section-title">Insights actionnables</div>
+      <div class="section-sub">Heuristiques calculees sur l'analyse collective, a revoir avec ton coach</div>
+      <div class="insights-grid">${cards}</div>
+    </div>
+  `;
+}
+
+function renderMembersDetail(aggregated, players, mode) {
+  const members = (aggregated && aggregated.members && aggregated.members.length)
+    ? aggregated.members
+    : players.map(p => ({
+        nickname: p.faceit_nickname || 'Joueur',
+        role: p.team_role || 'unknown',
+        is_captain: !!p.is_captain,
+        is_sub: !!p.is_sub,
+        level: p.faceit_level || 0,
+        elo: p.faceit_elo || 0,
+        fvRating: null, kd: null, kast: null, avatar: null,
+      }));
+
+  const cards = members.map(m => {
+    const avatar = m.avatar
+      ? `<div class="member-avatar"><img src="${escHtml(m.avatar)}" alt=""></div>`
+      : `<div class="member-avatar">${escHtml((m.nickname || '?').charAt(0).toUpperCase())}</div>`;
+    const tags = (m.is_captain ? '<span class="captain-tag">C</span>' : '') + (m.is_sub ? '<span class="sub-tag">Sub</span>' : '');
+    const statsRow = (m.fvRating != null && m.fvRating > 0)
+      ? `
+        <div class="member-stats-row">
+          <div class="member-stat"><div class="member-stat-val accent">${m.fvRating.toFixed(2)}</div><div class="member-stat-lbl">FV</div></div>
+          <div class="member-stat"><div class="member-stat-val">${m.kd.toFixed(2)}</div><div class="member-stat-lbl">K/D</div></div>
+          <div class="member-stat"><div class="member-stat-val gold">${m.elo || '-'}</div><div class="member-stat-lbl">ELO</div></div>
+        </div>
+      `
+      : (m.elo ? `<div class="member-stats-row"><div class="member-stat" style="grid-column:span 3"><div class="member-stat-val gold">${m.elo}</div><div class="member-stat-lbl">ELO lvl ${m.level}</div></div></div>` : '');
+
+    const scoutLink = m.nickname ? `/scout.html?q=${encodeURIComponent(m.nickname)}` : '#';
+    return `
+      <a class="member" href="${escHtml(scoutLink)}">
+        <div class="member-head">${avatar}
+          <div>
+            <div class="member-nick">${tags}${escHtml(m.nickname)}</div>
+            <div class="member-role-line">${escHtml(roleLabel(m.role))}${m.level ? ` - lvl ${m.level}` : ''}</div>
+          </div>
+        </div>
+        ${statsRow}
+      </a>
+    `;
+  }).join('');
+
+  return `
+    <div class="section">
+      <div class="section-title">Roster detaille (${members.length})</div>
+      <div class="section-sub">Clique sur un joueur pour ouvrir son profil scout complet</div>
+      <div class="members-grid">${cards}</div>
+    </div>
+  `;
+}
+
+// ── Animations ─────────────────────────────────────────────────────────
+function animateScoreRing() {
+  const fg = document.querySelector('.score-ring-fg');
+  if (!fg) return;
+  const target = parseFloat(fg.getAttribute('data-target'));
+  // trigger transition
+  requestAnimationFrame(() => {
+    fg.style.strokeDashoffset = String(target);
+  });
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────
+loadTeam().catch(err => {
+  console.error('[team.html] load error:', err);
+  renderError(err.message || 'Erreur inconnue');
 });
 </script>
 <script src="/nav.js"></script>
