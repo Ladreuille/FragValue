@@ -117,10 +117,29 @@
       } catch (e) {
         btn.dataset.state = '';
         btn.innerHTML = prev;
-        // Silencieux : le user peut retry. On log uniquement en dev.
         console.warn('feature-waitlist failed', e);
+        // Toast user : signale l'echec pour qu'il puisse retry ou comprendre
+        showFeedbackToast('Erreur reseau. Reessaie dans un instant.', 'error');
       }
     });
+  }
+
+  // Petit toast discret en bas d'ecran, auto-dismiss 4s
+  function showFeedbackToast(msg, type) {
+    if (type === void 0) type = 'info';
+    const existing = document.getElementById('fv-teaser-toast');
+    if (existing) existing.remove();
+    const t = document.createElement('div');
+    t.id = 'fv-teaser-toast';
+    const bg = type === 'error' ? 'rgba(255,68,68,.12)' : type === 'ok' ? 'rgba(45,212,160,.12)' : 'rgba(184,255,87,.12)';
+    const border = type === 'error' ? 'rgba(255,68,68,.4)' : type === 'ok' ? 'rgba(45,212,160,.4)' : 'rgba(184,255,87,.3)';
+    const color = type === 'error' ? '#ff8a8a' : type === 'ok' ? '#2dd4a0' : '#b8ff57';
+    t.setAttribute('role', 'status');
+    t.setAttribute('aria-live', 'polite');
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:' + bg + ';border:1px solid ' + border + ';color:' + color + ';padding:12px 20px;border-radius:8px;font-family:"Space Mono",monospace;font-size:12px;z-index:10000;backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:90vw;text-align:center';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.transition = 'opacity .3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 4000);
   }
 
   // Injecte keyframes spin une seule fois

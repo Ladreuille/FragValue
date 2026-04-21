@@ -192,8 +192,19 @@ async function handleCallback() {
   }
 
   if (session) {
-    await linkFaceitToProfile(session.user.id, faceitData);
-    showSuccess(faceitData);
+    try {
+      await linkFaceitToProfile(session.user.id, faceitData);
+      showSuccess(faceitData);
+    } catch (e) {
+      // Le lien FACEIT a echoue (RLS, reseau, DB down). Ne pas montrer
+      // showSuccess qui afficherait a tort 'Compte lie' alors qu'il ne l'est pas.
+      document.getElementById('card').innerHTML = `
+        <div class="error-icon" style="color:var(--danger);font-size:40px;margin-bottom:12px">!</div>
+        <div class="title" style="color:var(--danger)">Liaison incomplete</div>
+        <p class="sub" style="margin-top:12px">Ton compte FACEIT n'a pas pu etre lie a ton profil FragValue. Reessaie depuis ton espace.</p>
+        <a href="/account.html" class="link-btn" style="margin-top:16px;display:inline-block">Retour a mon espace</a>
+      `;
+    }
   } else {
     // Dernier recours : stocker les données FACEIT en attente
     sessionStorage.setItem('pending_faceit_link', JSON.stringify(faceitData));
@@ -210,18 +221,21 @@ async function handleCallback() {
 }
 
 async function linkFaceitToProfile(userId, data) {
-  try {
-    await sb.from('profiles').upsert({
-      id: userId,
-      faceit_nickname: data.nickname,
-      faceit_id: data.playerId,
-      faceit_avatar: data.avatar || null,
-      faceit_elo: data.elo || null,
-      faceit_level: data.level || null,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' });
-  } catch (e) {
-    console.warn('Profile link error:', e.message);
+  // IMPORTANT : laisser l'erreur se propager pour que le caller puisse afficher
+  // un etat d'echec a l'user plutot que d'afficher showSuccess alors que le
+  // compte n'est PAS lie (bug P1 identifie par l'audit UX).
+  const { error } = await sb.from('profiles').upsert({
+    id: userId,
+    faceit_nickname: data.nickname,
+    faceit_id: data.playerId,
+    faceit_avatar: data.avatar || null,
+    faceit_elo: data.elo || null,
+    faceit_level: data.level || null,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'id' });
+  if (error) {
+    console.warn('Profile link error:', error.message);
+    throw new Error(error.message || 'Profile upsert failed');
   }
 }
 
