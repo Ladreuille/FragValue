@@ -283,6 +283,20 @@ async function handleSubmit() {
   }
 }
 
+// Origine canonique pour les redirections OAuth et magic link.
+// Force https://fragvalue.com en prod meme si l'user est sur un deploiement
+// preview Vercel. Sans ce fix, window.location.origin = URL de preview
+// et Supabase/Google redirige apres auth vers une preview inaccessible
+// publiquement (ou protegee).
+// Pour localhost (dev), on garde l'origin local.
+function getAuthOrigin() {
+  const h = window.location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1' || h.startsWith('192.168.')) {
+    return window.location.origin;
+  }
+  return 'https://fragvalue.com';
+}
+
 // Traduit les messages d'erreur Supabase/Auth (EN par defaut) en FR user-friendly.
 // Fallback sur le message brut si on ne reconnait pas le pattern.
 function translateAuthError(err) {
@@ -306,7 +320,7 @@ async function sendMagicLink(e) {
   const email = document.getElementById('emailInput').value.trim();
   if (!email) { showMsg('Saisis ton adresse email d\'abord.', 'error'); return; }
   try {
-    const { error } = await _sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + '/account.html' } });
+    const { error } = await _sb.auth.signInWithOtp({ email, options: { emailRedirectTo: getAuthOrigin() + '/account.html' } });
     if (error) throw error;
     showMsg('Lien envoyé. Vérifie ta boite mail.', 'success');
   } catch(e) { showMsg(translateAuthError(e), 'error'); }
@@ -314,7 +328,7 @@ async function sendMagicLink(e) {
 
 async function loginGoogle() {
   try {
-    const { error } = await _sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/account.html' } });
+    const { error } = await _sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: getAuthOrigin() + '/account.html' } });
     if (error) throw error;
   } catch (e) {
     showMsg(translateAuthError(e), 'error');

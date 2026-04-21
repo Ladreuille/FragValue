@@ -815,8 +815,11 @@ async function sendPasswordReset() {
   btn.disabled = true; btn.textContent = '...';
   msg.className = 'settings-msg'; msg.textContent = '';
   try {
+    // Force prod origin pour eviter redirection vers preview Vercel
+    const authOrigin = (['localhost', '127.0.0.1'].includes(window.location.hostname) || window.location.hostname.startsWith('192.168.'))
+      ? window.location.origin : 'https://fragvalue.com';
     const { error } = await sb.auth.resetPasswordForEmail(session.user.email, {
-      redirectTo: window.location.origin + '/account.html',
+      redirectTo: authOrigin + '/account.html',
     });
     if (error) throw error;
     msg.className = 'settings-msg ok';

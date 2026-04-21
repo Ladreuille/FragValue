@@ -219,17 +219,26 @@ nav{
 
   /* Demo-preview devient une SECTION VISUELLEMENT DISTINCTE du hero :
      gros espace + label de section propre, plus de pill "Ce que tu obtiens"
-     qui se melange avec les autres elements */
+     qui se melange avec les autres elements.
+     IMPORTANT : on annule l'animation fadeLeft du desktop qui utilise
+     translateY(-50%) (concue pour position:absolute+top:50%) - sur mobile
+     ce transform remontait la section au-dessus du hero content. */
   .demo-preview{
-    margin:72px -20px 0 !important;
-    padding:32px 20px 28px !important;
-    background:linear-gradient(180deg,rgba(184,255,87,.03) 0%,transparent 100%);
-    border-top:1px solid rgba(184,255,87,.15);
-    position:relative;width:auto !important;max-width:none !important
+    position:relative !important;
+    animation:none !important;
+    transform:none !important;
+    margin:56px 0 0 !important;
+    padding:28px 0 24px !important;
+    width:100% !important;
+    max-width:none !important;
+    background:linear-gradient(180deg,rgba(184,255,87,.04) 0%,transparent 100%);
+    border-top:1px solid rgba(184,255,87,.18);
+    border-radius:8px 8px 0 0;
+    opacity:1 !important
   }
   .demo-preview::before{
     content:"DEMO · APRES UN MATCH";
-    position:absolute;top:-10px;left:20px;
+    position:absolute;top:-10px;left:0;
     font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.16em;
     color:#000;background:var(--accent);
     padding:3px 10px;border-radius:3px
