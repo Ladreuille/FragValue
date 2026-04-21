@@ -41,13 +41,20 @@
     .fv-fb-close{background:none;border:none;color:#7a8080;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;border-radius:6px;transition:all .15s}
     .fv-fb-close:hover{color:#e8eaea;background:#1c1e1e}
     .fv-fb-sub{font-size:12px;color:#7a8080;margin:0 0 18px;line-height:1.5}
-    .fv-fb-types{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
-    .fv-fb-type{background:#131414;border:1px solid #1c1e1e;border-radius:10px;padding:12px 8px;cursor:pointer;text-align:center;transition:all .15s;color:#7a8080}
-    .fv-fb-type:hover{border-color:#252727;color:#e8eaea}
-    .fv-fb-type.active{background:rgba(184,255,87,.06);color:#e8eaea}
+    .fv-fb-types-label{font-size:11px;color:#a8b0b0;font-weight:700;letter-spacing:.04em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .fv-fb-types-label::after{content:'obligatoire';font-size:9px;color:#b8ff57;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.2);padding:2px 8px;border-radius:40px;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+    .fv-fb-types{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px;border-radius:10px;transition:box-shadow .3s}
+    .fv-fb-types.shake{animation:fv-fb-shake .5s ease}
+    .fv-fb-types.required-highlight{box-shadow:0 0 0 2px rgba(184,255,87,.35),0 0 24px rgba(184,255,87,.15)}
+    @keyframes fv-fb-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+    .fv-fb-type{background:#131414;border:1px solid #1c1e1e;border-radius:10px;padding:12px 8px;cursor:pointer;text-align:center;transition:all .15s;color:#7a8080;position:relative}
+    .fv-fb-type:hover{border-color:#b8ff57;color:#e8eaea;background:rgba(184,255,87,.03)}
+    .fv-fb-type.active{background:rgba(184,255,87,.08);color:#e8eaea;border-color:rgba(184,255,87,.5);box-shadow:0 0 0 1px rgba(184,255,87,.25)}
+    .fv-fb-type.active::after{content:'✓';position:absolute;top:3px;right:5px;font-size:9px;color:#b8ff57;font-weight:700}
     .fv-fb-type-icon{font-family:'Anton',sans-serif;font-size:18px;line-height:1;margin-bottom:4px;display:block}
     .fv-fb-type-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
-    .fv-fb-type-desc{font-size:10px;color:#4a5050;margin-top:12px;min-height:14px}
+    .fv-fb-type-desc{font-size:10px;color:#4a5050;margin-top:4px;margin-bottom:16px;min-height:14px}
+    .fv-fb-type-desc.warning{color:#ff8a3d}
     .fv-fb-label{display:block;font-size:10px;color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin:14px 0 6px}
     .fv-fb-textarea{width:100%;background:#080909;border:1px solid #1c1e1e;color:#e8eaea;font-family:'Space Mono',monospace;font-size:13px;padding:12px;border-radius:8px;resize:vertical;min-height:90px;outline:none;transition:border-color .15s;line-height:1.5;box-sizing:border-box}
     .fv-fb-textarea:focus{border-color:rgba(184,255,87,.4)}
@@ -58,8 +65,11 @@
     .fv-fb-cancel{background:transparent;color:#7a8080;border:1px solid #1c1e1e;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;padding:9px 16px;border-radius:6px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase}
     .fv-fb-cancel:hover{color:#e8eaea;border-color:#252727}
     .fv-fb-submit{background:#b8ff57;color:#000;border:none;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;padding:9px 18px;border-radius:6px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
-    .fv-fb-submit:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
-    .fv-fb-submit:disabled{opacity:.5;cursor:not-allowed}
+    .fv-fb-submit:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    /* Etat invalide : pas disabled natif (pour capter le click + afficher
+       un message d'erreur utile), mais visuellement edulcore. */
+    .fv-fb-submit[data-state="invalid"]{opacity:.55;cursor:help}
+    .fv-fb-submit[data-state="invalid"]:hover{transform:none;filter:none}
     .fv-fb-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f1010;border:1px solid rgba(184,255,87,.3);color:#b8ff57;padding:12px 20px;border-radius:40px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.04em;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transition:opacity .2s,transform .2s}
     .fv-fb-toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
     .fv-fb-toast.err{color:#ff8a8a;border-color:rgba(255,68,68,.4)}
@@ -95,9 +105,10 @@
         </div>
         <p class="fv-fb-sub">Dis-nous ce qui marche, ce qui coince, ou ce que tu aimerais voir. On lit tout.</p>
 
-        <div class="fv-fb-types">
+        <div class="fv-fb-types-label">Type de retour</div>
+        <div class="fv-fb-types" data-role="types-container">
           ${TYPES.map(t => `
-            <button class="fv-fb-type" data-type="${t.key}" type="button">
+            <button class="fv-fb-type" data-type="${t.key}" type="button" aria-label="Type : ${t.label}">
               <span class="fv-fb-type-icon" style="color:${t.color}">${t.icon}</span>
               <span class="fv-fb-type-label">${t.label}</span>
             </button>
@@ -116,7 +127,7 @@
 
         <div class="fv-fb-actions">
           <button class="fv-fb-cancel" type="button">Annuler</button>
-          <button class="fv-fb-submit" type="button" disabled>Envoyer</button>
+          <button class="fv-fb-submit" type="button" aria-disabled="true" data-state="invalid">Envoyer</button>
         </div>
       </div>
     `;
@@ -129,9 +140,27 @@
     const msgInput = overlay.querySelector('#fv-fb-msg');
     const counter = overlay.querySelector('[data-role="counter"]');
     const typeDesc = overlay.querySelector('[data-role="type-desc"]');
+    const typesContainer = overlay.querySelector('[data-role="types-container"]');
     const emailBlock = overlay.querySelector('[data-role="email-block"]');
     const emailInput = overlay.querySelector('#fv-fb-email');
     const typeBtns = overlay.querySelectorAll('.fv-fb-type');
+
+    // Flash visuel + message sur la zone types quand l'user tente d'agir
+    // sans avoir choisi un type (l'erreur la plus frequente du formulaire)
+    function highlightTypeMissing() {
+      typesContainer.classList.remove('shake');
+      // Force reflow pour retrigger l'animation
+      void typesContainer.offsetWidth;
+      typesContainer.classList.add('shake', 'required-highlight');
+      typeDesc.textContent = 'Choisis un type (bug, idée, positif ou négatif) avant d\'envoyer';
+      typeDesc.classList.add('warning');
+      typeDesc.style.color = '#ff8a3d';
+      setTimeout(() => {
+        typesContainer.classList.remove('required-highlight');
+      }, 1400);
+      // Scroll vers le haut du modal pour voir les types
+      modal.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     // Affiche email block uniquement si pas logge
     if (!getAuthToken()) emailBlock.style.display = 'block';
@@ -144,6 +173,8 @@
         const meta = TYPES.find(t => t.key === selectedType);
         typeDesc.textContent = meta?.desc || '';
         typeDesc.style.color = meta?.color || '#7a8080';
+        typeDesc.classList.remove('warning');
+        typesContainer.classList.remove('required-highlight');
         updateSubmitState();
       });
     });
@@ -153,8 +184,20 @@
       updateSubmitState();
     });
 
+    // Si l'user clique dans la textarea sans avoir choisi de type,
+    // on highlight la zone types pour le guider sans bloquer sa frappe.
+    msgInput.addEventListener('focus', () => {
+      if (!selectedType) highlightTypeMissing();
+    });
+
+    // Plutot que disabled natif, on utilise aria-disabled + data-state pour
+    // garder le click interceptable. On peut ainsi afficher un warning clair
+    // si l'user tente d'envoyer sans avoir rempli les bons champs, au lieu
+    // du silence frustrant d'un bouton disabled.
     function updateSubmitState() {
-      submitBtn.disabled = !selectedType || msgInput.value.trim().length < 3 || isSubmitting;
+      const valid = selectedType && msgInput.value.trim().length >= 3 && !isSubmitting;
+      submitBtn.setAttribute('aria-disabled', valid ? 'false' : 'true');
+      submitBtn.dataset.state = valid ? 'valid' : 'invalid';
     }
 
     function close() {
@@ -168,10 +211,30 @@
 
     submitBtn.addEventListener('click', async () => {
       if (isSubmitting) return;
+
+      // Validation avec guidage UX au lieu du silence d'un bouton disabled.
+      // Ordre : type obligatoire d'abord, puis message.
+      if (!selectedType) {
+        highlightTypeMissing();
+        return;
+      }
+      if (msgInput.value.trim().length < 3) {
+        msgInput.focus();
+        // Shake + border rouge sur la textarea
+        msgInput.style.borderColor = '#ff8a3d';
+        msgInput.style.boxShadow = '0 0 0 2px rgba(255,138,61,.2)';
+        setTimeout(() => {
+          msgInput.style.borderColor = '';
+          msgInput.style.boxShadow = '';
+        }, 1400);
+        showToast('Écris au moins quelques mots pour décrire ton retour.', true);
+        return;
+      }
+
       isSubmitting = true;
       const originalText = submitBtn.textContent;
       submitBtn.textContent = 'Envoi...';
-      submitBtn.disabled = true;
+      submitBtn.setAttribute('aria-disabled', 'true');
 
       try {
         const headers = { 'Content-Type': 'application/json' };
@@ -197,13 +260,15 @@
 
         showToast('Merci pour ton feedback');
         close();
-        // Reset
+        // Reset complet du form pour la prochaine ouverture
         selectedType = null;
         msgInput.value = '';
         if (emailInput) emailInput.value = '';
         typeBtns.forEach(x => x.classList.remove('active'));
         typeDesc.textContent = 'Choisis un type pour commencer';
         typeDesc.style.color = '#4a5050';
+        typeDesc.classList.remove('warning');
+        typesContainer.classList.remove('required-highlight', 'shake');
         counter.textContent = '0 / 2000';
       } catch (e) {
         showToast(e.message || 'Erreur reseau', true);
