@@ -37,7 +37,7 @@ if (fs.existsSync(envPath)) {
 const SB_URL = process.env.SUPABASE_URL || 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
 if (!SB_KEY) {
-  console.error('❌ SUPABASE_SERVICE_KEY manquant.');
+  console.error('× SUPABASE_SERVICE_KEY manquant.');
   console.error('   Option 1 : cree un fichier .env.local a la racine avec :');
   console.error('     SUPABASE_SERVICE_KEY=eyJ...');
   console.error('   Option 2 : export SUPABASE_SERVICE_KEY=... avant de lancer le script');
@@ -229,7 +229,7 @@ async function importOne(hltvId) {
     normalized.maps.map(m =>
       m.stats_id
         ? HLTV.getMatchMapStats({ id: m.stats_id }).catch(e => {
-            console.warn(`    ⚠ map ${m.map_name} stats failed: ${e.message.slice(0, 80)}`);
+            console.warn(`    ! map ${m.map_name} stats failed: ${e.message.slice(0, 80)}`);
             return null;
           })
         : null
@@ -265,7 +265,7 @@ async function importOne(hltvId) {
   const hasScorecards = totalPlayers > 0;
   console.log(`✓ inseré match ${matchId} · ${mapsCount} maps · MVP ${normalized.best_player || '-'} (rating ${normalized.best_rating || '-'})`);
   if (!hasScorecards) {
-    console.log(`  ⚠ Scorecards non recuperees (Cloudflare bloque les pages stats HLTV).`);
+    console.log(`  ! Scorecards non recuperees (Cloudflare bloque les pages stats HLTV).`);
     console.log(`     Pour completer : https://fragvalue.com/admin/pro-matches.html`);
     console.log(`     -> click "Scorecards" sur la ligne du match -> saisie manuelle (~5 min/map)`);
   }
@@ -290,7 +290,7 @@ async function importOne(hltvId) {
   for (let i = 0; i < args.length; i++) {
     const id = parseIdFromArg(args[i]);
     if (!id) {
-      console.error(`✗ ID invalide : ${args[i]}`);
+      console.error(`× ID invalide : ${args[i]}`);
       fail++;
       continue;
     }
@@ -299,7 +299,7 @@ async function importOne(hltvId) {
       ok++;
       if (!r.hasScorecards) partial++;
     } catch (e) {
-      console.error(`✗ Match ${id} échoué : ${e.message}`);
+      console.error(`× Match ${id} échoué : ${e.message}`);
       fail++;
     }
     // Rate limit respectueux si plusieurs matchs

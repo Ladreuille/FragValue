@@ -469,7 +469,7 @@
         <span id="rfRoundLabel">Round 1</span>
       </div>
     </div>
-    <button class="rf-close" onclick="closeReplayFS()">✕ Quitter</button>
+    <button class="rf-close" onclick="closeReplayFS()">× Quitter</button>
   </div>
 
   <!-- Main : carte + panel joueurs -->
@@ -1217,7 +1217,7 @@ function renderPlayerList(){
   const kills=demoData.kills||[];
   const playerListEl=document.getElementById('playerList'); if(playerListEl) playerListEl.innerHTML=players.map(p=>{
     const c=getColor(p.name),isActive=activePlayers.has(p.name),isDisabled=!isActive&&atMax;
-    return `<button class="player-btn ${isActive?'active':''} ${isDisabled?'disabled-max':''}" onclick="togglePlayer('${p.name.replace(/'/g,"\\'")}')"><span class="p-dot ${isActive?'':'off'}" style="background:${c.solid}"></span><span class="p-name">${p.name.substring(0,15)}</span>${p.name===target?'<span class="p-star">★</span>':''}<span class="p-kd">${p.kd}</span><span class="p-check">✓</span></button>`;
+    return `<button class="player-btn ${isActive?'active':''} ${isDisabled?'disabled-max':''}" onclick="togglePlayer('${p.name.replace(/'/g,"\\'")}')"><span class="p-dot ${isActive?'':'off'}" style="background:${c.solid}"></span><span class="p-name">${p.name.substring(0,15)}</span>${p.name===target?'<span class="p-star">*</span>':''}<span class="p-kd">${p.kd}</span><span class="p-check">✓</span></button>`;
   }).join('');
   if(playerListEl) playerListEl.innerHTML=playerListEl.innerHTML; // already set
   const phEl=document.querySelector('.panel-hint'); if(phEl) phEl.innerHTML=`Clic pour toggle · <span style="color:${atMax?'var(--danger)':'var(--accent)'}">${activePlayers.size}/5</span> actifs`;

@@ -78,7 +78,7 @@ function resetDashboard() {
   const avatarEl = document.getElementById('profileAvatar');
   if (avatarEl) {
     avatarEl.style.backgroundImage = '';
-    avatarEl.textContent = '👤';
+    avatarEl.textContent = '';
     avatarEl.classList.remove('has-avatar');
   }
   ['profileName','profileCountry','profileRole','profileTeam',
@@ -176,7 +176,7 @@ function renderDashboard(data) {
       avatarEl.classList.add('has-avatar');
     } else {
       avatarEl.style.backgroundImage = '';
-      avatarEl.textContent = '👤';
+      avatarEl.textContent = '';
     }
   }
 
@@ -187,7 +187,7 @@ function renderDashboard(data) {
     const bracket = fvScore?.eloBracket;
     if (lvl === 10 && bracket) {
       levelBadge.textContent = bracket === 'Challenger'
-        ? `⚡ Challenger${fvScore.challengerRank ? ' #'+fvScore.challengerRank : ''}`
+        ? ` Challenger${fvScore.challengerRank ? ' #'+fvScore.challengerRank : ''}`
         : `Level ${bracket}`; // ex: "Level 10.5"
       levelBadge.className = bracket === 'Challenger'
         ? 'badge badge-challenger'
@@ -269,10 +269,10 @@ function renderDashboard(data) {
   const breakdownHtml = score?.breakdown ? `
     <div class="fvscore-breakdown">
       ${[
-        { key:'performance', label:'Performance', color:'#3B7FF5', icon:'⚡' },
-        { key:'consistency', label:'Consistance',  color:'#2DD4A0', icon:'📈' },
-        { key:'impact',      label:'Impact',       color:'#F5C842', icon:'💥' },
-        { key:'utility',     label:'Utilité',      color:'#EDA020', icon:'🔧' },
+        { key:'performance', label:'Performance', color:'#3B7FF5', icon:'' },
+        { key:'consistency', label:'Consistance',  color:'#2DD4A0', icon:'' },
+        { key:'impact',      label:'Impact',       color:'#F5C842', icon:'HS' },
+        { key:'utility',     label:'Utilité',      color:'#EDA020', icon:'' },
       ].map(d => {
         const dim = score.breakdown[d.key];
         const pct = Math.round((dim.score / dim.max) * 100);
