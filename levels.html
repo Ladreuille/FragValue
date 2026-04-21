@@ -171,7 +171,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .perso-ai-goal-val{font-size:12px;color:var(--text);line-height:1.6}
 .perso-ai-goal-val strong{color:var(--accent);display:block;margin-bottom:3px;font-family:var(--display);font-size:14px}
 .perso-ai-footer{margin-top:14px;font-size:10px;color:var(--text3);letter-spacing:.04em;text-align:right}
-@média(max-width:720px){
+@media(max-width:720px){
   .perso-ai-cols,.perso-ai-goals{grid-template-columns:1fr}
   .perso-ai{padding:18px}
 }
@@ -190,7 +190,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .perso-notlinked-desc{font-size:12px;color:var(--text2);line-height:1.7;max-width:420px;margin:0 auto 18px}
 .perso-notlinked-btn{display:inline-block;background:var(--accent);color:#000;padding:10px 22px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em}
 
-@média(max-width:720px){
+@media(max-width:720px){
   .perso-stats-grid{grid-template-columns:1fr}
   .perso-head{padding:18px;gap:14px}
   .perso-diag,.perso-actions{padding:18px}
@@ -306,7 +306,7 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
 
 @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
-@média(max-width:720px){
+@media(max-width:720px){
   .level-card{grid-template-columns:48px 1fr;gap:14px;padding:18px 18px}
   .level-badge{width:48px;height:48px;font-size:22px}
   .level-right{grid-column:1 / -1;align-items:flex-start}
@@ -875,7 +875,7 @@ async function loadAIDiagnosis(sessionToken) {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.détail || err.error || 'API ' + res.status);
+      throw new Error(err.detail || err.error || 'API ' + res.status);
     }
     const data = await res.json();
     const d = data.diagnosis || {};
@@ -891,7 +891,7 @@ async function loadAIDiagnosis(sessionToken) {
       return ''
         + '<div class="perso-ai-action">'
         + '  <div class="perso-ai-action-num">' + (i + 1) + '</div>'
-        + '  <div class="perso-ai-action-text"><strong>' + escapeHtml(a.title || '') + '</strong><span>' + escapeHtml(a.détail || '') + '</span></div>'
+        + '  <div class="perso-ai-action-text"><strong>' + escapeHtml(a.title || '') + '</strong><span>' + escapeHtml(a.detail || '') + '</span></div>'
         + '</div>';
     }).join('');
 

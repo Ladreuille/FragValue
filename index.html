@@ -201,10 +201,10 @@ nav{
   width:46%;max-width:500px;
   animation:fadeLeft .8s .2s ease both
 }
-@média(max-width:1100px){.demo-preview{position:relative;right:auto;top:auto;transform:none;width:100%;max-width:none;margin-top:40px}}
+@media(max-width:1100px){.demo-preview{position:relative;right:auto;top:auto;transform:none;width:100%;max-width:none;margin-top:40px}}
 
 /* ── Mobile styles hero ──────────────────────────────────────── */
-@média(max-width:768px){
+@media(max-width:768px){
   .hero{padding:32px 20px 40px;min-height:auto}
   .hero-tag{font-size:10px;padding:4px 10px;margin-bottom:14px}
   .hero h1{font-size:40px;line-height:1;margin-bottom:14px}
@@ -509,13 +509,13 @@ section{padding:100px 80px;position:relative}
 .metric-row.active .metric-name{color:var(--text)}
 .metric-name{font-size:12px;color:var(--text2);transition:color .15s}
 .metric-val{font-family:var(--display);font-size:22px;color:var(--accent)}
-.metric-détail{
+.metric-detail{
   background:var(--surface);border:1px solid var(--border2);
   border-radius:var(--radius2);padding:32px;
   min-height:320px
 }
-.metric-détail-title{font-family:var(--display);font-size:28px;margin-bottom:12px}
-.metric-détail-desc{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:24px}
+.metric-detail-title{font-family:var(--display);font-size:28px;margin-bottom:12px}
+.metric-detail-desc{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:24px}
 .metric-formula{
   background:var(--bg);border:1px solid var(--border);
   border-radius:var(--radius);padding:16px;
@@ -1024,9 +1024,9 @@ footer{
         <span class="metric-val">31%</span>
       </div>
     </div>
-    <div class="metric-détail" id="metricDetail">
-      <div class="metric-détail-title">FV Rating</div>
-      <div class="metric-détail-desc">Mesure comment tes actions affectent la probabilité de victoire en temps réel. Un entry frag en 5v5 qui ouvre un bombsite vaut 5x plus qu'un exit frag.</div>
+    <div class="metric-detail" id="metricDetail">
+      <div class="metric-detail-title">FV Rating</div>
+      <div class="metric-detail-desc">Mesure comment tes actions affectent la probabilité de victoire en temps réel. Un entry frag en 5v5 qui ouvre un bombsite vaut 5x plus qu'un exit frag.</div>
       <div class="metric-formula">FVR = Σ(ΔWinProb × RoundWeight) / Rounds</div>
       <div style="margin-top:24px">
         <div style="font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px">Distribution dans ton match</div>
@@ -1385,9 +1385,9 @@ function setMetric(el, name, sub, desc, formula) {
   document.querySelectorAll('.metric-row').forEach(r => r.classList.remove('active'))
   el.classList.add('active')
   document.getElementById('metricDetail').innerHTML = `
-    <div class="metric-détail-title">${name}</div>
+    <div class="metric-detail-title">${name}</div>
     <div style="font-size:11px;color:var(--text3);letter-spacing:.08em;margin-bottom:16px;text-transform:uppercase">${sub}</div>
-    <div class="metric-détail-desc">${desc}</div>
+    <div class="metric-detail-desc">${desc}</div>
     <div class="metric-formula">${formula}</div>
   `
 }
