@@ -44,9 +44,39 @@
     nav.fv-nav .fv-cta:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 20px rgba(184,255,87,.4)}
     nav.fv-nav .fv-account-dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#ff8a3d;border:2px solid #080909;animation:fv-dot-pulse 1.8s ease-in-out infinite;display:none}
     @keyframes fv-dot-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,138,61,.5)}50%{box-shadow:0 0 0 6px rgba(255,138,61,0)}}
+
+    /* ── Mobile burger (hidden on desktop) ──────────────────────────── */
+    nav.fv-nav .fv-burger{display:none;background:none;border:1px solid rgba(184,255,87,.2);border-radius:6px;width:40px;height:40px;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;padding:0}
+    nav.fv-nav .fv-burger:hover{border-color:rgba(184,255,87,.4);background:rgba(184,255,87,.06)}
+    nav.fv-nav .fv-burger:focus-visible{outline:2px solid #b8ff57;outline-offset:2px}
+    nav.fv-nav .fv-burger svg{width:20px;height:20px;color:#e8eaea}
+    nav.fv-nav .fv-burger[aria-expanded="true"] svg{color:#b8ff57}
+
+    /* ── Mobile drawer (full overlay from right) ────────────────────── */
+    .fv-mobile-drawer{position:fixed;top:0;right:0;bottom:0;width:min(320px,85vw);background:linear-gradient(180deg,#0f1010 0%,#0a0c0c 100%);border-left:1px solid rgba(184,255,87,.18);box-shadow:-12px 0 32px rgba(0,0,0,.6);z-index:9999;transform:translateX(100%);transition:transform .25s ease;overflow-y:auto;display:flex;flex-direction:column;padding:72px 20px 32px}
+    .fv-mobile-drawer.open{transform:translateX(0)}
+    .fv-mobile-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:9998;opacity:0;visibility:hidden;transition:all .25s}
+    .fv-mobile-backdrop.open{opacity:1;visibility:visible}
+    .fv-mobile-close{position:absolute;top:18px;right:18px;width:36px;height:36px;background:none;border:1px solid rgba(184,255,87,.2);border-radius:6px;color:#e8eaea;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+    .fv-mobile-close:hover{border-color:rgba(184,255,87,.4);color:#b8ff57}
+    .fv-mobile-close:focus-visible{outline:2px solid #b8ff57;outline-offset:2px}
+    .fv-mobile-close svg{width:18px;height:18px}
+    .fv-mobile-drawer .fv-mobile-section{margin-bottom:20px}
+    .fv-mobile-drawer .fv-mobile-section-label{font-family:'Anton',sans-serif;font-size:11px;color:#b8ff57;letter-spacing:.12em;text-transform:uppercase;margin:0 0 8px 4px;opacity:.8}
+    .fv-mobile-drawer .fv-mobile-link{display:flex;align-items:center;gap:10px;padding:12px 14px;font-family:'Space Mono',monospace;font-size:13px;color:#d8dcdc;text-decoration:none;border-radius:6px;transition:all .15s;border:1px solid transparent}
+    .fv-mobile-drawer .fv-mobile-link:hover,.fv-mobile-drawer .fv-mobile-link:focus-visible{background:rgba(184,255,87,.08);color:#b8ff57;border-color:rgba(184,255,87,.18);outline:none}
+    .fv-mobile-drawer .fv-mobile-link.active{color:#b8ff57;background:rgba(184,255,87,.06)}
+    .fv-mobile-drawer .fv-mobile-divider{height:1px;background:rgba(184,255,87,.1);margin:16px 4px}
+    .fv-mobile-drawer .fv-mobile-cta{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:#b8ff57;color:#000;text-decoration:none;border-radius:6px;font-family:'Space Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin-top:8px}
+    .fv-mobile-drawer .fv-mobile-cta:hover{filter:brightness(1.08)}
+
+    body.fv-drawer-open{overflow:hidden}
+
     @media (max-width: 768px){
       nav.fv-nav{padding:0 16px}
       nav.fv-nav .fv-sections{display:none}
+      nav.fv-nav .fv-right{display:none}
+      nav.fv-nav .fv-burger{display:flex}
     }
   `;
 
@@ -131,6 +161,9 @@
       <a href="/login.html" class="fv-login" id="navLoginBtn">Connexion</a>
       <a href="/account.html#feedback" class="fv-cta" id="navAccountBtn" style="display:none">Mon espace<span class="fv-account-dot" id="navFeedbackDot" title="Tu as une réponse à ton feedback"></span></a>
     </div>
+    <button class="fv-burger" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="fvMobileDrawer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
+    </button>
   `;
 
   // ── Injection dans le <nav> existant (ou création si absent) ────────────
@@ -161,6 +194,74 @@
     navEl.querySelectorAll('.fv-section-btn').forEach(b => b.setAttribute('aria-expanded', 'false'));
   });
 
+  // ── Mobile drawer ──────────────────────────────────────────────────────
+  // Construit le drawer mobile avec toutes les sections + Tarifs/Connexion/Mon espace.
+  // Injecté dans document.body pour éviter tout conflit de stacking context avec la nav.
+  function buildMobileDrawer() {
+    const badgeLabels = { pro: 'PRO', elite: 'ELITE', soon: 'BIENTÔT' };
+    const sectionsHTML = sections.map(s => {
+      const links = s.items.map(it => {
+        const activeCls = it.href.endsWith(path) ? ' active' : '';
+        const badge = it.badge ? `<span class="fv-badge ${it.badge}" style="margin-left:auto">${badgeLabels[it.badge] || it.badge.toUpperCase()}</span>` : '';
+        return `<a href="${it.href}" class="fv-mobile-link${activeCls}">${it.label}${badge}</a>`;
+      }).join('');
+      return `<div class="fv-mobile-section"><div class="fv-mobile-section-label">${s.label}</div>${links}</div>`;
+    }).join('');
+
+    const drawer = document.createElement('div');
+    drawer.className = 'fv-mobile-drawer';
+    drawer.id = 'fvMobileDrawer';
+    drawer.setAttribute('role', 'dialog');
+    drawer.setAttribute('aria-modal', 'true');
+    drawer.setAttribute('aria-label', 'Menu principal');
+    drawer.innerHTML = `
+      <button class="fv-mobile-close" type="button" aria-label="Fermer le menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+      </button>
+      ${sectionsHTML}
+      <div class="fv-mobile-divider"></div>
+      <a href="/pricing.html" class="fv-mobile-link">Tarifs</a>
+      <a href="/login.html" class="fv-mobile-link" id="navMobileLoginBtn">Connexion</a>
+      <a href="/account.html#feedback" class="fv-mobile-cta" id="navMobileAccountBtn" style="display:none">Mon espace</a>
+    `;
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'fv-mobile-backdrop';
+
+    document.body.appendChild(backdrop);
+    document.body.appendChild(drawer);
+
+    const burger = navEl.querySelector('.fv-burger');
+    const closeBtn = drawer.querySelector('.fv-mobile-close');
+
+    function openDrawer() {
+      drawer.classList.add('open');
+      backdrop.classList.add('open');
+      document.body.classList.add('fv-drawer-open');
+      burger.setAttribute('aria-expanded', 'true');
+      // Focus le bouton fermer pour les users clavier
+      setTimeout(() => closeBtn.focus(), 100);
+    }
+    function closeDrawer() {
+      drawer.classList.remove('open');
+      backdrop.classList.remove('open');
+      document.body.classList.remove('fv-drawer-open');
+      burger.setAttribute('aria-expanded', 'false');
+      burger.focus();
+    }
+
+    burger.addEventListener('click', () => {
+      drawer.classList.contains('open') ? closeDrawer() : openDrawer();
+    });
+    closeBtn.addEventListener('click', closeDrawer);
+    backdrop.addEventListener('click', closeDrawer);
+    drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', closeDrawer));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer();
+    });
+  }
+  buildMobileDrawer();
+
   // ── Auth state : check Supabase session via localStorage ────────────────
   // Supabase stocke la session dans localStorage avec une cle `sb-<ref>-auth-token`.
   // On lit directement sans avoir besoin du client SDK (evite de dependre de la
@@ -187,15 +288,15 @@
   function refreshAuth() {
     const loginBtn = document.getElementById('navLoginBtn');
     const accountBtn = document.getElementById('navAccountBtn');
+    const mobileLoginBtn = document.getElementById('navMobileLoginBtn');
+    const mobileAccountBtn = document.getElementById('navMobileAccountBtn');
     if (!loginBtn || !accountBtn) return;
-    if (hasSession()) {
-      loginBtn.style.display = 'none';
-      accountBtn.style.display = '';
-      checkUnreadFeedback();
-    } else {
-      loginBtn.style.display = '';
-      accountBtn.style.display = 'none';
-    }
+    const logged = hasSession();
+    loginBtn.style.display = logged ? 'none' : '';
+    accountBtn.style.display = logged ? '' : 'none';
+    if (mobileLoginBtn) mobileLoginBtn.style.display = logged ? 'none' : '';
+    if (mobileAccountBtn) mobileAccountBtn.style.display = logged ? '' : 'none';
+    if (logged) checkUnreadFeedback();
   }
 
   // Verifie si l'user a des reponses admin non lues, affiche un dot orange.
