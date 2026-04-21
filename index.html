@@ -216,7 +216,7 @@ nav{
   .hero-stats > div{flex:1;min-width:80px}
   .hero-stat-val{font-size:24px}
   .hero-stat-label{font-size:9px}
-  .demo-preview{margin-top:32px}
+  .demo-preview{margin-top:56px}
   .demo-body{gap:8px}
   .demo-card{padding:14px 12px}
 
@@ -228,10 +228,43 @@ nav{
   /* Grids qui passent en colonne unique (override les repeat(3/4,1fr)) */
   .steps{grid-template-columns:1fr !important;gap:14px !important;margin-top:32px !important}
   .metrics-grid{grid-template-columns:1fr !important;gap:12px !important}
-  .features-grid{grid-template-columns:1fr !important;gap:12px !important}
-  .pricing-grid{grid-template-columns:1fr !important;gap:16px !important;margin-top:32px !important;max-width:420px !important;margin-left:auto !important;margin-right:auto !important}
-  .pricing-card{padding:24px 20px !important}
+
+  /* ── Slider horizontal pour Features sur mobile ──────────────── */
+  /* Passe de grid 3-col vertical a carousel horizontal avec scroll-snap. */
+  .features-grid{
+    display:flex !important;grid-template-columns:unset !important;
+    overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+    gap:12px !important;padding:4px 20px 16px;margin:32px -20px 0 !important;
+    background:transparent !important;border:none !important;border-radius:0 !important;
+    scrollbar-width:none
+  }
+  .features-grid::-webkit-scrollbar{display:none}
+  .features-grid .feature-card{
+    flex:0 0 78%;min-width:240px;scroll-snap-align:center;
+    border:1px solid var(--border);border-radius:var(--radius2);
+    padding:24px 20px
+  }
+
+  /* ── Slider horizontal pour Pricing sur mobile ──────────────── */
+  .pricing-grid{
+    display:flex !important;grid-template-columns:unset !important;
+    overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+    gap:16px !important;padding:8px 20px 16px;margin:32px -20px 0 !important;
+    max-width:none !important;
+    scrollbar-width:none
+  }
+  .pricing-grid::-webkit-scrollbar{display:none}
+  .pricing-card{
+    flex:0 0 82%;min-width:280px;scroll-snap-align:center;
+    padding:28px 22px !important
+  }
   .pricing-card.featured{order:-1}
+
+  /* Hint visuel sur les sliders : label discret sous le titre */
+  .features-grid::after,.pricing-grid::after{display:none}
+
   /* Faq-row et pro-row de la section Challengers : reduire le padding + repeat */
   .faq-list{padding:0 !important}
   .pro-row{grid-template-columns:1fr !important;gap:4px !important;padding:14px !important}
