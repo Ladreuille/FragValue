@@ -136,8 +136,24 @@ function showProUpgradeModal(featureName, ctaHref) {
   document.body.appendChild(overlay);
 }
 
+// ═══ SECURITY : XSS escape helper ═════════════════════════════════════════
+// A utiliser sur TOUT contenu user-controlled avant innerHTML concat.
+// Sources typiques : URL params, nickname FACEIT, donnees de demo uploadee,
+// noms de maps venant du backend.
+// Exemple : el.innerHTML = `<div>${fvEscapeHtml(userInput)}</div>`;
+function fvEscapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Expose helpers globally so pages without module imports can use them
 window.getUserPlan = getUserPlan;
 window.isPro = isPro;
 window.clearPlanCache = clearPlanCache;
 window.showProUpgradeModal = showProUpgradeModal;
+window.fvEscapeHtml = fvEscapeHtml;

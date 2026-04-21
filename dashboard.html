@@ -1329,7 +1329,7 @@ function renderMatches(d) {
   if (mapSelect) {
     const maps = [...new Set(_allMatches.map(m => m.map).filter(Boolean))].sort();
     mapSelect.innerHTML = `<option value="">Toutes les maps (${_allMatches.length})</option>` +
-      maps.map(m => `<option value="${m}">${m} (${_allMatches.filter(x => x.map === m).length})</option>`).join('');
+      maps.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)} (${_allMatches.filter(x => x.map === m).length})</option>`).join('');
     mapSelect.onchange = () => { _matchFilters.map = mapSelect.value; rerenderMatchesTables(); };
   }
   renderMatchesSummary(_allMatches);

@@ -314,7 +314,7 @@ async function notifyAdminOfEmail({ ticketNumber, from, fromName, subject, text,
 
   return lib.sendEmail({
     to: ADMIN_EMAIL,
-    subject: `[${ticketCode}] ${subject || 'Email entrant'} — de ${from}`,
+    subject: `[${ticketCode}] ${subject || 'Email entrant'} - de ${from}`,
     html,
     text: `${ticketCode} · Email entrant\n\nDe: ${senderLabel}${tierLine}\nSujet: ${subject}\n\n${preview}\n\n→ https://fragvalue.com/admin/feedback.html#${ticketCode}`,
     reply_to: from,

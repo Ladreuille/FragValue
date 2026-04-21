@@ -110,7 +110,7 @@
         <div class="fv-fb-counter" data-role="counter">0 / 2000</div>
 
         <div data-role="email-block" style="display:none">
-          <label class="fv-fb-label" for="fv-fb-email">Email (optionnel — pour qu'on puisse te repondre)</label>
+          <label class="fv-fb-label" for="fv-fb-email">Email (optionnel - pour qu'on puisse te repondre)</label>
           <input class="fv-fb-input" id="fv-fb-email" type="email" placeholder="ton@email.com" maxlength="200" />
         </div>
 

@@ -164,16 +164,16 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <!-- EMAIL FORM -->
     <div id="loginForm">
       <div class="field">
-        <label class="field-label">Adresse email</label>
-        <input type="email" class="field-input" id="emailInput" placeholder="ton@email.com" autocomplete="email"/>
+        <label class="field-label" for="emailInput">Adresse email</label>
+        <input type="email" class="field-input" id="emailInput" placeholder="ton@email.com" autocomplete="email" required/>
       </div>
       <div class="field" id="passwordField">
-        <label class="field-label">Mot de passe</label>
-        <input type="password" class="field-input" id="passwordInput" placeholder="••••••••" autocomplete="current-password"/>
+        <label class="field-label" for="passwordInput">Mot de passe</label>
+        <input type="password" class="field-input" id="passwordInput" placeholder="••••••••" autocomplete="current-password" minlength="6" required/>
       </div>
       <div class="field" id="passwordConfirmField" style="display:none">
-        <label class="field-label">Confirmer le mot de passe</label>
-        <input type="password" class="field-input" id="passwordConfirmInput" placeholder="••••••••"/>
+        <label class="field-label" for="passwordConfirmInput">Confirmer le mot de passe</label>
+        <input type="password" class="field-input" id="passwordConfirmInput" placeholder="••••••••" minlength="6"/>
       </div>
 
       <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">
@@ -255,11 +255,16 @@ function switchTab(m, btn) {
   hideMsg();
 }
 
+// Regex email RFC 5322 simplifie : accepte user@domain.tld avec sous-domaines.
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 async function handleSubmit() {
   const email = document.getElementById('emailInput').value.trim();
   const pass  = document.getElementById('passwordInput').value;
   if (!email) { showMsg('Saisis ton adresse email.', 'error'); return; }
+  if (!EMAIL_REGEX.test(email)) { showMsg('Adresse email invalide. Vérifie le format (ex: nom@domaine.com).', 'error'); return; }
   if (!pass)  { showMsg('Saisis ton mot de passe.', 'error'); return; }
+  if (pass.length < 6) { showMsg('Le mot de passe doit faire au moins 6 caractères.', 'error'); return; }
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
@@ -319,6 +324,7 @@ async function sendMagicLink(e) {
   e.preventDefault();
   const email = document.getElementById('emailInput').value.trim();
   if (!email) { showMsg('Saisis ton adresse email d\'abord.', 'error'); return; }
+  if (!EMAIL_REGEX.test(email)) { showMsg('Adresse email invalide.', 'error'); return; }
   try {
     const { error } = await _sb.auth.signInWithOtp({ email, options: { emailRedirectTo: getAuthOrigin() + '/account.html' } });
     if (error) throw error;

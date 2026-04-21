@@ -264,6 +264,9 @@
 </div>
 
 <script>
+// XSS escape helper : les nicknames FACEIT sont user-controlled via URL params
+function escHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
 const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
 const sb = supabase.createClient(SB_URL, SB_ANON);
@@ -504,7 +507,7 @@ function renderMapMatrix() {
   // Icone cercle-barré : worst map (ban recommande)
   const banSvg = `<svg class="cell-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-label="Worst map · à ban"><circle cx="8" cy="8" r="6"/><line x1="3.76" y1="3.76" x2="12.24" y2="12.24"/></svg>`;
 
-  const head = `<th class="map-col">Map</th>` + playersData.map(p => `<th class="player-col" style="color:${p.color}">${p.player.nickname}</th>`).join('');
+  const head = `<th class="map-col">Map</th>` + playersData.map(p => `<th class="player-col" style="color:${p.color}">${escHtml(p.player.nickname)}</th>`).join('');
   const body = rows.map(({ map, byP, totalMatches }) => {
     const cells = playersData.map(p => {
       const s = byP[p.player.nickname];
@@ -515,9 +518,9 @@ function renderMapMatrix() {
       const cls = bw.bestMap === map ? 'best' : bw.worstMap === map ? 'worst' : '';
       const icon = cls === 'best' ? trophySvg : cls === 'worst' ? banSvg : '';
       const title = cls === 'best' ? 'Best map de ce joueur · à pick' : cls === 'worst' ? 'Worst map de ce joueur · à ban' : '';
-      return `<td class="matrix-cell ${cls}" style="color:${color}" ${title ? `title="${title}"` : ''}>${icon}${wr}%<span class="matrix-sub">${s.matches}M</span></td>`;
+      return `<td class="matrix-cell ${cls}" style="color:${color}" ${title ? `title="${title}"` : ''}>${icon}${wr}%<span class="matrix-sub">${Number(s.matches)||0}M</span></td>`;
     }).join('');
-    return `<tr><td class="map-cell">${mapName(map)}<span class="matches-total">${totalMatches}M total</span></td>${cells}</tr>`;
+    return `<tr><td class="map-cell">${escHtml(mapName(map))}<span class="matches-total">${Number(totalMatches)||0}M total</span></td>${cells}</tr>`;
   }).join('');
 
   container.innerHTML = `<div class="map-matrix-wrap"><table class="map-matrix"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;

@@ -526,6 +526,11 @@
 </div>
 
 <script>
+// XSS escape helper : les noms de joueurs (attacker/victim) viennent de demos
+// uploadees par les users - potentiellement mal formees. On sanitize avant
+// toute concatenation innerHTML.
+function escHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
 // Offsets basés sur les fichiers .txt officiels Valve (meta/maps/*.txt)
 // posX/posY = coordonnées world du coin haut-gauche du radar
 // scale = unités world CS2 par pixel (image 1024x1024)
@@ -1348,7 +1353,7 @@ function buildReplayFrames(round){
   const el=document.getElementById('replayTimeTotal');
   if(el)el.textContent=`${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;
   const killsRow=document.getElementById('replayKillsRow');
-  if(killsRow)killsRow.innerHTML=roundKills.slice(0,8).map(k=>`<div class="rp-kill ${k.isHeadshot?'hs':''}">${k.attacker} → ${k.victim}${k.isHeadshot?' <strong style="color:var(--gold);font-size:.85em">HS</strong>':''}</div>`).join('');
+  if(killsRow)killsRow.innerHTML=roundKills.slice(0,8).map(k=>`<div class="rp-kill ${k.isHeadshot?'hs':''}">${escHtml(k.attacker)} → ${escHtml(k.victim)}${k.isHeadshot?' <strong style="color:var(--gold);font-size:.85em">HS</strong>':''}</div>`).join('');
   const markers=document.getElementById('replayKillMarkers');
   if(markers)markers.innerHTML=roundKills.map(k=>{const pct=Math.min(100,Math.max(0,((k.tick||0)-minTick)/span*100));return `<div class="rp-kill-mark" style="left:${pct}%"></div>`;}).join('');
 }

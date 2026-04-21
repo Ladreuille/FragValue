@@ -277,6 +277,9 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 </div>
 
 <script>
+// XSS escape helper pour les noms de joueurs / contenu demo parse
+function escHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
 const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -924,7 +927,7 @@ function renderMinimaps(c) {
     // Header
     const hdr = document.createElement('div');
     hdr.className = 'minimap-header';
-    hdr.innerHTML = `<span class="minimap-name">${name}</span><span class="minimap-meta ${teamClass}">${teamLabel} - ${pKills} kills</span>`;
+    hdr.innerHTML = `<span class="minimap-name">${escHtml(name)}</span><span class="minimap-meta ${teamClass}">${escHtml(teamLabel)} - ${pKills} kills</span>`;
     card.appendChild(hdr);
 
     const cvs = document.createElement('canvas');
