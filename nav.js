@@ -58,6 +58,42 @@
     nav.fv-nav .fv-account-dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#ff8a3d;border:2px solid #080909;animation:fv-dot-pulse 1.8s ease-in-out infinite;display:none}
     @keyframes fv-dot-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,138,61,.5)}50%{box-shadow:0 0 0 6px rgba(255,138,61,0)}}
 
+    /* ── Bell notifications ───────────────────────────────────────── */
+    nav.fv-nav .fv-bell{position:relative;background:none;border:none;cursor:pointer;color:#a8b0b0;padding:8px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:all .18s;width:36px;height:36px}
+    nav.fv-nav .fv-bell:hover{color:#b8ff57;background:rgba(184,255,87,.06)}
+    nav.fv-nav .fv-bell.open{color:#b8ff57;background:rgba(184,255,87,.08)}
+    nav.fv-nav .fv-bell svg{width:18px;height:18px}
+    nav.fv-nav .fv-bell-badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;border-radius:8px;background:#ff8a3d;color:#000;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid rgba(12,14,10,.94);box-shadow:0 0 0 1px #0c0e0a}
+
+    /* ── Notifications dropdown panel ─────────────────────────────── */
+    .fv-notif-panel{position:fixed;top:60px;right:20px;width:min(380px,92vw);max-height:70vh;background:linear-gradient(180deg,#111313 0%,#0d0e0e 100%);border:1px solid rgba(184,255,87,.18);border-top:2px solid #b8ff57;border-radius:8px;padding:0;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .2s;box-shadow:0 12px 32px rgba(0,0,0,.7),0 0 0 1px rgba(184,255,87,.04);z-index:10000;display:flex;flex-direction:column;overflow:hidden}
+    .fv-notif-panel.open{opacity:1;visibility:visible;transform:translateY(0)}
+    .fv-notif-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(184,255,87,.1);flex-shrink:0}
+    .fv-notif-title{font-family:'Anton',sans-serif;font-size:14px;color:#e8eaea;letter-spacing:.06em}
+    .fv-notif-actions{display:flex;gap:10px;align-items:center}
+    .fv-notif-action{background:none;border:none;color:#7a8080;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:color .15s;padding:4px 2px}
+    .fv-notif-action:hover{color:#b8ff57}
+    .fv-notif-action:disabled{opacity:.4;cursor:not-allowed}
+    .fv-notif-list{overflow-y:auto;flex:1;padding:4px 0}
+    .fv-notif-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;cursor:pointer;transition:background .15s;border-bottom:1px solid rgba(28,30,30,.6);position:relative;background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;color:inherit;font:inherit}
+    .fv-notif-item:hover{background:rgba(184,255,87,.04)}
+    .fv-notif-item.unread{background:rgba(184,255,87,.02)}
+    .fv-notif-item.unread::before{content:'';position:absolute;left:4px;top:18px;width:4px;height:4px;border-radius:50%;background:#b8ff57;box-shadow:0 0 4px rgba(184,255,87,.5)}
+    .fv-notif-icon{flex-shrink:0;width:32px;height:32px;border-radius:6px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.2);color:#b8ff57;display:flex;align-items:center;justify-content:center}
+    .fv-notif-icon svg{width:15px;height:15px}
+    .fv-notif-body{flex:1;min-width:0}
+    .fv-notif-item-title{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:#e8eaea;margin-bottom:3px;line-height:1.35;letter-spacing:.01em}
+    .fv-notif-item-msg{font-family:'Space Mono',monospace;font-size:11px;color:#a8b0b0;line-height:1.45;margin-bottom:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .fv-notif-item-time{font-family:'Space Mono',monospace;font-size:9px;color:#7a8080;letter-spacing:.04em}
+    .fv-notif-empty{padding:40px 20px;text-align:center;color:#7a8080;font-family:'Space Mono',monospace;font-size:12px}
+    .fv-notif-footer{padding:10px 16px;border-top:1px solid rgba(184,255,87,.1);text-align:center;flex-shrink:0}
+    .fv-notif-footer a{font-family:'Space Mono',monospace;font-size:10px;color:#7a8080;text-decoration:none;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+    .fv-notif-footer a:hover{color:#b8ff57}
+
+    @media(max-width:640px){
+      .fv-notif-panel{top:60px;right:10px;left:10px;width:auto}
+    }
+
     /* ── Mobile burger (hidden on desktop) ──────────────────────────── */
     nav.fv-nav .fv-burger{display:none;background:none;border:1px solid rgba(184,255,87,.2);border-radius:6px;width:40px;height:40px;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;padding:0}
     nav.fv-nav .fv-burger:hover{border-color:rgba(184,255,87,.4);background:rgba(184,255,87,.06)}
@@ -88,7 +124,11 @@
     @media (max-width: 768px){
       nav.fv-nav{padding:0 16px}
       nav.fv-nav .fv-sections{display:none}
-      nav.fv-nav .fv-right{display:none}
+      /* On masque les liens Tarifs/Connexion/Mon espace sur mobile mais on
+         garde la cloche visible (accessible via .fv-right qui reste flex). */
+      nav.fv-nav .fv-right .fv-login,
+      nav.fv-nav .fv-right .fv-cta{display:none !important}
+      nav.fv-nav .fv-right{gap:4px}
       nav.fv-nav .fv-burger{display:flex}
     }
   `;
@@ -171,6 +211,10 @@
     <div class="fv-sections">${sections.map(buildSectionHTML).join('')}</div>
     <div class="fv-right">
       <a href="/pricing.html" class="fv-login">Tarifs</a>
+      <button class="fv-bell" id="navBellBtn" type="button" aria-label="Notifications" aria-haspopup="true" aria-expanded="false" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="fv-bell-badge" id="navBellBadge" style="display:none">0</span>
+      </button>
       <a href="/login.html" class="fv-login" id="navLoginBtn">Connexion</a>
       <a href="/account.html#feedback" class="fv-cta" id="navAccountBtn" style="display:none">Mon espace<span class="fv-account-dot" id="navFeedbackDot" title="Tu as une réponse à ton feedback"></span></a>
     </div>
@@ -295,6 +339,15 @@
   }
   buildMobileDrawer();
 
+  // ── Notifications bell : variable holders (moved up to avoid TDZ) ──────
+  // Declarations hoistees ici car refreshAuth() ci-dessous reference notifPanel
+  // et les fonctions initNotifs/fetchNotifications/etc. Le reste de la logique
+  // notifications (buildPanel, render, polling) est plus bas.
+  let notifPanel = null;
+  let notifListEl = null;
+  let notifMarkAllBtn = null;
+  let notifPollTimer = null;
+
   // ── Auth state : check Supabase session via localStorage ────────────────
   // Supabase stocke la session dans localStorage avec une cle `sb-<ref>-auth-token`.
   // On lit directement sans avoir besoin du client SDK (evite de dependre de la
@@ -323,13 +376,21 @@
     const accountBtn = document.getElementById('navAccountBtn');
     const mobileLoginBtn = document.getElementById('navMobileLoginBtn');
     const mobileAccountBtn = document.getElementById('navMobileAccountBtn');
+    const bellBtn = document.getElementById('navBellBtn');
     if (!loginBtn || !accountBtn) return;
     const logged = hasSession();
     loginBtn.style.display = logged ? 'none' : '';
     accountBtn.style.display = logged ? '' : 'none';
     if (mobileLoginBtn) mobileLoginBtn.style.display = logged ? 'none' : '';
     if (mobileAccountBtn) mobileAccountBtn.style.display = logged ? '' : 'none';
-    if (logged) checkUnreadFeedback();
+    if (bellBtn) bellBtn.style.display = logged ? '' : 'none';
+    if (logged) {
+      checkUnreadFeedback();
+      fetchNotifications();
+    } else {
+      updateBellBadge(0);
+      if (notifPanel && notifPanel.classList.contains('open')) closeNotifPanel();
+    }
   }
 
   // Verifie si l'user a des reponses admin non lues, affiche un dot orange.
@@ -360,6 +421,248 @@
   }
   // Retry si localStorage pas encore ecrit au moment du 1er check (login flow)
   setTimeout(refreshAuth, 300);
+
+  // ── Notifications bell : logique ───────────────────────────────────────
+  // Panel dropdown injecte dans document.body (evite conflit stacking context
+  // avec la nav sticky). Polling toutes les 60s quand tab visible + refresh
+  // au visibilitychange. Affichage lie au state auth dans refreshAuth().
+  // Les 4 let notifPanel/notifListEl/notifMarkAllBtn/notifPollTimer sont
+  // declares plus haut pour eviter TDZ quand refreshAuth() est appele sync.
+
+  function getAuthToken() {
+    try {
+      const raw = localStorage.getItem('sb-xmyruycvvkmcwysfygcq-auth-token');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed?.access_token || null;
+    } catch { return null; }
+  }
+
+  // Icones SVG par type. Fallback "info" si type inconnu.
+  const NOTIF_ICONS = {
+    ticket_created: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+    ticket_response: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    ticket: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+    mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+    match: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+    coach: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>',
+    subscription: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
+    feature: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  };
+
+  function getNotifIcon(key) {
+    return NOTIF_ICONS[key] || NOTIF_ICONS.info;
+  }
+
+  function formatRelativeTime(iso) {
+    if (!iso) return '';
+    const then = new Date(iso).getTime();
+    if (!then || isNaN(then)) return '';
+    const diff = Date.now() - then;
+    if (diff < 0) return 'a l\'instant';
+    const sec = Math.floor(diff / 1000);
+    if (sec < 60) return 'a l\'instant';
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `il y a ${min} min`;
+    const hours = Math.floor(min / 60);
+    if (hours < 24) return `il y a ${hours} h`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `il y a ${days} j`;
+    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+  }
+
+  function escapeHtmlNotif(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function buildNotifPanel() {
+    if (document.getElementById('fvNotifPanel')) return;
+    const panel = document.createElement('div');
+    panel.id = 'fvNotifPanel';
+    panel.className = 'fv-notif-panel';
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-label', 'Notifications');
+    panel.innerHTML = `
+      <div class="fv-notif-header">
+        <div class="fv-notif-title">Notifications</div>
+        <div class="fv-notif-actions">
+          <button class="fv-notif-action" id="fvNotifMarkAll" type="button" disabled>Tout marquer lu</button>
+        </div>
+      </div>
+      <div class="fv-notif-list" id="fvNotifList">
+        <div class="fv-notif-empty">Chargement...</div>
+      </div>
+      <div class="fv-notif-footer">
+        <a href="/account.html#feedback">Voir mes tickets</a>
+      </div>
+    `;
+    document.body.appendChild(panel);
+    notifPanel = panel;
+    notifListEl = panel.querySelector('#fvNotifList');
+    notifMarkAllBtn = panel.querySelector('#fvNotifMarkAll');
+
+    notifMarkAllBtn.addEventListener('click', async e => {
+      e.stopPropagation();
+      if (notifMarkAllBtn.disabled) return;
+      await markAllNotifsRead();
+    });
+  }
+
+  function openNotifPanel() {
+    const bell = document.getElementById('navBellBtn');
+    if (!bell || !notifPanel) return;
+    notifPanel.classList.add('open');
+    bell.classList.add('open');
+    bell.setAttribute('aria-expanded', 'true');
+    fetchNotifications(true);
+  }
+  function closeNotifPanel() {
+    const bell = document.getElementById('navBellBtn');
+    if (!bell || !notifPanel) return;
+    notifPanel.classList.remove('open');
+    bell.classList.remove('open');
+    bell.setAttribute('aria-expanded', 'false');
+  }
+  function toggleNotifPanel() {
+    if (!notifPanel) return;
+    notifPanel.classList.contains('open') ? closeNotifPanel() : openNotifPanel();
+  }
+
+  async function fetchNotifications(renderList = false) {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const res = await fetch('/api/notifications?limit=20', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (!res.ok) return;
+      const data = await res.json();
+      updateBellBadge(data.unread || 0);
+      if (renderList || (notifPanel && notifPanel.classList.contains('open'))) {
+        renderNotifList(data.notifications || []);
+      }
+    } catch {}
+  }
+
+  function updateBellBadge(unread) {
+    const badge = document.getElementById('navBellBadge');
+    if (!badge) return;
+    if (unread > 0) {
+      badge.textContent = unread > 99 ? '99+' : String(unread);
+      badge.style.display = '';
+      if (notifMarkAllBtn) notifMarkAllBtn.disabled = false;
+    } else {
+      badge.style.display = 'none';
+      if (notifMarkAllBtn) notifMarkAllBtn.disabled = true;
+    }
+  }
+
+  function renderNotifList(notifs) {
+    if (!notifListEl) return;
+    if (!notifs.length) {
+      notifListEl.innerHTML = '<div class="fv-notif-empty">Pas encore de notification.</div>';
+      return;
+    }
+    notifListEl.innerHTML = notifs.map(n => {
+      const unreadCls = !n.read ? ' unread' : '';
+      const title = escapeHtmlNotif(n.title || 'Notification');
+      const msg = escapeHtmlNotif(n.message || '');
+      const time = formatRelativeTime(n.created_at);
+      const iconKey = n.icon || n.type || 'info';
+      const icon = getNotifIcon(iconKey);
+      const url = escapeHtmlNotif(n.action_url || '');
+      return `
+        <button class="fv-notif-item${unreadCls}" type="button" data-id="${escapeHtmlNotif(n.id)}" data-url="${url}">
+          <div class="fv-notif-icon">${icon}</div>
+          <div class="fv-notif-body">
+            <div class="fv-notif-item-title">${title}</div>
+            ${msg ? `<div class="fv-notif-item-msg">${msg}</div>` : ''}
+            <div class="fv-notif-item-time">${time}</div>
+          </div>
+        </button>
+      `;
+    }).join('');
+    notifListEl.querySelectorAll('.fv-notif-item').forEach(el => {
+      el.addEventListener('click', async () => {
+        const id = el.getAttribute('data-id');
+        const url = el.getAttribute('data-url');
+        if (el.classList.contains('unread')) {
+          el.classList.remove('unread');
+          markNotifsRead([id]);
+        }
+        if (url) {
+          // Si url == page courante, juste fermer + rafraichir auth (pour hash scroll)
+          closeNotifPanel();
+          window.location.href = url;
+        }
+      });
+    });
+  }
+
+  async function markNotifsRead(ids) {
+    const token = getAuthToken();
+    if (!token || !ids || !ids.length) return;
+    try {
+      await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      fetchNotifications();
+    } catch {}
+  }
+
+  async function markAllNotifsRead() {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true }),
+      });
+      // Enleve visuellement tous les .unread dans la liste courante
+      if (notifListEl) {
+        notifListEl.querySelectorAll('.fv-notif-item.unread').forEach(el => el.classList.remove('unread'));
+      }
+      updateBellBadge(0);
+    } catch {}
+  }
+
+  function initNotifs() {
+    const bell = document.getElementById('navBellBtn');
+    if (!bell) return;
+    buildNotifPanel();
+    bell.addEventListener('click', e => {
+      e.stopPropagation();
+      toggleNotifPanel();
+    });
+    // Stop propagation sur le panel pour ne pas fermer au click interne
+    if (notifPanel) {
+      notifPanel.addEventListener('click', e => e.stopPropagation());
+    }
+    // Click outside ferme
+    document.addEventListener('click', () => {
+      if (notifPanel && notifPanel.classList.contains('open')) closeNotifPanel();
+    });
+    // Escape ferme
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && notifPanel && notifPanel.classList.contains('open')) closeNotifPanel();
+    });
+    // Poll 60s en tab visible
+    if (notifPollTimer) clearInterval(notifPollTimer);
+    notifPollTimer = setInterval(() => {
+      if (document.visibilityState === 'visible' && hasSession()) {
+        fetchNotifications();
+      }
+    }, 60000);
+    // Refresh immediat au retour de tab
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && hasSession()) {
+        fetchNotifications();
+      }
+    });
+  }
+  initNotifs();
 
   // ── Feedback widget : injection auto sur toutes les pages avec nav.js ──
   // Skip pages admin (l'admin a sa propre vue / ne veut pas se feedback lui-meme)

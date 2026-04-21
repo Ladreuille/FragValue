@@ -45,6 +45,45 @@ function sb() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
+// Insert une notification in-app pour un user donne. Non-bloquant : on swallow
+// les erreurs pour ne pas casser le flow principal (feedback create / update).
+// Les types acceptes : 'ticket_created', 'ticket_response', 'ticket_status_change'
+async function insertNotification({ user_id, type, title, message, action_url, icon, metadata }) {
+  if (!user_id) return;
+  try {
+    await sb().from('notifications').insert({
+      user_id,
+      type: type || 'info',
+      title: String(title || '').slice(0, 200),
+      message: String(message || '').slice(0, 500),
+      action_url: action_url ? String(action_url).slice(0, 500) : null,
+      icon: icon || null,
+      metadata: metadata || null,
+      read: false,
+    });
+  } catch (e) {
+    console.warn('[feedback] notification insert failed:', e.message);
+  }
+}
+
+// Recupere l'UUID du 1er admin (qdreuillet@gmail.com) pour lui notifier
+// les nouveaux tickets. Cache simple in-process.
+let _cachedAdminId = null;
+async function getAdminUserId() {
+  if (_cachedAdminId) return _cachedAdminId;
+  try {
+    // Pas d'API 'get by email', on list + filter (max 1000 users OK pour nous)
+    const { data } = await sb().auth.admin.listUsers({ perPage: 1000 });
+    const admin = (data?.users || []).find(u =>
+      ADMIN_EMAILS.includes((u.email || '').toLowerCase())
+    );
+    _cachedAdminId = admin?.id || null;
+    return _cachedAdminId;
+  } catch {
+    return null;
+  }
+}
+
 async function resolveUser(authHeader) {
   if (!authHeader) return null;
   const token = String(authHeader).replace(/^Bearer\s+/i, '').trim();
@@ -184,6 +223,39 @@ async function handleCreate(req, res) {
     }),
     new Promise(resolve => setTimeout(resolve, 4000)),
   ]).catch(e => console.warn('[feedback] notif admin failed:', e.message));
+
+  // Notif in-app :
+  // - Admin : "Nouveau ticket FB-XXXX (bug) de user@mail"
+  // - User connecte : "Ticket FB-XXXX recu, on te revient vite"
+  const ticketCode = data.ticket_number ? 'FB-' + String(data.ticket_number).padStart(4, '0') : '';
+  const typeLabel = { positive: 'Positif', negative: 'Negatif', idea: 'Idee', bug: 'Bug' }[type] || type;
+
+  // Notif admin in-app
+  const adminId = await getAdminUserId();
+  if (adminId) {
+    insertNotification({
+      user_id: adminId,
+      type: 'ticket_created',
+      title: `Nouveau ticket ${ticketCode} (${typeLabel})`,
+      message: message.slice(0, 120) + (message.length > 120 ? '...' : ''),
+      action_url: `/admin/feedback.html#${ticketCode}`,
+      icon: 'ticket',
+      metadata: { feedbackId: data.id, ticketNumber: data.ticket_number, feedbackType: type },
+    });
+  }
+
+  // Notif user confirmation (seulement si connecte)
+  if (user?.id) {
+    insertNotification({
+      user_id: user.id,
+      type: 'ticket_created_self',
+      title: `Ton retour ${ticketCode} a bien ete recu`,
+      message: 'On le lit et on te revient des que possible.',
+      action_url: '/account.html#feedback',
+      icon: 'ticket',
+      metadata: { feedbackId: data.id, ticketNumber: data.ticket_number },
+    });
+  }
 
   return res.status(201).json({
     id: data.id,
@@ -424,6 +496,20 @@ async function handleUpdate(req, res) {
         }),
         new Promise(resolve => setTimeout(resolve, 4000)),
       ]).catch(e => console.warn('[feedback] notif user response failed:', e.message));
+    }
+
+    // Notif in-app pour l'user : "L'admin a répondu à ton ticket FB-XXXX"
+    if (existing.user_id) {
+      const ticketCode = existing.ticket_number ? 'FB-' + String(existing.ticket_number).padStart(4, '0') : '';
+      insertNotification({
+        user_id: existing.user_id,
+        type: 'ticket_response',
+        title: `Réponse a ton ticket ${ticketCode}`,
+        message: newResponse.slice(0, 120) + (newResponse.length > 120 ? '...' : ''),
+        action_url: '/account.html#feedback',
+        icon: 'mail',
+        metadata: { feedbackId: existing.id, ticketNumber: existing.ticket_number },
+      });
     }
   }
 

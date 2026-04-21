@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   const origin = req.headers.origin || '';
   if (ALLOWED_ORIGIN_RE.test(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -27,15 +27,32 @@ export default async function handler(req, res) {
     if (authError || !user) return res.status(401).json({ error: 'Token invalide' });
 
     if (req.method === 'GET') {
-      const { data: notifs } = await supabase
+      const limit = Math.min(100, parseInt(req.query.limit, 10) || 30);
+      const unreadOnly = req.query.unread_only === '1';
+      let q = supabase
         .from('notifications')
-        .select('*')
+        .select('id, type, title, message, action_url, icon, metadata, read, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(30);
+        .limit(limit);
+      if (unreadOnly) q = q.eq('read', false);
+      const { data: notifs, error } = await q;
+      if (error) {
+        console.error('[notifications] select error:', error);
+        return res.status(500).json({ error: 'Erreur lecture' });
+      }
 
-      const unread = (notifs || []).filter(n => !n.read).length;
-      return res.status(200).json({ notifications: notifs || [], unread });
+      // Count total unread pour le badge (meme si la liste est filtree)
+      const { count: unreadCount } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+
+      return res.status(200).json({
+        notifications: notifs || [],
+        unread: unreadCount || 0,
+      });
     }
 
     if (req.method === 'POST') {
@@ -53,6 +70,18 @@ export default async function handler(req, res) {
           .eq('user_id', user.id)
           .in('id', ids);
       }
+      return res.status(200).json({ ok: true });
+    }
+
+    if (req.method === 'DELETE') {
+      // Clear toutes les notifs lues (menage > 30 jours OU bouton user)
+      const olderThan = req.query.older_than_days
+        ? new Date(Date.now() - parseInt(req.query.older_than_days, 10) * 86400000).toISOString()
+        : null;
+      let q = supabase.from('notifications').delete().eq('user_id', user.id);
+      if (req.query.read_only === '1') q = q.eq('read', true);
+      if (olderThan) q = q.lt('created_at', olderThan);
+      await q;
       return res.status(200).json({ ok: true });
     }
 
