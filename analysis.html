@@ -35,9 +35,30 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
 /* LAYOUT */
 .page{max-width:1280px;margin:0 auto;padding:32px 24px 120px;position:relative;z-index:1}
-.header{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+.header{display:flex;align-items:center;gap:16px;margin-bottom:8px;flex-wrap:wrap}
 .btn-back{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);text-decoration:none;letter-spacing:.04em;padding:8px 14px;border:1px solid var(--border);border-radius:var(--r);transition:all .15s}
 .btn-back:hover{border-color:var(--accent);color:var(--accent)}
+/* Bouton de partage analyse : cree un lien public shareable */
+.btn-share{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--text);text-decoration:none;letter-spacing:.04em;padding:8px 14px;border:1px solid var(--border2);border-radius:var(--r);background:transparent;cursor:pointer;font-family:var(--mono);font-weight:700;transition:all .15s;margin-left:auto}
+.btn-share:hover{border-color:var(--accent);color:var(--accent);background:rgba(184,255,87,.04)}
+.btn-share svg{opacity:.8}
+.share-popover{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.share-popover.open{display:flex}
+.share-popover-inner{background:linear-gradient(180deg, #111313 0%, #0d0e0e 100%);border:1px solid rgba(184,255,87,.25);border-top:2px solid #b8ff57;border-radius:12px;padding:24px 26px;max-width:440px;width:100%;position:relative}
+.share-popover-close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;line-height:1;padding:4px 8px}
+.share-popover-close:hover{color:var(--accent)}
+.share-popover-title{font-family:var(--display);font-size:20px;color:var(--text);letter-spacing:.04em;margin-bottom:6px;text-transform:uppercase}
+.share-popover-sub{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:16px;line-height:1.5}
+.share-url-row{display:flex;gap:8px;margin-bottom:14px}
+.share-url-input{flex:1;background:var(--card);border:1px solid var(--border);color:var(--accent);font-family:var(--mono);font-size:11px;padding:10px 12px;border-radius:6px;outline:none}
+.share-url-copy{background:var(--accent);color:#000;border:none;padding:10px 16px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;cursor:pointer;white-space:nowrap}
+.share-url-copy:hover{filter:brightness(1.08)}
+.share-social-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.share-social-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;transition:all .15s;border:1px solid var(--border2);color:var(--text)}
+.share-social-btn:hover{border-color:var(--accent);color:var(--accent)}
+.share-social-btn.twitter{background:#1d9bf0;color:#fff;border-color:#1d9bf0}
+.share-social-btn.twitter:hover{filter:brightness(1.1);color:#fff}
+.share-msg{font-family:var(--mono);font-size:11px;color:var(--success);margin-top:8px;min-height:14px}
 .page-title{font-family:var(--display);font-size:48px;letter-spacing:.02em;line-height:1}
 .pro-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);color:var(--accent);padding:4px 12px;border-radius:40px;font-size:10px;font-weight:700;letter-spacing:.1em;margin-left:12px;vertical-align:middle}
 
@@ -349,6 +370,34 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <div>
       <span class="page-title">ANALYSE PRO</span>
       <span class="pro-tag">PRO</span>
+    </div>
+    <button class="btn-share" id="btnSharePublic" onclick="openSharePopover()" title="Generer un lien public partageable">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Partager
+    </button>
+  </div>
+
+  <!-- Popover de partage : cree un lien public + copy + social share -->
+  <div class="share-popover" id="sharePopover" onclick="if(event.target===this)closeSharePopover()">
+    <div class="share-popover-inner">
+      <button class="share-popover-close" onclick="closeSharePopover()" aria-label="Fermer">&times;</button>
+      <div class="share-popover-title">Partager cette analyse</div>
+      <div class="share-popover-sub">Un lien public unique vers ton analyse. Sans login requis pour les destinataires. Fonctionne sur Twitter, Discord, etc.</div>
+      <div class="share-url-row">
+        <input type="text" class="share-url-input" id="sharePopoverUrl" readonly value="Generation du lien..."/>
+        <button class="share-url-copy" id="sharePopoverCopyBtn" onclick="copyShareUrl()">Copier</button>
+      </div>
+      <div class="share-social-row">
+        <a class="share-social-btn twitter" id="shareTwitterBtn" href="#" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          Partager sur X
+        </a>
+        <a class="share-social-btn" id="shareDiscordBtn" href="#" onclick="copyForDiscord();return false;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515 0.074 0.074 0 0 0-0.079 0.037c-0.21 0.375-0.444 0.864-0.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-0.617-1.25 0.077 0.077 0 0 0-0.079-0.037A19.736 19.736 0 0 0 3.677 4.37a0.07 0.07 0 0 0-0.032 0.027C0.533 9.046-0.32 13.58 0.099 18.057a0.082 0.082 0 0 0 0.031 0.057 19.9 19.9 0 0 0 5.993 3.03 0.078 0.078 0 0 0 0.084-0.028 14.09 14.09 0 0 0 1.226-1.994 0.076 0.076 0 0 0-0.041-0.106 13.107 13.107 0 0 1-1.872-0.892 0.077 0.077 0 0 1-0.008-0.128 10.2 10.2 0 0 0 0.372-0.292 0.074 0.074 0 0 1 0.077-0.01c3.928 1.793 8.18 1.793 12.062 0a0.074 0.074 0 0 1 0.078 0.01c0.12 0.098 0.246 0.198 0.373 0.292a0.077 0.077 0 0 1-0.006 0.127 12.299 12.299 0 0 1-1.873 0.892 0.077 0.077 0 0 0-0.041 0.107c0.36 0.698 0.772 1.362 1.225 1.993a0.076 0.076 0 0 0 0.084 0.028 19.839 19.839 0 0 0 6.002-3.03 0.077 0.077 0 0 0 0.032-0.054c0.5-5.177-0.838-9.674-3.549-13.66a0.061 0.061 0 0 0-0.031-0.03zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333 0.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-0.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333 0.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-0.946 2.418-2.157 2.418z"/></svg>
+          Copier pour Discord
+        </a>
+      </div>
+      <div class="share-msg" id="sharePopoverMsg"></div>
     </div>
   </div>
 
@@ -2288,6 +2337,128 @@ _sb.auth.getSession().then(({ data: { session } }) => {
     accountBtn.style.display = 'none';
   }
 });
+
+// ══════════════════════════════════════════════════════════════════════
+// Share popover : genere un lien public via /api/share-demo et propose
+// copy + partage Twitter / Discord.
+// ══════════════════════════════════════════════════════════════════════
+let _shareUrlCache = null;
+
+async function openSharePopover() {
+  const pop = document.getElementById('sharePopover');
+  const urlInput = document.getElementById('sharePopoverUrl');
+  const msg = document.getElementById('sharePopoverMsg');
+  const twitterBtn = document.getElementById('shareTwitterBtn');
+  msg.textContent = '';
+  pop.classList.add('open');
+
+  if (_shareUrlCache) {
+    urlInput.value = _shareUrlCache;
+    setupSocialLinks(_shareUrlCache);
+    return;
+  }
+
+  urlInput.value = 'Generation du lien...';
+
+  try {
+    // Recupere la demo courante (fallback via l'URL ?demo= ou via window._demo)
+    const params = new URLSearchParams(window.location.search);
+    const demoId = params.get('demo') || (window._demo && window._demo.id);
+    if (!demoId) {
+      urlInput.value = '';
+      msg.textContent = 'Erreur : demo introuvable';
+      msg.style.color = 'var(--danger)';
+      return;
+    }
+
+    const { data: { session } } = await window._sbClient.auth.getSession();
+    if (!session) {
+      urlInput.value = '';
+      msg.textContent = 'Connecte-toi pour partager cette analyse';
+      msg.style.color = 'var(--danger)';
+      return;
+    }
+
+    const res = await fetch('/api/share-demo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+      body: JSON.stringify({ demo_id: demoId }),
+    });
+    const d = await res.json();
+    if (!res.ok || !d.share_id) {
+      urlInput.value = '';
+      msg.textContent = 'Erreur : ' + (d.error || 'creation du lien impossible');
+      msg.style.color = 'var(--danger)';
+      return;
+    }
+
+    const url = `https://fragvalue.com/share.html?id=${d.share_id}`;
+    _shareUrlCache = url;
+    urlInput.value = url;
+    setupSocialLinks(url);
+  } catch (e) {
+    urlInput.value = '';
+    msg.textContent = 'Erreur reseau : ' + e.message;
+    msg.style.color = 'var(--danger)';
+  }
+}
+
+function setupSocialLinks(url) {
+  const twitterBtn = document.getElementById('shareTwitterBtn');
+  const tweet = `Je viens d'analyser mon match CS2 avec @FragValue. FV Rating, KAST, impact par round, tout decortique. Jette un oeil : ${url}`;
+  twitterBtn.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweet);
+}
+
+function closeSharePopover() {
+  document.getElementById('sharePopover').classList.remove('open');
+}
+
+async function copyShareUrl() {
+  const urlInput = document.getElementById('sharePopoverUrl');
+  const msg = document.getElementById('sharePopoverMsg');
+  if (!urlInput.value || urlInput.value.startsWith('Generation')) return;
+  try {
+    await navigator.clipboard.writeText(urlInput.value);
+    msg.textContent = 'Lien copie. Partage-le ou tu veux.';
+    msg.style.color = 'var(--success)';
+  } catch {
+    urlInput.select();
+    document.execCommand('copy');
+    msg.textContent = 'Lien copie (fallback)';
+    msg.style.color = 'var(--success)';
+  }
+  setTimeout(() => { msg.textContent = ''; }, 4000);
+}
+
+async function copyForDiscord() {
+  const urlInput = document.getElementById('sharePopoverUrl');
+  const msg = document.getElementById('sharePopoverMsg');
+  if (!urlInput.value || urlInput.value.startsWith('Generation')) return;
+  // Discord rend automatiquement les URLs avec OG preview
+  const text = `Mon analyse CS2 sur FragValue (FV Rating, KAST, impact par round) : ${urlInput.value}`;
+  try {
+    await navigator.clipboard.writeText(text);
+    msg.textContent = 'Message copie. Colle-le dans ton Discord.';
+    msg.style.color = 'var(--success)';
+  } catch {
+    msg.textContent = 'Copie manuellement le lien ci-dessus';
+    msg.style.color = 'var(--gold)';
+  }
+  setTimeout(() => { msg.textContent = ''; }, 4000);
+}
+
+// Escape ferme le popover
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('sharePopover').classList.contains('open')) {
+    closeSharePopover();
+  }
+});
+
+// Expose le client Supabase pour la popover
+window._sbClient = _sb;
 </script>
 <script src="/nav.js"></script>
 </body>

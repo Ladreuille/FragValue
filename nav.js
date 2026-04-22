@@ -674,6 +674,16 @@
     document.head.appendChild(fbScript);
   }
 
+  // ── Error tracker : hook window.onerror + unhandledrejection + fetch 5xx ──
+  // Injecte sur toutes les pages pour catch les bugs en prod avant que les
+  // users les reportent. POST vers /api/errors, rate limite, dedupe.
+  if (!document.querySelector('script[src="/error-tracker.js"]')) {
+    const etScript = document.createElement('script');
+    etScript.src = '/error-tracker.js';
+    etScript.defer = true;
+    document.head.appendChild(etScript);
+  }
+
   // ── Block pinch-zoom sur iOS Safari ───────────────────────────────────
   // iOS Safari 10+ ignore les meta viewport user-scalable=no et minimum-scale=1.
   // Pour vraiment bloquer le zoom-out (qui cree un vide noir a droite), il

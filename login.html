@@ -201,10 +201,51 @@ const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
+// ── Capture le referral code depuis ?ref= dans l'URL ───────────────────
+// On stocke en localStorage pour survivre au flow email verification
+// (l'user clique un lien email, revient sur le site authentifie).
+(function captureRefCode() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const ref = (params.get('ref') || '').toUpperCase().trim();
+    if (/^[A-Z0-9]{6,10}$/.test(ref)) {
+      localStorage.setItem('fv_pending_ref', ref);
+      console.log('[FragValue] Code parrainage capture :', ref);
+    }
+  } catch {}
+})();
+
+async function attributeReferrer(session) {
+  const code = localStorage.getItem('fv_pending_ref');
+  if (!code || !session?.access_token) return;
+  try {
+    const res = await fetch('/api/referral', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+      body: JSON.stringify({ code }),
+    });
+    const d = await res.json();
+    if (d.ok) {
+      console.log('[FragValue] Parrain enregistre');
+      localStorage.removeItem('fv_pending_ref');
+    } else if (d.error === 'Tu as deja un parrain' || d.error === 'Tu ne peux pas te parrainer toi-meme') {
+      // Cas valides, on nettoie
+      localStorage.removeItem('fv_pending_ref');
+    }
+    // Sinon on garde le code : l'user pourra retenter plus tard ou via account.html
+  } catch (e) {
+    console.warn('[FragValue] Attribution parrain echouee:', e.message);
+  }
+}
+
 // Rediriger si déjà connecté + lier FACEIT en attente
 _sb.auth.getSession().then(async ({ data }) => {
   if (data.session) {
     await linkPendingFaceit(data.session.user.id);
+    await attributeReferrer(data.session);
     window.location.href = 'account.html';
   }
 });
@@ -213,6 +254,7 @@ _sb.auth.getSession().then(async ({ data }) => {
 _sb.auth.onAuthStateChange(async (event, session) => {
   if (event === 'SIGNED_IN' && session) {
     await linkPendingFaceit(session.user.id);
+    await attributeReferrer(session);
   }
 });
 

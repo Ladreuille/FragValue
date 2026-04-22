@@ -287,6 +287,24 @@
         </div>
       </div>
 
+      <div class="sec-label">Parrainage</div>
+      <div class="settings-card" id="referralCard">
+        <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <div>
+              <div class="settings-label" style="min-width:0">Ton lien de parrainage</div>
+              <div class="settings-value" id="referralStats" style="margin-top:4px">Chargement...</div>
+            </div>
+            <button class="settings-btn" id="referralCopyBtn" onclick="copyReferralLink()">Copier le lien</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input type="text" id="referralLinkInput" readonly value="" style="flex:1;min-width:220px;background:var(--card);border:1px solid var(--border);color:var(--accent);font-family:var(--mono);font-size:12px;padding:9px 12px;border-radius:6px;outline:none"/>
+            <a class="settings-btn" id="referralTwitterBtn" href="#" target="_blank" rel="noopener" style="background:#1d9bf0;color:#fff;border-color:#1d9bf0">Partager X</a>
+          </div>
+          <div class="settings-msg" id="referralMsg"></div>
+        </div>
+      </div>
+
       <div class="sec-label">Profil Scout</div>
       <div class="settings-card scout-card">
         <div class="settings-row scout-row">
@@ -761,7 +779,59 @@ async function loadSettings() {
     ['scoutBirthYear','scoutYearsPlaying'].forEach(id => {
       document.getElementById(id).addEventListener('blur', saveScoutProfile);
     });
+
+    // Charge les stats de parrainage via /api/referral
+    loadReferral();
   } catch(e) { console.warn('Settings load error:', e.message); }
+}
+
+async function loadReferral() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const res = await fetch('/api/referral', {
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (!res.ok) return;
+    const d = await res.json();
+    const input = document.getElementById('referralLinkInput');
+    const stats = document.getElementById('referralStats');
+    const twitter = document.getElementById('referralTwitterBtn');
+    if (d.link) {
+      input.value = d.link;
+      const total = d.stats?.total || 0;
+      const last30 = d.stats?.last_30d || 0;
+      const fragment = total === 0
+        ? 'Aucun filleul pour l\'instant. Partage ton lien pour en inviter.'
+        : `${total} filleul${total > 1 ? 's' : ''} au total · ${last30} ce mois-ci`;
+      stats.textContent = fragment;
+      if (twitter) {
+        const tweet = `Je track ma progression CS2 avec @FragValue, c'est vraiment bien fait. Teste avec mon code (gratuit) : ${d.link}`;
+        twitter.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweet);
+      }
+    } else {
+      stats.textContent = 'Code de parrainage non genere. Contacte le support.';
+    }
+  } catch (e) {
+    console.warn('Referral load error:', e.message);
+  }
+}
+
+async function copyReferralLink() {
+  const input = document.getElementById('referralLinkInput');
+  const msg = document.getElementById('referralMsg');
+  if (!input.value) return;
+  try {
+    await navigator.clipboard.writeText(input.value);
+    msg.textContent = 'Lien copie dans le presse-papier';
+    msg.className = 'settings-msg ok';
+    setTimeout(() => { msg.textContent = ''; msg.className = 'settings-msg'; }, 3000);
+  } catch {
+    input.select();
+    document.execCommand('copy');
+    msg.textContent = 'Lien copie (fallback)';
+    msg.className = 'settings-msg ok';
+  }
 }
 
 function toggleScoutFields(show) {
