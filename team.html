@@ -5,10 +5,10 @@
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
   <title id="pageTitle">FragValue · Analyse d'equipe CS2</title>
-  <meta name="description" id="metaDesc" content="Analyse collective complete de ton equipe CS2 FACEIT : team score, side balance CT/T, map analysis, comparaison roster, insights actionnables.">
+  <meta name="description" id="metaDesc" content="Analyse collective complète de ton équipe CS2 FACEIT : team score, side balance CT/T, map analysis, comparaison roster, insights actionnables.">
   <meta property="og:type" content="profile">
-  <meta property="og:title" id="ogTitle" content="FragValue · Analyse d'equipe CS2">
-  <meta property="og:description" id="ogDesc" content="Analyse collective complete de ton equipe CS2 FACEIT">
+  <meta property="og:title" id="ogTitle" content="FragValue · Analyse d'équipe CS2">
+  <meta property="og:description" id="ogDesc" content="Analyse collective complète de ton équipe CS2 FACEIT">
   <meta property="og:image" content="https://fragvalue.com/fragvalue_icon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -243,8 +243,8 @@ function cleanMapName(m) {
   return (m || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
 }
 function roleLabel(r) {
-  const MAP = { captain: 'Captain', igl: 'IGL', entry: 'Entry', awp: 'AWPer', awper: 'AWPer', support: 'Support', lurker: 'Lurker', rifler: 'Rifler', unknown: 'Role non defini' };
-  return MAP[r] || (r ? r.charAt(0).toUpperCase() + r.slice(1) : 'Role non defini');
+  const MAP = { captain: 'Captain', igl: 'IGL', entry: 'Entry', awp: 'AWPer', awper: 'AWPer', support: 'Support', lurker: 'Lurker', rifler: 'Rifler', unknown: 'Rôle non défini' };
+  return MAP[r] || (r ? r.charAt(0).toUpperCase() + r.slice(1) : 'Rôle non défini');
 }
 
 // ── Point d'entree : route selon presence de ?tag ou auth ─────────────
@@ -318,10 +318,10 @@ async function fetchAggregated(rosterId) {
 }
 
 function setSeo(roster, aggregated) {
-  const pageTitle = `${roster.team_name} - Analyse d'equipe CS2 - FragValue`;
+  const pageTitle = `${roster.team_name} · Analyse d'équipe CS2 · FragValue`;
   document.title = pageTitle;
   document.getElementById('pageTitle').textContent = pageTitle;
-  const descText = `${roster.team_name} : analyse collective complete (Team Score ${aggregated?.team_score || '-'}/100, side balance CT/T, map analysis, comparaison roster).`;
+  const descText = `${roster.team_name} : analyse collective complète (Team Score ${aggregated?.team_score || '-'}/100, side balance CT/T, map analysis, comparaison roster).`;
   document.getElementById('metaDesc').setAttribute('content', descText);
   document.getElementById('ogTitle').setAttribute('content', pageTitle);
   document.getElementById('ogDesc').setAttribute('content', descText);
@@ -332,8 +332,8 @@ function renderNoPublicTeam(tag) {
   document.getElementById('content').outerHTML = `
     <div class="empty-big" id="content">
       <div class="empty-big-ico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="28" cy="28" r="14"/><line x1="38.5" y1="38.5" x2="48" y2="48"/></svg></div>
-      <div class="empty-big-title">Aucune equipe publique</div>
-      <div class="empty-big-sub">Pas d'equipe avec le tag [${escHtml(tag)}] en visibility publique. Verifie l'URL ou retourne au scout.</div>
+      <div class="empty-big-title">Aucune équipe publique</div>
+      <div class="empty-big-sub">Pas d'équipe avec le tag [${escHtml(tag)}] en visibilité publique. Vérifie l'URL ou retourne au scout.</div>
       <a href="/scout.html" class="empty-big-btn">Retour au scout</a>
     </div>`;
 }
@@ -341,8 +341,8 @@ function renderLoginRequired() {
   document.getElementById('content').outerHTML = `
     <div class="empty-big" id="content">
       <div class="empty-big-ico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="28" width="36" height="24" rx="3"/><path d="M22 28v-6a10 10 0 0 1 20 0v6"/></svg></div>
-      <div class="empty-big-title">Connecte-toi pour voir ton equipe</div>
-      <div class="empty-big-sub">L'analyse d'equipe est disponible quand tu es connecte. Si tu veux juste consulter une equipe publique, ajoute ?tag=XXX a l'URL.</div>
+      <div class="empty-big-title">Connecte-toi pour voir ton équipe</div>
+      <div class="empty-big-sub">L'analyse d'équipe est disponible quand tu es connecté. Si tu veux juste consulter une équipe publique, ajoute ?tag=XXX à l'URL.</div>
       <a href="/login.html" class="empty-big-btn">Se connecter</a>
     </div>`;
 }
@@ -350,9 +350,9 @@ function renderNoTeamYet() {
   document.getElementById('content').outerHTML = `
     <div class="empty-big" id="content">
       <div class="empty-big-ico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="20" cy="22" r="5"/><path d="M10 42c0-5.5 4.5-10 10-10s10 4.5 10 10"/><circle cx="44" cy="22" r="5"/><path d="M34 42c0-5.5 4.5-10 10-10s10 4.5 10 10"/><circle cx="32" cy="14" r="4"/></svg></div>
-      <div class="empty-big-title">Tu n'as pas encore d'equipe</div>
-      <div class="empty-big-sub">Cree ton roster FragValue depuis le dashboard pour obtenir l'analyse collective : team score, side balance, map analysis, comparaison membre par membre.</div>
-      <a href="/dashboard.html#roster" class="empty-big-btn">Creer mon equipe</a>
+      <div class="empty-big-title">Tu n'as pas encore d'équipe</div>
+      <div class="empty-big-sub">Crée ton roster FragValue depuis le dashboard pour obtenir l'analyse collective : team score, side balance, map analysis, comparaison membre par membre.</div>
+      <a href="/dashboard.html#roster" class="empty-big-btn">Créer mon équipe</a>
     </div>`;
 }
 function renderError(msg) {
@@ -360,8 +360,8 @@ function renderError(msg) {
     <div class="empty-big" id="content">
       <div class="empty-big-ico" style="color:var(--danger);border-color:rgba(255,68,68,.3);background:radial-gradient(circle, rgba(255,68,68,.1), transparent 70%)"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="32" cy="32" r="22"/><line x1="32" y1="22" x2="32" y2="34"/><circle cx="32" cy="42" r="1.5" fill="currentColor"/></svg></div>
       <div class="empty-big-title">Impossible de charger</div>
-      <div class="empty-big-sub">${escHtml(msg)}. Reessaie dans quelques instants.</div>
-      <button class="empty-big-btn" onclick="location.reload()">Reessayer</button>
+      <div class="empty-big-sub">${escHtml(msg)}. Réessaie dans quelques instants.</div>
+      <button class="empty-big-btn" onclick="location.reload()">Réessayer</button>
     </div>`;
 }
 
@@ -393,10 +393,10 @@ function renderHero(roster, players, aggregated, mode, isOwner) {
   const recruitPill = roster.looking_for_players ? '<span class="team-recruit-pill">Recrutement ouvert</span>' : '';
   const ownerPill = (mode === 'my' && isOwner) ? '<span class="team-owner-pill">Owner</span>' : '';
   const regionItem = roster.region ? `<span class="team-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${escHtml(roster.region)}</span>` : '';
-  const createdItem = roster.created_at ? `<span class="team-meta-item">Creee le ${formatDate(roster.created_at)}</span>` : '';
+  const createdItem = roster.created_at ? `<span class="team-meta-item">Créée le ${formatDate(roster.created_at)}</span>` : '';
   const modeHint = mode === 'my'
-    ? `<div class="mode-hint">Tu regardes <strong>ton equipe</strong>${isOwner ? ' (en tant qu\'owner)' : ' (en tant que membre)'}</div>`
-    : `<div class="mode-hint">Vue <strong>publique</strong> de cette equipe</div>`;
+    ? `<div class="mode-hint">Tu regardes <strong>ton équipe</strong>${isOwner ? ' (en tant qu\'owner)' : ' (en tant que membre)'}</div>`
+    : `<div class="mode-hint">Vue <strong>publique</strong> de cette équipe</div>`;
 
   return `
     ${modeHint}
@@ -404,11 +404,11 @@ function renderHero(roster, players, aggregated, mode, isOwner) {
       <div class="team-hero-inner">
         <div class="team-logo">${escHtml(logoInitial)}</div>
         <div class="team-id">
-          <div class="team-name">${escHtml(roster.team_name || 'Equipe')}${tagChip}</div>
+          <div class="team-name">${escHtml(roster.team_name || 'Équipe')}${tagChip}</div>
           <div class="team-meta">
             ${regionItem}
             <span class="team-meta-item">${players.length} membre${players.length > 1 ? 's' : ''}</span>
-            ${aggregated ? `<span class="team-meta-item">${aggregated.members_with_stats || 0} avec FACEIT lie</span>` : ''}
+            ${aggregated ? `<span class="team-meta-item">${aggregated.members_with_stats || 0} avec FACEIT lié</span>` : ''}
             ${createdItem}
             ${recruitPill}
             ${ownerPill}
@@ -423,15 +423,15 @@ function renderHero(roster, players, aggregated, mode, isOwner) {
 function renderRecruitBanner(roster, mode, isOwner) {
   if (!roster.looking_for_players) return '';
   const roles = (roster.looking_for_roles && roster.looking_for_roles.length)
-    ? 'Roles cherches : ' + roster.looking_for_roles.map(escHtml).join(', ')
-    : 'Tous roles ouverts, candidatures bienvenues.';
+    ? 'Rôles recherchés : ' + roster.looking_for_roles.map(escHtml).join(', ')
+    : 'Tous rôles ouverts, candidatures bienvenues.';
   const cta = (mode === 'public')
-    ? `<a href="/scout.html" class="recruit-btn">Apparaitre comme candidat</a>`
-    : `<a href="/dashboard.html#roster" class="recruit-btn">Gerer les candidatures</a>`;
+    ? `<a href="/scout.html" class="recruit-btn">Apparaître comme candidat</a>`
+    : `<a href="/dashboard.html#roster" class="recruit-btn">Gérer les candidatures</a>`;
   return `
     <div class="recruit-banner">
       <div class="recruit-left">
-        <div class="recruit-title">Cette equipe recrute</div>
+        <div class="recruit-title">Cette équipe recrute</div>
         <div class="recruit-sub">${roles}</div>
       </div>
       ${cta}
@@ -447,7 +447,7 @@ function renderScoreSection(aggregated, players) {
         <div class="empty-big" style="padding:40px 24px">
           <div class="empty-big-ico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="10" y="14" width="36" height="32" rx="3"/><polyline points="16,38 22,30 28,34 34,24 40,28"/></svg></div>
           <div class="empty-big-title">Pas assez de data</div>
-          <div class="empty-big-sub">Aucun membre n'a encore de compte FACEIT lie avec stats recentes. Les analyses apparaitront des qu'au moins 1 membre aura joue ${players.length > 0 ? 'des matchs classes' : 'et rejoint l\'equipe'}.</div>
+          <div class="empty-big-sub">Aucun membre n'a encore de compte FACEIT lié avec stats récentes. Les analyses apparaîtront dès qu'au moins 1 membre aura joué ${players.length > 0 ? 'des matchs classés' : 'et rejoint l\'équipe'}.</div>
         </div>
       </div>
     `;
@@ -458,13 +458,13 @@ function renderScoreSection(aggregated, players) {
   const members = aggregated.members_with_stats || 0;
   const totalMembers = aggregated.members_with_stats + (aggregated.total_members ? aggregated.total_members - aggregated.members_with_stats : 0);
   const headline = (() => {
-    if (score >= 80) return 'Equipe elite, niveau tres competitif.';
-    if (score >= 70) return 'Cette equipe joue un CS competitif solide.';
-    if (score >= 58) return 'Bon niveau collectif, les bases sont la pour progresser.';
-    if (score >= 46) return 'Niveau correct. Focus sur les gaps identifies plus bas.';
-    if (score >= 34) return 'Equipe en progression. Travailler la regularite.';
+    if (score >= 80) return 'Équipe élite, niveau très compétitif.';
+    if (score >= 70) return 'Cette équipe joue un CS compétitif solide.';
+    if (score >= 58) return 'Bon niveau collectif, les bases sont là pour progresser.';
+    if (score >= 46) return 'Niveau correct. Focus sur les gaps identifiés plus bas.';
+    if (score >= 34) return 'Équipe en progression. Travailler la régularité.';
     if (score >= 20) return 'Phase d\'apprentissage. Focus sur les fondamentaux.';
-    return 'Fondations a construire. Travail d\'equipe requis sur les basics.';
+    return 'Fondations à construire. Travail d\'équipe requis sur les basics.';
   })();
 
   // Circle ring values : 2*pi*r ; r=60 → circumference 377
@@ -488,7 +488,7 @@ function renderScoreSection(aggregated, players) {
         <div class="score-info">
           <div class="score-rank ${rankClass}">${escHtml(rank)}</div>
           <div class="score-headline">${headline}</div>
-          <div class="score-sub">Score compose de 50 pts FV Rating, 25 pts KAST, 25 pts Win Rate collectifs sur les 20 derniers matchs de chaque membre (${members} / ${players.length} membres avec FACEIT lie).</div>
+          <div class="score-sub">Moyenne du FV Score individuel de chaque membre sur les 20 derniers matchs (${members} / ${players.length} membres avec FACEIT lié). Même formule que ton dashboard perso.</div>
         </div>
       </div>
     </div>
@@ -522,12 +522,12 @@ function renderSideBalance(aggregated) {
   const ct = aggregated.avg_ct_win_rate;
   const t  = aggregated.avg_t_win_rate;
   const gap = aggregated.side_gap;
-  const gapLabel = gap > 0 ? `+${gap} en CT` : gap < 0 ? `${gap} en CT` : 'Equilibree';
+  const gapLabel = gap > 0 ? `+${gap} en CT` : gap < 0 ? `${gap} en CT` : 'Équilibrée';
   const gapDesc = (() => {
     const abs = Math.abs(gap);
-    if (abs < 5) return 'Side balance homogene, bon signe de solidite globale.';
+    if (abs < 5) return 'Side balance homogène, bon signe de solidité globale.';
     if (gap > 0) return `CT-sided (+${abs}pts). Force vos gun rounds en CT start et adapte le setup T.`;
-    return `T-sided (+${abs}pts cote T). Prioriser les maps fortes T : Mirage, Dust2, Inferno.`;
+    return `T-sided (+${abs}pts côté T). Prioriser les maps fortes T : Mirage, Dust2, Inferno.`;
   })();
   return `
     <div class="section">
@@ -537,7 +537,7 @@ function renderSideBalance(aggregated) {
         <div class="side-card ct">
           <div class="side-label">CT win rate</div>
           <div class="side-value">${ct}<span>%</span></div>
-          <div class="side-card-desc">Moyenne collective en side CT. ${ct >= 55 ? 'Solide defense.' : ct >= 48 ? 'CT correct.' : 'CT faible, travaille anchors et retakes.'}</div>
+          <div class="side-card-desc">Moyenne collective en side CT. ${ct >= 55 ? 'Solide défense.' : ct >= 48 ? 'CT correct.' : 'CT faible, travaille anchors et retakes.'}</div>
         </div>
         <div class="side-gap">
           <div class="side-gap-val">${escHtml(gapLabel)}</div>
@@ -546,7 +546,7 @@ function renderSideBalance(aggregated) {
         <div class="side-card t">
           <div class="side-label">T win rate</div>
           <div class="side-value">${t}<span>%</span></div>
-          <div class="side-card-desc">Moyenne collective en side T. ${t >= 55 ? 'Executes et control mid efficaces.' : t >= 48 ? 'T correct.' : 'T faible, travaille utility lineups et entries.'}</div>
+          <div class="side-card-desc">Moyenne collective en side T. ${t >= 55 ? 'Executes et control mid efficaces.' : t >= 48 ? 'T correct.' : 'T faible, travaille les utility lineups et les entries.'}</div>
         </div>
       </div>
     </div>
@@ -578,7 +578,7 @@ function renderMapAnalysis(aggregated) {
   return `
     <div class="section">
       <div class="section-title">Map analysis</div>
-      <div class="section-sub">Top ${aggregated.map_pool.length} maps jouees collectivement, avec recommandation veto</div>
+      <div class="section-sub">Top ${aggregated.map_pool.length} maps jouées collectivement, avec recommandation véto</div>
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
         <table class="map-table">
           <thead>
@@ -666,7 +666,7 @@ function renderRosterComparison(aggregated) {
   return `
     <div class="section">
       <div class="section-title">Comparaison roster</div>
-      <div class="section-sub">Vert = meilleur du roster, gris = a travailler. Sur les 20 derniers matchs individuels.</div>
+      <div class="section-sub">Vert = meilleur du roster, gris = à travailler. Sur les 20 derniers matchs individuels.</div>
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
         <table class="roster-compare">
           <thead>
@@ -702,7 +702,7 @@ function renderInsights(aggregated) {
   return `
     <div class="section">
       <div class="section-title">Insights actionnables</div>
-      <div class="section-sub">Heuristiques calculees sur l'analyse collective, a revoir avec ton coach</div>
+      <div class="section-sub">Heuristiques calculées sur l'analyse collective, à revoir avec ton coach</div>
       <div class="insights-grid">${cards}</div>
     </div>
   `;
@@ -752,7 +752,7 @@ function renderMembersDetail(aggregated, players, mode) {
 
   return `
     <div class="section">
-      <div class="section-title">Roster detaille (${members.length})</div>
+      <div class="section-title">Roster détaillé (${members.length})</div>
       <div class="section-sub">Clique sur un joueur pour ouvrir son profil scout complet</div>
       <div class="members-grid">${cards}</div>
     </div>

@@ -1581,14 +1581,14 @@ function renderRoster(data) {
 
   const isPublic = roster.visibility === 'public';
   const shareUrl = isPublic && roster.tag ? `${window.location.origin}/team.html?tag=${encodeURIComponent(roster.tag)}` : null;
-  // Analyse complete : ouvre /team.html (mode my-team via auth) pour voir team score, side balance, map analysis, insights
-  const analyzeBtn = `<a class="roster-btn primary" href="/team.html" target="_blank" rel="noopener">Voir l'analyse complete</a>`;
+  // Analyse complète : ouvre /team.html (mode my-team via auth) pour voir team score, side balance, map analysis, insights
+  const analyzeBtn = `<a class="roster-btn primary" href="/team.html" target="_blank" rel="noopener">Voir l'analyse complète</a>`;
   const ownerActions = is_owner ? `
     <div class="roster-actions">
       ${analyzeBtn}
       <button class="roster-btn" onclick="openInvitePlayerModal()">Inviter un joueur</button>
       <button class="roster-btn" onclick="toggleLookingForPlayers()">${roster.looking_for_players ? 'Fermer le recrutement' : 'Ouvrir le recrutement'}</button>
-      <button class="roster-btn" onclick="toggleVisibility()">${isPublic ? 'Rendre privee' : 'Rendre publique'}</button>
+      <button class="roster-btn" onclick="toggleVisibility()">${isPublic ? 'Rendre privée' : 'Rendre publique'}</button>
       ${shareUrl ? `<a class="roster-btn" href="${shareUrl}" target="_blank">Page publique</a>` : ''}
       <button class="roster-btn danger" onclick="deleteRoster()">Supprimer</button>
     </div>
@@ -1596,7 +1596,7 @@ function renderRoster(data) {
     <div class="roster-actions">
       ${analyzeBtn}
       ${shareUrl ? `<a class="roster-btn" href="${shareUrl}" target="_blank">Page publique</a>` : ''}
-      <button class="roster-btn danger" onclick="leaveRoster()">Quitter l'equipe</button>
+      <button class="roster-btn danger" onclick="leaveRoster()">Quitter l'équipe</button>
     </div>
   `;
 
@@ -1782,7 +1782,7 @@ async function submitCreateRoster() {
   btn.disabled = false;
   if (r.error) { errEl.textContent = r.error; return; }
   closeModal('modalCreateRoster');
-  showRosterToast(`Equipe "${teamName}" creee`);
+  showRosterToast(`Équipe "${teamName}" créée`);
 
   // Auto-invite les joueurs en attente (flow depuis compare)
   await processPendingInvites(r.roster && r.roster.id);
@@ -1838,14 +1838,14 @@ async function submitInvite() {
   btn.disabled = false;
   if (r.error) { errEl.textContent = r.error; return; }
   closeModal('modalInvitePlayer');
-  showRosterToast(`Invitation envoyee a ${nickname}`);
+  showRosterToast(`Invitation envoyée à ${nickname}`);
   await loadRoster();
 }
 
 async function respondInvitation(id, response) {
   const r = await callRosterAPI({ action: 'respond', invitation_id: id, response });
   if (r.error) { showRosterToast('Erreur : ' + r.error); return; }
-  showRosterToast(response === 'accepted' ? 'Invitation acceptee, bienvenue dans l\'equipe' : 'Invitation declinee');
+  showRosterToast(response === 'accepted' ? 'Invitation acceptée, bienvenue dans l\'équipe' : 'Invitation déclinée');
   await loadRoster();
 }
 
@@ -1853,23 +1853,23 @@ async function cancelInvitation(id) {
   if (!confirm('Annuler cette invitation ?')) return;
   const r = await callRosterAPI({ action: 'cancel_invite', invitation_id: id });
   if (r.error) { showRosterToast('Erreur : ' + r.error); return; }
-  showRosterToast('Invitation annulee');
+  showRosterToast('Invitation annulée');
   await loadRoster();
 }
 
 async function removeMember(playerId) {
-  if (!_currentRoster || !confirm('Retirer ce joueur de l\'equipe ?')) return;
+  if (!_currentRoster || !confirm('Retirer ce joueur de l\'équipe ?')) return;
   const r = await callRosterAPI({ action: 'remove_player', roster_id: _currentRoster.roster.id, player_id: playerId });
   if (r.error) { showRosterToast('Erreur : ' + r.error); return; }
-  showRosterToast('Joueur retire de l\'equipe');
+  showRosterToast('Joueur retiré de l\'équipe');
   await loadRoster();
 }
 
 async function leaveRoster() {
-  if (!_currentRoster || !confirm('Quitter cette equipe ?')) return;
+  if (!_currentRoster || !confirm('Quitter cette équipe ?')) return;
   const r = await callRosterAPI({ action: 'leave', roster_id: _currentRoster.roster.id });
   if (r.error) { showRosterToast('Erreur : ' + r.error); return; }
-  showRosterToast('Tu as quitte l\'equipe');
+  showRosterToast('Tu as quitté l\'équipe');
   _currentRoster = null;
   await loadRoster();
   // Reset a l'empty state
@@ -1883,10 +1883,10 @@ async function leaveRoster() {
 
 async function deleteRoster() {
   if (!_currentRoster) return;
-  if (!confirm(`Supprimer definitivement "${_currentRoster.roster.team_name}" ? Tous les membres seront ejectes et les invitations annulees.`)) return;
+  if (!confirm(`Supprimer définitivement "${_currentRoster.roster.team_name}" ? Tous les membres seront éjectés et les invitations annulées.`)) return;
   const r = await callRosterAPI({ action: 'delete', roster_id: _currentRoster.roster.id });
   if (r.error) { showRosterToast('Erreur : ' + r.error); return; }
-  showRosterToast('Equipe supprimee');
+  showRosterToast('Équipe supprimée');
   _currentRoster = null;
   document.getElementById('rosterContent').innerHTML = `
     <div class="empty-state">
@@ -1906,7 +1906,7 @@ async function toggleLookingForPlayers() {
     fields: { looking_for_players: newVal },
   });
   if (r.error) { showRosterToast('Erreur : ' + r.error); return; }
-  showRosterToast(newVal ? 'Recrutement ouvert' : 'Recrutement ferme');
+  showRosterToast(newVal ? 'Recrutement ouvert' : 'Recrutement fermé');
   await loadRoster();
 }
 
@@ -1915,7 +1915,7 @@ async function toggleVisibility() {
   const current = _currentRoster.roster.visibility || 'team';
   const newVal = current === 'public' ? 'team' : 'public';
   if (newVal === 'public' && !_currentRoster.roster.tag) {
-    showRosterToast('Ajoute un tag a ton equipe avant de la rendre publique');
+    showRosterToast('Ajoute un tag à ton équipe avant de la rendre publique');
     return;
   }
   const r = await callRosterAPI({
@@ -1924,7 +1924,7 @@ async function toggleVisibility() {
     fields: { visibility: newVal },
   });
   if (r.error) { showRosterToast('Erreur : ' + r.error); return; }
-  showRosterToast(newVal === 'public' ? 'Equipe maintenant publique' : 'Equipe maintenant privee');
+  showRosterToast(newVal === 'public' ? 'Équipe maintenant publique' : 'Équipe maintenant privée');
   await loadRoster();
 }
 

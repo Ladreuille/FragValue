@@ -44,8 +44,8 @@
 <article class="article-wrap">
   <div class="article-breadcrumb"><a href="/blog.html">Blog</a> / Produit</div>
   <div class="article-tag">Produit</div>
-  <h1 class="article-title">FV Rating explique : comment on calcule ton vrai impact au CS2</h1>
-  <p class="article-lead">Le FV Rating combine 4 facteurs ponderes : impact par round, consistance, clutch factor et side balance. On ouvre la formule complete, on explique pourquoi HLTV Rating 2.1 n'est pas toujours le meilleur repere pour un joueur FACEIT, et comment lire ton score.</p>
+  <h1 class="article-title">FV Rating expliqué : comment on calcule ton vrai impact au CS2</h1>
+  <p class="article-lead">Le FV Rating combine 4 facteurs pondérés : impact par round, consistance, clutch factor et side balance. On ouvre la formule complète, on explique pourquoi HLTV Rating 2.1 n'est pas toujours le meilleur repère pour un joueur FACEIT, et comment lire ton score.</p>
   <div class="article-meta">
     <span class="article-meta-item">22 avril 2026</span>
     <span class="article-meta-item">6 min de lecture</span>
@@ -54,142 +54,142 @@
 
   <div class="article-body">
 
-<h2>Pourquoi on a cree le FV Rating</h2>
-<p>Le HLTV Rating 2.1 est devenu le standard pour mesurer l'impact d'un joueur pro. Mais il est calcule <strong>sur les matchs pros</strong> (tier 1-2 LAN et online), avec un contexte tres specifique : 5v5 coordonne, strat callees, utility coordonnee.</p>
-<p>Pour un joueur FACEIT en solo queue, ce contexte n'existe pas. Tu joues avec des randoms, l'IGL c'est toi (ou personne), les strats sont limit-improvised. Le rating doit <strong>refleter l'impact dans ce contexte</strong>, pas extrapoler depuis des matchs pros.</p>
-<p>On a donc designe le FV Rating pour <em>ton environnement FACEIT</em>, avec 4 composantes qui mesurent chacune un aspect different de ton apport a l'equipe.</p>
+<h2>Pourquoi on a créé le FV Rating</h2>
+<p>Le HLTV Rating 2.1 est devenu le standard pour mesurer l'impact d'un joueur pro. Mais il est calculé <strong>sur les matchs pros</strong> (tier 1-2 LAN et online), avec un contexte très spécifique : 5v5 coordonné, strats callées, utility coordonnée.</p>
+<p>Pour un joueur FACEIT en solo queue, ce contexte n'existe pas. Tu joues avec des randoms, l'IGL c'est toi (ou personne), les strats sont improvisées. Le rating doit <strong>refléter l'impact dans ce contexte</strong>, pas extrapoler depuis des matchs pros.</p>
+<p>On a donc designé le FV Rating pour <em>ton environnement FACEIT</em>, avec 4 composantes qui mesurent chacune un aspect différent de ton apport à l'équipe.</p>
 
-<h2>Les 4 composantes ponderees</h2>
-<p>La formule complete :</p>
+<h2>Les 4 composantes pondérées</h2>
+<p>La formule complète :</p>
 <div class="callout">
-  <div class="callout-title">FV Rating = moyenne ponderee</div>
+  <div class="callout-title">FV Rating = moyenne pondérée</div>
   <div class="callout-body">
     <p><strong>40% Impact par round</strong> + <strong>25% Consistance</strong> + <strong>20% Clutch factor</strong> + <strong>15% Side balance</strong></p>
-    <p>Base centree sur 1.00 (joueur moyen du niveau), typiquement entre 0.70 et 1.30.</p>
+    <p>Base centrée sur 1.00 (joueur moyen du niveau), typiquement entre 0.70 et 1.30.</p>
   </div>
 </div>
 
 <h3>Composante 1 : Impact par round (40%)</h3>
-<p>La partie "offensive" : combien de valeur tu generes a chaque round.</p>
-<p>Sub-formule :</p>
+<p>La partie "offensive" : combien de valeur tu génères à chaque round.</p>
+<p>Sous-formule :</p>
 <ul>
-  <li>Kills par round (KPR) normalise vs niveau</li>
-  <li>Damage par round (ADR) normalise vs niveau</li>
-  <li>Multi-kills (2k, 3k, 4k, 5k) ponderes non-lineairement — un 3k pese plus qu'un seul kill x3</li>
+  <li>Kills par round (KPR) normalisés vs niveau</li>
+  <li>Damage par round (ADR) normalisé vs niveau</li>
+  <li>Multi-kills (2k, 3k, 4k, 5k) pondérés non-linéairement : un 3k pèse plus qu'un seul kill x3</li>
   <li>Opening duels wins (first kill du round)</li>
 </ul>
-<p>Pourquoi 40% : c'est la composante la plus tangible. Tu generes du damage ou tu en genere pas. Mais ce n'est pas 100% parce que faire des kills sans contexte (eco fragging, padding) ne mesure pas la difference a haut niveau.</p>
+<p>Pourquoi 40% : c'est la composante la plus tangible. Tu génères du damage ou tu n'en génères pas. Mais ce n'est pas 100% parce que faire des kills sans contexte (eco fragging, padding) ne mesure pas la différence à haut niveau.</p>
 
 <h3>Composante 2 : Consistance (25%)</h3>
-<p>La partie "fiabilite" : es-tu present chaque round ?</p>
-<p>Sub-formule :</p>
+<p>La partie "fiabilité" : es-tu présent chaque round ?</p>
+<p>Sous-formule :</p>
 <ul>
   <li>KAST % (Kills / Assists / Survived / Traded)</li>
-  <li>Ecart-type de tes stats sur 20 matchs (plus c'est bas, mieux c'est)</li>
-  <li>Rounds fantomes (0 kill + 0 assist + mort tot) — penalite si &gt; 4 par match</li>
-  <li>Frequency de matchs a &lt; 0.80 FV Rating individual (tes "off days")</li>
+  <li>Écart-type de tes stats sur 20 matchs (plus c'est bas, mieux c'est)</li>
+  <li>Rounds fantômes (0 kill + 0 assist + mort tôt) : pénalité si &gt; 4 par match</li>
+  <li>Fréquence de matchs à &lt; 0.80 FV Rating individuel (tes "off days")</li>
 </ul>
-<p>Pourquoi 25% : un carry inconsistant est moins utile qu'un joueur regulier a impact modere. Les matchs que tu perds sont ceux ou tu es absent, pas ceux ou tu carry pas.</p>
+<p>Pourquoi 25% : un carry inconsistant est moins utile qu'un joueur régulier à impact modéré. Les matchs que tu perds sont ceux où tu es absent, pas ceux où tu ne carry pas.</p>
 
 <h3>Composante 3 : Clutch factor (20%)</h3>
 <p>La partie "pression" : tes performances dans les moments qui comptent.</p>
-<p>Sub-formule :</p>
+<p>Sous-formule :</p>
 <ul>
-  <li>1vX win rates (1v1, 1v2, 1v3+) ponderes</li>
-  <li>Rounds decisifs (score proche, rounds economiques cles) win rate</li>
+  <li>1vX win rates (1v1, 1v2, 1v3+) pondérés</li>
+  <li>Rounds décisifs (score proche, rounds économiques clés) win rate</li>
   <li>Performance en overtime (si applicable)</li>
-  <li>Clutch quand le bomb est plante (retake vs defend)</li>
+  <li>Clutch quand la bomb est plantée (retake vs defend)</li>
 </ul>
-<p>Pourquoi 20% : les rounds decisifs sont rares mais disproportionnellement importants. Gagner 1 clutch 1v2 change souvent le momentum d'une half entiere. On a normalise vs le minimum de rounds (si tu as joue 0 clutch, le facteur est neutre, pas penalise).</p>
+<p>Pourquoi 20% : les rounds décisifs sont rares mais disproportionnellement importants. Gagner 1 clutch 1v2 change souvent le momentum d'une half entière. On a normalisé vs le minimum de rounds (si tu as joué 0 clutch, le facteur est neutre, pas pénalisé).</p>
 
 <h3>Composante 4 : Side balance (15%)</h3>
-<p>La partie "completude" : es-tu bon en CT ET en T, ou seulement d'un cote ?</p>
-<p>Sub-formule :</p>
+<p>La partie "complétude" : es-tu bon en CT ET en T, ou seulement d'un côté ?</p>
+<p>Sous-formule :</p>
 <ul>
-  <li>CT Win Rate vs T Win Rate — bonus si les deux sont decents, penalite si l'un est &lt; 40%</li>
+  <li>CT Win Rate vs T Win Rate : bonus si les deux sont décents, pénalité si l'un est &lt; 40%</li>
   <li>Role diversity : tu joues entry, lurker, support selon le round ?</li>
 </ul>
-<p>Pourquoi 15% : un joueur 70% CT / 30% T est moins precieux qu'un joueur 55% / 55%. Tu ne peux pas pick que les sides ou il brille.</p>
+<p>Pourquoi 15% : un joueur 70% CT / 30% T est moins précieux qu'un joueur 55% / 55%. Tu ne peux pas pick que les sides où il brille.</p>
 
 <h2>Comment ton FV Rating se compare aux autres</h2>
 <table class="stats-table">
   <thead>
-    <tr><th>FV Rating</th><th>Niveau FACEIT equivalent</th><th>Traduction</th></tr>
+    <tr><th>FV Rating</th><th>Niveau FACEIT équivalent</th><th>Traduction</th></tr>
   </thead>
   <tbody>
-    <tr><td>0.70 - 0.85</td><td>Level 3-5</td><td>Tu stagnes ou tu regresses</td></tr>
-    <tr><td>0.85 - 0.95</td><td>Level 5-7</td><td>Tu tiens ta place</td></tr>
-    <tr><td>0.95 - 1.05</td><td>Level 7-9</td><td>Tu fais ton job, peut gagner</td></tr>
-    <tr><td>1.05 - 1.15</td><td>Level 9-10</td><td>Tu carry regulierement</td></tr>
-    <tr><td>1.15 - 1.25</td><td>Level 10 top</td><td>Tu es dans le top 5% de ton level</td></tr>
-    <tr><td>1.25+</td><td>Semi-pro / pro</td><td>Niveau competitif serieux</td></tr>
+    <tr><td>0.70 à 0.85</td><td>Level 3-5</td><td>Tu stagnes ou tu régresses</td></tr>
+    <tr><td>0.85 à 0.95</td><td>Level 5-7</td><td>Tu tiens ta place</td></tr>
+    <tr><td>0.95 à 1.05</td><td>Level 7-9</td><td>Tu fais ton job, l'équipe peut gagner</td></tr>
+    <tr><td>1.05 à 1.15</td><td>Level 9-10</td><td>Tu carry régulièrement</td></tr>
+    <tr><td>1.15 à 1.25</td><td>Level 10 top</td><td>Tu es dans le top 5% de ton level</td></tr>
+    <tr><td>1.25+</td><td>Semi-pro / pro</td><td>Niveau compétitif sérieux</td></tr>
   </tbody>
 </table>
 
 <div class="callout">
-  <div class="callout-title">A comprendre</div>
+  <div class="callout-title">À comprendre</div>
   <div class="callout-body">
-    <p>Le FV Rating est <strong>normalise vs ton level</strong>. Un 1.05 en level 5 signifie "tu es au-dessus de la moyenne level 5". Tu auras un rating different si tu fais les memes stats en level 10 (parce que le bar est plus haut).</p>
-    <p>C'est pour ca que le FV Rating ne compare pas directement un level 5 a un level 10 — il compare chacun a son propre benchmark.</p>
+    <p>Le FV Rating est <strong>normalisé vs ton level</strong>. Un 1.05 en level 5 signifie "tu es au-dessus de la moyenne level 5". Tu auras un rating différent si tu fais les mêmes stats en level 10 (parce que le bar est plus haut).</p>
+    <p>C'est pour ça que le FV Rating ne compare pas directement un level 5 à un level 10 : il compare chacun à son propre benchmark.</p>
   </div>
 </div>
 
 <h2>Pourquoi on ne copie pas HLTV Rating 2.1</h2>
-<p>HLTV Rating 2.1 est une super metrique, mais elle a ete calibree pour :</p>
+<p>HLTV Rating 2.1 est une super métrique, mais elle a été calibrée pour :</p>
 <ul>
-  <li><strong>Matchs pro LAN / online tier 1-2</strong> — contexte bien different de FACEIT solo</li>
-  <li><strong>Utility coordinee</strong> — les pros ont 4 co-equipiers qui set-up</li>
-  <li><strong>Maps competitives strictes</strong> — map pool reduit, pas de Dust2/Vertigo de pickup</li>
+  <li><strong>Matchs pro LAN et online tier 1-2</strong> : contexte bien différent de FACEIT solo</li>
+  <li><strong>Utility coordonnée</strong> : les pros ont 4 coéquipiers qui set-up</li>
+  <li><strong>Maps compétitives strictes</strong> : map pool réduit, pas de Dust2 ou Vertigo de pickup</li>
 </ul>
-<p>Si on te applique HLTV Rating 2.1 sur ton FACEIT, tu obtiens un chiffre qui <em>sous-estime</em> tes clutches (tu en prends plus en solo queue) et <em>surestime</em> ton damage (pas de trade frags organises).</p>
-<p>On a fait des tests internes : sur 10k profils FACEIT analyses, HLTV Rating 2.1 et FV Rating correlent a 0.82 (forte correlation, mais pas identique). Les 18% de divergence sont concentres sur les profils "carry solo" et "support silencieux" — justement les profils que HLTV Rating lit mal.</p>
+<p>Si on t'applique HLTV Rating 2.1 sur ton FACEIT, tu obtiens un chiffre qui <em>sous-estime</em> tes clutches (tu en prends plus en solo queue) et <em>surestime</em> ton damage (pas de trade frags organisés).</p>
+<p>On a fait des tests internes : sur 10k profils FACEIT analysés, HLTV Rating 2.1 et FV Rating corrèlent à 0.82 (forte corrélation, mais pas identique). Les 18% de divergence sont concentrés sur les profils "carry solo" et "support silencieux", justement les profils que HLTV Rating lit mal.</p>
 
 <h2>Comment utiliser ton FV Rating</h2>
 
-<h3>1. Compare-le a ton historique</h3>
-<p>Le FV Rating d'un mois donne n'est pas interessant en absolu. Ce qui compte, c'est ton <strong>trend</strong>. Il est en 30j a 0.92, en 90j a 0.87 ? Tu progresses. Il baisse ? Tu regresses, analyse ce qui a change.</p>
+<h3>1. Compare-le à ton historique</h3>
+<p>Le FV Rating d'un mois donné n'est pas intéressant en absolu. Ce qui compte, c'est ton <strong>trend</strong>. Il est en 30j à 0.92, en 90j à 0.87 ? Tu progresses. Il baisse ? Tu régresses, analyse ce qui a changé.</p>
 
-<h3>2. Compare-le a tes teammates</h3>
-<p>Sur <a href="/compare.html">la page compare</a>, tu peux mettre 2-5 profils cote a cote. Si tu joues avec un mec a 1.05 et toi a 0.90, question : qu'est-ce que lui fait que tu fais pas ?</p>
+<h3>2. Compare-le à tes teammates</h3>
+<p>Sur <a href="/compare.html">la page compare</a>, tu peux mettre 2 à 5 profils côte à côte. Si tu joues avec un mec à 1.05 et toi à 0.90, question : qu'est-ce que lui fait que tu ne fais pas ?</p>
 
-<h3>3. Compare-le a tes adversaires</h3>
-<p>Avant un match important ou un scrim, regarde le FV Rating des joueurs adverses sur <a href="/scout.html">le Scout</a>. Tu peux <em>anticiper</em> ou sera leur carry (ADR eleve, HS% haut).</p>
+<h3>3. Compare-le à tes adversaires</h3>
+<p>Avant un match important ou un scrim, regarde le FV Rating des joueurs adverses sur <a href="/scout.html">le Scout</a>. Tu peux <em>anticiper</em> où sera leur carry (ADR élevé, HS% haut).</p>
 
 <h3>4. Check tes composantes</h3>
-<p>Sur le <a href="/dashboard.html">dashboard</a>, on te donne le breakdown des 4 composantes. Si ton FV Rating est a 1.00 avec "Impact 1.10, Consistance 0.85, Clutch 1.05, Side 0.95" — ton vrai gap c'est la consistance. Tu as des matchs oh tu disparais.</p>
+<p>Sur le <a href="/dashboard.html">dashboard</a>, on te donne le breakdown des 4 composantes. Si ton FV Rating est à 1.00 avec "Impact 1.10, Consistance 0.85, Clutch 1.05, Side 0.95", ton vrai gap c'est la consistance. Tu as des matchs où tu disparais.</p>
 
 <h2>Limitations connues</h2>
-<p>Honnete disclaimer :</p>
+<p>Honnête disclaimer :</p>
 <ul>
-  <li>Le FV Rating se base sur <strong>20 derniers matchs</strong>. Si tu as joué 19 matchs solo et 1 match stack, la stack pese lourdement.</li>
-  <li>Il ne prend pas en compte <strong>la composition de ton equipe</strong> (un level 10 avec 4 level 5 aura un FV Rating deflate parce que ses teammates font perdre des rounds).</li>
-  <li>Il <strong>n'integre pas encore les comms ou le game sense</strong> qualitatif (on bosse dessus via l'analyse de demos IA).</li>
+  <li>Le FV Rating se base sur <strong>les 20 derniers matchs</strong>. Si tu as joué 19 matchs solo et 1 match stack, la stack pèse lourdement.</li>
+  <li>Il ne prend pas en compte <strong>la composition de ton équipe</strong> (un level 10 avec 4 level 5 aura un FV Rating déflaté parce que ses teammates font perdre des rounds).</li>
+  <li>Il <strong>n'intègre pas encore les comms ou le game sense</strong> qualitatif (on bosse dessus via l'analyse de démos IA).</li>
 </ul>
 
-<p>C'est une metrique <em>utile mais pas parfaite</em>. A lire avec le context (type de queue, stack ou solo, maps jouees, forme du moment).</p>
+<p>C'est une métrique <em>utile mais pas parfaite</em>. À lire avec le contexte (type de queue, stack ou solo, maps jouées, forme du moment).</p>
 
   </div>
 
   <div class="article-cta">
     <div class="article-cta-title">Voir ton FV Rating en live</div>
-    <div class="article-cta-sub">Connecte ton FACEIT, FragValue calcule ton FV Rating sur tes 20 derniers matchs avec le breakdown des 4 composantes. Tu vois exactement ou sont tes gaps.</div>
-    <a href="/login.html" class="article-cta-btn">Creer mon compte</a>
+    <div class="article-cta-sub">Connecte ton FACEIT, FragValue calcule ton FV Rating sur tes 20 derniers matchs avec le breakdown des 4 composantes. Tu vois exactement où sont tes gaps.</div>
+    <a href="/login.html" class="article-cta-btn">Créer mon compte</a>
   </div>
 
   <div class="article-footer">
-    <div class="article-footer-title">A lire ensuite</div>
+    <div class="article-footer-title">À lire ensuite</div>
     <div class="related-grid">
       <a class="related-card" href="/blog/adr-kast-cs2-expliques.html">
-        <div class="related-card-title">ADR, KAST, FV Rating : les 3 stats cles</div>
-        <div class="related-card-meta">Stats - 7 min</div>
+        <div class="related-card-title">ADR, KAST, FV Rating : les 3 stats clés</div>
+        <div class="related-card-meta">Stats · 7 min</div>
       </a>
       <a class="related-card" href="/blog/comment-progresser-cs2-2026.html">
         <div class="related-card-title">Comment progresser au CS2</div>
-        <div class="related-card-meta">Guide hub - 9 min</div>
+        <div class="related-card-meta">Guide hub · 9 min</div>
       </a>
       <a class="related-card" href="/blog/passer-level-10-faceit.html">
-        <div class="related-card-title">Passer level 4 a level 10 FACEIT</div>
-        <div class="related-card-meta">Progression - 8 min</div>
+        <div class="related-card-title">Passer level 4 à level 10 FACEIT</div>
+        <div class="related-card-meta">Progression · 8 min</div>
       </a>
     </div>
   </div>

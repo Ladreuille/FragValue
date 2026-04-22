@@ -163,19 +163,19 @@ export default async function handler(req, res) {
     if (ranked.length >= 2) {
       const best = ranked[0]; const worst = ranked[ranked.length - 1];
       if (best.fvRating - worst.fvRating > 0.25) {
-        insights.push({ type: 'warning', icon: 'gap', title: 'Ecart de niveau notable',
-          message: `${best.nickname} (FV ${best.fvRating.toFixed(2)}) porte l'equipe vs ${worst.nickname} (FV ${worst.fvRating.toFixed(2)}). Renforcer les bas niveaux ou reequilibrer les roles.` });
+        insights.push({ type: 'warning', icon: 'gap', title: 'Écart de niveau notable',
+          message: `${best.nickname} (FV ${best.fvRating.toFixed(2)}) porte l'équipe vs ${worst.nickname} (FV ${worst.fvRating.toFixed(2)}). Renforcer les bas niveaux ou rééquilibrer les rôles.` });
       }
     }
 
     // Side balance
     if (sideGap != null && Math.abs(sideGap) >= 8) {
       if (sideGap > 0) {
-        insights.push({ type: 'info', icon: 'side', title: 'Equipe CT-sided',
-          message: `${avgCtWinRate}% en CT vs ${avgTWinRate}% en T (+${sideGap}pts). Forcer les gun-rounds en CT start, anti-eco plus serieux en T start.` });
+        insights.push({ type: 'info', icon: 'side', title: 'Équipe CT-sided',
+          message: `${avgCtWinRate}% en CT vs ${avgTWinRate}% en T (+${sideGap}pts). Force les gun rounds en CT start, anti-eco plus sérieux en T start.` });
       } else {
-        insights.push({ type: 'info', icon: 'side', title: 'Equipe T-sided',
-          message: `${avgTWinRate}% en T vs ${avgCtWinRate}% en CT (${sideGap}pts). Prioriser les maps a T-side fort (Mirage, Dust2, Inferno). Travailler le setup CT.` });
+        insights.push({ type: 'info', icon: 'side', title: 'Équipe T-sided',
+          message: `${avgTWinRate}% en T vs ${avgCtWinRate}% en CT (${sideGap}pts). Prioriser les maps à T-side fort (Mirage, Dust2, Inferno). Travailler le setup CT.` });
       }
     }
 
@@ -183,39 +183,39 @@ export default async function handler(req, res) {
     if (bestMap && bestMap.team_win_rate >= 60) {
       const mapName = (bestMap.map || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
       insights.push({ type: 'success', icon: 'map', title: `${mapName} = ta map signature`,
-        message: `${bestMap.team_win_rate}% de WR collectif sur ${bestMap.total_matches} matchs. A pick systematiquement en BO3.` });
+        message: `${bestMap.team_win_rate}% de WR collectif sur ${bestMap.total_matches} matchs. À pick systématiquement en BO3.` });
     }
     if (worstMap && worstMap.team_win_rate <= 40 && worstMap.total_matches >= 5) {
       const mapName = (worstMap.map || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
-      insights.push({ type: 'danger', icon: 'map', title: `${mapName} = map a eviter`,
-        message: `${worstMap.team_win_rate}% de WR sur ${worstMap.total_matches} matchs. Ban prioritaire ou gros travail d'entrainement.` });
+      insights.push({ type: 'danger', icon: 'map', title: `${mapName} = map à éviter`,
+        message: `${worstMap.team_win_rate}% de WR sur ${worstMap.total_matches} matchs. Ban prioritaire ou gros travail d'entraînement.` });
     }
 
     // Role coverage
     const hasIgl = members.some(m => m.role === 'igl');
     const hasAwp = members.some(m => m.role === 'awp' || m.role === 'awper');
     if (!hasIgl) {
-      insights.push({ type: 'warning', icon: 'role', title: 'Pas d\'IGL designe',
-        message: 'Aucun membre n\'a le role IGL. Designer un joueur pour appeler les rounds ameliore la coherence tactique.' });
+      insights.push({ type: 'warning', icon: 'role', title: 'Pas d\'IGL désigné',
+        message: 'Aucun membre n\'a le rôle IGL. Désigner un joueur pour appeler les rounds améliore la cohérence tactique.' });
     }
     if (!hasAwp) {
-      insights.push({ type: 'warning', icon: 'role', title: 'Pas d\'AWPer designe',
-        message: 'Aucun membre n\'a le role AWP. L\'AWP est un role crucial en CS2 pro, surtout en CT side.' });
+      insights.push({ type: 'warning', icon: 'role', title: 'Pas d\'AWPer désigné',
+        message: 'Aucun membre n\'a le rôle AWP. L\'AWP est un rôle crucial en CS2 pro, surtout en CT side.' });
     }
 
     // Opening potential
     const bestOpener = [...members].sort((a, b) => (b.firstKills - b.firstDeaths) - (a.firstKills - a.firstDeaths))[0];
     if (bestOpener && bestOpener.firstKills > 0 && (bestOpener.firstKills - bestOpener.firstDeaths) >= 5) {
-      insights.push({ type: 'success', icon: 'opening', title: 'Entry fragger identifie',
-        message: `${bestOpener.nickname} a ${bestOpener.firstKills} opening kills vs ${bestOpener.firstDeaths} deaths. Il doit prendre les first duels prio.` });
+      insights.push({ type: 'success', icon: 'opening', title: 'Entry fragger identifié',
+        message: `${bestOpener.nickname} a ${bestOpener.firstKills} opening kills vs ${bestOpener.firstDeaths} deaths. Il doit prendre les first duels en priorité.` });
     }
 
     // Team score context
     if (fvNum >= 1.10) {
-      insights.push({ type: 'success', icon: 'trophy', title: 'Niveau competitif',
-        message: `FV Rating collectif ${avgFvRating}. Vous avez le niveau pour viser des tournois amateurs serieux.` });
+      insights.push({ type: 'success', icon: 'trophy', title: 'Niveau compétitif',
+        message: `FV Rating collectif ${avgFvRating}. Vous avez le niveau pour viser des tournois amateurs sérieux.` });
     } else if (fvNum < 0.85) {
-      insights.push({ type: 'danger', icon: 'trophy', title: 'Fondations a solidifier',
+      insights.push({ type: 'danger', icon: 'trophy', title: 'Fondations à solidifier',
         message: `FV Rating collectif ${avgFvRating}. Focus sur les fondamentaux (crosshair placement, utility lineups, communication) avant les strats complexes.` });
     }
 
@@ -239,13 +239,13 @@ export default async function handler(req, res) {
     }
     // Label aligne sur celui du fvScore (Debutant → Challenger).
     const teamRank = teamScore >= 90 ? 'Challenger'
-      : teamScore >= 80 ? 'Elite+'
-      : teamScore >= 70 ? 'Elite'
-      : teamScore >= 58 ? 'Tres bon'
+      : teamScore >= 80 ? 'Élite+'
+      : teamScore >= 70 ? 'Élite'
+      : teamScore >= 58 ? 'Très bon'
       : teamScore >= 46 ? 'Bon'
       : teamScore >= 34 ? 'Moyen'
       : teamScore >= 20 ? 'En progression'
-                         : 'Debutant';
+                         : 'Débutant';
 
     const data = {
       roster,
