@@ -272,43 +272,100 @@ async function importOne(hltvId) {
   return { ok: true, matchId, hasScorecards };
 }
 
+// ── Mode "latest" : auto-discovery des derniers matchs HLTV ────────────
+// Scrape la page /results pour trouver les IDs des N derniers matchs, puis
+// filtre ceux deja en DB (hltv_match_id) pour ne pas refaire le boulot.
+async function discoverLatest(maxMatches) {
+  console.log(`→ Discovery : fetch les ${maxMatches} derniers resultats HLTV...`);
+  // HLTV.getResults retourne les derniers matchs joues (~100 par page)
+  const results = await HLTV.getResults({ pages: 1 }).catch(e => {
+    console.error(`× HLTV.getResults failed : ${e.message}`);
+    return [];
+  });
+  console.log(`  ${results.length} matchs recents detectes sur HLTV`);
+
+  if (!results.length) return [];
+
+  // Cherche ceux deja en DB pour les skip
+  const ids = results.map(r => r.id).filter(Boolean);
+  const { data: existing } = await s
+    .from('pro_matches')
+    .select('hltv_match_id')
+    .in('hltv_match_id', ids);
+  const existingSet = new Set((existing || []).map(r => parseInt(r.hltv_match_id, 10)));
+  console.log(`  ${existingSet.size} deja en DB, ${ids.length - existingSet.size} nouveaux a ingerer`);
+
+  const toImport = results
+    .filter(r => r.id && !existingSet.has(r.id))
+    .slice(0, maxMatches);
+
+  if (!toImport.length) {
+    console.log('  Tout est deja a jour.');
+    return [];
+  }
+
+  console.log('  Matchs qui seront importes :');
+  toImport.forEach(r => {
+    const teams = `${r.team1?.name || '?'} vs ${r.team2?.name || '?'}`;
+    console.log(`   - #${r.id}  ${teams}  @ ${r.event?.name || '?'}`);
+  });
+
+  return toImport.map(r => r.id);
+}
+
 // ── Main ────────────────────────────────────────────────────────────────
 (async () => {
   const args = process.argv.slice(2);
   if (!args.length) {
-    console.log('Usage : node scripts/import-hltv.js <match_id_ou_url> [...]');
+    console.log('Usage :');
+    console.log('  node scripts/import-hltv.js <match_id_ou_url> [...]');
+    console.log('  node scripts/import-hltv.js latest [nombre]       # auto-discovery');
     console.log('');
     console.log('Exemples :');
     console.log('  node scripts/import-hltv.js 2393243');
     console.log('  node scripts/import-hltv.js https://www.hltv.org/matches/2393243/furia-vs-vitality');
     console.log('  node scripts/import-hltv.js 2393243 2393244 2393245');
-    console.log('  npm run import:hltv -- 2393243');
+    console.log('  node scripts/import-hltv.js latest              # 10 derniers matchs auto');
+    console.log('  node scripts/import-hltv.js latest 20           # 20 derniers');
+    console.log('  npm run import:hltv -- latest');
     process.exit(0);
   }
 
-  let ok = 0, fail = 0, partial = 0;
-  for (let i = 0; i < args.length; i++) {
-    const id = parseIdFromArg(args[i]);
-    if (!id) {
-      console.error(`× ID invalide : ${args[i]}`);
-      fail++;
-      continue;
+  // Mode "latest" : auto-discovery
+  let ids;
+  if (args[0] === 'latest' || args[0] === 'recent') {
+    const n = Math.max(1, Math.min(50, parseInt(args[1], 10) || 10));
+    ids = await discoverLatest(n);
+    if (!ids.length) {
+      console.log('\nRien a faire.');
+      process.exit(0);
     }
+  } else {
+    // Mode manuel : match IDs / URLs
+    ids = args.map(a => parseIdFromArg(a)).filter(Boolean);
+    if (ids.length !== args.length) {
+      console.error(`× ${args.length - ids.length} ID(s) invalide(s) ignore(s)`);
+    }
+  }
+
+  let ok = 0, fail = 0, partial = 0;
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i];
     try {
       const r = await importOne(id);
       ok++;
       if (!r.hasScorecards) partial++;
     } catch (e) {
-      console.error(`× Match ${id} échoué : ${e.message}`);
+      console.error(`× Match ${id} echoue : ${e.message}`);
       fail++;
     }
-    // Rate limit respectueux si plusieurs matchs
-    if (i < args.length - 1) {
+    // Rate limit respectueux : 2s entre chaque match pour ne pas faire tomber HLTV
+    if (i < ids.length - 1) {
       console.log('  (attente 2s avant le prochain...)');
       await new Promise(r => setTimeout(r, 2000));
     }
   }
 
-  console.log(`\nTerminé : ${ok} réussi(s), ${fail} échoué(s)${partial > 0 ? `, ${partial} sans scorecards (à compléter dans /admin/pro-matches.html)` : ''}`);
+  console.log(`\nTermine : ${ok} reussi(s), ${fail} echoue(s)${partial > 0 ? `, ${partial} sans scorecards (a completer dans /admin/pro-matches.html)` : ''}`);
   process.exit(fail > 0 ? 1 : 0);
 })();
