@@ -315,9 +315,13 @@
             <a class="settings-btn" id="referralTwitterBtn" href="#" target="_blank" rel="noopener" style="background:#1d9bf0;color:#fff;border-color:#1d9bf0">Partager X</a>
           </div>
           <div class="settings-msg" id="referralMsg"></div>
-          <!-- Explication recompense -->
-          <div style="font-family:var(--mono);font-size:11px;color:var(--text3);line-height:1.6;padding-top:10px;border-top:1px solid var(--border);margin-top:4px">
-            <strong style="color:var(--accent)">Comment ca marche :</strong> un ami s'inscrit avec ton lien, vous recevez chacun <strong style="color:var(--text)">7 jours Pro offerts</strong>. Cumulable a chaque nouvelle inscription. Le code est enregistre au 1er partage, pas de limite.
+          <!-- Progression vers le prochain palier -->
+          <div id="referralProgress" style="margin-top:10px;padding-top:12px;border-top:1px solid var(--border)"></div>
+          <!-- Ladder des paliers -->
+          <div id="referralTiers" style="margin-top:8px"></div>
+          <!-- Explication succincte -->
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text3);line-height:1.6;margin-top:8px">
+            <strong style="color:var(--accent)">Comment ca marche :</strong> chaque ami qui s'inscrit avec ton lien te fait avancer dans les paliers. Ton filleul recoit 7 jours Pro de bienvenue. Toi, tu debloques des recompenses majeures aux seuils 15 / 50 / 100 / 500 parrainages.
           </div>
         </div>
       </div>
@@ -479,9 +483,22 @@ async function init() {
     if (rewardRaw) {
       const reward = JSON.parse(rewardRaw);
       sessionStorage.removeItem('fv_referral_reward');
-      showBanner(`Parrainage valide. ${reward.days} jours Pro offerts sont actifs sur ton compte.`, 'ok');
+      const msg = reward.referrer_nick
+        ? `Parrainage valide via ${reward.referrer_nick}. ${reward.days} jours Pro offerts sont actifs sur ton compte.`
+        : `Parrainage valide. ${reward.days} jours Pro offerts sont actifs sur ton compte.`;
+      showBanner(msg, 'ok');
       // Force refresh de la card abonnement pour refleter le trial
       setTimeout(() => { _subLoaded = false; loadSubscription(); }, 500);
+    } else {
+      // Cas d'erreur attribution : code deja utilise ou invalide
+      const info = sessionStorage.getItem('fv_referral_info');
+      if (info === 'already_referred') {
+        sessionStorage.removeItem('fv_referral_info');
+        showBanner('Tu as deja utilise un code de parrainage sur ce compte. Un seul code par compte.', 'err');
+      } else if (info === 'invalid_code') {
+        sessionStorage.removeItem('fv_referral_info');
+        showBanner('Le code de parrainage est inconnu. Verifie l\'orthographe et reessaie.', 'err');
+      }
     }
   } catch {}
 }
@@ -862,37 +879,100 @@ async function loadReferral() {
 
     // Affiche le banner si l'user a un grant Pro actif
     renderGrantBanner(d.grant);
+
+    // Progression vers le prochain palier + ladder des paliers
+    renderTierProgress(d.tier_progress);
+    renderTierLadder(d.tiers || []);
   } catch (e) {
     console.warn('Referral load error:', e.message);
   }
 }
 
+function renderTierProgress(progress) {
+  const el = document.getElementById('referralProgress');
+  if (!el) return;
+  if (!progress) { el.innerHTML = ''; return; }
+  if (progress.maxed) {
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.25);border-radius:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700">
+          Tous les paliers atteints (${progress.current} parrainages). Merci d'etre un pilier FragValue.
+        </div>
+      </div>`;
+    return;
+  }
+  const pct = progress.percent || 0;
+  const planLabel = progress.next_plan === 'elite' ? 'Elite' : 'Pro';
+  const durationLabel = progress.next_lifetime ? 'a vie' : '1 an';
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;font-family:var(--mono);font-size:11px">
+      <span style="color:var(--text)"><strong>${progress.current}</strong> / ${progress.target} parrainages</span>
+      <span style="color:var(--text3)">Plus que ${progress.remaining} pour <strong style="color:var(--accent)">${planLabel} ${durationLabel}</strong></span>
+    </div>
+    <div style="height:6px;background:var(--card);border:1px solid var(--border);border-radius:3px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg, var(--accent2), var(--accent));border-radius:2px;transition:width .6s ease"></div>
+    </div>
+  `;
+}
+
+function renderTierLadder(tiers) {
+  const el = document.getElementById('referralTiers');
+  if (!el || !tiers.length) return;
+  const items = tiers.map(t => {
+    const planLabel = t.plan === 'elite' ? 'Elite' : 'Pro';
+    const durationLabel = t.lifetime ? 'a vie' : '1 an';
+    const reached = t.reached;
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:${reached ? 'rgba(184,255,87,.05)' : 'var(--card)'};border:1px solid ${reached ? 'rgba(184,255,87,.2)' : 'var(--border)'};border-radius:6px">
+        <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${reached ? 'var(--accent)' : 'var(--border2)'};color:${reached ? '#000' : 'var(--text3)'};font-family:var(--display);font-size:10px;flex-shrink:0">
+          ${reached ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : t.threshold}
+        </div>
+        <div style="flex:1;font-family:var(--mono);font-size:11px;line-height:1.3">
+          <div style="color:${reached ? 'var(--accent)' : 'var(--text)'};font-weight:700">${t.threshold} parrainages</div>
+          <div style="color:var(--text3);font-size:10px;margin-top:1px">${planLabel} ${durationLabel}${t.lifetime ? ' · never expires' : ''}</div>
+        </div>
+      </div>`;
+  }).join('');
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px">${items}</div>`;
+}
+
 function renderGrantBanner(grant) {
   const banner = document.getElementById('grantBanner');
   if (!banner) return;
-  if (!grant || !grant.expires_at) {
+  if (!grant) {
     banner.style.display = 'none';
     return;
   }
-  const expiresMs = new Date(grant.expires_at).getTime();
+  const isLifetime = grant.expires_at == null;
   const now = Date.now();
-  if (expiresMs <= now) {
-    banner.style.display = 'none';
-    return;
+  let daysLeft = null;
+  if (!isLifetime) {
+    const expiresMs = new Date(grant.expires_at).getTime();
+    if (expiresMs <= now) { banner.style.display = 'none'; return; }
+    daysLeft = Math.max(1, Math.ceil((expiresMs - now) / 86400000));
   }
-  const daysLeft = Math.max(1, Math.ceil((expiresMs - now) / 86400000));
   const planLabel = (grant.plan || 'pro').toUpperCase();
   const reasonMsg = {
-    'referral_referee'  : 'Bienvenue ! Ton parrainage te donne acces a toutes les features Pro.',
-    'referral_referrer' : 'Merci d\'avoir parraine un joueur, profite de tes features Pro offertes.',
-    'admin_grant'       : 'Acces Pro offert par l\'equipe FragValue.',
-    'promo_code'        : 'Acces Pro via un code promo.',
-    'compensation'      : 'Acces Pro offert en compensation.',
+    'referral_referee'        : 'Bienvenue. Ton parrainage te donne acces aux features Pro.',
+    'referral_referrer'       : 'Merci d\'avoir parraine un joueur.',
+    'referral_tier_pro_1y'    : 'Palier 15 parrainages atteint. Pro 1 an debloque.',
+    'referral_tier_elite_1y'  : 'Palier 50 parrainages atteint. Elite 1 an debloque.',
+    'referral_tier_pro_life'  : 'Palier 100 parrainages atteint. Pro a vie debloque, ce grant ne peut plus etre revoque.',
+    'referral_tier_elite_life': 'Palier 500 parrainages atteint. Elite a vie debloque, niveau ultime.',
+    'admin_grant'             : 'Acces Pro offert par l\'equipe FragValue.',
+    'promo_code'              : 'Acces Pro via un code promo.',
+    'compensation'            : 'Acces Pro offert en compensation.',
   }[grant.reason] || 'Acces Pro offert actif.';
   const title = document.getElementById('grantBannerTitle');
   const msg = document.getElementById('grantBannerMsg');
-  title.textContent = `${daysLeft} jour${daysLeft > 1 ? 's' : ''} ${planLabel} offert${daysLeft > 1 ? 's' : ''}`;
-  msg.textContent = reasonMsg + ` Expire le ${new Date(grant.expires_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}.`;
+  if (isLifetime) {
+    title.textContent = `${planLabel} a vie`;
+    msg.textContent = reasonMsg + ' Ce grant n\'expire jamais.';
+  } else {
+    title.textContent = `${daysLeft} jour${daysLeft > 1 ? 's' : ''} ${planLabel} offert${daysLeft > 1 ? 's' : ''}`;
+    msg.textContent = reasonMsg + ` Expire le ${new Date(grant.expires_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}.`;
+  }
   banner.style.display = 'flex';
 }
 

@@ -82,17 +82,19 @@ async function resolvePlanFromDB(userId) {
 }
 
 // Check les pro_grants actifs (parrainage, admin, promo) pour cet user.
-// Retourne le grant le plus haut plan avec la plus grande date d'expiration,
-// ou null si aucun grant actif.
+// Retourne le grant le plus fort. expires_at = NULL signifie "a vie" (lifetime),
+// et supplante tout grant avec une date d'expiration.
 async function resolvePlanFromGrants(userId) {
+  const nowIso = new Date().toISOString();
   const { data } = await sb()
     .from('pro_grants')
     .select('plan, expires_at, reason')
     .eq('user_id', userId)
     .is('revoked_at', null)
-    .gt('expires_at', new Date().toISOString())
+    .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
     .order('plan', { ascending: false }) // team > pro
-    .order('expires_at', { ascending: false })
+    // NULLS FIRST : les grants a vie sont prioritaires
+    .order('expires_at', { ascending: false, nullsFirst: true })
     .limit(1);
   if (!data || data.length === 0) return null;
   return {
@@ -100,7 +102,8 @@ async function resolvePlanFromGrants(userId) {
     status: 'trialing',
     source: 'grant',
     reason: data[0].reason,
-    expires_at: data[0].expires_at,
+    expires_at: data[0].expires_at, // null si lifetime
+    lifetime: data[0].expires_at === null,
   };
 }
 
@@ -172,7 +175,11 @@ async function getUserPlan(authHeader, opts = {}) {
       user,
       status: fromGrant ? 'trialing' : (fromDB?.status || 'active'),
       source: fromGrant ? 'grant' : 'db',
-      grant: fromGrant ? { reason: fromGrants.reason, expires_at: fromGrants.expires_at } : null,
+      grant: fromGrant ? {
+        reason: fromGrants.reason,
+        expires_at: fromGrants.expires_at,
+        lifetime: fromGrants.lifetime || false,
+      } : null,
     };
     setCached(token, result);
     return result;

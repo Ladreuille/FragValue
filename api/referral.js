@@ -1,33 +1,73 @@
 // api/referral.js // FragValue
 // Gestion du programme de parrainage.
 //
-// GET  /api/referral                 → { code, link, stats: { total, last_30d, recent: [...] }, grant }
+// GET  /api/referral                 → { code, link, stats, grant, referrer, tier_progress }
 // POST /api/referral { code }        → attribue un parrain a l'user courant (1x max)
-//                                       + cree 2 pro_grants (7j pour parrain ET filleul)
-//                                       + cree 2 notifications in-app
+//                                       + filleul : +7j Pro welcome (immediat)
+//                                       + parrain : grant selon palier FRANCHI (si cumul atteint un seuil)
+//                                       + notifications in-app
 //
 // Auth : Bearer JWT Supabase obligatoire.
 // Regles : un user ne peut pas se parrainer lui-meme. L'attribution est
 // permanente (pas de changement apres le 1er parrain enregistre).
-// Recompense : +7 jours Pro offerts aux 2 parties (parrain + filleul).
+//
+// ── Systeme de recompenses ─────────────────────────────────────────────
+// Filleul : +7 jours Pro a l'inscription (welcome bonus, unique).
+// Parrain : paliers cumulatifs sur le nombre total de filleuls.
+//   Palier 1 :  15 filleuls  → Pro  1 an  (365 jours)
+//   Palier 2 :  50 filleuls  → Elite 1 an (365 jours)
+//   Palier 3 : 100 filleuls  → Pro  a vie (expires_at = NULL)
+//   Palier 4 : 500 filleuls  → Elite a vie (expires_at = NULL)
+// Le grant est cree une seule fois au franchissement du palier. Chaque
+// palier supplante les precedents (Elite > Pro, lifetime > temporaire).
 
 const { createClient } = require('@supabase/supabase-js');
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
-const REWARD_DAYS = 7;
+const REFEREE_WELCOME_DAYS = 7;
+
+// Paliers de recompense pour le parrain (ordre croissant de exigence)
+const REFERRAL_TIERS = [
+  { threshold:  15, plan: 'pro',  days: 365,  label: 'Pro 1 an',    reason: 'referral_tier_pro_1y'    },
+  { threshold:  50, plan: 'team', days: 365,  label: 'Elite 1 an',  reason: 'referral_tier_elite_1y'  },
+  { threshold: 100, plan: 'pro',  days: null, label: 'Pro a vie',   reason: 'referral_tier_pro_life'  },
+  { threshold: 500, plan: 'team', days: null, label: 'Elite a vie', reason: 'referral_tier_elite_life'},
+];
+
+// Retourne le palier qui vient d'etre franchi (ou null si aucun).
+// previousCount = count AVANT l'attribution courante. currentCount = count APRES.
+function findCrossedTier(previousCount, currentCount) {
+  for (const tier of REFERRAL_TIERS) {
+    if (previousCount < tier.threshold && currentCount >= tier.threshold) {
+      return tier;
+    }
+  }
+  return null;
+}
+
+// Retourne le prochain palier a atteindre pour l'UI de progression.
+function findNextTier(currentCount) {
+  for (const tier of REFERRAL_TIERS) {
+    if (currentCount < tier.threshold) return tier;
+  }
+  return null;
+}
 
 function sb() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
-// Insert un grant Pro non-bloquant (swallow errors pour ne pas casser le flow)
-async function grantProDays(s, userId, days, reason, metadata) {
-  if (!userId || !days) return null;
-  const expires = new Date(Date.now() + days * 86400000).toISOString();
+// Insert un grant Pro/Team non-bloquant (swallow errors pour ne pas casser le flow).
+// Si days est null, le grant est a vie (expires_at = NULL).
+async function grantPlan(s, userId, plan, days, reason, metadata) {
+  if (!userId) return null;
+  const expires = (days == null)
+    ? null
+    : new Date(Date.now() + days * 86400000).toISOString();
   try {
     const { data, error } = await s.from('pro_grants').insert({
       user_id: userId,
-      plan: 'pro',
+      plan: plan || 'pro',
       reason,
       expires_at: expires,
       metadata: metadata || null,
@@ -138,16 +178,43 @@ module.exports = async function handler(req, res) {
     const code = profile.referral_code || null;
     const link = code ? `https://fragvalue.com/login.html?ref=${code}` : null;
 
+    // Progression vers le prochain palier
+    const totalCount = total || 0;
+    const nextTier = findNextTier(totalCount);
+    const tier_progress = nextTier ? {
+      current: totalCount,
+      target: nextTier.threshold,
+      remaining: nextTier.threshold - totalCount,
+      next_label: nextTier.label,
+      next_plan: nextTier.plan === 'team' ? 'elite' : nextTier.plan,
+      next_lifetime: nextTier.days == null,
+      percent: Math.min(100, Math.round((totalCount / nextTier.threshold) * 100)),
+    } : {
+      current: totalCount,
+      maxed: true, // Tous les paliers atteints
+    };
+
+    // Liste des paliers pour l'UI (avec status reached / next / locked)
+    const tiers_status = REFERRAL_TIERS.map(t => ({
+      threshold: t.threshold,
+      plan: t.plan === 'team' ? 'elite' : t.plan,
+      lifetime: t.days == null,
+      label: t.label,
+      reached: totalCount >= t.threshold,
+    }));
+
     return res.status(200).json({
       code,
       link,
       stats: {
-        total: total || 0,
+        total: totalCount,
         last_30d: last30 || 0,
         recent: recent || [],
       },
       referrer,
       grant: activeGrant,
+      tier_progress,
+      tiers: tiers_status,
     });
   }
 
@@ -158,15 +225,26 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Code invalide' });
     }
 
-    // Profil de l'user : a-t-il deja un parrain ?
+    // Contrainte : 1 seul code utilise par compte (profile.referred_by est
+    // set au 1er usage et ne peut plus bouger). Validation explicite ci-dessous.
     const { data: profile } = await s
       .from('profiles')
       .select('id, referred_by, referral_code')
       .eq('id', user.id)
       .maybeSingle();
     if (!profile) return res.status(404).json({ error: 'Profil introuvable' });
-    if (profile.referred_by) return res.status(400).json({ error: 'Tu as deja un parrain' });
-    if (profile.referral_code === code) return res.status(400).json({ error: 'Tu ne peux pas te parrainer toi-meme' });
+    if (profile.referred_by) {
+      return res.status(400).json({
+        error: 'Tu as deja utilise un code de parrainage sur ce compte. Un seul code par compte.',
+        code: 'already_referred',
+      });
+    }
+    if (profile.referral_code === code) {
+      return res.status(400).json({
+        error: 'Tu ne peux pas utiliser ton propre code de parrainage.',
+        code: 'self_referral',
+      });
+    }
 
     // Trouve le parrain
     const { data: referrer } = await s
@@ -202,34 +280,62 @@ module.exports = async function handler(req, res) {
     const refereeNick = refereeProfile?.faceit_nickname || null;
     const referrerNick = referrerProfile?.faceit_nickname || null;
 
-    // Recompense : +7j Pro aux 2 parties
-    const [refereeGrant, referrerGrant] = await Promise.all([
-      grantProDays(s, user.id, REWARD_DAYS, 'referral_referee', {
-        referrer_id: referrer.id,
-        referrer_nick: referrerNick,
-        code,
-      }),
-      grantProDays(s, referrer.id, REWARD_DAYS, 'referral_referrer', {
-        referee_id: user.id,
-        referee_nick: refereeNick,
-        code: profile.referral_code,
-      }),
-    ]);
+    // Compte cumulative des filleuls du parrain APRES cette attribution
+    const { count: newCount } = await s
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('referred_by', referrer.id);
+    const currentCount = newCount || 0;
+    const previousCount = currentCount - 1; // l'user courant vient d'etre ajoute
 
-    // Notifications in-app : roles distincts, formulations claires
-    const expiresStr = new Date(Date.now() + REWARD_DAYS * 86400000).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' });
+    // ── RECOMPENSE FILLEUL : +7j Pro welcome bonus (inchange) ──────────
+    const refereeGrant = await grantPlan(
+      s, user.id, 'pro', REFEREE_WELCOME_DAYS, 'referral_referee',
+      { referrer_id: referrer.id, referrer_nick: referrerNick, code }
+    );
 
-    // Formulation filleul : on lui souhaite la bienvenue avec le nom du parrain
+    // ── RECOMPENSE PARRAIN : uniquement si un palier vient d'etre franchi ──
+    const crossedTier = findCrossedTier(previousCount, currentCount);
+    let referrerGrant = null;
+    if (crossedTier) {
+      referrerGrant = await grantPlan(
+        s, referrer.id, crossedTier.plan, crossedTier.days, crossedTier.reason,
+        { referee_id: user.id, referee_nick: refereeNick, total_referrals: currentCount, tier: crossedTier.label }
+      );
+    }
+
+    // ── NOTIFICATIONS ─────────────────────────────────────────────────
+    const expiresStr = new Date(Date.now() + REFEREE_WELCOME_DAYS * 86400000)
+      .toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' });
+
+    // Filleul : welcome message avec le nom du parrain
     const refereeTitle = 'Bienvenue chez FragValue';
     const refereeMsg = referrerNick
-      ? `Tu as rejoint FragValue via le parrainage de ${referrerNick}. Tu beneficies de ${REWARD_DAYS} jours Pro offerts jusqu'au ${expiresStr} pour decouvrir toutes les features premium.`
-      : `Ton parrainage est valide. Tu beneficies de ${REWARD_DAYS} jours Pro offerts jusqu'au ${expiresStr} pour decouvrir toutes les features premium.`;
+      ? `Tu as rejoint FragValue via le parrainage de ${referrerNick}. Tu beneficies de ${REFEREE_WELCOME_DAYS} jours Pro offerts jusqu'au ${expiresStr} pour decouvrir toutes les features premium.`
+      : `Ton parrainage est valide. Tu beneficies de ${REFEREE_WELCOME_DAYS} jours Pro offerts jusqu'au ${expiresStr} pour decouvrir toutes les features premium.`;
 
-    // Formulation parrain : on confirme l'action et la recompense
-    const referrerTitle = refereeNick
-      ? `${refereeNick} vient de s'inscrire avec ton code`
-      : 'Un nouveau joueur s\'est inscrit avec ton code';
-    const referrerMsg = `Merci d'avoir parraine un nouveau joueur sur FragValue. En remerciement, tu recois ${REWARD_DAYS} jours Pro offerts jusqu'au ${expiresStr}. Chaque nouvelle inscription avec ton lien te fera gagner ${REWARD_DAYS} jours supplementaires.`;
+    // Parrain : message different selon si palier franchi ou pas
+    let referrerTitle, referrerMsg;
+    if (crossedTier) {
+      const planLabel = crossedTier.plan === 'team' ? 'Elite' : 'Pro';
+      const durationLabel = crossedTier.days == null
+        ? 'a vie'
+        : `pendant ${Math.round(crossedTier.days / 30)} mois`;
+      referrerTitle = `Palier ${crossedTier.threshold} parrainages atteint ${planLabel} ${durationLabel}`;
+      referrerMsg = crossedTier.days == null
+        ? `Felicitations ! Tu viens de debloquer ${planLabel} a vie grace a ${crossedTier.threshold} parrainages reussis. Cet acces ne peut plus etre revoque. Merci d'etre un pilier de la communaute FragValue.`
+        : `Tu viens de franchir le palier ${crossedTier.threshold} parrainages. En recompense, tu recois ${planLabel} gratuit pendant 1 an. Continue pour atteindre le prochain palier.`;
+    } else {
+      // Pas de palier franchi : simple notif d'encouragement avec progression
+      const nextTier = findNextTier(currentCount);
+      const remaining = nextTier ? nextTier.threshold - currentCount : 0;
+      referrerTitle = refereeNick
+        ? `${refereeNick} vient de s'inscrire avec ton code`
+        : 'Un nouveau joueur s\'est inscrit avec ton code';
+      referrerMsg = nextTier
+        ? `Tu as maintenant ${currentCount} parrainage${currentCount > 1 ? 's' : ''}. Plus que ${remaining} pour atteindre ${nextTier.label}. Continue de partager ton lien.`
+        : `Tu as maintenant ${currentCount} parrainages. Tu as deja atteint tous les paliers, merci d'etre un pilier de FragValue.`;
+    }
 
     await Promise.all([
       insertNotification(s, {
@@ -243,12 +349,18 @@ module.exports = async function handler(req, res) {
       }),
       insertNotification(s, {
         user_id: referrer.id,
-        type: 'referral_reward',
+        type: crossedTier ? 'referral_tier_reached' : 'referral_reward',
         title: referrerTitle,
         message: referrerMsg,
         action_url: '/account.html#settings',
-        icon: 'trophy',
-        metadata: { referee_id: user.id, referee_nick: refereeNick, grant_id: referrerGrant?.id },
+        icon: crossedTier ? 'trophy' : 'trophy',
+        metadata: {
+          referee_id: user.id,
+          referee_nick: refereeNick,
+          total_referrals: currentCount,
+          tier_crossed: crossedTier?.label || null,
+          grant_id: referrerGrant?.id,
+        },
       }),
     ]);
 
@@ -256,10 +368,11 @@ module.exports = async function handler(req, res) {
       ok: true,
       message: 'Parrain enregistre',
       reward: {
-        days: REWARD_DAYS,
-        expires_at: refereeGrant?.expires_at || new Date(Date.now() + REWARD_DAYS * 86400000).toISOString(),
+        days: REFEREE_WELCOME_DAYS,
+        expires_at: refereeGrant?.expires_at || new Date(Date.now() + REFEREE_WELCOME_DAYS * 86400000).toISOString(),
       },
       referrer: { nickname: referrerNick },
+      tier_crossed: crossedTier ? { label: crossedTier.label, plan: crossedTier.plan === 'team' ? 'elite' : crossedTier.plan, lifetime: crossedTier.days == null } : null,
     });
   }
 

@@ -231,18 +231,26 @@ async function attributeReferrer(session) {
     if (d.ok) {
       console.log('[FragValue] Parrain enregistre, reward accorde:', d.reward);
       localStorage.removeItem('fv_pending_ref');
-      // Flag pour qu'account.html affiche un toast de bienvenue
+      // Flag pour qu'account.html affiche un toast de bienvenue avec le reward
       if (d.reward?.days) {
         sessionStorage.setItem('fv_referral_reward', JSON.stringify({
           days: d.reward.days,
           expires_at: d.reward.expires_at,
+          referrer_nick: d.referrer?.nickname || null,
         }));
       }
-    } else if (d.error === 'Tu as deja un parrain' || d.error === 'Tu ne peux pas te parrainer toi-meme') {
-      // Cas valides, on nettoie sans toast
+    } else if (d.code === 'already_referred' || d.code === 'self_referral') {
+      // Cas attendus : on nettoie et on flag pour un toast info (si already_referred)
       localStorage.removeItem('fv_pending_ref');
+      if (d.code === 'already_referred') {
+        sessionStorage.setItem('fv_referral_info', 'already_referred');
+      }
+    } else if (d.error === 'Code inconnu') {
+      // Code invalide : on nettoie silencieusement
+      localStorage.removeItem('fv_pending_ref');
+      sessionStorage.setItem('fv_referral_info', 'invalid_code');
     }
-    // Sinon on garde le code : l'user pourra retenter plus tard ou via account.html
+    // Sinon (erreur reseau, etc.) on garde le code pour retry plus tard
   } catch (e) {
     console.warn('[FragValue] Attribution parrain echouee:', e.message);
   }
