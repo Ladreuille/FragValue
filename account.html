@@ -288,6 +288,19 @@
       </div>
 
       <div class="sec-label">Parrainage</div>
+
+      <!-- Banner grant actif (affiche quand l'user a un grant Pro/Team via parrainage) -->
+      <div id="grantBanner" style="display:none;background:linear-gradient(135deg, rgba(184,255,87,.1), rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.35);border-radius:10px;padding:16px 18px;margin-bottom:16px;display:none;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(184,255,87,.15);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v6a4 4 0 0 1-8 0V4z"/><path d="M8 6h-3a2 2 0 0 0 0 4h3M16 6h3a2 2 0 0 1 0 4h-3"/><line x1="10" y1="16" x2="14" y2="16"/><line x1="12" y1="13" x2="12" y2="16"/></svg>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-family:var(--display);font-size:14px;color:var(--accent);letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px" id="grantBannerTitle">Acces Pro offert actif</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5" id="grantBannerMsg">Chargement...</div>
+        </div>
+        <a href="/pricing.html" class="settings-btn" style="background:var(--accent);color:#000;border-color:var(--accent)">Passer a Pro</a>
+      </div>
+
       <div class="settings-card" id="referralCard">
         <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:10px">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
@@ -302,6 +315,10 @@
             <a class="settings-btn" id="referralTwitterBtn" href="#" target="_blank" rel="noopener" style="background:#1d9bf0;color:#fff;border-color:#1d9bf0">Partager X</a>
           </div>
           <div class="settings-msg" id="referralMsg"></div>
+          <!-- Explication recompense -->
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text3);line-height:1.6;padding-top:10px;border-top:1px solid var(--border);margin-top:4px">
+            <strong style="color:var(--accent)">Comment ca marche :</strong> un ami s'inscrit avec ton lien, vous recevez chacun <strong style="color:var(--text)">7 jours Pro offerts</strong>. Cumulable a chaque nouvelle inscription. Le code est enregistre au 1er partage, pas de limite.
+          </div>
         </div>
       </div>
 
@@ -455,6 +472,18 @@ async function init() {
     // après le redirect. On retry une fois après 3s pour catch l'update.
     setTimeout(() => { _subLoaded = false; loadSubscription(); }, 3000);
   }
+
+  // Toast bienvenue si on vient d'etre parraine (reward de 7j Pro)
+  try {
+    const rewardRaw = sessionStorage.getItem('fv_referral_reward');
+    if (rewardRaw) {
+      const reward = JSON.parse(rewardRaw);
+      sessionStorage.removeItem('fv_referral_reward');
+      showBanner(`Parrainage valide. ${reward.days} jours Pro offerts sont actifs sur ton compte.`, 'ok');
+      // Force refresh de la card abonnement pour refleter le trial
+      setTimeout(() => { _subLoaded = false; loadSubscription(); }, 500);
+    }
+  } catch {}
 }
 
 function setTab(tab, btn) {
@@ -671,19 +700,37 @@ async function loadSubscription() {
       ? `Se termine le ${new Date(d.current_period_end * 1000).toLocaleDateString('fr-FR')}`
       : null;
     const usage = d.usage || {};
+
+    // Cas special : plan Pro/Team via un grant (parrainage, admin) et non Stripe.
+    // On affiche un libelle specifique + CTA "Passer a Pro" pour continuer
+    // apres expiration du trial.
+    const isGrantTrial = d._source === 'grant' && !!d.grant;
+    const grantReasonLabel = {
+      'referral_referee'  : 'parrainage',
+      'referral_referrer' : 'parrainage',
+      'admin_grant'       : 'offert par l\'equipe',
+      'promo_code'        : 'code promo',
+      'compensation'      : 'compensation',
+    }[d.grant?.reason] || 'offert';
+    const grantMeta = isGrantTrial && nextBilling
+      ? `Acces ${planLabel} (${grantReasonLabel}) · expire le <strong>${nextBilling}</strong>`
+      : null;
+
     card.innerHTML = `
       <div class="sub-head">
         <div class="sub-plan">
-          <div class="sub-plan-badge ${planKey}">${planLabel}</div>
+          <div class="sub-plan-badge ${planKey}">${planLabel}${isGrantTrial ? ' <span style="font-size:9px;background:rgba(245,200,66,.2);color:var(--gold);padding:2px 6px;border-radius:3px;margin-left:6px">TRIAL</span>' : ''}</div>
           <div class="sub-plan-meta">
             ${plan === 'free'
               ? `Plan gratuit · Passe Pro pour débloquer les fonctionnalités avancées`
-              : `Statut <strong>${status}</strong>${nextBilling ? ` · Prochaine facture <strong>${nextBilling}</strong>` : ''}${cancelAt ? ` · <span style="color:var(--gold)">${cancelAt}</span>` : ''}`}
+              : isGrantTrial
+                ? grantMeta
+                : `Statut <strong>${status}</strong>${nextBilling ? ` · Prochaine facture <strong>${nextBilling}</strong>` : ''}${cancelAt ? ` · <span style="color:var(--gold)">${cancelAt}</span>` : ''}`}
           </div>
         </div>
         <div class="sub-actions">
-          ${plan === 'free'
-            ? `<a href="pricing.html" class="sub-btn primary">Passer à Pro</a>`
+          ${plan === 'free' || isGrantTrial
+            ? `<a href="pricing.html" class="sub-btn primary">${isGrantTrial ? 'Continuer en Pro' : 'Passer à Pro'}</a>`
             : `<button class="sub-btn secondary" onclick="openStripePortal()">Gérer mon abonnement</button><a href="pricing.html" class="sub-btn secondary">Changer de plan</a>`}
         </div>
       </div>
@@ -812,9 +859,41 @@ async function loadReferral() {
     } else {
       stats.textContent = 'Code de parrainage non genere. Contacte le support.';
     }
+
+    // Affiche le banner si l'user a un grant Pro actif
+    renderGrantBanner(d.grant);
   } catch (e) {
     console.warn('Referral load error:', e.message);
   }
+}
+
+function renderGrantBanner(grant) {
+  const banner = document.getElementById('grantBanner');
+  if (!banner) return;
+  if (!grant || !grant.expires_at) {
+    banner.style.display = 'none';
+    return;
+  }
+  const expiresMs = new Date(grant.expires_at).getTime();
+  const now = Date.now();
+  if (expiresMs <= now) {
+    banner.style.display = 'none';
+    return;
+  }
+  const daysLeft = Math.max(1, Math.ceil((expiresMs - now) / 86400000));
+  const planLabel = (grant.plan || 'pro').toUpperCase();
+  const reasonMsg = {
+    'referral_referee'  : 'Bienvenue ! Ton parrainage te donne acces a toutes les features Pro.',
+    'referral_referrer' : 'Merci d\'avoir parraine un joueur, profite de tes features Pro offertes.',
+    'admin_grant'       : 'Acces Pro offert par l\'equipe FragValue.',
+    'promo_code'        : 'Acces Pro via un code promo.',
+    'compensation'      : 'Acces Pro offert en compensation.',
+  }[grant.reason] || 'Acces Pro offert actif.';
+  const title = document.getElementById('grantBannerTitle');
+  const msg = document.getElementById('grantBannerMsg');
+  title.textContent = `${daysLeft} jour${daysLeft > 1 ? 's' : ''} ${planLabel} offert${daysLeft > 1 ? 's' : ''}`;
+  msg.textContent = reasonMsg + ` Expire le ${new Date(grant.expires_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}.`;
+  banner.style.display = 'flex';
 }
 
 async function copyReferralLink() {

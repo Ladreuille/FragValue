@@ -229,10 +229,17 @@ async function attributeReferrer(session) {
     });
     const d = await res.json();
     if (d.ok) {
-      console.log('[FragValue] Parrain enregistre');
+      console.log('[FragValue] Parrain enregistre, reward accorde:', d.reward);
       localStorage.removeItem('fv_pending_ref');
+      // Flag pour qu'account.html affiche un toast de bienvenue
+      if (d.reward?.days) {
+        sessionStorage.setItem('fv_referral_reward', JSON.stringify({
+          days: d.reward.days,
+          expires_at: d.reward.expires_at,
+        }));
+      }
     } else if (d.error === 'Tu as deja un parrain' || d.error === 'Tu ne peux pas te parrainer toi-meme') {
-      // Cas valides, on nettoie
+      // Cas valides, on nettoie sans toast
       localStorage.removeItem('fv_pending_ref');
     }
     // Sinon on garde le code : l'user pourra retenter plus tard ou via account.html

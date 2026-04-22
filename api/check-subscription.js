@@ -40,14 +40,24 @@ module.exports = async function handler(req, res) {
       .from('subscriptions')
       .select('current_period_end, status')
       .eq('user_id', result.user.id)
-      .single();
+      .maybeSingle();
+
+    // Si le plan vient d'un grant (parrainage/admin), on utilise sa date
+    // d'expiration comme current_period_end pour l'UI
+    let periodEnd = sub?.current_period_end
+      ? Math.floor(new Date(sub.current_period_end).getTime() / 1000)
+      : null;
+    if (result.source === 'grant' && result.grant?.expires_at) {
+      periodEnd = Math.floor(new Date(result.grant.expires_at).getTime() / 1000);
+    }
 
     return res.status(200).json({
       plan: result.plan,
       status: result.status,
-      current_period_end: sub?.current_period_end ? Math.floor(new Date(sub.current_period_end).getTime() / 1000) : null,
+      current_period_end: periodEnd,
       cancel_at_period_end: false, // TODO : ajouter ce flag au webhook + DB schema si besoin UI
       _source: result.source,
+      grant: result.grant || null, // { reason, expires_at } si le plan vient d'un grant
     });
   } catch (err) {
     console.error('check-subscription error:', err);

@@ -75,10 +75,39 @@ async function resolvePlanFromDB(userId) {
     .from('subscriptions')
     .select('plan, status')
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
   if (!data) return null;
   if (!ACTIVE_STATUSES.has(data.status)) return { plan: 'free', status: data.status };
   return { plan: normalizePlan(data.plan), status: data.status };
+}
+
+// Check les pro_grants actifs (parrainage, admin, promo) pour cet user.
+// Retourne le grant le plus haut plan avec la plus grande date d'expiration,
+// ou null si aucun grant actif.
+async function resolvePlanFromGrants(userId) {
+  const { data } = await sb()
+    .from('pro_grants')
+    .select('plan, expires_at, reason')
+    .eq('user_id', userId)
+    .is('revoked_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .order('plan', { ascending: false }) // team > pro
+    .order('expires_at', { ascending: false })
+    .limit(1);
+  if (!data || data.length === 0) return null;
+  return {
+    plan: normalizePlan(data[0].plan),
+    status: 'trialing',
+    source: 'grant',
+    reason: data[0].reason,
+    expires_at: data[0].expires_at,
+  };
+}
+
+// Compare 2 plans et retourne le plus fort (team > pro > free)
+function upgradePlan(a, b) {
+  const rank = { team: 3, pro: 2, free: 1 };
+  return (rank[a] || 0) >= (rank[b] || 0) ? a : b;
 }
 
 async function resolvePlanFromStripe(customerId) {
@@ -124,10 +153,27 @@ async function getUserPlan(authHeader, opts = {}) {
     return result;
   }
 
-  // 1. DB en priorite (peuplee par stripe-webhook)
-  const fromDB = await resolvePlanFromDB(user.id);
-  if (fromDB && fromDB.plan !== 'free') {
-    const result = { plan: fromDB.plan, user, status: fromDB.status, source: 'db' };
+  // 1. DB subscriptions (peuplee par stripe-webhook) + pro_grants (parrainage/admin)
+  // On check les 2 sources en parallele et on prend le plan le plus fort.
+  const [fromDB, fromGrants] = await Promise.all([
+    resolvePlanFromDB(user.id),
+    resolvePlanFromGrants(user.id),
+  ]);
+
+  const dbPlan     = fromDB?.plan || 'free';
+  const grantPlan  = fromGrants?.plan || 'free';
+  const topPlan    = upgradePlan(dbPlan, grantPlan);
+
+  if (topPlan !== 'free') {
+    // Source d'autorite : grant si c'est le grant qui l'emporte, sinon DB
+    const fromGrant = fromGrants && grantPlan === topPlan;
+    const result = {
+      plan: topPlan,
+      user,
+      status: fromGrant ? 'trialing' : (fromDB?.status || 'active'),
+      source: fromGrant ? 'grant' : 'db',
+      grant: fromGrant ? { reason: fromGrants.reason, expires_at: fromGrants.expires_at } : null,
+    };
     setCached(token, result);
     return result;
   }
@@ -137,7 +183,7 @@ async function getUserPlan(authHeader, opts = {}) {
     .from('profiles')
     .select('stripe_customer_id')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
   if (profile?.stripe_customer_id) {
     const fromStripe = await resolvePlanFromStripe(profile.stripe_customer_id);
