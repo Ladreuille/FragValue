@@ -272,45 +272,115 @@ async function importOne(hltvId) {
   return { ok: true, matchId, hasScorecards };
 }
 
+// ── Discovery via fetch brut avec headers de vrai Chrome ─────────────────
+// Le package hltv envoie une signature que Cloudflare fingerprint. On bypass
+// en faisant un GET direct sur /results avec des headers de navigateur reel.
+// Si Cloudflare nous rejette quand meme (challenge JS), on aura une erreur
+// claire et on pivote sur le fallback (hltv.getResults).
+async function discoverLatestViaRawFetch(maxMatches) {
+  const url = 'https://www.hltv.org/results?offset=0';
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9,fr;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
+    'Sec-Ch-Ua': '"Chromium";v="131", "Not_A Brand";v="24"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"macOS"',
+  };
+
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+  const html = await res.text();
+
+  // Detection Cloudflare challenge : la page de challenge contient ces markers
+  if (html.includes('Just a moment') ||
+      html.includes('cf-browser-verification') ||
+      html.includes('Access denied') ||
+      html.includes('Attention Required')) {
+    throw new Error('Cloudflare challenge page renvoyee (fetch bloque)');
+  }
+  if (html.length < 5000) {
+    throw new Error(`Reponse trop courte (${html.length} chars), probable blocage`);
+  }
+
+  // Parse avec cheerio
+  const cheerio = require('cheerio');
+  const $ = cheerio.load(html);
+  const ids = [];
+  // Les matchs sur /results sont sous .result-con avec un anchor href="/matches/ID/slug"
+  $('.result-con a.a-reset, .allres .result-con a, a[href*="/matches/"]').each((_, el) => {
+    const href = $(el).attr('href') || '';
+    const m = href.match(/\/matches\/(\d+)\//);
+    if (m) ids.push(parseInt(m[1], 10));
+  });
+
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) {
+    throw new Error('Aucun match extrait du HTML (selecteurs changes ?)');
+  }
+  return unique.slice(0, Math.max(maxMatches * 3, 30)); // on en recupere plus pour filtrer
+}
+
 // ── Mode "latest" : auto-discovery des derniers matchs HLTV ────────────
-// Scrape la page /results pour trouver les IDs des N derniers matchs, puis
-// filtre ceux deja en DB (hltv_match_id) pour ne pas refaire le boulot.
+// 1. Essaye fetch brut avec headers Chrome (bypass fingerprint du package hltv)
+// 2. Fallback sur HLTV.getResults si fetch brut echoue
 async function discoverLatest(maxMatches) {
   console.log(`→ Discovery : fetch les ${maxMatches} derniers resultats HLTV...`);
-  // HLTV.getResults retourne les derniers matchs joues (~100 par page)
-  const results = await HLTV.getResults({ pages: 1 }).catch(e => {
-    console.error(`× HLTV.getResults failed : ${e.message}`);
-    return [];
-  });
-  console.log(`  ${results.length} matchs recents detectes sur HLTV`);
 
-  if (!results.length) return [];
+  let ids = [];
+  let source = null;
 
-  // Cherche ceux deja en DB pour les skip
-  const ids = results.map(r => r.id).filter(Boolean);
+  // Tentative 1 : fetch brut avec headers realistes
+  try {
+    ids = await discoverLatestViaRawFetch(maxMatches);
+    source = 'fetch brut';
+    console.log(`  ${ids.length} matchs detectes via fetch brut`);
+  } catch (e) {
+    console.log(`  fetch brut echoue : ${e.message}`);
+    console.log('  tentative fallback via HLTV.getResults...');
+    // Tentative 2 : package hltv (qui utilise probablement l'API interne scraper)
+    try {
+      const results = await HLTV.getResults({ pages: 1 });
+      ids = results.map(r => r.id).filter(Boolean);
+      source = 'HLTV.getResults';
+      console.log(`  ${ids.length} matchs detectes via HLTV package`);
+    } catch (e2) {
+      console.error(`× HLTV bloque (${e2.message})`);
+      console.error('');
+      console.error('Workaround : recupere les URLs manuellement sur https://www.hltv.org/results');
+      console.error('puis lance : node scripts/import-hltv.js <url1> <url2> <url3>');
+      return [];
+    }
+  }
+
+  if (!ids.length) return [];
+
+  // Filter out existing in DB
   const { data: existing } = await s
     .from('pro_matches')
     .select('hltv_match_id')
     .in('hltv_match_id', ids);
   const existingSet = new Set((existing || []).map(r => parseInt(r.hltv_match_id, 10)));
-  console.log(`  ${existingSet.size} deja en DB, ${ids.length - existingSet.size} nouveaux a ingerer`);
+  console.log(`  ${existingSet.size} deja en DB, ${ids.length - existingSet.size} nouveaux candidats`);
 
-  const toImport = results
-    .filter(r => r.id && !existingSet.has(r.id))
-    .slice(0, maxMatches);
-
-  if (!toImport.length) {
+  const newIds = ids.filter(id => !existingSet.has(id)).slice(0, maxMatches);
+  if (!newIds.length) {
     console.log('  Tout est deja a jour.');
     return [];
   }
 
-  console.log('  Matchs qui seront importes :');
-  toImport.forEach(r => {
-    const teams = `${r.team1?.name || '?'} vs ${r.team2?.name || '?'}`;
-    console.log(`   - #${r.id}  ${teams}  @ ${r.event?.name || '?'}`);
-  });
+  console.log(`  ${newIds.length} matchs vont etre importes (source : ${source}) :`);
+  newIds.forEach(id => console.log(`   - #${id}`));
 
-  return toImport.map(r => r.id);
+  return newIds;
 }
 
 // ── Main ────────────────────────────────────────────────────────────────
