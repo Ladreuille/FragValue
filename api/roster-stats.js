@@ -122,7 +122,9 @@ export default async function handler(req, res) {
     const bestMap  = qualifiedMaps.length > 0 ? qualifiedMaps.reduce((b, m) => m.team_win_rate > b.team_win_rate ? m : b) : null;
     const worstMap = qualifiedMaps.length > 0 ? qualifiedMaps.reduce((w, m) => m.team_win_rate < w.team_win_rate ? m : w) : null;
 
-    // Top performer du roster (par FV Rating) + tous les membres detailles
+    // Top performer du roster (par FV Score) + tous les membres detailles
+    // fvScore.total est le score 0-100 du dashboard. On l'expose ici pour
+    // unifier le scoring individuel / collectif (pas de formule parallele).
     const members = results.map(r => ({
       nickname:    r.scout.player?.nickname || r.player.faceit_nickname,
       avatar:      r.scout.player?.avatar || null,
@@ -132,6 +134,8 @@ export default async function handler(req, res) {
       level:       r.scout.cs2?.level || 0,
       elo:         r.scout.cs2?.elo || 0,
       fvRating:    parseFloat(r.scout.recent?.fvRating) || 0,
+      fvScore:     r.scout.fvScore?.total ?? null,
+      fvScoreLabel: r.scout.fvScore?.label || null,
       kd:          parseFloat(r.scout.recent?.avgKd) || 0,
       adr:         parseFloat(r.scout.recent?.avgAdr) || 0,
       hs:          parseFloat(r.scout.recent?.avgHs) || 0,
@@ -147,7 +151,7 @@ export default async function handler(req, res) {
       sniperKillRate: parseFloat(r.scout.recent?.sniperKillRate) || 0,
       currentStreak: parseInt(r.scout.lifetime?.currentStreak) || 0,
     }));
-    const ranked = [...members].sort((a, b) => b.fvRating - a.fvRating);
+    const ranked = [...members].sort((a, b) => (b.fvScore ?? b.fvRating * 50) - (a.fvScore ?? a.fvRating * 50));
     const topPerformer = ranked[0];
 
     // ── Collective insights : heuristiques actionnables ────────────────────
@@ -215,15 +219,33 @@ export default async function handler(req, res) {
         message: `FV Rating collectif ${avgFvRating}. Focus sur les fondamentaux (crosshair placement, utility lineups, communication) avant les strats complexes.` });
     }
 
-    // Team composite score (0-100) : moyenne ponderee FV + KAST + Win rate
-    const teamScore = Math.round(
-      Math.min(100, Math.max(0,
-        (parseFloat(avgFvRating) - 0.7) / 0.6 * 50 +   // 50pts pour FV 0.7→1.3
-        (parseFloat(avgKast)) / 100 * 25 +             // 25pts pour KAST 0→100
-        (avgWinRate) / 100 * 25                        // 25pts pour WR 0→100
-      ))
-    );
-    const teamRank = teamScore >= 75 ? 'Elite' : teamScore >= 60 ? 'Solide' : teamScore >= 45 ? 'En progression' : 'Débutant';
+    // Team Score (0-100) : moyenne des FV Score individuels des membres.
+    // C'est la MEME formule que le dashboard /api/scout.fvScore.total, donc
+    // un roster de 1 membre a un Team Score = au FV Score de ce membre.
+    // Fallback si aucun fvScore dispo (< 3 matchs) : ancienne formule
+    // FV Rating + KAST + WR.
+    const scores = members.map(m => m.fvScore).filter(v => v != null);
+    let teamScore;
+    if (scores.length > 0) {
+      teamScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    } else {
+      teamScore = Math.round(
+        Math.min(100, Math.max(0,
+          (parseFloat(avgFvRating) - 0.7) / 0.6 * 50 +
+          (parseFloat(avgKast)) / 100 * 25 +
+          (avgWinRate) / 100 * 25
+        ))
+      );
+    }
+    // Label aligne sur celui du fvScore (Debutant → Challenger).
+    const teamRank = teamScore >= 90 ? 'Challenger'
+      : teamScore >= 80 ? 'Elite+'
+      : teamScore >= 70 ? 'Elite'
+      : teamScore >= 58 ? 'Tres bon'
+      : teamScore >= 46 ? 'Bon'
+      : teamScore >= 34 ? 'Moyen'
+      : teamScore >= 20 ? 'En progression'
+                         : 'Debutant';
 
     const data = {
       roster,

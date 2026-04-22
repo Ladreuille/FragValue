@@ -1600,22 +1600,29 @@ function renderRoster(data) {
     </div>
   `;
 
-  const membersList = (players || []).map(p => `
-    <div class="member-row">
-      <div class="member-avatar">${(p.faceit_nickname || '?').charAt(0).toUpperCase()}</div>
+  // Note : faceit_elo / faceit_level affiches ici viennent de roster_players et
+  // peuvent etre stale (backfill a la creation). loadTeamStats() ci-dessous
+  // ecrase ces valeurs avec la data fraiche de /api/scout via data-nick.
+  const membersList = (players || []).map(p => {
+    const nick = p.faceit_nickname || 'Joueur';
+    const nickLower = nick.toLowerCase();
+    return `
+    <div class="member-row" data-nick="${nickLower}">
+      <div class="member-avatar">${nick.charAt(0).toUpperCase()}</div>
       <div class="member-info">
-        <div class="member-name">${p.faceit_nickname || 'Joueur'}</div>
-        <div class="member-rôle">
+        <div class="member-name">${nick}</div>
+        <div class="member-role">
           ${p.is_captain ? '<span class="captain-tag">Captain</span>' : ''}
           ${p.is_sub ? '<span class="sub-tag">Sub</span>' : ''}
-          ${p.team_role ? p.team_role.charAt(0).toUpperCase() + p.team_role.slice(1) : 'Rôle non défini'}
-          ${p.faceit_level ? ` · Lvl ${p.faceit_level}` : ''}
+          <span class="member-role-label">${p.team_role ? p.team_role.charAt(0).toUpperCase() + p.team_role.slice(1) : 'Role non defini'}</span>
+          <span class="member-level-label">${p.faceit_level ? ` - Lvl ${p.faceit_level}` : ''}</span>
         </div>
       </div>
-      ${p.faceit_elo ? `<div class="member-elo">${p.faceit_elo} ELO</div>` : ''}
+      <div class="member-elo">${p.faceit_elo ? p.faceit_elo + ' ELO' : ''}</div>
       ${is_owner && !p.is_captain ? `<button class="member-remove" onclick="removeMember('${p.id}')" title="Retirer ce joueur" aria-label="Retirer ce joueur"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   const pendingInvList = (invitations || []).length > 0 && is_owner ? `
     <div class="members-header" style="margin-top:20px"><div class="members-title">Invitations en attente</div></div>
@@ -1665,7 +1672,22 @@ async function loadTeamStats(rosterId) {
       return;
     }
     const a = d.aggregated;
-    const rankColor = a.team_score >= 75 ? 'var(--success)' : a.team_score >= 60 ? 'var(--accent)' : a.team_score >= 45 ? 'var(--gold)' : 'var(--danger)';
+    // Refresh member rows avec data fraiche FACEIT (scout.js). Les valeurs
+    // roster_players.faceit_elo/level peuvent etre stale (backfill). On
+    // overlay les valeurs fraiches sur les .member-row par data-nick.
+    (a.members || []).forEach(m => {
+      const nick = (m.nickname || '').toLowerCase();
+      const row = document.querySelector(`.member-row[data-nick="${CSS.escape(nick)}"]`);
+      if (!row) return;
+      const eloEl = row.querySelector('.member-elo');
+      if (eloEl && m.elo) eloEl.textContent = m.elo + ' ELO';
+      const lvlEl = row.querySelector('.member-level-label');
+      if (lvlEl && m.level) lvlEl.textContent = ` - Lvl ${m.level}`;
+    });
+    // Color aligne sur le FV Score du dashboard : >=80 succes, >=60 accent,
+    // >=40 or, sinon rouge. Depuis que Team Score = avg(fvScore.total), les
+    // seuils sont coherents avec la metrique individuelle.
+    const rankColor = a.team_score >= 80 ? 'var(--success)' : a.team_score >= 60 ? 'var(--accent)' : a.team_score >= 40 ? 'var(--gold)' : 'var(--danger)';
     el.innerHTML = `
       <div class="team-score-card">
         <div class="team-score-head">

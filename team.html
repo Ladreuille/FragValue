@@ -458,10 +458,13 @@ function renderScoreSection(aggregated, players) {
   const members = aggregated.members_with_stats || 0;
   const totalMembers = aggregated.members_with_stats + (aggregated.total_members ? aggregated.total_members - aggregated.members_with_stats : 0);
   const headline = (() => {
-    if (score >= 75) return 'Cette equipe joue deja un CS competitif solide.';
-    if (score >= 60) return 'Bon niveau collectif. Les bases sont la pour progresser.';
-    if (score >= 45) return 'Equipe en progression. Focus sur les gaps identifies plus bas.';
-    return 'Fondations a construire. Travail d\'equipe requis sur les fondamentaux.';
+    if (score >= 80) return 'Equipe elite, niveau tres competitif.';
+    if (score >= 70) return 'Cette equipe joue un CS competitif solide.';
+    if (score >= 58) return 'Bon niveau collectif, les bases sont la pour progresser.';
+    if (score >= 46) return 'Niveau correct. Focus sur les gaps identifies plus bas.';
+    if (score >= 34) return 'Equipe en progression. Travailler la regularite.';
+    if (score >= 20) return 'Phase d\'apprentissage. Focus sur les fondamentaux.';
+    return 'Fondations a construire. Travail d\'equipe requis sur les basics.';
   })();
 
   // Circle ring values : 2*pi*r ; r=60 → circumference 377
