@@ -52,9 +52,18 @@ const s = createClient(SB_URL, SB_KEY);
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function parseIdFromArg(arg) {
-  if (/^\d+$/.test(arg)) return parseInt(arg, 10);
-  const m = String(arg).match(/\/matches\/(\d+)\//);
-  return m ? parseInt(m[1], 10) : null;
+  if (!arg) return null;
+  const s = String(arg).trim();
+  if (!s) return null;
+  // Nombre pur
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+  // URL matches/ID/slug (avec ou sans trailing slash ou slug)
+  const m1 = s.match(/\/matches\/(\d+)(?:\/|$|\?)/);
+  if (m1) return parseInt(m1[1], 10);
+  // Fallback : extrait le 1er nombre >= 1000000 (les IDs HLTV sont a 7 chiffres)
+  const m2 = s.match(/\b(\d{7,})\b/);
+  if (m2) return parseInt(m2[1], 10);
+  return null;
 }
 
 function cleanMapName(n) {
@@ -434,11 +443,20 @@ async function readStdin() {
     const raw = await readStdin();
     const lines = raw.split(/[\s\n]+/).map(l => l.trim()).filter(Boolean);
     console.log(`→ ${lines.length} entree(s) recue(s) via stdin`);
-    ids = lines.map(l => parseIdFromArg(l)).filter(Boolean);
-    // Dedupe
-    ids = [...new Set(ids)];
+    const parsed = lines.map(l => ({ raw: l, id: parseIdFromArg(l) }));
+    const valid = parsed.filter(p => p.id);
+    const invalid = parsed.filter(p => !p.id);
+    if (invalid.length) {
+      console.log(`  ${invalid.length} entree(s) invalide(s) (pas d'ID HLTV detecte) :`);
+      invalid.slice(0, 5).forEach(p => console.log(`    - ${p.raw.slice(0, 120)}`));
+      if (invalid.length > 5) console.log(`    ... et ${invalid.length - 5} autres`);
+    }
+    ids = [...new Set(valid.map(p => p.id))];
     if (!ids.length) {
+      console.error('');
       console.error('× Aucun ID valide trouve dans l\'entree stdin');
+      console.error('  Le snippet a-t-il bien copie des URLs de type https://www.hltv.org/matches/XXXXXXX/... ?');
+      console.error('  Verifie le contenu du presse-papier avec : pbpaste');
       process.exit(1);
     }
     // Filter ceux deja en DB
