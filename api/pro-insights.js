@@ -117,17 +117,95 @@ async function setCached(contextHash, response) {
   }
 }
 
-function buildPrompt(context) {
+// Recupere les benchmarks pro HLTV pour une map donnee : top 3 joueurs
+// moyens (rating, ADR, KAST) calcules sur les pro_match_players en DB.
+// Permet a Claude de citer des valeurs concretes ("donk fait 108 ADR sur
+// Inferno T side") au lieu de generalites.
+async function fetchProBenchmarks(map) {
+  if (!map) return null;
+  try {
+    const s = sb();
+    // Normalise le nom de map : l'utilisateur peut envoyer "de_inferno" ou "Inferno"
+    const normalized = String(map).replace(/^de_/i, '');
+    const { data } = await s
+      .from('pro_match_players')
+      .select('nickname, hltv_rating, adr, kast_pct, kills, deaths, match_map_id, pro_match_maps!inner(map_name)')
+      .ilike('pro_match_maps.map_name', normalized)
+      .order('hltv_rating', { ascending: false })
+      .limit(30);
+    if (!data || data.length === 0) return null;
+
+    // Agrege par joueur pour obtenir une moyenne stable
+    const byPlayer = new Map();
+    for (const r of data) {
+      const k = r.nickname;
+      if (!byPlayer.has(k)) byPlayer.set(k, { nickname: k, samples: 0, rating: 0, adr: 0, kast: 0 });
+      const agg = byPlayer.get(k);
+      agg.samples++;
+      agg.rating += parseFloat(r.hltv_rating) || 0;
+      agg.adr    += parseFloat(r.adr) || 0;
+      agg.kast   += parseFloat(r.kast_pct) || 0;
+    }
+    const players = [...byPlayer.values()]
+      .filter(p => p.samples > 0)
+      .map(p => ({
+        nickname: p.nickname,
+        avgRating: +(p.rating / p.samples).toFixed(2),
+        avgAdr: +(p.adr / p.samples).toFixed(0),
+        avgKast: +(p.kast / p.samples).toFixed(0),
+        samples: p.samples,
+      }))
+      .sort((a, b) => b.avgRating - a.avgRating)
+      .slice(0, 3); // top 3
+
+    // Moyenne pro globale sur la map (pour comparaison vs le joueur)
+    const all = [...byPlayer.values()];
+    const totalSamples = all.reduce((s, p) => s + p.samples, 0);
+    const avgRating = totalSamples > 0 ? +(all.reduce((s, p) => s + p.rating, 0) / totalSamples).toFixed(2) : null;
+    const avgAdr    = totalSamples > 0 ? Math.round(all.reduce((s, p) => s + p.adr, 0) / totalSamples) : null;
+    const avgKast   = totalSamples > 0 ? Math.round(all.reduce((s, p) => s + p.kast, 0) / totalSamples) : null;
+
+    return {
+      map: normalized,
+      top_players: players,
+      avg_pro_rating: avgRating,
+      avg_pro_adr: avgAdr,
+      avg_pro_kast: avgKast,
+      sample_size: totalSamples,
+    };
+  } catch (e) {
+    console.warn('[pro-insights] fetchProBenchmarks failed:', e.message);
+    return null;
+  }
+}
+
+function buildPrompt(context, benchmarks) {
   const sits = (context.situations || []).slice(0, 3);
   const sitBlock = sits.map((s, i) => `
 SITUATION ${i + 1} · Round ${s.roundNum} · ${s.situationType} · ${s.outcome}
 ${s.details}
 `).join('\n');
 
+  // Bloc benchmarks HLTV injecte dans le prompt uniquement si on a de la data
+  let benchmarksBlock = '';
+  if (benchmarks && benchmarks.top_players && benchmarks.top_players.length) {
+    const topList = benchmarks.top_players
+      .map(p => `  - ${p.nickname} : rating ${p.avgRating}, ${p.avgAdr} ADR, ${p.avgKast}% KAST`)
+      .join('\n');
+    benchmarksBlock = `
+BENCHMARKS HLTV POUR ${benchmarks.map.toUpperCase()} (moyenne sur ${benchmarks.sample_size} performances pros)
+Pro average sur la map : rating ${benchmarks.avg_pro_rating}, ${benchmarks.avg_pro_adr} ADR, ${benchmarks.avg_pro_kast}% KAST
+Top 3 performers sur cette map :
+${topList}
+
+Utilise ces chiffres pour comparer concretement : "donk fait ${benchmarks.top_players[0].avgAdr} ADR sur ${benchmarks.map}, toi tu etais a X" par exemple. Cite des noms reels de pros quand tu sais.
+`;
+  }
+
   return `Tu es un coach CS2 niveau pro (Top 20 HLTV equivalent). Un joueur ${context.side || ''} ${context.targetName ? 'appele ' + context.targetName : ''} te demande ce que des joueurs pros auraient fait dans 3 situations cles de son match sur ${context.map || '?'}.
 
 ${sitBlock}
-
+${benchmarksBlock}
 Pour CHAQUE situation, reponds au format JSON strict ci-dessous :
 {
   "insights": [
@@ -145,6 +223,7 @@ REGLES STRICTES
 - Reponds UNIQUEMENT avec le JSON, rien d'autre, pas de prose autour
 - Chaque insight doit etre different et specifique a sa situation
 - Cite des positions/timings/nades reels de ${context.map || 'la map'} quand tu peux (ex: "smoke top mid", "molo heaven", "HE ct spawn")
+- Si des benchmarks HLTV sont fournis ci-dessus, cite des chiffres pro concrets quand pertinent
 - Style direct, pas de langue de bois
 - Parle a la 2e personne (tu), comme un coach qui debriefe
 - Si une situation manque d'info, fais de ton mieux avec ce qui est donne (pas d'excuses)`;
@@ -249,13 +328,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    const prompt = buildPrompt(context);
+    // Recupere les benchmarks HLTV pour la map (si dispo en DB) et les
+    // injecte dans le prompt pour que Claude cite des chiffres concrets.
+    const benchmarks = await fetchProBenchmarks(context.map);
+    const prompt = buildPrompt(context, benchmarks);
     const { text, tokens } = await callClaude(prompt);
     const parsed = parseResponse(text);
     if (!parsed.insights || !Array.isArray(parsed.insights)) {
       throw new Error('Reponse Claude sans champ insights');
     }
-    const response = { insights: parsed.insights.slice(0, 3), model: CLAUDE_MODEL };
+    const response = {
+      insights: parsed.insights.slice(0, 3),
+      model: CLAUDE_MODEL,
+      benchmarks_used: benchmarks ? {
+        map: benchmarks.map,
+        pro_avg_rating: benchmarks.avg_pro_rating,
+        pro_avg_adr: benchmarks.avg_pro_adr,
+        sample_size: benchmarks.sample_size,
+      } : null,
+    };
     await setCached(contextHash, response);
     await logCall(user.id, contextHash, tokens);
     return res.status(200).json({ ...response, tokensUsed: tokens, cached: false });
