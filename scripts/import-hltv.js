@@ -355,8 +355,15 @@ async function discoverLatest(maxMatches) {
     } catch (e2) {
       console.error(`× HLTV bloque (${e2.message})`);
       console.error('');
-      console.error('Workaround : recupere les URLs manuellement sur https://www.hltv.org/results');
-      console.error('puis lance : node scripts/import-hltv.js <url1> <url2> <url3>');
+      console.error('═══ WORKAROUND MANUEL (1 min) ══════════════════════════════════');
+      console.error('1. Ouvre https://www.hltv.org/results dans ton navigateur');
+      console.error('2. Ouvre la console (F12 > Console) et colle ce snippet :');
+      console.error('');
+      console.error('   copy(Array.from(document.querySelectorAll(\'a[href*="/matches/"]\')).map(a=>a.href).filter(h=>/\\/matches\\/\\d+\\//.test(h)).filter((v,i,a)=>a.indexOf(v)===i).slice(0,20).join(\'\\n\'))');
+      console.error('');
+      console.error('3. Le snippet copie les 20 dernieres URLs dans ton presse-papier');
+      console.error('4. Lance : pbpaste | node scripts/import-hltv.js --stdin');
+      console.error('═══════════════════════════════════════════════════════════════');
       return [];
     }
   }
@@ -383,6 +390,16 @@ async function discoverLatest(maxMatches) {
   return newIds;
 }
 
+// Lit les URLs/IDs depuis stdin (pour | pipe ou heredoc)
+async function readStdin() {
+  return new Promise((resolve) => {
+    let buf = '';
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', chunk => { buf += chunk; });
+    process.stdin.on('end', () => resolve(buf));
+  });
+}
+
 // ── Main ────────────────────────────────────────────────────────────────
 (async () => {
   const args = process.argv.slice(2);
@@ -390,6 +407,7 @@ async function discoverLatest(maxMatches) {
     console.log('Usage :');
     console.log('  node scripts/import-hltv.js <match_id_ou_url> [...]');
     console.log('  node scripts/import-hltv.js latest [nombre]       # auto-discovery');
+    console.log('  pbpaste | node scripts/import-hltv.js --stdin     # lit les URLs depuis stdin');
     console.log('');
     console.log('Exemples :');
     console.log('  node scripts/import-hltv.js 2393243');
@@ -397,6 +415,7 @@ async function discoverLatest(maxMatches) {
     console.log('  node scripts/import-hltv.js 2393243 2393244 2393245');
     console.log('  node scripts/import-hltv.js latest              # 10 derniers matchs auto');
     console.log('  node scripts/import-hltv.js latest 20           # 20 derniers');
+    console.log('  pbpaste | node scripts/import-hltv.js --stdin   # depuis presse-papier');
     console.log('  npm run import:hltv -- latest');
     process.exit(0);
   }
@@ -408,6 +427,31 @@ async function discoverLatest(maxMatches) {
     ids = await discoverLatest(n);
     if (!ids.length) {
       console.log('\nRien a faire.');
+      process.exit(0);
+    }
+  } else if (args[0] === '--stdin' || args[0] === '-') {
+    // Mode stdin : lit le presse-papier ou une sortie pipe
+    const raw = await readStdin();
+    const lines = raw.split(/[\s\n]+/).map(l => l.trim()).filter(Boolean);
+    console.log(`→ ${lines.length} entree(s) recue(s) via stdin`);
+    ids = lines.map(l => parseIdFromArg(l)).filter(Boolean);
+    // Dedupe
+    ids = [...new Set(ids)];
+    if (!ids.length) {
+      console.error('× Aucun ID valide trouve dans l\'entree stdin');
+      process.exit(1);
+    }
+    // Filter ceux deja en DB
+    const { data: existing } = await s
+      .from('pro_matches')
+      .select('hltv_match_id')
+      .in('hltv_match_id', ids);
+    const existingSet = new Set((existing || []).map(r => parseInt(r.hltv_match_id, 10)));
+    const before = ids.length;
+    ids = ids.filter(id => !existingSet.has(id));
+    console.log(`  ${before - ids.length} deja en DB, ${ids.length} a importer`);
+    if (!ids.length) {
+      console.log('Tout est deja a jour.');
       process.exit(0);
     }
   } else {
