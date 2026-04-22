@@ -176,11 +176,38 @@ function parseMapStatsHtml(html) {
 /**
  * Fetch les stats detaillees d'une map HLTV via son mapstats_id.
  * Retourne l'objet compatible avec le code d'import.
+ *
+ * Debug : si FV_DEBUG_HLTV=1 dans l'env, sauvegarde le HTML a chaque fetch
+ * dans /tmp/hltv-debug-MAPSTATSID.html pour inspection manuelle.
  */
 async function fetchMapStats(mapStatsId) {
   const url = `https://www.hltv.org/stats/matches/mapstatsid/${mapStatsId}/-`;
-  const html = await fetchHtml(url, { waitForSelector: 'table.stats-table' });
-  return parseMapStatsHtml(html);
+  // Plusieurs selectors tentes car HLTV change parfois les classes
+  const html = await fetchHtml(url, {
+    waitForSelector: 'table.stats-table, .stats-table, .match-info-box, .contentCol',
+    timeout: 45000,
+  });
+
+  // Save HTML si debug active OU si parse vide plus tard (done dans caller)
+  if (process.env.FV_DEBUG_HLTV === '1') {
+    const fs = require('node:fs');
+    const outPath = `/tmp/hltv-debug-${mapStatsId}.html`;
+    fs.writeFileSync(outPath, html);
+    console.log(`    [debug] HTML sauvegarde : ${outPath} (${html.length} chars)`);
+  }
+
+  const parsed = parseMapStatsHtml(html);
+  const totalPlayers = (parsed.playerStats?.team1?.length || 0) + (parsed.playerStats?.team2?.length || 0);
+
+  // Si 0 joueurs parses, auto-save HTML pour analyse meme sans debug flag
+  if (totalPlayers === 0 && !process.env.FV_DEBUG_HLTV) {
+    const fs = require('node:fs');
+    const outPath = `/tmp/hltv-debug-${mapStatsId}.html`;
+    fs.writeFileSync(outPath, html);
+    console.log(`    [auto-debug] 0 joueurs parses, HTML sauvegarde : ${outPath}`);
+  }
+
+  return parsed;
 }
 
 /**
