@@ -188,51 +188,67 @@ module.exports = async function handler(req, res) {
       .eq('id', user.id);
     if (error) return res.status(500).json({ error: error.message });
 
-    // Recompense : +7j Pro aux 2 parties
-    const refereeNickname = profile.referral_code ? 'Un ami' : 'Un nouveau joueur';
+    // Recupere les nicknames des 2 parties pour personnaliser les notifs
     const { data: refereeProfile } = await s
       .from('profiles')
       .select('faceit_nickname')
       .eq('id', user.id)
       .maybeSingle();
-    const refereeNick = refereeProfile?.faceit_nickname || 'Un nouveau joueur';
+    const { data: referrerProfile } = await s
+      .from('profiles')
+      .select('faceit_nickname')
+      .eq('id', referrer.id)
+      .maybeSingle();
+    const refereeNick = refereeProfile?.faceit_nickname || null;
+    const referrerNick = referrerProfile?.faceit_nickname || null;
 
+    // Recompense : +7j Pro aux 2 parties
     const [refereeGrant, referrerGrant] = await Promise.all([
-      // Filleul : +7j Pro
       grantProDays(s, user.id, REWARD_DAYS, 'referral_referee', {
         referrer_id: referrer.id,
+        referrer_nick: referrerNick,
         code,
       }),
-      // Parrain : +7j Pro
       grantProDays(s, referrer.id, REWARD_DAYS, 'referral_referrer', {
         referee_id: user.id,
+        referee_nick: refereeNick,
         code: profile.referral_code,
       }),
     ]);
 
-    // Notifications in-app
+    // Notifications in-app : roles distincts, formulations claires
     const expiresStr = new Date(Date.now() + REWARD_DAYS * 86400000).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' });
 
+    // Formulation filleul : on lui souhaite la bienvenue avec le nom du parrain
+    const refereeTitle = 'Bienvenue chez FragValue';
+    const refereeMsg = referrerNick
+      ? `Tu as rejoint FragValue via le parrainage de ${referrerNick}. Tu beneficies de ${REWARD_DAYS} jours Pro offerts jusqu'au ${expiresStr} pour decouvrir toutes les features premium.`
+      : `Ton parrainage est valide. Tu beneficies de ${REWARD_DAYS} jours Pro offerts jusqu'au ${expiresStr} pour decouvrir toutes les features premium.`;
+
+    // Formulation parrain : on confirme l'action et la recompense
+    const referrerTitle = refereeNick
+      ? `${refereeNick} vient de s'inscrire avec ton code`
+      : 'Un nouveau joueur s\'est inscrit avec ton code';
+    const referrerMsg = `Merci d'avoir parraine un nouveau joueur sur FragValue. En remerciement, tu recois ${REWARD_DAYS} jours Pro offerts jusqu'au ${expiresStr}. Chaque nouvelle inscription avec ton lien te fera gagner ${REWARD_DAYS} jours supplementaires.`;
+
     await Promise.all([
-      // Filleul : "Ton parrain a ete enregistre, +7j Pro offerts"
       insertNotification(s, {
         user_id: user.id,
         type: 'referral_welcome',
-        title: `Bienvenue ! ${REWARD_DAYS} jours Pro offerts`,
-        message: `Ton parrainage a ete valide. Tu as ${REWARD_DAYS} jours Pro gratuits jusqu'au ${expiresStr}. Teste toutes les features premium sans restriction.`,
+        title: refereeTitle,
+        message: refereeMsg,
         action_url: '/account.html',
         icon: 'trophy',
-        metadata: { referrer_id: referrer.id, grant_id: refereeGrant?.id },
+        metadata: { referrer_id: referrer.id, referrer_nick: referrerNick, grant_id: refereeGrant?.id },
       }),
-      // Parrain : "X s'est inscrit avec ton code, +7j Pro offerts"
       insertNotification(s, {
         user_id: referrer.id,
         type: 'referral_reward',
-        title: `${refereeNick} a utilise ton code`,
-        message: `Tu viens de recevoir ${REWARD_DAYS} jours Pro offerts jusqu'au ${expiresStr}. Continue de partager ton lien pour cumuler les recompenses.`,
+        title: referrerTitle,
+        message: referrerMsg,
         action_url: '/account.html#settings',
         icon: 'trophy',
-        metadata: { referee_id: user.id, grant_id: referrerGrant?.id },
+        metadata: { referee_id: user.id, referee_nick: refereeNick, grant_id: referrerGrant?.id },
       }),
     ]);
 
@@ -243,6 +259,7 @@ module.exports = async function handler(req, res) {
         days: REWARD_DAYS,
         expires_at: refereeGrant?.expires_at || new Date(Date.now() + REWARD_DAYS * 86400000).toISOString(),
       },
+      referrer: { nickname: referrerNick },
     });
   }
 
