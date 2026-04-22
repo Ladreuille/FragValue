@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <title>Blog CS2 FragValue : guides, analyses, methodes data-driven</title>
+  <meta name="description" content="Guides et analyses CS2 pour progresser au FACEIT : comprendre ses stats, analyser ses demos, passer les levels, maitriser le meta. Articles data-driven par FragValue.">
+  <meta name="keywords" content="CS2, blog, FACEIT, guide, progresser, stats, ADR, KAST, demo, analyse, FV Rating, level, progression">
+  <link rel="canonical" href="https://fragvalue.com/blog.html">
+  <link rel="alternate" hreflang="fr" href="https://fragvalue.com/blog.html">
+  <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/blog.html">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Blog CS2 FragValue : guides et analyses data-driven">
+  <meta property="og:description" content="Guides CS2 pour progresser au FACEIT : stats, demos, levels, meta.">
+  <meta property="og:url" content="https://fragvalue.com/blog.html">
+  <meta property="og:image" content="https://fragvalue.com/og/blog.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Blog CS2 FragValue">
+  <meta name="twitter:description" content="Guides et analyses data-driven pour progresser au CS2 FACEIT.">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "Blog FragValue",
+    "description": "Guides CS2 data-driven pour progresser au FACEIT",
+    "url": "https://fragvalue.com/blog.html",
+    "inLanguage": "fr-FR",
+    "publisher": {
+      "@type": "Organization",
+      "name": "FragValue",
+      "logo": { "@type": "ImageObject", "url": "https://fragvalue.com/fragvalue_icon.svg" }
+    }
+  }
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/blog-style.css">
+</head>
+<body>
+
+<nav></nav>
+
+<div class="blog-hero">
+  <div class="blog-hero-tag">Blog FragValue</div>
+  <h1 class="blog-hero-title">Progresse au <span>CS2</span><br>avec la data</h1>
+  <p class="blog-hero-sub">Guides methodiques, analyses data-driven et explications sans bullshit. Ce que les autres appellent "intuition de pro", on le mesure.</p>
+</div>
+
+<div class="page">
+  <div class="blog-grid" id="blogGrid"></div>
+</div>
+
+<script>
+// Articles index : ordre = affichage. Featured en 1re position (span 2 cols).
+const ARTICLES = [
+  {
+    slug: 'comment-progresser-cs2-2026',
+    title: 'Comment progresser au CS2 en 2026 : la methode data-driven',
+    excerpt: 'Arreter de farmer 4h par jour sans comprendre pourquoi tu perds. Comment utiliser tes demos, tes stats FACEIT et les benchmarks pro pour progresser mesurablement, meme en 1h par jour.',
+    tag: 'Guide Hub',
+    date: '2026-04-22',
+    readTime: 9,
+    featured: true,
+  },
+  {
+    slug: 'adr-kast-cs2-expliques',
+    title: 'ADR, KAST, FV Rating : les 3 stats qui racontent vraiment ton niveau',
+    excerpt: 'Le K/D est trompeur. L\'ADR, le KAST et le FV Rating mesurent ton vrai impact. On explique ce que chaque metrique veut dire, comment elle se calcule, et les seuils pour chaque niveau FACEIT.',
+    tag: 'Stats',
+    date: '2026-04-22',
+    readTime: 7,
+  },
+  {
+    slug: 'analyser-sa-demo-cs2',
+    title: 'Comment analyser sa demo CS2 comme un pro (sans y passer 3h)',
+    excerpt: 'Revoir une demo c\'est long et on regarde souvent les mauvais rounds. Voici la methode 30-min qui fait ressortir les 3 erreurs qui te couteront le prochain match. Grid de focus, timestamps cles et anti-patterns.',
+    tag: 'Methode',
+    date: '2026-04-22',
+    readTime: 8,
+  },
+  {
+    slug: 'passer-level-10-faceit',
+    title: 'Passer du level 4 au level 10 FACEIT : roadmap concrete par palier',
+    excerpt: 'Chaque level a ses skills requis. Level 4-6 : fundamentals. Level 6-8 : adaptation. Level 8-10 : coordination. On detaille quoi travailler a chaque palier, avec les stats-cibles minimales.',
+    tag: 'Progression',
+    date: '2026-04-22',
+    readTime: 8,
+  },
+  {
+    slug: 'fv-rating-explique',
+    title: 'FV Rating explique : comment on calcule ton vrai impact au CS2',
+    excerpt: 'Le FV Rating combine 4 facteurs pondered : impact par round, consistance, clutch factor et side balance. On ouvre la formule, on explique pourquoi HLTV Rating 2.1 n\'est pas toujours le meilleur repere, et comment lire le tien.',
+    tag: 'Produit',
+    date: '2026-04-22',
+    readTime: 6,
+  },
+];
+
+function formatDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch { return iso; }
+}
+
+function renderBlog() {
+  const grid = document.getElementById('blogGrid');
+  grid.innerHTML = ARTICLES.map(a => `
+    <a class="blog-card${a.featured ? ' featured' : ''}" href="/blog/${a.slug}.html">
+      <div class="blog-card-tag">${a.tag}</div>
+      <div class="blog-card-title">${a.title}</div>
+      <div class="blog-card-excerpt">${a.excerpt}</div>
+      <div class="blog-card-meta">
+        <span class="blog-card-date">${formatDate(a.date)}</span>
+        <span class="blog-card-read">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          ${a.readTime} min
+        </span>
+      </div>
+    </a>
+  `).join('');
+}
+renderBlog();
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>

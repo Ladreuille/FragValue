@@ -157,6 +157,7 @@
         { href: '/levels.html', label: 'Roadmap' },
         { href: '/stats-guide.html', label: 'Guide des stats' },
         { href: '/lineup-library.html', label: 'Lineup library' },
+        { href: '/blog.html', label: 'Blog' },
       ],
     },
     {
