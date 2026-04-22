@@ -48,6 +48,21 @@ if (!SB_KEY) {
 const { createClient } = require('@supabase/supabase-js');
 const HLTV = require('hltv').default;
 
+// Playwright helper chargé a la demande (evite d'instancier Chromium
+// si on n'en a pas besoin — ex. mode manuel d'IDs qui passent via le
+// package hltv sans bloquer).
+let _pw = null;
+function pw() {
+  if (_pw) return _pw;
+  try {
+    _pw = require('./hltv-playwright');
+    return _pw;
+  } catch (e) {
+    console.warn('  ! Playwright helper indisponible :', e.message);
+    return null;
+  }
+}
+
 const s = createClient(SB_URL, SB_KEY);
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -232,17 +247,37 @@ async function importOne(hltvId) {
   const normalized = normalizeMatch(match, hltvId);
   console.log(`  Score : ${normalized.team_a_score}-${normalized.team_b_score} (winner: ${normalized.winner || '-'})`);
 
-  // Fetch stats per-map en parallele
+  // Fetch stats per-map : essaye HLTV package d'abord, fallback Playwright
+  // si Cloudflare bloque le package.
   console.log(`  Fetching scorecards for ${normalized.maps.length} maps...`);
   const statsResults = await Promise.all(
-    normalized.maps.map(m =>
-      m.stats_id
-        ? HLTV.getMatchMapStats({ id: m.stats_id }).catch(e => {
-            console.warn(`    ! map ${m.map_name} stats failed: ${e.message.slice(0, 80)}`);
-            return null;
-          })
-        : null
-    )
+    normalized.maps.map(async (m) => {
+      if (!m.stats_id) return null;
+      // Tentative 1 : package hltv
+      try {
+        return await HLTV.getMatchMapStats({ id: m.stats_id });
+      } catch (e) {
+        const short = e.message.slice(0, 80);
+        // Tentative 2 : Playwright (Chromium headless bypass Cloudflare)
+        const helper = pw();
+        if (helper) {
+          try {
+            console.warn(`    ! map ${m.map_name} via hltv pkg bloque, retry Playwright...`);
+            const data = await helper.fetchMapStats(m.stats_id);
+            const totalPlayers = (data.playerStats?.team1?.length || 0) + (data.playerStats?.team2?.length || 0);
+            if (totalPlayers > 0) {
+              console.log(`    + map ${m.map_name} : ${totalPlayers} joueurs via Playwright`);
+              return data;
+            }
+            console.warn(`    ! map ${m.map_name} Playwright : 0 joueurs parses (HTML inattendu)`);
+          } catch (e2) {
+            console.warn(`    ! map ${m.map_name} Playwright echoue : ${e2.message.slice(0, 80)}`);
+          }
+        }
+        console.warn(`    ! map ${m.map_name} stats failed: ${short}`);
+        return null;
+      }
+    })
   );
   let totalPlayers = 0;
   normalized.maps.forEach((m, i) => {
@@ -339,39 +374,53 @@ async function discoverLatestViaRawFetch(maxMatches) {
 }
 
 // ── Mode "latest" : auto-discovery des derniers matchs HLTV ────────────
-// 1. Essaye fetch brut avec headers Chrome (bypass fingerprint du package hltv)
-// 2. Fallback sur HLTV.getResults si fetch brut echoue
+// Priorite : Playwright (vrai Chromium, bypass Cloudflare) > fetch brut > HLTV.pkg
 async function discoverLatest(maxMatches) {
   console.log(`→ Discovery : fetch les ${maxMatches} derniers resultats HLTV...`);
 
   let ids = [];
   let source = null;
 
-  // Tentative 1 : fetch brut avec headers realistes
-  try {
-    ids = await discoverLatestViaRawFetch(maxMatches);
-    source = 'fetch brut';
-    console.log(`  ${ids.length} matchs detectes via fetch brut`);
-  } catch (e) {
-    console.log(`  fetch brut echoue : ${e.message}`);
-    console.log('  tentative fallback via HLTV.getResults...');
-    // Tentative 2 : package hltv (qui utilise probablement l'API interne scraper)
+  // Tentative 1 : Playwright (le seul qui passe Cloudflare de maniere fiable)
+  const helper = pw();
+  if (helper) {
+    try {
+      ids = await helper.fetchMatchResults({ maxResults: Math.max(maxMatches * 2, 40) });
+      source = 'Playwright';
+      console.log(`  ${ids.length} matchs detectes via Playwright`);
+    } catch (e) {
+      console.log(`  Playwright echoue : ${e.message}`);
+    }
+  }
+
+  // Tentative 2 : fetch brut
+  if (!ids.length) {
+    try {
+      ids = await discoverLatestViaRawFetch(maxMatches);
+      source = 'fetch brut';
+      console.log(`  ${ids.length} matchs detectes via fetch brut`);
+    } catch (e) {
+      console.log(`  fetch brut echoue : ${e.message}`);
+    }
+  }
+
+  // Tentative 3 : HLTV package
+  if (!ids.length) {
     try {
       const results = await HLTV.getResults({ pages: 1 });
       ids = results.map(r => r.id).filter(Boolean);
       source = 'HLTV.getResults';
       console.log(`  ${ids.length} matchs detectes via HLTV package`);
     } catch (e2) {
-      console.error(`× HLTV bloque (${e2.message})`);
+      console.error(`× Toutes les tentatives ont echoue : ${e2.message.slice(0, 80)}`);
       console.error('');
       console.error('═══ WORKAROUND MANUEL (1 min) ══════════════════════════════════');
       console.error('1. Ouvre https://www.hltv.org/results dans ton navigateur');
-      console.error('2. Ouvre la console (F12 > Console) et colle ce snippet :');
+      console.error('2. Console (F12) > colle le snippet et copy auto-remplit clipboard :');
       console.error('');
-      console.error('   copy(Array.from(document.querySelectorAll(\'a[href*="/matches/"]\')).map(a=>a.href).filter(h=>/\\/matches\\/\\d+\\//.test(h)).filter((v,i,a)=>a.indexOf(v)===i).slice(0,20).join(\'\\n\'))');
+      console.error('   (function(){const urls=Array.from(document.querySelectorAll(\'.result-con a.a-reset\')).map(a=>a.href).filter(h=>/\\/matches\\/\\d+\\//.test(h)).filter((v,i,a)=>a.indexOf(v)===i).slice(0,20);const cmd=\'node scripts/import-hltv.js \'+urls.map(u=>\'"\'+u+\'"\').join(\' \');console.log(cmd);try{copy(cmd);}catch(e){}})();');
       console.error('');
-      console.error('3. Le snippet copie les 20 dernieres URLs dans ton presse-papier');
-      console.error('4. Lance : pbpaste | node scripts/import-hltv.js --stdin');
+      console.error('3. Colle la commande dans le terminal');
       console.error('═══════════════════════════════════════════════════════════════');
       return [];
     }
@@ -499,5 +548,9 @@ async function readStdin() {
   }
 
   console.log(`\nTermine : ${ok} reussi(s), ${fail} echoue(s)${partial > 0 ? `, ${partial} sans scorecards (a completer dans /admin/pro-matches.html)` : ''}`);
+  // Ferme Chromium si il a ete instancie
+  if (_pw) {
+    try { await _pw.closeBrowser(); } catch {}
+  }
   process.exit(fail > 0 ? 1 : 0);
 })();
