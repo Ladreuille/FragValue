@@ -21,13 +21,23 @@ let _context = null;
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
-// Options Chromium pour minimiser le fingerprint "headless" detectable par
-// Cloudflare. Basiquement on essaye de ressembler a un vrai Chrome user.
+// Chromium stealth via playwright-extra + puppeteer-extra-plugin-stealth
+// Le plugin stealth applique ~20 patches qui masquent les indicateurs
+// typiques d'un navigateur automatise (navigator.webdriver, plugins list,
+// WebGL vendor, chrome runtime, permissions, etc.)
+//
+// FV_HEADLESS=0 dans l'env pour voir la fenetre Chrome (debug visuel).
 async function ensureBrowser() {
   if (_browser) return _browser;
-  const { chromium } = require('playwright');
+
+  // Charge playwright-extra au lieu de playwright, puis enregistre stealth
+  const { chromium } = require('playwright-extra');
+  const stealth = require('puppeteer-extra-plugin-stealth')();
+  chromium.use(stealth);
+
+  const isHeadless = process.env.FV_HEADLESS !== '0';
   _browser = await chromium.launch({
-    headless: true,
+    headless: isHeadless,
     args: [
       '--disable-blink-features=AutomationControlled',
       '--disable-features=IsolateOrigins,site-per-process',
@@ -39,18 +49,14 @@ async function ensureBrowser() {
     viewport: { width: 1280, height: 800 },
     locale: 'en-US',
     timezoneId: 'Europe/Paris',
-    // Emule un device realiste
     deviceScaleFactor: 2,
     hasTouch: false,
     isMobile: false,
     javaScriptEnabled: true,
   });
-  // Override navigator.webdriver avant chaque page (detection anti-bot standard)
-  await _context.addInitScript(() => {
-    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-    Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en', 'fr'] });
-    Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-  });
+  if (!isHeadless) {
+    console.log('  [hltv-playwright] headless=false (fenetre Chrome visible pour debug)');
+  }
   return _browser;
 }
 
@@ -63,31 +69,42 @@ async function closeBrowser() {
 }
 
 /**
- * Fetch une URL HLTV en bypassant Cloudflare via Chromium headless.
- * Retry 1 fois si Cloudflare challenge detecte (attend la resolution JS).
+ * Fetch une URL HLTV en bypassant Cloudflare via Chromium headless + stealth.
+ * Attend jusqu'a 30s que le challenge Cloudflare se resolve.
  */
-async function fetchHtml(url, { timeout = 30000, waitForSelector = null } = {}) {
+async function fetchHtml(url, { timeout = 45000, waitForSelector = null } = {}) {
   await ensureBrowser();
   const page = await _context.newPage();
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout });
-    // Attends que Cloudflare passe (JS challenge resolue, redirect vers vraie page)
-    // On detecte la page challenge via son title "Just a moment..." et on
-    // attend jusqu'a 20s la redirect vers le vrai contenu.
+
+    // Attend que le challenge Cloudflare se resolve (title change de
+    // "Just a moment..." a la vraie page). Avec stealth plugin, ca prend
+    // generalement 3-10s.
     let title = await page.title().catch(() => '');
     let tries = 0;
-    while (title.includes('Just a moment') || title.includes('Attention Required')) {
-      if (tries++ > 20) break;
+    const maxTries = 30; // 30 * 1s = 30s max
+    while (title.includes('Just a moment') || title.includes('Attention Required') || title.includes('Verifying')) {
+      if (tries++ >= maxTries) {
+        console.warn(`    [cf] challenge non resolu apres ${maxTries}s, title="${title}"`);
+        break;
+      }
       await page.waitForTimeout(1000);
       title = await page.title().catch(() => '');
     }
-    // Attends le selector specifique si precise (certaines pages ont du lazy-load)
+    if (tries > 0 && tries < maxTries) {
+      console.log(`    [cf] challenge resolu apres ${tries}s`);
+    }
+
+    // Attend le selector specifique (page hydratee) OU networkidle en fallback
     if (waitForSelector) {
-      await page.waitForSelector(waitForSelector, { timeout: 10000 }).catch(() => null);
+      await page.waitForSelector(waitForSelector, { timeout: 15000 }).catch(() => {
+        console.warn(`    [cf] selector "${waitForSelector}" pas trouve, page peut-etre incomplete`);
+      });
     } else {
-      // Network idle pour laisser le JS finir
       await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => null);
     }
+
     const html = await page.content();
     return html;
   } finally {
