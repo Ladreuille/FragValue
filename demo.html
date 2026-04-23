@@ -60,19 +60,23 @@ body::before{
   pointer-events:none;z-index:0;opacity:.4
 }
 
-/* NAV  - identique landing, un peu plus discrete sur cette page (pas de border
-   marquee qui cree une barre noire visible au scroll). Blur conserve. */
-nav{
+/* NAV OVERRIDE : la nav est injectee par /nav.js et a un border/box-shadow
+   accent vert qui cree une 'barre' visible au scroll. Sur la page demo on
+   veut une nav totalement discrete qui se fond dans le background. */
+nav.fv-nav{
+  background:rgba(8,9,9,.35) !important;
+  backdrop-filter:blur(18px) !important;
+  -webkit-backdrop-filter:blur(18px) !important;
+  border-bottom:none !important;
+  box-shadow:none !important
+}
+/* Nav initiale (avant que nav.js ne la remplace), meme style */
+nav:not(.fv-nav){
   position:fixed;top:0;left:0;right:0;z-index:100;
   display:flex;align-items:center;justify-content:space-between;
   padding:0 32px;height:56px;
-  background:rgba(8,9,9,.55);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)
-}
-/* Fade subtil en bas de la nav au lieu d'un border tranche */
-nav::after{
-  content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06) 20%,rgba(255,255,255,.06) 80%,transparent)
+  background:rgba(8,9,9,.35);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)
 }
 .nav-logo{
   font-family:var(--display);font-size:20px;letter-spacing:.04em;
@@ -94,20 +98,22 @@ nav::after{
 }
 .nav-cta:hover{background:var(--accent2);transform:translateY(-1px)}
 
-/* LAYOUT SPLIT */
+/* LAYOUT : 3 colonnes sur desktop (hero compact | slider maps | upload).
+   Tout tient dans le viewport sans scroll. */
 .layout{
   display:grid;
-  grid-template-columns:1fr 460px;
-  min-height:100vh;
+  grid-template-columns:minmax(320px,1fr) minmax(0,1.1fr) 420px;
+  height:100vh;
   padding-top:56px;
-  position:relative;z-index:1
+  position:relative;z-index:1;
+  overflow:hidden
 }
 
-/* GAUCHE */
+/* GAUCHE : hero compact (pas de scroll, tient sur 1 ecran) */
 .left{
-  padding:48px 56px 64px;
+  padding:32px 36px;
   display:flex;flex-direction:column;
-  justify-content:flex-start;
+  justify-content:center;
   border-right:1px solid var(--border);
   position:relative;overflow:hidden
 }
@@ -127,30 +133,30 @@ nav::after{
 .left-inner{position:relative;z-index:1}
 
 .left-tag{
-  font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  font-size:9px;letter-spacing:.2em;text-transform:uppercase;
   color:var(--accent);border:1px solid rgba(184,255,87,.2);
-  padding:5px 12px;border-radius:40px;display:inline-block;
-  margin-bottom:16px;
+  padding:4px 10px;border-radius:40px;display:inline-block;
+  margin-bottom:12px;
   opacity:0;animation:fadeUp .5s .05s ease forwards
 }
 .left-title{
   font-family:var(--display);
-  font-size:clamp(36px,4vw,56px);
-  line-height:.93;letter-spacing:.01em;margin-bottom:12px;
+  font-size:clamp(30px,3.2vw,44px);
+  line-height:.95;letter-spacing:.01em;margin-bottom:10px;
   opacity:0;animation:fadeUp .5s .1s ease forwards
 }
 .left-title em{font-style:normal;-webkit-text-stroke:1px var(--text);color:transparent}
 .left-sub{
-  font-size:13px;color:var(--text2);line-height:1.85;
-  max-width:380px;margin-bottom:28px;
+  font-size:12px;color:var(--text2);line-height:1.7;
+  max-width:340px;margin-bottom:18px;
   opacity:0;animation:fadeUp .5s .15s ease forwards
 }
 .feat-list{
-  display:flex;flex-direction:column;gap:7px;
+  display:flex;flex-direction:column;gap:6px;
   opacity:0;animation:fadeUp .5s .2s ease forwards
 }
-.feat{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text2)}
-.feat-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.feat{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text2)}
+.feat-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);flex-shrink:0}
 .feat strong{color:var(--text)}
 
 /* STATUS LIVE : petit ticker en haut du hero avec dot pulsante + stat live.
@@ -221,63 +227,139 @@ nav::after{
   text-transform:uppercase;line-height:1.3
 }
 
-/* MINI MAP RADAR : visualisation stylisee d'une map CS2 avec dots de positions
-   et heatmap colore. Remplit l'espace vide au milieu de la page, montre la
-   value prop visuellement. */
-.mini-map{
-  margin-top:24px;position:relative;
-  border:1px solid var(--border);border-radius:10px;
-  padding:16px 18px 20px;
-  background:linear-gradient(135deg,rgba(15,16,16,.7),rgba(8,9,9,.4));
-  overflow:hidden;
+/* MAPS SLIDER : carousel horizontal des 7 maps CS2 disponibles en analyse.
+   Auto-scroll infini (duplique le set pour un loop sans saccade). Occupe
+   tout l'espace vide au milieu de la page et montre visuellement la couverture. */
+.maps-slider{
+  margin-top:32px;position:relative;
   opacity:0;animation:fadeUp .5s .35s ease forwards
 }
-.mini-map-hd{
+.maps-slider-hd{
   display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:12px
+  margin-bottom:14px
 }
-.mini-map-label{
+.maps-slider-label{
+  display:flex;align-items:center;gap:10px;
   font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3)
 }
-.mini-map-pill{
-  display:inline-flex;align-items:center;gap:6px;
-  font-family:var(--mono);font-size:10px;color:var(--accent);
-  padding:3px 10px;border-radius:40px;border:1px solid rgba(184,255,87,.3);
-  background:rgba(184,255,87,.06)
-}
-.mini-map-pill .mm-dot{
+.maps-slider-label .msl-dot{
   width:5px;height:5px;border-radius:50%;background:var(--accent);
   box-shadow:0 0 6px var(--accent);animation:pulse 2s ease-in-out infinite
 }
-.mini-map-svg{
-  width:100%;height:auto;display:block;
-  filter:drop-shadow(0 4px 20px rgba(184,255,87,.04))
+.maps-slider-count{
+  font-family:var(--display);font-size:14px;color:var(--text);letter-spacing:.02em
 }
-.mini-map-legend{
-  display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;
-  font-size:10px;color:var(--text3);letter-spacing:.04em
-}
-.mm-lg-item{display:flex;align-items:center;gap:6px}
-.mm-lg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.maps-slider-count em{color:var(--text3);font-style:normal;font-size:10px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-left:6px}
 
-/* DROITE : sticky pour que le upload reste visible pendant le scroll.
-   max-height = viewport minus nav pour eviter debordement. */
+/* Viewport du slider avec mask gradient pour fade-out sur les cotes */
+.maps-viewport{
+  position:relative;overflow:hidden;
+  border:1px solid var(--border);border-radius:10px;
+  background:linear-gradient(135deg,rgba(15,16,16,.6),rgba(8,9,9,.4));
+  padding:18px 0;
+  mask-image:linear-gradient(90deg,transparent 0%,black 8%,black 92%,transparent 100%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,black 8%,black 92%,transparent 100%)
+}
+.maps-track{
+  display:flex;gap:18px;align-items:center;
+  width:max-content;
+  animation:mapsScroll 35s linear infinite
+}
+.maps-viewport:hover .maps-track{animation-play-state:paused}
+@keyframes mapsScroll{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+
+.map-card{
+  flex-shrink:0;width:180px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  transition:transform .25s ease
+}
+.map-card:hover{transform:translateY(-3px)}
+.map-card-img{
+  width:160px;height:160px;
+  background:#080909;border:1px solid var(--border2);border-radius:8px;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  position:relative;overflow:hidden;
+  box-shadow:0 8px 24px rgba(0,0,0,.4),inset 0 0 0 1px rgba(184,255,87,.04);
+  transition:box-shadow .25s,border-color .25s
+}
+.map-card:hover .map-card-img{
+  border-color:rgba(184,255,87,.3);
+  box-shadow:0 12px 32px rgba(0,0,0,.5),0 0 0 1px rgba(184,255,87,.15),inset 0 0 0 1px rgba(184,255,87,.08)
+}
+/* Overlay tint pour harmoniser avec le design dark */
+.map-card-img::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(8,9,9,0) 40%,rgba(8,9,9,.65) 100%);
+  pointer-events:none
+}
+.map-card-label{
+  font-family:var(--mono);font-size:11px;color:var(--text);
+  letter-spacing:.06em;text-transform:uppercase;font-weight:700
+}
+.map-card-sub{
+  font-size:9px;color:var(--text3);letter-spacing:.08em;
+  text-transform:uppercase;margin-top:-4px
+}
+
+/* Stats compacts sous le slider (dans .middle), remplace le result-preview */
+.middle-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  margin-top:4px;padding:14px 18px;
+  border:1px solid var(--border);border-radius:10px;
+  background:linear-gradient(135deg,rgba(15,16,16,.6),rgba(8,9,9,.3))
+}
+.ms-item{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.ms-val{
+  font-family:var(--display);font-size:22px;line-height:1;
+  color:var(--accent);letter-spacing:.02em
+}
+.ms-val span{font-size:12px;color:var(--text2);margin-left:2px}
+.ms-key{
+  font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase
+}
+
+/* Resize : quand le viewport est etroit, reduire la taille des cards maps */
+@media (max-width:1280px){
+  .map-card{width:150px}
+  .map-card-img{width:130px;height:130px}
+}
+
+/* Trust row inline compacte : 3 items sur une ligne sous l'upload */
+.trust-inline{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;padding:10px 0 0;margin-top:4px;
+  border-top:1px solid var(--border);
+  font-size:9px;color:var(--text3);letter-spacing:.06em;
+  text-transform:uppercase;font-family:var(--mono)
+}
+.trust-inline span{
+  display:inline-flex;align-items:center;gap:5px;
+  flex:1;justify-content:center
+}
+.trust-inline svg{color:var(--accent);flex-shrink:0}
+
+/* MILIEU : colonne centrale entre hero et upload, dediee au slider de maps. */
+.middle{
+  padding:32px 24px;
+  display:flex;flex-direction:column;
+  justify-content:center;align-items:stretch;gap:14px;
+  position:relative;overflow:hidden;
+  background:linear-gradient(180deg,rgba(15,16,16,.3),rgba(8,9,9,.6))
+}
+
+/* DROITE : upload compact (pas de sticky, tient sur 1 ecran sans scroll) */
 .right{
   background:var(--surface);
   border-left:1px solid var(--border);
-  padding:32px 36px;
+  padding:24px 28px;
   display:flex;flex-direction:column;
-  justify-content:flex-start;
-  gap:8px;
-  position:sticky;
-  top:56px;
-  align-self:start;
-  max-height:calc(100vh - 56px);
-  overflow-y:auto;
-  scrollbar-width:thin
+  justify-content:center;
+  gap:6px;
+  overflow:hidden
 }
-.right::-webkit-scrollbar{width:4px}
-.right::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
 /* SECTION LABEL  - identique landing */
 .section-label{
@@ -356,7 +438,7 @@ nav::after{
 #fileInput{display:none}
 .upload-zone{
   border:1px dashed var(--border2);border-radius:var(--radius2);
-  padding:28px 28px;text-align:center;cursor:pointer;
+  padding:22px 22px;text-align:center;cursor:pointer;
   background:var(--bg);transition:all .2s;
   opacity:0;animation:fadeUp .5s .1s ease forwards
 }
@@ -509,14 +591,26 @@ nav::after{
 .rp-bar-num{font-family:var(--display);font-size:13px;color:var(--accent);width:28px;text-align:right;flex-shrink:0}
 
 /* RESPONSIVE */
-@media(max-width:860px){
-  .layout{grid-template-columns:1fr}
-  .left{display:none}
-  /* Mobile : retire le sticky, le .right prend tout l'espace normalement */
-  .right{
-    padding:40px 20px;min-height:calc(100vh - 56px);
-    position:static;max-height:none;overflow:visible;align-self:auto
+@media(max-width:1100px){
+  /* Tablette : hero + upload en 2 colonnes, slider relegue sous le hero */
+  .layout{
+    grid-template-columns:1fr 400px;
+    grid-template-areas:"left right" "middle right";
+    height:auto;min-height:100vh;overflow:visible
   }
+  .left{grid-area:left;padding:24px 28px}
+  .middle{grid-area:middle;padding:0 28px 24px;border-right:1px solid var(--border)}
+  .right{grid-area:right;padding:24px 28px}
+}
+@media(max-width:860px){
+  .layout{
+    grid-template-columns:1fr;
+    grid-template-areas:"right" "left" "middle";
+    height:auto
+  }
+  .left{display:none}
+  .middle{border-right:none;padding:20px;display:none}
+  .right{padding:40px 20px;min-height:calc(100vh - 56px)}
 }
 
 /* ANIMATIONS */
@@ -567,12 +661,6 @@ nav::after{
     <div class="left-grid"></div>
     <div class="left-glow"></div>
     <div class="left-inner">
-      <div class="live-status">
-        <span class="ls-dot"></span>
-        <span class="ls-on">Parser en ligne</span>
-        <span class="ls-sep"></span>
-        <span><span class="ls-count" id="liveStatsCount">2 847</span> analyses cette semaine</span>
-      </div>
       <div class="left-tag">Demo Analyzer</div>
       <h1 class="left-title">Upload.<br><em>Analyse.</em><br>Progresse.</h1>
       <p class="left-sub">Dépose ton fichier .dem FACEIT et reçois une analyse complète en moins de 2 minutes. Positions, kills, grenades et FV Rating.</p>
@@ -598,153 +686,109 @@ nav::after{
           <span><strong>Stats équipes</strong> · KAST, ADR, opening duels</span>
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- MINI PROCESS 3 STEPS -->
-      <div class="mini-process">
-        <div class="mp-step">
-          <span class="mp-num">01</span>
-          <span class="mp-txt"><strong>Upload</strong>Fichier .dem</span>
+  <!-- MILIEU : slider des 7 maps CS2 supportees, defile en boucle -->
+  <div class="middle">
+    <div class="maps-slider">
+      <div class="maps-slider-hd">
+        <div class="maps-slider-label">
+          <span class="msl-dot"></span>
+          <span>Maps supportees</span>
         </div>
-        <span class="mp-arr">&rsaquo;</span>
-        <div class="mp-step">
-          <span class="mp-num">02</span>
-          <span class="mp-txt"><strong>Parse</strong>Ticks + events</span>
-        </div>
-        <span class="mp-arr">&rsaquo;</span>
-        <div class="mp-step">
-          <span class="mp-num">03</span>
-          <span class="mp-txt"><strong>Diagnostic</strong>FV Rating + plan</span>
+        <div class="maps-slider-count">7<em>Active Duty</em></div>
+      </div>
+      <div class="maps-viewport">
+        <div class="maps-track">
+          <!-- Set 1 -->
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/de_mirage_radar_psd.png')"></div>
+            <div class="map-card-label">Mirage</div>
+            <div class="map-card-sub">de_mirage</div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/de_inferno_radar_psd.png')"></div>
+            <div class="map-card-label">Inferno</div>
+            <div class="map-card-sub">de_inferno</div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/de_dust2_radar_psd.png')"></div>
+            <div class="map-card-label">Dust 2</div>
+            <div class="map-card-sub">de_dust2</div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/de_ancient_radar_psd.png')"></div>
+            <div class="map-card-label">Ancient</div>
+            <div class="map-card-sub">de_ancient</div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/de_anubis_radar_psd.png')"></div>
+            <div class="map-card-label">Anubis</div>
+            <div class="map-card-sub">de_anubis</div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/de_overpass_radar_psd.png')"></div>
+            <div class="map-card-label">Overpass</div>
+            <div class="map-card-sub">de_overpass</div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/nuke/de_nuke_radar_psd.png')"></div>
+            <div class="map-card-label">Nuke</div>
+            <div class="map-card-sub">de_nuke</div>
+          </div>
+          <!-- Set 2 : duplique pour un loop sans saccade -->
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/de_mirage_radar_psd.png')"></div>
+            <div class="map-card-label">Mirage</div>
+            <div class="map-card-sub">de_mirage</div>
+          </div>
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/de_inferno_radar_psd.png')"></div>
+            <div class="map-card-label">Inferno</div>
+            <div class="map-card-sub">de_inferno</div>
+          </div>
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/de_dust2_radar_psd.png')"></div>
+            <div class="map-card-label">Dust 2</div>
+            <div class="map-card-sub">de_dust2</div>
+          </div>
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/de_ancient_radar_psd.png')"></div>
+            <div class="map-card-label">Ancient</div>
+            <div class="map-card-sub">de_ancient</div>
+          </div>
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/de_anubis_radar_psd.png')"></div>
+            <div class="map-card-label">Anubis</div>
+            <div class="map-card-sub">de_anubis</div>
+          </div>
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/de_overpass_radar_psd.png')"></div>
+            <div class="map-card-label">Overpass</div>
+            <div class="map-card-sub">de_overpass</div>
+          </div>
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/nuke/de_nuke_radar_psd.png')"></div>
+            <div class="map-card-label">Nuke</div>
+            <div class="map-card-sub">de_nuke</div>
+          </div>
         </div>
       </div>
 
-      <!-- MINI RÉSULTAT PREVIEW -->
-      <div class="result-preview">
-        <div class="rp-label">Exemple de résultat</div>
-        <div class="rp-row">
-          <div class="rp-card">
-            <div class="rp-val">1.42</div>
-            <div class="rp-key">FV Rating</div>
-          </div>
-          <div class="rp-card">
-            <div class="rp-val">74%</div>
-            <div class="rp-key">KAST</div>
-          </div>
-          <div class="rp-card">
-            <div class="rp-val">87</div>
-            <div class="rp-key">ADR</div>
-          </div>
-          <div class="rp-card">
-            <div class="rp-val">63%</div>
-            <div class="rp-key">Opening</div>
-          </div>
+      <!-- Stats compacts sous le slider (remplace result-preview) -->
+      <div class="middle-stats">
+        <div class="ms-item">
+          <div class="ms-val">1.42</div>
+          <div class="ms-key">FV Rating moyen</div>
         </div>
-        <div class="rp-bar-row">
-          <span class="rp-bar-label">CT side</span>
-          <div class="rp-bar-track"><div class="rp-bar-fill" style="width:71%"></div></div>
-          <span class="rp-bar-num">1.58</span>
+        <div class="ms-item">
+          <div class="ms-val">134</div>
+          <div class="ms-key">Metriques</div>
         </div>
-        <div class="rp-bar-row">
-          <span class="rp-bar-label">T side</span>
-          <div class="rp-bar-track"><div class="rp-bar-fill" style="width:52%;background:var(--gold)"></div></div>
-          <span class="rp-bar-num" style="color:var(--gold)">1.26</span>
-        </div>
-      </div>
-
-      <!-- MINI MAP RADAR : preview stylisee d'une analyse, type radar CS2 avec
-           dots de positions joueurs et zones heatmap. Donne du corps visuel et
-           illustre la value prop (positions, duels, zones cles). -->
-      <div class="mini-map">
-        <div class="mini-map-hd">
-          <span class="mini-map-label">Preview · de_mirage</span>
-          <span class="mini-map-pill"><span class="mm-dot"></span>Live analysis</span>
-        </div>
-        <svg class="mini-map-svg" viewBox="0 0 460 210" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <!-- Gradient heatmap chaud : jaune vers rouge pour les zones de duel -->
-            <radialGradient id="heatHot" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#ff6b35" stop-opacity=".55"/>
-              <stop offset="55%" stop-color="#f5c842" stop-opacity=".25"/>
-              <stop offset="100%" stop-color="#f5c842" stop-opacity="0"/>
-            </radialGradient>
-            <!-- Gradient heatmap froid : accent vert pour les zones controlees -->
-            <radialGradient id="heatCool" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#b8ff57" stop-opacity=".35"/>
-              <stop offset="100%" stop-color="#b8ff57" stop-opacity="0"/>
-            </radialGradient>
-            <!-- Grille de background discrete -->
-            <pattern id="mapGrid" width="28" height="28" patternUnits="userSpaceOnUse">
-              <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#1c1e1e" stroke-width="1"/>
-            </pattern>
-          </defs>
-
-          <!-- Background + grille -->
-          <rect width="460" height="210" fill="#080909"/>
-          <rect width="460" height="210" fill="url(#mapGrid)"/>
-
-          <!-- Contours d'une map CS2 stylisee (abstraite, type mirage) -->
-          <g stroke="#2a2c2c" stroke-width="1.5" fill="#101111" opacity=".8">
-            <rect x="40" y="35" width="110" height="58" rx="3"/>
-            <rect x="175" y="25" width="80" height="50" rx="3"/>
-            <rect x="280" y="35" width="140" height="70" rx="3"/>
-            <rect x="60" y="120" width="100" height="60" rx="3"/>
-            <rect x="195" y="100" width="100" height="85" rx="3"/>
-            <rect x="320" y="130" width="95" height="55" rx="3"/>
-          </g>
-          <!-- Lignes de passage entre zones -->
-          <g stroke="#1c1e1e" stroke-width="1" stroke-dasharray="3 4" fill="none">
-            <path d="M150 65 L175 55"/>
-            <path d="M255 55 L280 65"/>
-            <path d="M110 95 L110 120"/>
-            <path d="M245 100 L245 75"/>
-            <path d="M330 110 L330 130"/>
-          </g>
-
-          <!-- Zones heatmap (blobs de couleur) -->
-          <ellipse cx="228" cy="130" rx="55" ry="40" fill="url(#heatHot)"/>
-          <ellipse cx="355" cy="65" rx="45" ry="32" fill="url(#heatHot)" opacity=".7"/>
-          <ellipse cx="100" cy="150" rx="42" ry="30" fill="url(#heatCool)"/>
-          <ellipse cx="95" cy="65" rx="35" ry="25" fill="url(#heatCool)" opacity=".6"/>
-
-          <!-- Dots joueurs (5 CT bleu-vert, 5 T gold) -->
-          <!-- CT positions -->
-          <circle cx="85" cy="58" r="4" fill="#b8ff57" stroke="#080909" stroke-width="1.5"/>
-          <circle cx="118" cy="70" r="4" fill="#b8ff57" stroke="#080909" stroke-width="1.5"/>
-          <circle cx="210" cy="45" r="4" fill="#b8ff57" stroke="#080909" stroke-width="1.5"/>
-          <circle cx="355" cy="60" r="4" fill="#b8ff57" stroke="#080909" stroke-width="1.5"/>
-          <circle cx="390" cy="75" r="4" fill="#b8ff57" stroke="#080909" stroke-width="1.5"/>
-          <!-- T positions -->
-          <circle cx="95" cy="150" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5"/>
-          <circle cx="135" cy="165" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5"/>
-          <circle cx="225" cy="140" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5"/>
-          <circle cx="255" cy="125" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5"/>
-          <circle cx="360" cy="160" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5"/>
-
-          <!-- Duels actifs : lignes pointillees entre dots opposes -->
-          <g stroke="#ff6b35" stroke-width="1" stroke-dasharray="2 3" opacity=".55" fill="none">
-            <path d="M210 45 L225 140"/>
-            <path d="M355 60 L360 160"/>
-          </g>
-
-          <!-- Labels de zones (petits callouts) -->
-          <g font-family="'Space Mono',monospace" font-size="8" fill="#7a8080" letter-spacing=".1em">
-            <text x="55" y="48" fill="#b8ff57" opacity=".9">CT SPAWN</text>
-            <text x="200" y="20" fill="#7a8080">MID</text>
-            <text x="335" y="28" fill="#ff6b35" opacity=".85">A SITE</text>
-            <text x="215" y="197" fill="#ff6b35" opacity=".85">B SITE</text>
-            <text x="75" y="190" fill="#f5c842" opacity=".8">T SPAWN</text>
-          </g>
-
-          <!-- Pulsation subtile sur le duel hot -->
-          <circle cx="228" cy="130" r="3" fill="#ff6b35">
-            <animate attributeName="r" values="3;10;3" dur="2.5s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" values="1;.15;1" dur="2.5s" repeatCount="indefinite"/>
-          </circle>
-        </svg>
-        <div class="mini-map-legend">
-          <div class="mm-lg-item"><span class="mm-lg-dot" style="background:#b8ff57"></span>CT positions</div>
-          <div class="mm-lg-item"><span class="mm-lg-dot" style="background:#f5c842"></span>T positions</div>
-          <div class="mm-lg-item"><span class="mm-lg-dot" style="background:#ff6b35"></span>Zone chaude</div>
-          <div class="mm-lg-item"><span class="mm-lg-dot" style="background:#7a8080"></span>Grille 128 ticks</div>
+        <div class="ms-item">
+          <div class="ms-val">&lt;2<span>min</span></div>
+          <div class="ms-key">Analyse</div>
         </div>
       </div>
     </div>
@@ -827,38 +871,11 @@ nav::after{
       </div>
     </div>
 
-    <div class="stats-row">
-      <div class="sc"><div class="sc-val">134</div><div class="sc-lbl">Métriques</div></div>
-      <div class="sc"><div class="sc-val">&lt;2min</div><div class="sc-lbl">Analyse</div></div>
-      <div class="sc"><div class="sc-val">Free</div><div class="sc-lbl">Gratuit</div></div>
-    </div>
-
-    <!-- TRUST BADGES : reassure l'user avant l'upload (privacy, no credit card, no install) -->
-    <div class="trust-row">
-      <div class="trust">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-        <div class="trust-title">Donnees privees</div>
-        <div class="trust-sub">Chiffrees</div>
-      </div>
-      <div class="trust">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2L3 6v6c0 5 4 9 9 10 5-1 9-5 9-10V6l-9-4z"/>
-          <path d="m9 12 2 2 4-4"/>
-        </svg>
-        <div class="trust-title">Sans carte</div>
-        <div class="trust-sub">100% gratuit</div>
-      </div>
-      <div class="trust">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="9"/>
-          <polyline points="12 7 12 12 15 14"/>
-        </svg>
-        <div class="trust-title">Supprimees</div>
-        <div class="trust-sub">Apres 30 jours</div>
-      </div>
+    <!-- Trust row inline compacte (3 mots cles) -->
+    <div class="trust-inline">
+      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Donnees privees</span>
+      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 6v6c0 5 4 9 9 10 5-1 9-5 9-10V6l-9-4z"/></svg>Sans carte</span>
+      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>Auto suppr 30j</span>
     </div>
 
   </div>
@@ -1156,41 +1173,7 @@ _sb.auth.getSession().then(async ({ data }) => {
     // Toast welcome si signup recent
     renderWelcomeToast(data.session);
   }
-  // Live counter "analyses cette semaine" : visible pour tous, connecte ou non
-  renderLiveCount();
 });
-
-// Affiche le compteur "analyses cette semaine" dans le status bar hero.
-// Social proof : si la DB a plus de 50 analyses sur 7 jours, on montre le
-// vrai chiffre ; sinon on masque le compteur (on garde juste "Parser en ligne")
-// pour ne pas sur-vendre en phase launch.
-async function renderLiveCount() {
-  const el = document.getElementById('liveStatsCount');
-  if (!el) return;
-  try {
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { count } = await _sb.from('demos')
-      .select('*', { count: 'exact', head: true })
-      .gte('analysed_at', weekAgo);
-    const n = count || 0;
-    if (n >= 50) {
-      // Format avec espace insecable tous les 3 chiffres (style FR)
-      el.textContent = n.toLocaleString('fr-FR');
-    } else {
-      // Pas assez pour faire social proof : masque le segment count
-      const parent = el.closest('.live-status');
-      if (parent) {
-        // Retire le separateur + le segment "X analyses"
-        const segs = parent.querySelectorAll('.ls-sep, span:last-child');
-        segs.forEach(s => { if (s.textContent?.includes('analyses') || s.classList.contains('ls-sep')) s.remove(); });
-      }
-    }
-  } catch (_) {
-    // En cas d'erreur, on masque simplement le count pour ne pas afficher "2 847" hardcoded
-    const parent = el.closest('.live-status');
-    if (parent) parent.style.display = 'none';
-  }
-}
 
 // Affiche le badge quota d'analyses dans la nav. Pill compact avec count + plan.
 // Remplace l'ancienne top-bar pleine largeur qui cassait le layout flex.
