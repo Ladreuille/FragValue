@@ -46,7 +46,10 @@
   --radius2: 12px;
 }
 
+html,body{height:100%}
 html{scroll-behavior:smooth}
+/* Sur la page demo on veut zero scroll : tout tient dans le viewport */
+body.demo-no-scroll{overflow:hidden;height:100vh}
 body{
   background:var(--bg);color:var(--text);
   font-family:var(--mono);font-size:14px;line-height:1.6;
@@ -99,21 +102,21 @@ nav:not(.fv-nav){
 .nav-cta:hover{background:var(--accent2);transform:translateY(-1px)}
 
 /* LAYOUT : 3 colonnes sur desktop (hero compact | slider maps | upload).
-   Tout tient dans le viewport sans scroll. */
+   Tout tient dans le viewport sans scroll (la nav est sticky 56px, donc
+   le layout prend exactement le reste). */
 .layout{
   display:grid;
-  grid-template-columns:minmax(320px,1fr) minmax(0,1.1fr) 420px;
-  height:100vh;
-  padding-top:56px;
+  grid-template-columns:minmax(320px,1fr) minmax(0,1.15fr) 420px;
+  height:calc(100vh - 56px);
   position:relative;z-index:1;
   overflow:hidden
 }
 
-/* GAUCHE : hero compact (pas de scroll, tient sur 1 ecran) */
+/* GAUCHE : hero compact ancre en haut avec padding-top aere */
 .left{
-  padding:32px 36px;
+  padding:48px 36px 32px;
   display:flex;flex-direction:column;
-  justify-content:center;
+  justify-content:flex-start;
   border-right:1px solid var(--border);
   position:relative;overflow:hidden
 }
@@ -343,20 +346,20 @@ nav:not(.fv-nav){
 
 /* MILIEU : colonne centrale entre hero et upload, dediee au slider de maps. */
 .middle{
-  padding:32px 24px;
+  padding:48px 24px 32px;
   display:flex;flex-direction:column;
-  justify-content:center;align-items:stretch;gap:14px;
+  justify-content:flex-start;align-items:stretch;gap:14px;
   position:relative;overflow:hidden;
   background:linear-gradient(180deg,rgba(15,16,16,.3),rgba(8,9,9,.6))
 }
 
-/* DROITE : upload compact (pas de sticky, tient sur 1 ecran sans scroll) */
+/* DROITE : upload compact, ancre en haut, tient sur 1 ecran sans scroll */
 .right{
   background:var(--surface);
   border-left:1px solid var(--border);
-  padding:24px 28px;
+  padding:48px 28px 28px;
   display:flex;flex-direction:column;
-  justify-content:center;
+  justify-content:flex-start;
   gap:6px;
   overflow:hidden
 }
@@ -620,7 +623,7 @@ nav:not(.fv-nav){
 @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
 </style>
 </head>
-<body>
+<body class="demo-no-scroll">
 
 <nav>
   <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
