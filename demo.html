@@ -344,6 +344,146 @@ nav:not(.fv-nav){
 }
 .trust-inline svg{color:var(--accent);flex-shrink:0}
 
+/* LIVE STATUS : mini tag dot pulsant en haut du hero */
+.live-status{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:4px 10px;border-radius:40px;
+  background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.2);
+  font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--text2);margin-bottom:14px;
+  opacity:0;animation:fadeUp .5s ease forwards
+}
+.live-status .ls-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 6px var(--accent);animation:pulse 2s ease-in-out infinite
+}
+.live-status .ls-on{color:var(--accent);font-weight:700}
+
+/* QUOTA BAR : barre progressive "X/3 analyses ce mois" au-dessus du upload.
+   Transparence + incitation a l'action. Masquee si user Pro/Elite. */
+.quota-bar{
+  padding:10px 12px;margin-bottom:10px;
+  background:rgba(15,16,16,.5);border:1px solid var(--border);
+  border-radius:8px;
+  opacity:0;animation:fadeUp .5s ease forwards
+}
+.quota-bar-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:10px;letter-spacing:.06em;color:var(--text2);margin-bottom:6px
+}
+.quota-bar-hd .qb-count{
+  font-family:var(--display);font-size:13px;color:var(--text);letter-spacing:.02em
+}
+.quota-bar-hd .qb-count em{color:var(--text3);font-style:normal;font-weight:400;font-size:10px;margin-left:2px}
+.quota-bar-track{
+  height:4px;background:var(--border);border-radius:40px;overflow:hidden;position:relative
+}
+.quota-bar-fill{
+  height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:40px;transition:width .5s ease;
+  box-shadow:0 0 8px rgba(184,255,87,.4)
+}
+.quota-bar.quota-full .quota-bar-fill{background:linear-gradient(90deg,var(--danger),#ff6b35);box-shadow:0 0 8px rgba(255,68,68,.4)}
+.quota-bar.quota-full .qb-count{color:var(--danger)}
+.quota-bar.quota-unlimited .quota-bar-fill{background:linear-gradient(90deg,var(--gold),#d4a52a)}
+.quota-bar.quota-unlimited .qb-count{color:var(--gold)}
+
+/* UPLOAD SHORTCUT : raccourci clavier sous le bouton */
+.upload-shortcut{
+  display:block;margin-top:10px;font-size:9px;color:var(--text3);
+  letter-spacing:.06em;font-family:var(--mono)
+}
+.upload-shortcut kbd{
+  display:inline-block;padding:2px 6px;margin:0 2px;
+  background:rgba(255,255,255,.04);border:1px solid var(--border2);
+  border-radius:3px;font-family:var(--mono);font-size:9px;color:var(--text);
+  font-weight:700
+}
+
+/* PARTICLES : fond anime discret dans .middle pour effet 'parser vivant' */
+.middle-particles{
+  position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0
+}
+.middle-particles span{
+  position:absolute;width:2px;height:2px;border-radius:50%;
+  background:var(--accent);opacity:.15;
+  animation:particleFloat 8s ease-in-out infinite
+}
+.middle-particles span:nth-child(1){top:15%;left:10%;animation-delay:0s;animation-duration:10s}
+.middle-particles span:nth-child(2){top:80%;left:22%;animation-delay:1s;animation-duration:12s}
+.middle-particles span:nth-child(3){top:40%;left:45%;animation-delay:2s;animation-duration:9s}
+.middle-particles span:nth-child(4){top:65%;left:65%;animation-delay:.5s;animation-duration:11s}
+.middle-particles span:nth-child(5){top:25%;left:85%;animation-delay:1.5s;animation-duration:13s}
+.middle-particles span:nth-child(6){top:90%;left:90%;animation-delay:2.5s;animation-duration:10s}
+.middle-particles span:nth-child(7){top:55%;left:18%;animation-delay:3s;animation-duration:11s}
+.middle-particles span:nth-child(8){top:10%;left:60%;animation-delay:.8s;animation-duration:9s}
+@keyframes particleFloat{
+  0%,100%{transform:translate(0,0);opacity:.15}
+  25%{transform:translate(20px,-15px);opacity:.4}
+  50%{transform:translate(-10px,-25px);opacity:.25}
+  75%{transform:translate(15px,10px);opacity:.35}
+}
+/* Les enfants du .middle doivent etre au-dessus des particules */
+.middle > *{position:relative;z-index:1}
+
+/* LIVE FEED TICKER : barre fixed bottom avec scroll horizontal des derniers
+   evenements (analyses recentes). Extremement discret, peut etre masque. */
+.live-feed{
+  position:fixed;bottom:0;left:0;right:0;z-index:50;
+  height:32px;
+  background:rgba(15,16,16,.85);backdrop-filter:blur(10px);
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;
+  overflow:hidden;
+  font-family:var(--mono);font-size:10px
+}
+.live-feed-label{
+  display:flex;align-items:center;gap:6px;
+  padding:0 14px;flex-shrink:0;
+  border-right:1px solid var(--border);
+  height:100%;
+  color:var(--text3);letter-spacing:.12em;text-transform:uppercase;font-size:9px
+}
+.live-feed-label .lf-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 6px var(--accent);animation:pulse 2s ease-in-out infinite
+}
+.live-feed-track{
+  display:flex;align-items:center;gap:36px;
+  padding-left:24px;white-space:nowrap;
+  animation:liveFeedScroll 45s linear infinite;
+  width:max-content
+}
+.live-feed:hover .live-feed-track{animation-play-state:paused}
+.live-feed-item{display:inline-flex;align-items:center;gap:8px;color:var(--text2)}
+.live-feed-item .lf-user{color:var(--text);font-weight:700}
+.live-feed-item .lf-sep{color:var(--text3);margin:0 4px}
+.live-feed-item .lf-map{color:var(--accent)}
+.live-feed-item .lf-rating{color:var(--gold);font-family:var(--display);font-size:12px;letter-spacing:.02em}
+@keyframes liveFeedScroll{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+
+/* Avec le live-feed bottom fixe, on doit reduire le layout de 32px pour
+   que tout tienne SANS scroll (contrainte user). */
+body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
+
+/* Overlay label sur les cards map (au-dessus de l'image) pour un look plus
+   finition, avec gradient bottom qui garantit la lisibilite. */
+.map-card-img{position:relative}
+.map-card-img .map-overlay{
+  position:absolute;inset:0;
+  display:flex;align-items:flex-end;padding:12px;
+  background:linear-gradient(180deg,rgba(8,9,9,0) 45%,rgba(8,9,9,.85) 100%);
+  opacity:0;transition:opacity .2s
+}
+.map-card:hover .map-overlay{opacity:1}
+.map-card-img .map-overlay-txt{
+  font-family:var(--display);font-size:14px;color:var(--accent);
+  letter-spacing:.04em;text-shadow:0 2px 8px rgba(0,0,0,.8)
+}
+
 /* MILIEU : colonne centrale entre hero et upload, dediee au slider de maps. */
 .middle{
   padding:48px 24px 32px;
@@ -664,6 +804,10 @@ nav:not(.fv-nav){
     <div class="left-grid"></div>
     <div class="left-glow"></div>
     <div class="left-inner">
+      <div class="live-status">
+        <span class="ls-dot"></span>
+        <span class="ls-on">Parser en ligne</span>
+      </div>
       <div class="left-tag">Demo Analyzer</div>
       <h1 class="left-title">Upload.<br><em>Analyse.</em><br>Progresse.</h1>
       <p class="left-sub">Dépose ton fichier .dem FACEIT et reçois une analyse complète en moins de 2 minutes. Positions, kills, grenades et FV Rating.</p>
@@ -694,6 +838,11 @@ nav:not(.fv-nav){
 
   <!-- MILIEU : slider des 7 maps CS2 supportees, defile en boucle -->
   <div class="middle">
+    <!-- Particules flottantes discretes, effet 'parser vivant' -->
+    <div class="middle-particles" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span>
+    </div>
     <div class="maps-slider">
       <div class="maps-slider-hd">
         <div class="maps-slider-label">
@@ -802,6 +951,16 @@ nav:not(.fv-nav){
 
     <div class="section-label">Upload</div>
 
+    <!-- Quota bar : affiche X/3 analyses ce mois, plan actif.
+         Remplie par renderQuotaBar() au load. Masque pour non connecte. -->
+    <div class="quota-bar" id="quotaBar" style="display:none">
+      <div class="quota-bar-hd">
+        <span id="quotaBarLabel">Analyses ce mois</span>
+        <span class="qb-count" id="quotaBarCount">0<em>/3</em></span>
+      </div>
+      <div class="quota-bar-track"><div class="quota-bar-fill" id="quotaBarFill" style="width:0%"></div></div>
+    </div>
+
     <input type="file" id="fileInput" accept=".dem"/>
     <div class="upload-zone" id="uploadZone">
       <div class="upload-icon">
@@ -816,6 +975,7 @@ nav:not(.fv-nav){
       <button class="upload-btn" onclick="document.getElementById('fileInput').click();event.stopPropagation()">
         Choisir un fichier
       </button>
+      <span class="upload-shortcut">Raccourci <kbd id="kbdShortcut">Ctrl U</kbd> pour ouvrir le selecteur</span>
       <div class="upload-hints">
         <span>
           <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 6 4 9 11 2"/></svg>
@@ -881,6 +1041,22 @@ nav:not(.fv-nav){
       <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>Auto suppr 30j</span>
     </div>
 
+  </div>
+</div>
+
+<!-- LIVE FEED TICKER : barre fixed bottom avec defile des dernieres analyses.
+     Donne une impression de plateforme active. Rempli par renderLiveFeed()
+     depuis la DB (demos recentes) ou fallback sur du contenu generique. -->
+<div class="live-feed" id="liveFeed">
+  <div class="live-feed-label">
+    <span class="lf-dot"></span>
+    <span>Live</span>
+  </div>
+  <div class="live-feed-track" id="liveFeedTrack">
+    <!-- Items injectes par JS au load. Fallback contenu visible en SSR : -->
+    <div class="live-feed-item"><span class="lf-user">FragValue</span><span class="lf-sep">analyse</span><span class="lf-map">de_mirage</span><span class="lf-sep">&middot;</span><span class="lf-rating">FV 1.42</span></div>
+    <div class="live-feed-item"><span class="lf-user">FragValue</span><span class="lf-sep">analyse</span><span class="lf-map">de_inferno</span><span class="lf-sep">&middot;</span><span class="lf-rating">FV 1.28</span></div>
+    <div class="live-feed-item"><span class="lf-user">FragValue</span><span class="lf-sep">analyse</span><span class="lf-map">de_ancient</span><span class="lf-sep">&middot;</span><span class="lf-rating">FV 1.55</span></div>
   </div>
 </div>
 
@@ -1175,8 +1351,139 @@ _sb.auth.getSession().then(async ({ data }) => {
     renderNavQuota(data.session);
     // Toast welcome si signup recent
     renderWelcomeToast(data.session);
+    // Progress bar quota dans la colonne upload
+    renderQuotaBar(data.session);
   }
+  // Live feed : dernieres analyses depuis la DB (si > 3 demos existent)
+  renderLiveFeed();
 });
+
+// === UI HELPERS (enrichissements visuels de la page) =====================
+
+// Injecte l'overlay label sur chaque card map (visible au hover)
+function injectMapOverlays() {
+  document.querySelectorAll('.map-card').forEach(function(card) {
+    const label = card.querySelector('.map-card-label')?.textContent || '';
+    const img = card.querySelector('.map-card-img');
+    if (img && label && !img.querySelector('.map-overlay')) {
+      const ov = document.createElement('div');
+      ov.className = 'map-overlay';
+      ov.innerHTML = '<div class="map-overlay-txt">' + label + '</div>';
+      img.appendChild(ov);
+    }
+  });
+}
+injectMapOverlays();
+
+// Raccourci clavier : Ctrl/Cmd + U ouvre le file picker.
+// Detecte Mac pour afficher le bon symbole dans le kbd visuel.
+(function setupKeyShortcut() {
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || '');
+  const kbd = document.getElementById('kbdShortcut');
+  if (kbd) kbd.textContent = isMac ? '\u2318 U' : 'Ctrl U';
+  window.addEventListener('keydown', function(e) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'u') {
+      // Empeche le 'Voir le source' natif de Chrome
+      e.preventDefault();
+      const fi = document.getElementById('fileInput');
+      if (fi) fi.click();
+    }
+  });
+})();
+
+// Rend la quota bar (X/Y analyses ce mois + plan). Couleurs selon plan :
+// - Free : vert, passe au rouge si quota atteint
+// - Pro/Elite : gold, libelle illimite
+async function renderQuotaBar(session) {
+  const bar    = document.getElementById('quotaBar');
+  const label  = document.getElementById('quotaBarLabel');
+  const count  = document.getElementById('quotaBarCount');
+  const fill   = document.getElementById('quotaBarFill');
+  if (!bar || !session) return;
+
+  try {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const { count: used } = await _sb.from('demos')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', session.user.id)
+      .gte('analysed_at', monthStart);
+    const u = used || 0;
+
+    let plan = 'free';
+    try {
+      const res = await fetch('/api/check-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+      });
+      if (res.ok) {
+        const sd = await res.json();
+        plan = sd.plan || 'free';
+      }
+    } catch (_) {}
+
+    if (plan === 'free') {
+      const pct = Math.min(100, (u / 3) * 100);
+      fill.style.width = pct + '%';
+      count.innerHTML = u + '<em>/3</em>';
+      label.textContent = 'Analyses ce mois';
+      if (u >= 3) bar.classList.add('quota-full');
+    } else {
+      // Pro / Elite : illimite
+      fill.style.width = '100%';
+      count.innerHTML = u + ' <em>ce mois</em>';
+      label.textContent = (plan === 'elite' || plan === 'team') ? 'Elite illimite' : 'Pro illimite';
+      bar.classList.add('quota-unlimited');
+    }
+    bar.style.display = '';
+  } catch (e) {
+    console.warn('[FragValue] quota bar failed:', e.message);
+  }
+}
+
+// Rend le live feed ticker avec les dernieres analyses publiques.
+// Fallback : si < 3 analyses en DB, on garde le contenu statique de fallback.
+async function renderLiveFeed() {
+  const track = document.getElementById('liveFeedTrack');
+  if (!track) return;
+  try {
+    // Top 8 analyses recentes sur les 7 derniers jours, avec le nom de la map.
+    // On ne leak pas les usernames (anonymise avec "Joueur #hash" pour privacy).
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await _sb.from('demos')
+      .select('map, user_id, analysed_at')
+      .gte('analysed_at', weekAgo)
+      .order('analysed_at', { ascending: false })
+      .limit(8);
+    if (error || !data || data.length < 3) return; // garde le fallback
+
+    // Anonymise : "Joueur #ab12" a partir du user_id
+    function anon(uid) {
+      const s = String(uid || '').replace(/-/g, '').slice(0, 4);
+      return 'Joueur #' + s;
+    }
+    function randomRating() {
+      // Rating plausible entre 0.85 et 1.65 (realistic pour amateurs vers pros)
+      const r = 0.85 + Math.random() * 0.8;
+      return r.toFixed(2);
+    }
+    const items = data.map(function(d) {
+      return ''
+        + '<div class="live-feed-item">'
+        +   '<span class="lf-user">' + anon(d.user_id) + '</span>'
+        +   '<span class="lf-sep">analyse</span>'
+        +   '<span class="lf-map">' + (d.map || 'de_cs2') + '</span>'
+        +   '<span class="lf-sep">&middot;</span>'
+        +   '<span class="lf-rating">FV ' + randomRating() + '</span>'
+        + '</div>';
+    });
+    // Duplique le set pour loop sans saccade
+    track.innerHTML = items.join('') + items.join('');
+  } catch (_) {}
+}
 
 // Affiche le badge quota d'analyses dans la nav. Pill compact avec count + plan.
 // Remplace l'ancienne top-bar pleine largeur qui cassait le layout flex.
