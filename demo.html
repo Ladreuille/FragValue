@@ -204,8 +204,13 @@ nav{
 }
 .top-bar-quota .qb-upgrade:hover{color:var(--accent2)}
 
-/* Quand top-bar visible, compense le padding-top du layout */
-body.has-top-bar .layout{padding-top:0}
+/* Quand top-bar visible, compense le padding-top du layout et ajuste
+   le min-height pour que le contenu centre reste visible sans scroll.
+   --tb-height est set par renderTopBar() via JS (offsetHeight mesure). */
+body.has-top-bar .layout{
+  padding-top:0;
+  min-height:calc(100vh - 56px - var(--tb-height, 48px))
+}
 
 /* UPLOAD ZONE */
 #fileInput{display:none}
@@ -942,6 +947,19 @@ async function renderTopBar(session) {
   if (hasAnything) {
     topBar.classList.add('visible');
     document.body.classList.add('has-top-bar');
+    // Mesure la vraie hauteur de la top-bar pour que le layout en dessous
+    // garde le contenu centre visible sans scroll indesirable. Le CSS
+    // utilise var(--tb-height, 48px) comme fallback.
+    const setTbHeight = () => {
+      document.documentElement.style.setProperty('--tb-height', topBar.offsetHeight + 'px');
+    };
+    setTbHeight();
+    // Re-mesure si la top-bar wrap (redimensionnement, orientation mobile)
+    if (window.ResizeObserver) {
+      new ResizeObserver(setTbHeight).observe(topBar);
+    } else {
+      window.addEventListener('resize', setTbHeight);
+    }
   }
 }
 
