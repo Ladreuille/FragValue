@@ -166,51 +166,70 @@ nav{
 }
 .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
-/* TOP BAR  welcome + quota */
-.top-bar{
-  position:relative;z-index:2;
-  margin-top:56px;
-  display:none;
-  padding:14px 32px;
-  background:rgba(15,16,16,.92);
-  border-bottom:1px solid var(--border);
-  font-size:11px;letter-spacing:.04em;
-  backdrop-filter:blur(8px);
-  animation:fadeUp .4s ease
+/* NAV QUOTA PILL : badge quota + plan, integre dans la nav (pas de top-bar
+   separee qui casserait le layout flex du .layout). Visible en permanence
+   quand l'user est connecte. */
+.nav-quota{
+  display:none;align-items:center;gap:10px;
+  padding:5px 12px;border:1px solid var(--border2);border-radius:40px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--text2);
+  margin-right:6px;transition:border-color .15s
 }
-.top-bar.visible{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:space-between}
-.top-bar-welcome{display:flex;align-items:center;gap:10px;color:var(--text)}
-.top-bar-welcome .wb-dot{
-  width:8px;height:8px;border-radius:50%;background:var(--accent);
-  box-shadow:0 0 10px var(--accent);animation:pulse 2s ease-in-out infinite
+.nav-quota.visible{display:inline-flex}
+.nav-quota .nq-count{color:var(--text);font-weight:700}
+.nav-quota .nq-count em{color:var(--text3);font-style:normal;font-weight:400}
+.nav-quota.quota-full{border-color:rgba(255,68,68,.35)}
+.nav-quota.quota-full .nq-count{color:var(--danger)}
+.nav-quota .nq-plan{
+  padding:2px 7px;border-radius:3px;
+  font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  background:rgba(255,255,255,.04);color:var(--text2)
 }
-.top-bar-welcome strong{color:var(--accent);font-weight:700}
-.top-bar-quota{display:flex;align-items:center;gap:10px;color:var(--text2)}
-.top-bar-quota .qb-count{
-  font-family:var(--display);font-size:16px;color:var(--text);letter-spacing:.02em
-}
-.top-bar-quota .qb-count em{color:var(--text3);font-style:normal;font-weight:400}
-.top-bar-quota .qb-count.quota-full{color:var(--danger)}
-.top-bar-quota .qb-plan{
-  padding:3px 8px;border:1px solid var(--border2);border-radius:4px;
-  font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2)
-}
-.top-bar-quota .qb-plan.plan-pro{border-color:var(--accent);color:var(--accent)}
-.top-bar-quota .qb-plan.plan-team{border-color:var(--gold);color:var(--gold)}
-.top-bar-quota .qb-upgrade{
-  color:var(--accent);text-decoration:none;
-  font-weight:700;letter-spacing:.04em;
+.nav-quota .nq-plan.plan-pro{background:rgba(184,255,87,.12);color:var(--accent)}
+.nav-quota .nq-plan.plan-elite{background:rgba(245,200,66,.14);color:var(--gold)}
+.nav-quota .nq-upgrade{
+  color:var(--accent);text-decoration:none;font-weight:700;
+  border-left:1px solid var(--border2);padding-left:10px;margin-left:2px;
   transition:color .15s
 }
-.top-bar-quota .qb-upgrade:hover{color:var(--accent2)}
-
-/* Quand top-bar visible, compense le padding-top du layout et ajuste
-   le min-height pour que le contenu centre reste visible sans scroll.
-   --tb-height est set par renderTopBar() via JS (offsetHeight mesure). */
-body.has-top-bar .layout{
-  padding-top:0;
-  min-height:calc(100vh - 56px - var(--tb-height, 48px))
+.nav-quota .nq-upgrade:hover{color:var(--accent2)}
+@media (max-width:720px){
+  .nav-quota{font-size:10px;padding:4px 10px;gap:8px}
+  .nav-quota .nq-count em{display:none}
 }
+
+/* WELCOME TOAST : auto-dismiss 10s apres le signup (?welcome=1).
+   Positionne top-right, fade-in puis slide-out. Pas intrusif. */
+.welcome-toast{
+  position:fixed;top:72px;right:20px;z-index:1000;
+  max-width:340px;width:calc(100% - 40px);
+  background:linear-gradient(135deg,rgba(15,16,16,.98),rgba(15,16,16,.92));
+  border:1px solid rgba(184,255,87,.45);border-radius:10px;
+  padding:14px 16px;
+  box-shadow:0 10px 40px rgba(0,0,0,.5),0 0 0 1px rgba(184,255,87,.05);
+  transform:translateX(calc(100% + 30px));opacity:0;
+  transition:transform .4s cubic-bezier(.2,.9,.3,1.2),opacity .3s
+}
+.welcome-toast.show{transform:translateX(0);opacity:1}
+.welcome-toast-row{display:flex;align-items:flex-start;gap:12px}
+.welcome-toast-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 10px var(--accent);margin-top:6px;flex-shrink:0;
+  animation:pulse 2s ease-in-out infinite
+}
+.welcome-toast-body{flex:1;min-width:0}
+.welcome-toast-title{
+  font-family:var(--display);font-size:13px;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);margin-bottom:4px
+}
+.welcome-toast-msg{font-size:11px;color:var(--text2);line-height:1.55}
+.welcome-toast-msg strong{color:var(--text)}
+.welcome-toast-close{
+  background:none;border:none;color:var(--text3);cursor:pointer;
+  padding:2px 6px;font-size:14px;line-height:1;
+  transition:color .15s
+}
+.welcome-toast-close:hover{color:var(--text)}
 
 /* UPLOAD ZONE */
 #fileInput{display:none}
@@ -392,21 +411,27 @@ body.has-top-bar .layout{
     <a href="pricing.html">Tarifs</a>
     <a href="demo.html" class="active">Analyse</a>
     <a href="matches.html" id="navMatchesBtn" style="display:none">Mes matchs</a>
+    <!-- Quota + plan pill : remplacee par JS quand user connecte -->
+    <div class="nav-quota" id="navQuota">
+      <span class="nq-count" id="navQuotaCount"></span>
+      <span class="nq-plan" id="navQuotaPlan">Free</span>
+      <a href="pricing.html" class="nq-upgrade" id="navQuotaUpgrade" style="display:none">Passer Pro</a>
+    </div>
     <a href="login.html" id="navLoginBtn">Connexion</a>
     <a href="account.html" class="nav-cta" id="navAccountBtn" style="display:none">Mon espace</a>
   </div>
 </nav>
 
-<!-- TOP BAR : welcome banner si ?welcome=1, et quota d'analyses -->
-<div class="top-bar" id="topBar">
-  <div class="top-bar-welcome" id="topBarWelcome" style="display:none">
-    <div class="wb-dot"></div>
-    <div>Bienvenue <strong id="topBarNick">sur FragValue</strong>. Depose ta premiere demo pour decouvrir ton FV Rating.</div>
-  </div>
-  <div class="top-bar-quota" id="topBarQuota" style="display:none">
-    <span class="qb-count" id="topBarCount"></span>
-    <span class="qb-plan" id="topBarPlan">Free</span>
-    <a href="pricing.html" class="qb-upgrade" id="topBarUpgrade" style="display:none">Passer Pro</a>
+<!-- Toast de bienvenue si ?welcome=1 (nouveau signup). Non intrusif,
+     auto-dismiss apres 10s. Positionne en top-right, ne casse pas le layout. -->
+<div class="welcome-toast" id="welcomeToast" style="display:none">
+  <div class="welcome-toast-row">
+    <div class="welcome-toast-dot"></div>
+    <div class="welcome-toast-body">
+      <div class="welcome-toast-title">Bienvenue <span id="welcomeToastNick"></span></div>
+      <div class="welcome-toast-msg">Depose ton fichier <strong>.dem FACEIT</strong> pour decouvrir ton FV Rating et ton plan d'action personnalise.</div>
+    </div>
+    <button class="welcome-toast-close" onclick="document.getElementById('welcomeToast').classList.remove('show');setTimeout(()=>document.getElementById('welcomeToast').style.display='none',400)" aria-label="Fermer">&times;</button>
   </div>
 </div>
 
@@ -851,116 +876,100 @@ _sb.auth.getSession().then(async ({ data }) => {
     document.getElementById('navAccountBtn').style.display = '';
     const mb = document.getElementById('navMatchesBtn');
     if (mb) mb.style.display = '';
+    // Badge quota dans la nav (pill entre "Mes matchs" et le bouton espace)
+    renderNavQuota(data.session);
+    // Toast welcome si signup recent
+    renderWelcomeToast(data.session);
   }
-  await renderTopBar(data?.session || null);
 });
 
-// Remplit la top-bar : welcome banner (si ?welcome=1) + badge quota d'analyses.
-// Quota visible AVANT upload pour eviter le gating en post-upload (frustrant).
-async function renderTopBar(session) {
-  const topBar       = document.getElementById('topBar');
-  const welcomeEl    = document.getElementById('topBarWelcome');
-  const quotaEl      = document.getElementById('topBarQuota');
-  const nickEl       = document.getElementById('topBarNick');
-  const countEl      = document.getElementById('topBarCount');
-  const planEl       = document.getElementById('topBarPlan');
-  const upgradeEl    = document.getElementById('topBarUpgrade');
+// Affiche le badge quota d'analyses dans la nav. Pill compact avec count + plan.
+// Remplace l'ancienne top-bar pleine largeur qui cassait le layout flex.
+async function renderNavQuota(session) {
+  const pillEl    = document.getElementById('navQuota');
+  const countEl   = document.getElementById('navQuotaCount');
+  const planEl    = document.getElementById('navQuotaPlan');
+  const upgradeEl = document.getElementById('navQuotaUpgrade');
+  if (!pillEl || !session) return;
 
-  const params    = new URLSearchParams(window.location.search);
-  const isWelcome = params.get('welcome') === '1';
-  let   hasAnything = false;
+  try {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const { count } = await _sb.from('demos')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', session.user.id)
+      .gte('analysed_at', monthStart);
+    const used = count || 0;
 
-  // 1) Welcome banner (peut etre affiche meme non-connecte apres verif email
-  // tres rare mais possible, on n'affiche que si session).
-  if (isWelcome && session) {
-    let nick = (session.user?.email || '').split('@')[0];
+    let plan = 'free';
     try {
-      const { data: prof } = await _sb.from('profiles')
-        .select('faceit_nickname')
-        .eq('id', session.user.id)
-        .single();
-      if (prof?.faceit_nickname) nick = prof.faceit_nickname;
-    } catch (_) {}
-    nickEl.textContent = nick;
-    welcomeEl.style.display = '';
-    hasAnything = true;
-  }
-
-  // 2) Quota badge (user connecte uniquement)
-  if (session) {
-    try {
-      // Count demos this month
-      const now = new Date();
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const { count } = await _sb.from('demos')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', session.user.id)
-        .gte('analysed_at', monthStart);
-      const used = count || 0;
-
-      // Resolve plan
-      let plan = 'free';
-      try {
-        const subRes = await fetch('/api/check-subscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + session.access_token,
-          },
-        });
-        if (subRes.ok) {
-          const sd = await subRes.json();
-          plan = sd.plan || 'free';
-        }
-      } catch (_) {}
-
-      // Render
-      if (plan === 'free') {
-        const remaining = Math.max(0, 3 - used);
-        countEl.innerHTML = `${used}<em>/3</em> analyses ce mois`;
-        if (used >= 3) {
-          countEl.classList.add('quota-full');
-          countEl.innerHTML = 'Quota atteint';
-          upgradeEl.style.display = '';
-        } else if (used >= 2) {
-          // Derniere analyse gratuite : highlight discret
-          upgradeEl.style.display = '';
-        }
-        planEl.textContent = 'Free';
-      } else if (plan === 'team' || plan === 'elite') {
-        countEl.innerHTML = `${used} analyses ce mois`;
-        planEl.textContent = 'Elite';
-        planEl.classList.add('plan-team');
-      } else {
-        // pro
-        countEl.innerHTML = `${used} analyses ce mois`;
-        planEl.textContent = 'Pro';
-        planEl.classList.add('plan-pro');
+      const subRes = await fetch('/api/check-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+      });
+      if (subRes.ok) {
+        const sd = await subRes.json();
+        plan = sd.plan || 'free';
       }
-      quotaEl.style.display = '';
-      hasAnything = true;
-    } catch (e) {
-      console.warn('[FragValue] top-bar quota failed:', e.message);
-    }
-  }
+    } catch (_) {}
 
-  if (hasAnything) {
-    topBar.classList.add('visible');
-    document.body.classList.add('has-top-bar');
-    // Mesure la vraie hauteur de la top-bar pour que le layout en dessous
-    // garde le contenu centre visible sans scroll indesirable. Le CSS
-    // utilise var(--tb-height, 48px) comme fallback.
-    const setTbHeight = () => {
-      document.documentElement.style.setProperty('--tb-height', topBar.offsetHeight + 'px');
-    };
-    setTbHeight();
-    // Re-mesure si la top-bar wrap (redimensionnement, orientation mobile)
-    if (window.ResizeObserver) {
-      new ResizeObserver(setTbHeight).observe(topBar);
+    if (plan === 'free') {
+      countEl.innerHTML = `${used}<em>/3</em>`;
+      planEl.textContent = 'Free';
+      if (used >= 3) {
+        pillEl.classList.add('quota-full');
+        countEl.innerHTML = 'Quota';
+        upgradeEl.style.display = '';
+      } else if (used >= 2) {
+        upgradeEl.style.display = '';
+      }
+    } else if (plan === 'elite' || plan === 'team') {
+      countEl.textContent = `${used}`;
+      planEl.textContent = 'Elite';
+      planEl.classList.add('plan-elite');
     } else {
-      window.addEventListener('resize', setTbHeight);
+      // pro
+      countEl.textContent = `${used}`;
+      planEl.textContent = 'Pro';
+      planEl.classList.add('plan-pro');
     }
+    pillEl.classList.add('visible');
+  } catch (e) {
+    console.warn('[FragValue] nav quota failed:', e.message);
   }
+}
+
+// Toast de bienvenue si ?welcome=1 dans l'URL. Auto-dismiss 10s.
+async function renderWelcomeToast(session) {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('welcome') !== '1' || !session) return;
+
+  const toast = document.getElementById('welcomeToast');
+  const nickEl = document.getElementById('welcomeToastNick');
+  if (!toast) return;
+
+  let nick = (session.user?.email || '').split('@')[0];
+  try {
+    const { data: prof } = await _sb.from('profiles')
+      .select('faceit_nickname')
+      .eq('id', session.user.id)
+      .single();
+    if (prof?.faceit_nickname) nick = prof.faceit_nickname;
+  } catch (_) {}
+  nickEl.textContent = nick;
+
+  toast.style.display = '';
+  // Trigger transition apres un tick pour que display:none → display:'' soit pris
+  requestAnimationFrame(() => toast.classList.add('show'));
+
+  // Auto-dismiss apres 10s
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => { toast.style.display = 'none'; }, 450);
+  }, 10000);
 }
 
 async function saveDemoAnalysis(d) {
