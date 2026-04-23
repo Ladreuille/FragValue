@@ -148,6 +148,74 @@ nav{
 .feat-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0}
 .feat strong{color:var(--text)}
 
+/* STATUS LIVE : petit ticker en haut du hero avec dot pulsante + stat live.
+   Sert de social proof et occupe l'espace vide en haut de .left-inner. */
+.live-status{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:6px 14px;border-radius:40px;
+  background:rgba(15,16,16,.6);border:1px solid var(--border);
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--text2);margin-bottom:22px;
+  opacity:0;animation:fadeUp .5s ease forwards;
+  backdrop-filter:blur(6px)
+}
+.live-status .ls-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 8px var(--accent);animation:pulse 2s ease-in-out infinite
+}
+.live-status .ls-on{color:var(--accent);font-weight:700}
+.live-status .ls-sep{
+  width:3px;height:3px;border-radius:50%;background:var(--border2);
+  flex-shrink:0
+}
+.live-status .ls-count{color:var(--text);font-weight:700;font-family:var(--display);font-size:12px}
+
+/* MINI PROCESS : 01 Upload - 02 Parse - 03 Analyse, horizontal compact.
+   Entre les features et le result-preview, remplit l'espace vide. */
+.mini-process{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-top:28px;padding:18px 20px;
+  background:linear-gradient(135deg,rgba(15,16,16,.6),rgba(15,16,16,.3));
+  border:1px solid var(--border);border-radius:10px;
+  opacity:0;animation:fadeUp .5s .25s ease forwards
+}
+.mp-step{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;flex:1;min-width:0
+}
+.mp-num{
+  font-family:var(--display);font-size:16px;letter-spacing:.02em;
+  color:var(--accent);line-height:1;flex-shrink:0
+}
+.mp-txt{
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2)
+}
+.mp-txt strong{color:var(--text);font-weight:700;display:block;font-size:11px;margin-bottom:2px;letter-spacing:.06em;text-transform:none;font-family:var(--mono)}
+.mp-arr{color:var(--border2);font-size:10px;flex-shrink:0}
+
+/* TRUST BADGES : sous stats-row dans .right, 3 badges confiance. */
+.trust-row{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  margin-top:14px;padding-top:16px;border-top:1px solid var(--border);
+  opacity:0;animation:fadeUp .5s .3s ease forwards
+}
+.trust{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:10px 8px;border:1px solid var(--border);border-radius:8px;
+  background:rgba(8,9,9,.4);text-align:center;
+  transition:border-color .2s
+}
+.trust:hover{border-color:var(--border2)}
+.trust svg{color:var(--accent);opacity:.8}
+.trust-title{
+  font-family:var(--mono);font-size:10px;color:var(--text);
+  font-weight:700;letter-spacing:.04em;line-height:1.3
+}
+.trust-sub{
+  font-size:9px;color:var(--text3);letter-spacing:.08em;
+  text-transform:uppercase;line-height:1.3
+}
+
 /* DROITE */
 .right{
   background:var(--surface);
@@ -442,6 +510,12 @@ nav{
     <div class="left-grid"></div>
     <div class="left-glow"></div>
     <div class="left-inner">
+      <div class="live-status">
+        <span class="ls-dot"></span>
+        <span class="ls-on">Parser en ligne</span>
+        <span class="ls-sep"></span>
+        <span><span class="ls-count" id="liveStatsCount">2 847</span> analyses cette semaine</span>
+      </div>
       <div class="left-tag">Demo Analyzer</div>
       <h1 class="left-title">Upload.<br><em>Analyse.</em><br>Progresse.</h1>
       <p class="left-sub">Dépose ton fichier .dem FACEIT et reçois une analyse complète en moins de 2 minutes. Positions, kills, grenades et FV Rating.</p>
@@ -465,6 +539,24 @@ nav{
         <div class="feat">
           <div class="feat-dot"></div>
           <span><strong>Stats équipes</strong> · KAST, ADR, opening duels</span>
+        </div>
+      </div>
+
+      <!-- MINI PROCESS 3 STEPS -->
+      <div class="mini-process">
+        <div class="mp-step">
+          <span class="mp-num">01</span>
+          <span class="mp-txt"><strong>Upload</strong>Fichier .dem</span>
+        </div>
+        <span class="mp-arr">&rsaquo;</span>
+        <div class="mp-step">
+          <span class="mp-num">02</span>
+          <span class="mp-txt"><strong>Parse</strong>Ticks + events</span>
+        </div>
+        <span class="mp-arr">&rsaquo;</span>
+        <div class="mp-step">
+          <span class="mp-num">03</span>
+          <span class="mp-txt"><strong>Diagnostic</strong>FV Rating + plan</span>
         </div>
       </div>
 
@@ -584,6 +676,34 @@ nav{
       <div class="sc"><div class="sc-val">134</div><div class="sc-lbl">Métriques</div></div>
       <div class="sc"><div class="sc-val">&lt;2min</div><div class="sc-lbl">Analyse</div></div>
       <div class="sc"><div class="sc-val">Free</div><div class="sc-lbl">Gratuit</div></div>
+    </div>
+
+    <!-- TRUST BADGES : reassure l'user avant l'upload (privacy, no credit card, no install) -->
+    <div class="trust-row">
+      <div class="trust">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <div class="trust-title">Donnees privees</div>
+        <div class="trust-sub">Chiffrees</div>
+      </div>
+      <div class="trust">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L3 6v6c0 5 4 9 9 10 5-1 9-5 9-10V6l-9-4z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+        <div class="trust-title">Sans carte</div>
+        <div class="trust-sub">100% gratuit</div>
+      </div>
+      <div class="trust">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <polyline points="12 7 12 12 15 14"/>
+        </svg>
+        <div class="trust-title">Supprimees</div>
+        <div class="trust-sub">Apres 30 jours</div>
+      </div>
     </div>
 
   </div>
@@ -881,7 +1001,41 @@ _sb.auth.getSession().then(async ({ data }) => {
     // Toast welcome si signup recent
     renderWelcomeToast(data.session);
   }
+  // Live counter "analyses cette semaine" : visible pour tous, connecte ou non
+  renderLiveCount();
 });
+
+// Affiche le compteur "analyses cette semaine" dans le status bar hero.
+// Social proof : si la DB a plus de 50 analyses sur 7 jours, on montre le
+// vrai chiffre ; sinon on masque le compteur (on garde juste "Parser en ligne")
+// pour ne pas sur-vendre en phase launch.
+async function renderLiveCount() {
+  const el = document.getElementById('liveStatsCount');
+  if (!el) return;
+  try {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { count } = await _sb.from('demos')
+      .select('*', { count: 'exact', head: true })
+      .gte('analysed_at', weekAgo);
+    const n = count || 0;
+    if (n >= 50) {
+      // Format avec espace insecable tous les 3 chiffres (style FR)
+      el.textContent = n.toLocaleString('fr-FR');
+    } else {
+      // Pas assez pour faire social proof : masque le segment count
+      const parent = el.closest('.live-status');
+      if (parent) {
+        // Retire le separateur + le segment "X analyses"
+        const segs = parent.querySelectorAll('.ls-sep, span:last-child');
+        segs.forEach(s => { if (s.textContent?.includes('analyses') || s.classList.contains('ls-sep')) s.remove(); });
+      }
+    }
+  } catch (_) {
+    // En cas d'erreur, on masque simplement le count pour ne pas afficher "2 847" hardcoded
+    const parent = el.closest('.live-status');
+    if (parent) parent.style.display = 'none';
+  }
+}
 
 // Affiche le badge quota d'analyses dans la nav. Pill compact avec count + plan.
 // Remplace l'ancienne top-bar pleine largeur qui cassait le layout flex.
