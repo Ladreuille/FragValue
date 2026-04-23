@@ -48,13 +48,37 @@ if (!SB_KEY) {
 const { createClient } = require('@supabase/supabase-js');
 const HLTV = require('hltv').default;
 
+// Playwright helper chargé a la demande (evite d'instancier Chromium
+// si on n'en a pas besoin — ex. mode manuel d'IDs qui passent via le
+// package hltv sans bloquer).
+let _pw = null;
+function pw() {
+  if (_pw) return _pw;
+  try {
+    _pw = require('./hltv-playwright');
+    return _pw;
+  } catch (e) {
+    console.warn('  ! Playwright helper indisponible :', e.message);
+    return null;
+  }
+}
+
 const s = createClient(SB_URL, SB_KEY);
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function parseIdFromArg(arg) {
-  if (/^\d+$/.test(arg)) return parseInt(arg, 10);
-  const m = String(arg).match(/\/matches\/(\d+)\//);
-  return m ? parseInt(m[1], 10) : null;
+  if (!arg) return null;
+  const s = String(arg).trim();
+  if (!s) return null;
+  // Nombre pur
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+  // URL matches/ID/slug (avec ou sans trailing slash ou slug)
+  const m1 = s.match(/\/matches\/(\d+)(?:\/|$|\?)/);
+  if (m1) return parseInt(m1[1], 10);
+  // Fallback : extrait le 1er nombre >= 1000000 (les IDs HLTV sont a 7 chiffres)
+  const m2 = s.match(/\b(\d{7,})\b/);
+  if (m2) return parseInt(m2[1], 10);
+  return null;
 }
 
 function cleanMapName(n) {
@@ -223,17 +247,37 @@ async function importOne(hltvId) {
   const normalized = normalizeMatch(match, hltvId);
   console.log(`  Score : ${normalized.team_a_score}-${normalized.team_b_score} (winner: ${normalized.winner || '-'})`);
 
-  // Fetch stats per-map en parallele
+  // Fetch stats per-map : essaye HLTV package d'abord, fallback Playwright
+  // si Cloudflare bloque le package.
   console.log(`  Fetching scorecards for ${normalized.maps.length} maps...`);
   const statsResults = await Promise.all(
-    normalized.maps.map(m =>
-      m.stats_id
-        ? HLTV.getMatchMapStats({ id: m.stats_id }).catch(e => {
-            console.warn(`    ! map ${m.map_name} stats failed: ${e.message.slice(0, 80)}`);
-            return null;
-          })
-        : null
-    )
+    normalized.maps.map(async (m) => {
+      if (!m.stats_id) return null;
+      // Tentative 1 : package hltv
+      try {
+        return await HLTV.getMatchMapStats({ id: m.stats_id });
+      } catch (e) {
+        const short = e.message.slice(0, 80);
+        // Tentative 2 : Playwright (Chromium headless bypass Cloudflare)
+        const helper = pw();
+        if (helper) {
+          try {
+            console.warn(`    ! map ${m.map_name} via hltv pkg bloque, retry Playwright...`);
+            const data = await helper.fetchMapStats(m.stats_id);
+            const totalPlayers = (data.playerStats?.team1?.length || 0) + (data.playerStats?.team2?.length || 0);
+            if (totalPlayers > 0) {
+              console.log(`    + map ${m.map_name} : ${totalPlayers} joueurs via Playwright`);
+              return data;
+            }
+            console.warn(`    ! map ${m.map_name} Playwright : 0 joueurs parses (HTML inattendu)`);
+          } catch (e2) {
+            console.warn(`    ! map ${m.map_name} Playwright echoue : ${e2.message.slice(0, 80)}`);
+          }
+        }
+        console.warn(`    ! map ${m.map_name} stats failed: ${short}`);
+        return null;
+      }
+    })
   );
   let totalPlayers = 0;
   normalized.maps.forEach((m, i) => {
@@ -272,43 +316,241 @@ async function importOne(hltvId) {
   return { ok: true, matchId, hasScorecards };
 }
 
+// ── Discovery via fetch brut avec headers de vrai Chrome ─────────────────
+// Le package hltv envoie une signature que Cloudflare fingerprint. On bypass
+// en faisant un GET direct sur /results avec des headers de navigateur reel.
+// Si Cloudflare nous rejette quand meme (challenge JS), on aura une erreur
+// claire et on pivote sur le fallback (hltv.getResults).
+async function discoverLatestViaRawFetch(maxMatches) {
+  const url = 'https://www.hltv.org/results?offset=0';
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9,fr;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
+    'Sec-Ch-Ua': '"Chromium";v="131", "Not_A Brand";v="24"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"macOS"',
+  };
+
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+  const html = await res.text();
+
+  // Detection Cloudflare challenge : la page de challenge contient ces markers
+  if (html.includes('Just a moment') ||
+      html.includes('cf-browser-verification') ||
+      html.includes('Access denied') ||
+      html.includes('Attention Required')) {
+    throw new Error('Cloudflare challenge page renvoyee (fetch bloque)');
+  }
+  if (html.length < 5000) {
+    throw new Error(`Reponse trop courte (${html.length} chars), probable blocage`);
+  }
+
+  // Parse avec cheerio
+  const cheerio = require('cheerio');
+  const $ = cheerio.load(html);
+  const ids = [];
+  // Les matchs sur /results sont sous .result-con avec un anchor href="/matches/ID/slug"
+  $('.result-con a.a-reset, .allres .result-con a, a[href*="/matches/"]').each((_, el) => {
+    const href = $(el).attr('href') || '';
+    const m = href.match(/\/matches\/(\d+)\//);
+    if (m) ids.push(parseInt(m[1], 10));
+  });
+
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) {
+    throw new Error('Aucun match extrait du HTML (selecteurs changes ?)');
+  }
+  return unique.slice(0, Math.max(maxMatches * 3, 30)); // on en recupere plus pour filtrer
+}
+
+// ── Mode "latest" : auto-discovery des derniers matchs HLTV ────────────
+// Priorite : Playwright (vrai Chromium, bypass Cloudflare) > fetch brut > HLTV.pkg
+async function discoverLatest(maxMatches) {
+  console.log(`→ Discovery : fetch les ${maxMatches} derniers resultats HLTV...`);
+
+  let ids = [];
+  let source = null;
+
+  // Tentative 1 : Playwright (le seul qui passe Cloudflare de maniere fiable)
+  const helper = pw();
+  if (helper) {
+    try {
+      ids = await helper.fetchMatchResults({ maxResults: Math.max(maxMatches * 2, 40) });
+      source = 'Playwright';
+      console.log(`  ${ids.length} matchs detectes via Playwright`);
+    } catch (e) {
+      console.log(`  Playwright echoue : ${e.message}`);
+    }
+  }
+
+  // Tentative 2 : fetch brut
+  if (!ids.length) {
+    try {
+      ids = await discoverLatestViaRawFetch(maxMatches);
+      source = 'fetch brut';
+      console.log(`  ${ids.length} matchs detectes via fetch brut`);
+    } catch (e) {
+      console.log(`  fetch brut echoue : ${e.message}`);
+    }
+  }
+
+  // Tentative 3 : HLTV package
+  if (!ids.length) {
+    try {
+      const results = await HLTV.getResults({ pages: 1 });
+      ids = results.map(r => r.id).filter(Boolean);
+      source = 'HLTV.getResults';
+      console.log(`  ${ids.length} matchs detectes via HLTV package`);
+    } catch (e2) {
+      console.error(`× Toutes les tentatives ont echoue : ${e2.message.slice(0, 80)}`);
+      console.error('');
+      console.error('═══ WORKAROUND MANUEL (1 min) ══════════════════════════════════');
+      console.error('1. Ouvre https://www.hltv.org/results dans ton navigateur');
+      console.error('2. Console (F12) > colle le snippet et copy auto-remplit clipboard :');
+      console.error('');
+      console.error('   (function(){const urls=Array.from(document.querySelectorAll(\'.result-con a.a-reset\')).map(a=>a.href).filter(h=>/\\/matches\\/\\d+\\//.test(h)).filter((v,i,a)=>a.indexOf(v)===i).slice(0,20);const cmd=\'node scripts/import-hltv.js \'+urls.map(u=>\'"\'+u+\'"\').join(\' \');console.log(cmd);try{copy(cmd);}catch(e){}})();');
+      console.error('');
+      console.error('3. Colle la commande dans le terminal');
+      console.error('═══════════════════════════════════════════════════════════════');
+      return [];
+    }
+  }
+
+  if (!ids.length) return [];
+
+  // Filter out existing in DB
+  const { data: existing } = await s
+    .from('pro_matches')
+    .select('hltv_match_id')
+    .in('hltv_match_id', ids);
+  const existingSet = new Set((existing || []).map(r => parseInt(r.hltv_match_id, 10)));
+  console.log(`  ${existingSet.size} deja en DB, ${ids.length - existingSet.size} nouveaux candidats`);
+
+  const newIds = ids.filter(id => !existingSet.has(id)).slice(0, maxMatches);
+  if (!newIds.length) {
+    console.log('  Tout est deja a jour.');
+    return [];
+  }
+
+  console.log(`  ${newIds.length} matchs vont etre importes (source : ${source}) :`);
+  newIds.forEach(id => console.log(`   - #${id}`));
+
+  return newIds;
+}
+
+// Lit les URLs/IDs depuis stdin (pour | pipe ou heredoc)
+async function readStdin() {
+  return new Promise((resolve) => {
+    let buf = '';
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', chunk => { buf += chunk; });
+    process.stdin.on('end', () => resolve(buf));
+  });
+}
+
 // ── Main ────────────────────────────────────────────────────────────────
 (async () => {
   const args = process.argv.slice(2);
   if (!args.length) {
-    console.log('Usage : node scripts/import-hltv.js <match_id_ou_url> [...]');
+    console.log('Usage :');
+    console.log('  node scripts/import-hltv.js <match_id_ou_url> [...]');
+    console.log('  node scripts/import-hltv.js latest [nombre]       # auto-discovery');
+    console.log('  pbpaste | node scripts/import-hltv.js --stdin     # lit les URLs depuis stdin');
     console.log('');
     console.log('Exemples :');
     console.log('  node scripts/import-hltv.js 2393243');
     console.log('  node scripts/import-hltv.js https://www.hltv.org/matches/2393243/furia-vs-vitality');
     console.log('  node scripts/import-hltv.js 2393243 2393244 2393245');
-    console.log('  npm run import:hltv -- 2393243');
+    console.log('  node scripts/import-hltv.js latest              # 10 derniers matchs auto');
+    console.log('  node scripts/import-hltv.js latest 20           # 20 derniers');
+    console.log('  pbpaste | node scripts/import-hltv.js --stdin   # depuis presse-papier');
+    console.log('  npm run import:hltv -- latest');
     process.exit(0);
   }
 
-  let ok = 0, fail = 0, partial = 0;
-  for (let i = 0; i < args.length; i++) {
-    const id = parseIdFromArg(args[i]);
-    if (!id) {
-      console.error(`× ID invalide : ${args[i]}`);
-      fail++;
-      continue;
+  // Mode "latest" : auto-discovery
+  let ids;
+  if (args[0] === 'latest' || args[0] === 'recent') {
+    const n = Math.max(1, Math.min(50, parseInt(args[1], 10) || 10));
+    ids = await discoverLatest(n);
+    if (!ids.length) {
+      console.log('\nRien a faire.');
+      process.exit(0);
     }
+  } else if (args[0] === '--stdin' || args[0] === '-') {
+    // Mode stdin : lit le presse-papier ou une sortie pipe
+    const raw = await readStdin();
+    const lines = raw.split(/[\s\n]+/).map(l => l.trim()).filter(Boolean);
+    console.log(`→ ${lines.length} entree(s) recue(s) via stdin`);
+    const parsed = lines.map(l => ({ raw: l, id: parseIdFromArg(l) }));
+    const valid = parsed.filter(p => p.id);
+    const invalid = parsed.filter(p => !p.id);
+    if (invalid.length) {
+      console.log(`  ${invalid.length} entree(s) invalide(s) (pas d'ID HLTV detecte) :`);
+      invalid.slice(0, 5).forEach(p => console.log(`    - ${p.raw.slice(0, 120)}`));
+      if (invalid.length > 5) console.log(`    ... et ${invalid.length - 5} autres`);
+    }
+    ids = [...new Set(valid.map(p => p.id))];
+    if (!ids.length) {
+      console.error('');
+      console.error('× Aucun ID valide trouve dans l\'entree stdin');
+      console.error('  Le snippet a-t-il bien copie des URLs de type https://www.hltv.org/matches/XXXXXXX/... ?');
+      console.error('  Verifie le contenu du presse-papier avec : pbpaste');
+      process.exit(1);
+    }
+    // Filter ceux deja en DB
+    const { data: existing } = await s
+      .from('pro_matches')
+      .select('hltv_match_id')
+      .in('hltv_match_id', ids);
+    const existingSet = new Set((existing || []).map(r => parseInt(r.hltv_match_id, 10)));
+    const before = ids.length;
+    ids = ids.filter(id => !existingSet.has(id));
+    console.log(`  ${before - ids.length} deja en DB, ${ids.length} a importer`);
+    if (!ids.length) {
+      console.log('Tout est deja a jour.');
+      process.exit(0);
+    }
+  } else {
+    // Mode manuel : match IDs / URLs
+    ids = args.map(a => parseIdFromArg(a)).filter(Boolean);
+    if (ids.length !== args.length) {
+      console.error(`× ${args.length - ids.length} ID(s) invalide(s) ignore(s)`);
+    }
+  }
+
+  let ok = 0, fail = 0, partial = 0;
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i];
     try {
       const r = await importOne(id);
       ok++;
       if (!r.hasScorecards) partial++;
     } catch (e) {
-      console.error(`× Match ${id} échoué : ${e.message}`);
+      console.error(`× Match ${id} echoue : ${e.message}`);
       fail++;
     }
-    // Rate limit respectueux si plusieurs matchs
-    if (i < args.length - 1) {
+    // Rate limit respectueux : 2s entre chaque match pour ne pas faire tomber HLTV
+    if (i < ids.length - 1) {
       console.log('  (attente 2s avant le prochain...)');
       await new Promise(r => setTimeout(r, 2000));
     }
   }
 
-  console.log(`\nTerminé : ${ok} réussi(s), ${fail} échoué(s)${partial > 0 ? `, ${partial} sans scorecards (à compléter dans /admin/pro-matches.html)` : ''}`);
+  console.log(`\nTermine : ${ok} reussi(s), ${fail} echoue(s)${partial > 0 ? `, ${partial} sans scorecards (a completer dans /admin/pro-matches.html)` : ''}`);
+  // Ferme Chromium si il a ete instancie
+  if (_pw) {
+    try { await _pw.closeBrowser(); } catch {}
+  }
   process.exit(fail > 0 ? 1 : 0);
 })();

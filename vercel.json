@@ -1,7 +1,15 @@
 {
   "functions": {
-    "api/admin-pro-match.js": { "maxDuration": 60 }
+    "api/admin-pro-match.js": { "maxDuration": 60 },
+    "api/cron/pandascore-sync.js": { "maxDuration": 300 }
   },
+  "_comment_crons": "Cron PandaScore desactive jusqu'a activation du plan Business ($79/mo). A re-activer en decommentant le bloc 'crons' ci-dessous quand PANDASCORE_API_TOKEN sera valide en prod.",
+  "_crons_disabled": [
+    {
+      "path": "/api/cron/pandascore-sync",
+      "schedule": "0 6 * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/faceit-config", "destination": "/api/faceit-config" },
     { "source": "/faceit-profile", "destination": "/api/faceit-profile" },
