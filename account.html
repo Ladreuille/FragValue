@@ -188,6 +188,26 @@
       <div class="page-sub">Gère ton abonnement, tes préférences et la sécurité de ton compte</div>
     </div>
 
+    <!-- FIRST DEMO BANNER : affiche si l'user n'a jamais analyse de demo.
+         Rempli par renderFirstDemoBanner() au page load. -->
+    <a id="firstDemoBanner" href="/demo.html?welcome=1" style="display:none;text-decoration:none;background:linear-gradient(135deg, rgba(184,255,87,.12), rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.45);border-radius:12px;padding:20px 22px;margin-bottom:24px;align-items:center;gap:16px;flex-wrap:wrap;transition:all .15s;cursor:pointer" onmouseover="this.style.borderColor='var(--accent)';this.style.transform='translateY(-1px)'" onmouseout="this.style.borderColor='rgba(184,255,87,.45)';this.style.transform='translateY(0)'">
+      <div style="width:48px;height:48px;border-radius:12px;background:rgba(184,255,87,.15);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:220px">
+        <div style="font-family:var(--display);font-size:16px;color:var(--accent);letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px">Fais ta premiere analyse</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.55">Depose un fichier .dem FACEIT. Tu recois ton FV Rating, tes heatmaps et ton plan d'action en 2 minutes. 3 analyses offertes ce mois.</div>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:11px 22px;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.04em">
+        Analyser ma demo
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+    </a>
+
     <!-- ABONNEMENT -->
     <div class="tab-panel active" id="panelSubscription">
       <div class="sec-label">Mon abonnement</div>
@@ -470,6 +490,8 @@ async function init() {
   }
   // Toujours fetch les feedbacks au load (pour le badge non-lu, meme si on est sur un autre tab)
   refreshFeedbackBadge();
+  // Banner d'activation : si l'user n'a jamais analyse de demo, on l'y invite.
+  renderFirstDemoBanner(session.user.id);
   if (window.location.search.includes('checkout=success')) {
     showBanner('Bienvenue dans Pro. Ton abonnement est actif.', 'ok');
     // Force re-fetch : le webhook Stripe peut prendre 2-5s pour peupler la DB
@@ -501,6 +523,25 @@ async function init() {
       }
     }
   } catch {}
+}
+
+// Affiche un banner d'activation si l'user n'a jamais analyse de demo.
+// Visible quel que soit le tab actif, pour pousser le "aha moment" de la 1re
+// analyse. Le banner est un lien vers /demo.html?welcome=1.
+async function renderFirstDemoBanner(userId) {
+  try {
+    const { count, error } = await sb
+      .from('demos')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    if (error) return;
+    if ((count || 0) === 0) {
+      const el = document.getElementById('firstDemoBanner');
+      if (el) el.style.display = 'flex';
+    }
+  } catch (e) {
+    console.warn('[FragValue] firstDemoBanner failed:', e.message);
+  }
 }
 
 function setTab(tab, btn) {

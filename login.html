@@ -257,11 +257,29 @@ async function attributeReferrer(session) {
 }
 
 // Rediriger si déjà connecté + lier FACEIT en attente
+// Choisit la destination post-login : users qui n'ont jamais upload de demo
+// atterrissent direct sur /demo.html?welcome=1 pour les guider vers la 1re
+// analyse (le "aha moment"). Users qui ont deja des demos : account.html
+// (abonnement, historique, parrainage).
+async function getPostLoginDestination(userId) {
+  try {
+    const { count, error } = await _sb
+      .from('demos')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    if (error) throw error;
+    return (count && count > 0) ? 'account.html' : 'demo.html?welcome=1';
+  } catch (e) {
+    console.warn('[FragValue] count demos failed, fallback account.html:', e.message);
+    return 'account.html';
+  }
+}
+
 _sb.auth.getSession().then(async ({ data }) => {
   if (data.session) {
     await linkPendingFaceit(data.session.user.id);
     await attributeReferrer(data.session);
-    window.location.href = 'account.html';
+    window.location.href = await getPostLoginDestination(data.session.user.id);
   }
 });
 
@@ -334,9 +352,10 @@ async function handleSubmit() {
       if (error) throw error;
       showMsg('Compte créé. Vérifie ta boîte mail pour confirmer.', 'success');
     } else {
-      const { error } = await _sb.auth.signInWithPassword({ email, password: pass });
+      const { data: signinData, error } = await _sb.auth.signInWithPassword({ email, password: pass });
       if (error) throw error;
-      window.location.href = 'account.html';
+      const uid = signinData?.user?.id || signinData?.session?.user?.id;
+      window.location.href = uid ? await getPostLoginDestination(uid) : 'account.html';
     }
   } catch(e) {
     showMsg(translateAuthError(e), 'error');

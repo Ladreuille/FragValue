@@ -166,6 +166,47 @@ nav{
 }
 .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
+/* TOP BAR  welcome + quota */
+.top-bar{
+  position:relative;z-index:2;
+  margin-top:56px;
+  display:none;
+  padding:14px 32px;
+  background:rgba(15,16,16,.92);
+  border-bottom:1px solid var(--border);
+  font-size:11px;letter-spacing:.04em;
+  backdrop-filter:blur(8px);
+  animation:fadeUp .4s ease
+}
+.top-bar.visible{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:space-between}
+.top-bar-welcome{display:flex;align-items:center;gap:10px;color:var(--text)}
+.top-bar-welcome .wb-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 10px var(--accent);animation:pulse 2s ease-in-out infinite
+}
+.top-bar-welcome strong{color:var(--accent);font-weight:700}
+.top-bar-quota{display:flex;align-items:center;gap:10px;color:var(--text2)}
+.top-bar-quota .qb-count{
+  font-family:var(--display);font-size:16px;color:var(--text);letter-spacing:.02em
+}
+.top-bar-quota .qb-count em{color:var(--text3);font-style:normal;font-weight:400}
+.top-bar-quota .qb-count.quota-full{color:var(--danger)}
+.top-bar-quota .qb-plan{
+  padding:3px 8px;border:1px solid var(--border2);border-radius:4px;
+  font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2)
+}
+.top-bar-quota .qb-plan.plan-pro{border-color:var(--accent);color:var(--accent)}
+.top-bar-quota .qb-plan.plan-team{border-color:var(--gold);color:var(--gold)}
+.top-bar-quota .qb-upgrade{
+  color:var(--accent);text-decoration:none;
+  font-weight:700;letter-spacing:.04em;
+  transition:color .15s
+}
+.top-bar-quota .qb-upgrade:hover{color:var(--accent2)}
+
+/* Quand top-bar visible, compense le padding-top du layout */
+body.has-top-bar .layout{padding-top:0}
+
 /* UPLOAD ZONE */
 #fileInput{display:none}
 .upload-zone{
@@ -350,6 +391,19 @@ nav{
     <a href="account.html" class="nav-cta" id="navAccountBtn" style="display:none">Mon espace</a>
   </div>
 </nav>
+
+<!-- TOP BAR : welcome banner si ?welcome=1, et quota d'analyses -->
+<div class="top-bar" id="topBar">
+  <div class="top-bar-welcome" id="topBarWelcome" style="display:none">
+    <div class="wb-dot"></div>
+    <div>Bienvenue <strong id="topBarNick">sur FragValue</strong>. Depose ta premiere demo pour decouvrir ton FV Rating.</div>
+  </div>
+  <div class="top-bar-quota" id="topBarQuota" style="display:none">
+    <span class="qb-count" id="topBarCount"></span>
+    <span class="qb-plan" id="topBarPlan">Free</span>
+    <a href="pricing.html" class="qb-upgrade" id="topBarUpgrade" style="display:none">Passer Pro</a>
+  </div>
+</div>
 
 <div class="layout">
 
@@ -786,14 +840,110 @@ const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-_sb.auth.getSession().then(({ data }) => {
+_sb.auth.getSession().then(async ({ data }) => {
   if (data.session) {
     document.getElementById('navLoginBtn').style.display  = 'none';
     document.getElementById('navAccountBtn').style.display = '';
     const mb = document.getElementById('navMatchesBtn');
     if (mb) mb.style.display = '';
   }
+  await renderTopBar(data?.session || null);
 });
+
+// Remplit la top-bar : welcome banner (si ?welcome=1) + badge quota d'analyses.
+// Quota visible AVANT upload pour eviter le gating en post-upload (frustrant).
+async function renderTopBar(session) {
+  const topBar       = document.getElementById('topBar');
+  const welcomeEl    = document.getElementById('topBarWelcome');
+  const quotaEl      = document.getElementById('topBarQuota');
+  const nickEl       = document.getElementById('topBarNick');
+  const countEl      = document.getElementById('topBarCount');
+  const planEl       = document.getElementById('topBarPlan');
+  const upgradeEl    = document.getElementById('topBarUpgrade');
+
+  const params    = new URLSearchParams(window.location.search);
+  const isWelcome = params.get('welcome') === '1';
+  let   hasAnything = false;
+
+  // 1) Welcome banner (peut etre affiche meme non-connecte apres verif email
+  // tres rare mais possible, on n'affiche que si session).
+  if (isWelcome && session) {
+    let nick = (session.user?.email || '').split('@')[0];
+    try {
+      const { data: prof } = await _sb.from('profiles')
+        .select('faceit_nickname')
+        .eq('id', session.user.id)
+        .single();
+      if (prof?.faceit_nickname) nick = prof.faceit_nickname;
+    } catch (_) {}
+    nickEl.textContent = nick;
+    welcomeEl.style.display = '';
+    hasAnything = true;
+  }
+
+  // 2) Quota badge (user connecte uniquement)
+  if (session) {
+    try {
+      // Count demos this month
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { count } = await _sb.from('demos')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', session.user.id)
+        .gte('analysed_at', monthStart);
+      const used = count || 0;
+
+      // Resolve plan
+      let plan = 'free';
+      try {
+        const subRes = await fetch('/api/check-subscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + session.access_token,
+          },
+        });
+        if (subRes.ok) {
+          const sd = await subRes.json();
+          plan = sd.plan || 'free';
+        }
+      } catch (_) {}
+
+      // Render
+      if (plan === 'free') {
+        const remaining = Math.max(0, 3 - used);
+        countEl.innerHTML = `${used}<em>/3</em> analyses ce mois`;
+        if (used >= 3) {
+          countEl.classList.add('quota-full');
+          countEl.innerHTML = 'Quota atteint';
+          upgradeEl.style.display = '';
+        } else if (used >= 2) {
+          // Derniere analyse gratuite : highlight discret
+          upgradeEl.style.display = '';
+        }
+        planEl.textContent = 'Free';
+      } else if (plan === 'team' || plan === 'elite') {
+        countEl.innerHTML = `${used} analyses ce mois`;
+        planEl.textContent = 'Elite';
+        planEl.classList.add('plan-team');
+      } else {
+        // pro
+        countEl.innerHTML = `${used} analyses ce mois`;
+        planEl.textContent = 'Pro';
+        planEl.classList.add('plan-pro');
+      }
+      quotaEl.style.display = '';
+      hasAnything = true;
+    } catch (e) {
+      console.warn('[FragValue] top-bar quota failed:', e.message);
+    }
+  }
+
+  if (hasAnything) {
+    topBar.classList.add('visible');
+    document.body.classList.add('has-top-bar');
+  }
+}
 
 async function saveDemoAnalysis(d) {
   try {
