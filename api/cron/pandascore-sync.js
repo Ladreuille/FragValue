@@ -1,12 +1,18 @@
 // api/cron/pandascore-sync.js
 // Cron Vercel quotidien qui importe les derniers matchs CS2 pros depuis PandaScore.
+//
+// CRON INACTIF : le bloc "crons" a ete retire de vercel.json car les detail
+// endpoints (/csgo/matches/{id}, /csgo/games/{id}) renvoient 403 sur le free tier
+// PandaScore. A reactiver quand on upgrade au plan Business ($79/mo) en ajoutant
+// dans vercel.json :
+//   "crons": [ { "path": "/api/cron/pandascore-sync", "schedule": "0 6 * * *" } ]
 // Schedule : 0 6 * * *  (6h UTC = 7h/8h Paris)
 //
 // Securise par Vercel CRON_SECRET : Vercel envoie automatiquement un header
 // Authorization: Bearer <CRON_SECRET> lors de l'execution des crons.
 //
 // Config env requise :
-//   PANDASCORE_API_TOKEN  (token PandaScore, free tier 1000 req/mois)
+//   PANDASCORE_API_TOKEN  (token PandaScore, Business tier 10000 req/mois)
 //   SUPABASE_URL
 //   SUPABASE_SERVICE_KEY
 //   CRON_SECRET           (auto-genere par Vercel pour secu)
