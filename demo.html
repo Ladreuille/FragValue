@@ -60,14 +60,19 @@ body::before{
   pointer-events:none;z-index:0;opacity:.4
 }
 
-/* NAV  - identique landing */
+/* NAV  - identique landing, un peu plus discrete sur cette page (pas de border
+   marquee qui cree une barre noire visible au scroll). Blur conserve. */
 nav{
   position:fixed;top:0;left:0;right:0;z-index:100;
   display:flex;align-items:center;justify-content:space-between;
   padding:0 32px;height:56px;
-  background:rgba(8,9,9,.85);
-  border-bottom:1px solid var(--border);
-  backdrop-filter:blur(12px)
+  background:rgba(8,9,9,.55);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)
+}
+/* Fade subtil en bas de la nav au lieu d'un border tranche */
+nav::after{
+  content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06) 20%,rgba(255,255,255,.06) 80%,transparent)
 }
 .nav-logo{
   font-family:var(--display);font-size:20px;letter-spacing:.04em;
@@ -100,9 +105,9 @@ nav{
 
 /* GAUCHE */
 .left{
-  padding:48px 56px;
+  padding:48px 56px 64px;
   display:flex;flex-direction:column;
-  justify-content:center;
+  justify-content:flex-start;
   border-right:1px solid var(--border);
   position:relative;overflow:hidden
 }
@@ -216,15 +221,63 @@ nav{
   text-transform:uppercase;line-height:1.3
 }
 
-/* DROITE */
+/* MINI MAP RADAR : visualisation stylisee d'une map CS2 avec dots de positions
+   et heatmap colore. Remplit l'espace vide au milieu de la page, montre la
+   value prop visuellement. */
+.mini-map{
+  margin-top:24px;position:relative;
+  border:1px solid var(--border);border-radius:10px;
+  padding:16px 18px 20px;
+  background:linear-gradient(135deg,rgba(15,16,16,.7),rgba(8,9,9,.4));
+  overflow:hidden;
+  opacity:0;animation:fadeUp .5s .35s ease forwards
+}
+.mini-map-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px
+}
+.mini-map-label{
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3)
+}
+.mini-map-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10px;color:var(--accent);
+  padding:3px 10px;border-radius:40px;border:1px solid rgba(184,255,87,.3);
+  background:rgba(184,255,87,.06)
+}
+.mini-map-pill .mm-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 6px var(--accent);animation:pulse 2s ease-in-out infinite
+}
+.mini-map-svg{
+  width:100%;height:auto;display:block;
+  filter:drop-shadow(0 4px 20px rgba(184,255,87,.04))
+}
+.mini-map-legend{
+  display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;
+  font-size:10px;color:var(--text3);letter-spacing:.04em
+}
+.mm-lg-item{display:flex;align-items:center;gap:6px}
+.mm-lg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* DROITE : sticky pour que le upload reste visible pendant le scroll.
+   max-height = viewport minus nav pour eviter debordement. */
 .right{
   background:var(--surface);
   border-left:1px solid var(--border);
   padding:32px 36px;
   display:flex;flex-direction:column;
-  justify-content:center;
-  gap:8px
+  justify-content:flex-start;
+  gap:8px;
+  position:sticky;
+  top:56px;
+  align-self:start;
+  max-height:calc(100vh - 56px);
+  overflow-y:auto;
+  scrollbar-width:thin
 }
+.right::-webkit-scrollbar{width:4px}
+.right::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
 /* SECTION LABEL  - identique landing */
 .section-label{
@@ -459,7 +512,11 @@ nav{
 @media(max-width:860px){
   .layout{grid-template-columns:1fr}
   .left{display:none}
-  .right{padding:40px 20px;min-height:calc(100vh - 56px)}
+  /* Mobile : retire le sticky, le .right prend tout l'espace normalement */
+  .right{
+    padding:40px 20px;min-height:calc(100vh - 56px);
+    position:static;max-height:none;overflow:visible;align-self:auto
+  }
 }
 
 /* ANIMATIONS */
@@ -590,6 +647,104 @@ nav{
           <span class="rp-bar-label">T side</span>
           <div class="rp-bar-track"><div class="rp-bar-fill" style="width:52%;background:var(--gold)"></div></div>
           <span class="rp-bar-num" style="color:var(--gold)">1.26</span>
+        </div>
+      </div>
+
+      <!-- MINI MAP RADAR : preview stylisee d'une analyse, type radar CS2 avec
+           dots de positions joueurs et zones heatmap. Donne du corps visuel et
+           illustre la value prop (positions, duels, zones cles). -->
+      <div class="mini-map">
+        <div class="mini-map-hd">
+          <span class="mini-map-label">Preview · de_mirage</span>
+          <span class="mini-map-pill"><span class="mm-dot"></span>Live analysis</span>
+        </div>
+        <svg class="mini-map-svg" viewBox="0 0 460 210" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <!-- Gradient heatmap chaud : jaune vers rouge pour les zones de duel -->
+            <radialGradient id="heatHot" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ff6b35" stop-opacity=".55"/>
+              <stop offset="55%" stop-color="#f5c842" stop-opacity=".25"/>
+              <stop offset="100%" stop-color="#f5c842" stop-opacity="0"/>
+            </radialGradient>
+            <!-- Gradient heatmap froid : accent vert pour les zones controlees -->
+            <radialGradient id="heatCool" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#b8ff57" stop-opacity=".35"/>
+              <stop offset="100%" stop-color="#b8ff57" stop-opacity="0"/>
+            </radialGradient>
+            <!-- Grille de background discrete -->
+            <pattern id="mapGrid" width="28" height="28" patternUnits="userSpaceOnUse">
+              <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#1c1e1e" stroke-width="1"/>
+            </pattern>
+          </defs>
+
+          <!-- Background + grille -->
+          <rect width="460" height="210" fill="#080909"/>
+          <rect width="460" height="210" fill="url(#mapGrid)"/>
+
+          <!-- Contours d'une map CS2 stylisee (abstraite, type mirage) -->
+          <g stroke="#2a2c2c" stroke-width="1.5" fill="#101111" opacity=".8">
+            <rect x="40" y="35" width="110" height="58" rx="3"/>
+            <rect x="175" y="25" width="80" height="50" rx="3"/>
+            <rect x="280" y="35" width="140" height="70" rx="3"/>
+            <rect x="60" y="120" width="100" height="60" rx="3"/>
+            <rect x="195" y="100" width="100" height="85" rx="3"/>
+            <rect x="320" y="130" width="95" height="55" rx="3"/>
+          </g>
+          <!-- Lignes de passage entre zones -->
+          <g stroke="#1c1e1e" stroke-width="1" stroke-dasharray="3 4" fill="none">
+            <path d="M150 65 L175 55"/>
+            <path d="M255 55 L280 65"/>
+            <path d="M110 95 L110 120"/>
+            <path d="M245 100 L245 75"/>
+            <path d="M330 110 L330 130"/>
+          </g>
+
+          <!-- Zones heatmap (blobs de couleur) -->
+          <ellipse cx="228" cy="130" rx="55" ry="40" fill="url(#heatHot)"/>
+          <ellipse cx="355" cy="65" rx="45" ry="32" fill="url(#heatHot)" opacity=".7"/>
+          <ellipse cx="100" cy="150" rx="42" ry="30" fill="url(#heatCool)"/>
+          <ellipse cx="95" cy="65" rx="35" ry="25" fill="url(#heatCool)" opacity=".6"/>
+
+          <!-- Dots joueurs (5 CT bleu-vert, 5 T gold) -->
+          <!-- CT positions -->
+          <circle cx="85" cy="58" r="4" fill="#b8ff57" stroke="#080909" stroke-width="1.5"/>
+          <circle cx="118" cy="70" r="4" fill="#b8ff57" stroke="#080909" stroke-width="1.5"/>
+          <circle cx="210" cy="45" r="4" fill="#b8ff57" stroke="#080909" stroke-width="1.5"/>
+          <circle cx="355" cy="60" r="4" fill="#b8ff57" stroke="#080909" stroke-width="1.5"/>
+          <circle cx="390" cy="75" r="4" fill="#b8ff57" stroke="#080909" stroke-width="1.5"/>
+          <!-- T positions -->
+          <circle cx="95" cy="150" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5"/>
+          <circle cx="135" cy="165" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5"/>
+          <circle cx="225" cy="140" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5"/>
+          <circle cx="255" cy="125" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5"/>
+          <circle cx="360" cy="160" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5"/>
+
+          <!-- Duels actifs : lignes pointillees entre dots opposes -->
+          <g stroke="#ff6b35" stroke-width="1" stroke-dasharray="2 3" opacity=".55" fill="none">
+            <path d="M210 45 L225 140"/>
+            <path d="M355 60 L360 160"/>
+          </g>
+
+          <!-- Labels de zones (petits callouts) -->
+          <g font-family="'Space Mono',monospace" font-size="8" fill="#7a8080" letter-spacing=".1em">
+            <text x="55" y="48" fill="#b8ff57" opacity=".9">CT SPAWN</text>
+            <text x="200" y="20" fill="#7a8080">MID</text>
+            <text x="335" y="28" fill="#ff6b35" opacity=".85">A SITE</text>
+            <text x="215" y="197" fill="#ff6b35" opacity=".85">B SITE</text>
+            <text x="75" y="190" fill="#f5c842" opacity=".8">T SPAWN</text>
+          </g>
+
+          <!-- Pulsation subtile sur le duel hot -->
+          <circle cx="228" cy="130" r="3" fill="#ff6b35">
+            <animate attributeName="r" values="3;10;3" dur="2.5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="1;.15;1" dur="2.5s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+        <div class="mini-map-legend">
+          <div class="mm-lg-item"><span class="mm-lg-dot" style="background:#b8ff57"></span>CT positions</div>
+          <div class="mm-lg-item"><span class="mm-lg-dot" style="background:#f5c842"></span>T positions</div>
+          <div class="mm-lg-item"><span class="mm-lg-dot" style="background:#ff6b35"></span>Zone chaude</div>
+          <div class="mm-lg-item"><span class="mm-lg-dot" style="background:#7a8080"></span>Grille 128 ticks</div>
         </div>
       </div>
     </div>
