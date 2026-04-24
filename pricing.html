@@ -289,7 +289,20 @@ section{padding:80px 80px;position:relative;z-index:1}
 .pricing-btn.featured:hover{background:var(--accent2)}
 .pricing-btn[data-state="saved"]{background:var(--border2);color:var(--text);cursor:default}
 .pricing-btn[data-state="saved"]:hover{background:var(--border2);transform:none}
+.pricing-btn:disabled{opacity:.8;cursor:wait !important}
+.pricing-btn:disabled:hover{transform:none;filter:none}
 @keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+
+/* Spinner inline pour les boutons de checkout pendant la redirection Stripe.
+   S'adapte a la couleur du bouton parent (pricing-btn ou pricing-btn.featured)
+   via currentColor sur les borders. */
+.spinner-inline{
+  display:inline-block;width:14px;height:14px;
+  border:2px solid currentColor;border-top-color:transparent;
+  border-radius:50%;vertical-align:-3px;
+  animation:spinnerInline .7s linear infinite
+}
+@keyframes spinnerInline{to{transform:rotate(360deg)}}
 
 /* COMPARISON TABLE */
 .compare-section{
@@ -609,7 +622,7 @@ footer{
           Support prioritaire (&lt; 24h)
         </div>
       </div>
-      <button type="button" class="pricing-btn featured" id="proCta" onclick="startCheckout(isYearly ? 'pro_yearly' : 'pro_monthly')">Démarrer l'essai 7 jours</button>
+      <button type="button" class="pricing-btn featured" id="proCta" onclick="startCheckout(isYearly ? 'pro_yearly' : 'pro_monthly', this)">Démarrer l'essai 7 jours</button>
       <div class="pricing-cta-sub" style="margin-top:10px">Sans carte pendant l'essai &middot; Annulation en 1 clic</div>
     </div>
 
@@ -666,7 +679,7 @@ footer{
           Support prioritaire (&lt; 4h)
         </div>
       </div>
-      <button type="button" class="pricing-btn" id="eliteCta" onclick="startCheckout(isYearly ? 'elite_yearly' : 'elite_monthly')">Démarrer l'essai 7 jours</button>
+      <button type="button" class="pricing-btn" id="eliteCta" onclick="startCheckout(isYearly ? 'elite_yearly' : 'elite_monthly', this)">Démarrer l'essai 7 jours</button>
       <div class="pricing-cta-sub" style="margin-top:10px">Sans carte pendant l'essai &middot; Annulation en 1 clic</div>
     </div>
 
@@ -1052,17 +1065,34 @@ function toggleBilling() {
   }
 }
 
-/* ── Checkout (desactive pendant la phase waitlist Pro) ──
-   Reactive le bouton "Essayer Pro 7 jours" + change le href ci-dessus dans le
-   markup (data-teaser-cta="pro-launch" → onclick="startCheckout(...)") quand
-   Stripe Live est setup et que le SIRET est obtenu.
-   Code conserve pour reactivation rapide en 1 commit. */
-async function startCheckout(plan) {
+/* ── Checkout ──────────────────────────────────────────────────────────
+   Lance une Stripe Checkout Session via /api/stripe-checkout puis redirige.
+   Le bouton cliqué passe `btn` au handler pour gerer l'etat de loading
+   (spinner + texte "Redirection..." + disable) pendant les 1-3s d'attente.
+*/
+async function startCheckout(plan, btn) {
+  // Sauvegarde l'etat initial pour restore en cas d'erreur
+  const originalLabel = btn?.innerHTML;
+  const setLoading = (loading) => {
+    if (!btn) return;
+    if (loading) {
+      btn.disabled = true;
+      btn.style.cursor = 'wait';
+      btn.innerHTML = '<span class="spinner-inline" aria-hidden="true"></span><span style="margin-left:8px">Redirection...</span>';
+    } else {
+      btn.disabled = false;
+      btn.style.cursor = '';
+      if (originalLabel) btn.innerHTML = originalLabel;
+    }
+  };
+
+  setLoading(true);
+
   const { data: { session } } = await _sb.auth.getSession();
 
   if (!session) {
-    window.location.href = 'login.html';
-    return;
+    window.location.href = 'login.html?redirect=/pricing.html';
+    return; // pas de reset : on quitte la page
   }
 
   const headers = {
@@ -1078,11 +1108,14 @@ async function startCheckout(plan) {
     });
     const data = await res.json();
     if (data.url) {
+      // Garde le spinner affiche pendant la redirection vers Stripe
       window.location.href = data.url;
     } else {
+      setLoading(false);
       showError(data.error || 'Erreur inconnue');
     }
   } catch (err) {
+    setLoading(false);
     showError('Erreur reseau. Réessaye.');
   }
 }
