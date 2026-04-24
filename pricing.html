@@ -609,24 +609,16 @@ footer{
           Support prioritaire (&lt; 24h)
         </div>
       </div>
-      <a href="account.html#settings" class="pricing-btn featured" id="proCta" data-teaser-cta="pro-launch">Activer les notifications</a>
-      <div class="pricing-cta-sub" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <span style="display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);padding:5px 12px;border-radius:40px">
-          <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulseDot 1.8s ease-in-out infinite"></span>
-          <strong data-teaser-counter="pro-launch" style="color:var(--accent)">-</strong>
-          <span>en attente</span>
-        </span>
-      </div>
-      <div class="pricing-cta-sub" style="margin-top:8px;font-size:11px;color:var(--text3)">Lancement officiel imminent &middot; 7 jours gratuits dès l'ouverture</div>
+      <button type="button" class="pricing-btn featured" id="proCta" onclick="startCheckout(isYearly ? 'pro_yearly' : 'pro_monthly')">Démarrer l'essai 7 jours</button>
+      <div class="pricing-cta-sub" style="margin-top:10px">Sans carte pendant l'essai &middot; Annulation en 1 clic</div>
     </div>
 
-    <!-- ELITE : DOMINER (BIENTOT) -->
-    <div class="pricing-card soon">
-      <div class="soon-badge">BIENT&Ocirc;T</div>
+    <!-- ELITE : DOMINER -->
+    <div class="pricing-card">
       <div class="pricing-tag">Dominer</div>
       <div class="pricing-name">Elite</div>
-      <div class="pricing-price" id="elitePrice" style="color:var(--text2)">?<span style="color:var(--text3)">&euro;/mois</span></div>
-      <div class="pricing-period" id="elitePeriod">Tarif communiqué au lancement &middot; Coachs et équipes</div>
+      <div class="pricing-price" id="elitePrice">29<span>&euro;/mois</span></div>
+      <div class="pricing-period" id="elitePeriod">soit 348&euro;/an &middot; facturé mensuellement</div>
       <hr class="pricing-divider">
       <div class="pricing-features">
         <div class="pricing-feature">
@@ -674,8 +666,8 @@ footer{
           Support prioritaire (&lt; 4h)
         </div>
       </div>
-      <a href="mailto:contact@fragvalue.com?subject=Intérêt%20plan%20Elite" class="pricing-btn">Me prévenir du lancement</a>
-      <div class="pricing-cta-sub">Accès anticipe pour les early backers</div>
+      <button type="button" class="pricing-btn" id="eliteCta" onclick="startCheckout(isYearly ? 'elite_yearly' : 'elite_monthly')">Démarrer l'essai 7 jours</button>
+      <div class="pricing-cta-sub" style="margin-top:10px">Sans carte pendant l'essai &middot; Annulation en 1 clic</div>
     </div>
 
   </div>
@@ -1050,14 +1042,14 @@ function toggleBilling() {
   if (isYearly) {
     proPrice.innerHTML = '79<span>\u20ac/an</span>';
     proPeriod.textContent = 'soit 6,58\u20ac/mois \u00b7 2 mois offerts';
+    if (elitePrice) elitePrice.innerHTML = '290<span>\u20ac/an</span>';
+    if (elitePeriod) elitePeriod.textContent = 'soit 24,17\u20ac/mois \u00b7 17% d\'economie';
   } else {
     proPrice.innerHTML = '9<span>\u20ac/mois</span>';
     proPeriod.textContent = 'soit 108\u20ac/an';
+    if (elitePrice) elitePrice.innerHTML = '29<span>\u20ac/mois</span>';
+    if (elitePeriod) elitePeriod.textContent = 'soit 348\u20ac/an \u00b7 facturé mensuellement';
   }
-  // Elite : prix masqué tant que plan pas lancé. Le tarif sera communiqué
-  // aux early backers par email une fois la beta ouverte.
-  if (elitePrice) elitePrice.innerHTML = '?<span style="color:var(--text3)">\u20ac/mois</span>';
-  if (elitePeriod) elitePeriod.textContent = 'Tarif communiqu\u00e9 au lancement \u00b7 Coachs et \u00e9quipes';
 }
 
 /* ── Checkout (desactive pendant la phase waitlist Pro) ──
