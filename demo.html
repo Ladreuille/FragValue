@@ -787,6 +787,7 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
 </style>
+<script src="/analytics.js" defer></script>
 </head>
 <body class="demo-no-scroll">
 
@@ -1190,7 +1191,14 @@ async function startAnalysis() {
 
   // Plan gating
   const allowed = await checkPlanGating();
-  if (!allowed) return;
+  if (!allowed) {
+    if (typeof window.fvTrack === 'function') window.fvTrack('Quota Hit', { plan: 'free' });
+    return;
+  }
+  // Funnel : upload demo demarre (le user a passe le quota check, va consommer 1 analyse)
+  if (typeof window.fvTrack === 'function') {
+    window.fvTrack('Demo Upload Start', { sizeMB: Math.round(selectedFile.size / 1024 / 1024) });
+  }
 
   // Pre-check parser availability (evite d'uploader 500 MB si Railway est down)
   // Si le ping initial a échoué, on retry avant l'upload.

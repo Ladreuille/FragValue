@@ -153,6 +153,7 @@
 
     @media(max-width:768px){.page{padding:16px}}
   </style>
+<script src="/analytics.js" defer></script>
 </head>
 <body>
 
@@ -496,6 +497,8 @@ async function init() {
     // Banner riche dedie post-checkout : reste visible jusqu'au clic et propose
     // un CTA direct vers l'analyse demo. Pousse l'activation apres conversion.
     showCheckoutSuccessBanner();
+    // Funnel : conversion reussie (capture client-side, complete celle du webhook serveur)
+    if (typeof window.fvTrack === 'function') window.fvTrack('Checkout Success');
     // Force re-fetch : le webhook Stripe peut prendre 2-5s pour peupler la DB
     // après le redirect. On retry une fois après 3s pour catch l'update.
     setTimeout(() => { _subLoaded = false; loadSubscription(); }, 3000);

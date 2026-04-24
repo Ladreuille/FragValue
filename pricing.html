@@ -460,6 +460,7 @@ footer{
   .faq-a-inner{padding:0 18px 16px;font-size:11px}
 }
 </style>
+<script src="/analytics.js" defer></script>
 </head>
 <body>
 
@@ -1087,6 +1088,8 @@ async function startCheckout(plan, btn) {
   };
 
   setLoading(true);
+  // Funnel : clic sur le CTA checkout (avant redirect Stripe)
+  if (typeof window.fvTrack === 'function') window.fvTrack('Checkout Start', { plan: plan });
 
   const { data: { session } } = await _sb.auth.getSession();
 
