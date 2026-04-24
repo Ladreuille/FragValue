@@ -35,7 +35,7 @@ module.exports = async function handler(req, res) {
   try {
     const s = sb();
     const { plan, source } = await getUserPlan(req.headers.authorization);
-    const isPaid = plan === 'pro' || plan === 'team';
+    const isPaid = plan === 'pro' || plan === 'elite' || plan === 'team';
 
     // 1. Match meta + event
     const { data: match, error: matchErr } = await s

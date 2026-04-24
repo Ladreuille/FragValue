@@ -31,7 +31,7 @@ module.exports = async function handler(req, res) {
     // Recupere les details de la subscription pour current_period_end + cancel_at_period_end
     // depuis la DB (peuplee par le webhook). Pour l'admin on retourne juste { active }.
     if (result.source === 'admin') {
-      return res.status(200).json({ plan: 'team', status: 'active', isAdmin: true });
+      return res.status(200).json({ plan: 'elite', status: 'active', isAdmin: true });
     }
 
     const { createClient } = await import('@supabase/supabase-js');

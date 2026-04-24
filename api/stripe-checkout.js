@@ -1,5 +1,5 @@
 // api/stripe-checkout.js // FragValue
-// Cree une Stripe Checkout Session pour l'abonnement Pro ou Team
+// Cree une Stripe Checkout Session pour l'abonnement Pro ou Elite
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 
@@ -30,21 +30,30 @@ export default async function handler(req, res) {
     const Stripe = (await import('stripe')).default;
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
 
-    // Mapping plan logique → env var. On valide UNIQUEMENT le plan demande
-    // pour qu'un Team Annuel pas configure ne bloque pas un checkout Pro.
+    // Mapping plan logique → env vars. Chaque plan peut etre resolu par
+    // plusieurs env vars (dans l'ordre), ce qui permet de migrer les anciens
+    // noms STRIPE_PRICE_TEAM_* vers STRIPE_PRICE_ELITE_* sans casser la prod
+    // pendant la transition. La premiere env var definie gagne.
     const PLAN_ENV = {
-      pro_monthly:  'STRIPE_PRICE_PRO_MONTHLY',
-      pro_yearly:   'STRIPE_PRICE_PRO_ANNUEL',
-      team_monthly: 'STRIPE_PRICE_TEAM_MONTHLY',
-      team_yearly:  'STRIPE_PRICE_TEAM_ANNUEL',
+      pro_monthly:    ['STRIPE_PRICE_PRO_MONTHLY'],
+      pro_yearly:     ['STRIPE_PRICE_PRO_ANNUEL'],
+      elite_monthly:  ['STRIPE_PRICE_ELITE_MONTHLY', 'STRIPE_PRICE_TEAM_MONTHLY'],
+      elite_yearly:   ['STRIPE_PRICE_ELITE_ANNUEL',  'STRIPE_PRICE_TEAM_ANNUEL'],
     };
+    // Alias legacy pour backward-compat : le front peut encore envoyer team_*
+    PLAN_ENV.team_monthly = PLAN_ENV.elite_monthly;
+    PLAN_ENV.team_yearly  = PLAN_ENV.elite_yearly;
 
     const body = req.body || {};
     const plan = body.plan;
     if (!plan || !PLAN_ENV[plan]) return res.status(400).json({ error: 'Plan invalide : ' + (plan || 'undefined') });
 
-    const priceId = process.env[PLAN_ENV[plan]];
-    if (!priceId) return res.status(503).json({ error: 'Variable manquante : ' + PLAN_ENV[plan] });
+    // Normalise le plan team_* -> elite_* pour les metadata Stripe
+    const normalizedPlan = plan.startsWith('team_') ? plan.replace('team_', 'elite_') : plan;
+
+    const envNames = PLAN_ENV[plan];
+    const priceId = envNames.map(n => process.env[n]).find(v => !!v);
+    if (!priceId) return res.status(503).json({ error: 'Variable manquante : ' + envNames.join(' / ') });
 
     const siteOrigin = originFrom(req);
     const sessionParams = {
@@ -55,7 +64,7 @@ export default async function handler(req, res) {
       allow_promotion_codes: true,
       // Metadata pour le webhook : sans supabase_user_id, le checkout.session.completed
       // ne peut pas associer la subscription au bon user en DB.
-      metadata: { plan },
+      metadata: { plan: normalizedPlan },
       // 7 jours d'essai gratuit sur les plans Pro (claim marketing sur pricing.html).
       // Pendant le trial, aucun prelevement. L'abonnement commence automatiquement
       // apres 7 jours si l'utilisateur n'a pas annule (cancel en 1 clic depuis Stripe).
@@ -63,7 +72,7 @@ export default async function handler(req, res) {
         trial_period_days: 7,
         // Propage le plan sur la subscription pour les webhooks de renew/update
         // (subscription.updated ne contient pas la metadata de session).
-        metadata: { plan },
+        metadata: { plan: normalizedPlan },
       },
     };
 

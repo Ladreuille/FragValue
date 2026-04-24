@@ -26,7 +26,7 @@ async function initNavAuth() {
 document.addEventListener('DOMContentLoaded', initNavAuth);
 
 // ═══ PLAN GATING HELPERS ═════════════════════════════════════════════════
-// getUserPlan() returns 'free' | 'pro' | 'team' (defaults 'free')
+// getUserPlan() returns 'free' | 'pro' | 'elite' (defaults 'free')
 // Cached for 5 minutes in sessionStorage to avoid spamming check-subscription.
 
 const PLAN_CACHE_KEY = 'fv_user_plan';
@@ -76,10 +76,10 @@ async function getUserPlan() {
   }
 }
 
-// isPro(): convenience wrapper, returns true for pro or team
+// isPro(): convenience wrapper, returns true for pro or elite
 async function isPro() {
   const plan = await getUserPlan();
-  return plan === 'pro' || plan === 'team';
+  return plan === 'pro' || plan === 'elite' || plan === 'team';
 }
 
 // Clear plan cache (call after login / logout / plan change)

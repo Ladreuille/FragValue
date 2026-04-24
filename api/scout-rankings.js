@@ -44,7 +44,7 @@ export default async function handler(req, res) {
           userId = user.id;
           const { data: sub } = await supabase.from('subscriptions').select('plan, status').eq('user_id', user.id).single();
           if (sub && sub.status === 'active') {
-            userTier = sub.plan === 'team' ? 'elite' : sub.plan === 'pro' ? 'pro' : 'free';
+            userTier = (sub.plan === 'elite' || sub.plan === 'team') ? 'elite' : sub.plan === 'pro' ? 'pro' : 'free';
           } else {
             userTier = 'free';
           }

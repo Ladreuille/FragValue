@@ -1,5 +1,5 @@
 // api/_lib/subscription.js - FragValue
-// Helper pour resoudre le plan d'un user (free | pro | team) cote backend.
+// Helper pour resoudre le plan d'un user (free | pro | elite) cote backend.
 //
 // Source of truth : table `subscriptions` (peuplee par le webhook Stripe).
 // Fallback : Stripe API si rien en DB pour le customer (cas legacy ou si
@@ -7,12 +7,16 @@
 //
 // Usage :
 //   const { plan, user, source } = await getUserPlan(req.headers.authorization);
-//   if (plan !== 'pro' && plan !== 'team') return res.status(403)...
+//   if (plan !== 'pro' && plan !== 'elite') return res.status(403)...
 //
 //   // ou plus court :
 //   const gate = await requirePro(req, res);
 //   if (!gate) return; // 401/403 deja envoye
 //   const { user, plan } = gate;
+//
+// NB : le plan interne est 'elite' depuis avril 2026 (anciennement 'team').
+// Legacy : les valeurs DB ou priceId contenant 'team' sont mappees vers 'elite'
+// par normalizePlan pour backward-compat.
 
 const { createClient } = require('@supabase/supabase-js');
 
@@ -54,14 +58,15 @@ function setCached(token, value) {
 }
 
 // Mappe la valeur stockee en DB (qui peut etre 'pro_monthly', 'pro_yearly',
-// 'team_monthly', 'team_yearly', 'team') vers le tier logique 'pro'|'team'.
+// 'elite_monthly', 'elite_yearly', 'elite', legacy 'team_*') vers le tier
+// logique 'pro'|'elite'.
 function normalizePlan(rawPlan, priceId) {
   const p = String(rawPlan || '').toLowerCase();
-  if (p.includes('team') || p.includes('elite')) return 'team';
+  if (p.includes('elite') || p.includes('team')) return 'elite';
   if (p.includes('pro')) return 'pro';
   // Fallback price ID (utilise quand on lit Stripe direct)
   const pid = String(priceId || '').toLowerCase();
-  if (pid.includes('team') || pid.includes('elite')) return 'team';
+  if (pid.includes('elite') || pid.includes('team')) return 'elite';
   if (pid.includes('pro')) return 'pro';
   return 'free';
 }
@@ -92,7 +97,7 @@ async function resolvePlanFromGrants(userId) {
     .eq('user_id', userId)
     .is('revoked_at', null)
     .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
-    .order('plan', { ascending: false }) // team > pro
+    .order('plan', { ascending: false }) // elite > pro
     // NULLS FIRST : les grants a vie sont prioritaires
     .order('expires_at', { ascending: false, nullsFirst: true })
     .limit(1);
@@ -107,9 +112,9 @@ async function resolvePlanFromGrants(userId) {
   };
 }
 
-// Compare 2 plans et retourne le plus fort (team > pro > free)
+// Compare 2 plans et retourne le plus fort (elite > pro > free)
 function upgradePlan(a, b) {
-  const rank = { team: 3, pro: 2, free: 1 };
+  const rank = { elite: 3, team: 3, pro: 2, free: 1 }; // team = legacy alias
   return (rank[a] || 0) >= (rank[b] || 0) ? a : b;
 }
 
@@ -149,9 +154,9 @@ async function getUserPlan(authHeader, opts = {}) {
     return result;
   }
 
-  // Admin bypass : acces team permanent
+  // Admin bypass : acces elite permanent
   if (user.email && ADMIN_EMAILS.includes(user.email)) {
-    const result = { plan: 'team', user, status: 'active', source: 'admin' };
+    const result = { plan: 'elite', user, status: 'active', source: 'admin' };
     setCached(token, result);
     return result;
   }
@@ -214,7 +219,7 @@ async function requirePro(req, res) {
     res.status(401).json({ error: 'Authentification requise' });
     return null;
   }
-  if (result.plan !== 'pro' && result.plan !== 'team') {
+  if (result.plan !== 'pro' && result.plan !== 'elite') {
     res.status(403).json({
       error: 'Abonnement Pro requis',
       plan: result.plan,
@@ -225,15 +230,15 @@ async function requirePro(req, res) {
   return result;
 }
 
-async function requireTeam(req, res) {
+async function requireElite(req, res) {
   const result = await getUserPlan(req.headers.authorization);
   if (!result.user) {
     res.status(401).json({ error: 'Authentification requise' });
     return null;
   }
-  if (result.plan !== 'team') {
+  if (result.plan !== 'elite') {
     res.status(403).json({
-      error: 'Abonnement Team requis',
+      error: 'Abonnement Elite requis',
       plan: result.plan,
       upgrade_url: '/pricing.html',
     });
@@ -242,4 +247,8 @@ async function requireTeam(req, res) {
   return result;
 }
 
-module.exports = { getUserPlan, requirePro, requireTeam, normalizePlan };
+// Alias legacy : requireTeam redirige vers requireElite (anciennement le plan
+// s'appelait 'team'). Garde pour ne pas casser les imports tiers.
+const requireTeam = requireElite;
+
+module.exports = { getUserPlan, requirePro, requireElite, requireTeam, normalizePlan };

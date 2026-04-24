@@ -41,7 +41,7 @@ async function getUser(authHeader) {
 async function resolveUserPlan(user) {
   if (!user) return 'free';
   const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
-  if (user.email && ADMIN_EMAILS.includes(user.email)) return 'team';
+  if (user.email && ADMIN_EMAILS.includes(user.email)) return 'elite';
   try {
     const s = sb();
     const { data: profile } = await s
@@ -60,7 +60,7 @@ async function resolveUserPlan(user) {
     });
     if (!subs.data.length) return 'free';
     const priceId = subs.data[0].items.data[0]?.price?.id || '';
-    if (priceId.includes('team')) return 'team';
+    if (priceId.includes('elite') || priceId.includes('team')) return 'elite';
     return 'pro';
   } catch {
     return 'free';

@@ -26,12 +26,13 @@ const { createClient } = require('@supabase/supabase-js');
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 const REFEREE_WELCOME_DAYS = 7;
 
-// Paliers de recompense pour le parrain (ordre croissant de exigence)
+// Paliers de recompense pour le parrain (ordre croissant de exigence).
+// plan stocke en DB : 'elite' depuis avril 2026 (anciennement 'team').
 const REFERRAL_TIERS = [
-  { threshold:  15, plan: 'pro',  days: 365,  label: 'Pro 1 an',    reason: 'referral_tier_pro_1y'    },
-  { threshold:  50, plan: 'team', days: 365,  label: 'Elite 1 an',  reason: 'referral_tier_elite_1y'  },
-  { threshold: 100, plan: 'pro',  days: null, label: 'Pro a vie',   reason: 'referral_tier_pro_life'  },
-  { threshold: 500, plan: 'team', days: null, label: 'Elite a vie', reason: 'referral_tier_elite_life'},
+  { threshold:  15, plan: 'pro',   days: 365,  label: 'Pro 1 an',    reason: 'referral_tier_pro_1y'    },
+  { threshold:  50, plan: 'elite', days: 365,  label: 'Elite 1 an',  reason: 'referral_tier_elite_1y'  },
+  { threshold: 100, plan: 'pro',   days: null, label: 'Pro a vie',   reason: 'referral_tier_pro_life'  },
+  { threshold: 500, plan: 'elite', days: null, label: 'Elite a vie', reason: 'referral_tier_elite_life'},
 ];
 
 // Retourne le palier qui vient d'etre franchi (ou null si aucun).
@@ -186,7 +187,7 @@ module.exports = async function handler(req, res) {
       target: nextTier.threshold,
       remaining: nextTier.threshold - totalCount,
       next_label: nextTier.label,
-      next_plan: nextTier.plan === 'team' ? 'elite' : nextTier.plan,
+      next_plan: nextTier.plan,
       next_lifetime: nextTier.days == null,
       percent: Math.min(100, Math.round((totalCount / nextTier.threshold) * 100)),
     } : {
@@ -197,7 +198,7 @@ module.exports = async function handler(req, res) {
     // Liste des paliers pour l'UI (avec status reached / next / locked)
     const tiers_status = REFERRAL_TIERS.map(t => ({
       threshold: t.threshold,
-      plan: t.plan === 'team' ? 'elite' : t.plan,
+      plan: t.plan,
       lifetime: t.days == null,
       label: t.label,
       reached: totalCount >= t.threshold,
@@ -317,7 +318,7 @@ module.exports = async function handler(req, res) {
     // Parrain : message different selon si palier franchi ou pas
     let referrerTitle, referrerMsg;
     if (crossedTier) {
-      const planLabel = crossedTier.plan === 'team' ? 'Elite' : 'Pro';
+      const planLabel = crossedTier.plan === 'elite' ? 'Elite' : 'Pro';
       const durationLabel = crossedTier.days == null
         ? 'a vie'
         : `pendant ${Math.round(crossedTier.days / 30)} mois`;
@@ -372,7 +373,7 @@ module.exports = async function handler(req, res) {
         expires_at: refereeGrant?.expires_at || new Date(Date.now() + REFEREE_WELCOME_DAYS * 86400000).toISOString(),
       },
       referrer: { nickname: referrerNick },
-      tier_crossed: crossedTier ? { label: crossedTier.label, plan: crossedTier.plan === 'team' ? 'elite' : crossedTier.plan, lifetime: crossedTier.days == null } : null,
+      tier_crossed: crossedTier ? { label: crossedTier.label, plan: crossedTier.plan, lifetime: crossedTier.days == null } : null,
     });
   }
 

@@ -46,7 +46,7 @@ async function resolveUserPlan(user) {
   if (!user) return { plan: 'free', isAdmin: false };
   const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
   if (user.email && ADMIN_EMAILS.includes(user.email)) {
-    return { plan: 'team', isAdmin: true };
+    return { plan: 'elite', isAdmin: true };
   }
   try {
     const s = sb();
@@ -71,7 +71,9 @@ async function resolveUserPlan(user) {
     const sub = subs.data[0];
     const priceId = sub.items.data[0]?.price?.id || '';
     let plan = 'free';
-    if (priceId.includes('team') || priceId === process.env.STRIPE_PRICE_TEAM_MONTHLY || priceId === process.env.STRIPE_PRICE_TEAM_ANNUEL) plan = 'team';
+    const eliceM = process.env.STRIPE_PRICE_ELITE_MONTHLY || process.env.STRIPE_PRICE_TEAM_MONTHLY;
+    const eliceY = process.env.STRIPE_PRICE_ELITE_ANNUEL  || process.env.STRIPE_PRICE_TEAM_ANNUEL;
+    if (priceId.includes('elite') || priceId.includes('team') || priceId === eliceM || priceId === eliceY) plan = 'elite';
     else if (priceId.includes('pro') || sub.items.data[0]?.price?.unit_amount >= 500) plan = 'pro';
     return { plan, isAdmin: false };
   } catch { return { plan: 'free', isAdmin: false }; }
@@ -325,9 +327,9 @@ module.exports = async function handler(req, res) {
   // ── Gating par plan ────────────────────────────────────────────────────
   // Free : 1 diagnostic par mois maximum. Le cache existant est renvoye,
   //        mais le bouton Refresh est bloque (429 ai_limit_reached).
-  // Pro / Team : refresh illimite.
+  // Pro / Elite : refresh illimite.
   const { plan, isAdmin } = await resolveUserPlan(user);
-  const isPro = plan === 'pro' || plan === 'team' || isAdmin;
+  const isPro = plan === 'pro' || plan === 'elite' || plan === 'team' || isAdmin;
 
   const cached = await readCache(user.id);
   const forceRefresh = req.query.refresh === '1';

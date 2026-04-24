@@ -100,7 +100,7 @@ async function resolveUserTier(userId) {
       .single();
     if (!data || !['active', 'trialing'].includes(data.status)) return 'free';
     const p = String(data.plan || '').toLowerCase();
-    if (p.includes('team')) return 'team';
+    if (p.includes('elite') || p.includes('team')) return 'elite';
     if (p.includes('pro')) return 'pro';
     return 'free';
   } catch {

@@ -204,9 +204,9 @@ async function handlePost(req, res, supabase, user) {
   if (TEAM_OWNER_ACTIONS.has(action)) {
     const { getUserPlan } = await import('./_lib/subscription.js');
     const { plan } = await getUserPlan(req.headers.authorization);
-    if (plan !== 'team') {
+    if (plan !== 'elite') {
       return res.status(403).json({
-        error: 'Abonnement Team requis pour cette action',
+        error: 'Abonnement Elite requis pour cette action',
         action,
         plan,
         upgrade_url: '/pricing.html',

@@ -11,13 +11,15 @@ export default function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  // elite_* prend la priorite, sinon fallback sur les anciennes env vars team_*
+  // (backward-compat pendant la migration post-rename du plan).
   const checks = {
     stripe_key: !!process.env.STRIPE_SECRET_KEY,
     webhook_secret: !!process.env.STRIPE_WEBHOOK_SECRET,
     pro_monthly: !!process.env.STRIPE_PRICE_PRO_MONTHLY,
     pro_yearly: !!process.env.STRIPE_PRICE_PRO_ANNUEL,
-    team_monthly: !!process.env.STRIPE_PRICE_TEAM_MONTHLY,
-    team_yearly: !!process.env.STRIPE_PRICE_TEAM_ANNUEL,
+    elite_monthly: !!(process.env.STRIPE_PRICE_ELITE_MONTHLY || process.env.STRIPE_PRICE_TEAM_MONTHLY),
+    elite_yearly: !!(process.env.STRIPE_PRICE_ELITE_ANNUEL  || process.env.STRIPE_PRICE_TEAM_ANNUEL),
     supabase_url: !!process.env.SUPABASE_URL,
     supabase_key: !!process.env.SUPABASE_SERVICE_KEY,
   };

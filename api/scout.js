@@ -146,7 +146,7 @@ async function resolveUserPlan(user) {
   if (!user) return 'free';
   // Admin bypass aligne avec /api/check-subscription
   const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
-  if (user.email && ADMIN_EMAILS.includes(user.email)) return 'team';
+  if (user.email && ADMIN_EMAILS.includes(user.email)) return 'elite';
   try {
     const sb = getSbClient();
     if (!sb) return 'free';
