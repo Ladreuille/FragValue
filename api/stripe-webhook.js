@@ -41,21 +41,14 @@ export default async function handler(req, res) {
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
   } catch (err) {
-    // Log detaille cote Vercel + reponse detaillee pour debug dans Stripe dashboard
-    const diagnostic = {
+    // Log cote serveur uniquement (pas dans la reponse pour eviter info leak).
+    // Le diagnostic detaille reste disponible dans les Vercel logs si besoin.
+    console.error('[Stripe] Webhook signature verification failed:', {
       error: err.message,
       secretSource,
-      secretPrefix: webhookSecret ? webhookSecret.slice(0, 10) + '...' : 'none',
-      stripeKeyPrefix: process.env.STRIPE_SECRET_KEY
-        ? process.env.STRIPE_SECRET_KEY.slice(0, 8) + '...'
-        : 'missing',
-      bothSecretsSet: !!(process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_WEBHOOKLIVE_SECRET),
-      sigPrefix: sig ? String(sig).slice(0, 30) + '...' : 'missing',
       bodyLen: rawBody.length,
-      bodyStart: rawBody.length > 0 ? rawBody.slice(0, 40).toString() : 'empty',
-    };
-    console.error('[Stripe] Webhook signature verification failed:', diagnostic);
-    return res.status(400).json({ error: 'Signature invalide', diagnostic });
+    });
+    return res.status(400).json({ error: 'Signature invalide' });
   }
 
   try {
