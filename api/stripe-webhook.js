@@ -28,13 +28,30 @@ export default async function handler(req, res) {
   // Si les 2 sont set, le standard gagne (retrocompat).
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
                      || process.env.STRIPE_WEBHOOKLIVE_SECRET;
+  const secretSource = process.env.STRIPE_WEBHOOK_SECRET
+    ? 'STRIPE_WEBHOOK_SECRET'
+    : (process.env.STRIPE_WEBHOOKLIVE_SECRET ? 'STRIPE_WEBHOOKLIVE_SECRET' : 'NONE');
+
+  if (!webhookSecret) {
+    console.error('[Stripe] Aucun webhook secret configure');
+    return res.status(500).json({ error: 'Webhook secret non configure', hint: 'Definir STRIPE_WEBHOOK_SECRET ou STRIPE_WEBHOOKLIVE_SECRET' });
+  }
 
   let event;
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
   } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
-    return res.status(400).json({ error: 'Signature invalide' });
+    // Log detaille cote Vercel + reponse detaillee pour debug dans Stripe dashboard
+    const diagnostic = {
+      error: err.message,
+      secretSource,
+      secretPrefix: webhookSecret ? webhookSecret.slice(0, 10) + '...' : 'none',
+      sigPrefix: sig ? String(sig).slice(0, 30) + '...' : 'missing',
+      bodyLen: rawBody.length,
+      bodyStart: rawBody.length > 0 ? rawBody.slice(0, 40).toString() : 'empty',
+    };
+    console.error('[Stripe] Webhook signature verification failed:', diagnostic);
+    return res.status(400).json({ error: 'Signature invalide', diagnostic });
   }
 
   try {
