@@ -1377,7 +1377,8 @@ _sb.auth.getSession().then(async ({ data }) => {
 });
 
 // Ping le parser Railway et affiche son etat reel dans le tag live-status.
-// 3 etats : online (<3s latence), degraded (>3s), offline (no response).
+// 3 etats : online (<3s RTT), degrade (>3s RTT), offline (no response).
+// Utilise /ping (meme endpoint que pingParser existant, evite un 404 sur /health).
 async function updateLiveStatus() {
   const tag = document.querySelector('.live-status');
   const label = document.querySelector('.live-status .ls-on');
@@ -1385,21 +1386,24 @@ async function updateLiveStatus() {
   const started = Date.now();
   try {
     const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 5000);
-    const res = await fetch(PARSER_URL + '/health', { signal: ctrl.signal, cache: 'no-store' });
-    clearTimeout(timeout);
+    const to = setTimeout(function() { ctrl.abort(); }, 6000);
+    const res = await fetch(PARSER_URL + '/ping', { method:'GET', mode:'cors', signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(to);
     const elapsed = Date.now() - started;
     if (res.ok && elapsed < 3000) {
       tag.classList.remove('degraded', 'offline');
       label.textContent = 'Parser en ligne';
     } else if (res.ok) {
+      tag.classList.remove('offline');
       tag.classList.add('degraded');
       label.textContent = 'Parser degrade';
     } else {
+      tag.classList.remove('degraded');
       tag.classList.add('offline');
       label.textContent = 'Parser offline';
     }
   } catch (_) {
+    tag.classList.remove('degraded');
     tag.classList.add('offline');
     label.textContent = 'Parser offline';
   }
