@@ -15,7 +15,7 @@ export default function handler(req, res) {
   // (backward-compat pendant la migration post-rename du plan).
   const checks = {
     stripe_key: !!process.env.STRIPE_SECRET_KEY,
-    webhook_secret: !!process.env.STRIPE_WEBHOOK_SECRET,
+    webhook_secret: !!(process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOKLIVE_SECRET),
     pro_monthly: !!process.env.STRIPE_PRICE_PRO_MONTHLY,
     pro_yearly: !!process.env.STRIPE_PRICE_PRO_ANNUEL,
     elite_monthly: !!(process.env.STRIPE_PRICE_ELITE_MONTHLY || process.env.STRIPE_PRICE_TEAM_MONTHLY),

@@ -22,9 +22,16 @@ export default async function handler(req, res) {
   const sig = req.headers['stripe-signature'];
   const rawBody = await buffer(req);
 
+  // On accepte 2 noms d'env var pour le secret :
+  // - STRIPE_WEBHOOK_SECRET : nom historique standard
+  // - STRIPE_WEBHOOKLIVE_SECRET : variante utilisee pour separer test/live
+  // Si les 2 sont set, le standard gagne (retrocompat).
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+                     || process.env.STRIPE_WEBHOOKLIVE_SECRET;
+
   let event;
   try {
-    event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).json({ error: 'Signature invalide' });
