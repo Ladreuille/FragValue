@@ -22,25 +22,15 @@ export default async function handler(req, res) {
   const sig = req.headers['stripe-signature'];
   const rawBody = await buffer(req);
 
-  // Resolution du webhook secret avec detection du mode live/test :
-  // - Si STRIPE_SECRET_KEY commence par sk_live_ -> preferer STRIPE_WEBHOOKLIVE_SECRET
-  // - Sinon (sk_test_) -> preferer STRIPE_WEBHOOK_SECRET (historique)
-  // - Dans les 2 cas, fallback sur l'autre si le primaire est absent.
-  // Cela evite qu'un secret test heritee cohabite avec un secret live
-  // et cause des 400 Bad Request au webhook live.
-  const isLiveMode = String(process.env.STRIPE_SECRET_KEY || '').startsWith('sk_live_');
-  let webhookSecret, secretSource;
-  if (isLiveMode) {
-    webhookSecret = process.env.STRIPE_WEBHOOKLIVE_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
-    secretSource = process.env.STRIPE_WEBHOOKLIVE_SECRET
-      ? 'STRIPE_WEBHOOKLIVE_SECRET'
-      : (process.env.STRIPE_WEBHOOK_SECRET ? 'STRIPE_WEBHOOK_SECRET (fallback)' : 'NONE');
-  } else {
-    webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOKLIVE_SECRET;
-    secretSource = process.env.STRIPE_WEBHOOK_SECRET
-      ? 'STRIPE_WEBHOOK_SECRET'
-      : (process.env.STRIPE_WEBHOOKLIVE_SECRET ? 'STRIPE_WEBHOOKLIVE_SECRET (fallback)' : 'NONE');
-  }
+  // Priorite absolue a STRIPE_WEBHOOKLIVE_SECRET s'il est set. Cette var a
+  // ete ajoutee explicitement pour le mode live par l'user, donc on la
+  // privilegie face au STRIPE_WEBHOOK_SECRET historique (qui peut encore
+  // contenir un secret test mode cohabitant).
+  const webhookSecret = process.env.STRIPE_WEBHOOKLIVE_SECRET
+                     || process.env.STRIPE_WEBHOOK_SECRET;
+  const secretSource = process.env.STRIPE_WEBHOOKLIVE_SECRET
+    ? 'STRIPE_WEBHOOKLIVE_SECRET'
+    : (process.env.STRIPE_WEBHOOK_SECRET ? 'STRIPE_WEBHOOK_SECRET' : 'NONE');
 
   if (!webhookSecret) {
     console.error('[Stripe] Aucun webhook secret configure');
@@ -56,6 +46,10 @@ export default async function handler(req, res) {
       error: err.message,
       secretSource,
       secretPrefix: webhookSecret ? webhookSecret.slice(0, 10) + '...' : 'none',
+      stripeKeyPrefix: process.env.STRIPE_SECRET_KEY
+        ? process.env.STRIPE_SECRET_KEY.slice(0, 8) + '...'
+        : 'missing',
+      bothSecretsSet: !!(process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_WEBHOOKLIVE_SECRET),
       sigPrefix: sig ? String(sig).slice(0, 30) + '...' : 'missing',
       bodyLen: rawBody.length,
       bodyStart: rawBody.length > 0 ? rawBody.slice(0, 40).toString() : 'empty',
