@@ -387,6 +387,149 @@
     .perf-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;min-width:2px}
     .perf-bar-val{font-family:var(--mono);font-size:11px;font-weight:700;width:36px;flex-shrink:0;text-align:left}
     .perf-ref-line{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.15);pointer-events:none}
+
+    /* ── FV RATING HERO CARD : le "aha moment" post-analyse.
+         Score en gros, color-coding selon performance, context humain
+         (Excellent / Solide / Moyen / A ameliorer). ── */
+    .fv-hero{
+      background:linear-gradient(135deg,var(--surface),var(--card));
+      border:1px solid var(--border);border-radius:14px;
+      padding:28px 32px;margin-bottom:20px;
+      display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center;
+      position:relative;overflow:hidden
+    }
+    .fv-hero::before{
+      content:'';position:absolute;top:0;left:0;bottom:0;width:4px;
+      background:var(--fv-accent, var(--accent));transition:background .3s
+    }
+    .fv-hero[data-tier="excellent"]{--fv-accent:var(--success)}
+    .fv-hero[data-tier="solid"]{--fv-accent:var(--accent)}
+    .fv-hero[data-tier="average"]{--fv-accent:var(--gold)}
+    .fv-hero[data-tier="weak"]{--fv-accent:var(--danger)}
+    .fv-hero-score-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+    .fv-hero-label{
+      font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+      text-transform:uppercase;color:var(--text3)
+    }
+    .fv-hero-score{
+      font-family:var(--display);font-size:clamp(48px,6vw,68px);
+      line-height:1;letter-spacing:.01em;color:var(--fv-accent,var(--accent))
+    }
+    .fv-hero-sub{
+      font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+      color:var(--text3);text-transform:uppercase;margin-top:4px
+    }
+    .fv-hero-center{display:flex;flex-direction:column;gap:6px;min-width:0}
+    .fv-hero-tier{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:5px 12px;border-radius:40px;width:fit-content;
+      background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.25);
+      color:var(--fv-accent,var(--accent));
+      font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;
+      text-transform:uppercase
+    }
+    .fv-hero-tier-dot{
+      width:6px;height:6px;border-radius:50%;background:var(--fv-accent,var(--accent));
+      box-shadow:0 0 6px var(--fv-accent,var(--accent));
+      animation:pulseDot 2s ease-in-out infinite
+    }
+    .fv-hero-context{
+      font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.55
+    }
+    .fv-hero-context strong{color:var(--text);font-weight:700}
+    .fv-hero-meta{
+      display:grid;grid-template-columns:auto auto;gap:8px 18px;
+      padding-left:20px;border-left:1px solid var(--border)
+    }
+    .fv-hero-meta-item{display:flex;flex-direction:column}
+    .fv-hero-meta-val{
+      font-family:var(--display);font-size:20px;color:var(--text);line-height:1
+    }
+    .fv-hero-meta-lbl{
+      font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+      text-transform:uppercase;color:var(--text3);margin-top:3px
+    }
+    @media (max-width:720px){
+      .fv-hero{grid-template-columns:1fr;padding:22px 20px;gap:18px;text-align:center}
+      .fv-hero-score-wrap{align-items:center}
+      .fv-hero-tier{margin:0 auto}
+      .fv-hero-meta{grid-template-columns:repeat(4,auto);justify-content:center;padding:12px 0 0;border-left:none;border-top:1px solid var(--border)}
+    }
+
+    /* ── UNLOCK PRO : section affichee en bas des resultats quand l'user n'est
+         pas Pro/Elite. Teaser visuel + CTA direct vers /pricing.html pour
+         pousser la conversion au moment du "aha moment" post-analyse. ── */
+    .unlock-pro{
+      margin-top:40px;padding:40px 32px;
+      background:linear-gradient(135deg,rgba(15,16,16,.95),rgba(8,9,9,.85));
+      border:1px solid rgba(184,255,87,.25);border-radius:16px;
+      position:relative;overflow:hidden
+    }
+    .unlock-pro::before{
+      content:'';position:absolute;top:-50%;left:-20%;width:80%;height:200%;
+      background:radial-gradient(ellipse 40% 50% at 50% 50%,rgba(184,255,87,.12),transparent 70%);
+      pointer-events:none;animation:upGlow 12s ease-in-out infinite
+    }
+    @keyframes upGlow{
+      0%,100%{transform:translate(0,0);opacity:.6}
+      50%{transform:translate(20%,10%);opacity:1}
+    }
+    .up-hero{position:relative;z-index:1;text-align:center;max-width:620px;margin:0 auto 28px}
+    .up-tag{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 12px;border-radius:40px;
+      background:rgba(184,255,87,.12);border:1px solid rgba(184,255,87,.3);
+      color:var(--accent);font-family:var(--mono);font-size:10px;font-weight:700;
+      letter-spacing:.14em;margin-bottom:14px
+    }
+    .up-tag-dot{
+      width:6px;height:6px;border-radius:50%;background:var(--accent);
+      box-shadow:0 0 6px var(--accent);animation:pulseDot 2s ease-in-out infinite
+    }
+    @keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .up-title{
+      font-family:var(--display);font-size:clamp(24px,3vw,36px);
+      line-height:1.05;letter-spacing:.01em;color:var(--text);margin-bottom:12px
+    }
+    .up-title em{color:var(--accent);font-style:normal}
+    .up-sub{
+      font-size:13px;color:var(--text2);line-height:1.7;max-width:520px;margin:0 auto
+    }
+    .up-grid{
+      position:relative;z-index:1;
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;margin-bottom:28px
+    }
+    .up-card{
+      background:rgba(8,9,9,.6);border:1px solid var(--border);
+      border-radius:10px;padding:18px 16px;
+      transition:border-color .2s,transform .2s
+    }
+    .up-card:hover{border-color:rgba(184,255,87,.35);transform:translateY(-2px)}
+    .up-card-icon{
+      width:32px;height:32px;border-radius:8px;
+      background:rgba(184,255,87,.1);color:var(--accent);
+      display:flex;align-items:center;justify-content:center;margin-bottom:10px
+    }
+    .up-card-title{
+      font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);
+      letter-spacing:.04em;margin-bottom:4px
+    }
+    .up-card-desc{font-size:11px;color:var(--text2);line-height:1.55}
+    .up-cta-row{
+      position:relative;z-index:1;
+      display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap
+    }
+    .up-cta-primary{
+      display:inline-flex;align-items:center;gap:8px;
+      background:var(--accent);color:#000;
+      padding:14px 28px;border-radius:var(--radius);
+      font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.06em;
+      text-decoration:none;transition:all .15s;
+      box-shadow:0 8px 24px rgba(184,255,87,.15)
+    }
+    .up-cta-primary:hover{transform:translateY(-1px);filter:brightness(1.08);box-shadow:0 12px 32px rgba(184,255,87,.25)}
+    .up-cta-meta{font-size:11px;color:var(--text3);letter-spacing:.04em}
   </style>
 </head>
 <body>
@@ -439,6 +582,21 @@
     </button>
   </div>
 
+  <!-- FV RATING HERO CARD : l'impact du user/MVP ce match, tres visible
+       des l'ouverture des resultats. Couleur selon performance. -->
+  <div class="fv-hero" id="fvHeroCard" style="display:none" data-tier="solid">
+    <div class="fv-hero-score-wrap">
+      <div class="fv-hero-label">Ton impact</div>
+      <div class="fv-hero-score" id="fvHeroScore">-</div>
+      <div class="fv-hero-sub">FV Rating 2.1</div>
+    </div>
+    <div class="fv-hero-center">
+      <div class="fv-hero-tier" id="fvHeroTier"><span class="fv-hero-tier-dot"></span><span id="fvHeroTierLabel">Solide</span></div>
+      <div class="fv-hero-context" id="fvHeroContext">Analyse completee.</div>
+    </div>
+    <div class="fv-hero-meta" id="fvHeroMeta"></div>
+  </div>
+
   <!-- HIGHLIGHTS DU MATCH -->
   <div class="highlights-grid" id="highlightsBlock"></div>
 
@@ -449,6 +607,63 @@
   <div class="perf-chart" id="perfChart" style="display:none">
     <div class="perf-chart-title">Performance  - FV Rating</div>
     <div id="perfBars"></div>
+  </div>
+
+  <!-- UNLOCK PRO : section affichee pour les users Free uniquement.
+       Pousse la conversion au moment du "aha moment" post-analyse. -->
+  <div class="unlock-pro" id="unlockProSection" style="display:none">
+    <div class="up-hero">
+      <div class="up-tag"><span class="up-tag-dot"></span>PRO · DEBLOQUE TOUT</div>
+      <h2 class="up-title">Ta demo a <em>bien plus</em> a te dire</h2>
+      <p class="up-sub">Tu vois aujourd'hui les heatmaps et tes stats de base. Passe Pro pour acceder au 2D Replay frame par frame, aux KPIs tactiques avances, au Coach IA personnalise et au match report complet.</p>
+    </div>
+    <div class="up-grid">
+      <div class="up-card">
+        <div class="up-card-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <div class="up-card-title">2D Replay complet</div>
+        <div class="up-card-desc">Chaque round, tick par tick. Positions, duels, trajectoires de grenades et mouvements des 10 joueurs.</div>
+      </div>
+      <div class="up-card">
+        <div class="up-card-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>
+          </svg>
+        </div>
+        <div class="up-card-title">KPIs avances</div>
+        <div class="up-card-desc">Entry duels, trade kills, flash efficiency, utility damage, survival rate. Les metriques que les pros regardent.</div>
+      </div>
+      <div class="up-card">
+        <div class="up-card-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L3 6v6c0 5 4 9 9 10 5-1 9-5 9-10V6l-9-4z"/><path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="up-card-title">Coach IA illimite</div>
+        <div class="up-card-desc">Diagnostic personnalise avec 3 forces chiffrees, 3 faiblesses avec delta et plan d'action 7 jours.</div>
+      </div>
+      <div class="up-card">
+        <div class="up-card-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>
+          </svg>
+        </div>
+        <div class="up-card-title">Match Report</div>
+        <div class="up-card-desc">Analyse round par round avec top moments, turning points et recommandations tactiques commentees.</div>
+      </div>
+    </div>
+    <div class="up-cta-row">
+      <a href="pricing.html" class="up-cta-primary">
+        Essayer Pro 7 jours gratuits
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+      <span class="up-cta-meta">Des 9 euros/mois &middot; Annulation en 1 clic &middot; Sans carte pendant l'essai</span>
+    </div>
   </div>
 
 </div>
@@ -732,12 +947,86 @@ window.addEventListener('load',()=>{
     assignPlayerColors();
     const target=demoData.meta?.targetPlayer;
     if(target) activePlayers.add(target);
-    renderMeta(); renderMatchStats(); renderPlayerList();
+    renderFvHeroCard(); renderMeta(); renderMatchStats(); renderPlayerList();
     loadMapImageThenDraw(); initRoundsBar();
     // Mettre à jour le FV Rating dans Supabase
     saveRatingToSupabase();
+    // Affiche la section "Debloque avec Pro" uniquement pour les users Free
+    // (les Pro/Elite voient deja tout, pas besoin de les pousser au checkout).
+    renderUnlockProSection();
   }catch(e){console.error('heatmap-results init error:',e);}
 });
+
+// FV Hero Card : affiche le FV Rating du target player en gros avec
+// color-coding (excellent / solide / moyen / weak) + stats complementaires.
+// Si pas de target, prend le MVP (meilleur FV rating).
+function renderFvHeroCard(){
+  try{
+    const players = demoData?.playerStats || [];
+    const rounds = (demoData?.rounds || []).filter(r => !r.isKnife);
+    const numR = rounds.length || 1;
+    if (!players.length) return;
+
+    const target = demoData.meta?.targetPlayer;
+    let p = target ? players.find(pl => pl.name === target) : null;
+    // Si pas de target ou non trouve : prendre le MVP (meilleur rating calcule)
+    if (!p) {
+      p = players.map(pl => ({ ...pl, _r: calcFvRating(pl.kills, pl.deaths, 0, numR) }))
+                 .sort((a,b) => b._r - a._r)[0];
+    }
+    if (!p) return;
+
+    const rating = calcFvRating(p.kills, p.deaths, 0, numR);
+    const kd = p.deaths > 0 ? (p.kills / p.deaths).toFixed(2) : p.kills.toFixed(2);
+    const adr = p.adr ? Math.round(p.adr) : '-';
+    const hsPct = (p.kills > 0 && typeof p.hsKills === 'number')
+      ? Math.round((p.hsKills / p.kills) * 100) + '%' : '-';
+
+    // Classification : benchmarks Faceit/HLTV amateurs -> pros
+    let tier, tierLabel, context;
+    if (rating >= 1.30) {
+      tier = 'excellent';
+      tierLabel = 'Excellent';
+      context = `Performance <strong>niveau pro</strong>. Tu domines ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds. Au-dessus de 90% des joueurs FACEIT.`;
+    } else if (rating >= 1.10) {
+      tier = 'solid';
+      tierLabel = 'Solide';
+      context = `Match <strong>au-dessus de la moyenne</strong> FACEIT. Tu impactes ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds. Continue comme ça.`;
+    } else if (rating >= 0.90) {
+      tier = 'average';
+      tierLabel = 'Dans la moyenne';
+      context = `Performance <strong>standard</strong>. ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds. Regarde les heatmaps pour identifier où tu peux gagner du tempo.`;
+    } else {
+      tier = 'weak';
+      tierLabel = 'A ameliorer';
+      context = `Match <strong>difficile</strong> avec ${p.kills} kills pour ${p.deaths} deaths. Analyse tes morts dans la heatmap et travaille les duels desavantageux.`;
+    }
+
+    const card = document.getElementById('fvHeroCard');
+    if (!card) return;
+    card.dataset.tier = tier;
+    document.getElementById('fvHeroScore').textContent = rating.toFixed(2);
+    document.getElementById('fvHeroTierLabel').textContent = tierLabel;
+    document.getElementById('fvHeroContext').innerHTML = context;
+    document.getElementById('fvHeroMeta').innerHTML = `
+      <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${p.kills}</div><div class="fv-hero-meta-lbl">Kills</div></div>
+      <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${p.deaths}</div><div class="fv-hero-meta-lbl">Deaths</div></div>
+      <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${kd}</div><div class="fv-hero-meta-lbl">K/D</div></div>
+      <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${adr}</div><div class="fv-hero-meta-lbl">ADR</div></div>
+    `;
+    card.style.display = '';
+  }catch(e){ console.warn('[FragValue] renderFvHeroCard:', e.message); }
+}
+
+// Affiche la section unlock-pro seulement si user n'est pas Pro/Elite.
+// Permet de ne pas polluer l'experience des payants.
+async function renderUnlockProSection(){
+  try{
+    const isPro = await fvIsPro();
+    const section = document.getElementById('unlockProSection');
+    if(section && !isPro){ section.style.display='block'; }
+  }catch(_){/* fail silent - default hidden */}
+}
 
 function assignPlayerColors(){(demoData.playerStats||[]).forEach((p,i)=>{playerColorMap[p.name]=i%PLAYER_COLORS.length;});}
 function getColor(name){const idx=playerColorMap[name];return idx!==undefined?PLAYER_COLORS[idx]:NEUTRAL_COLOR;}
