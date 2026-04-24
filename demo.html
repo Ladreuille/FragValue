@@ -155,34 +155,13 @@ nav:not(.fv-nav){
   opacity:0;animation:fadeUp .5s .15s ease forwards
 }
 .feat-list{
-  display:flex;flex-direction:column;gap:6px;
+  display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;
   opacity:0;animation:fadeUp .5s .2s ease forwards
 }
-.feat{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text2)}
+.feat{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);line-height:1.3}
 .feat-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);flex-shrink:0}
 .feat strong{color:var(--text)}
-
-/* STATUS LIVE : petit ticker en haut du hero avec dot pulsante + stat live.
-   Sert de social proof et occupe l'espace vide en haut de .left-inner. */
-.live-status{
-  display:inline-flex;align-items:center;gap:10px;
-  padding:6px 14px;border-radius:40px;
-  background:rgba(15,16,16,.6);border:1px solid var(--border);
-  font-family:var(--mono);font-size:10px;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--text2);margin-bottom:22px;
-  opacity:0;animation:fadeUp .5s ease forwards;
-  backdrop-filter:blur(6px)
-}
-.live-status .ls-dot{
-  width:6px;height:6px;border-radius:50%;background:var(--accent);
-  box-shadow:0 0 8px var(--accent);animation:pulse 2s ease-in-out infinite
-}
-.live-status .ls-on{color:var(--accent);font-weight:700}
-.live-status .ls-sep{
-  width:3px;height:3px;border-radius:50%;background:var(--border2);
-  flex-shrink:0
-}
-.live-status .ls-count{color:var(--text);font-weight:700;font-family:var(--display);font-size:12px}
+.feat-full{grid-column:1/-1}
 
 /* MINI PROCESS : 01 Upload - 02 Parse - 03 Analyse, horizontal compact.
    Entre les features et le result-preview, remplit l'espace vide. */
@@ -307,22 +286,65 @@ nav:not(.fv-nav){
   text-transform:uppercase;margin-top:-4px
 }
 
-/* Stats compacts sous le slider (dans .middle), remplace le result-preview */
-.middle-stats{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
-  margin-top:4px;padding:14px 18px;
+/* REPLAY PREVIEW : reproduit la page 2D Replay en miniature (scoreline + map
+   + dots joueurs animes + timeline rounds) pour montrer concretement la value. */
+.replay-preview{
+  margin-top:8px;padding:12px 14px;
   border:1px solid var(--border);border-radius:10px;
-  background:linear-gradient(135deg,rgba(15,16,16,.6),rgba(8,9,9,.3))
+  background:linear-gradient(135deg,rgba(15,16,16,.7),rgba(8,9,9,.4));
+  display:flex;flex-direction:column;gap:8px;
+  opacity:0;animation:fadeUp .5s .45s ease forwards
 }
-.ms-item{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
-.ms-val{
-  font-family:var(--display);font-size:22px;line-height:1;
-  color:var(--accent);letter-spacing:.02em
+.rpv-head{
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--mono);font-size:10px
 }
-.ms-val span{font-size:12px;color:var(--text2);margin-left:2px}
-.ms-key{
-  font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase
+.rpv-map{display:flex;align-items:center;gap:6px;color:var(--text2);letter-spacing:.06em}
+.rpv-map .rpv-label{color:var(--accent);font-weight:700}
+.rpv-map .rpv-sep{color:var(--text3)}
+.rpv-map .rpv-round{color:var(--text)}
+.rpv-map .rpv-time{
+  padding:2px 8px;border:1px solid var(--border2);border-radius:40px;
+  color:var(--accent);font-weight:700;font-family:var(--display);font-size:11px
 }
+.rpv-score{display:flex;align-items:center;gap:6px;font-family:var(--display);font-size:13px}
+.rpv-score .rpv-ct{color:#60a5fa;display:inline-flex;align-items:center;gap:5px}
+.rpv-score .rpv-t{color:#f5c842;display:inline-flex;align-items:center;gap:5px}
+.rpv-score strong{font-size:9px;letter-spacing:.15em;opacity:.7;font-weight:700;font-family:var(--mono)}
+.rpv-score .rpv-mid{color:var(--text3)}
+
+.rpv-canvas{
+  width:100%;aspect-ratio:2/1;
+  border:1px solid var(--border);border-radius:6px;
+  background:#0a0b0b;overflow:hidden
+}
+.rpv-canvas svg{width:100%;height:100%;display:block}
+
+.rpv-timeline{
+  display:flex;gap:3px;padding-top:2px
+}
+.rpv-tl-r{
+  flex:1;height:4px;border-radius:2px;background:var(--border);
+  transition:background .2s
+}
+.rpv-tl-ct{background:#60a5fa;opacity:.6}
+.rpv-tl-t{background:#f5c842;opacity:.6}
+.rpv-tl-current{
+  background:var(--accent);
+  box-shadow:0 0 8px rgba(184,255,87,.6);
+  animation:pulse 1.5s ease-in-out infinite
+}
+
+/* Hero FAQ link : petit lien discret sous les features pour les hesitants */
+.hero-faq-link{
+  display:inline-block;margin-top:14px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  color:var(--text3);text-decoration:none;
+  border-bottom:1px dashed var(--border2);padding-bottom:2px;
+  transition:color .15s,border-color .15s;
+  opacity:0;animation:fadeUp .5s .3s ease forwards
+}
+.hero-faq-link:hover{color:var(--accent);border-color:var(--accent)}
 
 /* Resize : quand le viewport est etroit, reduire la taille des cards maps */
 @media (max-width:1280px){
@@ -358,6 +380,52 @@ nav:not(.fv-nav){
   box-shadow:0 0 6px var(--accent);animation:pulse 2s ease-in-out infinite
 }
 .live-status .ls-on{color:var(--accent);font-weight:700}
+/* Variations live-status selon la sante du parser Railway */
+.live-status.degraded{border-color:rgba(245,200,66,.35);background:rgba(245,200,66,.05)}
+.live-status.degraded .ls-dot{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+.live-status.degraded .ls-on{color:var(--gold)}
+.live-status.offline{border-color:rgba(255,68,68,.35);background:rgba(255,68,68,.05)}
+.live-status.offline .ls-dot{background:var(--danger);box-shadow:0 0 6px var(--danger);animation:none}
+.live-status.offline .ls-on{color:var(--danger)}
+
+/* Upload-sub separator dot */
+.upload-sub .us-sep{color:var(--text3);margin:0 6px}
+
+/* RECENT DEMOS : card compacte affichee dans la colonne droite quand
+   l'user connecte a 1+ demos. Liens rapides vers ses resultats. */
+.recent-demos{
+  display:none;padding:8px 10px;margin-top:8px;
+  background:rgba(15,16,16,.5);border:1px solid var(--border);
+  border-radius:8px
+}
+.recent-demos.visible{display:block}
+.recent-demos-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:9px;letter-spacing:.1em;color:var(--text3);
+  text-transform:uppercase;margin-bottom:6px
+}
+.recent-demos-hd a{
+  color:var(--accent);text-decoration:none;font-weight:700;
+  letter-spacing:.06em
+}
+.recent-demo-item{
+  display:flex;align-items:center;gap:10px;padding:4px 0;
+  font-size:10px;color:var(--text2);text-decoration:none;
+  border-bottom:1px solid var(--border);transition:color .15s
+}
+.recent-demo-item:last-child{border-bottom:none}
+.recent-demo-item:hover{color:var(--text)}
+.recent-demo-item .rd-map{
+  color:var(--text);font-weight:700;min-width:75px;
+  font-family:var(--mono);font-size:10px
+}
+.recent-demo-item .rd-rating{
+  color:var(--accent);font-family:var(--display);font-size:12px;
+  margin-left:auto
+}
+.recent-demo-item .rd-date{
+  font-size:9px;color:var(--text3);letter-spacing:.04em
+}
 
 /* QUOTA BAR : barre progressive "X/3 analyses ce mois" au-dessus du upload.
    Transparence + incitation a l'action. Masquee si user Pro/Elite. */
@@ -512,37 +580,8 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
 }
 .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
-/* NAV QUOTA PILL : badge quota + plan, integre dans la nav (pas de top-bar
-   separee qui casserait le layout flex du .layout). Visible en permanence
-   quand l'user est connecte. */
-.nav-quota{
-  display:none;align-items:center;gap:10px;
-  padding:5px 12px;border:1px solid var(--border2);border-radius:40px;
-  font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--text2);
-  margin-right:6px;transition:border-color .15s
-}
-.nav-quota.visible{display:inline-flex}
-.nav-quota .nq-count{color:var(--text);font-weight:700}
-.nav-quota .nq-count em{color:var(--text3);font-style:normal;font-weight:400}
-.nav-quota.quota-full{border-color:rgba(255,68,68,.35)}
-.nav-quota.quota-full .nq-count{color:var(--danger)}
-.nav-quota .nq-plan{
-  padding:2px 7px;border-radius:3px;
-  font-size:9px;letter-spacing:.1em;text-transform:uppercase;
-  background:rgba(255,255,255,.04);color:var(--text2)
-}
-.nav-quota .nq-plan.plan-pro{background:rgba(184,255,87,.12);color:var(--accent)}
-.nav-quota .nq-plan.plan-elite{background:rgba(245,200,66,.14);color:var(--gold)}
-.nav-quota .nq-upgrade{
-  color:var(--accent);text-decoration:none;font-weight:700;
-  border-left:1px solid var(--border2);padding-left:10px;margin-left:2px;
-  transition:color .15s
-}
-.nav-quota .nq-upgrade:hover{color:var(--accent2)}
-@media (max-width:720px){
-  .nav-quota{font-size:10px;padding:4px 10px;gap:8px}
-  .nav-quota .nq-count em{display:none}
-}
+/* (Ancienne .nav-quota pill retiree : quota affiche maintenant directement
+   dans la colonne upload via .quota-bar, plus visible et moins redondant.) */
 
 /* WELCOME TOAST : auto-dismiss 10s apres le signup (?welcome=1).
    Positionne top-right, fade-in puis slide-out. Pas intrusif. */
@@ -773,12 +812,6 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
     <a href="pricing.html">Tarifs</a>
     <a href="demo.html" class="active">Analyse</a>
     <a href="matches.html" id="navMatchesBtn" style="display:none">Mes matchs</a>
-    <!-- Quota + plan pill : remplacee par JS quand user connecte -->
-    <div class="nav-quota" id="navQuota">
-      <span class="nq-count" id="navQuotaCount"></span>
-      <span class="nq-plan" id="navQuotaPlan">Free</span>
-      <a href="pricing.html" class="nq-upgrade" id="navQuotaUpgrade" style="display:none">Passer Pro</a>
-    </div>
     <a href="login.html" id="navLoginBtn">Connexion</a>
     <a href="account.html" class="nav-cta" id="navAccountBtn" style="display:none">Mon espace</a>
   </div>
@@ -828,11 +861,12 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
           <div class="feat-dot"></div>
           <span><strong>Utility Map</strong> · Trajectoires grenades et smokes</span>
         </div>
-        <div class="feat">
+        <div class="feat feat-full">
           <div class="feat-dot"></div>
           <span><strong>Stats équipes</strong> · KAST, ADR, opening duels</span>
         </div>
       </div>
+      <a href="index.html#features" class="hero-faq-link">Comment ça marche ? &rsaquo;</a>
     </div>
   </div>
 
@@ -844,13 +878,6 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
       <span></span><span></span><span></span><span></span>
     </div>
     <div class="maps-slider">
-      <div class="maps-slider-hd">
-        <div class="maps-slider-label">
-          <span class="msl-dot"></span>
-          <span>Maps supportees</span>
-        </div>
-        <div class="maps-slider-count">7<em>Active Duty</em></div>
-      </div>
       <div class="maps-viewport">
         <div class="maps-track">
           <!-- Set 1 -->
@@ -928,20 +955,113 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
         </div>
       </div>
 
-      <!-- Stats compacts sous le slider (remplace result-preview) -->
-      <div class="middle-stats">
-        <div class="ms-item">
-          <div class="ms-val">1.42</div>
-          <div class="ms-key">FV Rating moyen</div>
+    </div>
+
+    <!-- MINI PREVIEW 2D REPLAY : reproduit l'experience de la page /replay.
+         Radar dust2 + dots joueurs animes + scoreline CT/T + timeline rounds.
+         Montre concretement la value prop plutot que des chiffres generiques. -->
+    <div class="replay-preview">
+      <div class="rpv-head">
+        <div class="rpv-map">
+          <span class="rpv-label">de_dust2</span>
+          <span class="rpv-sep">&middot;</span>
+          <span class="rpv-round">Round 15</span>
+          <span class="rpv-sep">&middot;</span>
+          <span class="rpv-time" id="rpvTime">0:12</span>
         </div>
-        <div class="ms-item">
-          <div class="ms-val">134</div>
-          <div class="ms-key">Metriques</div>
+        <div class="rpv-score">
+          <span class="rpv-ct"><strong>CT</strong>8</span>
+          <span class="rpv-mid">&middot;</span>
+          <span class="rpv-t"><strong>T</strong>6</span>
         </div>
-        <div class="ms-item">
-          <div class="ms-val">&lt;2<span>min</span></div>
-          <div class="ms-key">Analyse</div>
-        </div>
+      </div>
+      <div class="rpv-canvas">
+        <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- Map abstraite dust2-like -->
+          <defs>
+            <radialGradient id="rpvGlowHot" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ff6b35" stop-opacity=".45"/>
+              <stop offset="100%" stop-color="#ff6b35" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="rpvGlowCool" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#b8ff57" stop-opacity=".3"/>
+              <stop offset="100%" stop-color="#b8ff57" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <rect width="400" height="200" fill="#0a0b0b"/>
+          <!-- Zones map stylisees -->
+          <g fill="#15181a" stroke="#1c1e1e" stroke-width="1">
+            <rect x="30" y="30" width="90" height="55" rx="2"/>
+            <rect x="140" y="20" width="75" height="50" rx="2"/>
+            <rect x="240" y="30" width="130" height="65" rx="2"/>
+            <rect x="50" y="115" width="95" height="55" rx="2"/>
+            <rect x="165" y="100" width="95" height="80" rx="2"/>
+            <rect x="285" y="120" width="85" height="55" rx="2"/>
+          </g>
+          <!-- Zones heatmap -->
+          <ellipse cx="200" cy="125" rx="55" ry="38" fill="url(#rpvGlowHot)"/>
+          <ellipse cx="325" cy="60" rx="40" ry="28" fill="url(#rpvGlowHot)" opacity=".65"/>
+          <ellipse cx="85" cy="140" rx="38" ry="28" fill="url(#rpvGlowCool)"/>
+          <!-- CT dots (5) bleus cyan -->
+          <g>
+            <circle cx="75" cy="55" r="4" fill="#60a5fa" stroke="#080909" stroke-width="1.5">
+              <animate attributeName="cx" values="75;82;75" dur="4s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="175" cy="45" r="4" fill="#22d3ee" stroke="#080909" stroke-width="1.5">
+              <animate attributeName="cy" values="45;52;45" dur="5s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="310" cy="55" r="4" fill="#60a5fa" stroke="#080909" stroke-width="1.5">
+              <animate attributeName="cx" values="310;303;310" dur="4.5s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="125" cy="140" r="4" fill="#22d3ee" stroke="#080909" stroke-width="1.5"/>
+            <circle cx="345" cy="145" r="4" fill="#60a5fa" stroke="#080909" stroke-width="1.5">
+              <animate attributeName="cy" values="145;138;145" dur="3.8s" repeatCount="indefinite"/>
+            </circle>
+          </g>
+          <!-- T dots (5) jaunes/oranges -->
+          <g>
+            <circle cx="90" cy="130" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5">
+              <animate attributeName="cx" values="90;95;90" dur="4.2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="205" cy="115" r="4" fill="#ff6b35" stroke="#080909" stroke-width="1.5">
+              <animate attributeName="cx" values="205;215;205" dur="3.5s" repeatCount="indefinite"/>
+              <animate attributeName="cy" values="115;120;115" dur="3.5s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="220" cy="155" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5"/>
+            <circle cx="300" cy="135" r="4" fill="#ff6b35" stroke="#080909" stroke-width="1.5">
+              <animate attributeName="cy" values="135;128;135" dur="4s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="325" cy="160" r="4" fill="#f5c842" stroke="#080909" stroke-width="1.5"/>
+          </g>
+          <!-- Duel actif avec pulsation -->
+          <circle cx="255" cy="90" r="3" fill="#b8ff57">
+            <animate attributeName="r" values="3;12;3" dur="2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".9;.1;.9" dur="2s" repeatCount="indefinite"/>
+          </circle>
+          <!-- Trajectoires pointillees (mouvements precedents) -->
+          <g stroke="#2a2c2c" stroke-width="1" stroke-dasharray="2 3" fill="none" opacity=".5">
+            <path d="M175 45 L 200 75 L 220 100"/>
+            <path d="M300 135 L 280 115 L 260 95"/>
+          </g>
+        </svg>
+      </div>
+      <!-- Timeline rounds compact (15 rounds joues) -->
+      <div class="rpv-timeline">
+        <span class="rpv-tl-r rpv-tl-ct"></span>
+        <span class="rpv-tl-r rpv-tl-ct"></span>
+        <span class="rpv-tl-r rpv-tl-t"></span>
+        <span class="rpv-tl-r rpv-tl-ct"></span>
+        <span class="rpv-tl-r rpv-tl-t"></span>
+        <span class="rpv-tl-r rpv-tl-ct"></span>
+        <span class="rpv-tl-r rpv-tl-t"></span>
+        <span class="rpv-tl-r rpv-tl-ct"></span>
+        <span class="rpv-tl-r rpv-tl-t"></span>
+        <span class="rpv-tl-r rpv-tl-ct"></span>
+        <span class="rpv-tl-r rpv-tl-ct"></span>
+        <span class="rpv-tl-r rpv-tl-t"></span>
+        <span class="rpv-tl-r rpv-tl-ct"></span>
+        <span class="rpv-tl-r rpv-tl-t"></span>
+        <span class="rpv-tl-r rpv-tl-current"></span>
       </div>
     </div>
   </div>
@@ -971,25 +1091,11 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
         </svg>
       </div>
       <div class="upload-title">Dépose ta démo</div>
-      <div class="upload-sub">Glisse-dépose ton fichier .dem ici<br>ou clique pour parcourir</div>
+      <div class="upload-sub">Glisse-dépose ton fichier <strong>.dem FACEIT</strong> ici <span class="us-sep">&middot;</span> Max 500 MB</div>
       <button class="upload-btn" onclick="document.getElementById('fileInput').click();event.stopPropagation()">
         Choisir un fichier
       </button>
       <span class="upload-shortcut">Raccourci <kbd id="kbdShortcut">Ctrl U</kbd> pour ouvrir le selecteur</span>
-      <div class="upload-hints">
-        <span>
-          <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 6 4 9 11 2"/></svg>
-          Format .dem
-        </span>
-        <span>
-          <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 6 4 9 11 2"/></svg>
-          Max 500 MB
-        </span>
-        <span>
-          <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 6 4 9 11 2"/></svg>
-          FACEIT CS2
-        </span>
-      </div>
     </div>
 
     <div class="file-bar" id="fileSelected">
@@ -1034,11 +1140,21 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
       </div>
     </div>
 
-    <!-- Trust row inline compacte (3 mots cles) -->
+    <!-- Recent demos : 3 dernieres analyses du user (lien direct vers resultats) -->
+    <div class="recent-demos" id="recentDemos">
+      <div class="recent-demos-hd">
+        <span>Tes dernieres analyses</span>
+        <a href="account.html">Tout voir &rsaquo;</a>
+      </div>
+      <div id="recentDemosList"></div>
+    </div>
+
+    <!-- Trust row inline compacte (4 mots cles : privacy + RGPD + no card + retention) -->
     <div class="trust-inline">
-      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Donnees privees</span>
-      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 6v6c0 5 4 9 9 10 5-1 9-5 9-10V6l-9-4z"/></svg>Sans carte</span>
-      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>Auto suppr 30j</span>
+      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Privees</span>
+      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 6v6c0 5 4 9 9 10 5-1 9-5 9-10V6l-9-4z"/></svg>RGPD</span>
+      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Sans carte</span>
+      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>Del 30j</span>
     </div>
 
   </div>
@@ -1347,16 +1463,81 @@ _sb.auth.getSession().then(async ({ data }) => {
     document.getElementById('navAccountBtn').style.display = '';
     const mb = document.getElementById('navMatchesBtn');
     if (mb) mb.style.display = '';
-    // Badge quota dans la nav (pill entre "Mes matchs" et le bouton espace)
-    renderNavQuota(data.session);
     // Toast welcome si signup recent
     renderWelcomeToast(data.session);
     // Progress bar quota dans la colonne upload
     renderQuotaBar(data.session);
+    // Recent demos (3 dernieres analyses) dans la colonne upload
+    renderRecentDemos(data.session);
   }
   // Live feed : dernieres analyses depuis la DB (si > 3 demos existent)
   renderLiveFeed();
+  // Live status : ping le parser Railway et adapte le tag (online/degraded/offline)
+  updateLiveStatus();
 });
+
+// Ping le parser Railway et affiche son etat reel dans le tag live-status.
+// 3 etats : online (<3s latence), degraded (>3s), offline (no response).
+async function updateLiveStatus() {
+  const tag = document.querySelector('.live-status');
+  const label = document.querySelector('.live-status .ls-on');
+  if (!tag || !label) return;
+  const started = Date.now();
+  try {
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 5000);
+    const res = await fetch(PARSER_URL + '/health', { signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(timeout);
+    const elapsed = Date.now() - started;
+    if (res.ok && elapsed < 3000) {
+      tag.classList.remove('degraded', 'offline');
+      label.textContent = 'Parser en ligne';
+    } else if (res.ok) {
+      tag.classList.add('degraded');
+      label.textContent = 'Parser degrade';
+    } else {
+      tag.classList.add('offline');
+      label.textContent = 'Parser offline';
+    }
+  } catch (_) {
+    tag.classList.add('offline');
+    label.textContent = 'Parser offline';
+  }
+}
+
+// Affiche les 3 dernieres analyses de l'user (lien rapide vers resultats).
+async function renderRecentDemos(session) {
+  const el = document.getElementById('recentDemos');
+  const list = document.getElementById('recentDemosList');
+  if (!el || !list || !session) return;
+  try {
+    const { data, error } = await _sb.from('demos')
+      .select('id, map, analysed_at, fv_rating')
+      .eq('user_id', session.user.id)
+      .order('analysed_at', { ascending: false })
+      .limit(3);
+    if (error || !data || data.length === 0) return;
+    function timeAgo(iso) {
+      const d = new Date(iso);
+      const diff = Date.now() - d.getTime();
+      const h = Math.floor(diff / 3600000);
+      if (h < 1) return 'moins d\'1h';
+      if (h < 24) return h + 'h';
+      const j = Math.floor(h / 24);
+      return j + 'j';
+    }
+    list.innerHTML = data.map(function(d) {
+      const rating = d.fv_rating ? Number(d.fv_rating).toFixed(2) : '-';
+      return ''
+        + '<a href="heatmap-results.html?id=' + d.id + '" class="recent-demo-item">'
+        +   '<span class="rd-map">' + (d.map || 'de_cs2') + '</span>'
+        +   '<span class="rd-date">' + timeAgo(d.analysed_at) + '</span>'
+        +   '<span class="rd-rating">' + rating + '</span>'
+        + '</a>';
+    }).join('');
+    el.classList.add('visible');
+  } catch (_) {}
+}
 
 // === UI HELPERS (enrichissements visuels de la page) =====================
 
@@ -1485,63 +1666,9 @@ async function renderLiveFeed() {
   } catch (_) {}
 }
 
-// Affiche le badge quota d'analyses dans la nav. Pill compact avec count + plan.
-// Remplace l'ancienne top-bar pleine largeur qui cassait le layout flex.
-async function renderNavQuota(session) {
-  const pillEl    = document.getElementById('navQuota');
-  const countEl   = document.getElementById('navQuotaCount');
-  const planEl    = document.getElementById('navQuotaPlan');
-  const upgradeEl = document.getElementById('navQuotaUpgrade');
-  if (!pillEl || !session) return;
-
-  try {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const { count } = await _sb.from('demos')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', session.user.id)
-      .gte('analysed_at', monthStart);
-    const used = count || 0;
-
-    let plan = 'free';
-    try {
-      const subRes = await fetch('/api/check-subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + session.access_token,
-        },
-      });
-      if (subRes.ok) {
-        const sd = await subRes.json();
-        plan = sd.plan || 'free';
-      }
-    } catch (_) {}
-
-    if (plan === 'free') {
-      countEl.innerHTML = `${used}<em>/3</em>`;
-      planEl.textContent = 'Free';
-      if (used >= 3) {
-        pillEl.classList.add('quota-full');
-        countEl.innerHTML = 'Quota';
-        upgradeEl.style.display = '';
-      } else if (used >= 2) {
-        upgradeEl.style.display = '';
-      }
-    } else if (plan === 'elite' || plan === 'team') {
-      countEl.textContent = `${used}`;
-      planEl.textContent = 'Elite';
-      planEl.classList.add('plan-elite');
-    } else {
-      // pro
-      countEl.textContent = `${used}`;
-      planEl.textContent = 'Pro';
-      planEl.classList.add('plan-pro');
-    }
-    pillEl.classList.add('visible');
-  } catch (e) {
-    console.warn('[FragValue] nav quota failed:', e.message);
-  }
+// NOTE : renderNavQuota retiree - le quota est maintenant affiche directement
+// dans la colonne upload via renderQuotaBar (plus visible, moins redondant).
+function _removedRenderNavQuota() { /* kept as placeholder */
 }
 
 // Toast de bienvenue si ?welcome=1 dans l'URL. Auto-dismiss 10s.
