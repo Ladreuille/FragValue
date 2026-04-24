@@ -59,12 +59,13 @@ export default async function handler(req, res) {
         if (!userId) break;
 
         const subscription = await stripe.subscriptions.retrieve(session.subscription);
+        const planMeta = session.metadata.plan || 'pro_monthly';
 
         await sb.from('subscriptions').upsert({
           user_id: userId,
           stripe_subscription_id: subscription.id,
           stripe_customer_id: session.customer,
-          plan: session.metadata.plan || 'pro_monthly',
+          plan: planMeta,
           status: subscription.status,
           current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
           current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
@@ -72,6 +73,33 @@ export default async function handler(req, res) {
         }, { onConflict: 'user_id' });
 
         console.log(`[Stripe] Subscription created for user ${userId}: ${subscription.id}`);
+
+        // Email de confirmation paiement (best-effort, n'echoue pas le webhook)
+        try {
+          const { data: profile } = await sb
+            .from('profiles')
+            .select('faceit_nickname')
+            .eq('id', userId)
+            .maybeSingle();
+          // Recupere l'email user via auth.users (admin scope avec SERVICE_KEY)
+          const { data: userData } = await sb.auth.admin.getUserById(userId);
+          const userEmail = userData?.user?.email;
+          if (userEmail) {
+            const tpl = (await import('./_lib/email-templates.js')).default
+              || require('./_lib/email-templates.js');
+            const { sendEmail } = await import('./_lib/email.js');
+            const t = tpl.checkoutSuccess({
+              nickname: profile?.faceit_nickname || userEmail.split('@')[0],
+              plan: planMeta,
+              periodEndIso: new Date(subscription.current_period_end * 1000).toISOString(),
+            });
+            await sendEmail({ to: userEmail, subject: t.subject, html: t.html, text: t.text });
+            console.log(`[Stripe] Checkout success email sent to ${userEmail}`);
+          }
+        } catch (mailErr) {
+          // On ne fait pas echouer le webhook si l'email rate (Stripe retry sinon)
+          console.error('[Stripe] Checkout success email failed:', mailErr.message);
+        }
         break;
       }
 

@@ -280,6 +280,17 @@ _sb.auth.getSession().then(async ({ data }) => {
   if (data.session) {
     await linkPendingFaceit(data.session.user.id);
     await attributeReferrer(data.session);
+    // Welcome email + UTM persist : idempotents cote backend, on tente meme
+    // si on n'est pas sur que c'est un nouveau signup (les endpoints checkent
+    // welcome_email_sent_at / signup_at pour ne pas dupliquer).
+    try {
+      const headers = { 'Authorization': 'Bearer ' + data.session.access_token, 'Content-Type': 'application/json' };
+      fetch('/api/email-welcome', { method: 'POST', headers }).catch(() => {});
+      const utm = (typeof window.fvGetSignupUtm === 'function') ? window.fvGetSignupUtm() : null;
+      if (utm) {
+        fetch('/api/profile-utm', { method: 'POST', headers, body: JSON.stringify(utm) }).catch(() => {});
+      }
+    } catch (_) {}
     window.location.href = await getPostLoginDestination(data.session.user.id);
   }
 });
@@ -349,9 +360,21 @@ async function handleSubmit() {
     if (mode === 'signup') {
       const confirm = document.getElementById('passwordConfirmInput').value;
       if (pass !== confirm) { showMsg('Les mots de passe ne correspondent pas.', 'error'); btn.disabled=false; return; }
-      const { error } = await _sb.auth.signUp({ email, password: pass });
+      const { data: signupData, error } = await _sb.auth.signUp({ email, password: pass });
       if (error) throw error;
       if (typeof window.fvTrack === 'function') window.fvTrack('Signup', { method: 'email' });
+      // Welcome email + persist UTM (best-effort, n'echoue pas le signup)
+      try {
+        const sess = signupData?.session;
+        if (sess?.access_token) {
+          const headers = { 'Authorization': 'Bearer ' + sess.access_token, 'Content-Type': 'application/json' };
+          fetch('/api/email-welcome', { method: 'POST', headers }).catch(() => {});
+          const utm = (typeof window.fvGetSignupUtm === 'function') ? window.fvGetSignupUtm() : null;
+          if (utm) {
+            fetch('/api/profile-utm', { method: 'POST', headers, body: JSON.stringify(utm) }).catch(() => {});
+          }
+        }
+      } catch (_) {}
       showMsg('Compte créé. Vérifie ta boîte mail pour confirmer.', 'success');
     } else {
       const { data: signinData, error } = await _sb.auth.signInWithPassword({ email, password: pass });

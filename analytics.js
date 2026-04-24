@@ -19,8 +19,46 @@
   const PLAUSIBLE_DOMAIN = 'fragvalue.com';
   const PLAUSIBLE_SCRIPT = 'https://plausible.io/js/script.outbound-links.js';
   const STORAGE_KEY = 'fv_consent_v1';
+  const UTM_KEY = 'fv_utm_v1';
   const REFUSED_TTL_DAYS = 30;
   const ACCEPTED_TTL_DAYS = 365;
+  const UTM_TTL_DAYS = 30;
+
+  // Capture les params UTM + referrer + landing au tout 1er load.
+  // Stocke en localStorage pour pouvoir les attribuer au signup meme si
+  // l'user navigue sur 5 pages avant. Pas de PII, pas de consent requis.
+  function captureUtm() {
+    try {
+      const existing = JSON.parse(localStorage.getItem(UTM_KEY) || 'null');
+      // Si deja capture il y a moins de 30j, on garde la 1re attribution
+      if (existing && existing.ts && (Date.now() - existing.ts) < UTM_TTL_DAYS * 86400000) return;
+      const params = new URLSearchParams(window.location.search);
+      const utm = {
+        source:   params.get('utm_source')   || null,
+        medium:   params.get('utm_medium')   || null,
+        campaign: params.get('utm_campaign') || null,
+        term:     params.get('utm_term')     || null,
+        content:  params.get('utm_content')  || null,
+        referrer: (document.referrer || '').slice(0, 200) || null,
+        landing:  (window.location.origin + window.location.pathname).slice(0, 200),
+        ts:       Date.now(),
+      };
+      // Ne stocke que si au moins une donnee utile
+      if (utm.source || utm.medium || utm.campaign || utm.referrer) {
+        localStorage.setItem(UTM_KEY, JSON.stringify(utm));
+      }
+    } catch (_) {}
+  }
+  captureUtm();
+
+  // Helper public : recupere les UTM stockees pour les passer au backend
+  // au moment du signup (POST /api/profile-utm).
+  window.fvGetSignupUtm = function () {
+    try {
+      const raw = localStorage.getItem(UTM_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) { return null; }
+  };
 
   function readConsent() {
     try {

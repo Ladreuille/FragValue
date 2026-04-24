@@ -1,8 +1,12 @@
 {
   "functions": {
     "api/admin-pro-match.js": { "maxDuration": 60 },
-    "api/cron/pandascore-sync.js": { "maxDuration": 300 }
+    "api/cron/pandascore-sync.js": { "maxDuration": 300 },
+    "api/cron/trial-expiring.js":  { "maxDuration": 60 }
   },
+  "crons": [
+    { "path": "/api/cron/trial-expiring", "schedule": "0 9 * * *" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
