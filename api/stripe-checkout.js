@@ -102,6 +102,24 @@ export default async function handler(req, res) {
     const session = await stripe.checkout.sessions.create(sessionParams);
     return res.status(200).json({ url: session.url });
   } catch (err) {
-    return res.status(500).json({ error: 'Erreur serveur' });
+    // Log cote Vercel (visible dans les Vercel Logs) + detail dans la reponse
+    // pour debug rapide. A retirer une fois le flow valide en prod.
+    console.error('[stripe-checkout] error:', {
+      name: err?.name,
+      type: err?.type,
+      code: err?.code,
+      message: err?.message,
+      stripeRequestId: err?.requestId,
+      planRequested: req.body?.plan,
+    });
+    return res.status(500).json({
+      error: 'Erreur serveur',
+      diagnostic: {
+        type: err?.type || err?.name || 'unknown',
+        code: err?.code,
+        message: err?.message,
+        stripeRequestId: err?.requestId,
+      },
+    });
   }
 }
