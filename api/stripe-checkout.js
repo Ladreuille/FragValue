@@ -26,6 +26,18 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'Variables manquantes : STRIPE_SECRET_KEY' });
   }
 
+  // Validation explicite : STRIPE_SECRET_KEY doit commencer par sk_, sinon Stripe
+  // retournera secret_key_required a chaque appel. On intercepte pour un message
+  // plus explicite vers le dev (prefix expose = 8 chars = pas de leak sensible).
+  const keyPrefix = process.env.STRIPE_SECRET_KEY.slice(0, 8);
+  if (!process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
+    return res.status(503).json({
+      error: 'STRIPE_SECRET_KEY incorrecte',
+      hint: 'La variable doit commencer par sk_live_ ou sk_test_ (tu as actuellement ' + keyPrefix + '...)',
+      fix: 'Dans Vercel Env Vars Production, remplace par la Secret key (sk_) du dashboard Stripe. Ne pas confondre avec la Publishable key (pk_).',
+    });
+  }
+
   try {
     const Stripe = (await import('stripe')).default;
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
@@ -85,12 +97,42 @@ export default async function handler(req, res) {
         const { data: { user } } = await supabase.auth.getUser(token);
         if (user) {
           const { data: profile } = await supabase.from('profiles').select('stripe_customer_id').eq('id', user.id).single();
+
+          // Helper local : cree un nouveau customer Stripe et met a jour la DB
+          const createNewCustomer = async () => {
+            const customer = await stripe.customers.create({
+              email: user.email,
+              metadata: { supabase_uid: user.id },
+            });
+            await supabase.from('profiles').upsert(
+              { id: user.id, stripe_customer_id: customer.id },
+              { onConflict: 'id' }
+            );
+            return customer.id;
+          };
+
           if (profile?.stripe_customer_id) {
-            sessionParams.customer = profile.stripe_customer_id;
+            // Le customer existe en DB, mais peut etre un id obsolete (cree en test
+            // mode pendant la periode beta, invalide maintenant qu'on est en live).
+            // On retrieve pour verifier ; si le customer est deleted ou n'existe pas
+            // dans le mode courant, on en cree un nouveau et on met a jour la DB.
+            try {
+              const existing = await stripe.customers.retrieve(profile.stripe_customer_id);
+              if (existing && !existing.deleted) {
+                sessionParams.customer = profile.stripe_customer_id;
+              } else {
+                sessionParams.customer = await createNewCustomer();
+              }
+            } catch (retrieveErr) {
+              if (retrieveErr?.code === 'resource_missing') {
+                // Customer id obsolete (probablement de l'ancien mode test) : recreate
+                sessionParams.customer = await createNewCustomer();
+              } else {
+                throw retrieveErr;
+              }
+            }
           } else {
-            const customer = await stripe.customers.create({ email: user.email, metadata: { supabase_uid: user.id } });
-            await supabase.from('profiles').upsert({ id: user.id, stripe_customer_id: customer.id }, { onConflict: 'id' });
-            sessionParams.customer = customer.id;
+            sessionParams.customer = await createNewCustomer();
           }
           // Critical : sans supabase_user_id, le webhook ne peut pas peupler la DB.
           sessionParams.metadata.supabase_user_id = user.id;
