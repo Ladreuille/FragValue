@@ -13,8 +13,13 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-const CLAUDE_MODEL = 'claude-haiku-4-5';
-const CLAUDE_ENDPOINT = 'https://api.anthropic.com/v1/messages';
+// Modele par plan :
+// - Free : Haiku 4.5 (rapide, cache 30j, cout faible)
+// - Pro / Elite : Sonnet 4.5 (raisonnement plus fin, meilleures references
+//   pros, analyse tactique plus profonde - difference visible avec langage HLTV)
+const CLAUDE_MODEL_FREE = 'claude-haiku-4-5';
+const CLAUDE_MODEL_PRO  = 'claude-sonnet-4-5';
+const CLAUDE_ENDPOINT   = 'https://api.anthropic.com/v1/messages';
 const FACEIT_BASE = 'https://open.faceit.com/data/v4';
 const CACHE_TTL_DAYS = 7;
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
@@ -180,94 +185,200 @@ async function fetchFaceitStats(nickname, apiKey) {
   return stats;
 }
 
-// ── Prompt construction + Claude call ────────────────────────────────────
-function buildPrompt(stats) {
-  const nextLevel = Math.min((stats.level || 1) + 1, 11);
-  const eloTarget = stats.level >= 10 ? 2400 : LEVEL_TARGETS_ELO[stats.level];
-  const eloGap = Math.max(0, eloTarget - (stats.elo || 0));
+// ── FragValue Demos context (option C partielle) ─────────────────────────
+// Recupere les demos analysees par le user via notre parser Railway et
+// calcule quelques stats qu'on injecte dans le prompt Claude. Differenciateur
+// cle vs les coachs IA concurrents qui ne voient que les stats FACEIT agregees.
+async function fetchFragValueDemos(userId) {
+  try {
+    const s = sb();
+    const { data, error } = await s
+      .from('demos')
+      .select('map, fv_rating, analysed_at')
+      .eq('user_id', userId)
+      .order('analysed_at', { ascending: false })
+      .limit(20);
+    if (error || !data || data.length === 0) return null;
 
-  return `Tu es un coach CS2 experimente et bienveillant. Ton role est de produire un diagnostic de progression personnalise pour un joueur FACEIT qui veut passer au niveau superieur. Tu reponds UNIQUEMENT en JSON valide, sans texte avant ou apres, sans markdown, sans code fence.
+    const withRating = data.filter(d => d.fv_rating != null);
+    const avgFvRating = withRating.length > 0
+      ? +(withRating.reduce((sum, d) => sum + Number(d.fv_rating), 0) / withRating.length).toFixed(2)
+      : null;
 
-Voici les stats du joueur sur ses 20 derniers matchs FACEIT :
+    // Map la plus jouee
+    const byMap = {};
+    data.forEach(d => {
+      const m = d.map || 'unknown';
+      byMap[m] = (byMap[m] || 0) + 1;
+    });
+    const topMap = Object.entries(byMap).sort((a, b) => b[1] - a[1])[0]?.[0];
 
-Pseudo : ${stats.nickname}
-Niveau FACEIT actuel : ${stats.level}
-ELO : ${stats.elo} (cible niveau ${nextLevel} : ${eloTarget}, soit ${eloGap} ELO a gagner)
-Matchs analyses : ${stats.matchesAnalyzed}
-Win rate : ${stats.winRate}%
-K/D ratio moyen : ${stats.avgKd}
-ADR moyen : ${stats.avgAdr}
-HS% moyen : ${stats.avgHs}%
-KAST moyen : ${stats.avgKast}%
-K/R ratio : ${stats.avgKr}
-Total kills : ${stats.totalKills}
-Total deaths : ${stats.totalDeaths}
-Total assists : ${stats.totalAssists}
-Total rounds joues : ${stats.totalRounds}
-
-Lifetime :
-- Total matchs : ${stats.lifetime.matches}
-- Win rate lifetime : ${stats.lifetime.winRate}%
-- K/D lifetime : ${stats.lifetime.avgKd}
-- Plus longue serie de victoires : ${stats.lifetime.longestStreak}
-
-Stats par map (derniers 20 matchs) :
-${stats.mapStats.map(m => `- ${m.map} : ${m.matches} matchs, ${m.winRate}% winrate`).join('\n')}
-
-Ta tache : produire un diagnostic JSON structure avec 6 champs obligatoires.
-
-Format de reponse JSON attendu (respecte EXACTEMENT cette structure) :
-{
-  "summary": "2 a 3 phrases resumant le profil du joueur et son levier principal de progression. Tutoie le joueur (\"tu as\", \"ton K/D\"). Maximum 280 caracteres.",
-  "strengths": [
-    "Point fort 1 avec chiffre precis",
-    "Point fort 2 avec chiffre precis",
-    "Point fort 3 avec chiffre precis"
-  ],
-  "weaknesses": [
-    "Faiblesse 1 avec chiffre precis et contexte",
-    "Faiblesse 2 avec chiffre precis et contexte",
-    "Faiblesse 3 avec chiffre precis et contexte"
-  ],
-  "actions": [
-    {
-      "title": "Action concrete 1",
-      "detail": "Comment la mettre en oeuvre, en 1 phrase. Specifique au profil du joueur."
-    },
-    {
-      "title": "Action concrete 2",
-      "detail": "Comment la mettre en oeuvre."
-    },
-    {
-      "title": "Action concrete 3",
-      "detail": "Comment la mettre en oeuvre."
-    },
-    {
-      "title": "Action concrete 4",
-      "detail": "Comment la mettre en oeuvre."
-    }
-  ],
-  "weeklyGoal": "Un objectif chiffre a atteindre sur les 5 prochains matchs. Exemple : \"Atteindre K/D 1.15 sur les 5 prochains matchs\" ou \"Gagner 3 pistol rounds cette semaine\".",
-  "mapTip": {
-    "map": "nom de la map avec le pire winrate parmi celles jouees >= 3 fois, OU la map avec le meilleur winrate si tout est OK",
-    "advice": "Conseil specifique sur cette map, 1 a 2 phrases. Peut mentionner positions, strats, utility. Si le joueur la joue peu, propose plutot de la delaisser."
+    return {
+      demosCount:     data.length,
+      avgFvRating,
+      topMap:         topMap && topMap !== 'unknown' ? topMap : null,
+      lastDemoMap:    data[0].map || null,
+      lastDemoRating: data[0].fv_rating != null ? Number(data[0].fv_rating).toFixed(2) : null,
+    };
+  } catch (e) {
+    console.warn('[ai-roadmap] fetchFragValueDemos failed:', e.message);
+    return null;
   }
 }
 
-Regles strictes :
-- Tutoiement obligatoire.
-- Aucun emoji, aucun accent sur les mots techniques (kast, adr, elo, hs).
-- Les chiffres precis dans les faiblesses / forces (ex : "K/D 1.05", "KAST 68%").
-- Les actions doivent etre specifiques au profil, pas generiques. Si K/D faible, propose du DM. Si KAST faible, propose de travailler le positionnement. Adapte au niveau : un joueur lvl 4 a besoin de conseils differents d'un lvl 9.
-- Si le joueur n'a pas de faiblesse evidente (toutes les stats au niveau cible), focus les actions sur la regularite et les facteurs ELO (streak, pistol, tilt).
-- Le weeklyGoal doit etre realiste et mesurable.
-- mapTip : obligatoire de choisir une map parmi celles listees ci-dessus.
-- Pas de phrases types "vous etes un bon joueur", reste factuel et actionnable.
-
-Reponds UNIQUEMENT par le JSON, rien d'autre.`;
+// ── Prompt construction + Claude call ────────────────────────────────────
+// ── Benchmarks FACEIT par niveau (references HLTV/pros amateurs 2026) ─────
+// Utilises dans le prompt pour que Claude classe les stats de l'user en
+// "faible / moyen / bon / excellent" selon son vrai niveau. Evite les
+// conseils hors-contexte ("K/D 1.05 faible" pour un lvl 4 c'est faux).
+const LEVEL_BENCHMARKS = {
+  low:    { elo: '800-1200',   kd: '0.85-1.00', adr: '60-72',  hs: '28-40', kast: '62-68' }, // lvl 3-4
+  mid:    { elo: '1200-1530',  kd: '1.00-1.15', adr: '72-85',  hs: '35-45', kast: '68-72' }, // lvl 5-6
+  high:   { elo: '1530-2000',  kd: '1.10-1.25', adr: '85-100', hs: '40-50', kast: '72-76' }, // lvl 7-8
+  elite:  { elo: '2000-2400+', kd: '1.20-1.45', adr: '95-115', hs: '45-55', kast: '75-82' }, // lvl 9-10
+};
+function getTier(level) {
+  if (level >= 9) return 'elite';
+  if (level >= 7) return 'high';
+  if (level >= 5) return 'mid';
+  return 'low';
 }
 
-async function callClaude(prompt, apiKey) {
+function buildPrompt(stats, fvContext) {
+  const nextLevel = Math.min((stats.level || 1) + 1, 11);
+  const eloTarget = stats.level >= 10 ? 2400 : LEVEL_TARGETS_ELO[stats.level];
+  const eloGap = Math.max(0, eloTarget - (stats.elo || 0));
+  const tier = getTier(stats.level || 1);
+  const b = LEVEL_BENCHMARKS[tier];
+
+  // Section optionnelle : donnees FragValue Demos (si l'user a analyse des demos)
+  const fvSection = fvContext && fvContext.demosCount > 0
+    ? `\nFragValue Demos (analyses locales depuis le parser FV) :
+- Demos analysees : ${fvContext.demosCount}
+- FV Rating moyen : ${fvContext.avgFvRating ?? 'n/a'} (echelle HLTV 2.1 style : 0.80 faible, 1.00 moyen, 1.15 bon, 1.30+ pro-level)
+- Map la plus jouee : ${fvContext.topMap || 'n/a'}
+- Derniere demo analysee : ${fvContext.lastDemoMap || 'n/a'} (FV Rating ${fvContext.lastDemoRating ?? 'n/a'})`
+    : '';
+
+  return `Tu es un coach CS2 professionnel ecrit pour FragValue. Ton profil : 15 ans de competitive (lvl 10 FACEIT, ex-joueur semi-pro EU), expert des stats HLTV et de la meta CS2 2026. Tu connais par coeur les rosters Vitality, G2, FaZe, Spirit, NaVi, MOUZ, Heroic, Cloud9 et les patterns de donk (Spirit), ZywOo (Vitality), m0NESY (G2), ropz (FaZe), broky (FaZe), NiKo (G2), s1mple, magixx, apEX, cadiaN, Aleksib, HObbit.
+
+Ton ton : direct, factuel, pas bienveillant pour rien. Tu parles comme un analyste HLTV. Si un joueur a un aim moyen tu lui dis "ton aim c'est du lvl 5 standard, pas pro". Pas de compliments gratuits. Pas d'emojis.
+
+Voici les stats FACEIT du joueur (20 derniers matchs CS2) :
+
+IDENTITE
+- Pseudo : ${stats.nickname}
+- Niveau FACEIT : ${stats.level} (tier ${tier})
+- ELO : ${stats.elo} (cible lvl ${nextLevel} : ${eloTarget}, gap : ${eloGap} ELO)
+
+PERFORMANCE (20 derniers matchs)
+- Matchs : ${stats.matchesAnalyzed}, winrate ${stats.winRate}%
+- K/D : ${stats.avgKd} (benchmark tier ${tier} : ${b.kd})
+- ADR : ${stats.avgAdr} (benchmark : ${b.adr})
+- HS% : ${stats.avgHs}% (benchmark : ${b.hs})
+- KAST : ${stats.avgKast}% (benchmark : ${b.kast})
+- K/R : ${stats.avgKr}
+- Volume : ${stats.totalKills} kills, ${stats.totalDeaths} deaths, ${stats.totalAssists} assists sur ${stats.totalRounds} rounds
+
+LIFETIME
+- Total matchs : ${stats.lifetime.matches}
+- Winrate lifetime : ${stats.lifetime.winRate}%
+- K/D lifetime : ${stats.lifetime.avgKd}
+- Longest win streak : ${stats.lifetime.longestStreak}
+
+MAP POOL (20 derniers matchs)
+${stats.mapStats.map(m => `- de_${m.map} : ${m.matches} matchs, winrate ${m.winRate}%`).join('\n')}
+${fvSection}
+
+ANALYSE ATTENDUE
+Produis un diagnostic JSON au format exact ci-dessous. Tutoiement obligatoire. Langage HLTV : utilise Rating 2.1, Impact, KAST, ADR, opening duels, entry fragger, trade kill, clutch, multi-kill, utility damage, crosshair placement, spray control, prefire, pre-aim, crosshair placement, peek (wide/jiggle/shoulder peek), off-angle, retake, execute, stack, rotate, trade bait, flash pop, wallbang. Pas d'accents sur les termes techniques (kast, adr, hltv, elo, cs).
+
+{
+  "summary": "2 a 3 phrases style analyse HLTV. Identifie le ROLE implicite du joueur (entry fragger / rifler support / AWPer / lurker / IGL) d'apres ses stats, pointe le levier n1. Max 320 caracteres.",
+  "strengths": [
+    "Point fort 1 avec chiffre ET contexte HLTV. Ex: 'ADR 89 au-dessus du benchmark lvl 6 (72-85), profil entry/impact'",
+    "Point fort 2 similaire",
+    "Point fort 3 similaire"
+  ],
+  "weaknesses": [
+    "Faiblesse 1 avec chiffre ET diagnostic. Ex: 'KAST 64% sous le benchmark (68-72), tu meurs trop souvent sans trade, positionnement a travailler'",
+    "Faiblesse 2",
+    "Faiblesse 3"
+  ],
+  "actions": [
+    {
+      "title": "Action courte imperative (max 6 mots)",
+      "detail": "Implementation concrete avec REFERENCE pro ou map/workshop specifique. Ex: 'Fais 400 kills/jour sur aim_botz map USP + AK, style crosshair placement comme ropz. Vise 45% HS sur 5 matchs'. Pas de 'fais du DM', toujours specifique."
+    },
+    {
+      "title": "Action 2",
+      "detail": "Detail specifique"
+    },
+    {
+      "title": "Action 3",
+      "detail": "Detail specifique"
+    },
+    {
+      "title": "Action 4",
+      "detail": "Detail specifique (peut concerner mental, tilt, pistol, utility)"
+    }
+  ],
+  "weeklyGoal": "Objectif chiffre measurable sur 5 prochains matchs. Format HLTV : 'Atteindre KAST 72% sur 5 matchs' ou 'Gagner 3/5 pistol rounds'. Aligne sur la faiblesse n1.",
+  "mapTip": {
+    "map": "Map la plus faible (winrate le plus bas parmi celles avec >= 3 matchs). Si winrate partout bon, prend la moins jouee (< 2 matchs) qui appartient a l'Active Duty.",
+    "advice": "Conseil tactique 2-3 phrases : cite 1 position forte, 1 utility essentielle avec nom precis (ex: 'molo connector mirage CT', 'smoke xbox long dust2'), et 1 reference pro qui excelle sur cette map (ex: 'Regarde donk sur mirage T side mid control')."
+  },
+  "proReference": {
+    "name": "Nom d'un pro actuel qui a un STYLE similaire au joueur (pas juste meilleur, similaire en role/stats/approach).",
+    "team": "Team actuelle du pro",
+    "why": "Pourquoi ce pro : 1 phrase qui relie le profil du joueur au style du pro. Ex: 'Comme ropz, tu as un K/D solide mais un impact par round (KR) qui pourrait monter avec plus d'agressivite early round'."
+  },
+  "warmupRoutine": [
+    { "duration": "5 min", "task": "Tache precise 1 (ex: aim_botz map pistol + rifle 200 kills)" },
+    { "duration": "10 min", "task": "Tache 2 (ex: DM FFA 1 match sur AIM_BOTZ ou Warmup.cfg)" },
+    { "duration": "10 min", "task": "Tache 3 (ex: prefire map dust2 long lineup)" },
+    { "duration": "5 min", "task": "Tache 4 (ex: reflex cooldown, crosshair placement static)" }
+  ],
+  "roadmap7days": [
+    { "day": "Jour 1", "title": "Titre court", "detail": "Action du jour (max 80 chars)" },
+    { "day": "Jour 2", "title": "Titre", "detail": "Action" },
+    { "day": "Jour 3", "title": "Titre", "detail": "Action" },
+    { "day": "Jour 4", "title": "Titre", "detail": "Action" },
+    { "day": "Jour 5", "title": "Titre", "detail": "Action" },
+    { "day": "Jour 6", "title": "Titre", "detail": "Action (dimanche : match official)" },
+    { "day": "Jour 7", "title": "Review", "detail": "Analyse des 3 dernieres demos + ajustements semaine 2" }
+  ],
+  "mapSetups": {
+    "map": "Meme map que mapTip",
+    "setups": [
+      { "name": "Nom lineup precis (ex: 'Molo Connector CT Mirage')", "role": "CT ou T", "why": "Impact : ce que ca empeche / ouvre" },
+      { "name": "2e lineup", "role": "CT ou T", "why": "Impact" }
+    ]
+  },
+  "mentalTip": "1 conseil mental / discipline / tilt management specifique au profil. Ex: 'Tu as un winrate 42% en T-side vs 58% CT. Arrete de forcer des entry fragger ton role quand tu es IGL-passif. Accepte ton style support.'"
+}
+
+REGLES STRICTES
+- Tutoiement obligatoire partout.
+- Aucun emoji, aucune phrase type ("tu es un bon joueur", "continue comme ca").
+- Chiffres precis obligatoires dans strengths/weaknesses (ex: "K/D 1.05", "KAST 68%", "ADR 76").
+- References pros reelles 2026 (donk, ZywOo, m0NESY, ropz, broky, NiKo, s1mple, magixx, apEX, cadiaN, HObbit, Aleksib, karrigan, b1t, Jame, sh1ro).
+- Lineup/setups avec noms precis (ex: "smoke Xbox long dust2", "molo banana inferno", "flash popflash A apps mirage").
+- Workshop maps pour warmup : aim_botz, Yprac Arena, prefire_series, FastAim/Reflex training.
+- roadmap7days doit etre progressif : jour 1-2 fondamentaux, jour 3-4 tactique, jour 5-6 match, jour 7 review.
+- Adapte au tier :
+  * tier low (lvl 3-4) : focus aim/crosshair placement/spray control, utility basique
+  * tier mid (lvl 5-6) : focus KAST/positioning/trade/util lineups
+  * tier high (lvl 7-8) : focus tactique/map knowledge/clutch/pistol/anti-eco
+  * tier elite (lvl 9-10) : focus meta/IGL micro-decisions/mental/consistency pro-level
+- Si la stat est DANS le benchmark tier, ne la marque pas comme faiblesse.
+- mapSetups : toujours 2 lineups reels CS2 (pas inventes).
+- proReference : reference un pro dont le PROFIL colle, pas juste le meilleur joueur.
+
+Reponds UNIQUEMENT par le JSON valide, sans texte avant/apres, sans markdown fence.`;
+}
+
+async function callClaude(prompt, apiKey, model) {
   const res = await fetch(CLAUDE_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -276,8 +387,10 @@ async function callClaude(prompt, apiKey) {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: CLAUDE_MODEL,
-      max_tokens: 1500,
+      model: model || CLAUDE_MODEL_FREE,
+      // JSON enrichi (pro_reference, warmup, roadmap7days, mapSetups,
+      // mentalTip) demande plus de tokens. 3000 couvre large.
+      max_tokens: 3000,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
@@ -379,14 +492,23 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // 1. Fetch stats FACEIT fraiches (20 derniers matchs + lifetime + per-map)
-    const stats = await fetchFaceitStats(nickname, process.env.FACEIT_API_KEY);
+    // 1. Fetch en parallele :
+    //    - stats FACEIT fraiches (20 matchs + lifetime + per-map)
+    //    - context FragValue Demos (FV Rating moyen, maps analysees)
+    const [stats, fvContext] = await Promise.all([
+      fetchFaceitStats(nickname, process.env.FACEIT_API_KEY),
+      fetchFragValueDemos(user.id),
+    ]);
 
-    // 2. Build prompt + call Claude
-    const prompt = buildPrompt(stats);
-    const diagnosis = await callClaude(prompt, process.env.ANTHROPIC_API_KEY);
+    // 2. Build prompt enrichi + call Claude avec le bon model selon plan
+    const prompt = buildPrompt(stats, fvContext);
+    const model = (plan === 'pro' || plan === 'elite' || plan === 'team' || isAdmin)
+      ? CLAUDE_MODEL_PRO
+      : CLAUDE_MODEL_FREE;
+    const diagnosis = await callClaude(prompt, process.env.ANTHROPIC_API_KEY, model);
 
-    // 3. Cache pour 7 jours
+    // 3. Cache pour 7 jours (inclut le model utilise pour debug/analytics)
+    diagnosis._meta = { model, generatedAt: new Date().toISOString(), hasFvContext: !!fvContext };
     await writeCache(user.id, stats, diagnosis);
 
     return res.status(200).json({
