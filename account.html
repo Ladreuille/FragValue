@@ -493,10 +493,14 @@ async function init() {
   // Banner d'activation : si l'user n'a jamais analyse de demo, on l'y invite.
   renderFirstDemoBanner(session.user.id);
   if (window.location.search.includes('checkout=success')) {
-    showBanner('Bienvenue dans Pro. Ton abonnement est actif.', 'ok');
+    // Banner riche dedie post-checkout : reste visible jusqu'au clic et propose
+    // un CTA direct vers l'analyse demo. Pousse l'activation apres conversion.
+    showCheckoutSuccessBanner();
     // Force re-fetch : le webhook Stripe peut prendre 2-5s pour peupler la DB
     // après le redirect. On retry une fois après 3s pour catch l'update.
     setTimeout(() => { _subLoaded = false; loadSubscription(); }, 3000);
+    // Nettoie le query param pour eviter un replay si refresh
+    try { window.history.replaceState(null, '', window.location.pathname); } catch (_) {}
   }
 
   // Toast bienvenue si on vient d'etre parraine (reward de 7j Pro)
@@ -561,6 +565,42 @@ function showBanner(text, type) {
   b.textContent = text;
   document.body.appendChild(b);
   setTimeout(() => b.remove(), 5000);
+}
+
+// Banner riche affiche apres un checkout Stripe reussi.
+// Contient un CTA "Analyser ma demo Pro" pour pousser l'activation immediate
+// et reste visible 15s (au lieu de 5s du showBanner standard) ou jusqu'au clic.
+function showCheckoutSuccessBanner() {
+  const existing = document.getElementById('fvCheckoutSuccessBanner');
+  if (existing) existing.remove();
+
+  const wrap = document.createElement('div');
+  wrap.id = 'fvCheckoutSuccessBanner';
+  wrap.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:600;background:linear-gradient(135deg,rgba(184,255,87,.18),rgba(45,212,160,.12));border:1px solid rgba(184,255,87,.45);color:var(--text);font-family:var(--mono);font-size:13px;padding:16px 20px;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.4);display:flex;align-items:center;gap:14px;max-width:calc(100% - 40px);flex-wrap:wrap;opacity:0;transition:opacity .3s';
+  wrap.innerHTML =
+    '<div style="display:flex;align-items:center;gap:10px">' +
+      '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b8ff57" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/>' +
+      '</svg>' +
+      '<div>' +
+        '<div style="font-family:\'Anton\',sans-serif;font-size:14px;letter-spacing:.04em;color:#b8ff57;text-transform:uppercase">Pro active</div>' +
+        '<div style="font-size:11px;color:var(--text2);margin-top:2px">Analyses illimitees, 2D Replay, Coach IA.</div>' +
+      '</div>' +
+    '</div>' +
+    '<a href="demo.html" style="background:#b8ff57;color:#000;padding:9px 18px;border-radius:6px;font-family:\'Space Mono\',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em;white-space:nowrap">Analyser une demo</a>' +
+    '<button type="button" onclick="document.getElementById(\'fvCheckoutSuccessBanner\').remove()" aria-label="Fermer" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 8px;font-size:18px;line-height:1">&times;</button>';
+
+  document.body.appendChild(wrap);
+  // Fade-in
+  requestAnimationFrame(() => { wrap.style.opacity = '1'; });
+  // Auto-dismiss apres 15s (plus long que le banner standard pour laisser le
+  // temps de lire et de cliquer sur le CTA)
+  setTimeout(() => {
+    if (document.getElementById('fvCheckoutSuccessBanner')) {
+      wrap.style.opacity = '0';
+      setTimeout(() => wrap.remove(), 350);
+    }
+  }, 15000);
 }
 
 // ══ FEEDBACK ═══════════════════════════════════════════════════════════════
