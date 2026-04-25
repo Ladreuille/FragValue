@@ -1068,7 +1068,7 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
 
 <!-- LIVE FEED TICKER : barre fixed bottom avec defile des dernieres analyses.
      Donne une impression de plateforme active. Rempli par renderLiveFeed()
-     depuis la DB (demos recentes) ou fallback sur du contenu generique. -->
+     depuis la DB (demos recentes) or fallback sur du contenu generique. -->
 <div class="live-feed" id="liveFeed">
   <div class="live-feed-label">
     <span class="lf-dot"></span>
@@ -1152,7 +1152,7 @@ async function checkPlanGating() {
     const { data:{ session } } = await _sb.auth.getSession();
     if (!session) return true; // non connecte = on laisse passer (free)
 
-    // Compter les demos ce mois-ci
+    // Compter les demos this month
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const { count } = await _sb.from('demos')
@@ -1214,7 +1214,7 @@ async function startAnalysis() {
     if (typeof window.fvTrack === 'function') window.fvTrack('Quota Hit', { plan: 'free' });
     return;
   }
-  // Funnel : upload demo demarre (le user a passe le quota check, va consommer 1 analyse)
+  // Funnel : upload demo demarre (le user a passe le quota check, va consommer 1 yearalyse)
   if (typeof window.fvTrack === 'function') {
     window.fvTrack('Demo Upload Start', { sizeMB: Math.round(selectedFile.size / 1024 / 1024) });
   }
@@ -1298,7 +1298,7 @@ async function startAnalysis() {
     // Fetch terminé  - annuler les timers et finir proprement
     timers.forEach(t => clearTimeout(t));
 
-    if (!res.ok) { const e = await res.json().catch(()=>({error:'Error serveur'})); throw new Error(e.error||'Error serveur'); }
+    if (!res.ok) { const e = await res.json().catch(()=>({error:'Server error'})); throw new Error(e.error||'Server error'); }
 
     go(5, 92, 'Finalizing', 'Processing results...');
     const data = await res.json();
@@ -1591,7 +1591,7 @@ async function renderLiveFeed() {
   const track = document.getElementById('liveFeedTrack');
   if (!track) return;
   try {
-    // Top 8 analyses recentes sur les 7 derniers jours, avec le nom de la map.
+    // Top 8 analyses recentes sur les 7 derniers days, avec le nom de la map.
     // On ne leak pas les usernames (anonymise avec "Player #hash" pour privacy).
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await _sb.from('demos')
@@ -1674,7 +1674,7 @@ async function saveDemoAnalysis(d) {
       analysed_at: new Date().toISOString()
     }).select('id').single();
     if (!error && inserted?.id) {
-      // Stocker l'id pour mettre à jour le FV Rating depuis heatmap-results.html
+      // Stocker l'id pour mettre à day le FV Rating depuis heatmap-results.html
       sessionStorage.setItem('lastDemoId', inserted.id);
     }
   } catch(e) { console.warn('saveDemoAnalysis:', e.message); }

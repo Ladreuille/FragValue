@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="description" content="FragValue · My account: subscription, settings and security">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <title>FragValue · My account</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/tag-colors.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
+      --accent:#b8ff57;--accent2:#7ddd1a;--accent-dim:rgba(184,255,87,.10);
+      --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+      --font:'Space Mono',monospace;--mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+      --radius:6px;--radius2:12px;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+    /* Nav styles injected by nav.js */
+    .page{max-width:1200px;margin:0 auto;padding:28px 32px 80px;display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start}
+    @media(max-width:900px){.page{grid-template-columns:1fr;padding:16px}}
+    .sidebar{position:sticky;top:76px;display:flex;flex-direction:column;gap:4px}
+    @media(max-width:900px){.sidebar{display:grid;grid-template-columns:repeat(3,1fr);position:static}}
+    .sidebar-section{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);padding:6px 10px;margin-top:6px}
+    @media(max-width:900px){.sidebar-section{display:none}}
+    .sidebar-btn{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;border:none;background:transparent;color:var(--text2);font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;width:100%;text-align:left}
+    .sidebar-btn:hover{background:var(--surface);color:var(--text)}
+    .sidebar-btn.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+    .sidebar-btn svg{flex-shrink:0;opacity:.6;transition:opacity .15s}
+    .sidebar-btn.active svg,.sidebar-btn:hover svg{opacity:1}
+    .sidebar-badge{margin-left:auto;background:var(--accent);color:#000;font-size:9px;font-weight:700;padding:2px 7px;border-radius:40px;letter-spacing:.04em;min-width:16px;text-align:center;line-height:1.4}
+
+    /* Feedback list */
+    .fb-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;transition:border-color .15s}
+    .fb-card:hover{border-color:var(--border2)}
+    .fb-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+    .fb-card-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:1;min-width:0}
+    .fb-ticket{font-family:var(--mono);font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.04em;background:rgba(184,255,87,.06);padding:2px 8px;border-radius:6px;border:1px solid rgba(184,255,87,.2)}
+    .fb-type-pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:40px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .fb-type-pill.positive{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.25)}
+    .fb-type-pill.negative{background:rgba(255,68,68,.1);color:var(--danger);border:1px solid rgba(255,68,68,.25)}
+    .fb-type-pill.idea{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.25)}
+    .fb-type-pill.bug{background:rgba(255,138,61,.1);color:#ff8a3d;border:1px solid rgba(255,138,61,.25)}
+    .fb-status{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase}
+    .fb-status.responded{color:var(--accent)}
+    .fb-card-date{font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap}
+    .fb-card-msg{font-size:13px;color:var(--text2);line-height:1.55;white-space:pre-wrap;background:var(--card);border-left:2px solid var(--border2);border-radius:0 6px 6px 0;padding:10px 14px;margin:6px 0}
+    .fb-card-response{margin-top:10px;padding:10px 14px;background:rgba(184,255,87,.04);border-left:2px solid var(--accent);border-radius:0 6px 6px 0}
+    .fb-card-response-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+    .fb-card-response-content{font-size:13px;color:var(--text);line-height:1.55;white-space:pre-wrap}
+    .fb-card-tags{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 0}
+    .fb-card-tag{display:inline-flex;align-items:center;font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:40px;letter-spacing:.04em}
+    .fb-card-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+    .fb-card-action{background:transparent;border:1px solid var(--border2);color:var(--text3);font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 11px;border-radius:6px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .fb-card-action:hover{color:var(--text);border-color:var(--text3)}
+    .fb-card-action.danger:hover{color:var(--danger);border-color:rgba(255,68,68,.4);background:rgba(255,68,68,.06)}
+    .fb-empty{padding:60px 20px;text-align:center;color:var(--text2);font-size:13px;background:var(--surface);border:1px dashed var(--border2);border-radius:10px}
+    .main{min-width:0}
+    .tab-panel{display:none}.tab-panel.active{display:block;animation:fadeUp .25s ease}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .sec-label{font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:20px 0 12px;display:flex;align-items:center;gap:10px;font-family:var(--mono)}
+    .sec-label:first-child{margin-top:0}
+    .sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+    .load-spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── Subscription ─────────────────────────────────────────── */
+    .sub-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
+    .sub-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 0% 50%,rgba(184,255,87,.06),transparent);pointer-events:none}
+    .sub-card-loading{display:flex;align-items:center;gap:12px;color:var(--text2);font-size:13px;position:relative;z-index:1}
+    .sub-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;position:relative;z-index:1;flex-wrap:wrap;gap:12px}
+    .sub-plan{display:flex;align-items:center;gap:12px}
+    .sub-plan-badge{font-family:var(--display);font-size:24px;letter-spacing:.04em;padding:4px 14px;border-radius:6px}
+    .sub-plan-badge.free{background:rgba(122,128,128,.12);color:var(--text2);border:1px solid var(--border2)}
+    .sub-plan-badge.pro{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000}
+    .sub-plan-badge.elite{background:linear-gradient(135deg,var(--gold),#d4a52a);color:#000}
+    .sub-plan-meta{font-size:12px;color:var(--text2)}
+    .sub-plan-meta strong{color:var(--text);font-family:var(--mono)}
+    .sub-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .sub-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:9px 16px;border-radius:6px;border:none;cursor:pointer;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+    .sub-btn.primary{background:var(--accent);color:#000}
+    .sub-btn.primary:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 20px rgba(184,255,87,.4)}
+    .sub-btn.secondary{background:transparent;color:var(--text);border:1px solid var(--border2)}
+    .sub-btn.secondary:hover{border-color:var(--accent);color:var(--accent)}
+    .sub-usage{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;position:relative;z-index:1}
+    @media(max-width:600px){.sub-usage{grid-template-columns:1fr}}
+    .sub-usage-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px}
+    .sub-usage-label{font-size:10px;font-family:var(--mono);letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:6px}
+    .sub-usage-val{font-family:var(--display);font-size:22px;color:var(--text);line-height:1}
+    .sub-usage-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px}
+    .sub-usage-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:8px}
+    .sub-usage-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .6s ease}
+
+    .plan-compare{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    @media(max-width:700px){.plan-compare{grid-template-columns:1fr}}
+    .plan-mini{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
+    .plan-mini[data-plan="pro"]{border-color:rgba(184,255,87,.3)}
+    .plan-mini[data-plan="elite"]{border-color:rgba(245,200,66,.3)}
+    .plan-mini-name{font-family:var(--display);font-size:18px;letter-spacing:.04em;margin-bottom:6px}
+    .plan-mini-price{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent);margin-bottom:12px}
+    .plan-mini-price span{font-size:12px;color:var(--text3);font-weight:400}
+    .plan-mini-feats{list-style:none;padding:0;margin:0}
+    .plan-mini-feats li{font-size:12px;color:var(--text2);padding:4px 0 4px 16px;position:relative}
+    .plan-mini-feats li::before{content:'•';color:var(--accent);position:absolute;left:0}
+    .teaser-link-inline{color:var(--accent);text-decoration:none;font-family:var(--mono);font-size:12px;font-weight:700}
+    .teaser-link-inline:hover{text-decoration:underline}
+
+    /* ── Settings / Security ─────────────────────────────── */
+    .settings-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px 18px;margin-bottom:16px}
+    .settings-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+    .settings-row:last-child{border-bottom:none}
+    @media(max-width:600px){.settings-row{flex-wrap:wrap}}
+    .settings-label{font-size:13px;color:var(--text);font-weight:400;flex-shrink:0;min-width:180px}
+    .settings-value{flex:1;font-size:12px;color:var(--text2);font-family:var(--mono)}
+    .settings-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:7px 14px;border-radius:6px;background:transparent;color:var(--text);border:1px solid var(--border2);cursor:pointer;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .settings-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .settings-btn.danger-btn{color:var(--danger);border-color:rgba(255,68,68,.3)}
+    .settings-btn.danger-btn:hover{background:rgba(255,68,68,.08);color:var(--danger)}
+    .settings-select{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:6px;cursor:pointer}
+    .settings-input{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 14px;border-radius:6px;width:120px;outline:none;transition:border-color .15s}
+    .settings-input:focus{border-color:var(--accent)}
+    /* Scout rows : contrôle a gauche, label + description a droite */
+    .scout-row{align-items:flex-start;gap:18px}
+    .scout-row > .toggle,.scout-row > .settings-select,.scout-row > .settings-input{flex-shrink:0;margin-top:2px}
+    .scout-row > .settings-select,.scout-row > .settings-input{min-width:140px}
+    .scout-row-text{flex:1;min-width:0}
+    .scout-row-text .settings-label{margin-bottom:3px;min-width:0}
+    .scout-row-text .settings-value{font-family:var(--mono);color:var(--text3);font-size:11px;line-height:1.4}
+    .settings-msg{font-family:var(--mono);font-size:11px;padding:8px 0;min-height:14px}
+    .settings-msg.ok{color:var(--success)}
+    .settings-msg.err{color:var(--danger)}
+    .danger-label{color:var(--danger)!important}
+    .danger-label::after{background:rgba(255,68,68,.2)!important}
+    .danger-card{border-color:rgba(255,68,68,.2)!important}
+
+    .toggle{position:relative;display:inline-block;width:42px;height:22px;flex-shrink:0}
+    .toggle input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--card);border:1px solid var(--border2);border-radius:22px;transition:.2s}
+    .toggle-slider::before{content:'';position:absolute;height:16px;width:16px;left:2px;top:1px;background:var(--text2);border-radius:50%;transition:.2s}
+    .toggle input:checked + .toggle-slider{background:rgba(184,255,87,.15);border-color:var(--accent)}
+    .toggle input:checked + .toggle-slider::before{transform:translateX(20px);background:var(--accent)}
+
+    /* Header section de la page */
+    .page-header{margin-bottom:24px}
+    .page-title{font-family:var(--display);font-size:32px;letter-spacing:.02em;color:var(--text);margin-bottom:4px}
+    .page-sub{font-size:12px;color:var(--text2);font-family:var(--mono)}
+
+    @media(max-width:768px){.page{padding:16px}}
+  </style>
+<script src="/analytics.js" defer></script>
+</head>
+<body>
+
+<nav></nav>
+
+<div class="page">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">My account</div>
+    <button class="sidebar-btn active" onclick="setTab('subscription',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Subscription
+    </button>
+    <button class="sidebar-btn" onclick="setTab('settings',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </button>
+    <button class="sidebar-btn" onclick="setTab('security',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Security
+    </button>
+    <button class="sidebar-btn" onclick="setTab('feedback',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      My feedbacks
+      <span id="feedbackBadge" class="sidebar-badge" style="display:none">0</span>
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="page-header">
+      <h1 class="page-title">My account</h1>
+      <div class="page-sub">Manage your subscription, preferences and account security</div>
+    </div>
+
+    <!-- FIRST DEMO BANNER : affiche si l'user n'a jamais analyse de demo.
+         Rempli par renderFirstDemoBanner() au page load. -->
+    <a id="firstDemoBanner" href="/demo.html?welcome=1" style="display:none;text-decoration:none;background:linear-gradient(135deg, rgba(184,255,87,.12), rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.45);border-radius:12px;padding:20px 22px;margin-bottom:24px;align-items:center;gap:16px;flex-wrap:wrap;transition:all .15s;cursor:pointer" onmouseover="this.style.borderColor='var(--accent)';this.style.transform='translateY(-1px)'" onmouseout="this.style.borderColor='rgba(184,255,87,.45)';this.style.transform='translateY(0)'">
+      <div style="width:48px;height:48px;border-radius:12px;background:rgba(184,255,87,.15);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:220px">
+        <div style="font-family:var(--display);font-size:16px;color:var(--accent);letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px">Run your first analysis</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.55">Drop a .dem FACEIT file. You receive your FV Rating, heatmaps and action plan in 2 minutes. 3 analyses offered this month.</div>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:11px 22px;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.04em">
+        Analyze my demo
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+    </a>
+
+    <!-- SUBSCRIPTION -->
+    <div class="tab-panel active" id="panelSubscription">
+      <div class="sec-label">My subscription</div>
+      <div class="sub-card" id="subCard">
+        <div class="sub-card-loading"><div class="load-spinner"></div>Loading your subscription...</div>
+      </div>
+
+      <div class="sec-label">Plans comparison</div>
+      <div class="plan-compare">
+        <div class="plan-mini" data-plan="free">
+          <div class="plan-mini-name">Free</div>
+          <div class="plan-mini-price">0€</div>
+          <ul class="plan-mini-feats">
+            <li>3 analyses / month</li>
+            <li>Basic stats</li>
+            <li>1 AI diagnosis / month</li>
+          </ul>
+        </div>
+        <div class="plan-mini" data-plan="pro">
+          <div class="plan-mini-name">Pro</div>
+          <div class="plan-mini-price">9€<span>/mois</span></div>
+          <ul class="plan-mini-feats">
+            <li>Unlimited analyses</li>
+            <li>2D Replay + advanced KPIs</li>
+            <li>Unlimited AI Coach</li>
+            <li>Pro demos viewer</li>
+          </ul>
+        </div>
+        <div class="plan-mini" data-plan="elite">
+          <div class="plan-mini-name">Elite</div>
+          <div class="plan-mini-price" style="color:var(--text2)">?<span style="color:var(--text3)">€/month</span></div>
+          <ul class="plan-mini-feats">
+            <li>Everything in Pro + team tools</li>
+            <li>Pro strats DB</li>
+            <li>Anti-strat tool</li>
+            <li>Team dashboard</li>
+          </ul>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:18px">
+        <a href="pricing.html" class="teaser-link-inline">See full comparison →</a>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="tab-panel" id="panelSettings">
+      <div class="sec-label">Profile</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Email</div>
+          <div class="settings-value" id="settingsEmail">-</div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">FACEIT username</div>
+          <div class="settings-value" id="settingsFaceit">-</div>
+          <button class="settings-btn" onclick="window.location.href='onboarding.html'">Edit</button>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Member since</div>
+          <div class="settings-value" id="settingsCreated">-</div>
+        </div>
+      </div>
+
+      <div class="sec-label">Chrome extension</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Status</div>
+          <div class="settings-value" id="settingsExt">Checking...</div>
+          <a href="extension-auth.html" class="settings-btn">Configure</a>
+        </div>
+      </div>
+
+      <div class="sec-label">Notifications</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Email · new match analyzed</div>
+          <label class="toggle"><input type="checkbox" id="notifMatches"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Email · weekly report</div>
+          <label class="toggle"><input type="checkbox" id="notifWeekly"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Email · product announcements</div>
+          <label class="toggle"><input type="checkbox" id="notifProduct"/><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+
+      <div class="sec-label">Preferences</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Language</div>
+          <select class="settings-select" id="settingsLang">
+            <option value="fr">French</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sec-label">Referral</div>
+
+      <!-- Banner grant actif (affiche quand l'user a un grant Pro/Team via parrainage) -->
+      <div id="grantBanner" style="display:none;background:linear-gradient(135deg, rgba(184,255,87,.1), rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.35);border-radius:10px;padding:16px 18px;margin-bottom:16px;display:none;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(184,255,87,.15);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v6a4 4 0 0 1-8 0V4z"/><path d="M8 6h-3a2 2 0 0 0 0 4h3M16 6h3a2 2 0 0 1 0 4h-3"/><line x1="10" y1="16" x2="14" y2="16"/><line x1="12" y1="13" x2="12" y2="16"/></svg>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-family:var(--display);font-size:14px;color:var(--accent);letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px" id="grantBannerTitle">Free Pro access active</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5" id="grantBannerMsg">Loading...</div>
+        </div>
+        <a href="/en/pricing.html" class="settings-btn" style="background:var(--accent);color:#000;border-color:var(--accent)">Passer a Pro</a>
+      </div>
+
+      <div class="settings-card" id="referralCard">
+        <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <div>
+              <div class="settings-label" style="min-width:0">Your referral link</div>
+              <div class="settings-value" id="referralStats" style="margin-top:4px">Loading...</div>
+            </div>
+            <button class="settings-btn" id="referralCopyBtn" onclick="copyReferralLink()">Copy link</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input type="text" id="referralLinkInput" readonly value="" style="flex:1;min-width:220px;background:var(--card);border:1px solid var(--border);color:var(--accent);font-family:var(--mono);font-size:12px;padding:9px 12px;border-radius:6px;outline:none"/>
+            <a class="settings-btn" id="referralTwitterBtn" href="#" target="_blank" rel="noopener" style="background:#1d9bf0;color:#fff;border-color:#1d9bf0">Share X</a>
+          </div>
+          <div class="settings-msg" id="referralMsg"></div>
+          <!-- Progression vers le prochain palier -->
+          <div id="referralProgress" style="margin-top:10px;padding-top:12px;border-top:1px solid var(--border)"></div>
+          <!-- Ladder des paliers -->
+          <div id="referralTiers" style="margin-top:8px"></div>
+          <!-- Explication succincte -->
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text3);line-height:1.6;margin-top:8px">
+            <strong style="color:var(--accent)">How it works :</strong> chaque ami qui s'inscrit avec ton lien te fait avancer dans les paliers. Ton referral recoit 7 days Pro de bienvenue. You, tu debloques des recompenses majeures aux seuils 15 / 50 / 100 / 500 referrals.
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-label">Scout Profile</div>
+      <div class="settings-card scout-card">
+        <div class="settings-row scout-row">
+          <label class="toggle"><input type="checkbox" id="scoutOptIn"/><span class="toggle-slider"></span></label>
+          <div class="scout-row-text">
+            <div class="settings-label">Appear in leaderboards</div>
+            <div class="settings-value">Your FACEIT stats will be public in Scout leaderboards once unlocked (1000 users). You can disable at any time.</div>
+          </div>
+        </div>
+        <div class="settings-row scout-row" data-requires-optin style="display:none">
+          <select class="settings-select" id="scoutRolePrimary">
+            <option value="">-</option>
+            <option value="entry">Entry fragger</option>
+            <option value="awp">AWPer</option>
+            <option value="support">Support</option>
+            <option value="lurker">Lurker</option>
+            <option value="igl">IGL</option>
+            <option value="rifler">Rifler</option>
+          </select>
+          <div class="scout-row-text">
+            <div class="settings-label">Main role</div>
+            <div class="settings-value">Determines your ranking in "Best Entry", "Best AWPer", etc.</div>
+          </div>
+        </div>
+        <div class="settings-row scout-row" data-requires-optin style="display:none">
+          <select class="settings-select" id="scoutRoleSecondary">
+            <option value="">-</option>
+            <option value="entry">Entry fragger</option>
+            <option value="awp">AWPer</option>
+            <option value="support">Support</option>
+            <option value="lurker">Lurker</option>
+            <option value="igl">IGL</option>
+            <option value="rifler">Rifler</option>
+          </select>
+          <div class="scout-row-text">
+            <div class="settings-label">Secondary role</div>
+            <div class="settings-value">Optional · second ranking where you appear</div>
+          </div>
+        </div>
+        <div class="settings-row scout-row" data-requires-optin style="display:none">
+          <input class="settings-input" id="scoutBirthYear" type="number" min="1970" max="2015" placeholder="Ex: 2003"/>
+          <div class="scout-row-text">
+            <div class="settings-label">Birth year</div>
+            <div class="settings-value">Permet le classement "Rookie Gems" (talents &lt; 22 ans). Non visible publiquement.</div>
+          </div>
+        </div>
+        <div class="settings-row scout-row" data-requires-optin style="display:none">
+          <input class="settings-input" id="scoutYearsPlaying" type="number" min="0" max="25" placeholder="Ex: 5"/>
+          <div class="scout-row-text">
+            <div class="settings-label">Years of CS practice</div>
+            <div class="settings-value">How long you've played Counter-Strike (CS2, CSGO, CS 1.6, all included)</div>
+          </div>
+        </div>
+        <div class="settings-row scout-row" data-requires-optin style="display:none">
+          <select class="settings-select" id="scoutRegion">
+            <option value="">-</option>
+            <option value="EU">Europe</option>
+            <option value="NA">North America</option>
+            <option value="SA">South America</option>
+            <option value="OCE">Oceania</option>
+            <option value="SEA">SE Asia</option>
+          </select>
+          <div class="scout-row-text">
+            <div class="settings-label">Region</div>
+            <div class="settings-value">Main filter used by recruiters</div>
+          </div>
+        </div>
+        <div class="settings-row scout-row" data-requires-optin style="display:none">
+          <label class="toggle"><input type="checkbox" id="scoutOpenToOffers"/><span class="toggle-slider"></span></label>
+          <div class="scout-row-text">
+            <div class="settings-label">Open to offers</div>
+            <div class="settings-value">Appear in the "Free Agent" filter for recruiting teams</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECURITY -->
+    <div class="tab-panel" id="panelSecurity">
+      <div class="sec-label">Password</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Change my password</div>
+          <div class="settings-value">Send a reset link by email</div>
+          <button class="settings-btn" onclick="sendPasswordReset()" id="pwdResetBtn">Send link</button>
+        </div>
+        <div class="settings-msg" id="pwdMsg"></div>
+      </div>
+
+      <div class="sec-label">Active sessions</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Sign out of all devices</div>
+          <div class="settings-value">Close all sessions except this one</div>
+          <button class="settings-btn" onclick="logoutAll()">Sign out</button>
+        </div>
+      </div>
+
+      <div class="sec-label danger-label">Danger zone</div>
+      <div class="settings-card danger-card">
+        <div class="settings-row">
+          <div class="settings-label">Delete my account</div>
+          <div class="settings-value">All your data (profile, demos, watchlist) will be permanently deleted. This action is irreversible.</div>
+          <button class="settings-btn danger-btn" onclick="deleteAccount()">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ FEEDBACK ══════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="panelFeedback">
+      <div class="sec-label">My feedbacks</div>
+      <div id="feedbackList">
+        <div style="color:var(--text2);font-size:13px;padding:40px 20px;text-align:center">Loading...</div>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:18px;text-align:center;line-height:1.6">
+        You can send new feedback via the green button at the bottom right of each page.<br>
+        We typically reply within 48 business hours.
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+window._sb = sb;
+let currentUser = null;
+
+async function init() {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; return; }
+  currentUser = session.user;
+  // Gere query params : ?checkout=success après Stripe, #settings/#feedback pour deep-link
+  const hash = (window.location.hash || '').replace('#','');
+  if (['settings', 'security', 'feedback'].includes(hash)) {
+    const btn = document.querySelector(`[onclick*="${hash}"]`);
+    if (btn) setTab(hash, btn);
+  } else {
+    loadSubscription();
+  }
+  // Toujours fetch les feedbacks au load (pour le badge non-lu, meme si on est sur un autre tab)
+  refreshFeedbackBadge();
+  // Banner d'activation : si l'user n'a jamais analyse de demo, on l'y invite.
+  renderFirstDemoBanner(session.user.id);
+  if (window.location.search.includes('checkout=success')) {
+    // Banner riche dedie post-checkout : reste visible jusqu'au clic et propose
+    // un CTA direct vers l'analyse demo. Pousse l'activation apres conversion.
+    showCheckoutSuccessBanner();
+    // Funnel : conversion reussie (capture client-side, complete celle du webhook serveur)
+    if (typeof window.fvTrack === 'function') window.fvTrack('Checkout Success');
+    // Force re-fetch : le webhook Stripe peut prendre 2-5s pour peupler la DB
+    // après le redirect. On retry une fois après 3s pour catch l'update.
+    setTimeout(() => { _subLoaded = false; loadSubscription(); }, 3000);
+    // Nettoie le query param pour eviter un replay si refresh
+    try { window.history.replaceState(null, '', window.location.pathname); } catch (_) {}
+  }
+
+  // Toast bienvenue si on vient d'etre parraine (reward de 7j Pro)
+  try {
+    const rewardRaw = sessionStorage.getItem('fv_referral_reward');
+    if (rewardRaw) {
+      const reward = JSON.parse(rewardRaw);
+      sessionStorage.removeItem('fv_referral_reward');
+      const msg = reward.referrer_nick
+        ? `Referral valide via ${reward.referrer_nick}. ${reward.days} days Pro offered sont actifs sur ton compte.`
+        : `Referral valide. ${reward.days} days Pro offered sont actifs sur ton compte.`;
+      showBanner(msg, 'ok');
+      // Force refresh de la card abonnement pour refleter le trial
+      setTimeout(() => { _subLoaded = false; loadSubscription(); }, 500);
+    } else {
+      // Cas d'erreur attribution : code deja utilise or invalide
+      const info = sessionStorage.getItem('fv_referral_info');
+      if (info === 'already_referred') {
+        sessionStorage.removeItem('fv_referral_info');
+        showBanner('Tu as deja utilise un code de parrainage sur ce compte. Un seul code par compte.', 'err');
+      } else if (info === 'invalid_code') {
+        sessionStorage.removeItem('fv_referral_info');
+        showBanner('Le code de parrainage est inconnu. Verifie l\'orthographe et reessaie.', 'err');
+      }
+    }
+  } catch {}
+}
+
+// Affiche un banner d'activation si l'user n'a jamais analyse de demo.
+// Visible quel que soit le tab actif, pour pousser le "aha moment" de la 1re
+// analyse. Le banner est un lien vers /demo.html?welcome=1.
+async function renderFirstDemoBanner(userId) {
+  try {
+    const { count, error } = await sb
+      .from('demos')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    if (error) return;
+    if ((count || 0) === 0) {
+      const el = document.getElementById('firstDemoBanner');
+      if (el) el.style.display = 'flex';
+    }
+  } catch (e) {
+    console.warn('[FragValue] firstDemoBanner failed:', e.message);
+  }
+}
+
+function setTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (tab === 'subscription') loadSubscription();
+  if (tab === 'settings')     loadSettings();
+  if (tab === 'feedback')     loadFeedbacks();
+  window.history.replaceState(null, '', '#' + tab);
+}
+
+function showBanner(text, type) {
+  const b = document.createElement('div');
+  b.style.cssText = `position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:500;background:${type==='ok'?'rgba(45,212,160,.1)':'rgba(255,68,68,.1)'};border:1px solid ${type==='ok'?'var(--success)':'var(--danger)'};color:${type==='ok'?'var(--success)':'var(--danger)'};font-family:var(--mono);font-size:12px;padding:10px 18px;border-radius:6px`;
+  b.textContent = text;
+  document.body.appendChild(b);
+  setTimeout(() => b.remove(), 5000);
+}
+
+// Banner riche affiche apres un checkout Stripe reussi.
+// Contient un CTA "Analyze my demo Pro" pour pousser l'activation immediate
+// et reste visible 15s (au lieu de 5s du showBanner standard) or jusqu'au clic.
+function showCheckoutSuccessBanner() {
+  const existing = document.getElementById('fvCheckoutSuccessBanner');
+  if (existing) existing.remove();
+
+  const wrap = document.createElement('div');
+  wrap.id = 'fvCheckoutSuccessBanner';
+  wrap.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:600;background:linear-gradient(135deg,rgba(184,255,87,.18),rgba(45,212,160,.12));border:1px solid rgba(184,255,87,.45);color:var(--text);font-family:var(--mono);font-size:13px;padding:16px 20px;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.4);display:flex;align-items:center;gap:14px;max-width:calc(100% - 40px);flex-wrap:wrap;opacity:0;transition:opacity .3s';
+  wrap.innerHTML =
+    '<div style="display:flex;align-items:center;gap:10px">' +
+      '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b8ff57" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/>' +
+      '</svg>' +
+      '<div>' +
+        '<div style="font-family:\'Anton\',sans-serif;font-size:14px;letter-spacing:.04em;color:#b8ff57;text-transform:uppercase">Pro active</div>' +
+        '<div style="font-size:11px;color:var(--text2);margin-top:2px">Unlimited analyses, 2D Replay, AI Coach.</div>' +
+      '</div>' +
+    '</div>' +
+    '<a href="demo.html" style="background:#b8ff57;color:#000;padding:9px 18px;border-radius:6px;font-family:\'Space Mono\',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em;white-space:nowrap">Analyze a demo</a>' +
+    '<button type="button" onclick="document.getElementById(\'fvCheckoutSuccessBanner\').remove()" aria-label="Close" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 8px;font-size:18px;line-height:1">&times;</button>';
+
+  document.body.appendChild(wrap);
+  // Fade-in
+  requestAnimationFrame(() => { wrap.style.opacity = '1'; });
+  // Auto-dismiss apres 15s (plus long que le banner standard pour laisser le
+  // temps de lire et de cliquer sur le CTA)
+  setTimeout(() => {
+    if (document.getElementById('fvCheckoutSuccessBanner')) {
+      wrap.style.opacity = '0';
+      setTimeout(() => wrap.remove(), 350);
+    }
+  }, 15000);
+}
+
+// ══ FEEDBACK ═══════════════════════════════════════════════════════════════
+// Clé localStorage pour tracker quels admin_response l'user a déjà vus
+const FB_SEEN_KEY = 'fv_feedback_seen_v1';
+function readSeenIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(FB_SEEN_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+function writeSeenIds(set) {
+  try { localStorage.setItem(FB_SEEN_KEY, JSON.stringify([...set])); } catch {}
+}
+
+const TYPE_LABELS_FR = { positive: 'Positive', negative: 'Negative', idea: 'Idea', bug: 'Bug' };
+const STATUS_LABELS_FR = { new: 'Received', read: 'Read', responded: 'Replied', closed: 'Closed' };
+
+let _fbLoaded = false;
+async function loadFeedbacks() {
+  if (_fbLoaded) return;
+  _fbLoaded = true;
+  const target = document.getElementById('feedbackList');
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const headers = session?.access_token ? { 'Authorization': 'Bearer ' + session.access_token } : {};
+    const res = await fetch('/api/feedback?mine=1', { headers });
+    if (!res.ok) throw new Error('status ' + res.status);
+    const d = await res.json();
+    renderFeedbacks(d.feedbacks || []);
+
+    // Marque tous les admin_response visibles comme vus
+    const seen = readSeenIds();
+    let changed = false;
+    for (const f of (d.feedbacks || [])) {
+      if (f.admin_response && !seen.has(f.id)) { seen.add(f.id); changed = true; }
+    }
+    if (changed) writeSeenIds(seen);
+    refreshFeedbackBadge(); // recompute
+  } catch (e) {
+    target.innerHTML = (window.FV && FV.emptyState)
+      ? FV.emptyState({
+          icon: 'error',
+          title: 'Loading error',
+          message: escapeHtml(e.message || 'Unable to load your feedbacks.'),
+          cta: { label: 'Retry', onclick: 'location.reload()' },
+          variant: 'compact',
+        })
+      : `<div class="fb-empty">Loading error : ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderFeedbacks(feedbacks) {
+  const target = document.getElementById('feedbackList');
+  if (!feedbacks.length) {
+    target.innerHTML = (window.FV && FV.emptyState)
+      ? FV.emptyState({
+          icon: 'feedback',
+          title: 'No feedback yet',
+          message: 'You haven\'t sent a ticket yet. Bug, idea, perf issue: the green button at the bottom right opens the form. We read everything and reply.',
+          hint: 'Every feedback helps FragValue improve. Thanks in advance.',
+        })
+      : `<div class="fb-empty">You haven't sent feedback yet. The green button at the bottom right is there for that.</div>`;
+    return;
+  }
+  target.innerHTML = feedbacks.map(f => {
+    const ticket = f.ticket_number ? 'FB-' + String(f.ticket_number).padStart(4, '0') : '';
+    const date = f.created_at ? new Date(f.created_at).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-';
+    const typeLabel = TYPE_LABELS_FR[f.type] || f.type;
+    const statusClass = f.status === 'responded' ? 'responded' : '';
+    const statusLabel = STATUS_LABELS_FR[f.status] || f.status;
+    const tagStyle = (typeof window.fvTagStyle === 'function') ? window.fvTagStyle : (() => '');
+    const tagsBlock = (Array.isArray(f.tags) && f.tags.length) ? `
+      <div class="fb-card-tags">
+        ${f.tags.map(t => `<span class="fb-card-tag" style="${tagStyle(t)}">#${escapeHtml(t)}</span>`).join('')}
+      </div>` : '';
+    const responseBlock = f.admin_response
+      ? `<div class="fb-card-response">
+           <div class="fb-card-response-label">
+             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+             FragValue reply
+           </div>
+           <div class="fb-card-response-content">${escapeHtml(f.admin_response)}</div>
+         </div>`
+      : '';
+    const closeBtn = f.status !== 'closed'
+      ? `<button class="fb-card-action" onclick="closeMyFeedback('${f.id}', '${ticket}')">Close</button>`
+      : '';
+    return `
+      <div class="fb-card">
+        <div class="fb-card-head">
+          <div class="fb-card-meta">
+            ${ticket ? `<span class="fb-ticket">${ticket}</span>` : ''}
+            <span class="fb-type-pill ${f.type}">${typeLabel}</span>
+            <span class="fb-status ${statusClass}">${statusLabel}</span>
+          </div>
+          <span class="fb-card-date">${date}</span>
+        </div>
+        <div class="fb-card-msg">${escapeHtml(f.message)}</div>
+        ${tagsBlock}
+        ${responseBlock}
+        <div class="fb-card-actions">
+          ${closeBtn}
+          <button class="fb-card-action danger" onclick="deleteMyFeedback('${f.id}', '${ticket}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function closeMyFeedback(id, ticketLabel) {
+  if (!confirm(`Close ${ticketLabel || 'this feedback'} ?\nIl restera dans ton historique mais marqué comme résolu.`)) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.access_token) throw new Error('Session expired');
+    const res = await fetch('/api/feedback', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ id, status: 'closed' }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Error ' + res.status);
+    showBanner('Feedback closed', 'ok');
+    _fbLoaded = false;
+    loadFeedbacks();
+  } catch (e) {
+    showBanner(e.message, 'err');
+  }
+}
+
+async function deleteMyFeedback(id, ticketLabel) {
+  if (!confirm(`Delete définitivement ${ticketLabel || 'this feedback'} ?\nCette action est irréversible.`)) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.access_token) throw new Error('Session expired');
+    const res = await fetch('/api/feedback?id=' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Error ' + res.status);
+    showBanner('Feedback deleted', 'ok');
+    _fbLoaded = false;
+    loadFeedbacks();
+    refreshFeedbackBadge();
+  } catch (e) {
+    showBanner(e.message, 'err');
+  }
+}
+
+// Refresh juste le badge (sans render le panel) : lance par init() et après loadFeedbacks
+async function refreshFeedbackBadge() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.access_token) return;
+    const res = await fetch('/api/feedback?mine=1&limit=50', { headers: { 'Authorization': 'Bearer ' + session.access_token } });
+    if (!res.ok) return;
+    const d = await res.json();
+    const seen = readSeenIds();
+    const unread = (d.feedbacks || []).filter(f => f.admin_response && !seen.has(f.id)).length;
+    const badge = document.getElementById('feedbackBadge');
+    if (!badge) return;
+    if (unread > 0) {
+      badge.textContent = String(unread);
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch {}
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// ══ SUBSCRIPTION ═════════════════════════════════════════════════════════════
+let _subLoaded = false;
+async function loadSubscription() {
+  if (_subLoaded) return;
+  _subLoaded = true;
+  const card = document.getElementById('subCard');
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const headers = { 'Content-Type': 'application/json' };
+    if (session?.access_token) headers['Authorization'] = 'Bearer ' + session.access_token;
+    // POST imposé par l'API (check-subscription rejette les GET avec 405)
+    const res = await fetch('/api/check-subscription', { method: 'POST', headers });
+    const d = await res.json();
+    const plan = (d.plan || 'free').toLowerCase();
+    const planLabel = plan === 'pro' ? 'Pro' : plan === 'team' || plan === 'elite' ? 'Elite' : 'Free';
+    const planKey = plan === 'team' ? 'elite' : plan;
+    const nextBilling = d.current_period_end
+      ? new Date(d.current_period_end * 1000).toLocaleDateString('fr-FR')
+      : null;
+    const status = d.status || (plan === 'free' ? 'actif' : '-');
+    const cancelAt = d.cancel_at_period_end
+      ? `Se termine le ${new Date(d.current_period_end * 1000).toLocaleDateString('fr-FR')}`
+      : null;
+    const usage = d.usage || {};
+
+    // Cas special : plan Pro/Team via un grant (parrainage, admin) et non Stripe.
+    // On affiche un libelle specifique + CTA "Passer a Pro" pour continuer
+    // apres expiration du trial.
+    const isGrantTrial = d._source === 'grant' && !!d.grant;
+    const grantReasonLabel = {
+      'referral_referee'  : 'parrainage',
+      'referral_referrer' : 'parrainage',
+      'admin_grant'       : 'offered par l\'equipe',
+      'promo_code'        : 'code promo',
+      'compensation'      : 'compensation',
+    }[d.grant?.reason] || 'offered';
+    const grantMeta = isGrantTrial && nextBilling
+      ? `Acces ${planLabel} (${grantReasonLabel}) · expire le <strong>${nextBilling}</strong>`
+      : null;
+
+    card.innerHTML = `
+      <div class="sub-head">
+        <div class="sub-plan">
+          <div class="sub-plan-badge ${planKey}">${planLabel}${isGrantTrial ? ' <span style="font-size:9px;background:rgba(245,200,66,.2);color:var(--gold);padding:2px 6px;border-radius:3px;margin-left:6px">TRIAL</span>' : ''}</div>
+          <div class="sub-plan-meta">
+            ${plan === 'free'
+              ? `Free plan · Upgrade to Pro to unlock advanced features`
+              : isGrantTrial
+                ? grantMeta
+                : `Status <strong>${status}</strong>${nextBilling ? ` · Prochaine facture <strong>${nextBilling}</strong>` : ''}${cancelAt ? ` · <span style="color:var(--gold)">${cancelAt}</span>` : ''}`}
+          </div>
+        </div>
+        <div class="sub-actions">
+          ${plan === 'free' || isGrantTrial
+            ? `<a href="pricing.html" class="sub-btn primary">${isGrantTrial ? 'Continue with Pro' : 'Upgrade to Pro'}</a>`
+            : `<button class="sub-btn secondary" onclick="openStripePortal()">Manage my subscription</button><a href="pricing.html" class="sub-btn secondary">Change plan</a>`}
+        </div>
+      </div>
+      ${plan === 'free' ? `
+        <div class="sub-usage">
+          <div class="sub-usage-item">
+            <div class="sub-usage-label">Demo analyses</div>
+            <div class="sub-usage-val">${usage.analyses_used || 0}<span style="color:var(--text3);font-size:14px"> / 3</span></div>
+            <div class="sub-usage-sub">ce mois · reset dans ${usage.days_to_reset || 30}j</div>
+            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, ((usage.analyses_used || 0) / 3) * 100)}%"></div></div>
+          </div>
+          <div class="sub-usage-item">
+            <div class="sub-usage-label">Player scouts</div>
+            <div class="sub-usage-val">${usage.scouts_today || 0}<span style="color:var(--text3);font-size:14px"> / 3</span></div>
+            <div class="sub-usage-sub">today · resets at midnight</div>
+            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, ((usage.scouts_today || 0) / 3) * 100)}%"></div></div>
+          </div>
+          <div class="sub-usage-item">
+            <div class="sub-usage-label">AI diagnosis</div>
+            <div class="sub-usage-val">${usage.ai_used || 0}<span style="color:var(--text3);font-size:14px"> / 1</span></div>
+            <div class="sub-usage-sub">this month · Pro = unlimited</div>
+            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, (usage.ai_used || 0) * 100)}%"></div></div>
+          </div>
+        </div>
+      ` : ''}
+    `;
+  } catch(e) {
+    card.innerHTML = `<div style="color:var(--text2);font-size:12px">Unable to load your subscription. <a href="pricing.html" style="color:var(--accent)">See plans</a>.</div>`;
+  }
+}
+
+async function openStripePortal() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+    const res = await fetch('/api/stripe-portal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+    });
+    const d = await res.json();
+    if (d.url) window.location.href = d.url;
+    else showBanner(d.error || 'Portail indisponible.', 'err');
+  } catch(e) { showBanner('Network error. Réessaie.', 'err'); }
+}
+
+// ══ PARAMETRES ═════════════════════════════════════════════════════════════
+let _settingsLoaded = false;
+async function loadSettings() {
+  if (_settingsLoaded) return;
+  _settingsLoaded = true;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    document.getElementById('settingsEmail').textContent = session.user.email || '-';
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+    if (profile) {
+      document.getElementById('settingsFaceit').textContent = profile.faceit_nickname || 'Not linked';
+      if (profile.created_at) {
+        document.getElementById('settingsCreated').textContent = new Date(profile.created_at).toLocaleDateString('fr-FR');
+      }
+      const notifs = profile.notification_prefs || {};
+      document.getElementById('notifMatches').checked = notifs.match_ready !== false;
+      document.getElementById('notifWeekly').checked  = notifs.weekly_report !== false;
+      document.getElementById('notifProduct').checked = notifs.product_news !== false;
+      if (profile.locale) document.getElementById('settingsLang').value = profile.locale;
+    }
+    const extMarker = document.querySelector('[data-fv-ext-installed]');
+    document.getElementById('settingsExt').textContent = extMarker ? 'Installed' : 'Not detected';
+
+    ['notifMatches','notifWeekly','notifProduct'].forEach(id => {
+      document.getElementById(id).addEventListener('change', saveNotifPrefs);
+    });
+    document.getElementById('settingsLang').addEventListener('change', saveLocale);
+
+    // Scout opt-in : charger l'état + bind handlers
+    if (profile) {
+      document.getElementById('scoutOptIn').checked = !!profile.scout_opt_in;
+      if (profile.scout_role_primary)   document.getElementById('scoutRolePrimary').value = profile.scout_role_primary;
+      if (profile.scout_role_secondary) document.getElementById('scoutRoleSecondary').value = profile.scout_role_secondary;
+      if (profile.scout_region)         document.getElementById('scoutRegion').value = profile.scout_region;
+      if (profile.birth_year)           document.getElementById('scoutBirthYear').value = profile.birth_year;
+      if (profile.years_playing_cs)     document.getElementById('scoutYearsPlaying').value = profile.years_playing_cs;
+      document.getElementById('scoutOpenToOffers').checked = !!profile.scout_open_to_offers;
+      toggleScoutFields(profile.scout_opt_in);
+    }
+    document.getElementById('scoutOptIn').addEventListener('change', async (e) => {
+      toggleScoutFields(e.target.checked);
+      await saveScoutProfile();
+    });
+    ['scoutRolePrimary','scoutRoleSecondary','scoutRegion','scoutOpenToOffers'].forEach(id => {
+      document.getElementById(id).addEventListener('change', saveScoutProfile);
+    });
+    ['scoutBirthYear','scoutYearsPlaying'].forEach(id => {
+      document.getElementById(id).addEventListener('blur', saveScoutProfile);
+    });
+
+    // Charge les stats de parrainage via /api/referral
+    loadReferral();
+  } catch(e) { console.warn('Settings load error:', e.message); }
+}
+
+async function loadReferral() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const res = await fetch('/api/referral', {
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (!res.ok) return;
+    const d = await res.json();
+    const input = document.getElementById('referralLinkInput');
+    const stats = document.getElementById('referralStats');
+    const twitter = document.getElementById('referralTwitterBtn');
+    if (d.link) {
+      input.value = d.link;
+      const total = d.stats?.total || 0;
+      const last30 = d.stats?.last_30d || 0;
+      const fragment = total === 0
+        ? 'No referrals yet. Share your link to invite some.'
+        : `${total} referral${total > 1 ? 's' : ''} au total · ${last30} this month`;
+      stats.textContent = fragment;
+      if (twitter) {
+        const tweet = `Je track ma progression CS2 avec @FragValue, c'est vraiment bien fait. Teste avec mon code (free) : ${d.link}`;
+        twitter.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweet);
+      }
+    } else {
+      stats.textContent = 'Referral code not generated. Contact support.';
+    }
+
+    // Affiche le banner si l'user a un grant Pro actif
+    renderGrantBanner(d.grant);
+
+    // Progression vers le prochain palier + ladder des paliers
+    renderTierProgress(d.tier_progress);
+    renderTierLadder(d.tiers || []);
+  } catch (e) {
+    console.warn('Referral load error:', e.message);
+  }
+}
+
+function renderTierProgress(progress) {
+  const el = document.getElementById('referralProgress');
+  if (!el) return;
+  if (!progress) { el.innerHTML = ''; return; }
+  if (progress.maxed) {
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.25);border-radius:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700">
+          All les paliers atteints (${progress.current} referrals). Merci d'etre un pilier FragValue.
+        </div>
+      </div>`;
+    return;
+  }
+  const pct = progress.percent || 0;
+  const planLabel = progress.next_plan === 'elite' ? 'Elite' : 'Pro';
+  const durationLabel = progress.next_lifetime ? 'for life' : '1 year';
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;font-family:var(--mono);font-size:11px">
+      <span style="color:var(--text)"><strong>${progress.current}</strong> / ${progress.target} referrals</span>
+      <span style="color:var(--text3)">Plus que ${progress.remaining} pour <strong style="color:var(--accent)">${planLabel} ${durationLabel}</strong></span>
+    </div>
+    <div style="height:6px;background:var(--card);border:1px solid var(--border);border-radius:3px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg, var(--accent2), var(--accent));border-radius:2px;transition:width .6s ease"></div>
+    </div>
+  `;
+}
+
+function renderTierLadder(tiers) {
+  const el = document.getElementById('referralTiers');
+  if (!el || !tiers.length) return;
+  const items = tiers.map(t => {
+    const planLabel = t.plan === 'elite' ? 'Elite' : 'Pro';
+    const durationLabel = t.lifetime ? 'for life' : '1 year';
+    const reached = t.reached;
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:${reached ? 'rgba(184,255,87,.05)' : 'var(--card)'};border:1px solid ${reached ? 'rgba(184,255,87,.2)' : 'var(--border)'};border-radius:6px">
+        <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${reached ? 'var(--accent)' : 'var(--border2)'};color:${reached ? '#000' : 'var(--text3)'};font-family:var(--display);font-size:10px;flex-shrink:0">
+          ${reached ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : t.threshold}
+        </div>
+        <div style="flex:1;font-family:var(--mono);font-size:11px;line-height:1.3">
+          <div style="color:${reached ? 'var(--accent)' : 'var(--text)'};font-weight:700">${t.threshold} referrals</div>
+          <div style="color:var(--text3);font-size:10px;margin-top:1px">${planLabel} ${durationLabel}${t.lifetime ? ' · never expires' : ''}</div>
+        </div>
+      </div>`;
+  }).join('');
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px">${items}</div>`;
+}
+
+function renderGrantBanner(grant) {
+  const banner = document.getElementById('grantBanner');
+  if (!banner) return;
+  if (!grant) {
+    banner.style.display = 'none';
+    return;
+  }
+  const isLifetime = grant.expires_at == null;
+  const now = Date.now();
+  let daysLeft = null;
+  if (!isLifetime) {
+    const expiresMs = new Date(grant.expires_at).getTime();
+    if (expiresMs <= now) { banner.style.display = 'none'; return; }
+    daysLeft = Math.max(1, Math.ceil((expiresMs - now) / 86400000));
+  }
+  const planLabel = (grant.plan || 'pro').toUpperCase();
+  const reasonMsg = {
+    'referral_referee'        : 'Welcome. Ton parrainage te donne acces aux features Pro.',
+    'referral_referrer'       : 'Merci d\'avoir parraine un player.',
+    'referral_tier_pro_1y'    : 'Palier 15 referrals atteint. Pro 1 year debloque.',
+    'referral_tier_elite_1y'  : 'Palier 50 referrals atteint. Elite 1 year debloque.',
+    'referral_tier_pro_life'  : 'Palier 100 referrals atteint. Pro for life debloque, ce grant ne peut plus etre revoque.',
+    'referral_tier_elite_life': 'Palier 500 referrals atteint. Elite for life debloque, niveau ultime.',
+    'admin_grant'             : 'Acces Pro offered par l\'equipe FragValue.',
+    'promo_code'              : 'Acces Pro via un code promo.',
+    'compensation'            : 'Acces Pro offered en compensation.',
+  }[grant.reason] || 'Free Pro access active.';
+  const title = document.getElementById('grantBannerTitle');
+  const msg = document.getElementById('grantBannerMsg');
+  if (isLifetime) {
+    title.textContent = `${planLabel} for life`;
+    msg.textContent = reasonMsg + ' This grant never expires.';
+  } else {
+    title.textContent = `${daysLeft} day${daysLeft > 1 ? 's' : ''} ${planLabel} offered${daysLeft > 1 ? 's' : ''}`;
+    msg.textContent = reasonMsg + ` Expires on ${new Date(grant.expires_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}.`;
+  }
+  banner.style.display = 'flex';
+}
+
+async function copyReferralLink() {
+  const input = document.getElementById('referralLinkInput');
+  const msg = document.getElementById('referralMsg');
+  if (!input.value) return;
+  try {
+    await navigator.clipboard.writeText(input.value);
+    msg.textContent = 'Link copied to clipboard';
+    msg.className = 'settings-msg ok';
+    setTimeout(() => { msg.textContent = ''; msg.className = 'settings-msg'; }, 3000);
+  } catch {
+    input.select();
+    document.execCommand('copy');
+    msg.textContent = 'Link copied (fallback)';
+    msg.className = 'settings-msg ok';
+  }
+}
+
+function toggleScoutFields(show) {
+  document.querySelectorAll('[data-requires-optin]').forEach(el => {
+    el.style.display = show ? 'flex' : 'none';
+  });
+}
+
+async function saveScoutProfile() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  const birthYearRaw = document.getElementById('scoutBirthYear').value;
+  const yearsRaw     = document.getElementById('scoutYearsPlaying').value;
+  await sb.from('profiles').update({
+    scout_opt_in:          document.getElementById('scoutOptIn').checked,
+    scout_role_primary:    document.getElementById('scoutRolePrimary').value || null,
+    scout_role_secondary:  document.getElementById('scoutRoleSecondary').value || null,
+    scout_region:          document.getElementById('scoutRegion').value || null,
+    scout_open_to_offers:  document.getElementById('scoutOpenToOffers').checked,
+    birth_year:            birthYearRaw ? parseInt(birthYearRaw, 10) : null,
+    years_playing_cs:      yearsRaw ? parseInt(yearsRaw, 10) : null,
+  }).eq('id', session.user.id);
+}
+
+async function saveNotifPrefs(ev) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  const prefs = {
+    match_ready:  document.getElementById('notifMatches').checked,
+    weekly_report:document.getElementById('notifWeekly').checked,
+    product_news: document.getElementById('notifProduct').checked,
+  };
+  const { error } = await sb.from('profiles').update({ notification_prefs: prefs }).eq('id', session.user.id);
+  flashSaveFeedback(ev?.target, error);
+}
+
+async function saveLocale(ev) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  const locale = document.getElementById('settingsLang').value;
+  const { error } = await sb.from('profiles').update({ locale }).eq('id', session.user.id);
+  flashSaveFeedback(ev?.target, error);
+}
+
+function flashSaveFeedback(el, error) {
+  if (!el) return;
+  const row = el.closest('.settings-row') || el.parentElement;
+  if (!row) return;
+  const prev = row.querySelector('.save-toast'); if (prev) prev.remove();
+  const toast = document.createElement('span');
+  toast.className = 'save-toast';
+  toast.textContent = error ? 'Error' : 'Saved';
+  toast.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);font:10px/1.2 "Space Mono",monospace;padding:3px 8px;border-radius:4px;background:'+(error?'#5b1a1a':'#1a3c1a')+';color:'+(error?'#ff8080':'#b8ff57')+';pointer-events:none;transition:opacity .4s;opacity:1;';
+  if (getComputedStyle(row).position === 'static') row.style.position = 'relative';
+  row.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; }, 1400);
+  setTimeout(() => toast.remove(), 1900);
+}
+
+// ══ SECURITE ═══════════════════════════════════════════════════════════════
+async function sendPasswordReset() {
+  const btn = document.getElementById('pwdResetBtn');
+  const msg = document.getElementById('pwdMsg');
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  btn.disabled = true; btn.textContent = '...';
+  msg.className = 'settings-msg'; msg.textContent = '';
+  try {
+    // On passe par notre endpoint custom /api/password-reset au lieu de
+    // sb.auth.resetPasswordForEmail. Raison : le flow Supabase natif envoie
+    // un template email generique (branded Supabase) alors que notre endpoint
+    // utilise le design FragValue via Resend.
+    // L'endpoint genere le lien via supabase admin generateLink puis envoie
+    // via notre template HTML dark+lime.
+    const res = await fetch('/api/password-reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: session.user.email }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error envoi');
+    msg.className = 'settings-msg ok';
+    msg.textContent = `Email sent to ${session.user.email}. Check your inbox (and spam if needed).`;
+  } catch(e) {
+    msg.className = 'settings-msg err';
+    msg.textContent = 'Error : ' + (e.message || 'envoi impossible');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Send link';
+  }
+}
+
+async function logoutAll() {
+  if (!confirm('Sign out all sessions? You'll need to sign in again here.')) return;
+  await sb.auth.signOut({ scope: 'global' });
+  window.location.href = 'login.html';
+}
+
+async function deleteAccount() {
+  const confirmText = 'DELETE';
+  const input = prompt(`Cette action est irréversible. All tes données (profil, démos, watchlist, roster) seront supprimées.\n\nTape "${confirmText}" to confirm:`);
+  if (input !== confirmText) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch('/api/delete-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (!res.ok) throw new Error('Failed suppression');
+    await sb.auth.signOut();
+    alert('Account deleted. Goodbye.');
+    window.location.href = 'index.html';
+  } catch(e) {
+    alert('Error : ' + e.message + '\n\nContact support@fragvalue.com');
+  }
+}
+
+init();
+</script>
+<script src="/nav.js"></script>
+<script src="/empty-state.js"></script>
+</body>
+</html>

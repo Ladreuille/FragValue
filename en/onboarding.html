@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+
+  <meta charset="UTF-8"/>
+  <meta name="description" content="FragValue · CS2 Match Analytics">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <title>FragValue: Welcome</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
+      --accent:#b8ff57;--accent2:#7ddd1a;--text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+      --font:'Space Mono',monospace;--mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+    }
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;-webkit-font-smoothing:antialiased;position:relative;overflow:hidden}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 50% 0%, rgba(184,255,87,.08),transparent);pointer-events:none}
+
+    .logo{font-size:16px;font-weight:700;text-decoration:none;color:var(--text);position:fixed;top:28px;left:40px;z-index:10}
+    .logo span{color:var(--accent)}
+
+    .step{width:100%;max-width:640px;text-align:center;animation:fadeUp .4s ease}
+
+    /* Step indicators */
+    .steps-indicator{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:44px}
+    .step-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:all .3s}
+    .step-dot.active{background:var(--accent);width:24px;border-radius:4px}
+    .step-dot.done{background:var(--success)}
+
+    .eyebrow{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+    .step-title{font-size:clamp(26px,4vw,38px);font-weight:700;letter-spacing:-1.2px;margin-bottom:12px;line-height:1.1}
+    .step-sub{font-size:15px;color:var(--text2);line-height:1.7;max-width:480px;margin:0 auto 40px}
+
+    /* Mode cards */
+    .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;text-align:left}
+    @media(max-width:560px){.mode-grid{grid-template-columns:1fr}}
+    .mode-card{
+      background:var(--surface);border:2px solid var(--border);border-radius:14px;
+      padding:28px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+    }
+    .mode-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--mc-color,var(--accent));transform:scaleX(0);transform-origin:left;transition:transform .25s}
+    .mode-card:hover{border-color:var(--mc-color,var(--accent));transform:translateY(-2px)}
+    .mode-card:hover::before{transform:scaleX(1)}
+    .mode-card.selected{border-color:var(--mc-color,var(--accent));background:var(--mc-bg,rgba(184,255,87,.06))}
+    .mode-card.selected::before{transform:scaleX(1)}
+    .mode-card-icon{margin-bottom:16px;color:var(--mc-color);display:flex;align-items:center;justify-content:flex-start}
+    .mode-card-tag{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--mc-color,var(--accent));margin-bottom:8px}
+    .mode-card-title{font-size:18px;font-weight:700;letter-spacing:-.4px;margin-bottom:8px}
+    .mode-card-desc{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px}
+    .mode-card-features{display:flex;flex-direction:column;gap:6px}
+    .mode-feat{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:7px}
+    .mode-feat::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--mc-color,var(--accent));flex-shrink:0;opacity:.7}
+    .mode-check{position:absolute;top:16px;right:16px;width:20px;height:20px;border-radius:50%;border:2px solid var(--border2);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:10px}
+    .mode-card.selected .mode-check{background:var(--mc-color,var(--accent));border-color:var(--mc-color,var(--accent));color:#fff}
+
+    /* FACEIT input step */
+    .faceit-input-wrap{
+      display:flex;gap:0;width:100%;max-width:420px;margin:0 auto 12px;
+      background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;
+      transition:border-color .15s;
+    }
+    .faceit-input-wrap:focus-within{border-color:var(--accent)}
+    .faceit-input{flex:1;background:transparent;border:none;padding:14px 18px;font-family:var(--mono);font-size:14px;color:var(--text);outline:none}
+    .faceit-input::placeholder{color:var(--text3)}
+    .faceit-verify-btn{background:var(--accent);color:#fff;border:none;padding:14px 20px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap}
+    .faceit-verify-btn:hover{opacity:.9}
+    .skip-link{font-size:12px;color:var(--text3);font-family:var(--mono);cursor:pointer;background:none;border:none;transition:color .15s}
+    .skip-link:hover{color:var(--text2)}
+    .faceit-verified{display:none;align-items:center;gap:10px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);border-radius:8px;padding:12px 16px;margin:0 auto 12px;max-width:420px;width:100%}
+    .faceit-verified-avatar{width:36px;height:36px;border-radius:7px;background:var(--card);background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+    .faceit-verified-name{font-size:14px;font-weight:700}
+    .faceit-verified-meta{font-size:11px;color:var(--success);font-family:var(--mono)}
+
+    /* CTA button */
+    .cta-btn{
+      display:inline-flex;align-items:center;gap:8px;
+      background:var(--accent);color:#fff;border:none;
+      padding:14px 32px;border-radius:9px;font-family:var(--font);font-size:15px;font-weight:600;
+      cursor:pointer;transition:all .2s;box-shadow:0 0 28px rgba(184,255,87,.2);
+    }
+    .cta-btn:hover{opacity:.9;transform:translateY(-1px)}
+    .cta-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+    .cta-ghost{display:inline-flex;align-items:center;gap:6px;background:transparent;color:var(--text3);border:none;font-family:var(--mono);font-size:12px;cursor:pointer;padding:8px 16px;transition:color .15s;margin-top:8px}
+    .cta-ghost:hover{color:var(--text2)}
+
+    /* Progress bar */
+    .progress-wrap{position:fixed;top:0;left:0;right:0;height:2px;background:var(--border)}
+    .progress-fill{height:100%;background:var(--accent);transition:width .4s ease}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  </style>
+<script src="/analytics.js" defer></script>
+</head>
+<body>
+
+<div class="progress-wrap"><div class="progress-fill" id="progressFill" style="width:33%"></div></div>
+<a href="index.html" class="logo">Frag<span>Value</span></a>
+
+<!-- STEP 1 : Choix du mode -->
+<div class="step" id="step1">
+  <div class="steps-indicator">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+  </div>
+  <div class="eyebrow">Welcome to FragValue</div>
+  <h1 class="step-title">How will you use FragValue?</h1>
+  <p class="step-sub">Choose your profile: the interface will be adapted to your intent.</p>
+
+  <div class="mode-grid">
+    <div class="mode-card" id="modePlayer" style="--mc-color:#b8ff57;--mc-bg:rgba(184,255,87,.06)"
+         onclick="selectMode('player')">
+      <div class="mode-check" id="checkPlayer"></div>
+      <div class="mode-card-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div class="mode-card-tag">Player</div>
+      <div class="mode-card-title">I want to improve</div>
+      <div class="mode-card-desc">Analyze my game, identify my improvement areas and track my progression over time.</div>
+      <div class="mode-card-features">
+        <div class="mode-feat">Personalized improvement points</div>
+        <div class="mode-feat">CT/T demo analysis</div>
+        <div class="mode-feat">Progress tracking</div>
+        <div class="mode-feat">Position heatmaps</div>
+      </div>
+    </div>
+
+    <div class="mode-card" id="modeScout" style="--mc-color:#2DD4A0;--mc-bg:rgba(45,212,160,.06)"
+         onclick="selectMode('scout')">
+      <div class="mode-check" id="checkScout"></div>
+      <div class="mode-card-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div class="mode-card-tag">Scout / Coach</div>
+      <div class="mode-card-title">I recruit or coach</div>
+      <div class="mode-card-desc">Analyze and compare players, manage a roster, identify the best profiles to recruit.</div>
+      <div class="mode-card-features">
+        <div class="mode-feat">Multi-player comparison</div>
+        <div class="mode-feat">Watchlist & Roster</div>
+        <div class="mode-feat">FV Score /100</div>
+        <div class="mode-feat">Complete player profiles</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="cta-btn" id="step1Btn" onclick="goStep2()" disabled>
+    Continue
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </button>
+</div>
+
+<!-- STEP 2 : Link compte FACEIT -->
+<div class="step" id="step2" style="display:none">
+  <div class="steps-indicator">
+    <div class="step-dot done" id="dot1b"></div>
+    <div class="step-dot active" id="dot2b"></div>
+    <div class="step-dot" id="dot3b"></div>
+  </div>
+  <div class="eyebrow" id="step2Eyebrow">For players</div>
+  <h1 class="step-title" id="step2Title">What's your FACEIT username?</h1>
+  <p class="step-sub" id="step2Sub">We verify your account to personalize your experience.</p>
+
+  <div class="faceit-input-wrap">
+    <input class="faceit-input" id="faceitInput" type="text"
+      placeholder="Your exact FACEIT username..." autocomplete="off" spellcheck="false"
+      onkeydown="if(event.key==='Enter')verifyFaceit()"/>
+    <button class="faceit-verify-btn" onclick="verifyFaceit()">Verify →</button>
+  </div>
+
+  <div class="faceit-verified" id="faceitVerified">
+    <div class="faceit-verified-avatar" id="verifiedAvatar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div>
+      <div class="faceit-verified-name" id="verifiedName"></div>
+      <div class="faceit-verified-meta" id="verifiedMeta"></div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0;margin-top:16px">
+    <button class="cta-btn" id="step2Btn" onclick="goStep3()" disabled>
+      Continue
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+    <button class="cta-ghost" onclick="skipFaceit()" style="opacity:.4;font-size:11px">Skip (you can link it later)</button>
+  </div>
+</div>
+
+<!-- STEP 3 : Prêt -->
+<div class="step" id="step3" style="display:none">
+  <div class="steps-indicator">
+    <div class="step-dot done"></div>
+    <div class="step-dot done"></div>
+    <div class="step-dot active"></div>
+  </div>
+  <div style="display:inline-flex;align-items:center;justify-content:center;width:88px;height:88px;border-radius:50%;background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.3);margin-bottom:20px;color:var(--accent)">
+    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <div class="eyebrow">All set</div>
+  <h1 class="step-title" id="step3Title">Welcome to FragValue!</h1>
+  <p class="step-sub" id="step3Sub">Your account is configured. Start by analyzing your first player.</p>
+  <button class="cta-btn" onclick="finish()">
+    Go to my account
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </button>
+</div>
+
+<script>
+  const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  let selectedMode = null;
+  let verifiedFaceitNick = null;
+  let currentUser = null;
+
+  // Vérifier session
+  sb.auth.getSession().then(({ data }) => {
+    if (!data.session) { window.location.href = 'login.html'; return; }
+    currentUser = data.session.user;
+
+    // Vérifier si déjà onboardé
+    sb.from('profiles').select('mode,faceit_nickname').eq('id', currentUser.id).single()
+      .then(({ data: profile }) => {
+        if (profile?.mode) {
+          // Déjà onboardé → rediriger
+          window.location.href = 'dashboard.html';
+        }
+      });
+  });
+
+  function selectMode(mode) {
+    selectedMode = mode;
+    document.getElementById('modePlayer').classList.toggle('selected', mode === 'player');
+    document.getElementById('modeScout').classList.toggle('selected', mode === 'scout');
+    document.getElementById('checkPlayer').textContent = mode === 'player' ? '✓' : '';
+    document.getElementById('checkScout').textContent  = mode === 'scout'  ? '✓' : '';
+    document.getElementById('step1Btn').disabled = false;
+  }
+
+  function goStep2() {
+    if (!selectedMode) return;
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'block';
+    document.getElementById('progressFill').style.width = '66%';
+
+    if (selectedMode === 'scout') {
+      document.getElementById('step2Eyebrow').textContent = 'For scouts & coaches';
+      document.getElementById('step2Title').textContent   = 'Which player do you want to analyze first?';
+      document.getElementById('step2Sub').textContent     = 'Enter a FACEIT username to start: you can also skip this step.';
+    }
+    setTimeout(() => document.getElementById('faceitInput').focus(), 100);
+  }
+
+  async function verifyFaceit() {
+    const nick = document.getElementById('faceitInput').value.trim();
+    if (!nick) return;
+    const btn = document.querySelector('.faceit-verify-btn');
+    btn.textContent = '...'; btn.disabled = true;
+    try {
+      const res  = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`);
+      const data = await res.json();
+      if (!res.ok || !data.player) {
+        document.getElementById('faceitInput').style.borderColor = 'var(--danger)';
+        btn.textContent = 'Username not found'; btn.disabled = false;
+        return;
+      }
+      verifiedFaceitNick = data.player.nickname;
+      // Afficher confirmation
+      const verifiedEl = document.getElementById('faceitVerified');
+      const avatar = data.player.avatar;
+      const avatarEl = document.getElementById('verifiedAvatar');
+      if (avatar) { avatarEl.style.backgroundImage = `url(${avatar})`; avatarEl.textContent = ''; }
+      document.getElementById('verifiedName').textContent = data.player.nickname;
+      document.getElementById('verifiedMeta').textContent = `Lvl ${data.cs2?.level} · ${data.cs2?.elo} ELO · ✓ Account verified`;
+      verifiedEl.style.display = 'flex';
+      document.getElementById('step2Btn').disabled = false;
+      btn.textContent = '✓ Verified'; btn.style.background = 'var(--success)';
+    } catch {
+      btn.textContent = 'Error'; btn.disabled = false;
+    }
+  }
+
+  function skipFaceit() {
+    verifiedFaceitNick = null;
+    goStep3();
+  }
+
+  async function goStep3() {
+    // Sauvegarder mode + faceit dans Supabase via upsert
+    if (currentUser) {
+      const update = {
+        id: currentUser.id,
+        mode: selectedMode,
+      };
+      if (verifiedFaceitNick) update.faceit_nickname = verifiedFaceitNick;
+      const { error } = await sb.from('profiles').upsert(update, { onConflict: 'id' });
+      if (error) console.warn('Profile save error:', error.message);
+    }
+
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('step3').style.display = 'block';
+    document.getElementById('progressFill').style.width = '100%';
+
+    // Message personnalisé
+    if (selectedMode === 'player') {
+      document.getElementById('step3Title').textContent = verifiedFaceitNick
+        ? `Welcome ${verifiedFaceitNick} !`
+        : 'Welcome to FragValue!';
+      document.getElementById('step3Sub').textContent = 'Your player account is ready. Run your first analysis to see your improvement areas.';
+    } else {
+      document.getElementById('step3Title').textContent = 'Your scout account is ready!';
+      document.getElementById('step3Sub').textContent = 'Start by analyzing a player or configure your recruiting watchlist.';
+    }
+  }
+
+  function finish() {
+    // Si player avec FACEIT lié → analyser directement
+    if (selectedMode === 'player' && verifiedFaceitNick) {
+      window.location.href = `index.html?analyse=${encodeURIComponent(verifiedFaceitNick)}`;
+    } else {
+      window.location.href = 'dashboard.html';
+    }
+  }
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>

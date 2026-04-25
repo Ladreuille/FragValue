@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+
+<meta charset="UTF-8"/>
+<meta name="description" content="FragValue · CS2 Match Analytics">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<title>FragValue · My matches</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;
+  --border:#1c1e1e;--border2:#252727;
+  --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --danger:#ff4444;--success:#2dd4a0;--gold:#f5c842;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  --r:6px;--r2:12px
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.nav-logo{font-family:var(--display);font-size:20px;letter-spacing:.04em;color:var(--text);text-decoration:none}
+.nav-logo span{color:var(--accent)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-cta{background:var(--accent);color:#000;padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;transition:all .15s;border:none;cursor:pointer;display:flex;align-items:center;gap:6px}
+.nav-cta:hover{background:var(--accent2)}
+.nav-out{font-size:11px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border:none;background:none;font-family:var(--mono);transition:color .15s;padding:7px 12px;border-radius:var(--r);border:1px solid var(--border)}
+.nav-out:hover{border-color:var(--danger);color:var(--danger)}
+.nav-link{font-size:11px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;text-decoration:none;font-family:var(--mono)}
+.nav-bell{position:relative;cursor:pointer;padding:7px;border-radius:var(--r);border:1px solid var(--border);color:var(--text2);transition:all .15s;display:flex;align-items:center}
+.nav-bell:hover{border-color:var(--accent);color:var(--accent)}
+.bell-dot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--bg)}
+.notif-dropdown{display:none;position:absolute;top:calc(100% + 8px);right:0;width:340px;max-height:420px;overflow-y:auto;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);box-shadow:0 12px 48px rgba(0,0,0,.6);z-index:200}
+.notif-dropdown.open{display:block}
+.notif-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.notif-head-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2)}
+.notif-head-mark{font-size:9px;color:var(--text3);cursor:pointer;letter-spacing:.06em}
+.notif-head-mark:hover{color:var(--accent)}
+.notif-item{padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;display:block;text-decoration:none;color:inherit}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:var(--card)}
+.notif-item.unread{border-left:2px solid var(--accent)}
+.notif-title{font-size:11px;color:var(--text);margin-bottom:3px;letter-spacing:.02em}
+.notif-msg{font-size:10px;color:var(--text3);line-height:1.5}
+.notif-time{font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:.04em}
+.notif-empty{padding:28px 16px;text-align:center;font-size:10px;color:var(--text3)}
+
+.page{max-width:1200px;margin:0 auto;padding:36px 32px 100px;position:relative;z-index:1}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;opacity:0;animation:up .4s ease forwards}
+.page-title{font-family:var(--display);font-size:32px;letter-spacing:.02em}
+.page-title span{color:var(--accent)}
+.page-sub{font-size:11px;color:var(--text3);letter-spacing:.06em;margin-top:4px}
+.btn-import{background:transparent;color:var(--accent);border:1px solid rgba(184,255,87,.3);padding:10px 18px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
+.btn-import:hover{background:rgba(184,255,87,.08);border-color:var(--accent)}
+.btn-import:disabled{opacity:.5;cursor:default}
+
+.sl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sl::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.matches-grid{display:flex;flex-direction:column;gap:10px;opacity:0;animation:up .4s .1s ease forwards}
+
+.match-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px 24px;transition:all .2s;text-decoration:none;color:inherit;display:block;position:relative;overflow:hidden}
+a.match-card{cursor:pointer}
+.match-card:hover{border-color:var(--border2);transform:translateX(3px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+a.match-card:hover{border-color:rgba(184,255,87,.3)}
+.match-card.parsing{border-color:rgba(184,255,87,.25)}
+.match-card.failed{opacity:.62}
+
+.mc-row{display:flex;align-items:center;gap:24px}
+
+.mc-col-map{display:flex;flex-direction:column;gap:6px;min-width:0;flex:0 1 auto}
+.mc-map{font-family:var(--display);font-size:24px;letter-spacing:.02em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-date{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+
+.mc-col-score{display:flex;align-items:center;gap:14px;padding:0 26px;border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:48px;flex:0 0 auto}
+.mc-score-val{font-family:var(--display);font-size:30px;line-height:1;color:var(--text3);min-width:26px;text-align:center}
+.mc-score-val.win{color:var(--success)}
+.mc-score-val.loss{color:var(--danger)}
+.mc-score-sep{font-family:var(--display);font-size:22px;color:var(--text3)}
+
+.mc-col-rounds{display:flex;flex-direction:column;gap:4px;flex:0 0 auto;margin-left:auto}
+.mc-rounds-val{font-family:var(--display);font-size:16px;line-height:1;color:var(--text);letter-spacing:.02em}
+.mc-rounds-label{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+
+.mc-col-status{flex:0 0 auto;display:flex;align-items:center}
+.mc-status{font-size:9px;padding:6px 14px;border-radius:40px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.mc-status.parsed{background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);color:var(--success)}
+.mc-status.parsing{background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.2);color:var(--accent)}
+.mc-status.pending{background:rgba(122,128,128,.08);border:1px solid rgba(122,128,128,.15);color:var(--text2)}
+.mc-status.failed{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.15);color:var(--danger)}
+
+.mc-col-chevron{color:var(--text3);display:flex;align-items:center;flex:0 0 auto;transition:transform .2s,color .2s}
+a.match-card:hover .mc-col-chevron{color:var(--accent);transform:translateX(3px)}
+
+.mc-subrow{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+.mc-parsing-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);background-size:200% 100%;animation:scan 1.6s linear infinite}
+@keyframes scan{0%{background-position:-100% 0}100%{background-position:100% 0}}
+
+.mc-spin{width:12px;height:12px;border:1.5px solid rgba(184,255,87,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mc-elapsed{font-size:10px;color:var(--text3);letter-spacing:.04em;display:flex;align-items:center}
+.mc-elapsed span.mc-elapsed-val{color:var(--accent);margin-left:6px}
+
+.mc-retry-btn{background:transparent;color:var(--text2);border:1px solid var(--border2);padding:7px 16px;border-radius:var(--r);font-family:var(--mono);font-size:10px;letter-spacing:.06em;cursor:pointer;transition:all .15s;text-transform:uppercase}
+.mc-retry-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.mc-reason{flex:1 1 260px;min-width:220px;padding:9px 12px;border:1px solid rgba(255,99,99,.25);background:rgba(255,99,99,.06);border-radius:var(--r);font-family:var(--mono);font-size:10px;line-height:1.45;color:#ff9e9e;letter-spacing:.02em}
+.mc-reason b{color:#ffb8b8;font-weight:600;margin-right:6px}
+
+@media (max-width:780px){
+  .mc-row{flex-wrap:wrap;gap:14px}
+  .mc-col-map{flex:1 1 100%}
+  .mc-col-score{border:none;padding:0;min-height:0}
+  .mc-col-rounds{margin-left:0}
+  .mc-col-chevron{display:none}
+}
+
+.empty-box{background:var(--surface);border:1px dashed var(--border2);border-radius:var(--r2);padding:60px 28px;text-align:center}
+.empty-box-title{font-family:var(--display);font-size:22px;margin-bottom:10px;letter-spacing:.02em}
+.empty-box-sub{font-size:11px;color:var(--text3);line-height:1.7;margin-bottom:22px;max-width:440px;margin-left:auto;margin-right:auto}
+
+/* IMPORT OVERLAY */
+.ov-back{display:none;position:fixed;inset:0;z-index:300;background:rgba(8,9,9,.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px}
+.ov-back.open{display:flex}
+.ov-card{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:28px;position:relative;overflow:hidden;animation:up .3s ease}
+.ov-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:shimmer 1.8s ease-in-out infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+.ov-hd{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.ov-spin{width:24px;height:24px;flex-shrink:0;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .75s linear infinite}
+.ov-title{font-family:var(--display);font-size:20px;letter-spacing:.02em}
+.ov-sub{font-size:10px;color:var(--text3);letter-spacing:.06em;margin-top:3px}
+.ov-track{height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-bottom:20px}
+.ov-fill{height:100%;width:0%;background:var(--accent);border-radius:1px;transition:width .5s ease}
+.ov-steps{display:flex;flex-direction:column;gap:10px}
+.ov-step{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text3);letter-spacing:.04em;transition:color .2s}
+.ov-step.done{color:var(--success)}
+.ov-step.active{color:var(--text)}
+.ov-step-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .2s}
+.ov-step.done .ov-step-dot{background:var(--success)}
+.ov-step.active .ov-step-dot{background:var(--accent);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ov-close{margin-top:22px;display:flex;justify-content:flex-end}
+.ov-close-btn{background:transparent;color:var(--text3);border:1px solid var(--border);padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:10px;letter-spacing:.06em;cursor:pointer;text-transform:uppercase}
+.ov-close-btn:hover{border-color:var(--text2);color:var(--text2)}
+
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══ FACEIT sync pending (teaser) ═══════════════════════════════════ */
+.faceit-pending{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:14px;padding:36px 32px;margin-bottom:32px;text-align:center}
+.fp-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.35);color:var(--accent);padding:5px 12px;border-radius:40px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px}
+.fp-title{font-family:var(--display);font-size:clamp(28px,4vw,42px);line-height:1.05;letter-spacing:.02em;margin-bottom:10px;color:var(--text)}
+.fp-title span{color:var(--accent);text-shadow:0 0 18px rgba(184,255,87,.3)}
+.fp-sub{font-family:var(--mono);font-size:13px;color:var(--text2);line-height:1.65;max-width:580px;margin:0 auto 22px}
+.fp-cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:12px 22px;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s;border:none;cursor:pointer}
+.fp-cta:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,255,87,.3)}
+.fp-cta[data-state="saved"]{background:var(--border2);color:var(--text);cursor:default}
+.fp-cta[data-state="saved"]:hover{transform:none;filter:none;box-shadow:none}
+.fp-counter{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:5px 14px;background:var(--card);border:1px solid var(--border);border-radius:40px;font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.04em}
+.fp-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:fpPulse 1.8s ease-in-out infinite}
+.fp-counter strong{color:var(--accent);font-weight:700}
+@keyframes fpPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+
+/* Blur du contenu matches (aperçu derriere le teaser) */
+.matches-blur{position:relative}
+.matches-blur-content{filter:blur(2px) saturate(.85);pointer-events:none;user-select:none;opacity:.7}
+.matches-blur-veil{position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,rgba(8,9,9,.6) 50%,var(--bg) 100%);pointer-events:none;z-index:2;border-radius:12px}
+</style>
+<script src="/analytics.js" defer></script>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
+  <div class="nav-right">
+    <a href="levels.html" class="nav-link">ROADMAP</a>
+    <a href="stats-guide.html" class="nav-link">GUIDE</a>
+    <a href="matches.html" class="nav-link">MY MATCHES</a>
+    <div class="nav-bell" id="navBell" onclick="toggleNotifs(event)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="bell-dot" id="bellDot" style="display:none"></span>
+      <div class="notif-dropdown" id="notifDropdown"></div>
+    </div>
+    <a href="account.html" class="nav-link">MY ACCOUNT</a>
+    <a href="demo.html" class="nav-cta">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      New demo
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Hero "FACEIT sync pending" : tant que l'API officielle FACEIT n'a
+       pas valide notre demande d'accès, la synchro auto n'est pas encore
+       fonctionnelle. Waitlist pour etre prévenu en priorite. -->
+  <div class="faceit-pending">
+    <div class="fp-badge">● FACEIT sync pending</div>
+    <h1 class="fp-title">The FACEIT API<br><span>coming soon</span></h1>
+    <p class="fp-sub">Our request to access the official FACEIT API is being reviewed. Once we get the green light, your match history will sync automatically (FV Rating, KAST, ADR, per-match heatmaps).<br><br>Enable notifications to be notified in priority at launch.</p>
+    <a href="account.html#settings" class="fp-cta" data-teaser-cta="faceit-sync">
+      Enable notifications
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+    <div class="fp-counter">
+      <span class="fp-dot"></span>
+      <strong data-teaser-counter="faceit-sync">-</strong>
+      <span>players waiting</span>
+    </div>
+  </div>
+
+  <!-- Overview de ce qui s'affichera une fois la sync active (floute) -->
+  <div class="matches-blur">
+    <div class="matches-blur-content">
+      <div class="page-head">
+        <div>
+          <div class="page-title">MY <span>MATCHES</span></div>
+          <div class="page-sub">Automatic analysis of your FACEIT matches</div>
+        </div>
+        <button class="btn-import" id="importBtn" disabled>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Import my last 5 matches
+        </button>
+      </div>
+      <div class="sl">History</div>
+      <div id="matchesContainer">
+        <div style="text-align:center;padding:60px 20px;font-size:11px;color:var(--text3)">Preview unavailable during the waiting period.</div>
+      </div>
+    </div>
+    <div class="matches-blur-veil"></div>
+  </div>
+</div>
+
+<div class="ov-back" id="importOverlay">
+  <div class="ov-card">
+    <div class="ov-hd">
+      <div class="ov-spin"></div>
+      <div>
+        <div class="ov-title" id="ovTitle">Import in progress</div>
+        <div class="ov-sub" id="ovSub">Connecting to FACEIT</div>
+      </div>
+    </div>
+    <div class="ov-track"><div class="ov-fill" id="ovFill"></div></div>
+    <div class="ov-steps">
+      <div class="ov-step" id="ovStep0"><div class="ov-step-dot"></div>FACEIT account verification</div>
+      <div class="ov-step" id="ovStep1"><div class="ov-step-dot"></div>Fetching last 5 matches</div>
+      <div class="ov-step" id="ovStep2"><div class="ov-step-dot"></div>Queueing for Railway parser</div>
+      <div class="ov-step" id="ovStep3"><div class="ov-step-dot"></div>Analyzing demos in background</div>
+    </div>
+    <div class="ov-close" id="ovClose" style="display:none">
+      <button class="ov-close-btn" onclick="closeOverlay()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let _pollTimer = null;
+let _session = null;
+
+async function init() {
+  const { data:{ session } } = await _sb.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; return; }
+  _session = session;
+  // Tant que l'API FACEIT n'est pas active (waitlist mode), on ne
+  // charge pas les matches et on ne poll pas. On garde juste les notifs
+  // pour que le bell nav continue de marcher.
+  await loadNotifs();
+}
+
+function schedulePoll() {
+  clearTimeout(_pollTimer);
+  _pollTimer = setTimeout(async () => {
+    await loadMatches();
+    schedulePoll();
+  }, 10000);
+}
+
+async function loadMatches() {
+  try {
+    const r = await fetch('/api/matches', {
+      headers: { 'Authorization': 'Bearer ' + _session.access_token }
+    });
+    if (!r.ok) { renderError('Server error'); return; }
+    const data = await r.json();
+    renderMatches(data.matches || []);
+  } catch (e) {
+    renderError('Connection failed');
+  }
+}
+
+function renderError(msg) {
+  document.getElementById('matchesContainer').innerHTML = (window.FV && FV.emptyState)
+    ? FV.emptyState({
+        icon: 'error',
+        title: msg || 'Error',
+        message: 'Unable to fetch your matches. Try again in a few seconds.',
+        cta: { label: 'Retry', onclick: 'location.reload()' },
+      })
+    : '<div class="empty-box"><div class="empty-box-title">' + msg + '</div></div>';
+}
+
+function fmtFull(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})
+    + ' · ' + new Date(d).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderMatches(matches) {
+  const el = document.getElementById('matchesContainer');
+  if (!matches.length) {
+    el.innerHTML = (window.FV && FV.emptyState)
+      ? FV.emptyState({
+          icon: 'match',
+          title: 'No match yet',
+          message: 'Launch the import to fetch your last 5 FACEIT matches (< 30 days). For older matches, upload the demo manually. FragValue analyzes in the background and notifies you when ready.',
+          cta: { label: 'Import my matches', onclick: 'importHistory()' },
+          hint: 'You can also upload a .dem demo from the New demo page',
+        })
+      : '<div class="empty-box"><div class="empty-box-title">NO MATCH YET</div></div>';
+    return;
+  }
+  el.innerHTML = '<div class="matches-grid">' + matches.map(renderCard).join('') + '</div>';
+}
+
+function friendlyReason(msg) {
+  const m = (msg || '').toLowerCase();
+  if (!m) return { title: 'Parser error', sub: 'Unknown cause · restart the match' };
+  // Tags emitted by the extension resolver (background.js friendlyResolveError)
+  if (m.startsWith('demo_expired:')) {
+    return { title: 'Demo expired', sub: 'FACEIT purges demos after ~30 days' };
+  }
+  if (m.startsWith('demo_forbidden:')) {
+    return { title: 'Demo access denied', sub: 'FACEIT blocked the download' };
+  }
+  if (m.startsWith('no_demo:')) {
+    return { title: 'No demo available', sub: 'Canceled match, forfeit, or demo not yet uploaded' };
+  }
+  if (m.startsWith('captcha_required:')) {
+    return { title: 'Verification required', sub: 'FACEIT requires captcha, open www.faceit.com' };
+  }
+  if (m.startsWith('resolve_failed:')) {
+    return { title: 'Resolution failed', sub: "Error fetching FACEIT URL" };
+  }
+  if (m.startsWith('parser_stuck:')) {
+    return { title: 'Parser stuck', sub: 'Manual reset done, click Retry to restart' };
+  }
+  // Parser-side errors (Railway downloadAndParse)
+  if (m.includes('err_nf0') || m.includes('file not found')) {
+    return { title: 'Demo expired', sub: 'FACEIT purges demos after ~30 days' };
+  }
+  if (m.includes('enotfound') || m.includes('getaddrinfo') || m.includes('eai_again')) {
+    return { title: 'FACEIT demo unavailable', sub: 'The CDN or URL provided by FACEIT is not responding. Try again later.' };
+  }
+  if (m.includes('404')) {
+    return { title: 'Demo deleted by FACEIT', sub: 'FACEIT demos are purged after ~30 days' };
+  }
+  if (m.includes('403') || m.includes('401')) {
+    return { title: 'Demo access denied', sub: 'FACEIT blocked the download (token expired)' };
+  }
+  if (m.includes('zst') || m.includes('gzip') || m.includes('magic')) {
+    return { title: 'Incompatible demo format', sub: 'The parser did not recognize the FACEIT format' };
+  }
+  if (m.includes('timeout') || m.includes('econnreset') || m.includes('etimedout')) {
+    return { title: 'Download too long', sub: 'Restart the match' };
+  }
+  return { title: 'Parser error', sub: (msg || '').slice(0, 120) };
+}
+
+function renderCard(m) {
+  const isParsed = m.status === 'parsed';
+  const isParsing = m.status === 'parsing' || m.status === 'pending';
+  const isFailed = m.status === 'failed';
+  const classes = ['match-card', isParsing ? 'parsing' : '', isFailed ? 'failed' : ''].filter(Boolean).join(' ');
+  const statusLabel = isParsed ? 'Analysis'
+    : m.status === 'pending' ? 'Queued'
+    : m.status === 'parsing' ? 'Analyzing'
+    : isFailed ? 'Failed' : 'En attente';
+  const statusClass = isParsed ? 'parsed' : m.status === 'pending' ? 'pending' : isParsing ? 'parsing' : 'failed';
+
+  // Sur les rows non-parsees on n à pas encore de map ni de score réel, donc
+  // on affiché un placeholder "PENDING" a la place du nom de map et on
+  // skippe entièrement le bloc score pour éviter un "0 : 0" disgracieux.
+  const ct = m.score_ct ?? 0;
+  const t = m.score_t ?? 0;
+  const map = isParsed
+    ? (m.map || 'UNKNOWN').replace('de_', '').toUpperCase()
+    : 'PENDING';
+  const ctWin = isParsed && m.winner === 'ct';
+  const tWin = isParsed && m.winner === 't';
+
+  const href = isParsed ? 'analysis.html?match=' + encodeURIComponent(m.faceit_match_id) : '#';
+  const tag = isParsed ? 'a' : 'div';
+
+  // Date affichée a côté du nom de map. Pour un match parse on affiché la
+  // date du match (parsed_at fait foi), sinon la date d import (created_at).
+  const dateHtml = '<div class="mc-date">' + fmtFull(m.parsed_at || m.created_at) + '</div>';
+
+  // Rounds column : n affiché quelque chose que si on a un total fiable.
+  const roundsHtml = isParsed && m.rounds
+    ? '<div class="mc-col-rounds">' +
+        '<div class="mc-rounds-val">' + m.rounds + '</div>' +
+        '<div class="mc-rounds-label">Rounds</div>' +
+      '</div>'
+    : '';
+
+  // Chevron de navigation pour les matches cliquables (parsed).
+  const chevronHtml = isParsed
+    ? '<div class="mc-col-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></div>'
+    : '';
+
+  // Sub-row : timer elapsed (parsing) or reason + retry (failed).
+  let subrowHtml = '';
+  if (isParsing) {
+    const elapsed = Math.max(0, Math.floor((Date.now() - new Date(m.created_at).getTime()) / 1000));
+    const mm = Math.floor(elapsed / 60);
+    const ss = elapsed % 60;
+    const human = mm > 0 ? mm + ' min ' + ss + 's' : ss + 's';
+    const label = m.status === 'pending' ? 'Waiting for Railway parser' : 'Downloading and parsing demo';
+    subrowHtml = '<div class="mc-subrow">' +
+      '<div class="mc-elapsed"><span class="mc-spin"></span>' + label +
+      ' <span class="mc-elapsed-val">' + human + '</span></div>' +
+    '</div>';
+  } else if (isFailed) {
+    const r = friendlyReason(m.error_message);
+    subrowHtml = '<div class="mc-subrow">' +
+      '<div class="mc-reason"><b>' + r.title + '</b>' + r.sub + '</div>' +
+      '<button class="mc-retry-btn" onclick="retryMatch(event,\'' + m.faceit_match_id + '\')">Retry</button>' +
+    '</div>';
+  }
+
+  // Score block : seulement sur les matches parses (les autres n ont pas de
+  // score réel et afficher "0 : 0" en gros chiffres est visuellement moche).
+  const scoreHtml = isParsed
+    ? '<div class="mc-col-score">' +
+        '<div class="mc-score-val ' + (ctWin ? 'win' : tWin ? 'loss' : '') + '">' + ct + '</div>' +
+        '<div class="mc-score-sep">:</div>' +
+        '<div class="mc-score-val ' + (tWin ? 'win' : ctWin ? 'loss' : '') + '">' + t + '</div>' +
+      '</div>'
+    : '';
+
+  return '<' + tag + (isParsed ? ' href="' + href + '"' : '') + ' class="' + classes + '">' +
+    '<div class="mc-row">' +
+      '<div class="mc-col-map">' +
+        '<div class="mc-map">' + map + '</div>' +
+        dateHtml +
+      '</div>' +
+      scoreHtml +
+      roundsHtml +
+      '<div class="mc-col-status"><div class="mc-status ' + statusClass + '">' + statusLabel + '</div></div>' +
+      chevronHtml +
+    '</div>' +
+    subrowHtml +
+    (isParsing ? '<div class="mc-parsing-bar"></div>' : '') +
+  '</' + tag + '>';
+}
+
+async function retryMatch(e, matchId) {
+  e.preventDefault();
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  btn.textContent = 'Restart in progress';
+  try {
+    const r = await fetch('/api/retry-match', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + _session.access_token,
+      },
+      body: JSON.stringify({ matchId }),
+    });
+    if (!r.ok) {
+      btn.disabled = false;
+      btn.textContent = 'Retry';
+      return;
+    }
+    // Recharge immédiat pour voir le match repasser en pending
+    await loadMatches();
+  } catch (_) {
+    btn.disabled = false;
+    btn.textContent = 'Retry';
+  }
+}
+
+// ============================================================================
+// IMPORT OVERLAY : affichage d'une progression visible
+// ============================================================================
+function openOverlay() {
+  document.getElementById('importOverlay').classList.add('open');
+  setOvStep(0, 'active');
+  setOvFill(8);
+  setOvSub('FACEIT account verification');
+  document.getElementById('ovTitle').textContent = 'Import in progress';
+  document.getElementById('ovClose').style.display = 'none';
+}
+function closeOverlay() {
+  document.getElementById('importOverlay').classList.remove('open');
+}
+function setOvStep(i, state) {
+  const el = document.getElementById('ovStep' + i);
+  if (!el) return;
+  el.classList.remove('active', 'done');
+  if (state) el.classList.add(state);
+}
+function setOvFill(pct) {
+  document.getElementById('ovFill').style.width = pct + '%';
+}
+function setOvSub(txt) {
+  document.getElementById('ovSub').textContent = txt;
+}
+function markStepsDoneUntil(idx) {
+  for (let i = 0; i <= idx; i++) setOvStep(i, 'done');
+}
+
+async function importHistory() {
+  const btn = document.getElementById('importBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/></svg>Import in progress'; }
+
+  openOverlay();
+
+  // Tick visuel pendant l'attente reseau (avancé progressif jusqu'à 30%)
+  let fakePct = 8;
+  const fakeTick = setInterval(() => {
+    if (fakePct < 28) {
+      fakePct += 2;
+      setOvFill(fakePct);
+    }
+  }, 300);
+
+  try {
+    const r = await fetch('/api/import-history', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + _session.access_token,
+      },
+    });
+    clearInterval(fakeTick);
+
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      document.getElementById('ovTitle').textContent = 'Import failed';
+      setOvSub(err.error || 'Server error');
+      setOvFill(100);
+      document.getElementById('ovClose').style.display = 'flex';
+      if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Import my last 5 matches'; }
+      return;
+    }
+
+    const data = await r.json();
+    // Étapes 0-2 done
+    markStepsDoneUntil(2);
+    setOvStep(3, 'active');
+    setOvFill(65);
+    const skipped = data.skippedTooOld || 0;
+    const subImport = (data.imported || 0) + ' matches en file' +
+      (skipped > 0 ? ' (' + skipped + ' trop anciens ignores)' : '') +
+      ' · analyse en cours';
+    setOvSub(subImport);
+
+    await loadMatches();
+
+    // If the extension is installed and required for demo URL résolution,
+    // trigger its full sync flow (resolve presigned URLs + submit to parser).
+    // The 10s poll will pick up status changes automatically.
+    const extInstalled = document.documentElement.hasAttribute('data-fv-ext-installed');
+    if (data.extensionRequired && extInstalled) {
+      const _syncHandler = (event) => {
+        if (event.source !== window) return;
+        if (!event.data || event.data.type !== 'FV_EXT_SYNC_REPLY') return;
+        window.removeEventListener('message', _syncHandler);
+        if (event.data.ok) loadMatches();
+      };
+      window.addEventListener('message', _syncHandler);
+      window.postMessage({ type: 'FV_EXT_SYNC' }, '*');
+    }
+
+    // Laisse l'overlay affiché 2s de plus puis finalise
+    setTimeout(() => {
+      setOvFill(100);
+      markStepsDoneUntil(3);
+      document.getElementById('ovTitle').textContent = 'Import complete';
+      const subDone = skipped > 0
+        ? skipped + ' matches too old · upload manually for those'
+        : 'Analyses will finalize in background';
+      setOvSub(subDone);
+      document.getElementById('ovClose').style.display = 'flex';
+      // Auto close après 3s
+      setTimeout(closeOverlay, 3000);
+    }, 1200);
+  } catch (e) {
+    clearInterval(fakeTick);
+    document.getElementById('ovTitle').textContent = 'Connection failed';
+    setOvSub('Try again in a few seconds');
+    setOvFill(100);
+    document.getElementById('ovClose').style.display = 'flex';
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Import my last 5 matches'; }
+}
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+let _notifCache = [];
+
+async function loadNotifs() {
+  if (!_session) return;
+  try {
+    const r = await fetch('/api/notifications', {
+      headers: { 'Authorization': 'Bearer ' + _session.access_token }
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    _notifCache = data.notifications || [];
+    document.getElementById('bellDot').style.display = data.unread > 0 ? 'block' : 'none';
+    renderNotifDropdown();
+  } catch (_) {}
+}
+
+function renderNotifDropdown() {
+  const dd = document.getElementById('notifDropdown');
+  if (!_notifCache.length) {
+    dd.innerHTML = '<div class="notif-head"><span class="notif-head-title">Notifications</span></div><div class="notif-empty">No notifications</div>';
+    return;
+  }
+  const fmt = (d) => {
+    const diff = (Date.now() - new Date(d).getTime()) / 1000;
+    if (diff < 60) return 'a l\'instant';
+    if (diff < 3600) return Math.floor(diff/60) + ' min';
+    if (diff < 86400) return Math.floor(diff/3600) + ' h';
+    return Math.floor(diff/86400) + ' j';
+  };
+  dd.innerHTML = '<div class="notif-head"><span class="notif-head-title">Notifications</span><span class="notif-head-mark" onclick="markAllNotifs(event)">Mark all read</span></div>' +
+    _notifCache.slice(0, 20).map(n => {
+      const href = n.match_id ? 'matches.html?id=' + encodeURIComponent(n.match_id) : 'matches.html';
+      return '<a class="notif-item ' + (n.read ? '' : 'unread') + '" href="' + href + '">' +
+        '<div class="notif-title">' + (n.title || '') + '</div>' +
+        '<div class="notif-msg">' + (n.message || '') + '</div>' +
+        '<div class="notif-time">' + fmt(n.created_at) + '</div>' +
+        '</a>';
+    }).join('');
+}
+
+function toggleNotifs(e) {
+  e.stopPropagation();
+  document.getElementById('notifDropdown').classList.toggle('open');
+}
+
+async function markAllNotifs(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  if (!_session) return;
+  await fetch('/api/notifications', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + _session.access_token,
+    },
+    body: JSON.stringify({ all: true }),
+  });
+  _notifCache.forEach(n => n.read = true);
+  document.getElementById('bellDot').style.display = 'none';
+  renderNotifDropdown();
+}
+
+document.addEventListener('click', (e) => {
+  const bell = document.getElementById('navBell');
+  if (bell && !bell.contains(e.target)) {
+    document.getElementById('notifDropdown')?.classList.remove('open');
+  }
+});
+
+init();
+</script>
+<script src="/nav.js"></script>
+<script src="/empty-state.js"></script>
+<script src="/teaser.js"></script>
+<script>
+  // Waitlist FACEIT sync : en attendant l'API officielle, on capture
+  // les emails des users qui veulent la sync des leur dispo.
+  FVTeaser.initCTA('faceit-sync', { base: 18, perDay: 0.6 });
+</script>
+</body>
+</html>

@@ -655,7 +655,7 @@
     const token = getAuthToken();
     if (!token) return;
     try {
-      const res = await fetch('/api/notifications?limit=20', { headers: { 'Authorization': 'Bearer ' + token } });
+      const res = await fetch('/api/notifications?limit=20', { headers: { 'Authorization': 'Bearer ' + token, 'X-FV-Lang': FV_LANG } });
       if (!res.ok) return;
       const data = await res.json();
       updateBellBadge(data.unread || 0);

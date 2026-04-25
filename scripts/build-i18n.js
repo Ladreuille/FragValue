@@ -22,7 +22,7 @@ const ROOT = path.join(__dirname, '..');
 const EN_DIR = path.join(ROOT, 'en');
 const TRANSLATIONS = path.join(ROOT, 'locales', 'translations.json');
 
-// Liste des pages à traduire (Standard scope = 15 pages)
+// Liste des pages à traduire (Extended scope = 22 pages)
 const PAGES = [
   'index.html',
   'pricing.html',
@@ -39,6 +39,15 @@ const PAGES = [
   'levels.html',
   'stats-guide.html',
   'compare-outils.html',
+  // Pages user-authentifiees (ajoutees Phase 6)
+  'account.html',
+  'dashboard.html',
+  'matches.html',
+  'scout.html',
+  'compare.html',
+  'team.html',
+  'blog.html',
+  'onboarding.html',
 ];
 
 // Charge le dictionnaire (objet plat { "fr": "en" })

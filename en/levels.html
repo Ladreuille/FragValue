@@ -245,7 +245,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 }
 .perso-ai-warmup-task{font-size:12px;color:var(--text);line-height:1.5;flex:1;min-width:0}
 
-/* Roadmap 7 jours (timeline verticale) */
+/* Roadmap 7 days (timeline verticale) */
 .perso-ai-roadmap-days{display:flex;flex-direction:column;gap:6px}
 .perso-ai-roadmap-day{
   display:grid;grid-template-columns:70px 1fr;gap:14px;align-items:start;
@@ -539,7 +539,7 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center;font-si
 // ═════════════════════════════════════════════════════════════════════════
 
 // Seuils numeriques pour comparer les stats réelles d'un user au niveau cible.
-// Clef = niveau du joueur CIBLE (niveau qu'il veut atteindre).
+// Clef = niveau du player CIBLE (niveau qu'il veut atteindre).
 // Chaque stat a une valeur "median" attendue pour ce niveau.
 const LEVEL_TARGETS = {
   2:  { kd: 0.80, adr: 55, kast: 55, openingWr: 42, hs: 38, winRate: 45, fvScore: 28, elo: 501 },
@@ -950,7 +950,7 @@ function renderPersonalRoadmap(profile, level, scoutData) {
     + '  </div>'
     + '</div>'
     + '<div class="perso-diag">'
-    + '  <div class="perso-diag-title">Tes stats vs <span>niveau ' + (nextLevel >= 11 ? 'Challenger' : nextLevel) + '</span> (last 20 matches)</div>'
+    + '  <div class="perso-diag-title">Tes stats vs <span>niveau ' + (nextLevel >= 11 ? 'Challenger' : nextLevel) + '</span> (Last 20 matches)</div>'
     + '  <div class="perso-stats-grid">' + statsHtml + '</div>'
     + '</div>'
     + '<div class="perso-actions">'
@@ -978,7 +978,7 @@ function renderPersonalRoadmap(profile, level, scoutData) {
 
 // ═════════════════════════════════════════════════════════════════════════
 // Fetch le diagnostic IA depuis /api/ai-roadmap et l'injecte dans la carte.
-// Cache serveur de 7 jours, donc l'appel est quasi instantane la plupart
+// Cache serveur de 7 days, donc l'appel est quasi instantane la plupart
 // du temps. Premier appel : ~5-10s (call Claude).
 // ═════════════════════════════════════════════════════════════════════════
 async function loadAIDiagnosis(sessionToken) {
@@ -1021,7 +1021,7 @@ async function loadAIDiagnosis(sessionToken) {
       + '  <div class="perso-ai-goal-val"><strong>' + escapeHtml((d.mapTip || {}).map || '-') + '</strong>' + escapeHtml((d.mapTip || {}).advice || '-') + '</div>'
       + '</div>';
 
-    // Nouveaux champs HLTV-style : pro reference, warmup routine, roadmap 7 jours,
+    // Nouveaux champs HLTV-style : pro reference, warmup routine, roadmap 7 days,
     // map setups, mental tip. Chacun est render seulement si Claude l'a produit
     // (backward-compat avec les diagnoses cached de l'ancien prompt).
     const proRef = d.proReference;

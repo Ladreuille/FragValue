@@ -21,7 +21,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
 
 <meta charset="UTF-8"/>
-<meta name="description" content="Sign in to FragValue : analyse CS2 FACEIT, AI Coach, heatmaps et 2D replay. Authentification Google, FACEIT OAuth ou email.">
+<meta name="description" content="Sign in to FragValue : analyse CS2 FACEIT, AI Coach, heatmaps et 2D replay. Authentification Google, FACEIT OAuth or email.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
 <meta name="robots" content="noindex, follow">
 <link rel="canonical" href="https://fragvalue.com/en/login.html">
@@ -215,7 +215,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <div class="msg" id="msgBox"></div>
 
     <div class="switch-link" id="switchText">
-      Don't have an account yet? <a href="#" onclick="switchTab('signup',null);return false">Create account</a>
+      No account yet? <a href="#" onclick="switchTab('signup',null);return false">Create account</a>
     </div>
   </div>
 </div>
@@ -280,7 +280,7 @@ async function attributeReferrer(session) {
   }
 }
 
-// Rediriger si déjà connecté + lier FACEIT waiting
+// Rediriger si déjà connecté + lier FACEIT pending
 // Choisit la destination post-login : users qui n'ont jamais upload de demo
 // atterrissent direct sur /demo.html?welcome=1 pour les guider vers la 1re
 // analyse (le "aha moment"). Users qui ont deja des demos : account.html
@@ -361,7 +361,7 @@ function switchTab(m, btn) {
   document.getElementById('magicLinkRow').style.display = isSignup ? 'none' : '';
   document.getElementById('switchText').innerHTML = isSignup
     ? 'Already have an account? <a href="#" onclick="switchTab(\'login\',null);return false">Sign in</a>'
-    : 'Don't have an account yet? <a href="#" onclick="switchTab(\'signup\',null);return false">Create account</a>';
+    : 'No account yet? <a href="#" onclick="switchTab(\'signup\',null);return false">Create account</a>';
   hideMsg();
 }
 
@@ -417,7 +417,7 @@ async function handleSubmit() {
 // Force https://fragvalue.com en prod meme si l'user est sur un deploiement
 // preview Vercel. Sans ce fix, window.location.origin = URL de preview
 // et Supabase/Google redirige après auth vers une preview inaccessible
-// publiquement (ou protegee).
+// publiquement (or protegee).
 // Pour localhost (dev), on garde l'origin local.
 function getAuthOrigin() {
   const h = window.location.hostname;

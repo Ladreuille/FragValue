@@ -39,26 +39,44 @@ module.exports = async function handler(req, res) {
       ? parseFloat(fvRatingRaw).toFixed(2) : null;
     const demoId = body.demoId || null;
 
+    // i18n : detection de la langue (header X-FV-Lang ou Accept-Language ou referer /en/)
+    const langHeader = String(req.headers['x-fv-lang'] || '').toLowerCase();
+    const referer = String(req.headers.referer || '');
+    const acceptLang = String(req.headers['accept-language'] || '').toLowerCase();
+    const isEN = langHeader === 'en'
+              || /\/en\//.test(referer)
+              || (langHeader === '' && acceptLang.startsWith('en') && !/\/(?!en\/)[a-z]+\.html/.test(referer));
+
     // Title et message adaptes au resultat (encourage ou pousse a progresser)
     let title, message;
     if (fvRating != null) {
       const r = parseFloat(fvRating);
       if (r >= 1.30) {
-        title = 'Match excellent';
-        message = `FV ${fvRating} sur ${mapShort}. Tes heatmaps et ton diagnostic Coach IA sont prets a etre consultes.`;
+        title = isEN ? 'Excellent match' : 'Match excellent';
+        message = isEN
+          ? `FV ${fvRating} on ${mapShort}. Your heatmaps and AI Coach diagnosis are ready to view.`
+          : `FV ${fvRating} sur ${mapShort}. Tes heatmaps et ton diagnostic Coach IA sont prets a etre consultes.`;
       } else if (r >= 1.10) {
-        title = 'Belle performance';
-        message = `FV ${fvRating} sur ${mapShort}. Decouvre tes 3 forces et tes axes d'amelioration.`;
+        title = isEN ? 'Great performance' : 'Belle performance';
+        message = isEN
+          ? `FV ${fvRating} on ${mapShort}. Discover your 3 strengths and areas to improve.`
+          : `FV ${fvRating} sur ${mapShort}. Decouvre tes 3 forces et tes axes d'amelioration.`;
       } else if (r >= 0.90) {
-        title = 'Analyse terminee';
-        message = `FV ${fvRating} sur ${mapShort}. Vois tes positions risquees et le plan d'action 7 jours.`;
+        title = isEN ? 'Analysis complete' : 'Analyse terminee';
+        message = isEN
+          ? `FV ${fvRating} on ${mapShort}. See your risky positions and the 7-day action plan.`
+          : `FV ${fvRating} sur ${mapShort}. Vois tes positions risquees et le plan d'action 7 jours.`;
       } else {
-        title = 'Match difficile, tu as des pistes';
-        message = `FV ${fvRating} sur ${mapShort}. Le Coach IA a identifie 4 actions concretes pour rebondir.`;
+        title = isEN ? 'Tough match, here are some leads' : 'Match difficile, tu as des pistes';
+        message = isEN
+          ? `FV ${fvRating} on ${mapShort}. The AI Coach identified 4 concrete actions to bounce back.`
+          : `FV ${fvRating} sur ${mapShort}. Le Coach IA a identifie 4 actions concretes pour rebondir.`;
       }
     } else {
-      title = 'Diagnostic pret';
-      message = `Ta demo ${mapShort} est analysee. Heatmaps, KPIs et plan d'action te attendent.`;
+      title = isEN ? 'Diagnosis ready' : 'Diagnostic pret';
+      message = isEN
+        ? `Your ${mapShort} demo is analyzed. Heatmaps, KPIs and action plan are waiting for you.`
+        : `Ta demo ${mapShort} est analysee. Heatmaps, KPIs et plan d'action te attendent.`;
     }
 
     const action_url = demoId ? `/heatmap-results.html?id=${demoId}` : '/heatmap-results.html';

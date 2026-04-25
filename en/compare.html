@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="description" content="Compare 2 à 5 players CS2 FACEIT côte à côte : FV Rating, K/D, ADR, HS%, KAST, radar multi-KPI, map pool matrix, sparkline de forme. Outil de scouting et recrutement.">
+  <meta name="keywords" content="comparer players CS2, scout FACEIT, radar stats, map pool, recrutement esport, coaching">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <link rel="canonical" href="https://fragvalue.com/en/compare.html">
+<link rel="alternate" hreflang="fr" href="https://fragvalue.com/compare.html">
+<link rel="alternate" hreflang="en" href="https://fragvalue.com/en/compare.html">
+<link rel="alternate" hreflang="x-default" href="https://fragvalue.com/compare.html">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fragvalue.com/en/compare.html">
+  <meta property="og:title" content="Compare CS2 players · FragValue">
+  <meta property="og:description" content="Compare jusqu'à 5 players FACEIT côte à côte avec radar, map matrix, sparklines de forme.">
+  <meta property="og:image" content="https://fragvalue.com/og/home.png">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Compare CS2 players · FragValue">
+  <meta name="twitter:description" content="Radar multi-KPI, map pool matrix, trend sparklines. Outil de scouting.">
+  <meta name="twitter:image" content="https://fragvalue.com/og/home.png">
+  <title>Compare des players FACEIT CS2 · Scout · FragValue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
+      --accent:#b8ff57;--accent2:#7ddd1a;--accent-dim:rgba(184,255,87,.10);
+      --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+      --font:'Space Mono',monospace;--mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+      --p1:#b8ff57;--p2:#2dd4a0;--p3:#f5c842;--p4:#ff6b9d;--p5:#a78bfa;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+    .page{max-width:1200px;margin:0 auto;padding:28px 32px 80px;position:relative;z-index:1}
+    @media(max-width:768px){.page{padding:20px 16px 60px}}
+
+    /* ── Tab intro header ───────────────────────────────── */
+    .tab-intro{margin-bottom:22px}
+    .tab-title{font-family:var(--display);font-size:36px;color:var(--text);letter-spacing:.02em;margin-bottom:6px;line-height:1.1}
+    .tab-sub{font-size:13px;color:var(--text2);font-family:var(--mono);line-height:1.5;max-width:720px}
+
+    /* ── Section labels ─────────────────────────────────── */
+    .sec-label{font-family:var(--display);font-size:20px;color:var(--text);letter-spacing:.02em;margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+    .sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(184,255,87,.2),transparent)}
+
+    /* ── Search inputs ──────────────────────────────────── */
+    .search-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:20px;position:relative;overflow:hidden}
+    .search-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 50% 80% at 100% 0%,rgba(184,255,87,.05),transparent);pointer-events:none}
+    .search-title{font-family:var(--mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:14px;position:relative;z-index:1}
+    .players-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px;position:relative;z-index:1}
+    .player-input-wrap{position:relative;display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0 14px;transition:border-color .15s}
+    .player-input-wrap:focus-within{border-color:var(--accent)}
+    .player-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor}
+    .player-input{flex:1;background:none;border:none;color:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;padding:12px 0;outline:none}
+    .player-input::placeholder{color:var(--text3);font-weight:400}
+    .player-remove{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;font-size:18px;line-height:1;transition:color .15s}
+    .player-remove:hover{color:var(--danger)}
+    .search-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
+    .btn-primary{background:var(--accent);color:#000;border:none;padding:10px 22px;border-radius:6px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+    .btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 16px rgba(184,255,87,.3)}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+    .btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border2);padding:10px 16px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+    .btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-secondary:disabled{opacity:.4;cursor:not-allowed}
+    .search-hint{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto}
+
+    /* ── Loading + Error ────────────────────────────────── */
+    .loading-bar{height:2px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:16px;display:none}
+    .loading-bar.active{display:block}
+    .loading-bar-fill{height:100%;width:30%;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:loading 1.4s ease-in-out infinite}
+    @keyframes loading{0%,100%{transform:translateX(-100%)}50%{transform:translateX(400%)}}
+    .error-card{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.3);color:var(--danger);padding:12px 16px;border-radius:8px;font-family:var(--mono);font-size:12px;margin-bottom:16px;display:none}
+    .error-card.warn{background:rgba(245,200,66,.08);border-color:rgba(245,200,66,.3);color:var(--gold)}
+
+    /* ── Share bar ──────────────────────────────────────── */
+    .share-bar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px 8px 16px;margin-bottom:20px}
+    .share-url{flex:1;background:none;border:none;color:var(--text2);font-family:var(--mono);font-size:11px;outline:none;min-width:0}
+    .share-btn{background:transparent;color:var(--text);border:1px solid var(--border2);padding:7px 14px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+    .share-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+    /* ── Player cards ───────────────────────────────────── */
+    .players-row{display:grid;gap:12px;margin-bottom:20px}
+    .player-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;transition:transform .15s}
+    .player-card:hover{transform:translateY(-2px)}
+    .player-card-bar{position:absolute;left:0;top:0;bottom:0;width:3px}
+    .player-avatar{width:52px;height:52px;border-radius:10px;background:var(--card);border:1px solid var(--border2);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:22px;flex-shrink:0}
+    .player-name-block{flex:1;min-width:0}
+    .player-name{font-family:var(--display);font-size:22px;letter-spacing:.02em;line-height:1.1;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .player-meta{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+    .mini-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.4px;text-transform:uppercase}
+    .lvl-badge{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.25)}
+    .fv-badge{background:var(--card);border:1px solid var(--border2);color:var(--text2)}
+    .fv-badge.elite{color:var(--success);border-color:rgba(45,212,160,.3);background:rgba(45,212,160,.08)}
+    .fv-badge.great{color:var(--accent);border-color:rgba(184,255,87,.3);background:rgba(184,255,87,.08)}
+    .fv-badge.good{color:var(--gold);border-color:rgba(245,200,66,.3);background:rgba(245,200,66,.08)}
+    .fv-badge.low{color:var(--danger);border-color:rgba(255,68,68,.25);background:rgba(255,68,68,.06)}
+    .country-mini{font-family:var(--mono);font-size:10px;color:var(--text3);font-weight:700}
+    .player-elo-block{text-align:right;flex-shrink:0}
+    .player-elo{font-family:var(--display);font-size:24px;line-height:1}
+    .player-elo-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+    .player-actions{display:flex;gap:6px;margin-top:8px}
+    .player-act-btn{background:transparent;color:var(--text2);border:1px solid var(--border);padding:4px 8px;border-radius:4px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+    .player-act-btn:hover{border-color:var(--accent);color:var(--accent)}
+    /* Player card : full-width row below for sparkline */
+    .player-card{flex-wrap:wrap}
+    .player-card > .player-card-bar{z-index:1}
+    .player-form{flex-basis:100%;display:flex;align-items:center;gap:10px;padding-top:12px;margin-top:2px;border-top:1px solid var(--border)}
+    .player-form-label{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;white-space:nowrap}
+    .player-form-svg{flex:1;overflow:visible}
+    .player-form-trend{font-family:var(--mono);font-size:10px;font-weight:700;white-space:nowrap}
+
+    /* ── Charts ─────────────────────────────────────────── */
+    .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+    @media(max-width:800px){.charts-row{grid-template-columns:1fr}}
+    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+    .chart-title{font-family:var(--mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-bottom:12px}
+    .chart-wrap{height:240px;position:relative}
+    .radar-wrap{height:300px;position:relative}
+
+    /* ── Bar compare ────────────────────────────────────── */
+    .bar-compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+    @media(max-width:800px){.bar-compare{grid-template-columns:1fr}}
+    .bar-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+    .bar-item-header{font-family:var(--mono);font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:10px}
+    .bar-rows{display:flex;flex-direction:column;gap:6px}
+    .bar-row{display:grid;grid-template-columns:120px 1fr 70px;gap:10px;align-items:center;font-family:var(--mono);font-size:11px}
+    .bar-player-name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .bar-track{height:6px;background:var(--card);border-radius:3px;overflow:hidden}
+    .bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+    .bar-value{font-weight:700;text-align:right;font-size:12px}
+
+    /* ── Team CTA ───────────────────────────────────────── */
+    .team-cta-card{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:18px 22px;margin:20px 0;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+    .team-cta-left{flex:1;min-width:220px}
+    .team-cta-title{font-family:var(--display);font-size:20px;color:var(--text);letter-spacing:.02em;margin-bottom:4px}
+    .team-cta-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5}
+    .team-cta-btn{background:var(--accent);color:#000;border:none;padding:12px 22px;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+    .team-cta-btn:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,255,87,.3)}
+
+    /* ── Map pool matrix ────────────────────────────────── */
+    .map-matrix-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow-x:auto;margin-bottom:20px}
+    .map-matrix{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;min-width:640px}
+    .map-matrix th{background:var(--card);padding:11px 14px;text-align:center;color:var(--text2);letter-spacing:.06em;font-weight:700;text-transform:uppercase;font-size:10px;border-bottom:1px solid var(--border2)}
+    .map-matrix th.map-col{text-align:left;min-width:120px}
+    .map-matrix th.player-col{font-family:var(--display);font-size:14px;letter-spacing:.02em;text-transform:none;font-weight:400}
+    .map-matrix td{padding:11px 14px;border-bottom:1px solid rgba(28,30,30,.6);text-align:center}
+    .map-matrix td.map-cell{text-align:left;font-family:var(--display);font-size:15px;color:var(--text);letter-spacing:.02em}
+    .map-matrix td.map-cell .matches-total{font-family:var(--mono);font-size:10px;color:var(--text3);font-weight:400;margin-left:6px;letter-spacing:.5px}
+    .map-matrix td.matrix-cell{font-weight:700;font-size:13px;position:relative}
+    .map-matrix td.matrix-cell .matrix-sub{font-size:10px;font-weight:400;opacity:.7;margin-left:3px}
+    .map-matrix td.matrix-cell.empty{color:var(--text3);font-weight:400}
+    .map-matrix td.matrix-cell .cell-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:14px;height:14px;opacity:.95}
+    .map-matrix td.matrix-cell.best{padding-left:28px}
+    .map-matrix td.matrix-cell.worst{padding-left:28px}
+    .map-matrix tr:last-child td{border-bottom:none}
+    .map-matrix tr:hover td{background:rgba(184,255,87,.02)}
+    .map-matrix-empty{padding:24px;text-align:center;color:var(--text3);font-family:var(--mono);font-size:12px}
+
+    /* ── Compare table ──────────────────────────────────── */
+    .compare-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow-x:auto;margin-bottom:16px}
+    .compare-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;min-width:640px}
+    .compare-table th{background:var(--card);padding:11px 12px;text-align:left;color:var(--text2);letter-spacing:.06em;font-weight:700;text-transform:uppercase;font-size:10px;border-bottom:1px solid var(--border2)}
+    .compare-table th.player-col{font-family:var(--display);font-size:14px;letter-spacing:.02em;text-transform:none;text-align:right}
+    .compare-table td{padding:10px 12px;border-bottom:1px solid rgba(28,30,30,.6)}
+    .compare-table tr:last-child td{border-bottom:none}
+    .stat-group-header td{background:var(--card);color:var(--accent);font-family:var(--display);font-size:13px;letter-spacing:.04em;padding:9px 12px;font-weight:400}
+    .stat-name{color:var(--text2);white-space:nowrap}
+    .stat-val{font-weight:700;text-align:right}
+    .stat-val.best{color:var(--success)}
+    .stat-val.worst{color:var(--danger)}
+    .stat-val.mid{color:var(--text2)}
+
+    /* ── Empty state ────────────────────────────────────── */
+    .empty-state{position:relative;text-align:center;padding:64px 24px;background:linear-gradient(180deg, rgba(184,255,87,.02) 0%, var(--surface) 80%);border:1px solid rgba(184,255,87,.1);border-radius:14px;margin-bottom:16px;overflow:hidden}
+    .empty-state::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(184,255,87,.03) 1px, transparent 1px),linear-gradient(90deg, rgba(184,255,87,.03) 1px, transparent 1px);background-size:28px 28px;mask-image:radial-gradient(circle at center, rgba(0,0,0,.9) 0%, transparent 65%);-webkit-mask-image:radial-gradient(circle at center, rgba(0,0,0,.9) 0%, transparent 65%);pointer-events:none}
+    .empty-state::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:280px;height:100px;background:radial-gradient(ellipse at center, rgba(184,255,87,.06) 0%, transparent 70%);pointer-events:none}
+    .empty-state > *{position:relative;z-index:1}
+    .empty-ico{display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:radial-gradient(circle, rgba(184,255,87,.12) 0%, rgba(184,255,87,.02) 70%);border:1px solid rgba(184,255,87,.18);color:var(--accent);margin-bottom:18px;animation:empty-float 3s ease-in-out infinite;box-shadow:0 0 24px rgba(184,255,87,.06)}
+    .empty-ico svg{width:34px;height:34px}
+    @keyframes empty-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    .empty-title{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em;margin-bottom:8px;text-transform:uppercase}
+    .empty-sub{font-family:var(--mono);font-size:13px;color:var(--text2);max-width:420px;margin:0 auto;line-height:1.6}
+
+    /* ── Pro gate ───────────────────────────────────────── */
+    .pro-gate{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:14px;padding:40px 32px;text-align:center;margin:20px auto;max-width:520px}
+    .pro-gate-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.12);color:var(--accent);padding:5px 12px;border-radius:40px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px}
+    .pro-gate-title{font-family:var(--display);font-size:26px;color:var(--text);letter-spacing:.02em;margin-bottom:10px}
+    .pro-gate-sub{font-family:var(--mono);font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:24px}
+    .pro-gate-btn{display:inline-block;background:var(--accent);color:#000;padding:12px 28px;border-radius:6px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s}
+    .pro-gate-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+
+    .fade-in{animation:fadeUp .3s ease}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+<script src="/analytics.js" defer></script>
+</head>
+<body>
+
+<nav></nav>
+
+<div class="page">
+  <div class="tab-intro">
+    <h1 class="tab-title">Compare players</h1>
+    <p class="tab-sub">Compare side by side the FACEIT stats of 2 to 5 players. Global radar, KPI breakdown, full stats by role. Everything you need to benchmark an opponent or a potential recruit.</p>
+  </div>
+
+  <!-- Pro gate (injected si non Pro) -->
+  <div id="proGateContainer"></div>
+
+  <!-- Search -->
+  <div id="searchSection">
+    <div class="search-card">
+      <div class="search-title">FACEIT usernames</div>
+      <div class="players-inputs" id="playersInputs"></div>
+      <div class="search-actions">
+        <button class="btn-primary" id="compareBtn" onclick="startComparison()">Compare</button>
+        <button class="btn-secondary" id="addPlayerBtn" onclick="addPlayerInput()">+ Add a player</button>
+        <button class="btn-secondary" onclick="clearAll()">Reset</button>
+        <span class="search-hint" id="searchHint">2 players minimum · 5 maximum</span>
+      </div>
+    </div>
+
+    <div class="loading-bar" id="loadingBar"><div class="loading-bar-fill"></div></div>
+    <div class="error-card" id="errorCard"></div>
+  </div>
+
+  <!-- Results -->
+  <div id="results" style="display:none">
+    <div class="share-bar">
+      <input class="share-url" id="shareUrl" readonly/>
+      <button class="share-btn" onclick="copyShareUrl()" id="shareBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+        Share
+      </button>
+    </div>
+
+    <div class="sec-label">Profiles</div>
+    <div class="players-row" id="playersRow"></div>
+
+    <div class="sec-label">Overview</div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Global profile (normalized)</div>
+        <div class="radar-wrap"><canvas id="radarChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">FV Rating compared</div>
+        <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="sec-label">KPI breakdown</div>
+    <div class="bar-compare" id="barCompare"></div>
+
+    <div class="sec-label">Map pool compared</div>
+    <div id="mapMatrix"></div>
+
+    <div class="sec-label">Full table</div>
+    <div class="compare-table-wrap">
+      <table class="compare-table">
+        <thead><tr id="tableHead"></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// XSS escape helper : les nicknames FACEIT sont user-controlled via URL params
+function escHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+window._sb = sb;
+
+const PLAYER_COLORS = ['#b8ff57', '#2dd4a0', '#f5c842', '#ff6b9d', '#a78bfa'];
+let playersData = [], playerCount = 2;
+let radarInst = null, barInst = null;
+
+// ══ Pro gate ══════════════════════════════════════════════════════════════
+const PLAN_CACHE_KEY = 'fv_user_plan', PLAN_TTL = 5 * 60 * 1000;
+async function getPlan() {
+  try {
+    const raw = sessionStorage.getItem(PLAN_CACHE_KEY);
+    if (raw) { const c = JSON.parse(raw); if (c && c.ts && Date.now() - c.ts < PLAN_TTL) return c.plan || 'free'; }
+  } catch(_) {}
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return 'free';
+    const res = await fetch('/api/check-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (!res.ok) return 'free';
+    const d = await res.json();
+    const plan = d.plan || 'free';
+    sessionStorage.setItem(PLAN_CACHE_KEY, JSON.stringify({ plan, ts: Date.now() }));
+    return plan;
+  } catch(_) { return 'free'; }
+}
+async function isPro() {
+  const p = await getPlan();
+  return p === 'pro' || p === 'team' || p === 'elite';
+}
+
+function showProGate() {
+  document.getElementById('searchSection').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('proGateContainer').innerHTML = `
+    <div class="pro-gate">
+      <div class="pro-gate-tag">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Reserved for Pro subscribers
+      </div>
+      <h2 class="pro-gate-title">Multi-player comparison</h2>
+      <p class="pro-gate-sub">Compare up to 5 FACEIT players on all their advanced stats: FV Rating, KAST, Opening, CT/T split, multi-kills, clutches, utility. Analyze your next opponent or potential recruit in 30 seconds.</p>
+      <a href="pricing.html" class="pro-gate-btn">See Pro plans</a>
+    </div>`;
+}
+
+// ══ Input management ══════════════════════════════════════════════════════
+function buildInitialInputs() {
+  const grid = document.getElementById('playersInputs');
+  grid.innerHTML = '';
+  for (let i = 0; i < playerCount; i++) appendInputRow(i);
+}
+
+function appendInputRow(i) {
+  const wrap = document.createElement('div');
+  wrap.className = 'player-input-wrap';
+  wrap.dataset.idx = i;
+  wrap.innerHTML = `
+    <span class="player-dot" style="background:${PLAYER_COLORS[i]};color:${PLAYER_COLORS[i]}"></span>
+    <input class="player-input" type="text" placeholder="Player ${i + 1}" autocomplete="off" spellcheck="false"/>
+    ${i >= 2 ? `<button class="player-remove" onclick="removeInput(${i})" title="Remove">×</button>` : ''}
+  `;
+  document.getElementById('playersInputs').appendChild(wrap);
+}
+
+function addPlayerInput() {
+  if (playerCount >= 5) return;
+  appendInputRow(playerCount);
+  playerCount++;
+  document.getElementById('addPlayerBtn').disabled = playerCount >= 5;
+  updateHint();
+}
+
+function removeInput(idx) {
+  const wraps = [...document.querySelectorAll('.player-input-wrap')];
+  const values = wraps.map(w => w.querySelector('.player-input').value);
+  values.splice(idx, 1);
+  playerCount = Math.max(2, values.length);
+  buildInitialInputs();
+  values.forEach((v, i) => { const input = document.querySelectorAll('.player-input')[i]; if (input) input.value = v; });
+  document.getElementById('addPlayerBtn').disabled = playerCount >= 5;
+  updateHint();
+}
+
+function updateHint() {
+  document.getElementById('searchHint').textContent = `${playerCount} player${playerCount > 1 ? 's' : ''} · 5 maximum`;
+}
+
+function clearAll() {
+  playerCount = 2;
+  buildInitialInputs();
+  document.getElementById('addPlayerBtn').disabled = false;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('errorCard').style.display = 'none';
+  playersData = [];
+  updateHint();
+  window.history.replaceState({}, '', 'compare.html');
+}
+
+// ══ Initial load ══════════════════════════════════════════════════════════
+window.addEventListener('load', async () => {
+  if (!(await isPro())) { showProGate(); return; }
+
+  const params = new URLSearchParams(window.location.search);
+  // Accepte ?p=X&p=Y OU ?player=X (pour le flow depuis watchlist)
+  let players = params.getAll('p');
+  if (players.length === 0 && params.get('player')) players = [params.get('player')];
+
+  // Par defaut 2 inputs
+  playerCount = Math.max(2, Math.min(5, players.length));
+  buildInitialInputs();
+  document.getElementById('addPlayerBtn').disabled = playerCount >= 5;
+  updateHint();
+
+  if (players.length > 0) {
+    const inputs = document.querySelectorAll('.player-input');
+    players.forEach((p, i) => { if (i < 5) inputs[i].value = p; });
+    if (players.length >= 2) startComparison();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.activeElement?.classList?.contains('player-input')) {
+      e.preventDefault();
+      startComparison();
+    }
+  });
+});
+
+// ══ Comparison flow ═══════════════════════════════════════════════════════
+async function startComparison() {
+  if (!(await isPro())) { showProGate(); return; }
+
+  const inputs = [...document.querySelectorAll('.player-input')];
+  const nicks = inputs.map(i => i.value.trim()).filter(Boolean);
+  if (nicks.length < 2) { showError('Enter at least 2 FACEIT usernames.'); return; }
+
+  document.getElementById('compareBtn').disabled = true;
+  document.getElementById('loadingBar').classList.add('active');
+  document.getElementById('errorCard').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('searchHint').textContent = `Chargement de ${nicks.length} profils...`;
+
+  try {
+    const headers = {};
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+    } catch(_) {}
+
+    const results = await Promise.allSettled(
+      nicks.map(n => fetch(`/api/scout?nickname=${encodeURIComponent(n)}`, { headers }).then(r => r.json()))
+    );
+
+    playersData = [];
+    const errors = [];
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled' && r.value.player) playersData.push({ ...r.value, color: PLAYER_COLORS[i] });
+      else errors.push(nicks[i]);
+    });
+
+    if (playersData.length < 2) {
+      showError(`Unable to load les profils. Vérifie les pseudos : ${errors.join(', ')}`);
+      return;
+    }
+    if (errors.length > 0) showError(`Ignorés (introuvables) : ${errors.join(', ')}`, 'warn');
+
+    renderAll();
+    updateShareUrl(nicks);
+  } catch(err) {
+    showError('Connection error. Retry.');
+  } finally {
+    document.getElementById('compareBtn').disabled = false;
+    document.getElementById('loadingBar').classList.remove('active');
+    document.getElementById('searchHint').textContent = `${playersData.length} player${playersData.length > 1 ? 's' : ''} comparé${playersData.length > 1 ? 's' : ''}`;
+  }
+}
+
+function renderAll() {
+  renderPlayerCards();
+  renderRadar();
+  renderBar();
+  renderBarCompare();
+  renderMapMatrix();
+  renderTable();
+  renderTeamCta();
+  const r = document.getElementById('results');
+  r.style.display = 'block';
+  r.classList.add('fade-in');
+  setTimeout(() => r.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+
+// ══ Map pool matrix ═══════════════════════════════════════════════════════
+function renderMapMatrix() {
+  const container = document.getElementById('mapMatrix');
+  // Collecte map -> {player_nickname: stats}
+  const byMap = new Map();
+  playersData.forEach(p => {
+    (p.mapStats || []).forEach(m => {
+      if (!byMap.has(m.map)) byMap.set(m.map, {});
+      byMap.get(m.map)[p.player.nickname] = m;
+    });
+  });
+  // Filter : maps jouees par au moins 2 players, trier par matches totaux
+  const rows = [...byMap.entries()]
+    .filter(([_, byP]) => Object.keys(byP).length >= 1)
+    .map(([map, byP]) => {
+      const totalMatches = Object.values(byP).reduce((s, m) => s + (m.matches || 0), 0);
+      return { map, byP, totalMatches };
+    })
+    .sort((a, b) => b.totalMatches - a.totalMatches)
+    .slice(0, 8);
+
+  if (rows.length === 0) {
+    container.innerHTML = `<div class="map-matrix-wrap"><div class="map-matrix-empty">Not enough map-level data · FACEIT must have reported CT/T split</div></div>`;
+    return;
+  }
+
+  // Pour chaque player : identifier sa best / worst map (min 3 matches)
+  const bestWorst = {};
+  playersData.forEach(p => {
+    const qualified = (p.mapStats || []).filter(m => m.matches >= 3);
+    if (qualified.length < 2) return;
+    const best = qualified.reduce((b, m) => parseFloat(m.winRate) > parseFloat(b.winRate) ? m : b);
+    const worst = qualified.reduce((w, m) => parseFloat(m.winRate) < parseFloat(w.winRate) ? m : w);
+    bestWorst[p.player.nickname] = {
+      bestMap: parseFloat(best.winRate) !== parseFloat(worst.winRate) ? best.map : null,
+      worstMap: parseFloat(best.winRate) !== parseFloat(worst.winRate) ? worst.map : null,
+    };
+  });
+
+  const mapName = m => (m || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
+  // Icone trophee : best map (pick recommandé)
+  const trophySvg = `<svg class="cell-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Best map · to pick"><path d="M4 6H2.5a1.5 1.5 0 010-3H4"/><path d="M12 6h1.5a1.5 1.5 0 000-3H12"/><path d="M3 14h10"/><path d="M6.5 10v1c0 .5-.5.8-1 .9-.9.3-1.5 1-1.5 2.1"/><path d="M9.5 10v1c0 .5.5.8 1 .9.9.3 1.5 1 1.5 2.1"/><path d="M12 2H4v4.5a4 4 0 008 0V2z"/></svg>`;
+  // Icone cercle-barré : worst map (ban recommandé)
+  const banSvg = `<svg class="cell-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-label="Worst map · to ban"><circle cx="8" cy="8" r="6"/><line x1="3.76" y1="3.76" x2="12.24" y2="12.24"/></svg>`;
+
+  const head = `<th class="map-col">Map</th>` + playersData.map(p => `<th class="player-col" style="color:${p.color}">${escHtml(p.player.nickname)}</th>`).join('');
+  const body = rows.map(({ map, byP, totalMatches }) => {
+    const cells = playersData.map(p => {
+      const s = byP[p.player.nickname];
+      if (!s) return `<td class="matrix-cell empty">-</td>`;
+      const wr = parseFloat(s.winRate);
+      const color = wr >= 55 ? 'var(--success)' : wr >= 45 ? 'var(--gold)' : 'var(--danger)';
+      const bw = bestWorst[p.player.nickname] || {};
+      const cls = bw.bestMap === map ? 'best' : bw.worstMap === map ? 'worst' : '';
+      const icon = cls === 'best' ? trophySvg : cls === 'worst' ? banSvg : '';
+      const title = cls === 'best' ? 'Best map de ce player · à pick' : cls === 'worst' ? 'Worst map de ce player · à ban' : '';
+      return `<td class="matrix-cell ${cls}" style="color:${color}" ${title ? `title="${title}"` : ''}>${icon}${wr}%<span class="matrix-sub">${Number(s.matches)||0}M</span></td>`;
+    }).join('');
+    return `<tr><td class="map-cell">${escHtml(mapName(map))}<span class="matches-total">${Number(totalMatches)||0}M total</span></td>${cells}</tr>`;
+  }).join('');
+
+  container.innerHTML = `<div class="map-matrix-wrap"><table class="map-matrix"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+// ══ Team CTA ══════════════════════════════════════════════════════════════
+function renderTeamCta() {
+  if (playersData.length < 2) return;
+  // Injecte (or remplace) le bloc avant la section Map pool
+  let el = document.getElementById('teamCta');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'teamCta';
+    const barCompare = document.getElementById('barCompare');
+    barCompare.parentNode.insertBefore(el, barCompare.nextSibling);
+  }
+  const nicks = playersData.map(p => p.player.nickname).filter(Boolean);
+  el.innerHTML = `
+    <div class="team-cta-card">
+      <div class="team-cta-left">
+        <div class="team-cta-title">Like this lineup?</div>
+        <div class="team-cta-sub">Crée un roster avec ces ${nicks.length} player${nicks.length > 1 ? 's' : ''} · les invitations FACEIT seront pré-remplies.</div>
+      </div>
+      <button class="team-cta-btn" onclick="createRosterWithPlayers(${JSON.stringify(nicks).replace(/"/g,'&quot;')})">
+        Create a team →
+      </button>
+    </div>
+  `;
+}
+
+function createRosterWithPlayers(nicks) {
+  try {
+    sessionStorage.setItem('pendingRosterInvites', JSON.stringify({
+      nicknames: nicks,
+      created_at: Date.now(),
+    }));
+  } catch(_) {}
+  window.location.href = 'dashboard.html?createRoster=1#roster';
+}
+
+// ══ Player cards ══════════════════════════════════════════════════════════
+function renderPlayerCards() {
+  const row = document.getElementById('playersRow');
+  row.style.gridTemplateColumns = `repeat(${Math.min(playersData.length, 3)}, 1fr)`;
+  row.innerHTML = playersData.map(p => {
+    const { player, cs2, recent, color } = p;
+    const lvl = cs2.level || 1;
+    const fvR = parseFloat(recent.fvRating);
+    const fvCls = fvR >= 1.2 ? 'elite' : fvR >= 1.05 ? 'great' : fvR >= 0.9 ? 'good' : 'low';
+    const initial = (player.nickname || '?').charAt(0).toUpperCase();
+    // Form trend : FV Rating des Last 20 matches (ordre chrono = reverse du tableau qui est recent-first)
+    const ratings = (recent.matches || []).map(m => parseFloat(m.fvRating)).filter(v => v > 0).reverse();
+    const sparkHtml = ratings.length >= 3 ? renderSparkline(ratings, color) : '';
+    const trendHtml = ratings.length >= 6 ? renderTrend(ratings) : '';
+    return `<div class="player-card">
+      <div class="player-card-bar" style="background:${color}"></div>
+      <div class="player-avatar" style="${player.avatar ? `background-image:url(${player.avatar});color:transparent` : `color:${color}`}">${player.avatar ? '' : initial}</div>
+      <div class="player-name-block">
+        <div class="player-name" style="color:${color}">${player.nickname}</div>
+        <div class="player-meta">
+          <span class="mini-badge lvl-badge">Lvl ${lvl}</span>
+          <span class="mini-badge fv-badge ${fvCls}">FV ${recent.fvRating}</span>
+          ${player.country ? `<span class="country-mini">${player.country.toUpperCase()}</span>` : ''}
+        </div>
+        <div class="player-actions">
+          <button class="player-act-btn" onclick="addToWatchlist('${escapeAttr(player.nickname)}', ${cs2.elo || 0}, ${cs2.level || 0}, '${escapeAttr(player.avatar || '')}')">+ Watchlist</button>
+        </div>
+      </div>
+      <div class="player-elo-block">
+        <div class="player-elo" style="color:${color}">${(cs2.elo || 0).toLocaleString('fr-FR')}</div>
+        <div class="player-elo-label">FACEIT ELO</div>
+      </div>
+      ${sparkHtml ? `<div class="player-form">
+        <span class="player-form-label">Form</span>
+        ${sparkHtml}
+        ${trendHtml}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ══ Sparkline + trend helpers ═════════════════════════════════════════════
+function renderSparkline(values, color) {
+  const W = 200, H = 32;
+  const min = Math.min(...values, 0.6);
+  const max = Math.max(...values, 1.3);
+  const range = (max - min) || 1;
+  const step = W / (values.length - 1);
+  const baselineY = H - ((1.0 - min) / range) * H;
+  const pts = values.map((v, i) => `${(i * step).toFixed(1)},${(H - ((v - min) / range) * H).toFixed(1)}`).join(' ');
+  const lastX = (values.length - 1) * step;
+  const lastY = H - ((values[values.length - 1] - min) / range) * H;
+  // Area fill sous la courbe
+  const areaPts = `0,${H} ${pts} ${lastX},${H}`;
+  return `<svg class="player-form-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <line x1="0" y1="${baselineY.toFixed(1)}" x2="${W}" y2="${baselineY.toFixed(1)}" stroke="${color}" stroke-width="0.5" stroke-dasharray="2,3" opacity=".4"/>
+    <polygon points="${areaPts}" fill="${color}" opacity=".12"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3" fill="${color}"/>
+  </svg>`;
+}
+
+function renderTrend(values) {
+  const n = values.length;
+  const half = Math.min(5, Math.floor(n / 2));
+  const last = values.slice(-half).reduce((a, b) => a + b, 0) / half;
+  const prev = values.slice(-half * 2, -half).reduce((a, b) => a + b, 0) / half;
+  const delta = last - prev;
+  const pct = prev > 0 ? (delta / prev) * 100 : 0;
+  if (Math.abs(delta) < 0.03) return `<span class="player-form-trend" style="color:var(--text3)">→ stable</span>`;
+  if (delta > 0) return `<span class="player-form-trend" style="color:var(--success)">↗ +${Math.abs(pct).toFixed(0)}%</span>`;
+  return `<span class="player-form-trend" style="color:var(--danger)">↘ -${Math.abs(pct).toFixed(0)}%</span>`;
+}
+
+// ══ Radar chart ═══════════════════════════════════════════════════════════
+function renderRadar() {
+  if (radarInst) { radarInst.destroy(); radarInst = null; }
+  const labels = ['FV Rating', 'K/D', 'HS%', 'ADR', 'KAST', 'ELO'];
+  const normalize = (v, min, max) => Math.min(100, Math.max(0, ((v - min) / (max - min)) * 100));
+
+  const datasets = playersData.map(p => {
+    const r = p.recent;
+    return {
+      label: p.player.nickname,
+      data: [
+        normalize(parseFloat(r.fvRating), 0.5, 1.5),
+        normalize(parseFloat(r.avgKd), 0.5, 2),
+        normalize(parseFloat(r.avgHs), 20, 75),
+        normalize(parseFloat(r.avgAdr), 50, 120),
+        normalize(parseFloat(r.avgKast), 50, 90),
+        normalize(p.cs2.elo || 0, 500, 3500),
+      ],
+      backgroundColor: p.color + '22',
+      borderColor: p.color,
+      borderWidth: 2,
+      pointBackgroundColor: p.color,
+      pointRadius: 4,
+    };
+  });
+
+  radarInst = new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { color: '#7a8080', font: { family: 'Space Mono', size: 10 }, padding: 14, boxWidth: 10 } },
+        tooltip: chartTooltipOpts(),
+      },
+      scales: { r: {
+        backgroundColor: 'transparent',
+        grid: { color: '#1c1e1e' },
+        angleLines: { color: '#1c1e1e' },
+        pointLabels: { color: '#7a8080', font: { family: 'Space Mono', size: 11, weight: 700 } },
+        ticks: { display: false, stepSize: 20 },
+        min: 0, max: 100,
+      }},
+    },
+  });
+}
+
+// ══ Bar chart ═════════════════════════════════════════════════════════════
+function renderBar() {
+  if (barInst) { barInst.destroy(); barInst = null; }
+  barInst = new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: playersData.map(p => p.player.nickname),
+      datasets: [{
+        data: playersData.map(p => parseFloat(p.recent.fvRating)),
+        backgroundColor: playersData.map(p => p.color + '60'),
+        borderColor: playersData.map(p => p.color),
+        borderWidth: 2,
+        borderRadius: 6,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: chartTooltipOpts() },
+      scales: {
+        x: { ticks: { color: '#7a8080', font: { family: 'Space Mono', size: 11 } }, grid: { color: '#1c1e1e' } },
+        y: { ticks: { color: '#7a8080', font: { family: 'Space Mono', size: 11 } }, grid: { color: '#1c1e1e' }, min: 0 },
+      },
+    },
+  });
+}
+
+function chartTooltipOpts() {
+  return {
+    backgroundColor: '#131414', borderColor: '#252727', borderWidth: 1,
+    titleColor: '#e8eaea', bodyColor: '#a8b0b0',
+    titleFont: { family: 'Space Mono', size: 11, weight: 700 },
+    bodyFont: { family: 'Space Mono', size: 11 },
+    padding: 10, cornerRadius: 6,
+  };
+}
+
+// ══ Bar compare ═══════════════════════════════════════════════════════════
+function renderBarCompare() {
+  const stats = [
+    { label: 'FV Rating',     get: p => parseFloat(p.recent.fvRating),       fmt: v => v.toFixed(2),             max: 1.5 },
+    { label: 'Average K/D',     get: p => parseFloat(p.recent.avgKd),          fmt: v => v.toFixed(2),             max: 2 },
+    { label: 'HS%',           get: p => parseFloat(p.recent.avgHs),          fmt: v => v.toFixed(1) + '%',       max: 80 },
+    { label: 'ADR',           get: p => parseFloat(p.recent.avgAdr),         fmt: v => v.toFixed(0),             max: 130 },
+    { label: 'KAST',          get: p => parseFloat(p.recent.avgKast),        fmt: v => v.toFixed(0) + '%',       max: 90 },
+    { label: 'Win rate',      get: p => parseFloat(p.recent.winRate),        fmt: v => v.toFixed(0) + '%',       max: 100 },
+    { label: 'FACEIT ELO',    get: p => p.cs2.elo || 0,                      fmt: v => v.toLocaleString('fr-FR'), max: 3500 },
+    { label: 'Opening ratio', get: p => parseFloat(p.recent.openingRatio)||0,fmt: v => v.toFixed(2),             max: 3 },
+  ];
+
+  document.getElementById('barCompare').innerHTML = stats.map(stat => {
+    const values = playersData.map(stat.get);
+    const maxV = Math.max(...values), minV = Math.min(...values);
+    const rows = playersData.map(p => {
+      const v = stat.get(p);
+      const pct = Math.min(100, (v / stat.max) * 100);
+      const isBest = v === maxV && playersData.length > 1 && maxV !== minV;
+      const isWorst = v === minV && playersData.length > 1 && minV !== maxV;
+      const color = isBest ? 'var(--success)' : isWorst ? 'var(--danger)' : 'var(--text2)';
+      return `<div class="bar-row">
+        <div class="bar-player-name" style="color:${p.color}">${p.player.nickname}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${p.color}"></div></div>
+        <div class="bar-value" style="color:${color}">${stat.fmt(v)}</div>
+      </div>`;
+    }).join('');
+    return `<div class="bar-item">
+      <div class="bar-item-header">${stat.label}</div>
+      <div class="bar-rows">${rows}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══ Stats table ═══════════════════════════════════════════════════════════
+function renderTable() {
+  document.getElementById('tableHead').innerHTML = `<th>Statistique</th>` +
+    playersData.map(p => `<th class="player-col" style="color:${p.color}">${p.player.nickname}</th>`).join('');
+
+  const groups = [
+    { title: 'Stats générales', rows: [
+      { label: 'FV Rating',  get: p => p.recent.fvRating,               higher: true },
+      { label: 'Average K/D',  get: p => p.recent.avgKd,                   higher: true },
+      { label: 'HS%',        get: p => p.recent.avgHs + '%',             higher: true },
+      { label: 'ADR',        get: p => p.recent.avgAdr,                  higher: true },
+      { label: 'KAST',       get: p => p.recent.avgKast + '%',           higher: true },
+      { label: 'Win rate',   get: p => p.recent.winRate + '%',           higher: true },
+      { label: 'FACEIT ELO', get: p => (p.cs2.elo || 0).toLocaleString('fr-FR'), higher: true },
+      { label: 'Level',      get: p => p.cs2.level,                      higher: true },
+    ]},
+    { title: 'CT / T split', rows: [
+      { label: 'CT Win rate', get: p => p.recent.ctWinRate + '%', higher: true },
+      { label: 'CT K/D',      get: p => p.recent.ctKd,            higher: true },
+      { label: 'T Win rate',  get: p => p.recent.tWinRate + '%',  higher: true },
+      { label: 'T K/D',       get: p => p.recent.tKd,             higher: true },
+    ]},
+    { title: 'Utility', rows: [
+      { label: 'Flashes lancées', get: p => p.recent.totalFlashesThrown,  higher: true },
+      { label: 'Ennemis flashés', get: p => p.recent.totalEnemiesFlashed, higher: true },
+      { label: 'Flash / round',   get: p => p.recent.avgFlashPerRound,    higher: true },
+      { label: 'Util. DMG total', get: p => p.recent.totalUtilDmg,        higher: true },
+      { label: 'Sniper kills',    get: p => p.recent.totalSniperKills,    higher: true },
+    ]},
+    { title: 'Multi-kills & clutches', rows: [
+      { label: 'Doubles (2K)', get: p => p.recent.totalDoubles,   higher: true },
+      { label: 'Triples (3K)', get: p => p.recent.totalTriples,   higher: true },
+      { label: 'Quadros (4K)', get: p => p.recent.totalQuads,     higher: true },
+      { label: 'Aces (5K)',    get: p => p.recent.totalAces,      higher: true },
+      { label: 'Clutch 1v1',  get: p => p.recent.totalClutch1v1, higher: true },
+      { label: 'Clutch 1v2',  get: p => p.recent.totalClutch1v2, higher: true },
+      { label: 'Clutch 1v3',  get: p => p.recent.totalClutch1v3, higher: true },
+    ]},
+    { title: "Duels d'ouverture", rows: [
+      { label: 'Opening kills',  get: p => p.recent.totalFirstKills,   higher: true },
+      { label: 'Opening deaths', get: p => p.recent.totalFirstDeaths,  higher: false },
+      { label: 'Opening ratio',  get: p => p.recent.openingRatio,      higher: true },
+      { label: 'Trade kills',    get: p => p.recent.totalTradeKills,   higher: true },
+      { label: 'Saves',          get: p => p.recent.totalSaves,        higher: true },
+      { label: 'Pistol win%',    get: p => (p.recent.pistolWinRate || '-') + (p.recent.pistolWinRate ? '%' : ''), higher: true },
+    ]},
+  ];
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = groups.map(group => {
+    const dataRows = group.rows.map(row => {
+      const rawVals = playersData.map(p => parseFloat(String(row.get(p)).replace(/[^\d.-]/g,'')) || 0);
+      const dispVals = playersData.map(p => row.get(p));
+      const allEmpty = dispVals.every(v => !v || v === '0' || v === '-' || v === '0%' || v === '-' || parseFloat(v) === 0);
+      if (allEmpty) return '';
+
+      const best  = row.higher ? Math.max(...rawVals) : Math.min(...rawVals);
+      const worst = row.higher ? Math.min(...rawVals) : Math.max(...rawVals);
+      const cells = rawVals.map((raw, i) => {
+        const cls = playersData.length > 1 && best !== worst
+          ? (raw === best ? 'best' : raw === worst ? 'worst' : 'mid')
+          : 'mid';
+        return `<td class="stat-val ${cls}">${dispVals[i]}</td>`;
+      }).join('');
+      return `<tr><td class="stat-name">${row.label}</td>${cells}</tr>`;
+    }).filter(Boolean).join('');
+
+    if (!dataRows) return '';
+    const headerRow = `<tr class="stat-group-header"><td colspan="${playersData.length + 1}">${group.title}</td></tr>`;
+    return headerRow + dataRows;
+  }).join('');
+}
+
+// ══ Watchlist ═════════════════════════════════════════════════════════════
+async function addToWatchlist(nickname, elo, level, avatar_url) {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+    const res = await fetch('/api/watchlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ action: 'add', nickname, elo, level, avatar_url }),
+    });
+    const d = await res.json();
+    showToast(d.ok ? (d.already ? `${nickname} is already in your watchlist` : `${nickname} added to your watchlist`) : 'Error : ' + (d.error || ''));
+  } catch { showToast('Network error'); }
+}
+
+function showToast(text) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700;padding:10px 18px;border-radius:6px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.5)';
+  t.textContent = text;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ══ Share URL ═════════════════════════════════════════════════════════════
+function updateShareUrl(nicks) {
+  const params = new URLSearchParams();
+  nicks.forEach(n => params.append('p', n));
+  const url = `${window.location.origin}/compare.html?${params.toString()}`;
+  window.history.replaceState({}, '', `compare.html?${params.toString()}`);
+  document.getElementById('shareUrl').value = url;
+}
+
+function copyShareUrl() {
+  const url = document.getElementById('shareUrl').value;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('shareBtn');
+    const orig = btn.innerHTML;
+    btn.textContent = '✓ Copied';
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.color = 'var(--accent)';
+    setTimeout(() => { btn.innerHTML = orig; btn.style.borderColor = ''; btn.style.color = ''; }, 2000);
+  });
+}
+
+// ══ Utilities ═════════════════════════════════════════════════════════════
+function showError(msg, type = 'error') {
+  const el = document.getElementById('errorCard');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.className = 'error-card' + (type === 'warn' ? ' warn' : '');
+}
+
+function escapeAttr(s) {
+  return String(s || '').replace(/"/g, '&quot;').replace(/'/g, "\\'");
+}
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>

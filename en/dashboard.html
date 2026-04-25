@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="description" content="FragValue · CS2 Match Analytics">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <title>FragValue · My game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
+      --accent:#b8ff57;--accent2:#7ddd1a;--accent-dim:rgba(184,255,87,.10);
+      --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+      --font:'Space Mono',monospace;--mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+      --radius:6px;--radius2:12px;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+    /* Nav styles injected by nav.js */
+    .page{max-width:1200px;margin:0 auto;padding:28px 32px 80px;display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start}
+    @media(max-width:900px){.page{grid-template-columns:1fr;padding:16px}}
+    .sidebar{position:sticky;top:76px;display:flex;flex-direction:column;gap:4px}
+    @media(max-width:900px){.sidebar{display:grid;grid-template-columns:repeat(3,1fr);position:static}}
+    .sidebar-section{font-family:var(--display);font-size:15px;color:var(--text);letter-spacing:.05em;text-transform:uppercase;padding:8px 10px 6px;margin-top:16px;position:relative}
+    .sidebar-section:first-of-type{margin-top:4px}
+    .sidebar-section::before{content:'';position:absolute;left:10px;right:10px;bottom:2px;height:1px;background:linear-gradient(90deg,rgba(184,255,87,.25),transparent)}
+    @media(max-width:900px){.sidebar-section{display:none}}
+    .sidebar-btn{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;border:none;background:transparent;color:var(--text2);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;width:100%;text-align:left}
+    .sidebar-btn:hover{background:var(--surface);color:var(--text)}
+    .sidebar-btn.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+    .sidebar-btn svg{flex-shrink:0;opacity:.5;transition:opacity .15s}
+    .sidebar-btn.active svg,.sidebar-btn:hover svg{opacity:1}
+    .sidebar-badge{font-family:var(--mono);font-size:9px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(184,255,87,.2);padding:1px 5px;border-radius:3px;margin-left:auto}
+    .main{min-width:0}
+    .tab-panel{display:none}.tab-panel.active{display:block;animation:fadeUp .25s ease}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .sec-label{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;margin:0 0 12px;display:flex;align-items:center;gap:10px;font-family:var(--mono)}
+    .sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+    .sec-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;padding:2px 8px;border-radius:40px}
+    .sec-badge.pro{background:rgba(184,255,87,.1);color:#b8ff57;border:1px solid rgba(184,255,87,.25)}
+    .sec-badge.elite{background:rgba(245,200,66,.1);color:#f5c842;border:1px solid rgba(245,200,66,.25)}
+
+    /* AI Coach card sur overview */
+    .coach-ai-card{background:var(--surface);border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:24px 28px;margin-bottom:24px;position:relative;overflow:hidden}
+    .coach-ai-card::before{content:'';position:absolute;top:0;right:0;width:280px;height:100%;background:radial-gradient(ellipse 60% 80% at 100% 0%,rgba(184,255,87,.06),transparent);pointer-events:none}
+    .coach-ai-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+    .coach-ai-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .coach-ai-title{flex:1;min-width:0}
+    .coach-ai-title-main{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text)}
+    .coach-ai-title-sub{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em;margin-top:2px}
+    .coach-ai-pill{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;padding:4px 10px;border-radius:40px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;flex-shrink:0}
+    .coach-ai-quote{font-size:13px;color:var(--text);line-height:1.7;padding:12px 16px;background:var(--bg);border-left:2px solid var(--accent);border-radius:0 6px 6px 0;margin-bottom:16px;position:relative;z-index:1}
+    .coach-ai-highlights{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;position:relative;z-index:1}
+    @media(max-width:640px){.coach-ai-highlights{grid-template-columns:1fr}}
+    .coach-ai-col{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+    .coach-ai-col-label{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+    .coach-ai-col.force .coach-ai-col-label{color:#2dd4a0}
+    .coach-ai-col.axe .coach-ai-col-label{color:#f06b6b}
+    .coach-ai-col-text{font-size:11px;color:var(--text2);line-height:1.6}
+    .coach-ai-goal{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg);border-radius:8px;border:1px solid var(--border);position:relative;z-index:1}
+    .coach-ai-goal-icon{color:#f5c842;flex-shrink:0}
+    .coach-ai-goal-text{flex:1;font-family:var(--mono);font-size:12px;color:var(--text);line-height:1.5}
+    .coach-ai-goal-text strong{color:var(--accent);font-family:var(--display);font-size:14px;display:inline}
+    .coach-ai-cta{display:inline-flex;align-items:center;gap:6px;margin-top:14px;color:var(--accent);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;padding:8px 0;position:relative;z-index:1}
+    .coach-ai-cta:hover{gap:10px}
+    .coach-ai-loading{display:flex;align-items:center;gap:10px;color:var(--text3);font-family:var(--mono);font-size:11px;letter-spacing:.04em}
+    .coach-ai-loading-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:coach-ai-pulse 1.4s ease-in-out infinite}
+    @keyframes coach-ai-pulse{0%,100%{opacity:.4}50%{opacity:1}}
+    .coach-ai-locked{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 0;gap:14px}
+    .coach-ai-locked-title{font-family:var(--mono);font-size:13px;color:var(--text);font-weight:700}
+    .coach-ai-locked-sub{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.6;max-width:400px}
+    .coach-ai-locked-btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s}
+    .coach-ai-locked-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    .coach-ai-refresh{display:inline-flex;align-items:center;gap:5px;background:transparent;color:var(--text3);border:1px solid var(--border2);padding:5px 10px;border-radius:6px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:all .15s;flex-shrink:0}
+    .coach-ai-refresh:hover:not(:disabled){color:var(--accent);border-color:rgba(184,255,87,.4)}
+    .coach-ai-refresh:disabled{cursor:not-allowed;opacity:.5}
+    .coach-ai-refresh svg{transition:transform .4s}
+    .coach-ai-refresh[data-state="loading"] svg,
+    .coach-ai-refreshing .coach-ai-refresh svg{animation:coach-ai-spin 1s linear infinite}
+    .coach-ai-refreshing .coach-ai-refresh{color:var(--accent);border-color:rgba(184,255,87,.4);opacity:.8;cursor:wait}
+    @keyframes coach-ai-spin{to{transform:rotate(360deg)}}
+    .coach-ai-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid rgba(184,255,87,.3);color:var(--text);font-family:var(--mono);font-size:12px;padding:12px 20px;border-radius:8px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:440px;text-align:center}
+    .coach-ai-toast.warn{border-color:rgba(245,200,66,.4)}
+    .coach-ai-toast.err{border-color:rgba(255,68,68,.4)}
+
+    /* Section locked pour users Free : blur + overlay upgrade */
+    body[data-plan="free"] .sec-locked{position:relative;overflow:hidden}
+    body[data-plan="free"] .sec-locked::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,9,9,.2) 0%,rgba(8,9,9,.88) 100%);z-index:3;pointer-events:none;border-radius:12px}
+    body[data-plan="free"] .sec-locked::after{content:'Unlock with Pro';position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:4;background:#b8ff57;color:#000;padding:10px 20px;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;box-shadow:0 8px 24px rgba(184,255,87,.3);cursor:pointer}
+    body[data-plan="free"] .sec-locked > *{filter:blur(3px);pointer-events:none;user-select:none}
+    .hero-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:16px;position:relative;overflow:hidden}
+    .hero-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 0% 50%,rgba(184,255,87,.06),transparent);pointer-events:none}
+    .hero-top{display:flex;align-items:center;gap:16px;margin-bottom:18px;position:relative;z-index:1}
+    .hero-avatar{width:60px;height:60px;border-radius:11px;background:var(--card);border:1px solid var(--border);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .hero-info{flex:1;min-width:0}
+    .hero-name{font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:5px}
+    .hero-badges{display:flex;gap:5px;flex-wrap:wrap}
+    .badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:5px;letter-spacing:.2px}
+    .badge-lvl10{background:rgba(217,53,53,.1);color:#D93535;border:1px solid rgba(217,53,53,.2)}
+    .badge-lvl9{background:rgba(224,92,42,.1);color:#E05C2A;border:1px solid rgba(224,92,42,.2)}
+    .badge-lvl7,.badge-lvl8{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
+    .badge-lvl4,.badge-lvl5,.badge-lvl6{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
+    .badge-lvl1,.badge-lvl2,.badge-lvl3{background:rgba(35,196,78,.1);color:#23C44E;border:1px solid rgba(35,196,78,.2)}
+    .badge-fv-elite{background:rgba(45,212,160,.1);color:#2DD4A0;border:1px solid rgba(45,212,160,.2)}
+    .badge-fv-great{background:rgba(184,255,87,.1);color:#b8ff57;border:1px solid rgba(184,255,87,.2)}
+    .badge-fv-good{background:rgba(245,200,66,.1);color:#F5C842;border:1px solid rgba(245,200,66,.2)}
+    .badge-fv-avg{background:rgba(237,160,32,.1);color:#EDA020;border:1px solid rgba(237,160,32,.2)}
+    .badge-fv-low{background:rgba(240,107,107,.1);color:#ff4444;border:1px solid rgba(240,107,107,.2)}
+    .badge-challenger{background:linear-gradient(135deg,rgba(245,200,66,.15),rgba(237,160,32,.15));color:var(--gold);border:1px solid rgba(245,200,66,.3)}
+    .badge-rôle{background:linear-gradient(135deg,rgba(184,255,87,.12),rgba(184,255,87,.04));color:var(--accent);border:1px solid rgba(184,255,87,.25);font-weight:700;letter-spacing:.06em}
+    .hero-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .hero-pill{font-family:var(--mono);font-size:10px;font-weight:700;padding:4px 10px;border-radius:12px;letter-spacing:.04em}
+    .streak-w{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.25)}
+    .streak-l{background:rgba(255,68,68,.08);color:var(--danger);border:1px solid rgba(255,68,68,.22)}
+    .momentum-up{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.25)}
+    .momentum-down{background:rgba(255,68,68,.08);color:var(--danger);border:1px solid rgba(255,68,68,.22)}
+    .momentum-flat{background:var(--card);color:var(--text3);border:1px solid var(--border2)}
+    .hero-elo{text-align:right;flex-shrink:0}
+    .hero-elo-val{font-size:28px;font-weight:700;letter-spacing:-1.5px;font-family:var(--mono);color:var(--accent);line-height:1}
+    .hero-elo-label{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px}
+    .hero-results{display:flex;gap:3px;margin-top:5px;justify-content:flex-end}
+    .rdot{width:7px;height:7px;border-radius:2px}.rdot.w{background:var(--success)}.rdot.l{background:var(--danger)}
+    .hero-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;position:relative;z-index:1}
+    @media(max-width:600px){.hero-kpis{grid-template-columns:repeat(3,1fr)}}
+    .hero-kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+    .hero-kpi-val{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.8px;line-height:1}
+    .hero-kpi-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-top:4px;font-family:var(--mono)}
+    .fvscore-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+    @media(max-width:600px){.fvscore-card{grid-template-columns:1fr}}
+    .fvscore-donut-wrap{position:relative;width:120px;height:120px;flex-shrink:0;margin:0 auto}
+    .fvscore-donut-svg{width:100%;height:100%;transform:rotate(-90deg)}
+    .fvscore-donut-bg{fill:none;stroke:var(--border);stroke-width:10}
+    .fvscore-donut-fill{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-dasharray:345;stroke-dashoffset:86;transition:stroke-dashoffset .8s ease}
+    .fvscore-donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .fvscore-val{font-size:30px;font-weight:700;font-family:var(--mono);letter-spacing:-1.5px;line-height:1}
+    .fvscore-max{font-size:11px;color:var(--text3);font-family:var(--mono)}
+    .fvscore-label{font-size:12px;font-weight:600;color:var(--success);margin-top:6px;text-align:center}
+    .fvscore-dims{display:flex;flex-direction:column;gap:8px}
+    .fvscore-dim{display:flex;align-items:center;gap:10px}
+    .fvscore-dim-name{font-size:12px;color:var(--text2);width:88px;flex-shrink:0}
+    .fvscore-dim-bar{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+    .fvscore-dim-fill{height:100%;border-radius:2px;transition:width .6s ease}
+    .fvscore-dim-val{font-family:var(--mono);font-size:11px;color:var(--text2);width:36px;text-align:right;flex-shrink:0}
+    .sublevel-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+    .sublevel-label{font-size:11px;font-family:var(--mono);color:var(--text2)}
+    .sublevel-pct{font-size:10px;color:var(--text3);font-family:var(--mono)}
+    .sublevel-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:12px}
+    .sublevel-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--success));border-radius:2px}
+    .impr-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px}
+    .impr-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+    .impr-section-title{display:flex;align-items:center;gap:9px;font-family:var(--display);font-size:20px;color:var(--text);letter-spacing:.02em;text-transform:none;line-height:1.1}
+    .impr-section-title svg{color:var(--accent);opacity:.9}
+    .impr-match-badge{font-family:var(--mono);font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px}
+    .impr-match-badge.win{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.2)}
+    .impr-match-badge.loss{background:rgba(240,107,107,.08);color:var(--danger);border:1px solid rgba(240,107,107,.2)}
+    .impr-trend-up{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--success);background:rgba(45,212,160,.1);border:1px solid rgba(45,212,160,.2);padding:4px 10px;border-radius:5px}
+    .impr-trend-down{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--danger);background:rgba(240,107,107,.08);border:1px solid rgba(240,107,107,.2);padding:4px 10px;border-radius:5px}
+    .impr-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:700px){.impr-cols{grid-template-columns:1fr}}
+    .impr-col{display:flex;flex-direction:column;gap:8px}
+    .impr-col-header{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);margin-bottom:4px;padding:6px 10px;border-radius:6px}
+    .impr-col-header.strength{color:var(--success);background:rgba(45,212,160,.06);border:1px solid rgba(45,212,160,.12)}
+    .impr-col-header.warning{color:var(--gold);background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.12)}
+    .impr-col-header.improvement{color:#b8ff57;background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.12)}
+    .impr-item{display:flex;gap:10px;padding:12px;border-radius:8px;border:1px solid transparent}
+    .impr-item.strength{background:rgba(45,212,160,.04);border-color:rgba(45,212,160,.1)}
+    .impr-item.warning{background:rgba(245,200,66,.04);border-color:rgba(245,200,66,.1)}
+    .impr-item.improvement{background:rgba(184,255,87,.04);border-color:rgba(184,255,87,.1)}
+    .impr-item.improvement.high{background:rgba(240,107,107,.04);border-color:rgba(240,107,107,.12)}
+    .impr-item-icon{width:30px;height:30px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .impr-item-icon.strength{background:rgba(45,212,160,.12);color:var(--success)}
+    .impr-item-icon.warning{background:rgba(245,200,66,.12);color:var(--gold)}
+    .impr-item-icon.improvement{background:rgba(184,255,87,.12);color:#b8ff57}
+    .impr-item-content{flex:1;min-width:0}
+    .impr-item-header-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px}
+    .impr-item-label{font-size:13px;font-weight:600;letter-spacing:-.2px}
+    .impr-item-detail{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:4px}
+    .impr-item-advice{font-size:12px;color:var(--text2);line-height:1.55;background:rgba(255,255,255,.02);border-left:2px solid var(--border2);padding:6px 8px;border-radius:0 4px 4px 0;margin-top:4px}
+    .impr-item-metric{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px}
+    .impr-priority-badge{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+    .impr-priority-badge.high{background:rgba(240,107,107,.12);color:var(--danger)}
+    .impr-priority-badge.medium{background:rgba(245,200,66,.1);color:var(--gold)}
+    .impr-priority-badge.low{background:rgba(184,255,87,.1);color:#b8ff57}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px}
+    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px}
+    .kpi-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:7px;font-family:var(--mono)}
+    .kpi-val{font-size:22px;font-weight:700;letter-spacing:-.8px;font-family:var(--mono);line-height:1}
+    .kpi-sub{font-size:10px;color:var(--text3);margin-top:5px;font-family:var(--mono);line-height:1.35;letter-spacing:.01em}
+    .kpi-good{color:var(--success)}.kpi-bad{color:var(--danger)}.kpi-warn{color:var(--gold)}.kpi-blue{color:#b8ff57}.kpi-neutral{color:var(--accent)}.kpi-muted{color:var(--text3)}
+    .coach-cta{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.25);border-radius:12px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px}
+    @media(max-width:600px){.coach-cta{flex-direction:column;text-align:center}}
+    .coach-cta-icon{width:44px;height:44px;border-radius:10px;background:rgba(184,255,87,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .coach-cta-body{flex:1;min-width:0}
+    .coach-cta-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.2px}
+    .coach-cta-sub{font-size:12px;color:var(--text2);line-height:1.5}
+    .coach-cta-btn{background:var(--accent);color:#000;border:none;padding:9px 16px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.04em;text-transform:uppercase;transition:all .15s;flex-shrink:0}
+    .coach-cta-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}
+    .chart-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;font-family:var(--mono)}
+    .chart-wrap{height:180px;position:relative}
+    .match-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+    .match-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+    .match-table th{background:var(--card);padding:11px 12px;text-align:left;color:var(--text2);letter-spacing:.08em;font-weight:700;text-transform:uppercase;font-size:10px;border-bottom:1px solid var(--border2)}
+    .match-table td{padding:11px 12px;border-bottom:1px solid rgba(28,30,30,.6);color:var(--text2)}
+    .match-table tr:last-child td{border-bottom:none}
+    .match-table tr:hover td{background:rgba(184,255,87,.03)}
+    /* W/L pill prominent */
+    .td-win,.td-loss{font-weight:700;letter-spacing:.1em;text-align:center;width:42px}
+    .td-win{color:var(--success);background:rgba(45,212,160,.1);border-left:2px solid var(--success)}
+    .td-loss{color:var(--danger);background:rgba(255,68,68,.08);border-left:2px solid var(--danger)}
+    /* Map name accent */
+    .td-map{color:var(--text);font-weight:700;letter-spacing:.02em}
+    /* Metrics colorees par threshold */
+    .td-good{color:var(--success);font-weight:700}.td-warn{color:var(--gold);font-weight:700}.td-bad{color:var(--danger);font-weight:700}
+    .wl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:border-color .15s}
+    .wl-card:hover{border-color:var(--border2)}
+    .wl-avatar{width:36px;height:36px;border-radius:8px;background:var(--card);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+    .wl-name{font-size:13px;font-weight:600}
+    .wl-elo{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--gold)}
+    .wl-btn{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .15s}
+    .wl-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .empty-state{position:relative;text-align:center;padding:56px 24px;background:linear-gradient(180deg, rgba(184,255,87,.02) 0%, var(--surface) 80%);border:1px solid rgba(184,255,87,.1);border-radius:14px;overflow:hidden}
+    .empty-state::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(184,255,87,.03) 1px, transparent 1px),linear-gradient(90deg, rgba(184,255,87,.03) 1px, transparent 1px);background-size:28px 28px;mask-image:radial-gradient(circle at center, rgba(0,0,0,.9) 0%, transparent 65%);-webkit-mask-image:radial-gradient(circle at center, rgba(0,0,0,.9) 0%, transparent 65%);pointer-events:none}
+    .empty-state::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:280px;height:100px;background:radial-gradient(ellipse at center, rgba(184,255,87,.06) 0%, transparent 70%);pointer-events:none}
+    .empty-state > *{position:relative;z-index:1}
+    .empty-title{font-family:var(--display, 'Anton', sans-serif);font-size:18px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px;color:var(--text)}
+    .empty-sub{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:22px;max-width:360px;margin-left:auto;margin-right:auto}
+    .empty-btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#000;border:none;padding:10px 20px;border-radius:6px;font-family:var(--mono, 'Space Mono', monospace);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:all .18s}
+    .empty-btn:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 16px rgba(184,255,87,.3)}
+    /* Icone optionnelle : ajouter <div class="empty-ico"><svg/></div> avant title */
+    .empty-ico{display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:radial-gradient(circle, rgba(184,255,87,.12) 0%, rgba(184,255,87,.02) 70%);border:1px solid rgba(184,255,87,.18);color:var(--accent);margin-bottom:18px;animation:empty-float 3s ease-in-out infinite;box-shadow:0 0 24px rgba(184,255,87,.06)}
+    .empty-ico svg{width:34px;height:34px}
+    @keyframes empty-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    #loadingOverlay{display:none;position:fixed;inset:0;background:rgba(8,9,13,.85);z-index:300;backdrop-filter:blur(8px);flex-direction:column;align-items:center;justify-content:center;gap:14px}
+    .load-spinner{width:34px;height:34px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+    .load-text{font-family:var(--mono);font-size:12px;color:var(--text3)}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .link-prompt{background:var(--surface);border:1px solid rgba(184,255,87,.2);border-radius:12px;padding:28px;text-align:center;margin-bottom:20px}
+    .link-prompt-title{font-size:18px;font-weight:700;letter-spacing:-.4px;margin-bottom:8px}
+    .link-prompt-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px}
+    .link-form{display:flex;gap:0;max-width:380px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:9px;overflow:hidden;transition:border-color .15s}
+    .link-form:focus-within{border-color:var(--accent)}
+    .link-input{flex:1;background:transparent;border:none;padding:12px 16px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none}
+    .link-input::placeholder{color:var(--text3)}
+    .link-btn{background:var(--accent);color:#000;border:none;padding:12px 18px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+    .link-btn:hover{opacity:.9}
+    .link-msg{font-family:var(--mono);font-size:12px;text-align:center;margin-top:10px;min-height:16px}
+    /* ── This week ───────────────────────────────────────── */
+    .weekly-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;display:flex;align-items:center;gap:20px;position:relative;overflow:hidden;flex-wrap:wrap}
+    .weekly-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 50% 80% at 100% 0%,rgba(184,255,87,.06),transparent);pointer-events:none}
+    .weekly-item{position:relative;z-index:1;text-align:center;flex:1;min-width:90px}
+    .weekly-val{font-family:var(--display);font-size:26px;color:var(--text);line-height:1;letter-spacing:.01em}
+    .weekly-label{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+    .weekly-divider{width:1px;height:32px;background:var(--border)}
+    .weekly-empty{color:var(--text3);font-size:13px;font-family:var(--mono);padding:18px 22px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px}
+
+    /* ── CT vs T split ───────────────────────────────────────── */
+    .ct-t-split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    @media(max-width:600px){.ct-t-split{grid-template-columns:1fr}}
+    .side-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
+    .side-card.ct::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 0% 0%,rgba(184,255,87,.08),transparent);pointer-events:none}
+    .side-card.t::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 0% 0%,rgba(245,200,66,.08),transparent);pointer-events:none}
+    .side-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;position:relative;z-index:1}
+    .side-label{font-family:var(--display);font-size:18px;letter-spacing:.04em}
+    .side-card.ct .side-label{color:var(--accent)}
+    .side-card.t .side-label{color:var(--gold)}
+    .side-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:1}
+    .side-metric-val{font-family:var(--display);font-size:24px;color:var(--text);line-height:1}
+    .side-metric-label{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+    .side-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:10px;position:relative;z-index:1}
+    .side-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+    .side-card.ct .side-bar-fill{background:var(--accent)}
+    .side-card.t .side-bar-fill{background:var(--gold)}
+    .side-verdict{font-size:11px;color:var(--text2);font-family:var(--mono);text-align:center;margin-top:6px;padding:8px;background:var(--card);border:1px solid var(--border);border-radius:6px}
+    .side-verdict strong{color:var(--text)}
+
+    /* ── Maps grid ───────────────────────────────────────────── */
+    .maps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px}
+    .map-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;transition:border-color .2s}
+    .map-card:hover{border-color:rgba(184,255,87,.3)}
+    .map-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .map-name{font-family:var(--display);font-size:18px;color:var(--text);letter-spacing:.02em}
+    .map-matches{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+    .map-wr-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:8px}
+    .map-wr-fill{height:100%;transition:width .6s ease}
+    .map-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+    .map-stat{text-align:center}
+    .map-stat-val{font-family:var(--mono);font-size:14px;font-weight:700;line-height:1}
+    .map-stat-label{font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+    .map-sides{display:flex;gap:8px;font-family:var(--mono);font-size:10px}
+    .map-side{flex:1;padding:6px 8px;border-radius:4px;display:flex;justify-content:space-between;align-items:center}
+    .map-side.ct{background:rgba(184,255,87,.06);color:var(--accent)}
+    .map-side.t{background:rgba(245,200,66,.06);color:var(--gold)}
+    .map-side-label{font-weight:700}
+
+    /* ── Best match highlight ────────────────────────────────── */
+    .best-match{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.25);border-radius:12px;padding:18px 22px;margin-bottom:16px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+    .best-match-crown{width:44px;height:44px;border-radius:10px;background:rgba(184,255,87,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .best-match-info{flex:1;min-width:180px}
+    .best-match-title{font-family:var(--display);font-size:18px;color:var(--text);letter-spacing:.02em;margin-bottom:4px}
+    .best-match-sub{font-size:12px;color:var(--text2);font-family:var(--mono)}
+    .best-match-stats{display:flex;gap:18px;flex-wrap:wrap}
+    .best-match-stat{text-align:center}
+    .best-match-stat-val{font-family:var(--display);font-size:22px;color:var(--accent);line-height:1}
+    .best-match-stat-label{font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+
+    /* ── Baseline comparison ─────────────────────────────────── */
+    .kpi-baseline{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px;line-height:1.2;letter-spacing:.01em;white-space:nowrap}
+    .kpi-baseline.up{color:var(--success)}.kpi-baseline.down{color:var(--danger)}
+
+    /* ── Tab intro headers ────────────────────────────────── */
+    .tab-intro{margin-bottom:22px}
+    .tab-title{font-family:var(--display);font-size:32px;color:var(--text);letter-spacing:.02em;margin-bottom:6px;line-height:1.1}
+    .tab-sub{font-size:13px;color:var(--text2);font-family:var(--mono);line-height:1.5;max-width:720px}
+
+    /* ── Matches tab : summary + filters ──────────────────── */
+    .matches-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+    .matches-summary-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+    .matches-summary-label{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+    .matches-summary-val{font-family:var(--display);font-size:22px;color:var(--text);line-height:1}
+    .matches-summary-sub{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px}
+    .matches-filters{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px}
+    .filter-label{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+    .filter-select{background:var(--card);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;border-radius:6px;cursor:pointer;font-weight:700}
+    .filter-select:hover{border-color:var(--accent)}
+    .filter-toggle-group{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:3px}
+    .filter-toggle{font-family:var(--mono);font-size:11px;font-weight:700;padding:6px 12px;border-radius:4px;background:transparent;color:var(--text2);border:none;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:all .15s}
+    .filter-toggle:hover{color:var(--text)}
+    .filter-toggle.active{background:var(--accent);color:#000}
+
+    /* ── Modals ────────────────────────────────────────── */
+    .modal{display:none;position:fixed;inset:0;background:rgba(8,9,9,.8);backdrop-filter:blur(8px);z-index:500;align-items:center;justify-content:center;padding:20px}
+    .modal.open{display:flex}
+    .modal-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:480px;max-height:90vh;overflow:auto;box-shadow:0 16px 48px rgba(0,0,0,.6),0 0 0 1px rgba(184,255,87,.05)}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border)}
+    .modal-title{font-family:var(--display);font-size:22px;letter-spacing:.02em;color:var(--text)}
+    .modal-close{background:none;border:none;color:var(--text3);font-size:28px;cursor:pointer;line-height:1;padding:0;transition:color .15s}
+    .modal-close:hover{color:var(--text)}
+    .modal-body{padding:20px 24px}
+    .modal-field{margin-bottom:14px}
+    .modal-field label{display:block;font-family:var(--mono);font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:700}
+    .modal-field input,.modal-field textarea,.modal-field select{width:100%;background:var(--card);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:6px;outline:none;transition:border-color .15s;resize:vertical}
+    .modal-field input:focus,.modal-field textarea:focus,.modal-field select:focus{border-color:var(--accent)}
+    .modal-footer{display:flex;gap:10px;justify-content:flex-end;padding:16px 24px 20px;border-top:1px solid var(--border)}
+    .modal-btn-secondary{background:transparent;color:var(--text2);border:1px solid var(--border2);padding:9px 16px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .modal-btn-secondary:hover{color:var(--text);border-color:var(--text2)}
+    .modal-btn-primary{background:var(--accent);color:#000;border:none;padding:9px 18px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .modal-btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    .modal-btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .modal-err{font-family:var(--mono);font-size:11px;color:var(--danger);margin-top:8px;min-height:14px}
+
+    /* ── Roster ─────────────────────────────────────────── */
+    .roster-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:16px;position:relative;overflow:hidden}
+    .roster-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 50% 80% at 100% 0%,rgba(184,255,87,.08),transparent);pointer-events:none}
+    .roster-head{display:flex;align-items:center;gap:16px;margin-bottom:20px;position:relative;z-index:1;flex-wrap:wrap}
+    .roster-logo{width:56px;height:56px;border-radius:12px;background:var(--card);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:22px;color:var(--accent);letter-spacing:.02em;flex-shrink:0}
+    .roster-info{flex:1;min-width:0}
+    .roster-title{font-family:var(--display);font-size:28px;color:var(--text);letter-spacing:.02em;line-height:1.1;margin-bottom:3px}
+    .roster-title small{font-family:var(--mono);font-size:13px;color:var(--text3);margin-left:8px;letter-spacing:.04em;font-weight:400}
+    .roster-meta{font-family:var(--mono);font-size:11px;color:var(--text2);display:flex;flex-wrap:wrap;gap:12px}
+    .roster-meta-item{display:flex;align-items:center;gap:5px}
+    .roster-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .roster-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 14px;border-radius:6px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border2);background:transparent;color:var(--text);white-space:nowrap}
+    .roster-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .roster-btn.primary{background:var(--accent);color:#000;border-color:var(--accent);box-shadow:0 0 0 0 rgba(184,255,87,.3);transition:all .18s}
+    .roster-btn.primary:hover{filter:brightness(1.08);color:#000;transform:translateY(-1px);box-shadow:0 4px 16px rgba(184,255,87,.3)}
+    /* Mobile : actions empilees verticalement pour eviter les debordements */
+    @media (max-width:640px){
+      .roster-head{flex-direction:column;align-items:stretch}
+      .roster-actions{width:100%;flex-direction:column;gap:6px}
+      .roster-btn{width:100%;justify-content:center;padding:10px 14px;font-size:11px}
+    }
+    .roster-btn.danger{color:var(--danger);border-color:rgba(255,68,68,.3)}
+    .roster-btn.danger:hover{background:rgba(255,68,68,.08);color:var(--danger)}
+    .roster-desc{font-size:13px;color:var(--text2);font-family:var(--mono);line-height:1.5;margin-bottom:16px;position:relative;z-index:1}
+    .roster-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;position:relative;z-index:1}
+    .roster-stat{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+    .roster-stat-label{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+    .roster-stat-val{font-family:var(--display);font-size:20px;color:var(--accent);line-height:1}
+    .roster-stat-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px}
+
+    .members-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .members-title{font-family:var(--display);font-size:18px;color:var(--text);letter-spacing:.02em}
+    .member-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;transition:border-color .15s}
+    .member-row:hover{border-color:var(--border2)}
+    .member-avatar{width:36px;height:36px;border-radius:8px;background:var(--card);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;font-family:var(--display);color:var(--accent)}
+    .member-info{flex:1;min-width:0}
+    .member-name{font-size:14px;font-weight:700;color:var(--text)}
+    .member-rôle{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px}
+    .member-rôle .captain-tag{background:rgba(245,200,66,.15);color:var(--gold);padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-right:6px}
+    .member-rôle .sub-tag{background:rgba(122,128,128,.12);color:var(--text2);padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-right:6px}
+    .member-elo{font-family:var(--mono);font-size:12px;color:var(--gold);font-weight:700}
+    .member-remove{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:6px;border-radius:4px;transition:all .15s}
+    .member-remove:hover{color:var(--danger);background:rgba(255,68,68,.08)}
+
+    .pending-inv{background:rgba(245,200,66,.04);border:1px solid rgba(245,200,66,.18);border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--text2)}
+    .pending-inv-tag{background:rgba(245,200,66,.15);color:var(--gold);padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+    .pending-inv-cancel{background:transparent;border:none;color:var(--text3);cursor:pointer;padding:4px;font-size:16px;line-height:1;margin-left:auto}
+    .pending-inv-cancel:hover{color:var(--danger)}
+
+    .invitation-card{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .invitation-info{flex:1;min-width:200px}
+    .invitation-title{font-family:var(--display);font-size:18px;color:var(--text);margin-bottom:4px}
+    .invitation-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5}
+    .invitation-msg{font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:6px;padding:8px 10px;background:rgba(0,0,0,.2);border-left:2px solid var(--accent);border-radius:0 4px 4px 0}
+
+    /* Pending invites banner (from compare) */
+    .pending-invites-banner{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:24px;text-align:center;margin-bottom:16px}
+    .pending-invites-title{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em;margin-bottom:10px}
+    .pending-invites-title strong{color:var(--accent)}
+    .pending-invites-list{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px}
+    .pending-nick{font-family:var(--mono);font-size:11px;color:var(--accent);padding:5px 11px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.2);border-radius:40px;font-weight:700}
+    .pending-invites-sub{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5}
+
+    /* ── Team aggregated stats ────────────────────────── */
+    .team-score-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-top:14px;position:relative;z-index:1}
+    .team-score-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+    .team-score-val{font-family:var(--display);font-size:42px;line-height:1;letter-spacing:.01em}
+    .team-score-label{font-family:var(--mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+    .team-score-meta{font-family:var(--mono);font-size:11px;color:var(--text2);display:flex;flex-direction:column;gap:4px;text-align:right}
+    .team-metrics-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+    @media(max-width:600px){.team-metrics-grid{grid-template-columns:repeat(3,1fr)}}
+    .team-metric{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 8px;text-align:center}
+    .team-metric-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+    .team-metric-val{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);line-height:1}
+    .team-top-perf{background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .team-top-perf-label{font-family:var(--mono);font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+    .team-top-perf-val{font-family:var(--mono);font-size:12px;color:var(--text2)}
+    .team-top-perf-val strong{color:var(--text)}
+    .team-maps-label{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+    .team-maps-list{display:flex;flex-wrap:wrap;gap:6px}
+    .team-map-pill{font-family:var(--mono);font-size:11px;font-weight:700;padding:5px 10px;border-radius:40px;background:var(--surface);border:1px solid;display:inline-flex;align-items:center;gap:5px}
+
+    /* ── Watchlist / Roster : enhanced card layout ────────── */
+    .wl-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+    .wl-team-name{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em}
+    .wl-count{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+    .wl-add-btn{background:transparent;color:var(--accent);border:1px solid rgba(184,255,87,.3);padding:7px 14px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .wl-add-btn:hover{background:rgba(184,255,87,.08)}
+    .wl-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+    .wl-meta{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px}
+    .wl-level{display:inline-block;font-size:9px;font-family:var(--mono);font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.5px;margin-right:6px}
+    .wl-elo{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold);margin-right:8px}
+    .wl-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:6px 12px;border-radius:5px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .wl-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+    @media(max-width:768px){nav{padding:0 16px}.page{padding:16px}.hero-kpis{grid-template-columns:repeat(3,1fr)}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+<script src="/analytics.js" defer></script>
+</head>
+<body data-plan="free">
+
+<div id="loadingOverlay" style="display:none">
+  <div class="load-spinner"></div>
+  <div class="load-text" id="loadText">Loading...</div>
+</div>
+
+<nav></nav>
+
+<div class="page">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">My game</div>
+    <button class="sidebar-btn active" onclick="setTab('overview',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Overview
+    </button>
+    <button class="sidebar-btn" onclick="setTab('improve',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      Improvement
+      <span class="sidebar-badge">NEW</span>
+    </button>
+    <button class="sidebar-btn" onclick="setTab('matches',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      My matches
+    </button>
+    <div class="sidebar-section">Gestion</div>
+    <button class="sidebar-btn" onclick="setTab('watchlist',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+      Watchlist
+    </button>
+    <button class="sidebar-btn" onclick="setTab('roster',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Roster
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- VUE D'ENSEMBLE -->
+    <div class="tab-panel active" id="panelOverview">
+      <div id="profileHeroCard" class="hero-card">
+        <div class="hero-top">
+          <div class="hero-avatar"></div>
+          <div class="hero-info"><div class="hero-name">Loading...</div></div>
+        </div>
+      </div>
+      <div class="sec-label">FV Score <span class="sec-badge pro">PRO</span></div>
+      <div class="fvscore-card sec-locked" id="fvScoreCard">
+        <div style="text-align:center">
+          <div class="fvscore-donut-wrap">
+            <svg class="fvscore-donut-svg" viewBox="0 0 120 120">
+              <circle class="fvscore-donut-bg" cx="60" cy="60" r="50"/>
+              <circle class="fvscore-donut-fill" id="fvDonutFill" cx="60" cy="60" r="50"/>
+            </svg>
+            <div class="fvscore-donut-center">
+              <div class="fvscore-val" id="fvScoreVal">...</div>
+              <div class="fvscore-max">/ 100</div>
+            </div>
+          </div>
+          <div class="fvscore-label" id="fvScoreLabel"></div>
+        </div>
+        <div style="flex:1"><div id="fvSubLevel"></div><div class="fvscore-dims" id="fvDims"></div></div>
+      </div>
+      <div class="sec-label">This week</div>
+      <div id="weeklyInsights"></div>
+
+      <div class="sec-label">Key stats (20 matches)</div>
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="sec-label">Advanced KPIs <span class="sec-badge pro">PRO</span></div>
+      <div class="kpi-grid sec-locked" id="kpiAdvanced"></div>
+
+      <div class="sec-label">CT side vs T side <span class="sec-badge pro">PRO</span></div>
+      <div class="sec-locked" id="ctTSplit"></div>
+
+      <div class="sec-label">Stats by map <span class="sec-badge pro">PRO</span></div>
+      <div class="sec-locked" id="mapStatsGrid"></div>
+
+      <div class="sec-label">Best recent match <span class="sec-badge pro">PRO</span></div>
+      <div class="sec-locked" id="bestMatch"></div>
+
+      <div class="sec-label">FV Rating evolution <span class="sec-badge pro">PRO</span></div>
+      <div class="chart-card sec-locked"><div class="chart-title">FV Rating over 20 matches</div><div class="chart-wrap"><canvas id="chartFvRating"></canvas></div></div>
+
+      <div class="sec-label">AI Coach <span class="sec-badge pro">PRO</span></div>
+      <div id="coachAiCard" class="coach-ai-card">
+        <div class="coach-ai-loading">
+          <div class="coach-ai-loading-dot"></div>
+          <span>Loading your diagnosis...</span>
+        </div>
+      </div>
+
+      <div class="sec-label">Last match</div>
+      <div id="lastMatchSection"></div>
+      <div class="sec-label">Last 20 matches</div>
+      <div class="match-table-wrap"><table class="match-table"><thead><tr id="matchHead"></tr></thead><tbody id="matchBody"></tbody></table></div>
+    </div>
+
+    <!-- AMÉLIORATION -->
+    <div class="tab-panel" id="panelImprove">
+      <div class="tab-intro">
+        <h1 class="tab-title">Your improvement areas</h1>
+        <p class="tab-sub">Personalized analysis of your strengths and blockers, computed over your last 20 FACEIT matches. Actionable round by round.</p>
+      </div>
+      <div id="improvementsPanel"><div class="empty-state"><div class="empty-title">Loading analysis...</div></div></div>
+    </div>
+
+    <!-- MATCHS -->
+    <div class="tab-panel" id="panelMatches">
+      <div class="tab-intro">
+        <h1 class="tab-title">Match history</h1>
+        <p class="tab-sub">Your last 20 FACEIT matches with all key KPIs. Filter by map or result to zoom in.</p>
+      </div>
+      <div id="matchesSummary"></div>
+      <div class="matches-filters" id="matchesFilters">
+        <label class="filter-label">Filter:</label>
+        <select class="filter-select" id="filterMap"><option value="">All maps</option></select>
+        <div class="filter-toggle-group">
+          <button class="filter-toggle active" data-result="all" onclick="applyMatchFilter(this)">All</button>
+          <button class="filter-toggle" data-result="win" onclick="applyMatchFilter(this)">Wins</button>
+          <button class="filter-toggle" data-result="loss" onclick="applyMatchFilter(this)">Losses</button>
+        </div>
+      </div>
+      <div class="match-table-wrap"><table class="match-table"><thead><tr id="matchHead2"></tr></thead><tbody id="matchBody2"></tbody></table></div>
+    </div>
+
+    <!-- WATCHLIST -->
+    <div class="tab-panel" id="panelWatchlist">
+      <div class="tab-intro">
+        <h1 class="tab-title">Followed players</h1>
+        <p class="tab-sub">Keep an eye on players you're interested in: recurring opponents, potential teammates, former duos.</p>
+      </div>
+      <div id="watchlistContent">
+        <div class="empty-state">
+          <div class="empty-ico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="28" cy="28" r="14"/><line x1="38.5" y1="38.5" x2="48" y2="48"/><circle cx="28" cy="24" r="4"/><path d="M20 36c0-3 3.5-6 8-6s8 3 8 6"/></svg></div>
+          <div class="empty-title">No followed players</div>
+          <div class="empty-sub">Scout un player depuis la page Scout et ajoute-le a ta watchlist pour retrouver rapidement ses stats ici.</div>
+          <a href="scout.html" class="empty-btn">Go to Scout</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROSTER -->
+    <div class="tab-panel" id="panelRoster">
+      <div class="tab-intro">
+        <h1 class="tab-title">My team</h1>
+        <p class="tab-sub">Your roster to track collective stats, invite teammates and structure your competitive team. Up to 7 players (5 starters + 2 subs).</p>
+      </div>
+      <div id="rosterInvitations"></div>
+      <div id="rosterContent">
+        <div class="empty-state">
+          <div class="empty-ico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="20" cy="22" r="5"/><path d="M10 42c0-5.5 4.5-10 10-10s10 4.5 10 10"/><circle cx="44" cy="22" r="5"/><path d="M34 42c0-5.5 4.5-10 10-10s10 4.5 10 10"/><circle cx="32" cy="14" r="4"/><line x1="32" y1="18" x2="32" y2="28" stroke-dasharray="2,3" opacity=".6"/></svg></div>
+          <div class="empty-title">No team yet</div>
+          <div class="empty-sub">Create your team to invite teammates and track collective stats. You can also wait for an invitation from a friend.</div>
+          <button class="empty-btn" onclick="openCreateRosterModal()">Create my team</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modals roster -->
+<div class="modal" id="modalCreateRoster">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Create my team</div>
+      <button class="modal-close" onclick="closeModal('modalCreateRoster')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label>Team name</label>
+        <input id="rosterName" type="text" placeholder="Ex: FragValue Elite" maxlength="40"/>
+      </div>
+      <div class="modal-field">
+        <label>Tag (3-6 chars, optional)</label>
+        <input id="rosterTag" type="text" placeholder="Ex: FVT" maxlength="6" style="text-transform:uppercase"/>
+      </div>
+      <div class="modal-field">
+        <label>Description (optional)</label>
+        <textarea id="rosterDesc" rows="3" placeholder="FACEIT 10 competitive team, ESEA Open prep..." maxlength="200"></textarea>
+      </div>
+      <div class="modal-field">
+        <label>Region</label>
+        <select id="rosterRegion">
+          <option value="">-</option>
+          <option value="EU">Europe</option>
+          <option value="NA">North America</option>
+          <option value="SA">South America</option>
+          <option value="OCE">Oceania</option>
+          <option value="SEA">SE Asia</option>
+        </select>
+      </div>
+      <div class="modal-err" id="rosterCreateErr"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn-secondary" onclick="closeModal('modalCreateRoster')">Cancel</button>
+      <button class="modal-btn-primary" onclick="submitCreateRoster()" id="rosterCreateBtn">Create team</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modalInvitePlayer">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Invite a player</div>
+      <button class="modal-close" onclick="closeModal('modalInvitePlayer')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label>Player's FACEIT username</label>
+        <input id="inviteNickname" type="text" placeholder="Ex: s1mple"/>
+      </div>
+      <div class="modal-field">
+        <label>Proposed role (optional)</label>
+        <select id="inviteRole">
+          <option value="">Free to choose</option>
+          <option value="entry">Entry fragger</option>
+          <option value="awp">AWPer</option>
+          <option value="support">Support</option>
+          <option value="lurker">Lurker</option>
+          <option value="igl">IGL</option>
+          <option value="rifler">Rifler</option>
+          <option value="coach">Coach</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Message (optional)</label>
+        <textarea id="inviteMsg" rows="3" placeholder="Hi! We're looking for a support for ESEA Open..." maxlength="200"></textarea>
+      </div>
+      <div class="modal-err" id="inviteErr"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn-secondary" onclick="closeModal('modalInvitePlayer')">Cancel</button>
+      <button class="modal-btn-primary" onclick="submitInvite()" id="inviteBtn">Send invitation</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+let currentUser = null, playerData = null, fvChart = null;
+
+async function init() {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; return; }
+  currentUser = session.user;
+  const { data:profile } = await sb.from('profiles').select('*').eq('id',currentUser.id).single();
+  // Chercher le pseudo FACEIT dans profiles puis dans user_metadata comme fallback
+  const nick = profile?.faceit_nickname
+    || currentUser.user_metadata?.faceit_nickname
+    || null;
+
+  if (nick) {
+    loadFaceitData(nick);
+  } else {
+    // Not pseudo lié : vérifier si l'onboarding a sauvegarde dans une autre colonne
+    // or afficher le prompt de liaison
+    showLinkPrompt();
+  }
+  loadWatchlist(); loadRoster();
+
+  // Deep link par hash : #roster ouvre le tab Roster, #matches le Matches, etc.
+  const hashToTab = {
+    'overview': 'overview', 'improve': 'improve', 'matches': 'matches',
+    'watchlist': 'watchlist', 'roster': 'roster',
+  };
+  const hash = (window.location.hash || '').replace('#', '');
+  if (hashToTab[hash]) {
+    const btn = document.querySelector(`[onclick*="'${hashToTab[hash]}'"]`);
+    if (btn) setTab(hashToTab[hash], btn);
+  }
+}
+
+function showLinkPrompt() {
+  // Not pseudo FACEIT lie : rediriger vers l'onboarding
+  document.getElementById('profileHeroCard').innerHTML = `
+    <div class="link-prompt" style="text-align:center;padding:32px">
+      <div style="font-size:32px;margin-bottom:16px">
+        <svg width="48" height="48" viewBox="0 0 48 48" style="margin:0 auto;display:block">
+          <rect width="48" height="48" rx="12" fill="rgba(184,255,87,.1)"/>
+          <rect x="10" y="10" width="6" height="28" rx="2" fill="#b8ff57"/>
+          <rect x="10" y="10" width="18" height="6" rx="2" fill="#b8ff57"/>
+          <rect x="10" y="21" width="13" height="6" rx="2" fill="#b8ff57"/>
+          <path d="M24 14 L31 34 L38 14" stroke="url(#dg)" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <defs><linearGradient id="dg" x1="24" y1="14" x2="38" y2="34" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b8ff57"/><stop offset="100%" stop-color="#2DD4A0"/></linearGradient></defs>
+        </svg>
+      </div>
+      <div class="link-prompt-title">Configure your profile</div>
+      <p class="link-prompt-sub">Your FACEIT account is not linked yet. Complete your profile to access your stats and improvement analysis.</p>
+      <a href="onboarding.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;transition:opacity .15s" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+        Complete my profile →
+      </a>
+    </div>`;
+  document.getElementById('fvScoreCard').style.display='none';
+  document.getElementById('kpiGrid').innerHTML='';
+}
+
+async function saveFaceitNick() {
+  const nick = document.getElementById('linkNick')?.value.trim();
+  if (!nick) return;
+  const btn = document.querySelector('.link-btn');
+  const msg = document.getElementById('linkMsg');
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  msg.style.color='var(--text3)'; msg.textContent='Verifying...';
+  try {
+    const headersScout = {};
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) headersScout['Authorization'] = 'Bearer ' + session.access_token;
+    } catch(_) {}
+    const res = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`, { headers: headersScout });
+    const d = await res.json();
+    if (!res.ok||!d.player) {
+      msg.style.color='var(--danger)'; msg.textContent=`Pseudo "${nick}" introuvable sur FACEIT.`;
+      if (btn) { btn.disabled=false; btn.textContent='Link'; }
+      return;
+    }
+    // Sauvegarder dans Supabase
+    await sb.from('profiles').upsert({
+      id: currentUser.id,
+      faceit_nickname: d.player.nickname,
+      faceit_id: d.player.playerId,
+    }, { onConflict: 'id' });
+    msg.style.color='var(--success)'; msg.textContent=`Account "${d.player.nickname}" linked successfully!`;
+    setTimeout(() => loadFaceitData(d.player.nickname), 800);
+  } catch(e) {
+    msg.style.color='var(--danger)'; msg.textContent='Server error. Try again.';
+    if (btn) { btn.disabled=false; btn.textContent='Link'; }
+  }
+}
+
+async function loadFaceitData(nick) {
+  showLoading(true,`Chargement de ${nick}...`);
+  try {
+    const headersScout = {};
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) headersScout['Authorization'] = 'Bearer ' + session.access_token;
+    } catch(_) {}
+    const res = await fetch(`/api/scout?nickname=${encodeURIComponent(nick)}`, { headers: headersScout });
+    const d = await res.json();
+    if (!res.ok||!d.player) { showLinkPrompt(); return; }
+    playerData = d;
+    renderProfile(d); renderFvScore(d); renderWeeklyInsights(d); renderKpis(d); renderAdvancedKpis(d);
+    renderCtTSplit(d); renderMapStats(d); renderBestMatch(d); renderChart(d);
+    renderLastMatch(d); renderMatches(d); renderImprovements(d);
+    // Plan check + AI Coach en parallele (2 auth fetches, ~800ms saved)
+    Promise.all([renderPlanNudge(), renderCoachAi()]);
+  } catch(e) { console.error(e); } finally { showLoading(false); }
+}
+
+// Fetch + render du diagnostic AI Coach depuis /api/ai-roadmap.
+// Si free : affiché un preview + CTA. Si pro/team : rendu complet avec CTA détail.
+async function renderCoachAi(forceRefresh = false) {
+  const card = document.getElementById('coachAiCard');
+  if (!card) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      card.innerHTML = coachLockedHtml('Sign in to get your diagnosis', 'The AI Coach analyzes your last 20 FACEIT matches and gives you strengths, weaknesses and weekly goal.', '/login.html', 'Sign in');
+      return;
+    }
+    const qs = forceRefresh ? '?refresh=1' : '';
+    const res = await fetch('/api/ai-roadmap' + qs, {
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (res.status === 400) {
+      card.innerHTML = coachLockedHtml('FACEIT username not linked', 'Configure your FACEIT username in your account so the AI Coach can analyze your last 20 matches.', '/account.html', 'Link my FACEIT account');
+      return;
+    }
+    if (res.status === 429) {
+      const body = await res.json().catch(() => ({}));
+      const nextAt = body.nextAvailableAt ? new Date(body.nextAvailableAt) : null;
+      const nextStr = nextAt ? nextAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' }) : 'bientôt';
+      showCoachToast(`Limit reached : prochain refresh dispo le ${nextStr}. Passe Pro pour refresh unlimited.`, 'warn');
+      // On re-render avec le cache existant pour que l'UI reste utile
+      if (body.currentDiagnosis) renderCoachDiagnosis(card, { diagnosis: body.currentDiagnosis, cachedAt: null, plan: 'free' });
+      return;
+    }
+    if (!res.ok) throw new Error('ai-roadmap ' + res.status);
+    const data = await res.json();
+    if (!data.diagnosis?.summary) throw new Error('diagnostic vide');
+    renderCoachDiagnosis(card, data);
+    if (forceRefresh) showCoachToast('Diagnosis regenerated ✓', 'ok');
+  } catch (e) {
+    console.warn('AI Coach render failed', e);
+    if (forceRefresh) showCoachToast('Regeneration failed. Try again in a moment.', 'err');
+    else card.innerHTML = coachLockedHtml('Diagnosis unavailable', 'Link your FACEIT username in your profile to activate the AI Coach.', '/account.html', 'Complete my profile');
+  }
+}
+
+function renderCoachDiagnosis(card, data) {
+  const d = data.diagnosis || {};
+  const force = (d.strengths || [])[0] || '-';
+  const axe   = (d.weaknesses || [])[0] || '-';
+  const goal  = d.weeklyGoal || '-';
+  const refreshLabel = (data.plan === 'pro' || data.plan === 'elite' || data.plan === 'team') ? 'Regenerate' : '1/mois';
+  card.innerHTML = ''
+    + '<div class="coach-ai-head">'
+    + '  <div class="coach-ai-icon">'
+    + '    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>'
+    + '  </div>'
+    + '  <div class="coach-ai-title">'
+    + '    <div class="coach-ai-title-main">Your AI diagnosis</div>'
+    + '    <div class="coach-ai-title-sub">Analysis of the last 20 matches · updated ' + cacheAge(data.cachedAt) + '</div>'
+    + '  </div>'
+    + '  <button type="button" class="coach-ai-refresh" id="coachAiRefreshBtn" title="Regenerate diagnosis">'
+    + '    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>'
+    + '    ' + refreshLabel
+    + '  </button>'
+    + '  <div class="coach-ai-pill">AI COACH</div>'
+    + '</div>'
+    + '<div class="coach-ai-quote">' + escapeHtml(d.summary) + '</div>'
+    + '<div class="coach-ai-highlights">'
+    + '  <div class="coach-ai-col force"><div class="coach-ai-col-label">TOP STRENGTH</div><div class="coach-ai-col-text">' + escapeHtml(force) + '</div></div>'
+    + '  <div class="coach-ai-col axe"><div class="coach-ai-col-label">MAIN AREA</div><div class="coach-ai-col-text">' + escapeHtml(axe) + '</div></div>'
+    + '</div>'
+    + '<div class="coach-ai-goal">'
+    + '  <svg class="coach-ai-goal-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>'
+    + '  <div class="coach-ai-goal-text"><strong>Weekly goal · </strong>' + escapeHtml(goal) + '</div>'
+    + '</div>'
+    + '<a href="/en/levels.html" class="coach-ai-cta">See full diagnosis <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></a>';
+
+  const btn = document.getElementById('coachAiRefreshBtn');
+  if (btn) btn.addEventListener('click', async () => {
+    if (btn.dataset.state === 'loading') return;
+    btn.dataset.state = 'loading';
+    btn.disabled = true;
+    // Marque la card entière pour qu'on sache que c'est en cours meme
+    // après le re-render (innerHTML reset le btn mais pas la classe card)
+    card.classList.add('coach-ai-refreshing');
+    const minSpin = new Promise(r => setTimeout(r, 400));
+    await Promise.all([renderCoachAi(true), minSpin]);
+    card.classList.remove('coach-ai-refreshing');
+  });
+}
+
+function showCoachToast(msg, kind) {
+  const existing = document.querySelector('.coach-ai-toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'coach-ai-toast' + (kind ? ' ' + kind : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; }, 3500);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function coachLockedHtml(title, sub, href, cta) {
+  return ''
+    + '<div class="coach-ai-locked">'
+    + '  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#b8ff57" stroke-width="1.5"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>'
+    + '  <div class="coach-ai-locked-title">' + escapeHtml(title) + '</div>'
+    + '  <div class="coach-ai-locked-sub">' + escapeHtml(sub) + '</div>'
+    + '  <a href="' + href + '" class="coach-ai-locked-btn">' + escapeHtml(cta) + ' <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></a>'
+    + '</div>';
+}
+
+function cacheAge(iso) {
+  if (!iso) return '-';
+  const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 1) return 'quelques secondes';
+  if (mins < 60) return mins + ' min';
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return hours + ' h';
+  const days = Math.floor(hours / 24);
+  return days + ' j';
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// Pro upgrade nudge · s'affiché uniquement si l'user est free (or pas auth)
+// + set body[data-plan=...] pour activer les blur overlays sur .sec-locked
+async function renderPlanNudge() {
+  // body[data-plan="free"] est set des le HTML pour eviter le flash unlocked.
+  // On met à day le plan ici : si pro/team, on retire l'attribut (tout se deverrouille).
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { wireUnlockClicks(); return; }
+    const res = await fetch('/api/check-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (!res.ok) { wireUnlockClicks(); return; }
+    const d = await res.json();
+    const plan = d.plan || 'free';
+    document.body.dataset.plan = plan;
+    wireUnlockClicks();
+    if (plan !== 'free') return; // pro/team : pas de nudge
+
+    const panel = document.getElementById('panelOverview');
+    if (!panel || document.getElementById('planNudge')) return;
+    const nudge = document.createElement('div');
+    nudge.id = 'planNudge';
+    nudge.style.cssText = 'background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:12px;padding:20px 24px;margin:24px 0;display:flex;align-items:center;gap:20px;flex-wrap:wrap';
+    nudge.innerHTML = ''
+      + '<div style="flex:1;min-width:240px">'
+      + '  <div style="font-family:Anton,sans-serif;font-size:18px;letter-spacing:.02em;color:#e8eaea;margin-bottom:4px">Upgrade to Pro to unlock the rest</div>'
+      + '  <div style="font-family:Space Mono,monospace;font-size:12px;color:#a8b0b0;line-height:1.5">Unlimited AI Coach · Full 2D Replay · Grenade heatmaps · Exclusive stats · Multi-player comparison · Collective roster</div>'
+      + '</div>'
+      + '<a href="/en/pricing.html" style="display:inline-flex;align-items:center;gap:7px;background:#b8ff57;color:#000;padding:11px 22px;border-radius:8px;font-family:Space Mono,monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;flex-shrink:0">'
+      + '  See plans'
+      + '  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>'
+      + '</a>';
+    const insertBefore = document.querySelector('#panelOverview .sec-label:nth-of-type(6)') // "AI Coach" label
+                      || document.querySelector('#panelOverview #lastMatchSection');
+    if (insertBefore) insertBefore.parentNode.insertBefore(nudge, insertBefore);
+    else panel.appendChild(nudge);
+  } catch(_) { /* silencieux */ }
+}
+
+// Click sur le pseudo-élément "Unlock with Pro" des sections locked.
+// On detecte le clic dans la zone de l'overlay et on redirige.
+function wireUnlockClicks() {
+  if (document.body.dataset.plan !== 'free') return;
+  document.querySelectorAll('.sec-locked').forEach(el => {
+    if (el.dataset.unlockWired) return;
+    el.dataset.unlockWired = '1';
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', () => { window.location.href = '/pricing.html'; });
+  });
+}
+
+function renderProfile(d) {
+  const {player,cs2,recent,lifetime} = d;
+
+  const lvl = cs2.level||1;
+  const fvR = parseFloat(recent.fvRating);
+  const fvBadge = fvR>=1.2?'badge-fv-elite':fvR>=1.05?'badge-fv-great':fvR>=0.9?'badge-fv-good':fvR>=0.75?'badge-fv-avg':'badge-fv-low';
+  const fvLbl = fvR>=1.2?'Elite':fvR>=1.05?'Excellent':fvR>=0.9?'Good':fvR>=0.75?'Average':'Low';
+
+  // Role badge (calcule par scout.js : AWPer / Entry fragger / Support / Clutch player / Rifler)
+  const roleEmoji = {'AWPer':'AWP','Entry fragger':'ENTRY','Support':'SUPPORT','Clutch player':'CLUTCH','Rifler':'RIFLE'}[recent.rôle] || 'RIFLE';
+
+  // Streak (utilisé recentResults pour calculer la streak actuelle)
+  const results = lifetime.recentResults || [];
+  let streakCount = 0, streakType = null;
+  for (const r of results) {
+    const isWin = r === '1';
+    if (streakType === null) { streakType = isWin ? 'W' : 'L'; streakCount = 1; }
+    else if ((streakType === 'W' && isWin) || (streakType === 'L' && !isWin)) streakCount++;
+    else break;
+  }
+  const streakPill = streakCount >= 2
+    ? `<span class="hero-pill streak-${streakType.toLowerCase()}">${streakCount} ${streakType === 'W' ? 'wins' : 'defaites'} d'affilee</span>`
+    : '';
+
+  // Momentum : dernière 5 matches vs 5 précédents (FV rating)
+  const ratings = (recent.matches || []).map(m => parseFloat(m.fvRating)).filter(v => v > 0);
+  const last5 = ratings.slice(0, 5).reduce((a, b) => a + b, 0) / (Math.min(5, ratings.length) || 1);
+  const prev5 = ratings.slice(5, 10).reduce((a, b) => a + b, 0) / (Math.min(5, Math.max(0, ratings.length - 5)) || 1);
+  const delta = last5 - prev5;
+  const momentumPill = ratings.length >= 10
+    ? (delta >= 0.05 ? `<span class="hero-pill momentum-up">↗ Improving</span>`
+      : delta <= -0.05 ? `<span class="hero-pill momentum-down">↘ En baisse</span>`
+      : `<span class="hero-pill momentum-flat">→ Stable</span>`)
+    : '';
+
+  document.getElementById('profileHeroCard').innerHTML = `
+    <div class="hero-top">
+      <div class="hero-avatar" style="${player.avatar?`background-image:url(${player.avatar});background-size:cover;background-position:center`:''}">
+        ${player.avatar?'':'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'}
+      </div>
+      <div class="hero-info">
+        <div class="hero-name">${player.nickname}</div>
+        <div class="hero-badges">
+          <span class="badge badge-lvl${lvl}">Level ${lvl}</span>
+          <span class="badge ${fvBadge}">FV ${recent.fvRating} · ${fvLbl}</span>
+          <span class="badge badge-rôle">${roleEmoji}</span>
+          ${player.country?`<span class="badge" style="background:var(--card);color:var(--text3);border:1px solid var(--border)">${player.country.toUpperCase()}</span>`:''}
+        </div>
+        <div class="hero-pills">
+          ${streakPill}
+          ${momentumPill}
+        </div>
+      </div>
+      <div class="hero-elo">
+        <div class="hero-elo-val">${cs2.elo.toLocaleString()}</div>
+        <div class="hero-elo-label">FACEIT ELO</div>
+        <div class="hero-results">${(lifetime.recentResults||[]).slice(0,10).map(r=>`<div class="rdot ${r==='1'?'w':'l'}"></div>`).join('')}</div>
+      </div>
+    </div>
+    <div class="hero-kpis">
+      ${[
+        {label:'K/D',val:recent.avgKd,c:parseFloat(recent.avgKd)>=1.3?'var(--success)':parseFloat(recent.avgKd)>=1?'var(--gold)':'var(--danger)'},
+        {label:'ADR',val:recent.avgAdr,c:'#b8ff57'},
+        {label:'HS%',val:recent.avgHs+'%',c:'var(--text)'},
+        {label:'KAST',val:recent.avgKast+'%',c:parseFloat(recent.avgKast)>=70?'var(--success)':'var(--gold)'},
+        {label:'Win%',val:recent.winRate+'%',c:parseFloat(recent.winRate)>=55?'var(--success)':'var(--gold)'},
+      ].map(k=>`<div class="hero-kpi"><div class="hero-kpi-val" style="color:${k.c}">${k.val}</div><div class="hero-kpi-label">${k.label}</div></div>`).join('')}
+    </div>`;
+}
+
+function renderFvScore(d) {
+  const s = d.fvScore; if (!s) return;
+  const t = s.total||0;
+  document.getElementById('fvScoreVal').textContent = t;
+  document.getElementById('fvScoreLabel').textContent = s.label||'';
+  const c = t>=80?'#2DD4A0':t>=60?'#b8ff57':t>=40?'#F5C842':'#ff4444';
+  const fill = document.getElementById('fvDonutFill');
+  fill.style.strokeDashoffset = 345 - (t/100)*345;
+  fill.style.stroke = c;
+  document.getElementById('fvScoreVal').style.color = c;
+  if (s.subLevel && s.subLevelProgress !== null) {
+    document.getElementById('fvSubLevel').innerHTML = `
+      <div class="sublevel-row">
+        <span class="sublevel-label">${s.eloBracket||'Lvl 10'}</span>
+        <span class="sublevel-pct">${s.subLevelProgress}% vers ${s.subLevel<10?'Lvl 10.'+(s.subLevel+1):'Challenger'}</span>
+      </div>
+      <div class="sublevel-bar"><div class="sublevel-fill" style="width:${s.subLevelProgress}%"></div></div>`;
+  }
+  if (s.breakdown) {
+    document.getElementById('fvDims').innerHTML = [
+      {key:'performance',label:'Performance',color:'#b8ff57'},
+      {key:'consistency',label:'Consistance',color:'#2DD4A0'},
+      {key:'impact',label:'Impact',color:'#F5C842'},
+      {key:'utility',label:'Utility',color:'#EDA020'},
+    ].map(dim => {
+      const v = s.breakdown[dim.key]; if (!v) return '';
+      const pct = Math.round((v.score/v.max)*100);
+      return `<div class="fvscore-dim">
+        <div class="fvscore-dim-name">${dim.label}</div>
+        <div class="fvscore-dim-bar"><div class="fvscore-dim-fill" style="width:${pct}%;background:${dim.color}"></div></div>
+        <div class="fvscore-dim-val">${v.score.toFixed(0)}/${v.max}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderKpis(d) {
+  const {recent,cs2,lifetime} = d;
+  const kd = parseFloat(recent.avgKd);
+  // Medianes reference Lvl 10 FACEIT CS2 (source : agregats FragValue sur base DB)
+  const LVL10_BASELINE = { fvRating:1.10, kd:1.15, hs:52, adr:85, kast:72, winRate:55, opening:1.0 };
+  // Delta vs baseline : arrow + couleur. Decimal val pour K/D, FV, opening ; entier % pour les autres
+  const delta = (val, base, isPercent, decimals) => {
+    const v = parseFloat(val);
+    if (isNaN(v) || !base) return '';
+    const d = v - base;
+    if (Math.abs(d) < (isPercent ? 1 : 0.02)) return '';
+    const sign = d > 0 ? '↑' : '↓';
+    const cls = d > 0 ? 'up' : 'down';
+    const formatted = isPercent ? Math.abs(Math.round(d)) + 'pt' : Math.abs(d).toFixed(decimals || 2);
+    return `<div class="kpi-baseline ${cls}">${sign} ${formatted} vs L10</div>`;
+  };
+  document.getElementById('kpiGrid').innerHTML = [
+    {label:'FV Rating',val:recent.fvRating,cls:parseFloat(recent.fvRating)>=1.05?'kpi-good':'kpi-warn',sub:'2.0 style',base:delta(recent.fvRating, LVL10_BASELINE.fvRating, false, 2)},
+    {label:'Average K/D',val:recent.avgKd,cls:kd>=1.3?'kpi-good':kd>=1?'kpi-warn':'kpi-bad',sub:'20 matches',base:delta(recent.avgKd, LVL10_BASELINE.kd, false, 2)},
+    {label:'HS%',val:recent.avgHs+'%',cls:'kpi-blue',sub:'headshots',base:delta(recent.avgHs, LVL10_BASELINE.hs, true)},
+    {label:'ADR',val:recent.avgAdr,cls:parseFloat(recent.avgAdr)>=85?'kpi-good':parseFloat(recent.avgAdr)>=70?'kpi-warn':'kpi-bad',sub:'dmg/round',base:delta(recent.avgAdr, LVL10_BASELINE.adr, true)},
+    {label:'KAST',val:recent.avgKast+'%',cls:parseFloat(recent.avgKast)>=70?'kpi-good':'kpi-warn',sub:'presence',base:delta(recent.avgKast, LVL10_BASELINE.kast, true)},
+    {label:'Win rate',val:recent.winRate+'%',cls:parseFloat(recent.winRate)>=55?'kpi-good':'kpi-warn',sub:'wins',base:delta(recent.winRate, LVL10_BASELINE.winRate, true)},
+    {label:'Opening',val:recent.openingRatio,cls:parseFloat(recent.openingRatio)>=1?'kpi-good':'kpi-bad',sub:'duels ouv.',base:delta(recent.openingRatio, LVL10_BASELINE.opening, false, 2)},
+    {label:'Matches',val:lifetime.matches,cls:'kpi-neutral',sub:`${lifetime.wins} wins`,base:''},
+  ].map(k=>`<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val ${k.cls}">${k.val}</div><div class="kpi-sub">${k.sub}</div>${k.base}</div>`).join('');
+}
+
+function renderWeeklyInsights(d) {
+  const matches = d.recent.matches || [];
+  // Filtre les matches joues dans les 7 derniers days (date format FR dd/mm/yyyy)
+  const parseDate = s => {
+    if (!s) return null;
+    const parts = s.split('/');
+    if (parts.length !== 3) return null;
+    return new Date(+parts[2], +parts[1] - 1, +parts[0]);
+  };
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
+  const weekMatches = matches.filter(m => {
+    const dt = parseDate(m.date);
+    return dt && dt >= oneWeekAgo;
+  });
+  const el = document.getElementById('weeklyInsights');
+  if (weekMatches.length === 0) {
+    el.innerHTML = `<div class="weekly-empty">No match played this week. Come back after your next session.</div>`;
+    return;
+  }
+  const wins = weekMatches.filter(m => m.result === 1).length;
+  const winRate = Math.round((wins / weekMatches.length) * 100);
+  const avgKd = (weekMatches.reduce((s, m) => s + (m.kd || 0), 0) / weekMatches.length).toFixed(2);
+  const avgFv = (weekMatches.reduce((s, m) => s + (m.fvRating || 0), 0) / weekMatches.length).toFixed(2);
+  const avgAdr = Math.round(weekMatches.reduce((s, m) => s + (m.adr || 0), 0) / weekMatches.length);
+  const kdColor = parseFloat(avgKd) >= 1.1 ? 'var(--success)' : parseFloat(avgKd) >= 0.95 ? 'var(--gold)' : 'var(--danger)';
+  const wrColor = winRate >= 55 ? 'var(--success)' : winRate >= 45 ? 'var(--gold)' : 'var(--danger)';
+  const fvColor = parseFloat(avgFv) >= 1.05 ? 'var(--success)' : parseFloat(avgFv) >= 0.9 ? 'var(--gold)' : 'var(--danger)';
+  el.innerHTML = `
+    <div class="weekly-card">
+      <div class="weekly-item"><div class="weekly-val" style="color:var(--accent)">${weekMatches.length}</div><div class="weekly-label">matches</div></div>
+      <div class="weekly-divider"></div>
+      <div class="weekly-item"><div class="weekly-val" style="color:${wrColor}">${winRate}%</div><div class="weekly-label">win rate · ${wins}W/${weekMatches.length - wins}L</div></div>
+      <div class="weekly-divider"></div>
+      <div class="weekly-item"><div class="weekly-val" style="color:${kdColor}">${avgKd}</div><div class="weekly-label">Average K/D</div></div>
+      <div class="weekly-divider"></div>
+      <div class="weekly-item"><div class="weekly-val" style="color:${fvColor}">${avgFv}</div><div class="weekly-label">FV Rating</div></div>
+      <div class="weekly-divider"></div>
+      <div class="weekly-item"><div class="weekly-val">${avgAdr}</div><div class="weekly-label">ADR</div></div>
+    </div>`;
+}
+
+function renderCtTSplit(d) {
+  const r = d.recent || {};
+  const ctWR = parseFloat(r.ctWinRate) || 0;
+  const tWR  = parseFloat(r.tWinRate)  || 0;
+  const ctKd = parseFloat(r.ctKd) || 0;
+  const tKd  = parseFloat(r.tKd)  || 0;
+  const hasData = ctWR > 0 || tWR > 0 || ctKd > 0 || tKd > 0;
+  const el = document.getElementById('ctTSplit');
+  if (!hasData) {
+    el.innerHTML = `
+      <div class="weekly-empty" style="padding:24px;text-align:center">
+        <div style="font:700 14px 'Anton',sans-serif;color:var(--text);margin-bottom:6px">Coming soon</div>
+        <div style="color:var(--text-soft);font-size:12px;line-height:1.6">
+          The CT vs T breakdown requires analyzing your demos.<br>
+          The public FACEIT API no longer returns these per-side stats in CS2.<br>
+          <a href="/en/demo.html" style="color:var(--accent);text-decoration:none;font-weight:700">Upload a demo →</a>
+        </div>
+      </div>`;
+    return;
+  }
+  const verdict = ctWR > tWR + 5 ? `You're stronger on <strong style="color:var(--accent)">CT</strong> (${ctWR}% vs ${tWR}%)`
+                : tWR > ctWR + 5 ? `You're stronger on <strong style="color:var(--gold)">T</strong> (${tWR}% vs ${ctWR}%)`
+                : `Balanced between CT and T (gap < 5 pts)`;
+  el.innerHTML = `
+    <div class="ct-t-split">
+      <div class="side-card ct">
+        <div class="side-header"><div class="side-label">CT</div></div>
+        <div class="side-metrics">
+          <div><div class="side-metric-val">${ctWR || '-'}${ctWR ? '%' : ''}</div><div class="side-metric-label">Win rate</div></div>
+          <div><div class="side-metric-val">${ctKd || '-'}</div><div class="side-metric-label">K/D</div></div>
+        </div>
+        <div class="side-bar"><div class="side-bar-fill" style="width:${ctWR}%"></div></div>
+      </div>
+      <div class="side-card t">
+        <div class="side-header"><div class="side-label">T</div></div>
+        <div class="side-metrics">
+          <div><div class="side-metric-val">${tWR || '-'}${tWR ? '%' : ''}</div><div class="side-metric-label">Win rate</div></div>
+          <div><div class="side-metric-val">${tKd || '-'}</div><div class="side-metric-label">K/D</div></div>
+        </div>
+        <div class="side-bar"><div class="side-bar-fill" style="width:${tWR}%"></div></div>
+      </div>
+    </div>
+    <div class="side-verdict">${verdict}</div>`;
+}
+
+function renderMapStats(d) {
+  const maps = (d.mapStats || []).filter(m => m.matches >= 2).sort((a, b) => b.matches - a.matches);
+  const el = document.getElementById('mapStatsGrid');
+  if (maps.length === 0) {
+    el.innerHTML = `<div class="weekly-empty">Pas assez de matches par map pour un breakdown (minimum 2 matches).</div>`;
+    return;
+  }
+  const mapDisplay = m => (m || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
+  el.innerHTML = `
+    <div class="maps-grid">
+      ${maps.map(m => {
+        const wr = parseFloat(m.winRate) || 0;
+        const wrColor = wr >= 55 ? 'var(--success)' : wr >= 45 ? 'var(--gold)' : 'var(--danger)';
+        const kd = parseFloat(m.kd) || 0;
+        const kdColor = kd >= 1.2 ? 'var(--success)' : kd >= 0.95 ? 'var(--gold)' : 'var(--danger)';
+        const fv = parseFloat(m.avgFvRating) || 0;
+        const fvColor = fv >= 1.05 ? 'var(--success)' : fv >= 0.9 ? 'var(--gold)' : 'var(--danger)';
+        return `
+          <div class="map-card">
+            <div class="map-card-head">
+              <div class="map-name">${mapDisplay(m.map)}</div>
+              <div class="map-matches">${m.matches} matches</div>
+            </div>
+            <div class="map-wr-bar"><div class="map-wr-fill" style="width:${wr}%;background:${wrColor}"></div></div>
+            <div class="map-stats-row">
+              <div class="map-stat"><div class="map-stat-val" style="color:${wrColor}">${m.winRate}%</div><div class="map-stat-label">Win</div></div>
+              <div class="map-stat"><div class="map-stat-val" style="color:${kdColor}">${m.kd}</div><div class="map-stat-label">K/D</div></div>
+              <div class="map-stat"><div class="map-stat-val" style="color:${fvColor}">${m.avgFvRating}</div><div class="map-stat-label">FV</div></div>
+            </div>
+            <div class="map-sides">
+              <div class="map-side ct"><span class="map-side-label">CT</span><span>${m.ctWinRate || '-'}${m.ctWinRate ? '%' : ''}</span></div>
+              <div class="map-side t"><span class="map-side-label">T</span><span>${m.tWinRate || '-'}${m.tWinRate ? '%' : ''}</span></div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>`;
+}
+
+function renderBestMatch(d) {
+  const matches = d.recent.matches || [];
+  if (matches.length === 0) { document.getElementById('bestMatch').innerHTML = ''; return; }
+  const best = matches.reduce((b, m) => (m.fvRating || 0) > (b.fvRating || 0) ? m : b, matches[0]);
+  const mapName = (best.map || '').replace('de_', '').replace(/^\w/, c => c.toUpperCase());
+  document.getElementById('bestMatch').innerHTML = `
+    <div class="best-match">
+      <div class="best-match-crown">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6.3 6.9 1-5 4.8 1.2 6.9L12 18l-6.1 3 1.2-6.9-5-4.8 6.9-1z"/></svg>
+      </div>
+      <div class="best-match-info">
+        <div class="best-match-title">${mapName || '-'} · ${best.score || ''}</div>
+        <div class="best-match-sub">${best.result === 1 ? 'Win' : 'Loss'} · ${best.date || ''}</div>
+      </div>
+      <div class="best-match-stats">
+        <div class="best-match-stat"><div class="best-match-stat-val">${best.fvRating ? best.fvRating.toFixed(2) : '-'}</div><div class="best-match-stat-label">FV Rating</div></div>
+        <div class="best-match-stat"><div class="best-match-stat-val">${best.kills || 0}/${best.deaths || 0}</div><div class="best-match-stat-label">K/D</div></div>
+        <div class="best-match-stat"><div class="best-match-stat-val">${(best.adr || 0).toFixed(0)}</div><div class="best-match-stat-label">ADR</div></div>
+        <div class="best-match-stat"><div class="best-match-stat-val">${(best.hsPct || 0).toFixed(0)}%</div><div class="best-match-stat-label">HS%</div></div>
+      </div>
+    </div>`;
+}
+
+function renderAdvancedKpis(d) {
+  const r = d.recent || {};
+  const matches = r.matches || [];
+  const n = matches.length || 1;
+  const fk = r.totalFirstKills || 0;
+  const fd = r.totalFirstDeaths || 0;
+  const openingWR = (fk + fd) > 0 && fd > 0 ? Math.round(fk / (fk + fd) * 100) : null;
+  const flThr = r.totalFlashesThrown || 0;
+  const flHit = r.totalEnemiesFlashed || 0;
+  const flashEff = flThr > 0 ? (flHit / flThr).toFixed(2) : null;
+  const utilDmg = r.avgUtilDmg && parseFloat(r.avgUtilDmg) > 0 ? parseFloat(r.avgUtilDmg).toFixed(0) : null;
+  const totalMulti = (r.totalDoubles || 0) + (r.totalTriples || 0) + (r.totalQuads || 0) + (r.totalAces || 0);
+  const multiPerMatch = (totalMulti / n).toFixed(1);
+  const clutchTotal = (r.totalClutch1v1 || 0) + (r.totalClutch1v2 || 0) + (r.totalClutch1v3 || 0) + (r.totalClutch1v4 || 0) + (r.totalClutch1v5 || 0);
+  const sumAssists = matches.reduce((s, m) => s + (m.assists || 0), 0);
+  const assistsPerMatch = (sumAssists / n).toFixed(1);
+  const sumMvps = matches.reduce((s, m) => s + (m.mvp || 0), 0);
+  const mvpsPerMatch = (sumMvps / n).toFixed(1);
+
+  const fmt = (v, suffix) => v == null ? '-' : v + (suffix || '');
+  const cls = (v, g, w) => v == null ? 'kpi-muted' : (v >= g ? 'kpi-good' : v >= w ? 'kpi-warn' : 'kpi-bad');
+
+  document.getElementById('kpiAdvanced').innerHTML = [
+    { label: 'Entry WR', val: fmt(openingWR, '%'), cls: cls(openingWR, 52, 45), sub: `${fk}FK · ${fd}FD` },
+    { label: 'Assists', val: assistsPerMatch, cls: parseFloat(assistsPerMatch) >= 6 ? 'kpi-good' : parseFloat(assistsPerMatch) >= 4 ? 'kpi-warn' : 'kpi-bad', sub: `par match · ${sumAssists} total` },
+    { label: 'Flash eff', val: fmt(flashEff, ''), cls: flashEff == null ? 'kpi-muted' : (parseFloat(flashEff) >= 0.8 ? 'kpi-good' : parseFloat(flashEff) >= 0.5 ? 'kpi-warn' : 'kpi-bad'), sub: 'ennemis/flash' },
+    { label: 'Util dmg', val: fmt(utilDmg, ''), cls: cls(utilDmg, 70, 40), sub: 'dmg/match' },
+    { label: 'Multi-kills', val: multiPerMatch, cls: 'kpi-neutral', sub: `par match · ${totalMulti} total` },
+    { label: 'Clutches', val: clutchTotal, cls: clutchTotal >= 8 ? 'kpi-good' : clutchTotal >= 4 ? 'kpi-warn' : 'kpi-muted', sub: 'wins 1vN' },
+    { label: 'MVPs', val: mvpsPerMatch, cls: parseFloat(mvpsPerMatch) >= 4 ? 'kpi-good' : parseFloat(mvpsPerMatch) >= 2.5 ? 'kpi-warn' : 'kpi-bad', sub: `par match · ${sumMvps} total` },
+    { label: 'Sniper', val: r.sniperKillRate || '0.0', cls: 'kpi-neutral', sub: 'snipe/match' },
+  ].map(k => `<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val ${k.cls}">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+}
+
+function renderChart(d) {
+  const ms = (d.recent.matches||[]).slice().reverse();
+  if (fvChart) { fvChart.destroy(); fvChart=null; }
+  const ctx = document.getElementById('chartFvRating'); if (!ctx) return;
+  fvChart = new Chart(ctx,{type:'line',data:{labels:ms.map((_,i)=>`M${i+1}`),datasets:[{
+    data:ms.map(m=>m.fvRating),fill:true,backgroundColor:'rgba(184,255,87,.07)',borderColor:'#b8ff57',
+    borderWidth:1.5,pointRadius:3,tension:.4,
+    pointBackgroundColor:ms.map(m=>m.fvRating>=1.05?'#2DD4A0':m.fvRating>=0.9?'#F5C842':'#ff4444'),
+  }]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#131414',borderColor:'#1c1e1e',borderWidth:1,
+      titleColor:'#e8eaea',bodyColor:'#7a8080',titleFont:{family:'Space Mono',size:11},bodyFont:{family:'Space Mono',size:11}}},
+    scales:{x:{ticks:{color:'#4a5050',font:{family:'Space Mono',size:10}},grid:{color:'#1c1e1e'}},
+            y:{ticks:{color:'#4a5050',font:{family:'Space Mono',size:10}},grid:{color:'#1c1e1e'},suggestedMin:.3}}}});
+}
+
+function renderLastMatch(d) {
+  const m = (d.recent.matches||[])[0]; if (!m) return;
+  const ins = analyzeLastMatch(m); const icons = getIcons();
+  document.getElementById('lastMatchSection').innerHTML = `
+    <div class="impr-section">
+      <div class="impr-section-header">
+        <div class="impr-section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          ${m.map||'Inconnu'} · ${m.date||''}
+        </div>
+        <div class="impr-match-badge ${m.result===1?'win':'loss'}">${m.result===1?'Win':'Loss'} ${m.score||''}</div>
+      </div>
+      <div class="impr-cols">
+        ${ins.strengths.length?`<div class="impr-col"><div class="impr-col-header strength"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>What worked well</div>${ins.strengths.map(s=>`<div class="impr-item strength"><div class="impr-item-icon strength">${icons[s.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-label">${s.label}</div><div class="impr-item-detail">${s.detail}</div></div></div>`).join('')}</div>`:''}
+        ${ins.warnings.length?`<div class="impr-col"><div class="impr-col-header warning"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>A corriger</div>${ins.warnings.map(w=>`<div class="impr-item warning"><div class="impr-item-icon warning">${icons[w.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-label">${w.label}</div><div class="impr-item-detail">${w.detail}</div><div class="impr-item-advice">${w.advice}</div></div></div>`).join('')}</div>`:''}
+      </div>
+    </div>`;
+}
+
+let _allMatches = [];
+let _matchFilters = { map: '', result: 'all' };
+
+function renderMatches(d) {
+  _allMatches = d.recent.matches || [];
+  // Populer le filtre map avec les maps réellement jouees
+  const mapSelect = document.getElementById('filterMap');
+  if (mapSelect) {
+    const maps = [...new Set(_allMatches.map(m => m.map).filter(Boolean))].sort();
+    mapSelect.innerHTML = `<option value="">All maps (${_allMatches.length})</option>` +
+      maps.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)} (${_allMatches.filter(x => x.map === m).length})</option>`).join('');
+    mapSelect.onchange = () => { _matchFilters.map = mapSelect.value; rerenderMatchesTables(); };
+  }
+  renderMatchesSummary(_allMatches);
+  rerenderMatchesTables();
+}
+
+function applyMatchFilter(btn) {
+  document.querySelectorAll('.filter-toggle').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _matchFilters.result = btn.dataset.result;
+  rerenderMatchesTables();
+}
+
+function rerenderMatchesTables() {
+  const filtered = _allMatches.filter(m => {
+    if (_matchFilters.map && m.map !== _matchFilters.map) return false;
+    if (_matchFilters.result === 'win' && m.result !== 1) return false;
+    if (_matchFilters.result === 'loss' && m.result === 1) return false;
+    return true;
+  });
+  const heads = ['','Map','Score','K/D','K','D','HS%','ADR','KAST','FV Rating'];
+  ['matchHead','matchHead2'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = heads.map(h => `<th>${h}</th>`).join(''); });
+  const rows = filtered.map(m => {
+    const kd = m.kd||0, kdC = kd>=1.3?'td-good':kd>=1?'td-warn':'td-bad';
+    const fvC = m.fvRating>=1.05?'td-good':m.fvRating>=0.9?'td-warn':'td-bad';
+    const hs = m.hsPct||0, hsC = hs>=50?'td-good':hs>=40?'td-warn':'';
+    const adr = m.adr||0, adrC = adr>=80?'td-good':adr>=65?'td-warn':adr>0?'td-bad':'';
+    const kast = m.kast||0, kastC = kast>=70?'td-good':kast>=60?'td-warn':kast>0?'td-bad':'';
+    return `<tr><td class="${m.result===1?'td-win':'td-loss'}">${m.result===1?'W':'L'}</td><td class="td-map">${m.map||''}</td><td>${m.score||''}</td><td class="${kdC}">${kd.toFixed(2)}</td><td>${m.kills||0}</td><td>${m.deaths||0}</td><td class="${hsC}">${hs.toFixed(0)}%</td><td class="${adrC}">${adr>0?adr.toFixed(0):''}</td><td class="${kastC}">${kast>0?kast.toFixed(0)+'%':''}</td><td class="${fvC}">${(m.fvRating||0).toFixed(2)}</td></tr>`;
+  }).join('');
+  const emptyRow = `<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">No match matches the filters</td></tr>`;
+  ['matchBody','matchBody2'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = filtered.length > 0 ? rows : emptyRow; });
+}
+
+function renderMatchesSummary(matches) {
+  const el = document.getElementById('matchesSummary');
+  if (!el || matches.length === 0) return;
+  const wins = matches.filter(m => m.result === 1).length;
+  const losses = matches.length - wins;
+  const wr = Math.round((wins / matches.length) * 100);
+  const avgKd = (matches.reduce((s, m) => s + (m.kd || 0), 0) / matches.length).toFixed(2);
+  const avgFv = (matches.reduce((s, m) => s + (m.fvRating || 0), 0) / matches.length).toFixed(2);
+  const avgAdr = Math.round(matches.reduce((s, m) => s + (m.adr || 0), 0) / matches.length);
+  // Map la plus jouee
+  const mapCount = {};
+  matches.forEach(m => { if (m.map) mapCount[m.map] = (mapCount[m.map] || 0) + 1; });
+  const topMap = Object.entries(mapCount).sort((a, b) => b[1] - a[1])[0];
+  const wrColor = wr >= 55 ? 'var(--success)' : wr >= 45 ? 'var(--gold)' : 'var(--danger)';
+  const kdColor = parseFloat(avgKd) >= 1.1 ? 'var(--success)' : parseFloat(avgKd) >= 0.95 ? 'var(--gold)' : 'var(--danger)';
+  const fvColor = parseFloat(avgFv) >= 1.05 ? 'var(--success)' : parseFloat(avgFv) >= 0.9 ? 'var(--gold)' : 'var(--danger)';
+  el.innerHTML = `
+    <div class="matches-summary">
+      <div class="matches-summary-card"><div class="matches-summary-label">Matches</div><div class="matches-summary-val" style="color:var(--accent)">${matches.length}</div><div class="matches-summary-sub">${wins}W · ${losses}L</div></div>
+      <div class="matches-summary-card"><div class="matches-summary-label">Win rate</div><div class="matches-summary-val" style="color:${wrColor}">${wr}%</div><div class="matches-summary-sub">wins</div></div>
+      <div class="matches-summary-card"><div class="matches-summary-label">Average K/D</div><div class="matches-summary-val" style="color:${kdColor}">${avgKd}</div><div class="matches-summary-sub">kills / deaths</div></div>
+      <div class="matches-summary-card"><div class="matches-summary-label">FV Rating</div><div class="matches-summary-val" style="color:${fvColor}">${avgFv}</div><div class="matches-summary-sub">average</div></div>
+      <div class="matches-summary-card"><div class="matches-summary-label">Average ADR</div><div class="matches-summary-val">${avgAdr}</div><div class="matches-summary-sub">dmg/round</div></div>
+      <div class="matches-summary-card"><div class="matches-summary-label">Favorite map</div><div class="matches-summary-val" style="font-size:16px">${topMap ? topMap[0].replace('de_','').replace(/^\w/,c=>c.toUpperCase()) : '-'}</div><div class="matches-summary-sub">${topMap ? topMap[1] + ' matches' : ''}</div></div>
+    </div>`;
+}
+
+function renderImprovements(d) {
+  const g = analyzeGlobal(d.recent,d.cs2,d.fvScore,d.recent.matches||[]);
+  const icons = getIcons();
+  const m = (d.recent.matches||[])[0];
+  let lastHtml = '';
+  if (m) {
+    const ins = analyzeLastMatch(m);
+    lastHtml = `<div class="impr-section"><div class="impr-section-header"><div class="impr-section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Last match · ${m.map||''}</div><div class="impr-match-badge ${m.result===1?'win':'loss'}">${m.result===1?'Win':'Loss'}</div></div><div class="impr-cols">${ins.strengths.length?`<div class="impr-col"><div class="impr-col-header strength"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>What worked well</div>${ins.strengths.map(s=>`<div class="impr-item strength"><div class="impr-item-icon strength">${icons[s.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-label">${s.label}</div><div class="impr-item-detail">${s.detail}</div></div></div>`).join('')}</div>`:''} ${ins.warnings.length?`<div class="impr-col"><div class="impr-col-header warning"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>A corriger</div>${ins.warnings.map(w=>`<div class="impr-item warning"><div class="impr-item-icon warning">${icons[w.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-label">${w.label}</div><div class="impr-item-detail">${w.detail}</div><div class="impr-item-advice">${w.advice}</div></div></div>`).join('')}</div>`:''}</div></div>`;
+  }
+  document.getElementById('improvementsPanel').innerHTML = lastHtml + `
+    <div class="impr-section">
+      <div class="impr-section-header">
+        <div class="impr-section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 16 4-4 4 4 5-5"/></svg>Overall trends (20 matches)</div>
+        ${g.trendUp?'<div class="impr-trend-up">Improving</div>':g.trendDown?'<div class="impr-trend-down">Declining trend</div>':''}
+      </div>
+      <div class="impr-cols">
+        ${g.strengths.length?`<div class="impr-col"><div class="impr-col-header strength"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Strong points</div>${g.strengths.map(s=>`<div class="impr-item strength"><div class="impr-item-icon strength">${icons[s.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-label">${s.label}</div><div class="impr-item-detail">${s.detail}</div></div></div>`).join('')}</div>`:''}
+        ${g.improvements.length?`<div class="impr-col"><div class="impr-col-header improvement"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Priority areas</div>${g.improvements.map(imp=>`<div class="impr-item improvement ${imp.priority}"><div class="impr-item-icon improvement">${icons[imp.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-header-row"><div class="impr-item-label">${imp.label}</div><div class="impr-priority-badge ${imp.priority}">${imp.priority==='high'?'High priority':imp.priority==='medium'?'A travailler':'Secondary'}</div></div><div class="impr-item-detail">${imp.detail}</div><div class="impr-item-advice">${imp.advice}</div><div class="impr-item-metric">${imp.metric}</div></div></div>`).join('')}</div>`:''}
+      </div>
+    </div>`;
+}
+
+function renderPlayerCard(p, opts) {
+  const lvl = p.faceit_level || p.faceit_lvl;
+  const lvlClass = lvl ? `badge-lvl${Math.min(10, Math.max(1, lvl))}` : '';
+  const lvlBadge = lvl ? `<span class="wl-level ${lvlClass}">Lvl ${lvl}</span>` : '';
+  const meta = opts && opts.isRoster
+    ? `${lvlBadge}${p.rôle || 'Role undefined'}`
+    : `${lvlBadge}${p.note || 'Recently added'}`;
+  const initial = (p.faceit_nickname || '?').charAt(0).toUpperCase();
+  return `
+    <div class="wl-card">
+      <div class="wl-avatar" style="${p.avatar_url ? `background-image:url(${p.avatar_url})` : ''}">${p.avatar_url ? '' : initial}</div>
+      <div style="flex:1;min-width:0">
+        <div class="wl-name">${p.faceit_nickname || '-'}</div>
+        <div class="wl-meta">${meta}</div>
+      </div>
+      ${p.faceit_elo ? `<div class="wl-elo">${p.faceit_elo}<span style="color:var(--text3);font-weight:400;font-size:10px;margin-left:3px">ELO</span></div>` : ''}
+      <a class="wl-btn" href="compare.html?player=${encodeURIComponent(p.faceit_nickname)}">Analyze</a>
+    </div>`;
+}
+
+async function loadWatchlist() {
+  const { data } = await sb.from('watchlist').select('*').eq('user_id', currentUser.id).order('added_at', { ascending: false });
+  if (!data || data.length === 0) return;
+  const el = document.getElementById('watchlistContent');
+  el.innerHTML = `
+    <div class="wl-header">
+      <div class="wl-count">${data.length} ${data.length > 1 ? 'players suivis' : 'player suivi'}</div>
+      <a href="scout.html" class="wl-add-btn">+ Add a player</a>
+    </div>
+    ${data.map(p => renderPlayerCard(p)).join('')}
+  `;
+}
+
+let _currentRoster = null;
+
+async function loadRoster() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const headers = { 'Authorization': 'Bearer ' + session.access_token };
+
+    // Mes invitations reçues (ne bloque pas le roster si fail)
+    try {
+      const invRes = await fetch('/api/roster?view=my_invitations', { headers });
+      if (!invRes.ok) throw new Error('HTTP ' + invRes.status);
+      const invData = await invRes.json();
+      renderInvitations(invData.invitations || []);
+    } catch (e) {
+      console.warn('[loadRoster] invitations fetch failed:', e.message);
+      // Empty state silencieux, pas d'invitations visibles
+      const invSection = document.getElementById('invitationsSection');
+      if (invSection) invSection.innerHTML = '';
+    }
+
+    // Mon roster (owner or membre)
+    const rosterRes = await fetch('/api/roster?view=my_roster', { headers });
+    if (!rosterRes.ok) throw new Error('HTTP ' + rosterRes.status);
+    const rosterData = await rosterRes.json();
+    if (!rosterData.roster) {
+      _currentRoster = null;
+      // Si on arrive depuis Compare avec ?createRoster=1, ouvre direct le modal
+      handlePendingRosterFlow();
+      return;
+    }
+    _currentRoster = rosterData;
+    renderRoster(rosterData);
+  } catch (e) {
+    console.warn('Roster load error:', e.message);
+    // Affiché un empty state explicite au lieu de laisser le tab vide
+    const rosterPanel = document.getElementById('panelRoster');
+    if (rosterPanel) {
+      const loadingEl = rosterPanel.querySelector('.loading, .empty, .empty-state');
+      if (loadingEl) {
+        loadingEl.innerHTML = '<div class="empty-title">Roster unavailable</div><div class="empty-sub">The service is temporarily offline. Reload the page in a few moments.</div>';
+      }
+    }
+  }
+}
+
+// Flow depuis compare.html : ?createRoster=1 + sessionStorage.pendingRosterInvites
+function handlePendingRosterFlow() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('createRoster') !== '1') return;
+    const raw = sessionStorage.getItem('pendingRosterInvites');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    // Banner informatif dans l'empty state
+    const container = document.getElementById('rosterContent');
+    if (container) {
+      container.innerHTML = `
+        <div class="pending-invites-banner">
+          <div class="pending-invites-title">Create a team with <strong>${data.nicknames.length}</strong> player${data.nicknames.length > 1 ? 's' : ''}</div>
+          <div class="pending-invites-list">${data.nicknames.map(n => `<span class="pending-nick">${n}</span>`).join('')}</div>
+          <div class="pending-invites-sub">Invitations will be sent automatically after roster creation.</div>
+          <div style="display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap">
+            <button class="empty-btn" onclick="openCreateRosterModal()">Create team</button>
+            <button class="roster-btn" onclick="dismissPendingRoster()">Cancel</button>
+          </div>
+        </div>`;
+    }
+    // Nettoyer le param URL
+    window.history.replaceState({}, '', 'dashboard.html#roster');
+  } catch (e) { console.warn('pending roster flow error:', e.message); }
+}
+
+function dismissPendingRoster() {
+  sessionStorage.removeItem('pendingRosterInvites');
+  document.getElementById('rosterContent').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-title">Aucune équipe pour l'instant</div>
+      <div class="empty-sub">Crée ton équipe pour inviter des coéquipiers et suivre les stats collectives.</div>
+      <button class="empty-btn" onclick="openCreateRosterModal()">Create my team</button>
+    </div>`;
+}
+
+function renderInvitations(invitations) {
+  const el = document.getElementById('rosterInvitations');
+  if (!el || invitations.length === 0) { if (el) el.innerHTML = ''; return; }
+  el.innerHTML = invitations.map(inv => `
+    <div class="invitation-card">
+      <div class="invitation-info">
+        <div class="invitation-title">${inv.rosters?.team_name || 'Team'}${inv.rosters?.tag ? ` <small style="color:var(--text3);font-size:14px">[${inv.rosters.tag}]</small>` : ''}</div>
+        <div class="invitation-sub">T'invite ${inv.proposed_role ? `en tant que <strong style="color:var(--accent)">${inv.proposed_role}</strong>` : 'à rejoindre leur équipe'}${inv.rosters?.region ? ` · Region ${inv.rosters.region}` : ''}</div>
+        ${inv.message ? `<div class="invitation-msg">"${inv.message}"</div>` : ''}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="roster-btn" onclick="respondInvitation('${inv.id}','décline')">Decline</button>
+        <button class="roster-btn primary" onclick="respondInvitation('${inv.id}','accept')">Accept</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderRoster(data) {
+  const { roster, players, invitations, is_owner } = data;
+  const titulaires = (players || []).filter(p => !p.is_sub);
+  const subs = (players || []).filter(p => p.is_sub);
+  const tag = roster.tag ? `[${roster.tag}]` : '';
+  const logoInitial = roster.team_name.charAt(0).toUpperCase();
+
+  // Basic stats (structure) : les agregats FACEIT sont charges async via renderTeamStats
+  const statsHtml = `
+    <div class="roster-stats-grid">
+      <div class="roster-stat"><div class="roster-stat-label">Starters</div><div class="roster-stat-val">${titulaires.length}<span style="color:var(--text3);font-size:14px">/5</span></div></div>
+      <div class="roster-stat"><div class="roster-stat-label">Substitutes</div><div class="roster-stat-val">${subs.length}<span style="color:var(--text3);font-size:14px">/2</span></div></div>
+      <div class="roster-stat"><div class="roster-stat-label">Invitations</div><div class="roster-stat-val">${(invitations || []).length}</div><div class="roster-stat-sub">pending</div></div>
+      <div class="roster-stat"><div class="roster-stat-label">Visibility</div><div class="roster-stat-val" style="font-size:14px;color:var(--text);text-transform:capitalize">${roster.visibility || 'team'}</div></div>
+    </div>
+    <div id="teamStatsAggregated" style="margin-top:16px"></div>`;
+
+  const isPublic = roster.visibility === 'public';
+  const shareUrl = isPublic && roster.tag ? `${window.location.origin}/team.html?tag=${encodeURIComponent(roster.tag)}` : null;
+  // Analysis complete : ouvre /team.html (mode my-team via auth) pour voir team score, side balance, map analysis, insights
+  const analyzeBtn = `<a class="roster-btn primary" href="/en/team.html" target="_blank" rel="noopener">View full analysis</a>`;
+  const ownerActions = is_owner ? `
+    <div class="roster-actions">
+      ${analyzeBtn}
+      <button class="roster-btn" onclick="openInvitePlayerModal()">Invite a player</button>
+      <button class="roster-btn" onclick="toggleLookingForPlayers()">${roster.looking_for_players ? 'Close recruiting' : 'Open recruiting'}</button>
+      <button class="roster-btn" onclick="toggleVisibility()">${isPublic ? 'Make private' : 'Make public'}</button>
+      ${shareUrl ? `<a class="roster-btn" href="${shareUrl}" target="_blank">Public page</a>` : ''}
+      <button class="roster-btn danger" onclick="deleteRoster()">Delete</button>
+    </div>
+  ` : `
+    <div class="roster-actions">
+      ${analyzeBtn}
+      ${shareUrl ? `<a class="roster-btn" href="${shareUrl}" target="_blank">Public page</a>` : ''}
+      <button class="roster-btn danger" onclick="leaveRoster()">Leave team</button>
+    </div>
+  `;
+
+  // Note : faceit_elo / faceit_level affiches ici viennent de roster_players et
+  // peuvent etre stale (backfill a la creation). loadTeamStats() ci-dessous
+  // ecrase ces valeurs avec la data fraiche de /api/scout via data-nick.
+  const membersList = (players || []).map(p => {
+    const nick = p.faceit_nickname || 'Player';
+    const nickLower = nick.toLowerCase();
+    return `
+    <div class="member-row" data-nick="${nickLower}">
+      <div class="member-avatar">${nick.charAt(0).toUpperCase()}</div>
+      <div class="member-info">
+        <div class="member-name">${nick}</div>
+        <div class="member-role">
+          ${p.is_captain ? '<span class="captain-tag">Captain</span>' : ''}
+          ${p.is_sub ? '<span class="sub-tag">Sub</span>' : ''}
+          <span class="member-role-label">${p.team_role ? p.team_role.charAt(0).toUpperCase() + p.team_role.slice(1) : 'Role non defini'}</span>
+          <span class="member-level-label">${p.faceit_level ? ` - Lvl ${p.faceit_level}` : ''}</span>
+        </div>
+      </div>
+      <div class="member-elo">${p.faceit_elo ? p.faceit_elo + ' ELO' : ''}</div>
+      ${is_owner && !p.is_captain ? `<button class="member-remove" onclick="removeMember('${p.id}')" title="Remove this player" aria-label="Remove this player"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ''}
+    </div>
+  `;
+  }).join('');
+
+  const pendingInvList = (invitations || []).length > 0 && is_owner ? `
+    <div class="members-header" style="margin-top:20px"><div class="members-title">Pending invitations</div></div>
+    ${invitations.map(i => `
+      <div class="pending-inv">
+        <span class="pending-inv-tag">Pending</span>
+        <span><strong style="color:var(--text)">${i.invitee_nickname}</strong>${i.proposed_role ? ` · ${i.proposed_role}` : ''}</span>
+        <button class="pending-inv-cancel" onclick="cancelInvitation('${i.id}')" title="Cancel">&times;</button>
+      </div>
+    `).join('')}
+  ` : '';
+
+  document.getElementById('rosterContent').innerHTML = `
+    <div class="roster-card">
+      <div class="roster-head">
+        <div class="roster-logo">${logoInitial}</div>
+        <div class="roster-info">
+          <div class="roster-title">${roster.team_name}${tag ? ` <small>${tag}</small>` : ''}</div>
+          <div class="roster-meta">
+            ${roster.region ? `<span class="roster-meta-item"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${roster.region}</span>` : ''}
+            <span class="roster-meta-item">${titulaires.length + subs.length} membre${titulaires.length + subs.length > 1 ? 's' : ''}</span>
+            ${roster.looking_for_players ? '<span class="roster-meta-item" style="color:var(--accent)"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);margin-right:6px;vertical-align:middle"></span>Recruiting open</span>' : ''}
+          </div>
+        </div>
+        ${ownerActions}
+      </div>
+      ${roster.description ? `<div class="roster-desc">${roster.description}</div>` : ''}
+      ${statsHtml}
+    </div>
+    <div class="members-header"><div class="members-title">Members (${players.length}/7)</div></div>
+    ${membersList}
+    ${pendingInvList}
+  `;
+  // Charge les stats agregees FACEIT en async
+  loadTeamStats(roster.id);
+}
+
+async function loadTeamStats(rosterId) {
+  const el = document.getElementById('teamStatsAggregated');
+  if (!el) return;
+  el.innerHTML = `<div style="color:var(--text3);font-size:12px;font-family:var(--mono);padding:12px;text-align:center">Computing collective stats...</div>`;
+  try {
+    const res = await fetch(`/api/roster-stats?roster_id=${rosterId}`);
+    const d = await res.json();
+    if (!d.aggregated) {
+      el.innerHTML = `<div style="color:var(--text3);font-size:12px;font-family:var(--mono);padding:12px;text-align:center">No collective stats yet · members must have FACEIT linked</div>`;
+      return;
+    }
+    const a = d.aggregated;
+    // Refresh member rows avec data fraiche FACEIT (scout.js). Les valeurs
+    // roster_players.faceit_elo/level peuvent etre stale (backfill). On
+    // overlay les valeurs fraiches sur les .member-row par data-nick.
+    (a.members || []).forEach(m => {
+      const nick = (m.nickname || '').toLowerCase();
+      const row = document.querySelector(`.member-row[data-nick="${CSS.escape(nick)}"]`);
+      if (!row) return;
+      const eloEl = row.querySelector('.member-elo');
+      if (eloEl && m.elo) eloEl.textContent = m.elo + ' ELO';
+      const lvlEl = row.querySelector('.member-level-label');
+      if (lvlEl && m.level) lvlEl.textContent = ` - Lvl ${m.level}`;
+    });
+    // Color aligne sur le FV Score du dashboard : >=80 succes, >=60 accent,
+    // >=40 or, sinon rouge. Depuis que Team Score = avg(fvScore.total), les
+    // seuils sont coherents avec la metrique individuelle.
+    const rankColor = a.team_score >= 80 ? 'var(--success)' : a.team_score >= 60 ? 'var(--accent)' : a.team_score >= 40 ? 'var(--gold)' : 'var(--danger)';
+    el.innerHTML = `
+      <div class="team-score-card">
+        <div class="team-score-head">
+          <div>
+            <div class="team-score-val" style="color:${rankColor}">${a.team_score}<span style="color:var(--text3);font-size:18px">/100</span></div>
+            <div class="team-score-label">Team Score · ${a.team_rank}</div>
+          </div>
+          <div class="team-score-meta">
+            <div><strong style="color:var(--accent)">${a.avg_fv_rating}</strong> Average FV</div>
+            <div><strong style="color:var(--text)">${a.avg_level}</strong> Average Lvl</div>
+            <div><strong style="color:var(--gold)">${a.avg_elo}</strong> Average ELO</div>
+          </div>
+        </div>
+        <div class="team-metrics-grid">
+          <div class="team-metric"><div class="team-metric-lbl">K/D</div><div class="team-metric-val">${a.avg_kd}</div></div>
+          <div class="team-metric"><div class="team-metric-lbl">ADR</div><div class="team-metric-val">${a.avg_adr}</div></div>
+          <div class="team-metric"><div class="team-metric-lbl">HS%</div><div class="team-metric-val">${a.avg_hs}%</div></div>
+          <div class="team-metric"><div class="team-metric-lbl">KAST</div><div class="team-metric-val">${a.avg_kast}%</div></div>
+          <div class="team-metric"><div class="team-metric-lbl">Win rate</div><div class="team-metric-val">${a.avg_win_rate}%</div></div>
+        </div>
+        ${a.top_performer ? `
+          <div class="team-top-perf">
+            <div class="team-top-perf-label">Top performer</div>
+            <div class="team-top-perf-val"><strong>${a.top_performer.nickname}</strong> · FV ${a.top_performer.fvRating.toFixed(2)} · K/D ${a.top_performer.kd.toFixed(2)}</div>
+          </div>` : ''}
+        ${a.map_pool.length > 0 ? `
+          <div class="team-maps">
+            <div class="team-maps-label">Collective map pool (top ${Math.min(5, a.map_pool.length)})</div>
+            <div class="team-maps-list">
+              ${a.map_pool.map(m => {
+                const name = (m.map || '').replace('de_', '').replace(/^\\w/, c => c.toUpperCase());
+                const isBest = a.best_map && m.map === a.best_map.map;
+                const isWorst = a.worst_map && m.map === a.worst_map.map;
+                const color = m.team_win_rate >= 55 ? 'var(--success)' : m.team_win_rate >= 45 ? 'var(--gold)' : 'var(--danger)';
+                return `<div class="team-map-pill" style="border-color:${color};color:${color}">
+                  ${isBest ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px" title="Best map"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>' : ''}${isWorst ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px" title="A travailler"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : ''}
+                  ${name} · ${m.team_win_rate}% · ${m.total_matches}M
+                </div>`;
+              }).join('')}
+            </div>
+          </div>` : ''}
+      </div>
+    `;
+  } catch (e) {
+    el.innerHTML = `<div style="color:var(--text3);font-size:12px;font-family:var(--mono);padding:12px;text-align:center">Collective stats unavailable</div>`;
+  }
+}
+
+// ══ Modals ═══════════════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openCreateRosterModal() {
+  document.getElementById('rosterName').value = '';
+  document.getElementById('rosterTag').value = '';
+  document.getElementById('rosterDesc').value = '';
+  document.getElementById('rosterRegion').value = '';
+  document.getElementById('rosterCreateErr').textContent = '';
+  openModal('modalCreateRoster');
+}
+function openInvitePlayerModal() {
+  document.getElementById('inviteNickname').value = '';
+  document.getElementById('inviteRole').value = '';
+  document.getElementById('inviteMsg').value = '';
+  document.getElementById('inviteErr').textContent = '';
+  openModal('modalInvitePlayer');
+}
+
+// ══ Actions roster ════════════════════════════════════════════════════════
+async function callRosterAPI(body) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return { error: 'Non authentifie' };
+  const res = await fetch('/api/roster', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+async function submitCreateRoster() {
+  const btn = document.getElementById('rosterCreateBtn');
+  const errEl = document.getElementById('rosterCreateErr');
+  const teamName = document.getElementById('rosterName').value.trim();
+  btn.disabled = true; errEl.textContent = '';
+  const r = await callRosterAPI({
+    action: 'create',
+    team_name: teamName,
+    tag: document.getElementById('rosterTag').value.trim(),
+    description: document.getElementById('rosterDesc').value.trim(),
+    region: document.getElementById('rosterRegion').value || null,
+  });
+  btn.disabled = false;
+  if (r.error) { errEl.textContent = r.error; return; }
+  closeModal('modalCreateRoster');
+  showRosterToast(`Team "${teamName}" créée`);
+
+  // Auto-invite les players waiting (flow depuis compare)
+  await processPendingInvites(r.roster && r.roster.id);
+
+  await loadRoster();
+}
+
+async function processPendingInvites(rosterId) {
+  if (!rosterId) return;
+  try {
+    const raw = sessionStorage.getItem('pendingRosterInvites');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    sessionStorage.removeItem('pendingRosterInvites');
+    if (!Array.isArray(data.nicknames)) return;
+    // Filtre le nickname du user courant (owner déjà auto-ajoute comme captain)
+    const { data: profile } = await sb.from('profiles').select('faceit_nickname').eq('id', currentUser.id).maybeSingle();
+    const ownNick = (profile?.faceit_nickname || '').toLowerCase();
+    const toInvite = data.nicknames.filter(n => n && n.toLowerCase() !== ownNick);
+    let sent = 0, failed = 0;
+    for (const nickname of toInvite) {
+      const r = await callRosterAPI({ action: 'invite', roster_id: rosterId, nickname });
+      if (r.error) failed++; else sent++;
+    }
+    if (sent > 0 || failed > 0) {
+      const msg = sent > 0 ? `${sent} invitation${sent > 1 ? 's' : ''} envoyée${sent > 1 ? 's' : ''}${failed > 0 ? ` · ${failed} échec${failed > 1 ? 's' : ''}` : ''}` : `${failed} invitation${failed > 1 ? 's' : ''} échouée${failed > 1 ? 's' : ''}`;
+      showRosterToast(msg);
+    }
+  } catch (e) { console.warn('processPendingInvites error:', e.message); }
+}
+
+function showRosterToast(text) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700;padding:10px 18px;border-radius:6px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.5)';
+  t.textContent = text;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+async function submitInvite() {
+  if (!_currentRoster) return;
+  const btn = document.getElementById('inviteBtn');
+  const errEl = document.getElementById('inviteErr');
+  const nickname = document.getElementById('inviteNickname').value.trim();
+  btn.disabled = true; errEl.textContent = '';
+  const r = await callRosterAPI({
+    action: 'invite',
+    roster_id: _currentRoster.roster.id,
+    nickname,
+    proposed_role: document.getElementById('inviteRole').value || null,
+    message: document.getElementById('inviteMsg').value.trim() || null,
+  });
+  btn.disabled = false;
+  if (r.error) { errEl.textContent = r.error; return; }
+  closeModal('modalInvitePlayer');
+  showRosterToast(`Invitation envoyée à ${nickname}`);
+  await loadRoster();
+}
+
+async function respondInvitation(id, response) {
+  const r = await callRosterAPI({ action: 'respond', invitation_id: id, response });
+  if (r.error) { showRosterToast('Error : ' + r.error); return; }
+  showRosterToast(response === 'accepted' ? 'Invitation accepted, welcome to the team' : 'Invitation declined');
+  await loadRoster();
+}
+
+async function cancelInvitation(id) {
+  if (!confirm('Cancel cette invitation ?')) return;
+  const r = await callRosterAPI({ action: 'cancel_invite', invitation_id: id });
+  if (r.error) { showRosterToast('Error : ' + r.error); return; }
+  showRosterToast('Invitation canceled');
+  await loadRoster();
+}
+
+async function removeMember(playerId) {
+  if (!_currentRoster || !confirm('Remove this player de l\'équipe ?')) return;
+  const r = await callRosterAPI({ action: 'remove_player', roster_id: _currentRoster.roster.id, player_id: playerId });
+  if (r.error) { showRosterToast('Error : ' + r.error); return; }
+  showRosterToast('Player removed from team');
+  await loadRoster();
+}
+
+async function leaveRoster() {
+  if (!_currentRoster || !confirm('Quitter cette équipe ?')) return;
+  const r = await callRosterAPI({ action: 'leave', roster_id: _currentRoster.roster.id });
+  if (r.error) { showRosterToast('Error : ' + r.error); return; }
+  showRosterToast('You left the team');
+  _currentRoster = null;
+  await loadRoster();
+  // Reset a l'empty state
+  document.getElementById('rosterContent').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-title">Aucune équipe pour l'instant</div>
+      <div class="empty-sub">Crée ton équipe pour inviter des coéquipiers et suivre les stats collectives.</div>
+      <button class="empty-btn" onclick="openCreateRosterModal()">Create my team</button>
+    </div>`;
+}
+
+async function deleteRoster() {
+  if (!_currentRoster) return;
+  if (!confirm(`Delete définitivement "${_currentRoster.roster.team_name}" ? All les membres seront éjectés et les invitations annulées.`)) return;
+  const r = await callRosterAPI({ action: 'delete', roster_id: _currentRoster.roster.id });
+  if (r.error) { showRosterToast('Error : ' + r.error); return; }
+  showRosterToast('Team deleted');
+  _currentRoster = null;
+  document.getElementById('rosterContent').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-title">Aucune équipe pour l'instant</div>
+      <div class="empty-sub">Crée ton équipe pour inviter des coéquipiers et suivre les stats collectives.</div>
+      <button class="empty-btn" onclick="openCreateRosterModal()">Create my team</button>
+    </div>`;
+  document.getElementById('rosterInvitations').innerHTML = '';
+}
+
+async function toggleLookingForPlayers() {
+  if (!_currentRoster) return;
+  const newVal = !_currentRoster.roster.looking_for_players;
+  const r = await callRosterAPI({
+    action: 'update',
+    roster_id: _currentRoster.roster.id,
+    fields: { looking_for_players: newVal },
+  });
+  if (r.error) { showRosterToast('Error : ' + r.error); return; }
+  showRosterToast(newVal ? 'Recruiting open' : 'Recrutement fermé');
+  await loadRoster();
+}
+
+async function toggleVisibility() {
+  if (!_currentRoster) return;
+  const current = _currentRoster.roster.visibility || 'team';
+  const newVal = current === 'public' ? 'team' : 'public';
+  if (newVal === 'public' && !_currentRoster.roster.tag) {
+    showRosterToast('Add a tag to your team before making it public');
+    return;
+  }
+  const r = await callRosterAPI({
+    action: 'update',
+    roster_id: _currentRoster.roster.id,
+    fields: { visibility: newVal },
+  });
+  if (r.error) { showRosterToast('Error : ' + r.error); return; }
+  showRosterToast(newVal === 'public' ? 'Team maintenant publique' : 'Team now private');
+  await loadRoster();
+}
+
+// MOTEUR D'AMÉLIORATION
+function analyzeLastMatch(m) {
+  const strengths=[],warnings=[];
+  const kd=parseFloat(m.kd)||0,hs=parseFloat(m.hsPct)||0,adr=parseFloat(m.adr)||0,kast=parseFloat(m.kast)||0,fvR=parseFloat(m.fvRating)||0;
+  if(kd>=1.5)strengths.push({icon:'kill',label:'Excellent fragger',detail:`K/D ${kd.toFixed(2)}`});
+  if(hs>=60)strengths.push({icon:'hs',label:'Very high HS%',detail:`${hs.toFixed(0)}% de headshots`});
+  if(adr>=90)strengths.push({icon:'dmg',label:'Impact offensif fort',detail:`${adr.toFixed(0)} ADR`});
+  if(kast>=75)strengths.push({icon:'pres',label:'Constant presence',detail:`${kast.toFixed(0)}% KAST`});
+  const cl=(m.clutch1v1||0)+(m.clutch1v2||0)+(m.clutch1v3||0);
+  if(cl>=2)strengths.push({icon:'clutch',label:'Clutcheur en forme',detail:`${cl} clutches`});
+  if(fvR>=1.2)strengths.push({icon:'fv',label:'Elite FV Rating',detail:`${fvR.toFixed(2)}`});
+  if(kd<0.8)warnings.push({icon:'kd',label:'K/D difficile',detail:`${kd.toFixed(2)} ce match`,advice:'Joue plus en équipe, évite les duels isolés en fin de round.'});
+  if(hs<35&&kd<1.2)warnings.push({icon:'hs',label:'HS% faible',detail:`${hs.toFixed(0)}%`,advice:'Work on le positionnement de ta mire à hauteur de tête.'});
+  if(adr<65)warnings.push({icon:'dmg',label:'Low damage',detail:`${adr.toFixed(0)} ADR`,advice:'Damage check les ennemis avant les duels.'});
+  if(kast<60)warnings.push({icon:'pres',label:'Low presence',detail:`${kast.toFixed(0)}% KAST`,advice:'Sois plus actif : trade, assist or survive dans chaque round.'});
+  if((m.firstDeaths||0)>(m.firstKills||0)+1)warnings.push({icon:'open',label:'Opening duels perdus',detail:`${m.firstKills||0}FK vs ${m.firstDeaths||0}FD`,advice:`Attends que tes coéquipiers prennent les duels d'info en premier.`});
+  return {strengths:strengths.slice(0,3),warnings:warnings.slice(0,3)};
+}
+
+function analyzeGlobal(recent,cs2,fvScore,matches) {
+  const strengths=[],improvements=[];
+  const kd=parseFloat(recent.avgKd)||0,hs=parseFloat(recent.avgHs)||0,adr=parseFloat(recent.avgAdr)||0;
+  const kast=parseFloat(recent.avgKast)||0,winRate=parseFloat(recent.winRate)||0;
+  const opening=parseFloat(recent.openingRatio)||0,ctWR=parseFloat(recent.ctWinRate)||0,tWR=parseFloat(recent.tWinRate)||0;
+  const flashPR=parseFloat(recent.avgFlashPerRound)||0;
+  const ratings=matches.map(m=>parseFloat(m.fvRating)).filter(v=>v>0);
+  const avg=ratings.reduce((a,b)=>a+b,0)/(ratings.length||1);
+  const std=Math.sqrt(ratings.reduce((s,v)=>s+(v-avg)**2,0)/(ratings.length||1));
+  const cv=avg>0?std/avg:1;
+  const last5=ratings.slice(0,5).reduce((a,b)=>a+b,0)/5;
+  const prev5=ratings.slice(5,10).reduce((a,b)=>a+b,0)/5;
+  const trendUp=last5>prev5+0.05,trendDown=last5<prev5-0.05;
+  if(kd>=1.4)strengths.push({icon:'kill',label:'Fragger solide',detail:`K/D ${kd.toFixed(2)}`});
+  if(hs>=55)strengths.push({icon:'hs',label:'Accurate aim',detail:`${hs.toFixed(0)}% HS`});
+  if(adr>=85)strengths.push({icon:'dmg',label:'Impact offensif',detail:`${adr.toFixed(0)} ADR`});
+  if(kast>=72)strengths.push({icon:'pres',label:'Constant presence',detail:`${kast.toFixed(0)}% KAST`});
+  if(winRate>=58)strengths.push({icon:'win',label:'Win rate solide',detail:`${winRate.toFixed(0)}%`});
+  if(opening>=1.2)strengths.push({icon:'open',label:'Good duelliste',detail:`Opening ratio ${opening.toFixed(2)}`});
+  if(cv<=0.12)strengths.push({icon:'cons',label:'Very consistent',detail:'Low variability over 20 matches'});
+  if(trendUp)strengths.push({icon:'trend',label:'Improving',detail:'FV Rating en hausse'});
+  if(opening<0.85)improvements.push({icon:'open',label:'Opening ratio faible',detail:`${opening.toFixed(2)}`,advice:'Évite les duels d\'information en premier. Prends le trade si un coéquipier peek.',priority:'high',metric:`${opening.toFixed(2)} ratio`});
+  if(ctWR>0&&tWR>0&&ctWR-tWR>=12)improvements.push({icon:'tside',label:'T side underperforming',detail:`CT ${ctWR}% vs T ${tWR}%`,advice:'Work on team executions with utility before entering the site.',priority:'high',metric:`${(ctWR-tWR).toFixed(0)}pt d\'écart`});
+  if(kast<65)improvements.push({icon:'kast',label:'Low presence',detail:`${kast.toFixed(0)}% KAST`,advice:'Contribue dans chaque round : assist, trade or survive.',priority:'high',metric:`${kast.toFixed(0)}%`});
+  if(cv>=0.22)improvements.push({icon:'cons',label:'Manque de consistance',detail:'High variability',advice:'Play simple in bad matches, focus on survival.',priority:cv>=0.3?'high':'medium',metric:`CV ${(cv*100).toFixed(0)}%`});
+  if(adr<72)improvements.push({icon:'dmg',label:'Impact insuffisant',detail:`${adr.toFixed(0)} ADR`,advice:'Damage check before duels. Every point counts.',priority:'medium',metric:`${adr.toFixed(0)} ADR`});
+  if(flashPR<0.25&&(cs2.elo||0)>1500)improvements.push({icon:'util',label:'Utility rarely used',detail:`${flashPR.toFixed(2)} flash/round`,advice:'Flash avant de peeaker un angle or entrer sur un site.',priority:'medium',metric:`${flashPR.toFixed(2)}/round`});
+  if(trendDown&&!trendUp)improvements.push({icon:'trend',label:'Declining trend',detail:'FV Rating en baisse',advice:'Fais une pause or change de map pool.',priority:'medium',metric:`${((last5-prev5)/prev5*100).toFixed(0)}%`});
+  return{strengths:strengths.slice(0,4),improvements:improvements.sort((a,b)=>(a.priority==='high'?0:a.priority==='medium'?1:2)-(b.priority==='high'?0:b.priority==='medium'?1:2)).slice(0,4),trendUp,trendDown};
+}
+
+function getIcons(){return{
+  kill:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6.3 6.9 1-5 4.8 1.2 6.9L12 18l-6.1 3 1.2-6.9-5-4.8 6.9-1z"/></svg>`,
+  hs:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>`,
+  dmg:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+  pres:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  clutch:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>`,
+  fv:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`,
+  open:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22l-4-4 4-4M8 18h8a4 4 0 000-8h-1"/></svg>`,
+  cons:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 16 4-4 4 4 5-5"/></svg>`,
+  tside:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
+  kast:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>`,
+  util:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>`,
+  trend:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>`,
+  kd:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
+  win:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>`,
+};}
+
+function setTab(tab,btn) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+
+function showLoading(show,text) {
+  const el=document.getElementById('loadingOverlay');
+  el.style.display=show?'flex':'none';
+  if(text)document.getElementById('loadText').textContent=text;
+}
+
+async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
+
+// Gestion globale des erreurs d'init : evite que les placeholders "Loading..."
+// restent a l'écran indefiniment si Supabase / API / parser sont down.
+init().catch(err => {
+  console.error('[dashboard] init failed:', err);
+  showLoading(false);
+  const hero = document.getElementById('profileHeroCard');
+  if (hero) {
+    hero.innerHTML = `
+      <div style="text-align:center;padding:40px 24px">
+        <div style="font:700 20px 'Anton',sans-serif;color:#e8eaea;letter-spacing:.05em;margin-bottom:12px">Service temporairement indisponible</div>
+        <div style="color:#7a8080;font-size:14px;line-height:1.6;margin-bottom:20px">Unable to load your dashboard right now. Try again in a few moments.</div>
+        <button onclick="window.location.reload()" style="background:#b8ff57;color:#000;padding:10px 20px;border:none;border-radius:6px;font:700 12px 'Space Mono',monospace;letter-spacing:.06em;text-transform:uppercase;cursor:pointer">Recharger</button>
+      </div>`;
+  }
+  // Remplace aussi les autres placeholders bloquants
+  const replacers = [
+    ['fvScoreVal', '-'],
+    ['fvScoreLabel', 'Indisponible'],
+    ['improvementsPanel', '<div class="empty-state"><div class="empty-title">Analysis indisponible</div><div class="empty-sub">Service temporairement hors ligne.</div></div>'],
+  ];
+  replacers.forEach(([id, html]) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+  const coach = document.getElementById('coachAiCard');
+  if (coach) coach.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-title">Diagnosis unavailable</div></div>';
+});
+</script>
+<script src="/nav.js"></script>
+<script src="/empty-state.js"></script>
+</body>
+</html>

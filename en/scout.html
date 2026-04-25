@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="description" content="FragValue Scout : classements FACEIT CS2 par rôle (Entry, AWP, IGL, Support, Clutch), Rising Stars, Rookie Gems, Free Agents. Le recrutement CS2 basé sur la data.">
+  <meta name="keywords" content="scout CS2, classement FACEIT, recrutement esport, AWPer, Entry Fragger, IGL CS2">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <link rel="canonical" href="https://fragvalue.com/en/scout.html">
+<link rel="alternate" hreflang="fr" href="https://fragvalue.com/scout.html">
+<link rel="alternate" hreflang="en" href="https://fragvalue.com/en/scout.html">
+<link rel="alternate" hreflang="x-default" href="https://fragvalue.com/scout.html">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fragvalue.com/en/scout.html">
+  <meta property="og:title" content="FragValue Scout · Recrutement CS2 par la data">
+  <meta property="og:description" content="10 classements par rôle (Entry, AWP, IGL, Support, Clutch) + Rising Stars, Rookie Gems, Free Agents. Unlock à 1000 active Scout profiles.">
+  <meta property="og:image" content="https://fragvalue.com/og/home.png">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="FragValue Scout · Le recrutement CS2 par la data">
+  <meta name="twitter:description" content="10 leaderboards FACEIT par rôle. Unlock à 1000 active Scout profiles.">
+  <meta name="twitter:image" content="https://fragvalue.com/og/home.png">
+  <title>Scout FACEIT CS2 · Classements players · FragValue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
+      --accent:#b8ff57;--accent2:#7ddd1a;--accent-dim:rgba(184,255,87,.10);
+      --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+      --font:'Space Mono',monospace;--mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+      --radius:6px;--radius2:12px;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+    .page{max-width:1100px;margin:0 auto;padding:48px 32px 80px;position:relative;z-index:1}
+    @media(max-width:768px){.page{padding:24px 16px 60px}}
+
+    /* ── Hero teaser ────────────────────────────────── */
+    .hero{text-align:center;margin-bottom:48px;position:relative}
+    .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.25);color:var(--accent);padding:6px 14px;border-radius:40px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px}
+    .hero-title{font-family:var(--display);font-size:clamp(40px, 6vw, 72px);letter-spacing:.02em;line-height:1;margin-bottom:16px}
+    .hero-title span{color:var(--accent);text-shadow:0 0 30px rgba(184,255,87,.4)}
+    .hero-sub{font-size:15px;color:var(--text2);font-family:var(--mono);line-height:1.6;max-width:640px;margin:0 auto 32px}
+
+    /* ── Waitlist counter ─────────────────────────────── */
+    .counter-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:48px;position:relative;overflow:hidden}
+    .counter-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 40% 60% at 50% 0%,rgba(184,255,87,.1),transparent);pointer-events:none}
+    .counter-label{font-size:11px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px;text-align:center;margin-bottom:8px;position:relative;z-index:1}
+    .counter-row{display:flex;align-items:baseline;justify-content:center;gap:12px;margin-bottom:20px;position:relative;z-index:1;flex-wrap:wrap}
+    .counter-val{font-family:var(--display);font-size:80px;color:var(--accent);line-height:1;letter-spacing:.01em}
+    .counter-max{font-family:var(--display);font-size:40px;color:var(--text3);line-height:1}
+    .counter-bar{height:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative;z-index:1;margin-bottom:12px}
+    .counter-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:10px;transition:width 1s ease;box-shadow:0 0 20px rgba(184,255,87,.4)}
+    .counter-sub{text-align:center;font-size:12px;color:var(--text2);font-family:var(--mono);position:relative;z-index:1}
+    .counter-unlock{text-align:center;margin-top:20px;position:relative;z-index:1}
+    .counter-unlock-btn{background:var(--accent);color:#000;padding:12px 24px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;display:inline-flex;align-items:center;gap:8px;transition:all .2s;border:none;cursor:pointer}
+    .counter-unlock-btn:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,255,87,.3)}
+
+    /* ── Leaderboards teasers ─────────────────────────── */
+    .sec-label{font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em;margin:32px 0 16px;display:flex;align-items:center;gap:10px}
+    .sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(184,255,87,.2),transparent)}
+    .boards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+    .board-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;transition:border-color .2s}
+    .board-card:hover{border-color:rgba(184,255,87,.25)}
+    .board-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .board-title{font-family:var(--display);font-size:16px;color:var(--text);letter-spacing:.02em}
+    .board-tag{font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 8px;border-radius:40px;letter-spacing:.08em;text-transform:uppercase}
+    .board-tag.locked{background:rgba(122,128,128,.15);color:var(--text3);border:1px solid var(--border2)}
+    .board-tag.pro{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000}
+    .board-tag.elite{background:linear-gradient(135deg,var(--gold),#d4a52a);color:#000}
+    .board-list{display:flex;flex-direction:column;gap:6px}
+    .board-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--card);border-radius:6px;filter:blur(4px);opacity:.6;pointer-events:none}
+    .board-rank{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);width:24px;text-align:center}
+    .board-name{flex:1;font-family:var(--mono);font-size:12px;color:var(--text)}
+    .board-score{font-family:var(--mono);font-size:11px;color:var(--text3);font-weight:700}
+    .board-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse 80% 80% at 50% 100%,rgba(8,9,9,.9) 0%,rgba(8,9,9,.4) 100%);pointer-events:none;padding:20px}
+    .board-overlay-text{font-family:var(--mono);font-size:11px;color:var(--text2);text-align:center;letter-spacing:.04em;line-height:1.5}
+    .board-overlay-text strong{color:var(--accent);display:block;margin-bottom:3px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+
+    /* ── CTA profil Scout ─────────────────────────────── */
+    .optin-card{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:16px;padding:32px;margin-top:40px;text-align:center;position:relative;overflow:hidden}
+    .optin-title{font-family:var(--display);font-size:28px;color:var(--text);letter-spacing:.02em;margin-bottom:12px}
+    .optin-sub{font-size:13px;color:var(--text2);font-family:var(--mono);line-height:1.6;margin-bottom:24px;max-width:560px;margin-left:auto;margin-right:auto}
+    .optin-btn{background:var(--accent);color:#000;padding:14px 28px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
+    .optin-btn:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,255,87,.3)}
+    .optin-anon{font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:16px}
+    .optin-anon a{color:var(--accent);text-decoration:none;font-weight:700}
+    .optin-anon a:hover{text-decoration:underline}
+
+    /* ── Status pills (profil Scout actif) ────────────── */
+    .optin-ok{background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.3);border-radius:10px;padding:14px 18px;margin-top:24px;display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--success);font-weight:700}
+  </style>
+<script src="/analytics.js" defer></script>
+</head>
+<body>
+
+<nav></nav>
+
+<div class="page">
+  <div class="hero">
+    <div class="hero-badge">Coming soon · Early access</div>
+    <h1 class="hero-title">The scout <span>that decides</span><br>who deserves to be recruited</h1>
+    <p class="hero-sub">Multi-criteria rankings of the best FACEIT players. Computed on K/D, ADR, KAST, clutches, entries, utility and 20+ signals. Find the next star AWPer before other teams.</p>
+  </div>
+
+  <!-- WAITLIST COUNTER -->
+  <div class="counter-card" id="counterCard">
+    <div class="counter-label">Unlocks at 1000 registered users</div>
+    <div class="counter-row">
+      <div class="counter-val" id="counterVal">-</div>
+      <div class="counter-max">/ 1,000</div>
+    </div>
+    <div class="counter-bar"><div class="counter-fill" id="counterFill" style="width:0%"></div></div>
+    <div class="counter-sub" id="counterSub">Loading counter...</div>
+    <div class="counter-unlock" id="counterUnlock" style="display:none">
+      <a href="#optin" class="counter-unlock-btn">Activate my Scout profile · be ready at launch →</a>
+    </div>
+  </div>
+
+  <!-- PREVIEW LEADERBOARDS -->
+  <div class="sec-label">The 10 upcoming rankings</div>
+  <div class="boards-grid" id="boardsGrid">
+    <!-- Rempli par JS -->
+  </div>
+
+  <!-- OPT-IN CTA -->
+  <div class="optin-card" id="optin">
+    <h2 class="optin-title">Be in the rankings at launch</h2>
+    <p class="optin-sub">Activate your Scout profile now to appear in rankings as soon as it unlocks. Your FACEIT stats are analyzed over your last 20 matches. You can disable at any time from My account.</p>
+    <a href="account.html#settings" class="optin-btn" id="optinBtn">
+      Activate my Scout profile
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+    <div class="optin-anon" id="optinAnon">
+      No account yet? <a href="login.html">Sign in</a> or <a href="demo.html">create your profile in 30 seconds</a>.
+    </div>
+    <div id="optinStatus"></div>
+  </div>
+</div>
+
+<script>
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+window._sb = sb;
+
+const BOARDS = [
+  { type: 'global',     title: 'Global Talent',      tag: 'pro',   desc: 'Composite FV Score · the best all-around' },
+  { type: 'entry',      title: 'Best Entry fragger', tag: 'pro',   desc: 'Entry WR × volume · for players defined as entry' },
+  { type: 'awp',        title: 'Best AWPer',         tag: 'pro',   desc: 'Snipe rate × impact · for players defined as AWPer' },
+  { type: 'clutch',     title: 'Best Clutcher',      tag: 'pro',   desc: '1vN conversion rate · the cool-headed' },
+  { type: 'support',    title: 'Best Support',       tag: 'pro',   desc: 'Util dmg + Flash eff + Assists · for support players' },
+  { type: 'igl',        title: 'Best IGL',           tag: 'elite', desc: 'For players defined as IGL · consistency + KAST + leadership' },
+  { type: 'rising',     title: 'Rising Stars',       tag: 'pro',   desc: 'Biggest FV Rating gain over 30d' },
+  { type: 'consistent', title: 'Most Consistent',    tag: 'pro',   desc: 'Lowest variance · reliability embodied' },
+  { type: 'rookie',     title: 'Rookie Gems',        tag: 'pro',   desc: 'Under 22 with FV > 1.10 · raw talent' },
+  { type: 'freeagent',  title: 'Free Agents',        tag: 'elite', desc: 'Open to offers · recruitable immediately' },
+];
+
+async function loadWaitlist() {
+  try {
+    const res = await fetch('/api/scout-waitlist-status');
+    const d = await res.json();
+    const total = Number(d.total_users) || 0;
+    const threshold = Number(d.threshold) || 1000;
+    const optedIn = Number(d.opted_in_users) || 0;
+    const pct = Number(d.progress_pct) || 0;
+    // Animate counter
+    animateNumber('counterVal', total);
+    document.getElementById('counterFill').style.width = pct + '%';
+    const remaining = Math.max(0, threshold - total);
+    document.getElementById('counterSub').innerHTML = d.unlocked
+      ? '<strong style="color:var(--success)">Unlocked! All rankings are live.</strong>'
+      : `<strong style="color:var(--text)">${remaining}</strong> users left · already <strong style="color:var(--accent)">${optedIn}</strong> active Scout profiles`;
+    if (!d.unlocked) document.getElementById('counterUnlock').style.display = '';
+  } catch(e) {
+    document.getElementById('counterSub').textContent = 'Counter unavailable right now.';
+  }
+}
+
+function animateNumber(id, target) {
+  const el = document.getElementById(id);
+  const duration = 1500, start = 0, startTime = performance.now();
+  function step(now) {
+    const progress = Math.min(1, (now - startTime) / duration);
+    const easeOut = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(start + (target - start) * easeOut).toLocaleString('fr-FR');
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function renderBoards() {
+  const grid = document.getElementById('boardsGrid');
+  grid.innerHTML = BOARDS.map(b => {
+    // Mock rows blurred pour teaser
+    const mockRows = [1,2,3,4,5].map(i => `
+      <div class="board-row">
+        <div class="board-rank">#${i}</div>
+        <div class="board-name">●●●●●●●●●</div>
+        <div class="board-score">${(95 - i * 3).toFixed(1)}</div>
+      </div>
+    `).join('');
+    return `
+      <div class="board-card">
+        <div class="board-head">
+          <div class="board-title">${b.title}</div>
+          <div class="board-tag ${b.tag}">${b.tag === 'elite' ? 'Elite' : 'Pro'}</div>
+        </div>
+        <div class="board-list">${mockRows}</div>
+        <div class="board-overlay">
+          <div class="board-overlay-text"><strong>Soon</strong>${b.desc}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function checkOptinStatus() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      document.getElementById('optinBtn').style.display = 'none';
+      return;
+    }
+    document.getElementById('optinAnon').style.display = 'none';
+    const { data: profile } = await sb.from('profiles').select('scout_opt_in, faceit_nickname').eq('id', session.user.id).single();
+    if (profile && profile.scout_opt_in) {
+      document.getElementById('optinBtn').style.display = 'none';
+      document.getElementById('optinStatus').innerHTML = `
+        <div class="optin-ok">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Scout profile active · ${profile.faceit_nickname || 'FACEIT not linked'} will appear at launch
+        </div>
+      `;
+    }
+  } catch(e) {}
+}
+
+// ══ Helper : ajouter a la watchlist (utilisé quand rankings sont live) ════
+async function followPlayer(nickname, meta) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; return false; }
+  try {
+    const res = await fetch('/api/watchlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ action: 'add', nickname, ...(meta || {}) }),
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(d.already ? `${nickname} is already in your watchlist` : `${nickname} added to your watchlist`);
+      return true;
+    }
+    showToast('Error : ' + (d.error || 'action failed'));
+    return false;
+  } catch (e) { showToast('Network error'); return false; }
+}
+
+function showToast(text) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:12px;padding:10px 18px;border-radius:6px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.4)';
+  t.textContent = text;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+loadWaitlist();
+renderBoards();
+checkOptinStatus();
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>
