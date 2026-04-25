@@ -4784,14 +4784,21 @@ async function runCoachAIAnalysis() {
 }
 
 // Helper : recupere le JWT Supabase depuis la session active.
-// Utilise le client supabase-js charge globalement (via nav.js / supabase-init.js).
+// Note : window.supabase est la LIBRARY (avec createClient), pas un client.
+// On instancie un client local qui lit la session depuis localStorage
+// (meme pattern que checkReplayAccess pour rester coherent).
+let _fvAuthSb = null;
 async function getAuthToken() {
   try {
-    if (window.supabase && typeof window.supabase.auth?.getSession === 'function') {
-      const { data } = await window.supabase.auth.getSession();
-      return data?.session?.access_token || null;
+    if (typeof supabase === 'undefined') return null;
+    if (!_fvAuthSb) {
+      _fvAuthSb = supabase.createClient(
+        'https://xmyruycvvkmcwysfygcq.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI'
+      );
     }
-    return null;
+    const { data: { session } } = await _fvAuthSb.auth.getSession();
+    return session?.access_token || null;
   } catch(_) { return null; }
 }
 
