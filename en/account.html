@@ -532,8 +532,8 @@ async function init() {
       const reward = JSON.parse(rewardRaw);
       sessionStorage.removeItem('fv_referral_reward');
       const msg = reward.referrer_nick
-        ? `Referral valide via ${reward.referrer_nick}. ${reward.days} days Pro offered sont actifs sur ton compte.`
-        : `Referral valide. ${reward.days} days Pro offered sont actifs sur ton compte.`;
+        ? `Referral valid via ${reward.referrer_nick}. ${reward.days} days of Pro are active on your account.`
+        : `Referral valid. ${reward.days} days of Pro are active on your account.`;
       showBanner(msg, 'ok');
       // Force refresh de la card abonnement pour refleter le trial
       setTimeout(() => { _subLoaded = false; loadSubscription(); }, 500);
@@ -542,10 +542,10 @@ async function init() {
       const info = sessionStorage.getItem('fv_referral_info');
       if (info === 'already_referred') {
         sessionStorage.removeItem('fv_referral_info');
-        showBanner('Tu as deja utilise un code de parrainage sur ce compte. Un seul code par compte.', 'err');
+        showBanner('You have already used a referral code on this account. One code per account.', 'err');
       } else if (info === 'invalid_code') {
         sessionStorage.removeItem('fv_referral_info');
-        showBanner('Le code de parrainage est inconnu. Verifie l\'orthographe et reessaie.', 'err');
+        showBanner('The referral code is unknown. Check the spelling and try again.', 'err');
       }
     }
   } catch {}
@@ -732,7 +732,7 @@ function renderFeedbacks(feedbacks) {
 }
 
 async function closeMyFeedback(id, ticketLabel) {
-  if (!confirm(`Close ${ticketLabel || 'this feedback'} ?\nIl restera dans ton historique mais marqué comme résolu.`)) return;
+  if (!confirm(`Close ${ticketLabel || 'this feedback'}?\nIt will stay in your history but marked as resolved.`)) return;
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session?.access_token) throw new Error('Session expired');
@@ -752,7 +752,7 @@ async function closeMyFeedback(id, ticketLabel) {
 }
 
 async function deleteMyFeedback(id, ticketLabel) {
-  if (!confirm(`Delete définitivement ${ticketLabel || 'this feedback'} ?\nCette action est irréversible.`)) return;
+  if (!confirm(`Delete ${ticketLabel || 'this feedback'} permanently?\nThis action is irreversible.`)) return;
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session?.access_token) throw new Error('Session expired');
@@ -815,9 +815,9 @@ async function loadSubscription() {
     const nextBilling = d.current_period_end
       ? new Date(d.current_period_end * 1000).toLocaleDateString('fr-FR')
       : null;
-    const status = d.status || (plan === 'free' ? 'actif' : '-');
+    const status = d.status || (plan === 'free' ? 'active' : '-');
     const cancelAt = d.cancel_at_period_end
-      ? `Se termine le ${new Date(d.current_period_end * 1000).toLocaleDateString('fr-FR')}`
+      ? `Ends on ${new Date(d.current_period_end * 1000).toLocaleDateString('en-US')}`
       : null;
     const usage = d.usage || {};
 
@@ -826,14 +826,14 @@ async function loadSubscription() {
     // apres expiration du trial.
     const isGrantTrial = d._source === 'grant' && !!d.grant;
     const grantReasonLabel = {
-      'referral_referee'  : 'parrainage',
-      'referral_referrer' : 'parrainage',
-      'admin_grant'       : 'offered par l\'equipe',
-      'promo_code'        : 'code promo',
+      'referral_referee'  : 'referral',
+      'referral_referrer' : 'referral',
+      'admin_grant'       : 'offered by the team',
+      'promo_code'        : 'promo code',
       'compensation'      : 'compensation',
     }[d.grant?.reason] || 'offered';
     const grantMeta = isGrantTrial && nextBilling
-      ? `Acces ${planLabel} (${grantReasonLabel}) · expire le <strong>${nextBilling}</strong>`
+      ? `${planLabel} access (${grantReasonLabel}) · expires on <strong>${nextBilling}</strong>`
       : null;
 
     card.innerHTML = `
@@ -845,7 +845,7 @@ async function loadSubscription() {
               ? `Free plan · Upgrade to Pro to unlock advanced features`
               : isGrantTrial
                 ? grantMeta
-                : `Status <strong>${status}</strong>${nextBilling ? ` · Prochaine facture <strong>${nextBilling}</strong>` : ''}${cancelAt ? ` · <span style="color:var(--gold)">${cancelAt}</span>` : ''}`}
+                : `Status <strong>${status}</strong>${nextBilling ? ` · Next billing <strong>${nextBilling}</strong>` : ''}${cancelAt ? ` · <span style="color:var(--gold)">${cancelAt}</span>` : ''}`}
           </div>
         </div>
         <div class="sub-actions">
@@ -892,8 +892,8 @@ async function openStripePortal() {
     });
     const d = await res.json();
     if (d.url) window.location.href = d.url;
-    else showBanner(d.error || 'Portail indisponible.', 'err');
-  } catch(e) { showBanner('Network error. Réessaie.', 'err'); }
+    else showBanner(d.error || 'Portal unavailable.', 'err');
+  } catch(e) { showBanner('Network error. Try again.', 'err'); }
 }
 
 // ══ PARAMETRES ═════════════════════════════════════════════════════════════
@@ -1186,14 +1186,14 @@ async function sendPasswordReset() {
 }
 
 async function logoutAll() {
-  if (!confirm('Sign out all sessions? You'll need to sign in again here.')) return;
+  if (!confirm('Sign out all sessions? You will need to sign in again here.')) return;
   await sb.auth.signOut({ scope: 'global' });
   window.location.href = 'login.html';
 }
 
 async function deleteAccount() {
   const confirmText = 'DELETE';
-  const input = prompt(`Cette action est irréversible. All tes données (profil, démos, watchlist, roster) seront supprimées.\n\nTape "${confirmText}" to confirm:`);
+  const input = prompt(`This action is irreversible. All your data (profile, demos, watchlist, roster) will be deleted.\n\nType "${confirmText}" to confirm:`);
   if (input !== confirmText) return;
   try {
     const { data: { session } } = await sb.auth.getSession();

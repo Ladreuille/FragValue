@@ -678,6 +678,23 @@
     }
   }
 
+  // Traduit les notifications stockees en FR pour les afficher en EN.
+  // Couvre les 5 templates de notify-demo-analyzed.js historiques.
+  function translateNotifText(s) {
+    if (!s || FV_LANG !== 'en') return s;
+    return s
+      .replace(/^Match excellent$/, 'Excellent match')
+      .replace(/^Belle performance$/, 'Great performance')
+      .replace(/^Analyse terminee$/, 'Analysis complete')
+      .replace(/^Match difficile, tu as des pistes$/, 'Tough match, here are some leads')
+      .replace(/^Diagnostic pret$/, 'Diagnosis ready')
+      .replace(/sur ([A-Z0-9_]+)\. Tes heatmaps et ton diagnostic Coach IA sont prets a etre consultes\./, 'on $1. Your heatmaps and AI Coach diagnosis are ready to view.')
+      .replace(/sur ([A-Z0-9_]+)\. Decouvre tes 3 forces et tes axes d'amelioration\./, 'on $1. Discover your 3 strengths and areas to improve.')
+      .replace(/sur ([A-Z0-9_]+)\. Vois tes positions risquees et le plan d'action 7 jours\./, 'on $1. See your risky positions and the 7-day action plan.')
+      .replace(/sur ([A-Z0-9_]+)\. Le Coach IA a identifie 4 actions concretes pour rebondir\./, 'on $1. The AI Coach identified 4 concrete actions to bounce back.')
+      .replace(/Ta demo ([A-Z0-9_]+) est analysee\. Heatmaps, KPIs et plan d'action te attendent\./, 'Your $1 demo is analyzed. Heatmaps, KPIs and action plan are waiting for you.');
+  }
+
   function renderNotifList(notifs) {
     if (!notifListEl) return;
     if (!notifs.length) {
@@ -686,8 +703,8 @@
     }
     notifListEl.innerHTML = notifs.map(n => {
       const unreadCls = !n.read ? ' unread' : '';
-      const title = escapeHtmlNotif(n.title || T.notifFallbackTitle);
-      const msg = escapeHtmlNotif(n.message || '');
+      const title = escapeHtmlNotif(translateNotifText(n.title) || T.notifFallbackTitle);
+      const msg = escapeHtmlNotif(translateNotifText(n.message) || '');
       const time = formatRelativeTime(n.created_at);
       const iconKey = n.icon || n.type || 'info';
       const icon = getNotifIcon(iconKey);

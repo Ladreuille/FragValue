@@ -80,26 +80,47 @@ function translateHtml(html, dict) {
   const entries = Object.entries(dict).sort((a, b) => b[0].length - a[0].length);
   let out = html;
 
+  // Helper : detecte si un match est a l'interieur d'une string JS '...'.
+  // Utile quand l'EN a une apostrophe que le FR n'a pas (ex: "Tu devras"
+  // -> "You'll") : il faut alors echapper l'apostrophe EN pour ne pas
+  // casser la string JS qui contient le FR.
+  function applyContextAware(fr, en) {
+    const frEsc = escapeRegex(fr);
+    // Pass 1a : si FR est dans une string JS single-quoted ET EN contient '
+    // -> remplace avec EN echappe. Detection : le FR est precede par ' et
+    // suivi par ' (eventuellement \\'), et EN contient une apostrophe.
+    if (en.includes("'") && !fr.includes("'")) {
+      // Match FR a l'interieur d'une string JS '...' (heuristique simple :
+      // recherche FR avec une ' avant et apres dans la meme ligne).
+      const enEscaped = en.replace(/'/g, "\\'");
+      // Regex : ' (debut string) puis [contenu sans '] FR [contenu sans ']  '
+      // Plus permissif : on cherche ' suivi de chars puis FR puis chars puis '
+      // sur la meme ligne (sans nouvelle ligne).
+      const ctxRe = new RegExp("(')([^'\\n\\r]*?)" + frEsc + "([^'\\n\\r]*?)(?=')", 'g');
+      out = out.replace(ctxRe, function(_, q1, before, after) {
+        return q1 + before + enEscaped + after;
+      });
+    }
+    // Pass 1b : remplacement standard (HTML/text)
+    const isWordOnly = !/\s/.test(fr) && /^[A-Za-zÀ-ſ]/.test(fr);
+    if (isWordOnly && fr.length <= 15) {
+      const pattern = '(?<![A-Za-z\\u00C0-\\u017F])' + frEsc + '(?![A-Za-z\\u00C0-\\u017F])';
+      out = out.replace(new RegExp(pattern, 'g'), en);
+    } else {
+      out = out.replace(new RegExp(frEsc, 'g'), en);
+    }
+    // Pass 2 : variante FR-escapee si FR contient ' (ex: 'l\'utility')
+    if (fr.includes("'")) {
+      const frEscQ = fr.replace(/'/g, "\\'");
+      const enEscQ = en.replace(/'/g, "\\'");
+      out = out.replace(new RegExp(escapeRegex(frEscQ), 'g'), enEscQ);
+    }
+  }
+
   for (const [fr, en] of entries) {
     if (!fr || fr === en) continue;
     if (fr.startsWith('_')) continue; // section markers, ne rien faire
-
-    // Mot unique court : utilise word-boundary Unicode-aware
-    const isWordOnly = !/\s/.test(fr) && /^[A-Za-zÀ-ſ]/.test(fr);
-    if (isWordOnly && fr.length <= 15) {
-      const pattern = '(?<![A-Za-z\\u00C0-\\u017F])' + escapeRegex(fr) + '(?![A-Za-z\\u00C0-\\u017F])';
-      out = out.replace(new RegExp(pattern, 'g'), en);
-    } else {
-      const re = new RegExp(escapeRegex(fr), 'g');
-      out = out.replace(re, en);
-    }
-
-    // Variante avec apostrophes echappees (pour strings JS comme desc: 'l\'utility')
-    if (fr.includes("'")) {
-      const frEsc = fr.replace(/'/g, "\\'");
-      const enEsc = en.replace(/'/g, "\\'");
-      out = out.replace(new RegExp(escapeRegex(frEsc), 'g'), enEsc);
-    }
+    applyContextAware(fr, en);
   }
 
   return out;
