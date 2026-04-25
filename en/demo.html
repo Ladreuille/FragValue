@@ -1261,13 +1261,13 @@ async function startAnalysis() {
   // Les messages > 80s sont rassurants en cas de parsing plus long que prevu
   // (grosse demo, serveur charge) pour reduire le taux d'abandon.
   const autoSteps = [
-    { delay:800,  step:0, pct:8,  title:'Uploading file',            sub:'Transfert en cours...' },
-    { delay:3000, step:1, pct:20, title:'Parsing CS2',                 sub:'Lecture des ticks bruts...' },
-    { delay:5000, step:1, pct:32, title:'Parsing CS2',                 sub:'Extraction des positions...' },
-    { delay:8000, step:2, pct:44, title:'Computing zones',            sub:'Analysis des rounds...' },
+    { delay:800,  step:0, pct:8,  title:'Uploading file',            sub:'Transferring...' },
+    { delay:3000, step:1, pct:20, title:'Parsing CS2',                 sub:'Reading raw ticks...' },
+    { delay:5000, step:1, pct:32, title:'Parsing CS2',                 sub:'Extracting positions...' },
+    { delay:8000, step:2, pct:44, title:'Computing zones',            sub:'Analyzing rounds...' },
     { delay:12000,step:2, pct:54, title:'Computing zones',            sub:'Mapping grenades and shots...' },
     { delay:18000,step:3, pct:63, title:'Generating heatmaps',     sub:'Kill zones et duel areas...' },
-    { delay:25000,step:3, pct:70, title:'Generating heatmaps',     sub:'Calcul des trajectoires...' },
+    { delay:25000,step:3, pct:70, title:'Generating heatmaps',     sub:'Computing trajectories...' },
     { delay:35000,step:4, pct:76, title:'FV Rating',                   sub:'Calcul de l\'impact par round...' },
     { delay:50000,step:4, pct:82, title:'FV Rating',                   sub:'Weighting KPIs...' },
     { delay:70000,step:4, pct:87, title:'Finalizing',                sub:'Almost done...' },
@@ -1302,7 +1302,7 @@ async function startAnalysis() {
 
     go(5, 92, 'Finalizing', 'Processing results...');
     const data = await res.json();
-    go(5, 97, 'Finalizing', 'Sauvegarde...');
+    go(5, 97, 'Finalizing', 'Saving...');
 
     try {
       sessionStorage.setItem('demoData', JSON.stringify(data.data));
@@ -1538,7 +1538,7 @@ async function renderQuotaBar(session) {
       if (u >= 3) {
         bar.classList.add('quota-full');
         // Bloque l'upload avant meme que l'user ne commence :
-        // transforme la zone en CTA "Passer Pro" et desactive le submit.
+        // transforme la zone en CTA "Upgrade to Pro" et desactive le submit.
         lockUploadOnQuota(u);
       }
     } else {
@@ -1555,7 +1555,7 @@ async function renderQuotaBar(session) {
 }
 
 // Quand le user Free a atteint 3/3 analyses, on bloque le flow en amont
-// plutot qu'apres l'upload. Transforme la submit-btn en CTA "Passer Pro"
+// plutot qu'apres l'upload. Transforme la submit-btn en CTA "Upgrade to Pro"
 // directement clickable. UX : l'user sait avant meme de choisir un fichier.
 function lockUploadOnQuota(used) {
   const submitBtn = document.getElementById('analyseBtn');
@@ -1564,7 +1564,7 @@ function lockUploadOnQuota(used) {
   if (submitBtn) {
     submitBtn.disabled = true;
     submitBtn.setAttribute('data-locked', 'quota');
-    submitBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Quota ' + used + '/3 atteint - Passer Pro';
+    submitBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Quota ' + used + '/3 atteint - Upgrade to Pro';
     submitBtn.onclick = function() { window.location.href = 'pricing.html'; };
     submitBtn.style.cursor = 'pointer';
     submitBtn.style.background = 'var(--accent)';

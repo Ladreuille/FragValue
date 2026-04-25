@@ -269,7 +269,7 @@ async function attributeReferrer(session) {
       if (d.code === 'already_referred') {
         sessionStorage.setItem('fv_referral_info', 'already_referred');
       }
-    } else if (d.error === 'Code inconnu') {
+    } else if (d.error === 'Unknown code') {
       // Code invalide : on nettoie silencieusement
       localStorage.removeItem('fv_pending_ref');
       sessionStorage.setItem('fv_referral_info', 'invalid_code');
@@ -281,7 +281,7 @@ async function attributeReferrer(session) {
 }
 
 // Rediriger si déjà connecté + lier FACEIT waiting
-// Choisit la destination post-login : users qui n'ont jabut upload de demo
+// Choisit la destination post-login : users qui n'ont jamais upload de demo
 // atterrissent direct sur /demo.html?welcome=1 pour les guider vers la 1re
 // analyse (le "aha moment"). Users qui ont deja des demos : account.html
 // (abonnement, historique, parrainage).
@@ -431,7 +431,7 @@ function getAuthOrigin() {
 // Fallback sur le message brut si on ne reconnaît pas le pattern.
 function translateAuthError(err) {
   const msg = String(err?.message || err || '').toLowerCase();
-  if (msg.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
+  if (msg.includes('invalid login credentials')) return 'Email or password incorrect.';
   if (msg.includes('user already registered') || msg.includes('already been registered')) return 'This email is already in use. Sign in or use the magic link.';
   if (msg.includes('email rate limit') || msg.includes('rate limit')) return 'Too many attempts. Wait a minute before retrying.';
   if (msg.includes('password should be at least')) return 'Password must be at least 6 characters.';
