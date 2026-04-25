@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="description" content="FragValue · CS2 Match Analytics">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <title>FragValue · FACEIT login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080909;--surface:#0f1010;--card:#131414;
+      --border:#1c1e1e;--border2:#252727;
+      --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+      --accent:#b8ff57;--danger:#ff4444;--success:#2dd4a0;
+      --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+      --r:6px;--r2:12px
+    }
+    body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:40px 36px;text-align:center;max-width:420px;width:90%;position:relative;z-index:1}
+    .spinner{width:36px;height:36px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 20px}
+    .title{font-family:var(--display);font-size:24px;letter-spacing:.02em;margin-bottom:8px}
+    .sub{font-size:12px;color:var(--text2);line-height:1.7}
+    .error-msg{font-size:11px;color:var(--danger);margin-top:14px;padding:11px 14px;background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.2);border-radius:var(--r)}
+    .success-icon{width:48px;height:48px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+    .success-icon svg{width:24px;height:24px;color:var(--success)}
+    .faceit-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,85,0,.08);border:1px solid rgba(255,85,0,.2);color:#ff5500;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:700;margin-top:10px}
+    .link-btn{display:inline-block;background:var(--accent);color:#000;padding:10px 22px;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em;margin-top:16px;border:none;cursor:pointer}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="spinner" id="spinner"></div>
+  <div class="title" id="title">FACEIT login</div>
+  <p class="sub" id="sub">Recuperation de ton profil...</p>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+async function handleCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const errorParam = params.get('error');
+
+  if (errorParam) {
+    showError('Error FACEIT : ' + (params.get('error_description') || errorParam));
+    return;
+  }
+
+  if (!code) {
+    showError('No FACEIT code received. Try again from the sign-in page.');
+    return;
+  }
+
+  // ── Guard anti-double-call ────────────────────────────────────────────
+  // Le code OAuth est à usage unique. Si la page est rechargee / le back
+  // button est utilisé / le BFCache re-exécute le script, on relance un
+  // POST avec le même code -> 400. Pour éviter ca, on tagge le code
+  // comme "en cours" dans sessionStorage. Si on detecte un re-run, on
+  // regarde si la session Supabase a déjà été créée (cas du 2e run
+  // legitime post-redirect). Si oui, on redirige. Sinon, on bloque.
+  const processedKey = 'fv_faceit_code_processed';
+  const processedCode = sessionStorage.getItem(processedKey);
+
+  if (processedCode === code) {
+    // Ce code a déjà été traité dans cet onglet. Vérifie la session et redirige.
+    try {
+      const { data } = await sb.auth.getSession();
+      if (data?.session) {
+        updateStatus('Already signed in, redirecting...');
+        setTimeout(() => { window.location.href = '/account.html'; }, 400);
+        return;
+      }
+    } catch (_) {}
+    // Not session : l'utilisateur doit refaire le flow.
+    showError('Ce code FACEIT a expire. Recommence la connexion.');
+    return;
+  }
+
+  sessionStorage.setItem(processedKey, code);
+
+  // Vérification anti-CSRF + récupération du code_verifier PKCE.
+  // Purge des secrets orphelins > 10 min pour éviter l'accumulation.
+  const TEN_MIN = 10 * 60 * 1000;
+  const verifierTs = parseInt(localStorage.getItem('faceit_code_verifier_ts') || '0', 10);
+  if (verifierTs && (Date.now() - verifierTs) > TEN_MIN) {
+    localStorage.removeItem('faceit_code_verifier');
+    localStorage.removeItem('faceit_code_verifier_ts');
+    localStorage.removeItem('faceit_oauth_state');
+    localStorage.removeItem('faceit_redirect_uri');
+  }
+  const expectedState =
+    localStorage.getItem('faceit_oauth_state') ||
+    sessionStorage.getItem('faceit_oauth_state') ||
+    '';
+  const returnedState = params.get('state') || '';
+  if (expectedState && returnedState && expectedState !== returnedState) {
+    showError('Invalid OAuth state (CSRF protection). Restart sign-in.');
+    return;
+  }
+
+  const codeVerifier =
+    localStorage.getItem('faceit_code_verifier') ||
+    sessionStorage.getItem('faceit_code_verifier') ||
+    '';
+  if (!codeVerifier) {
+    showError('OAuth session expired (code_verifier missing). Restart sign-in.');
+    return;
+  }
+
+  // Dynamique : marche sur fragvalue.com (prod) ET frag-value.vercel.app (preview)
+  // Doit correspondre EXACTEMENT a celui envoye lors de l'auth request dans login.html
+  const redirectUri = window.location.origin + '/faceit-callback.html';
+
+  // Step 1: Exchange code for FACEIT profile
+  updateStatus('Echange du token FACEIT...');
+  let faceitData;
+  try {
+    const res = await fetch('/api/faceit-auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code,
+        redirect_uri: redirectUri,
+        code_verifier: codeVerifier,
+      }),
+    });
+    faceitData = await res.json();
+    if (!res.ok || !faceitData.success) {
+      // Si l'echange a échoué mais que la session Supabase existe déjà,
+      // c'est probablement une race: le 1er appel avait reussi côté serveur,
+      // Supabase a connecte l'user, puis notre onglet a renvoye le code
+      // une 2eme fois (refresh/BFCache). On considere le login OK.
+      try {
+        const { data } = await sb.auth.getSession();
+        if (data?.session) {
+          updateStatus('Sign in confirmee, redirection...');
+          setTimeout(() => { window.location.href = '/account.html'; }, 400);
+          return;
+        }
+      } catch (_) {}
+      // Not session, vraie erreur : reset le guard pour permettre un retry.
+      sessionStorage.removeItem(processedKey);
+      showError(faceitData.error || 'Token exchange failed.');
+      return;
+    }
+  } catch (err) {
+    sessionStorage.removeItem(processedKey);
+    showError('Error reseau : ' + err.message);
+    return;
+  }
+
+  sessionStorage.removeItem('faceit_oauth_state');
+  sessionStorage.removeItem('faceit_code_verifier');
+  localStorage.removeItem('faceit_oauth_state');
+  localStorage.removeItem('faceit_code_verifier');
+  localStorage.removeItem('faceit_code_verifier_ts');
+  localStorage.removeItem('faceit_redirect_uri');
+
+  // Step 2: Auto-login Supabase via session token
+  updateStatus('Sign in automatique...');
+
+  let session = null;
+
+  // Si l'API a retourne un sessionToken, on s'authentifie avec
+  if (faceitData.sessionToken) {
+    try {
+      const { error: verifyError } = await sb.auth.verifyOtp({
+        token_hash: faceitData.sessionToken,
+        type: 'magiclink',
+      });
+      if (!verifyError) {
+        const { data } = await sb.auth.getSession();
+        session = data?.session || null;
+      }
+    } catch (e) {
+      console.warn('Auto-login OTP error:', e.message);
+    }
+  }
+
+  // Fallback : session existante
+  if (!session) {
+    const { data } = await sb.auth.getSession();
+    session = data?.session || null;
+  }
+
+  if (session) {
+    try {
+      await linkFaceitToProfile(session.user.id, faceitData);
+      showSuccess(faceitData);
+    } catch (e) {
+      // Le lien FACEIT a échoué (RLS, reseau, DB down). Ne pas montrer
+      // showSuccess qui afficherait a tort 'Account lie' alors qu'il ne l'est pas.
+      document.getElementById('card').innerHTML = `
+        <div class="error-icon" style="color:var(--danger);font-size:40px;margin-bottom:12px">!</div>
+        <div class="title" style="color:var(--danger)">Liaison incomplete</div>
+        <p class="sub" style="margin-top:12px">Your FACEIT account could not be linked to your FragValue profile. Try again from your account.</p>
+        <a href="/en/account.html" class="link-btn" style="margin-top:16px;display:inline-block">Back a mon espace</a>
+      `;
+    }
+  } else {
+    // Dernier recours : stocker les données FACEIT pending
+    sessionStorage.setItem('pending_faceit_link', JSON.stringify(faceitData));
+    document.getElementById('card').innerHTML = `
+      <div class="title">FACEIT Account verified</div>
+      <div class="faceit-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>
+        ${faceitData.nickname}${faceitData.level ? ' . Lvl ' + faceitData.level : ''}
+      </div>
+      <p class="sub" style="margin-top:16px">Sign in or create an account to link your FACEIT profile.</p>
+      <a href="login.html" class="link-btn">Sign in</a>
+    `;
+  }
+}
+
+async function linkFaceitToProfile(userId, data) {
+  // IMPORTANT : laisser l'erreur se propager pour que le caller puisse afficher
+  // un état d'échec a l'user plutôt que d'afficher showSuccess alors que le
+  // compte n'est PAS lie (bug P1 identifie par l'audit UX).
+  const { error } = await sb.from('profiles').upsert({
+    id: userId,
+    faceit_nickname: data.nickname,
+    faceit_id: data.playerId,
+    faceit_avatar: data.avatar || null,
+    faceit_elo: data.elo || null,
+    faceit_level: data.level || null,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'id' });
+  if (error) {
+    console.warn('Profile link error:', error.message);
+    throw new Error(error.message || 'Profile upsert failed');
+  }
+}
+
+function showSuccess(data) {
+  document.getElementById('card').innerHTML = `
+    <div class="success-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="title" style="color:var(--success)">Account lie</div>
+    <div class="faceit-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>
+      ${data.nickname}${data.level ? ' . Lvl ' + data.level : ''}${data.elo ? ' . ' + data.elo + ' ELO' : ''}
+    </div>
+    <p class="sub" style="margin-top:12px">Redirection...</p>
+  `;
+  if (window.opener && !window.opener.closed) {
+    window.opener.postMessage({ type: 'FACEIT_AUTH_SUCCESS' }, window.location.origin);
+    setTimeout(() => window.close(), 300);
+  } else {
+    setTimeout(() => { window.location.href = '/account.html'; }, 1500);
+  }
+}
+
+function updateStatus(msg) {
+  document.getElementById('sub').textContent = msg;
+}
+
+function showError(msg) {
+  document.getElementById('spinner').style.display = 'none';
+  document.getElementById('title').textContent = 'Error';
+  document.getElementById('title').style.color = 'var(--danger)';
+  document.getElementById('sub').innerHTML = '';
+  const e = document.createElement('div');
+  e.className = 'error-msg';
+  e.textContent = msg;
+  document.getElementById('card').appendChild(e);
+  const btn = document.createElement('a');
+  btn.href = 'login.html';
+  btn.className = 'link-btn';
+  btn.textContent = 'Back';
+  btn.style.display = 'inline-block';
+  btn.style.marginTop = '16px';
+  document.getElementById('card').appendChild(btn);
+}
+
+handleCallback();
+</script>
+</body>
+</html>

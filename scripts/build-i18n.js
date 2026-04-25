@@ -48,6 +48,14 @@ const PAGES = [
   'team.html',
   'blog.html',
   'onboarding.html',
+  // Pages techniques + post-analyse (ajoutees Phase 9)
+  'replay.html',
+  'analysis.html',
+  'heatmap-results.html',
+  'pro-match.html',
+  'share.html',
+  'extension-auth.html',
+  'faceit-callback.html',
 ];
 
 // Charge le dictionnaire (objet plat { "fr": "en" })

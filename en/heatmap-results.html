@@ -1,0 +1,3077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <title>FragValue · CS2 Heatmaps & Diagnostic</title>
+  <meta name="description" content="Heatmaps of your CS2 kills, deaths and duels by map and side. Round-by-round 2D replay with timeline and grenade trajectories.">
+  <!-- Open Graph / Twitter Card : preview riche au partage des résultats heatmap -->
+  <meta property="og:title" content="FragValue · CS2 Heatmaps & Diagnostic"/>
+  <meta property="og:description" content="Positioning heatmaps by player, kills/deaths by zone, 2D replay and FV Rating. First demo free."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://fragvalue.com/en/heatmap-results.html"/>
+  <meta property="og:image" content="https://fragvalue.com/og/heatmap.png"/>
+  <meta property="og:image:alt" content="FragValue · Heatmaps"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:locale" content="en_US"/>
+  <meta property="og:site_name" content="FragValue"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:site" content="@fragvaluegg"/>
+  <meta name="twitter:title" content="FragValue · CS2 Heatmaps & Diagnostic"/>
+  <meta name="twitter:description" content="Positioning heatmaps by player, kills/deaths by zone, 2D replay and FV Rating. First demo free."/>
+  <meta name="twitter:image" content="https://fragvalue.com/og/heatmap.png"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080909;--surface:#0f1010;--card:#131414;
+      --border:#1c1e1e;--border2:#252727;
+      --accent:#b8ff57;--accent-dim:rgba(184,255,87,.1);
+      --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+      --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+      --font:'Space Mono',monospace;--mono:'Space Mono',monospace;
+      --display:'Anton',sans-serif;
+      --radius:6px;--radius2:12px
+    }
+    body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;-webkit-font-smoothing:antialiased}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+    .logo{font-family:var(--display);font-size:20px;letter-spacing:.04em;text-decoration:none;color:var(--text)}
+    .logo-accent{color:var(--accent)}
+    .nav-link{font-size:12px;color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:var(--radius);letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+    .nav-link:hover{color:var(--text);background:rgba(255,255,255,.04)}
+    .nav-cta{background:var(--accent);color:#000;padding:7px 16px;border-radius:var(--radius);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.04em;transition:all .15s}
+    .nav-cta:hover{filter:brightness(1.1);transform:translateY(-1px)}
+    .page{max-width:1200px;margin:0 auto;padding:28px 32px 80px}
+    .section-label{font-size:10px;letter-spacing:.16em;color:var(--text3);text-transform:uppercase;margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+    .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+    .no-data{text-align:center;padding:80px 24px}
+    .no-data-title{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:8px}
+    .no-data-sub{font-size:13px;color:var(--text2);margin-bottom:24px;font-family:var(--mono)}
+    .no-data-btn{display:inline-block;background:var(--accent);color:#000;padding:11px 24px;border-radius:var(--radius);font-family:var(--mono);font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em}
+    .meta-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+    .meta-item{text-align:center}
+    .meta-val{font-family:var(--display);font-size:28px;color:var(--accent);line-height:1}
+    .meta-label{font-size:10px;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:20px}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+    .stat-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:7px;font-family:var(--mono)}
+    .stat-val{font-family:var(--display);font-size:22px;line-height:1}
+    .stat-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
+    .c-accent{color:var(--accent)}.c-good{color:var(--success)}.c-warn{color:var(--gold)}.c-neutral{color:var(--text)}
+    .heatmap-tabs{display:flex;gap:4px;margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px;width:fit-content;flex-wrap:wrap}
+    .heatmap-tab{font-family:var(--mono);font-size:12px;font-weight:500;padding:7px 14px;border-radius:6px;cursor:pointer;color:var(--text2);border:none;background:transparent;transition:all .15s;display:flex;align-items:center;gap:4px}
+    .heatmap-tab.active{background:var(--card);color:var(--accent);border:1px solid rgba(184,255,87,.2)}
+    .floor-toggle{display:none;gap:4px;margin-bottom:10px;align-items:center}
+    .floor-toggle.visible{display:flex}
+    .floor-btn{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:5px;cursor:pointer;color:var(--text2);border:1px solid var(--border);background:transparent;transition:all .15s}
+    .floor-btn.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(184,255,87,.3)}
+    .side-toggle{display:flex;gap:6px;margin-bottom:14px;align-items:center}
+    .side-toggle-label{font-family:var(--mono);font-size:11px;color:var(--text3);margin-right:4px}
+    .side-btn{font-family:var(--mono);font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all .15s;display:flex;align-items:center;gap:5px}
+    .side-btn.active-ct{background:rgba(184,255,87,.08);color:var(--accent);border-color:rgba(184,255,87,.25)}
+    .side-btn.active-t{background:rgba(245,200,66,.1);color:var(--gold);border-color:rgba(245,200,66,.25)}
+    .side-check{width:10px;height:10px;border-radius:2px;border:1.5px solid currentColor;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+    .side-check::after{content:'';width:5px;height:5px;border-radius:1px;background:currentColor;display:none}
+    .side-btn.active-ct .side-check::after,.side-btn.active-t .side-check::after{display:block}
+    .side-stats-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+    .side-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+    .side-stat-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
+    .side-dot-ct{width:7px;height:7px;border-radius:50%;background:#4A9EFF;flex-shrink:0}
+    .side-dot-t{width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0}
+    .side-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .side-stat-item{text-align:center}
+    .side-stat-val{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.5px}
+    .side-stat-lbl{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
+    /* ── Layout fullscreen replay ─────────────────────────────── */
+    .canvas-outer{display:flex;flex-direction:column;gap:0}
+
+    /* Mode normal (heatmaps) */
+    .canvas-wrap{display:grid;grid-template-columns:1fr 220px;gap:14px;align-items:start}
+    @media(max-width:700px){.canvas-wrap{grid-template-columns:1fr}}
+    .canvas-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px}.replay-canvas-card{border-radius:10px 10px 0 0!important;border-bottom:none!important}
+    #heatmapCanvas{width:100%;height:auto;border-radius:6px;display:block}
+
+    /* Mode replay fullscreen */
+    .replay-fullscreen{
+      position:fixed;inset:0;z-index:200;
+      background:var(--bg);
+      display:none;flex-direction:column;
+    }
+    .replay-fullscreen.active{display:flex}
+
+    /* Header replay */
+    .rf-header{
+      height:48px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 16px;
+      background:rgba(8,9,9,.95);
+      border-bottom:1px solid var(--border);
+    }
+    .rf-title{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:8px}
+    .rf-map{color:var(--accent)}
+    .rf-close{background:var(--card);border:1px solid var(--border);color:var(--text2);padding:5px 12px;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .15s}
+    .rf-close:hover{border-color:var(--danger);color:var(--danger)}
+    .rf-round-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;background:rgba(184,255,87,.08);color:var(--accent);border:1px solid rgba(184,255,87,.2);padding:4px 10px;border-radius:var(--radius)}
+    .rf-live-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 1.8s infinite}
+
+    /* Zone principale */
+    .rf-main{flex:1;display:grid;grid-template-columns:1fr 200px;min-height:0;overflow:hidden}
+
+    /* Canvas */
+    .rf-canvas-wrap{position:relative;background:#0A0C12;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    #replayCanvas{max-width:100%;max-height:100%;display:block}
+
+    /* Panel droit players */
+    .rf-panel{
+      background:var(--surface);border-left:1px solid var(--border);
+      display:flex;flex-direction:column;overflow-y:auto;
+      padding:10px;gap:4px;
+    }
+    .rf-panel-title{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+    .rf-player{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:all .12s;border:1px solid transparent}
+    .rf-player:hover{background:rgba(255,255,255,.04)}
+    .rf-player.active{background:rgba(184,255,87,.05);border-color:rgba(184,255,87,.15)}
+    .rf-player-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .rf-player-name{font-family:var(--mono);font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rf-player-kd{font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0}
+    .rf-player.dead .rf-player-name{opacity:.35;text-decoration:line-through}
+
+    /* Footer replay */
+    .rf-footer{
+      flex-shrink:0;
+      background:rgba(8,9,9,.97);
+      border-top:1px solid var(--border);
+      padding:10px 16px 12px;
+      display:flex;flex-direction:column;gap:8px;
+    }
+
+    /* Barre rounds dans le footer */
+    .rf-rounds{display:flex;gap:2px;flex-wrap:nowrap;overflow-x:auto;align-items:center;padding-bottom:2px}
+    .rf-rounds::-webkit-scrollbar{height:3px}
+    .rf-rounds::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+    .rnd2{
+      position:relative;min-width:24px;height:28px;border-radius:5px;
+      border:1px solid var(--border);background:var(--card);
+      color:var(--text3);font-family:var(--mono);font-size:9px;font-weight:700;
+      cursor:pointer;transition:all .15s;
+      display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;overflow:hidden;
+    }
+    .rnd2::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+    .rnd2.win::after{background:var(--success)}
+    .rnd2.loss::after{background:var(--danger)}
+    .rnd2:hover{border-color:rgba(184,255,87,.3);color:var(--text)}
+    .rnd2.sel{background:var(--accent);border-color:var(--accent);color:#000;box-shadow:0 2px 8px rgba(184,255,87,.3)}
+    .rnd2-all{min-width:auto;padding:0 8px;font-size:9px}
+    .rnd2-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;margin:0 2px}
+
+    /* Timeline + controls dans footer */
+    .rf-controls-row{display:flex;align-items:center;gap:10px}
+    .rf-time{font-family:var(--mono);font-size:10px;color:var(--text2);white-space:nowrap;min-width:80px}
+    .rf-timeline{flex:1;position:relative;height:5px;background:var(--border);border-radius:3px;cursor:pointer}
+    .rf-timeline:hover{background:var(--border2)}
+    .rf-tl-fill{height:100%;background:var(--accent);border-radius:3px;pointer-events:none}
+    .rf-tl-thumb{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--accent);transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 2px rgba(184,255,87,.2)}
+    .rf-kill-mark{position:absolute;top:50%;transform:translate(-50%,-50%);width:3px;height:8px;border-radius:1.5px;background:var(--danger);opacity:.5;pointer-events:none}
+    .rf-btns{display:flex;align-items:center;gap:3px}
+    .rfb{width:32px;height:32px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+    .rfb:hover{border-color:rgba(184,255,87,.4);color:var(--accent)}
+    .rfb svg{pointer-events:none;display:block}
+    .rfb-play{width:38px;height:38px;border-radius:10px;background:var(--accent);border-color:var(--accent);color:#000;box-shadow:0 2px 10px rgba(184,255,87,.2)}
+    .rfb-play:hover{opacity:.9}
+    .rf-speeds{display:flex;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:2px;gap:1px}
+    .rfs{font-family:var(--mono);font-size:9px;font-weight:600;padding:4px 7px;border-radius:5px;cursor:pointer;color:var(--text3);border:none;background:transparent;transition:all .15s}
+    .rfs:hover:not(.on){color:var(--text)}
+    .rfs.on{background:var(--accent);color:#000}
+    .rf-kills-chips{display:flex;gap:4px;flex-wrap:wrap;min-height:16px}
+    .rfc{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(240,107,107,.08);color:var(--danger);border:1px solid rgba(240,107,107,.14)}
+    .rfc.hs{background:rgba(245,200,66,.08);color:var(--gold);border-color:rgba(245,200,66,.14)}
+    .map-notice{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:6px;text-align:center}
+    .legend{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+    .legend-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--text3)}
+    .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .player-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+    .panel-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;font-family:var(--mono)}
+    .panel-hint{font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:10px}
+    .player-btn{width:100%;text-align:left;padding:7px 10px;border-radius:6px;font-family:var(--mono);font-size:11px;color:var(--text2);border:1px solid transparent;background:transparent;cursor:pointer;transition:all .12s;margin-bottom:3px;display:flex;align-items:center;gap:7px}
+    .player-btn:hover{border-color:var(--border);color:var(--text)}
+    .player-btn.active{color:var(--text);background:rgba(255,255,255,.05)}
+    .player-btn.disabled-max{opacity:.4;cursor:not-allowed}
+    .p-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}.p-dot.off{opacity:.2}
+    .p-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .p-kd{font-size:10px;color:var(--text3);flex-shrink:0}
+    .p-star{color:var(--gold);font-size:10px;flex-shrink:0}
+    .p-check{font-size:10px;color:var(--success);flex-shrink:0;opacity:0;transition:opacity .12s}
+    .player-btn.active .p-check{opacity:1}
+    .select-all-btn{width:100%;font-family:var(--mono);font-size:10px;padding:5px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;margin-bottom:8px;transition:all .12s}
+    .select-all-btn:hover{color:var(--text);border-color:var(--text3)}
+    .export-btn{width:100%;font-family:var(--mono);font-size:11px;padding:7px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;margin-top:8px}
+    .export-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .compare-btn{width:100%;font-family:var(--mono);font-size:11px;padding:7px;border-radius:6px;border:1px solid rgba(45,212,160,.3);background:rgba(45,212,160,.06);color:var(--success);cursor:pointer;transition:all .15s;margin-top:6px}
+    .compare-btn:hover{border-color:var(--success);background:rgba(45,212,160,.12)}
+    .table-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:20px}
+    table{width:100%;border-collapse:collapse;font-size:12px;min-width:380px}
+    th{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--card);letter-spacing:.5px;font-weight:500}
+    td{padding:9px 14px;border-bottom:1px solid rgba(37,42,56,.5);font-family:var(--mono);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:rgba(255,255,255,.015)}
+    .td-name{color:var(--text);font-weight:500}
+    .td-good{color:var(--success)}.td-bad{color:var(--danger)}
+
+    /* ══ REPLAY ══════════════════════════════════════════════════════════════ */
+    .replay-system{display:none;flex-direction:column;gap:0;margin-top:14px}
+    .replay-system.visible{display:flex}
+
+    /* Barre 1 : Rounds */
+    .rounds-nav{background:var(--surface);border:1px solid var(--border);border-radius:10px 10px 0 0;border-bottom:1px solid var(--border2);padding:14px 18px 12px}
+    .rounds-nav-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .rounds-nav-title{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--text3)}
+    .rounds-nav-legend{display:flex;gap:12px}
+    .rnl-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--text3)}
+    .rnl-pip{width:10px;height:3px;border-radius:2px}
+    .rounds-list{display:flex;gap:3px;flex-wrap:wrap;align-items:center}
+    .rnd{position:relative;width:26px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text3);font-family:var(--mono);font-size:9px;font-weight:700;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+    .rnd::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+    .rnd.win::after{background:var(--success)}
+    .rnd.loss::after{background:var(--danger)}
+    .rnd:hover{border-color:rgba(184,255,87,.3);color:var(--text);transform:translateY(-2px);background:rgba(184,255,87,.04)}
+    .rnd.sel{background:var(--accent);border-color:var(--accent);color:#000;transform:translateY(-2px);box-shadow:0 4px 12px rgba(184,255,87,.25)}
+    .rnd.sel::after{background:rgba(255,255,255,.4)}
+    .rnd-all{width:auto;padding:0 10px;font-size:9px;letter-spacing:.4px}
+    .rnd-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 3px}
+
+    /* Barre 2 : Timeline */
+    .round-player{background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:14px 18px}
+    .rp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .rp-round-tag{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;font-weight:700;background:rgba(184,255,87,.08);color:var(--accent);border:1px solid rgba(184,255,87,.2);padding:5px 12px;border-radius:var(--radius)}
+    .rp-live-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 1.8s infinite}
+    .rp-time{font-family:var(--mono);font-size:11px}
+    .rp-time-cur{color:var(--text);font-weight:700}
+    .rp-time-sep,.rp-time-tot{color:var(--text3)}
+    .rp-time-sep{margin:0 3px}
+    .rp-timeline-wrap{position:relative;margin-bottom:14px;user-select:none}
+    .rp-track{height:6px;background:var(--border);border-radius:3px;cursor:pointer;position:relative;overflow:visible}
+    .rp-track:hover{background:var(--border2)}
+    .rp-fill{height:100%;background:var(--accent);border-radius:3px;pointer-events:none}
+    .rp-thumb{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#000;border:3px solid var(--accent);transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 3px rgba(184,255,87,.2)}
+    .rp-kill-mark{position:absolute;top:50%;transform:translate(-50%,-50%);width:3px;height:10px;border-radius:1.5px;background:var(--danger);opacity:.5;pointer-events:none}
+    .rp-controls{display:flex;align-items:center;gap:8px}
+    .rp-btn-group{display:flex;align-items:center;gap:4px}
+    .rpb{width:36px;height:36px;border-radius:9px;background:var(--card);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;flex-shrink:0}
+    .rpb:hover{border-color:rgba(184,255,87,.4);color:var(--accent);background:rgba(184,255,87,.05)}
+    .rpb svg{pointer-events:none;display:block}
+    .rpb-play{width:44px;height:44px;border-radius:12px;background:var(--accent);border-color:var(--accent);color:#000;box-shadow:0 4px 14px rgba(184,255,87,.2)}
+    .rpb-play:hover{opacity:.92;box-shadow:0 6px 20px rgba(184,255,87,.2)}
+    .rp-speeds{display:flex;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px;margin-left:auto}
+    .rps{font-family:var(--mono);font-size:10px;font-weight:600;padding:5px 9px;border-radius:6px;cursor:pointer;color:var(--text3);border:none;background:transparent;transition:all .15s}
+    .rps:hover:not(.on){color:var(--text)}
+    .rps.on{background:var(--accent);color:#000}
+    .rp-kills{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px;padding-top:11px;border-top:1px solid var(--border);min-height:24px}
+    .rp-kill{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:5px;background:rgba(240,107,107,.08);color:var(--danger);border:1px solid rgba(240,107,107,.14);display:flex;align-items:center;gap:4px}
+    .rp-kill.hs{background:rgba(245,200,66,.08);color:var(--gold);border-color:rgba(245,200,66,.14)}
+
+    /* ── Match header ── */
+    .match-header{display:flex;align-items:center;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 24px;margin-bottom:16px;flex-wrap:wrap;gap:24px}
+    .mh-item{text-align:center}
+    .mh-val{font-family:var(--display);font-size:22px;color:var(--accent);line-height:1}
+    .mh-lbl{font-size:9px;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
+    .mh-div{width:1px;height:36px;background:var(--border);flex-shrink:0}
+
+    /* ── Side filter bar ── */
+    .side-filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+    .sfb-label{font-family:var(--mono);font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+    .sfb-btns{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:3px;gap:2px}
+    .sfb-btn{font-family:var(--mono);font-size:11px;font-weight:600;padding:6px 14px;border-radius:5px;cursor:pointer;color:var(--text2);border:none;background:transparent;transition:all .15s}
+    .sfb-btn.active{background:var(--card);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+    .sfb-btn.ct.active{background:rgba(74,158,255,.15);color:#4A9EFF}
+    .sfb-btn.t.active{background:rgba(245,200,66,.12);color:var(--gold)}
+    .btn-2d-demo{display:inline-flex;align-items:center;gap:7px;margin-left:auto;background:var(--accent);color:#000;padding:9px 18px;border-radius:var(--radius);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.04em;border:none;cursor:pointer;transition:all .2s;box-shadow:0 0 16px rgba(184,255,87,.15)}
+    .btn-2d-demo:hover{opacity:.9;transform:translateY(-1px)}
+
+    /* ── Match stats HLTV style ── */
+    .ms-team-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px}
+    .ms-team-header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--card)}
+    .ms-team-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+    .ms-team-name{font-size:16px;font-weight:700;letter-spacing:-.3px}
+    .ms-team-score{font-family:var(--display);font-size:22px;margin-left:auto}
+    .ms-cols{display:grid;grid-template-columns:1fr 90px 80px 80px 80px 80px;align-items:center;padding:0 20px;border-bottom:1px solid rgba(37,42,56,.4)}
+    .ms-cols-header{padding:8px 20px;font-family:var(--mono);font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+    .ms-col{text-align:center;font-family:var(--mono);font-size:12px;color:var(--text3)}
+    .ms-col-name{text-align:left}
+    .ms-player-row{display:grid;grid-template-columns:1fr 90px 80px 80px 80px 80px;align-items:center;padding:10px 20px;border-bottom:1px solid rgba(37,42,56,.35);transition:background .12s;cursor:pointer}
+    .ms-player-row:last-child{border-bottom:none}
+    .ms-player-row:hover{background:rgba(255,255,255,.02)}
+    .ms-player-name{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500}
+    .ms-player-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .ms-val{text-align:center;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text2)}
+    .ms-val.good{color:var(--success);font-weight:700}
+    .ms-val.bad{color:var(--danger)}
+    .ms-val.rating{font-size:14px;font-weight:700}
+    .ms-val.rating.good{color:var(--success)}
+    .ms-val.rating.avg{color:var(--gold)}
+    .ms-val.rating.bad{color:var(--danger)}
+    @media(max-width:700px){.ms-player-row,.ms-cols{grid-template-columns:1fr 70px 65px 65px}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+
+    /* ── Layout replay-only ── */
+    .replay-outer{display:flex;flex-direction:column;gap:0}
+    .replay-map-row{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:start;margin-bottom:0}
+    @media(max-width:700px){.replay-map-row{grid-template-columns:1fr}}
+    .replay-canvas-card{background:var(--card);border:1px solid var(--border);border-radius:10px 10px 0 0;padding:12px;border-bottom:none}
+
+    /* Match header compact */
+    .match-header{
+      display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+      background:var(--surface);border:1px solid var(--border);border-radius:10px;
+      padding:14px 20px;margin-bottom:16px;
+    }
+    .mh-item{text-align:center}
+    .mh-val{font-size:20px;font-weight:700;letter-spacing:-.8px;color:var(--accent);font-family:var(--mono);line-height:1}
+    .mh-lbl{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono)}
+    .mh-divider{width:1px;height:32px;background:var(--border);flex-shrink:0}
+
+    /* Team Stats */
+    .teams-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    @media(max-width:600px){.teams-grid{grid-template-columns:1fr}}
+    .team-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+    .team-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+    .team-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .team-name{font-size:13px;font-weight:700;letter-spacing:-.2px}
+    .team-score{font-family:var(--mono);font-size:18px;font-weight:700;margin-left:auto}
+    .team-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+    .team-stat{text-align:center;background:var(--card);border-radius:6px;padding:8px 4px}
+    .team-stat-val{font-size:15px;font-weight:700;font-family:var(--mono);letter-spacing:-.5px;line-height:1}
+    .team-stat-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-top:3px;font-family:var(--mono)}
+
+    /* Rounds couleur CT/T */
+    .rnd.ct-win::after{background:#4A9EFF}
+    .rnd.t-win::after{background:var(--gold)}
+
+    /* Stats player sélectionné */
+    .player-stats-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:10px;
+      padding:20px 24px;animation:fadeUp .2s ease;
+    }
+    .psc-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+    .psc-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+    .psc-name{font-size:18px;font-weight:700;letter-spacing:-.4px}
+    .psc-kd-badge{font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 9px;border-radius:5px;margin-left:auto}
+    .psc-kd-good{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.2)}
+    .psc-kd-bad{background:rgba(240,107,107,.08);color:var(--danger);border:1px solid rgba(240,107,107,.2)}
+    .psc-kd-neutral{background:rgba(184,255,87,.08);color:var(--accent);border:1px solid rgba(184,255,87,.2)}
+    .psc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px}
+    .psc-stat{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+    .psc-stat-val{font-size:20px;font-weight:700;font-family:var(--mono);letter-spacing:-.6px;line-height:1}
+    .psc-stat-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;font-family:var(--mono)}
+    .psc-rounds{display:flex;flex-direction:column;gap:3px}
+    .psc-rounds-title{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+    .psc-round-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:5px;background:var(--card);font-family:var(--mono);font-size:10px}
+    .psc-round-num{color:var(--text3);width:20px;flex-shrink:0}
+    .psc-round-kills{color:var(--success);width:20px;font-weight:600}
+    .psc-round-hs{color:var(--gold);width:30px}
+    .psc-round-result{margin-left:auto;font-weight:600}
+    .psc-round-result.w{color:var(--success)}.psc-round-result.l{color:var(--danger)}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ── Highlights bloc ── */
+    .highlights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:20px}
+    .hl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+    .hl-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+    .hl-body{min-width:0}
+    .hl-label{font-size:10px;font-weight:600;letter-spacing:.5px;color:var(--text3);text-transform:uppercase;font-family:var(--mono);margin-bottom:3px}
+    .hl-name{font-size:14px;font-weight:700;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .hl-val{font-family:var(--mono);font-size:12px;color:var(--text2);margin-top:1px}
+
+    /* ── Tableau teams étendu ── */
+    .ms-cols{display:grid;grid-template-columns:1fr 80px 65px 60px 70px 60px 60px 80px;align-items:center;padding:0 20px;border-bottom:1px solid rgba(37,42,56,.4)}
+    .ms-player-row{display:grid;grid-template-columns:1fr 80px 65px 60px 70px 60px 60px 80px;align-items:center;padding:10px 20px;border-bottom:1px solid rgba(37,42,56,.35);transition:background .12s;cursor:pointer}
+    .ms-player-row:last-child{border-bottom:none}
+    .ms-player-row:hover{background:rgba(255,255,255,.02)}
+    @media(max-width:900px){.ms-player-row,.ms-cols{grid-template-columns:1fr 70px 60px 55px 65px 55px}}
+
+    /* ── Graphique barres FV Rating ── */
+    .perf-chart{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-top:20px}
+    .perf-chart-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);margin-bottom:14px}
+    .perf-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+    .perf-bar-name{font-family:var(--mono);font-size:11px;color:var(--text2);width:110px;flex-shrink:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .perf-bar-track{flex:1;height:18px;background:var(--card);border-radius:4px;overflow:hidden;position:relative}
+    .perf-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;min-width:2px}
+    .perf-bar-val{font-family:var(--mono);font-size:11px;font-weight:700;width:36px;flex-shrink:0;text-align:left}
+    .perf-ref-line{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.15);pointer-events:none}
+
+    /* ── FV RATING HERO CARD : le "aha moment" post-analyse.
+         Score en gros, color-coding selon performance, context humain
+         (Excellent / Solid / Average / Needs work). ── */
+    .fv-hero{
+      background:linear-gradient(135deg,var(--surface),var(--card));
+      border:1px solid var(--border);border-radius:14px;
+      padding:28px 32px;margin-bottom:20px;
+      display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center;
+      position:relative;overflow:hidden
+    }
+    .fv-hero::before{
+      content:'';position:absolute;top:0;left:0;bottom:0;width:4px;
+      background:var(--fv-accent, var(--accent));transition:background .3s
+    }
+    .fv-hero[data-tier="excellent"]{--fv-accent:var(--success)}
+    .fv-hero[data-tier="solid"]{--fv-accent:var(--accent)}
+    .fv-hero[data-tier="average"]{--fv-accent:var(--gold)}
+    .fv-hero[data-tier="weak"]{--fv-accent:var(--danger)}
+    .fv-hero-score-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+    .fv-hero-label{
+      font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+      text-transform:uppercase;color:var(--text3)
+    }
+    .fv-hero-score{
+      font-family:var(--display);font-size:clamp(48px,6vw,68px);
+      line-height:1;letter-spacing:.01em;color:var(--fv-accent,var(--accent))
+    }
+    .fv-hero-sub{
+      font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+      color:var(--text3);text-transform:uppercase;margin-top:4px
+    }
+    .fv-hero-center{display:flex;flex-direction:column;gap:6px;min-width:0}
+    .fv-hero-tier{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:5px 12px;border-radius:40px;width:fit-content;
+      background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.25);
+      color:var(--fv-accent,var(--accent));
+      font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;
+      text-transform:uppercase
+    }
+    .fv-hero-tier-dot{
+      width:6px;height:6px;border-radius:50%;background:var(--fv-accent,var(--accent));
+      box-shadow:0 0 6px var(--fv-accent,var(--accent));
+      animation:pulseDot 2s ease-in-out infinite
+    }
+    .fv-hero-context{
+      font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.55
+    }
+    .fv-hero-context strong{color:var(--text);font-weight:700}
+    .fv-hero-meta{
+      display:grid;grid-template-columns:auto auto;gap:8px 18px;
+      padding-left:20px;border-left:1px solid var(--border)
+    }
+    .fv-hero-meta-item{display:flex;flex-direction:column}
+    .fv-hero-meta-val{
+      font-family:var(--display);font-size:20px;color:var(--text);line-height:1
+    }
+    .fv-hero-meta-lbl{
+      font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+      text-transform:uppercase;color:var(--text3);margin-top:3px
+    }
+    @media (max-width:720px){
+      .fv-hero{grid-template-columns:1fr;padding:22px 20px;gap:18px;text-align:center}
+      .fv-hero-score-wrap{align-items:center}
+      .fv-hero-tier{margin:0 auto}
+      .fv-hero-meta{grid-template-columns:repeat(4,auto);justify-content:center;padding:12px 0 0;border-left:none;border-top:1px solid var(--border)}
+    }
+
+    /* ── UNLOCK PRO : section affichee en bas des resultats quand l'user n'est
+         pas Pro/Elite. Teaser visuel + CTA direct vers /pricing.html pour
+         pousser la conversion au moment du "aha moment" post-analyse. ── */
+    .unlock-pro{
+      margin-top:40px;padding:40px 32px;
+      background:linear-gradient(135deg,rgba(15,16,16,.95),rgba(8,9,9,.85));
+      border:1px solid rgba(184,255,87,.25);border-radius:16px;
+      position:relative;overflow:hidden
+    }
+    .unlock-pro::before{
+      content:'';position:absolute;top:-50%;left:-20%;width:80%;height:200%;
+      background:radial-gradient(ellipse 40% 50% at 50% 50%,rgba(184,255,87,.12),transparent 70%);
+      pointer-events:none;animation:upGlow 12s ease-in-out infinite
+    }
+    @keyframes upGlow{
+      0%,100%{transform:translate(0,0);opacity:.6}
+      50%{transform:translate(20%,10%);opacity:1}
+    }
+    .up-hero{position:relative;z-index:1;text-align:center;max-width:620px;margin:0 auto 28px}
+    .up-tag{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 12px;border-radius:40px;
+      background:rgba(184,255,87,.12);border:1px solid rgba(184,255,87,.3);
+      color:var(--accent);font-family:var(--mono);font-size:10px;font-weight:700;
+      letter-spacing:.14em;margin-bottom:14px
+    }
+    .up-tag-dot{
+      width:6px;height:6px;border-radius:50%;background:var(--accent);
+      box-shadow:0 0 6px var(--accent);animation:pulseDot 2s ease-in-out infinite
+    }
+    @keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .up-title{
+      font-family:var(--display);font-size:clamp(24px,3vw,36px);
+      line-height:1.05;letter-spacing:.01em;color:var(--text);margin-bottom:12px
+    }
+    .up-title em{color:var(--accent);font-style:normal}
+    .up-sub{
+      font-size:13px;color:var(--text2);line-height:1.7;max-width:520px;margin:0 auto
+    }
+    .up-grid{
+      position:relative;z-index:1;
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;margin-bottom:28px
+    }
+    .up-card{
+      background:rgba(8,9,9,.6);border:1px solid var(--border);
+      border-radius:10px;padding:18px 16px;
+      transition:border-color .2s,transform .2s
+    }
+    .up-card:hover{border-color:rgba(184,255,87,.35);transform:translateY(-2px)}
+    .up-card-icon{
+      width:32px;height:32px;border-radius:8px;
+      background:rgba(184,255,87,.1);color:var(--accent);
+      display:flex;align-items:center;justify-content:center;margin-bottom:10px
+    }
+    .up-card-title{
+      font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);
+      letter-spacing:.04em;margin-bottom:4px
+    }
+    .up-card-desc{font-size:11px;color:var(--text2);line-height:1.55}
+    .up-cta-row{
+      position:relative;z-index:1;
+      display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap
+    }
+    .up-cta-primary{
+      display:inline-flex;align-items:center;gap:8px;
+      background:var(--accent);color:#000;
+      padding:14px 28px;border-radius:var(--radius);
+      font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.06em;
+      text-decoration:none;transition:all .15s;
+      box-shadow:0 8px 24px rgba(184,255,87,.15)
+    }
+    .up-cta-primary:hover{transform:translateY(-1px);filter:brightness(1.08);box-shadow:0 12px 32px rgba(184,255,87,.25)}
+    .up-cta-meta{font-size:11px;color:var(--text3);letter-spacing:.04em}
+  </style>
+<script src="/analytics.js" defer></script>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
+  <div>
+    <a href="levels.html" class="nav-link">Roadmap</a>
+    <a href="demo.html" class="nav-link">New demo</a>
+    <a href="compare.html" class="nav-link">Compare</a>
+    <a href="matches.html" class="nav-link" id="navMatchesBtn" style="display:none">My matches</a>
+    <a href="login.html" class="nav-link" id="navLoginBtn">Sign in</a>
+    <a href="account.html" class="nav-cta" id="navAccountBtn" style="display:none">My account</a>
+  </div>
+</nav>
+
+<div id="noData" class="no-data" style="display:none!important;padding:80px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px">
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.7" aria-hidden="true">
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <circle cx="9" cy="9" r="1.5" fill="currentColor"/>
+    <circle cx="15" cy="9" r="1.5" fill="currentColor"/>
+    <path d="M7 14h10"/>
+  </svg>
+  <div class="no-data-title">Aucune demo analysee</div>
+  <p class="no-data-sub" style="max-width:380px">Importe ta premiere demo .dem FACEIT pour debloquer les heatmaps, le FV Rating et le diagnostic AI Coach.</p>
+  <a href="demo.html" class="no-data-btn" style="display:inline-flex;align-items:center;gap:8px;min-width:180px;justify-content:center">
+    Analyze a demo
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
+</div>
+
+<div class="page" id="mainContent" style="display:none">
+  <!-- Canvas caché pour compatibilité JS (rendu dans le fullscreen uniquement) -->
+  <canvas id="heatmapCanvas" style="display:none" width="1024" height="1024"></canvas>
+
+
+  <!-- TOGGLE SIDE : Both / CT / T -->
+  <div class="side-filter-bar">
+    <div class="sfb-label">Side</div>
+    <div class="sfb-btns">
+      <button class="sfb-btn active" onclick="setSideFilter('both',this)">Both</button>
+      <button class="sfb-btn ct" onclick="setSideFilter('ct',this)">CT</button>
+      <button class="sfb-btn t" onclick="setSideFilter('t',this)">T</button>
+    </div>
+    <button class="btn-2d-demo" onclick="window.location.href='replay.html'">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Voir la 2D Demo
+    </button>
+    <button class="export-btn" onclick="exportPDF()" style="width:auto;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;margin-top:0;margin-left:8px">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Export PDF
+    </button>
+    <button class="export-btn" onclick="shareDemo()" style="width:auto;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;margin-top:0;margin-left:4px">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Share
+    </button>
+    <button onclick="window.location.href='analysis.html'" style="background:#b8ff57;color:#000;font-family:'Space Mono',monospace;font-size:12px;padding:7px 14px;border:none;cursor:pointer;font-weight:700;border-radius:6px;margin-left:8px;display:inline-flex;align-items:center;gap:6px">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      ANALYSE PRO
+    </button>
+  </div>
+
+  <!-- FV RATING HERO CARD : l'impact du user/MVP ce match, tres visible
+       des l'ouverture des resultats. Couleur selon performance. -->
+  <div class="fv-hero" id="fvHeroCard" style="display:none" data-tier="solid">
+    <div class="fv-hero-score-wrap">
+      <div class="fv-hero-label">Your impact</div>
+      <div class="fv-hero-score" id="fvHeroScore">-</div>
+      <div class="fv-hero-sub">FV Rating 2.1</div>
+    </div>
+    <div class="fv-hero-center">
+      <div class="fv-hero-tier" id="fvHeroTier"><span class="fv-hero-tier-dot"></span><span id="fvHeroTierLabel">Solid</span></div>
+      <div class="fv-hero-context" id="fvHeroContext">Analysis completee.</div>
+    </div>
+    <div class="fv-hero-meta" id="fvHeroMeta"></div>
+  </div>
+
+  <!-- HIGHLIGHTS DU MATCH -->
+  <div class="highlights-grid" id="highlightsBlock"></div>
+
+  <!-- STATS PAR EQUIPE (style HLTV) -->
+  <div id="matchStatsBlock"></div>
+
+  <!-- GRAPHIQUE PERFORMANCE -->
+  <div class="perf-chart" id="perfChart" style="display:none">
+    <div class="perf-chart-title">Performance  - FV Rating</div>
+    <div id="perfBars"></div>
+  </div>
+
+  <!-- UNLOCK PRO : section affichee pour les users Free uniquement.
+       Pousse la conversion au moment du "aha moment" post-analyse. -->
+  <div class="unlock-pro" id="unlockProSection" style="display:none">
+    <div class="up-hero">
+      <div class="up-tag"><span class="up-tag-dot"></span>PRO · UNLOCK EVERYTHING</div>
+      <h2 class="up-title">Your demo has <em>much more</em> to tell you</h2>
+      <p class="up-sub">You currently see heatmaps and basic stats. Go Pro to access frame-by-frame 2D Replay, advanced tactical KPIs, personalized AI Coach and complete match report.</p>
+    </div>
+    <div class="up-grid">
+      <div class="up-card">
+        <div class="up-card-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <div class="up-card-title">Complete 2D Replay</div>
+        <div class="up-card-desc">Every round, tick by tick. Positions, duels, grenade trajectories and movements of all 10 players.</div>
+      </div>
+      <div class="up-card">
+        <div class="up-card-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>
+          </svg>
+        </div>
+        <div class="up-card-title">Advanced KPIs</div>
+        <div class="up-card-desc">Entry duels, trade kills, flash efficiency, utility damage, survival rate. The metrics pros watch.</div>
+      </div>
+      <div class="up-card">
+        <div class="up-card-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L3 6v6c0 5 4 9 9 10 5-1 9-5 9-10V6l-9-4z"/><path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="up-card-title">Unlimited AI Coach</div>
+        <div class="up-card-desc">Personalized diagnostic with 3 quantified strengths, 3 weaknesses with delta and 7-day action plan.</div>
+      </div>
+      <div class="up-card">
+        <div class="up-card-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>
+          </svg>
+        </div>
+        <div class="up-card-title">Match Report</div>
+        <div class="up-card-desc">Round-by-round analysis with top moments, turning points and commented tactical recommendations.</div>
+      </div>
+    </div>
+    <div class="up-cta-row">
+      <a href="pricing.html" class="up-cta-primary">
+        Try Pro 7 days free
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+      <span class="up-cta-meta">From 9€/month &middot; Cancel anytime &middot; No card during trial</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- REPLAY FULLSCREEN -->
+<div class="replay-fullscreen" id="replayFullscreen">
+
+  <!-- Header -->
+  <div class="rf-header">
+    <div class="rf-title">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <span>FragValue</span>
+      <span style="color:var(--border2)">·</span>
+      <span class="rf-map" id="rfMapName">de_dust2</span>
+      <span style="color:var(--border2)">·</span>
+      <div class="rf-round-tag">
+        <span class="rf-live-dot" id="rfLiveDot"></span>
+        <span id="rfRoundLabel">Round 1</span>
+      </div>
+    </div>
+    <button class="rf-close" onclick="closeReplayFS()">× Quit</button>
+  </div>
+
+  <!-- Main : carte + panel players -->
+  <div class="rf-main">
+    <div class="rf-canvas-wrap">
+      <canvas id="replayCanvas"></canvas>
+    </div>
+    <div class="rf-panel">
+      <div class="rf-panel-title">Joueurs</div>
+      <div id="rfPlayerList"></div>
+    </div>
+  </div>
+
+  <!-- Footer : rounds + timeline + controls -->
+  <div class="rf-footer">
+    <!-- Rounds -->
+    <div class="rf-rounds" id="rfRoundsBar"></div>
+
+    <!-- Timeline + controls -->
+    <div class="rf-controls-row">
+      <div class="rf-btns">
+        <button class="rfb" onclick="rfSkipBack()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+        </button>
+        <button class="rfb" onclick="rfStepBack()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4"/><polygon points="11 20 1 12 11 4"/></svg>
+        </button>
+        <button class="rfb rfb-play" id="rfPlayBtn" onclick="rfTogglePlay()">
+          <svg id="rfPlayIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg id="rfPauseIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+        </button>
+        <button class="rfb" onclick="rfStepFwd()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20"/><polygon points="13 4 23 12 13 20"/></svg>
+        </button>
+        <button class="rfb" onclick="rfSkipFwd()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+        </button>
+      </div>
+      <div class="rf-time"><span id="rfTimeCur">0:00</span> / <span id="rfTimeTot">0:00</span></div>
+      <div class="rf-timeline" id="rfTimeline" onclick="rfSeek(event)">
+        <div class="rf-tl-fill" id="rfFill" style="width:0%"></div>
+        <div id="rfKillMarks"></div>
+        <div class="rf-tl-thumb" id="rfThumb" style="left:0%"></div>
+      </div>
+      <div class="rf-speeds">
+        <button class="rfs" onclick="rfSetSpeed(0.5,this)">0.5×</button>
+        <button class="rfs on" onclick="rfSetSpeed(1,this)">1×</button>
+        <button class="rfs" onclick="rfSetSpeed(2,this)">2×</button>
+        <button class="rfs" onclick="rfSetSpeed(4,this)">4×</button>
+      </div>
+    </div>
+    <div class="rf-kills-chips" id="rfKillChips"></div>
+  </div>
+</div>
+
+<script>
+// XSS escape helper : les noms de players (attacker/victim) viennent de demos
+// uploadees par les users - potentiellement mal formees. On sanitize avant
+// toute concatenation innerHTML.
+function escHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+// Offsets basés sur les fichiers .txt officiels Valve (meta/maps/*.txt)
+// posX/posY = coordonnées world du coin haut-gauche du radar
+// scale = unités world CS2 par pixel (image 1024x1024)
+const MAP_CONFIG = {
+  'de_dust2':   { img:'maps/de_dust2_radar_psd.png',   posX:-2476, posY:3239,  scale:4.4  },
+  'de_mirage':  { img:'maps/de_mirage_radar_psd.png',  posX:-3230, posY:1713,  scale:5.0  },
+  'de_inferno': { img:'maps/de_inferno_radar_psd.png', posX:-2087, posY:3870,  scale:4.9  },
+  'de_anubis':  { img:'maps/de_anubis_radar_psd.png',  posX:-2796, posY:3328,  scale:5.22 },
+  'de_nuke': {
+    upper: { img:'maps/nuke/de_nuke_radar_psd.png',       posX:-3453, posY:2887, scale:7.0 },
+    lower: { img:'maps/nuke/de_nuke_lower_radar_psd.png', posX:-3453, posY:2887, scale:7.0 },
+  },
+  'de_ancient':  { img:'maps/de_ancient_radar_psd.png',  posX:-2953, posY:2164, scale:5.0 },
+  'de_overpass': { img:'maps/de_overpass_radar_psd.png', posX:-4831, posY:1781, scale:5.2 },
+};
+const PLAYER_COLORS = [
+  {solid:'#60a5fa',rgb:'96,165,250'},{solid:'#F06B6B',rgb:'240,107,107'},
+  {solid:'#2DD4A0',rgb:'45,212,160'},{solid:'#F5C842',rgb:'245,200,66'},
+  {solid:'#A76EF5',rgb:'167,110,245'},{solid:'#EDA020',rgb:'237,160,32'},
+  {solid:'#F06BB7',rgb:'240,107,183'},{solid:'#20C4ED',rgb:'32,196,237'},
+  {solid:'#ED4E20',rgb:'237,78,32'},{solid:'#6BF0A0',rgb:'107,240,160'},
+];
+const NEUTRAL_COLOR = {solid:'#8892A4',rgb:'136,146,164'};
+
+// ══ PRO GATING HELPERS (shared pattern) ═════════════════════════════════
+const FV_PLAN_CACHE_KEY='fv_user_plan', FV_PLAN_TTL=5*60*1000;
+async function fvGetPlan(){
+  try{
+    const raw=sessionStorage.getItem(FV_PLAN_CACHE_KEY);
+    if(raw){const c=JSON.parse(raw);if(c&&c.ts&&(Date.now()-c.ts)<FV_PLAN_TTL)return c.plan||'free';}
+  }catch(_){}
+  try{
+    const _sbPlan=supabase.createClient(_sbUrl,_sbAnon);
+    const {data:{session}}=await _sbPlan.auth.getSession();
+    if(!session){sessionStorage.setItem(FV_PLAN_CACHE_KEY,JSON.stringify({plan:'free',ts:Date.now()}));return 'free';}
+    const res=await fetch('/api/check-subscription',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token}});
+    if(!res.ok)return 'free';
+    const d=await res.json();const plan=d.plan||'free';
+    sessionStorage.setItem(FV_PLAN_CACHE_KEY,JSON.stringify({plan,ts:Date.now()}));
+    return plan;
+  }catch(_){return 'free';}
+}
+async function fvIsPro(){const p=await fvGetPlan();return p==='pro'||p==='elite'||p==='team';}
+function fvShowProModal(featureName){
+  const existing=document.getElementById('fvProUpgradeModal');
+  if(existing){existing.style.display='flex';return;}
+  const ov=document.createElement('div');
+  ov.id='fvProUpgradeModal';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)';
+  ov.innerHTML='<div style="background:#0f1010;border:1px solid #1c1e1e;border-radius:12px;padding:36px 32px;max-width:420px;width:90%;text-align:center;position:relative"><button aria-label="Close" onclick="document.getElementById(\'fvProUpgradeModal\').style.display=\'none\'" style="position:absolute;top:14px;right:14px;width:28px;height:28px;background:transparent;border:1px solid #252727;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#7a8080" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/></svg></button><div style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);color:#b8ff57;padding:4px 10px;border-radius:40px;font-family:\'Space Mono\',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;margin-bottom:18px">PRO</div><div style="font-family:\'Anton\',sans-serif;font-size:24px;line-height:1.15;letter-spacing:.01em;color:#e8eaea;margin-bottom:12px">'+(featureName||'Feature Pro')+'</div><p style="font-family:\'Space Mono\',monospace;font-size:12px;color:#7a8080;line-height:1.7;margin-bottom:24px">This feature is reserved for Pro subscribers. Upgrade to the Pro plan starting at 9 euros/month to unlock all advanced analyses.</p><a href="pricing.html" style="display:inline-block;background:#b8ff57;color:#000;padding:12px 28px;border-radius:6px;font-family:\'Space Mono\',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">See plans</a><div style="margin-top:14px"><button onclick="document.getElementById(\'fvProUpgradeModal\').style.display=\'none\'" style="background:none;border:none;color:#4a5050;font-family:\'Space Mono\',monospace;font-size:11px;cursor:pointer;letter-spacing:.04em">Later</button></div></div>';
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.style.display='none';});
+  document.body.appendChild(ov);
+}
+const _sbUrl='https://xmyruycvvkmcwysfygcq.supabase.co';
+const _sbAnon='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+
+let playerColorMap={}, demoData=null, activePlayers=new Set();
+let currentHeatmap='kills', currentFloor='upper', showCT=true, showT=true;
+let canvas, ctx, mapImage=null;
+let replayRound=null, replayFrames=[], replayFrameIdx=0;
+let replayPlaying=false, replayTimer=null, replaySpeed=1;
+const FPS=20;
+let currentStatsPlayer=null;
+
+function showPlayerStats(name){
+  if(!demoData)return;
+  currentStatsPlayer=name;
+  const kills=demoData.kills||[];
+  const rounds=demoData.rounds||[];
+  const color=getColor(name);
+  const kd=parseFloat((demoData.playerStats||[]).find(p=>p.name===name)?.kd||0);
+
+  // Stats globales du player
+  const playerKills=kills.filter(k=>k.attacker===name);
+  const playerDeaths=kills.filter(k=>k.victim===name);
+  const hs=playerKills.filter(k=>k.isHeadshot).length;
+  const hsPct=playerKills.length>0?Math.round(hs/playerKills.length*100):0;
+  const wb=playerKills.filter(k=>k.isWallbang).length;
+  const smk=playerKills.filter(k=>k.thruSmoke).length;
+  const ctKills=playerKills.filter(k=>k.attackerTeam===2).length;
+  const tKills=playerKills.filter(k=>k.attackerTeam===3).length;
+
+  // First kills
+  const firstKills = (()=>{
+    let count=0;
+    rounds.forEach((_,i)=>{
+      const r=i+1, rk=kills.filter(k=>k.round===r);
+      if(!rk.length)return;
+      const fk=rk.reduce((a,b)=>a.tick<=b.tick?a:b);
+      if(fk.attacker===name)count++;
+    });
+    return count;
+  })();
+
+  // Clutches (1vX) : rounds où le player a eu le dernier kill alors que seul côté adversaire
+  let clutches=0;
+  rounds.forEach((_,i)=>{
+    const r=i+1;
+    const rKills=kills.filter(k=>k.round===r);
+    const myKills=rKills.filter(k=>k.attacker===name);
+    if(myKills.length>=2){
+      // vérifie si le player a fait un kill après que ses teammates soient morts
+      const myTeam=playerKills.length>0?(playerKills.filter(k=>k.attackerTeam===2).length>=playerKills.filter(k=>k.attackerTeam===3).length?2:3):2;
+      const teamDeaths=rKills.filter(k=>k.victimTeam===myTeam&&k.victim!==name).length;
+      if(teamDeaths>=4&&myKills.length>=1)clutches++;
+    }
+  });
+
+  // Stats par round
+  const roundStats={};
+  playerKills.forEach(k=>{if(!roundStats[k.round])roundStats[k.round]={k:0,hs:0,d:0};roundStats[k.round].k++;if(k.isHeadshot)roundStats[k.round].hs++;});
+  playerDeaths.forEach(k=>{if(!roundStats[k.round])roundStats[k.round]={k:0,hs:0,d:0};roundStats[k.round].d++;});
+
+  const kdCls=kd>=1.3?'psc-kd-good':kd<1?'psc-kd-bad':'psc-kd-neutral';
+
+  const roundRows=rounds.map((rd,i)=>{
+    const r=i+1,rs=roundStats[r]||{k:0,hs:0,d:0};
+    const won=rd.winner>0;
+    return `<div class="psc-round-row">
+      <span class="psc-round-num">R${r}</span>
+      <span class="psc-round-kills">${rs.k>0?rs.k+'K':'-'}</span>
+      <span class="psc-round-hs">${rs.hs>0?rs.hs+' HS':''}</span>
+      <span class="psc-round-result ${won?'w':'l'}">${won?'W':'L'}</span>
+    </div>`;
+  }).join('');
+
+  const pscEl=document.getElementById('playerStatsCard');if(!pscEl)return;
+  pscEl.innerHTML=`
+    <div class="psc-header">
+      <div class="psc-dot" style="background:${color.solid}"></div>
+      <div class="psc-name">${name}</div>
+      <div class="psc-kd-badge ${kdCls}">K/D ${kd.toFixed(2)}</div>
+    </div>
+    <div class="psc-grid">
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--accent)">${playerKills.length}</div><div class="psc-stat-lbl">Kills</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--danger)">${playerDeaths.length}</div><div class="psc-stat-lbl">Deaths</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--gold)">${hsPct}%</div><div class="psc-stat-lbl">HS%</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--accent)">${Math.round(playerKills.length*80/(rounds.length||1))}</div><div class="psc-stat-lbl">ADR</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--success)">${firstKills}</div><div class="psc-stat-lbl">First kills</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--gold)">${clutches}</div><div class="psc-stat-lbl">Clutches</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--success)">${ctKills}</div><div class="psc-stat-lbl">Kills CT</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--gold)">${tKills}</div><div class="psc-stat-lbl">Kills T</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--text2)">${wb}</div><div class="psc-stat-lbl">Wallbangs</div></div>
+      <div class="psc-stat"><div class="psc-stat-val" style="color:var(--text2)">${smk}</div><div class="psc-stat-lbl">Thru smoke</div></div>
+    </div>
+    <div class="psc-weapons-label" style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin:12px 0 6px">Top armes</div>
+    <div class="psc-weapons" style="display:flex;gap:8px;flex-wrap:wrap">${(()=>{
+      const wMap={};playerKills.forEach(k=>{const w=(k.weapon||'').replace('weapon_','').toLowerCase();if(w)wMap[w]=(wMap[w]||0)+1;});
+      return Object.entries(wMap).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([w,ct])=>{
+        const file={ak47:'ak47',m4a1:'m4a1',m4a1_silencer:'m4a1_silencer',awp:'awp',deagle:'deagle',glock:'glock',usp_silencer:'usp_silencer',hkp2000:'hkp2000',p250:'p250',famas:'famas',galilar:'galilar',galil:'galilar',aug:'aug',sg556:'sg556',ssg08:'ssg08',scar20:'scar20',g3sg1:'g3sg1',mp9:'mp9',mac10:'mac10',mp7:'mp7',ump45:'ump45',p90:'p90',mp5sd:'mp5sd',bizon:'bizon',fiveseven:'fiveseven',tec9:'tec9',elite:'elite',cz75a:'cz75a',revolver:'revolver',nova:'nova',xm1014:'xm1014',mag7:'mag7',sawedoff:'sawedoff',m249:'m249',negev:'negev',knife:'knife',knife_t:'knife_t',hegrenade:'hegrenade',flashbang:'flashbang',smokegrenade:'smokegrenade',molotov:'molotov',incgrenade:'incgrenade',c4:'c4',taser:'taser'}[w];
+        const icon=file?'<img src="icons/'+file+'.svg" height="16" style="vertical-align:middle;opacity:.85">':'';
+        return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;font-size:10px">'+icon+'<span style="color:var(--text2)">'+ct+'</span></span>';
+      }).join('');
+    })()}
+    </div>
+    <div class="psc-rounds">
+      <div class="psc-rounds-title">Round breakdown</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:3px">${roundRows}</div>
+    </div>`;
+
+  const psp=document.getElementById('playerStatsPanel');if(psp)psp.style.display='block';
+  // Scroll doux vers les stats
+  setTimeout(()=>{const _psp=document.getElementById('playerStatsPanel');if(_psp)_psp.scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+}
+
+// Décompresse les kills au format compact (champs courts) → format long
+function expandKills(kills){
+  if(!kills||!kills.length)return kills;
+  // Détecter si déjà au format long (presence de 'attacker')
+  if(kills[0].attacker!==undefined)return kills;
+  return kills.map(k=>({
+    round:       k.r  ?? 0,
+    tick:        k.t  ?? 0,
+    attacker:    k.a  || 'Unknown',
+    attackerTeam:k.at ?? 0,
+    attackerX:   k.ax ?? 0,
+    attackerY:   k.ay ?? 0,
+    victim:      k.v  || 'Unknown',
+    victimTeam:  k.vt ?? 0,
+    victimX:     k.vx ?? 0,
+    victimY:     k.vy ?? 0,
+    weapon:      k.w  || '',
+    isHeadshot:  !!k.h,
+    thruSmoke:   !!k.s,
+    isWallbang:  !!k.wb,
+  }));
+}
+
+window.addEventListener('load',()=>{
+  canvas=document.getElementById('heatmapCanvas');
+  if(canvas) ctx=canvas.getContext('2d');
+  const raw=sessionStorage.getItem('demoData');
+  if(!raw){document.getElementById('noData').style.display='block';return;}
+  try{
+    demoData=JSON.parse(raw);
+    // Décompresser les kills si envoyés en format compact par le parser
+    if(demoData.kills) demoData.kills=expandKills(demoData.kills);
+    document.getElementById('noData').style.display='none';document.getElementById('mainContent').style.display='block';
+    assignPlayerColors();
+    const target=demoData.meta?.targetPlayer;
+    if(target) activePlayers.add(target);
+    renderFvHeroCard(); renderMeta(); renderMatchStats(); renderPlayerList();
+    loadMapImageThenDraw(); initRoundsBar();
+    // Mettre à day le FV Rating dans Supabase
+    saveRatingToSupabase();
+    // Affiche la section "Debloque avec Pro" uniquement pour les users Free
+    // (les Pro/Elite voient deja tout, pas besoin de les pousser au checkout).
+    renderUnlockProSection();
+  }catch(e){console.error('heatmap-results init error:',e);}
+});
+
+// FV Hero Card : affiche le FV Rating du target player en gros avec
+// color-coding (excellent / solide / average / weak) + stats complementaires.
+// Si pas de target, prend le MVP (meilleur FV rating).
+function renderFvHeroCard(){
+  try{
+    const players = demoData?.playerStats || [];
+    const rounds = (demoData?.rounds || []).filter(r => !r.isKnife);
+    const numR = rounds.length || 1;
+    if (!players.length) return;
+
+    const target = demoData.meta?.targetPlayer;
+    let p = target ? players.find(pl => pl.name === target) : null;
+    // Si pas de target or non trouve : prendre le MVP (meilleur rating calcule)
+    if (!p) {
+      p = players.map(pl => ({ ...pl, _r: calcFvRating(pl.kills, pl.deaths, 0, numR) }))
+                 .sort((a,b) => b._r - a._r)[0];
+    }
+    if (!p) return;
+
+    const rating = calcFvRating(p.kills, p.deaths, 0, numR);
+    const kd = p.deaths > 0 ? (p.kills / p.deaths).toFixed(2) : p.kills.toFixed(2);
+    const adr = p.adr ? Math.round(p.adr) : '-';
+    const hsPct = (p.kills > 0 && typeof p.hsKills === 'number')
+      ? Math.round((p.hsKills / p.kills) * 100) + '%' : '-';
+
+    // Classification : benchmarks Faceit/HLTV amateurs -> pros
+    let tier, tierLabel, context;
+    if (rating >= 1.30) {
+      tier = 'excellent';
+      tierLabel = 'Excellent';
+      context = `Performance <strong>niveau pro</strong>. Tu domines ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds. Au-dessus de 90% des players FACEIT.`;
+    } else if (rating >= 1.10) {
+      tier = 'solid';
+      tierLabel = 'Solid';
+      context = `Match <strong>above the FACEIT average</strong>. You impact ${p.kills} kills for ${p.deaths} deaths over ${numR} rounds. Keep it up.`;
+    } else if (rating >= 0.90) {
+      tier = 'average';
+      tierLabel = 'Average';
+      context = `<strong>Standard</strong> performance. ${p.kills} kills for ${p.deaths} deaths over ${numR} rounds. Look at the heatmaps to identify where you can gain tempo.`;
+    } else {
+      tier = 'weak';
+      tierLabel = 'Needs work';
+      context = `Match <strong>difficile</strong> avec ${p.kills} kills pour ${p.deaths} deaths. Analysis tes morts dans la heatmap et travaille les duels desavantageux.`;
+    }
+
+    const card = document.getElementById('fvHeroCard');
+    if (!card) return;
+    card.dataset.tier = tier;
+    document.getElementById('fvHeroScore').textContent = rating.toFixed(2);
+    document.getElementById('fvHeroTierLabel').textContent = tierLabel;
+    document.getElementById('fvHeroContext').innerHTML = context;
+    document.getElementById('fvHeroMeta').innerHTML = `
+      <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${p.kills}</div><div class="fv-hero-meta-lbl">Kills</div></div>
+      <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${p.deaths}</div><div class="fv-hero-meta-lbl">Deaths</div></div>
+      <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${kd}</div><div class="fv-hero-meta-lbl">K/D</div></div>
+      <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${adr}</div><div class="fv-hero-meta-lbl">ADR</div></div>
+    `;
+    card.style.display = '';
+  }catch(e){ console.warn('[FragValue] renderFvHeroCard:', e.message); }
+}
+
+// Affiche la section unlock-pro seulement si user n'est pas Pro/Elite.
+// Permet de ne pas polluer l'experience des payants.
+async function renderUnlockProSection(){
+  try{
+    const isPro = await fvIsPro();
+    const section = document.getElementById('unlockProSection');
+    if(section && !isPro){ section.style.display='block'; }
+  }catch(_){/* fail silent - default hidden */}
+}
+
+function assignPlayerColors(){(demoData.playerStats||[]).forEach((p,i)=>{playerColorMap[p.name]=i%PLAYER_COLORS.length;});}
+function getColor(name){const idx=playerColorMap[name];return idx!==undefined?PLAYER_COLORS[idx]:NEUTRAL_COLOR;}
+function togglePlayer(name){
+  if(activePlayers.has(name)){
+    activePlayers.delete(name);
+    // Si on désélectionne le player affiché dans le panel → cacher le panel
+    if(currentStatsPlayer===name){currentStatsPlayer=null;const _p=document.getElementById('playerStatsPanel');if(_p)_p.style.display='none';}
+  }else{
+    if(activePlayers.size>=5)return;
+    activePlayers.add(name);
+  }
+  renderPlayerList();renderHeatmap();
+  // Afficher les stats du player cliqué
+  if(activePlayers.has(name)){showPlayerStats(name);}
+}
+function selectNone(){activePlayers.clear();renderPlayerList();renderHeatmap();}
+function w2c(wx,wy,map,W,H){
+  // Normaliser le nom de map (enlever préfixes workshop, casse, espaces)
+  const normMap = (map||'').toLowerCase().replace(/^.*\//, '').trim();
+  const cfg=MAP_CONFIG[normMap]||MAP_CONFIG[map];
+  if(!cfg)return{px:W/2,py:H/2};
+  const c=cfg.upper?(currentFloor==='upper'?cfg.upper:cfg.lower):cfg;
+  // Formule Valve : pixel = (world - origin) / scale
+  // Image radar = 1024x1024, on normalise vers W×H du canvas
+  const rawPx=(wx-c.posX)/c.scale;
+  const rawPy=(c.posY-wy)/c.scale;
+  return{px:(rawPx/1024)*W, py:(rawPy/1024)*H};
+}
+function inBounds(px,py,W,H){return px>=0&&px<=W&&py>=0&&py<=H;}
+
+function getMapImgPath(){
+  const rawMap=demoData.meta?.map||'de_dust2';
+  const normMap=rawMap.toLowerCase().replace(/^.*\//,'').trim();
+  const cfg=MAP_CONFIG[normMap]||MAP_CONFIG[rawMap];if(!cfg)return null;if(cfg.upper)return currentFloor==='upper'?cfg.upper.img:cfg.lower.img;return cfg.img||null;}
+function loadMapImageThenDraw(){
+  const rawMapName=demoData.meta?.map||'de_dust2';
+  const mapName=rawMapName.toLowerCase().replace(/^.*\//,'').trim();
+  const floorToggleEl=document.getElementById('floorToggle');
+  if(floorToggleEl)floorToggleEl.classList.toggle('visible',!!(MAP_CONFIG[mapName]?.upper));
+  const imgPath=getMapImgPath();
+  const notice=document.getElementById('mapNotice');
+  if(!imgPath){mapImage=null;if(notice)notice.textContent=`Radar non disponible pour ${mapName}`;renderHeatmap();return;}
+  if(notice)notice.textContent='';
+  const img=new Image();
+  img.onload=()=>{mapImage=img;canvas.width=img.width;canvas.height=img.height;renderHeatmap();};
+  img.onerror=()=>{mapImage=null;notice.textContent=`Image introuvable : ${imgPath}`;renderHeatmap();};
+  img.src=imgPath;
+}
+
+function renderHeatmap(){
+  if(!demoData||currentHeatmap==='replay')return;
+  const mapName=demoData.meta?.map||'de_dust2';
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  if(mapImage){ctx.drawImage(mapImage,0,0,W,H);ctx.fillStyle='rgba(10,12,18,.38)';ctx.fillRect(0,0,W,H);}
+  else{ctx.fillStyle='#0A0C12';ctx.fillRect(0,0,W,H);}
+  ctx.globalAlpha=1;
+  if(activePlayers.size===0){
+    ctx.fillStyle='rgba(12,14,19,.85)';ctx.fillRect(W/2-120,H/2-20,240,36);
+    ctx.fillStyle='#8892A4';ctx.font='400 11px JetBrains Mono,monospace';ctx.textAlign='center';
+    ctx.fillText('Select players →',W/2,H/2+4);
+  }else{
+    if(currentHeatmap==='kills')drawKills(mapName,W,H,'attacker');
+    else if(currentHeatmap==='deaths')drawKills(mapName,W,H,'victim');
+    else if(currentHeatmap==='movement')drawMovement(mapName,W,H);
+    else if(currentHeatmap==='duels')drawDuels(W,H);
+    else if(currentHeatmap==='utility')drawUtility(mapName,W,H);
+  }
+  const lbl={kills:'KILL HEATMAP',deaths:'DEATH HEATMAP',movement:'MOVEMENTS',duels:'DUEL WIN ZONES',utility:'UTILITY MAP'};
+  ctx.fillStyle='rgba(12,14,19,.85)';ctx.fillRect(8,8,220,26);
+  ctx.fillStyle='#EDF0F7';ctx.font='500 11px JetBrains Mono,monospace';ctx.textAlign='left';
+  ctx.fillText(lbl[currentHeatmap]||'',14,25);
+  updateLegend();
+}
+
+function drawKills(mapName,W,H,mode){
+  const kills=demoData.kills||[],gs=Math.floor(W/48);
+  const sf=k=>{const t=mode==='attacker'?k.attackerTeam:k.victimTeam;if(t===2)return showCT;if(t===3)return showT;return true;};
+  [...activePlayers].forEach(name=>{
+    const f=kills.filter(k=>(mode==='attacker'?k.attacker:k.victim)===name&&sf(k));
+    drawKillSet(f,getColor(name),mapName,W,H,gs,mode);
+  });
+}
+function drawKillSet(kills,pc,mapName,W,H,gs,mode){
+  const valid=kills.filter(k=>{const x=mode==='attacker'?k.attackerX:k.victimX,y=mode==='attacker'?k.attackerY:k.victimY;const{px,py}=w2c(x,y,mapName,W,H);return inBounds(px,py,W,H);});
+  const grid={};let mx=0;
+  valid.forEach(k=>{const x=mode==='attacker'?k.attackerX:k.victimX,y=mode==='attacker'?k.attackerY:k.victimY;const{px,py}=w2c(x,y,mapName,W,H);const key=`${Math.floor(px/gs)}_${Math.floor(py/gs)}`;grid[key]=(grid[key]||0)+1;if(grid[key]>mx)mx=grid[key];});
+  Object.entries(grid).forEach(([key,count])=>{const[gx,gy]=key.split('_').map(Number);ctx.fillStyle=`rgba(${pc.rgb},${.12+(count/mx)*.45})`;ctx.fillRect(gx*gs,gy*gs,gs,gs);});
+  valid.forEach(k=>{
+    const x=mode==='attacker'?k.attackerX:k.victimX,y=mode==='attacker'?k.attackerY:k.victimY;
+    const{px,py}=w2c(x,y,mapName,W,H);
+    const isCT=(mode==='attacker'?k.attackerTeam:k.victimTeam)===2;
+    ctx.beginPath();ctx.arc(px,py,9,0,Math.PI*2);ctx.fillStyle=`rgba(${pc.rgb},.1)`;ctx.fill();
+    ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fillStyle=pc.solid;ctx.fill();
+    ctx.strokeStyle=isCT?'#4A9EFF':'#F5C842';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 5px JetBrains Mono,monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(isCT?'C':'T',px,py);ctx.textBaseline='alphabetic';
+  });
+}
+function drawMovement(mapName,W,H){
+  const positions=demoData.positions||{},gs=Math.floor(W/40);
+  [...activePlayers].forEach(name=>{
+    const pts=(positions[name]||[]).filter(p=>replayRound===null||p.round===replayRound);
+    const color=getColor(name);const grid={};let mx=0;
+    pts.forEach(p=>{const{px,py}=w2c(p.x,p.y,mapName,W,H);const key=`${Math.floor(px/gs)}_${Math.floor(py/gs)}`;grid[key]=(grid[key]||0)+1;if(grid[key]>mx)mx=grid[key];});
+    Object.entries(grid).forEach(([key,count])=>{const[gx,gy]=key.split('_').map(Number);ctx.fillStyle=`rgba(${color.rgb},${.08+(count/mx)*.6})`;ctx.fillRect(gx*gs,gy*gs,gs,gs);});
+  });
+}
+function drawDuels(W,H){
+  const zones=demoData.duelZones||[],GRID=10,cs=W/GRID;
+  zones.forEach(z=>{
+    const total=z.kills+z.deaths;if(total===0)return;
+    const wr=parseFloat(z.winRate);
+    const color=wr>=65?`rgba(45,212,160,${.2+wr/100*.45})`:wr>=45?`rgba(245,200,66,.4)`:`rgba(240,107,107,${.2+(100-wr)/100*.45})`;
+    const px=z.col*cs,py=(GRID-1-z.row)*cs;
+    ctx.fillStyle=color;ctx.fillRect(px,py,cs,cs);
+    if(total>=2){ctx.fillStyle='rgba(237,240,247,.9)';ctx.font=`600 ${Math.floor(cs*.24)}px JetBrains Mono,monospace`;ctx.textAlign='center';ctx.fillText(wr+'%',px+cs/2,py+cs/2+3);ctx.font=`${Math.floor(cs*.16)}px JetBrains Mono,monospace`;ctx.fillStyle='rgba(237,240,247,.5)';ctx.fillText(total+' duels',px+cs/2,py+cs/2+cs*.22);}
+  });
+}
+function drawUtility(mapName,W,H){
+  const C={'weapon_flashbang':'rgba(245,200,66,.9)','weapon_smokegrenade':'rgba(45,212,160,.8)','weapon_hegrenade':'rgba(240,107,107,.85)','weapon_molotov':'rgba(237,160,32,.85)','weapon_incgrenade':'rgba(237,160,32,.85)'};
+  (demoData.grenades||[]).filter(x=>activePlayers.has(x.thrower)).forEach(x=>{
+    const{px,py}=w2c(x.startX,x.startY,mapName,W,H);
+    const color=C[x.type]||'rgba(138,146,164,.6)';
+    ctx.beginPath();ctx.arc(px,py,10,0,Math.PI*2);ctx.fillStyle=color.replace(/[\d.]+\)$/,'0.2)');ctx.fill();
+    ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+    ctx.strokeStyle='rgba(237,240,247,.25)';ctx.lineWidth=1;ctx.stroke();
+  });
+}
+
+function updateLegend(){
+  let items=[];
+  if(currentHeatmap==='utility')items=[{color:'rgba(245,200,66,.9)',label:'<img src="icons/flashbang.svg" height="14" style="vertical-align:middle;opacity:.7"> Flash'},{color:'rgba(45,212,160,.8)',label:'<img src="icons/smokegrenade.svg" height="14" style="vertical-align:middle;opacity:.7"> Smoke'},{color:'rgba(240,107,107,.85)',label:'<img src="icons/hegrenade.svg" height="14" style="vertical-align:middle;opacity:.7"> HE'},{color:'rgba(237,160,32,.85)',label:'<img src="icons/molotov.svg" height="14" style="vertical-align:middle;opacity:.7"> Molotov'}];
+  else if(currentHeatmap==='duels')items=[{color:'#2DD4A0',label:'>65%'},{color:'#F5C842',label:'45-65%'},{color:'#F06B6B',label:'<45%'}];
+  else{items=[...activePlayers].map(n=>({color:getColor(n).solid,label:n}));if(showCT)items.push({color:'#4A9EFF',label:'CT'});if(showT)items.push({color:'#F5C842',label:'T'});}
+  const mlEl=document.getElementById('mapLegend');if(!mlEl)return;
+  mlEl.innerHTML=items.map(i=>`<div class="legend-item"><div class="legend-dot" style="background:${i.color}"></div>${i.label}</div>`).join('');
+}
+
+let currentSideFilter = 'both';
+
+function setSideFilter(side, btn) {
+  currentSideFilter = side;
+  document.querySelectorAll('.sfb-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderMatchStats();
+}
+
+function renderMeta(){
+  const el=document.getElementById('matchHeader');
+  if(!el)return;
+  const m=demoData.meta;
+  const rounds=demoData.rounds||[];
+  const ctWins=rounds.filter(r=>r.winner===2).length;
+  const tWins=rounds.filter(r=>r.winner===3).length;
+  el.innerHTML=`
+    <div class="mh-item"><div class="mh-val" style="color:var(--text)">${m.map||'-'}</div><div class="mh-lbl">Map</div></div>
+    <div class="mh-div"></div>
+    <div class="mh-item"><div class="mh-val" style="color:#4A9EFF">${ctWins}</div><div class="mh-lbl">CT Wins</div></div>
+    <div class="mh-div"></div>
+    <div class="mh-item"><div class="mh-val" style="color:var(--gold)">${tWins}</div><div class="mh-lbl">T Wins</div></div>
+    <div class="mh-div"></div>
+    <div class="mh-item"><div class="mh-val">${m.rounds||0}</div><div class="mh-lbl">Rounds</div></div>
+    <div class="mh-div"></div>
+    <div class="mh-item"><div class="mh-val">${m.totalKills||0}</div><div class="mh-lbl">Kills</div></div>
+    ${m.targetPlayer?`<div class="mh-div"></div><div class="mh-item"><div class="mh-val" style="font-size:14px;color:var(--gold)">${m.targetPlayer}</div><div class="mh-lbl">Analyzed</div></div>`:''}`;
+}
+
+function calcFvRating(kills, deaths, assists, rounds) {
+  if (!rounds || rounds <= 0) return 0;
+  const kpr = kills/rounds, dpr = deaths/rounds, apr = assists/rounds;
+  const kast = Math.min(0.92, Math.max(0.50, 0.0073*75 + 0.3591*kpr - 0.5329*dpr + 0.2372*(2.13*kpr+0.42*apr-0.41) + 0.0032*70 + 0.1587));
+  return parseFloat((0.0073*kast*100 + 0.3591*kpr - 0.5329*dpr + 0.2372*(2.13*kpr+0.42*apr-0.41) + 0.0032*70 + 0.1587).toFixed(2));
+}
+
+function calcKAST(name, kills, rounds) {
+  // KAST : % de rounds où le player a eu un Kill, Assist, Survived or was Traded
+  // Approximation : rounds avec kill or round survived (pas mort)
+  const totalR = rounds.length || 1;
+  let kastRounds = 0;
+  rounds.forEach((rd, i) => {
+    const r = i + 1;
+    const hadKill  = kills.some(k => k.round === r && k.attacker === name);
+    const wasDead  = kills.some(k => k.round === r && k.victim   === name);
+    const survived = !wasDead;
+    if (hadKill || survived) kastRounds++;
+  });
+  return Math.round(kastRounds / totalR * 100);
+}
+
+function renderHighlights(kills, playerStats, rounds) {
+  const el = document.getElementById('highlightsBlock');
+  if (!el) return;
+  const totalR = rounds.length || 1;
+
+  // Calculs par player
+  const stats = playerStats.map(p => {
+    const pK = kills.filter(k => k.attacker === p.name);
+    const awpK = pK.filter(k => k.weapon && k.weapon.includes('awp')).length;
+    // First kill = premier kill du round (tick le plus bas par round)
+    let firstKills = 0;
+    const roundsWithKill = {};
+    pK.forEach(k => {
+      if (!roundsWithKill[k.round] || k.tick < roundsWithKill[k.round].tick)
+        roundsWithKill[k.round] = k;
+    });
+    firstKills = Object.values(roundsWithKill).filter(k => {
+      const roundKills = kills.filter(x => x.round === k.round);
+      const minTick = Math.min(...roundKills.map(x => x.tick));
+      return k.tick === minTick;
+    }).length;
+    const adr = Math.round(pK.length * 80 / totalR);
+    const fvr = calcFvRating(p.kills, p.deaths, 0, totalR);
+    return { name: p.name, kills: p.kills, adr, awpK, firstKills, fvr };
+  });
+
+  const most = (arr, key) => arr.reduce((a, b) => a[key] >= b[key] ? a : b, arr[0] || {});
+  const best = [
+    { label:'Most kills',
+      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#F06B6B" stroke-width="1.5" width="18" height="18">
+        <path d="M10 3a4 4 0 100 8 4 4 0 000-8z"/>
+        <path d="M8 9l-4 8h12l-4-8" stroke-linejoin="round"/>
+        <line x1="10" y1="11" x2="10" y2="17" stroke-linecap="round"/>
+      </svg>`, bg:'rgba(240,107,107,.12)', p: most(stats,'kills'), val: s => s.kills+' kills' },
+    { label:'Most damage',
+      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#F5C842" stroke-width="1.5" width="18" height="18">
+        <path d="M3 10h3l2-6 4 12 2-6h3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`, bg:'rgba(245,200,66,.12)', p: most(stats,'adr'), val: s => s.adr+' ADR' },
+    { label:'Most AWP kills',
+      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#b8ff57" stroke-width="1.5" width="18" height="18">
+        <path d="M2 11h10l2-3 1 3h3" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="5" cy="11" r="2" fill="rgba(184,255,87,.3)"/>
+        <line x1="14" y1="8" x2="14" y2="5" stroke-linecap="round"/>
+      </svg>`, bg:'rgba(184,255,87,.08)', p: most(stats,'awpK'), val: s => s.awpK+' kills' },
+    { label:'Most 1st kills',
+      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#2DD4A0" stroke-width="1.5" width="18" height="18">
+        <polygon points="10,2 12,8 18,8 13,12 15,18 10,14 5,18 7,12 2,8 8,8" stroke-linejoin="round"/>
+        <line x1="10" y1="2" x2="10" y2="6" stroke="#2DD4A0" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>`, bg:'rgba(45,212,160,.12)', p: most(stats,'firstKills'), val: s => s.firstKills+' rounds' },
+    { label:'Best FV Rating',
+      icon:`<svg viewBox="0 0 20 20" fill="none" stroke="#A76EF5" stroke-width="1.5" width="18" height="18">
+        <rect x="3" y="12" width="3" height="6" rx="1" fill="rgba(167,110,245,.3)"/>
+        <rect x="8.5" y="7" width="3" height="11" rx="1" fill="rgba(167,110,245,.3)"/>
+        <rect x="14" y="3" width="3" height="15" rx="1" fill="rgba(167,110,245,.5)"/>
+        <polyline points="3,12 8.5,7 14,3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`, bg:'rgba(167,110,245,.12)', p: most(stats,'fvr'), val: s => s.fvr.toFixed(2) },
+  ];
+  el.innerHTML = best.filter(b => b.p && b.p.name).map(b =>
+    `<div class="hl-card">
+      <div class="hl-icon" style="background:${b.bg};display:flex;align-items:center;justify-content:center">${b.icon}</div>
+      <div class="hl-body">
+        <div class="hl-label">${b.label}</div>
+        <div class="hl-name">${b.p.name}</div>
+        <div class="hl-val">${b.val(b.p)}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function renderPerfChart(playerStats, kills, rounds) {
+  const el = document.getElementById('perfChart');
+  const barsEl = document.getElementById('perfBars');
+  if (!el || !barsEl) return;
+  const totalR = rounds.length || 1;
+  const data = playerStats.map(p => ({
+    name: p.name,
+    fvr: calcFvRating(p.kills, p.deaths, 0, totalR),
+    color: getColor(p.name).solid,
+  })).sort((a, b) => b.fvr - a.fvr);
+  const maxFvr = Math.max(...data.map(d => d.fvr), 2);
+  const REF = 1.0; // ligne de référence "average"
+  barsEl.innerHTML = data.map(d => {
+    const pct = Math.min(100, (d.fvr / maxFvr) * 100);
+    const refPct = Math.min(100, (REF / maxFvr) * 100);
+    const cls = d.fvr >= 1.15 ? 'var(--success)' : d.fvr >= 0.9 ? 'var(--gold)' : 'var(--danger)';
+    return `<div class="perf-bar-row">
+      <div class="perf-bar-name">${d.name}</div>
+      <div class="perf-bar-track">
+        <div class="perf-bar-fill" style="width:${pct}%;background:${cls}"></div>
+        <div class="perf-ref-line" style="left:${refPct}%"></div>
+      </div>
+      <div class="perf-bar-val" style="color:${cls}">${d.fvr.toFixed(2)}</div>
+    </div>`;
+  }).join('');
+  el.style.display = 'block';
+}
+
+function renderMatchStats() {
+  if (!demoData) return;
+  const kills = demoData.kills || [];
+  const allRounds = demoData.rounds || [];
+  const players = demoData.playerStats || [];
+  const sf = currentSideFilter;
+  const totalR = allRounds.length || 1;
+
+  // Rounds par side
+  const sideRounds = sf === 'ct' ? allRounds.filter((_,i)=>i<Math.ceil(totalR/2))
+                   : sf === 't'  ? allRounds.filter((_,i)=>i>=Math.ceil(totalR/2))
+                   : allRounds;
+  const numR = sideRounds.length || 1;
+
+  // Filtres kills par side attaquant / victime
+  const sideKillsFor    = k => sf==='both'||( sf==='ct'?k.attackerTeam===2:k.attackerTeam===3);
+  const sideKillsAgainst= k => sf==='both'||( sf==='ct'?k.victimTeam===2  :k.victimTeam===3);
+
+  // Attribution équipe : score CT vs T par player, puis partition stricte 5/5
+  const teamScores = players.map(p => {
+    const sCT = kills.filter(k=>(k.attacker===p.name&&k.attackerTeam===2)||(k.victim===p.name&&k.victimTeam===2)).length;
+    const sT  = kills.filter(k=>(k.attacker===p.name&&k.attackerTeam===3)||(k.victim===p.name&&k.victimTeam===3)).length;
+    return { name: p.name, ctScore: sCT, tScore: sT, diff: sCT - sT };
+  }).sort((a,b) => b.diff - a.diff); // plus CT en premier
+  const half = Math.ceil(teamScores.length / 2);
+  const ctSet = new Set(teamScores.slice(0, half).map(p => p.name));
+  const getPlayerTeam = name => ctSet.has(name) ? 2 : 3;
+
+  // First kill par round (approximation : kill avec tick minimum du round)
+  const firstKillMap = {};
+  allRounds.forEach((_,i) => {
+    const r = i+1;
+    const rk = kills.filter(k=>k.round===r);
+    if (rk.length) {
+      const fk = rk.reduce((a,b) => a.tick<=b.tick ? a : b);
+      firstKillMap[r] = fk.attacker;
+    }
+  });
+
+  const teamPlayers = {2: [], 3: []};
+  players.forEach(p => {
+    const team = getPlayerTeam(p.name);
+    const sKills  = kills.filter(k => k.attacker===p.name && sideKillsFor(k));
+    const sDeaths = kills.filter(k => k.victim===p.name   && sideKillsAgainst(k));
+    const hsCount = sKills.filter(k => k.isHeadshot).length;
+    const hsPct   = sKills.length > 0 ? Math.round(hsCount/sKills.length*100) : 0;
+    const adr     = Math.round(sKills.length * 80 / numR);
+    const kast    = calcKAST(p.name, kills, sideRounds);
+    const fvr     = calcFvRating(sKills.length, sDeaths.length, 0, numR);
+    const kd      = `${sKills.length}-${sDeaths.length}`;
+    const kdNum   = sDeaths.length > 0 ? sKills.length/sDeaths.length : sKills.length;
+
+    // Opening K-D : premier duel de chaque round (kill avec tick minimum du round)
+    let opK = 0, opD = 0;
+    sideRounds.forEach((_, i) => {
+      const r = i + 1;
+      const rk = kills.filter(k => k.round === r);
+      if (!rk.length) return;
+      const fk = rk.reduce((a, b) => (a.tick||0) <= (b.tick||0) ? a : b);
+      if (fk.attacker === p.name) opK++;
+      else if (fk.victim === p.name) opD++;
+    });
+    const opKdNum = opD > 0 ? opK / opD : opK;
+    const duelPct = (opK + opD) > 0 ? Math.round(opK / (opK + opD) * 100) : 0;
+
+    // Multi-kills : rounds avec 2+ kills
+    const mks = sideRounds.reduce((acc, _, i) => {
+      const r = i + 1;
+      return acc + (sKills.filter(k => k.round === r).length >= 2 ? 1 : 0);
+    }, 0);
+
+    teamPlayers[team].push({ name:p.name, kd, kdNum, kills:sKills.length, deaths:sDeaths.length, hsCount, hsPct, adr, kast, fvr, opK, opD, opKdNum, duelPct, mks });
+  });
+
+  // CS2 demoparser2 : winner=2 = CT, winner=3 = T
+  // Mais certaines démos retournent winner=1 (CT) or winner=2 (T)
+  // On détecte automatiquement le format
+  // Détecter le format winner
+  const winnerVals = [...new Set(allRounds.map(r=>r.winner).filter(w=>w>0))];
+  const useAlt = winnerVals.length > 0 && !winnerVals.includes(2) && !winnerVals.includes(3);
+  let ctWins = allRounds.filter(r => useAlt ? r.winner===1 : r.winner===2).length;
+  let tWins  = allRounds.filter(r => useAlt ? r.winner===2 : r.winner===3).length;
+
+  // Fallback : si winner=0 partout, déduire depuis les kills
+  // L'équipe qui a fait le dernier kill du round a probablement gagné
+  if (ctWins === 0 && tWins === 0 && kills.length > 0) {
+    allRounds.forEach((rd, i) => {
+      const r = i + 1;
+      const rKills = kills.filter(k => k.round === r);
+      if (!rKills.length) return;
+      // Dernier kill du round = tick max
+      const lastKill = rKills.reduce((a,b) => (a.tick||0)>=(b.tick||0)?a:b);
+      // CS2 : team_num CT=3, T=2  - l'attaquant du dernier kill a gagné
+      if (lastKill.attackerTeam === 3) ctWins++;      // CT gagne
+      else if (lastKill.attackerTeam === 2) tWins++;  // T gagne
+    });
+    console.log('[FragValue] Wins déduits des kills  - CT:', ctWins, 'T:', tWins);
+  }
+  console.log('[FragValue] Rounds winner vals:', winnerVals, '| CT wins:', ctWins, '| T wins:', tWins);
+
+  function teamBlock(teamNum, label, color, score) {
+    const tPlayers = (teamPlayers[teamNum]||[]).sort((a,b)=>b.fvr-a.fvr);
+    const rows = tPlayers.map(p => {
+      const fvrCls = p.fvr>=1.15?'good':p.fvr>=0.9?'avg':'bad';
+      const kdCls  = p.kdNum>=1.3?'good':p.kdNum<1?'bad':'';
+      const c = getColor(p.name).solid;
+      return `<div class="ms-player-row" onclick="showPlayerStats('${p.name.replace(/'/g,"\'")}')">
+        <div class="ms-player-name">
+          <span class="ms-player-dot" style="background:${c}"></span>
+          ${p.name}
+        </div>
+        <div class="ms-val ${kdCls}">${p.kd}</div>
+        <div class="ms-val">${p.kast}%</div>
+        <div class="ms-val">${p.adr}</div>
+        <div class="ms-val ${p.opKdNum>=1?'good':p.opKdNum<1&&p.opK+p.opD>0?'bad':''}">${p.opK}-${p.opD}</div>
+        <div class="ms-val ${p.duelPct>=55?'good':p.duelPct<=44&&p.opK+p.opD>0?'bad':''}">${p.opK+p.opD>0?p.duelPct+'%':'-'}</div>
+        <div class="ms-val">${p.mks>0?p.mks:'-'}</div>
+        <div class="ms-val rating ${fvrCls}">${p.fvr.toFixed(2)}</div>
+      </div>`;
+    }).join('');
+    return `<div class="ms-team-block">
+      <div class="ms-team-header">
+        <div class="ms-team-dot" style="background:${color}"></div>
+        <div class="ms-team-name">${label}</div>
+        <div class="ms-team-score" style="color:${color}" title="Rounds won">${score}</div>
+      </div>
+      <div class="ms-cols ms-cols-header">
+        <div class="ms-col ms-col-name">Player</div>
+        <div class="ms-col">K-D</div>
+        <div class="ms-col">KAST</div>
+        <div class="ms-col">ADR</div>
+        <div class="ms-col" title="Opening K-D (premier duel du round)">Op. K-D</div>
+        <div class="ms-col" title="% duels won (1v1 direct)">Duel%</div>
+        <div class="ms-col" title="Multi-kills (rounds avec 2+ kills)">MKs</div>
+        <div class="ms-col" style="color:var(--success)">FV Rating</div>
+      </div>
+      ${rows}
+    </div>`;
+  }
+
+  // Noms d'équipe : meilleur player par FV Rating
+  const ctBest = (teamPlayers[2]||[]).sort((a,b)=>b.fvr-a.fvr)[0]?.name || 'CT';
+  const tBest  = (teamPlayers[3]||[]).sort((a,b)=>b.fvr-a.fvr)[0]?.name || 'T';
+  const ctNames = 'Equipe_' + ctBest;
+  const tNames  = 'Equipe_' + tBest;
+  // Notification équipe gagnante
+  const winner = ctWins > tWins ? {name: ctNames, color: '#4A9EFF', wins: ctWins}
+               : tWins > ctWins ? {name: tNames,  color: '#F5C842', wins: tWins}
+               : null;
+  const winnerBanner = winner
+    ? `<div style="display:flex;align-items:center;gap:10px;background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);border-radius:10px;padding:12px 20px;margin-bottom:12px">
+        <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="var(--success)" stroke-width="1.5"><path d="M10 2l1.8 4.9H17l-4.1 3 1.6 4.9L10 12l-4.5 2.8 1.6-4.9L3 7h5.2z" stroke-linejoin="round"/></svg>
+        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--success)">VICTOIRE</span>
+        <span style="font-size:14px;font-weight:700;color:${winner.color}">${winner.name}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto">${ctWins}  - ${tWins}</span>
+      </div>`
+    : `<div style="display:flex;align-items:center;gap:10px;background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.2);border-radius:10px;padding:12px 20px;margin-bottom:12px">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent)">TIE</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto">${ctWins}  - ${tWins}</span>
+      </div>`;
+  const el = document.getElementById('matchStatsBlock');
+  if (el) el.innerHTML = winnerBanner + teamBlock(2, ctNames, '#4A9EFF', ctWins) + teamBlock(3, tNames, '#F5C842', tWins);
+
+  // Highlights + graphique (une seule fois, pas sensible au side)
+  if (sf === 'both') {
+    renderHighlights(kills, players, allRounds);
+    renderPerfChart(players, kills, allRounds);
+  }
+}
+// renderTeams replaced by renderMatchStats
+function renderStats(){
+  const kills=demoData.kills||[],active=[...activePlayers];
+  const pk=active.length>0?kills.filter(k=>active.includes(k.attacker)):kills;
+  const hs=pk.filter(k=>k.isHeadshot).length;
+  const gr=(demoData.grenades||[]).filter(g=>active.length===0||active.includes(g.thrower));
+  const sgEl=document.getElementById('statsGrid');if(!sgEl)return;
+  sgEl.innerHTML=[
+    {label:'Kills',val:pk.length,sub:active.length===1?active[0]:active.length+' players',cls:'c-accent'},
+    {label:'Headshot %',val:(pk.length>0?((hs/pk.length)*100).toFixed(0):0)+'%',sub:hs+' HS',cls:'c-good'},
+    {label:'Wallbangs',val:pk.filter(k=>k.isWallbang).length,sub:'through walls',cls:'c-warn'},
+    {label:'Thru smoke',val:pk.filter(k=>k.thruSmoke).length,sub:'kills smoke',cls:'c-accent'},
+    {label:'Rounds',val:(demoData.rounds||[]).length,sub:'played',cls:'c-neutral'},
+    {label:'Grenades',val:gr.length,sub:'thrown',cls:'c-accent'},
+  ].map(s=>`<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-val ${s.cls}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
+  sgEl.innerHTML=sgEl.innerHTML;
+}
+function renderPlayerList(){
+  const players=demoData.playerStats||[],target=demoData.meta?.targetPlayer,atMax=activePlayers.size>=5;
+  const kills=demoData.kills||[];
+  const playerListEl=document.getElementById('playerList'); if(playerListEl) playerListEl.innerHTML=players.map(p=>{
+    const c=getColor(p.name),isActive=activePlayers.has(p.name),isDisabled=!isActive&&atMax;
+    return `<button class="player-btn ${isActive?'active':''} ${isDisabled?'disabled-max':''}" onclick="togglePlayer('${p.name.replace(/'/g,"\\'")}')"><span class="p-dot ${isActive?'':'off'}" style="background:${c.solid}"></span><span class="p-name">${p.name.substring(0,15)}</span>${p.name===target?'<span class="p-star">*</span>':''}<span class="p-kd">${p.kd}</span><span class="p-check">✓</span></button>`;
+  }).join('');
+  if(playerListEl) playerListEl.innerHTML=playerListEl.innerHTML; // already set
+  const phEl=document.querySelector('.panel-hint'); if(phEl) phEl.innerHTML=`Clic pour toggle · <span style="color:${atMax?'var(--danger)':'var(--accent)'}">${activePlayers.size}/5</span> actifs`;
+}
+
+async function switchHeatmap(type,btn){
+  // Gate l'onglet grenades (utility) derriere Pro
+  if(type==='utility'){
+    const isP = await fvIsPro();
+    if(!isP){
+      fvShowProModal('Heatmaps grenades');
+      return;
+    }
+  }
+  currentHeatmap=type;
+  document.querySelectorAll('.heatmap-tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  if(type==='replay'){
+    openReplayFS();
+    return;
+  }
+  clearInterval(replayTimer);replayPlaying=false;setPlayPause(false);
+  loadMapImageThenDraw();
+}
+function switchFloor(floor,btn){currentFloor=floor;document.querySelectorAll('.floor-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');loadMapImageThenDraw();}
+function toggleSide(side){
+  if(side==='ct'){showCT=!showCT;document.getElementById('btnCT').classList.toggle('active-ct',showCT);}
+  else{showT=!showT;document.getElementById('btnT').classList.toggle('active-t',showT);}
+  if(!showCT&&!showT){showCT=showT=true;document.getElementById('btnCT').classList.add('active-ct');document.getElementById('btnT').classList.add('active-t');}
+  renderHeatmap();
+}
+function renderSideStats(){
+  if(!demoData)return;
+  const kills=demoData.kills||[],players=[...activePlayers];
+  const fk=team=>kills.filter(k=>(players.length===0||players.includes(k.attacker))&&k.attackerTeam===team);
+  const ct=fk(2),t=fk(3);
+  const hs=arr=>arr.length>0?Math.round(arr.filter(k=>k.isHeadshot).length/arr.length*100):0;
+  const deaths=team=>kills.filter(k=>(players.length===0||players.includes(k.victim))&&k.victimTeam===team).length;
+  const ctD=deaths(2),tD=deaths(3);
+  document.getElementById('ctKills').textContent=ct.length;document.getElementById('ctDeaths').textContent=ctD;
+  document.getElementById('ctHS').textContent=hs(ct)+'%';document.getElementById('ctKD').textContent=ctD>0?(ct.length/ctD).toFixed(2):ct.length;
+  document.getElementById('tKills').textContent=t.length;document.getElementById('tDeaths').textContent=tD;
+  document.getElementById('tHS').textContent=hs(t)+'%';document.getElementById('tKD').textContent=tD>0?(t.length/tD).toFixed(2):t.length;
+  document.getElementById('sideStatsBar').style.display=activePlayers.size>0?'grid':'none';
+}
+function exportHeatmap(){const link=document.createElement('a');link.download=`fragvalue-${currentHeatmap}-${[...activePlayers].join('-')||'all'}.png`;link.href=canvas.toDataURL('image/png');link.click();}
+function goCompare(){const p=demoData.playerStats||[];if(p.length<2){showShareStatus('Pas assez de players pour comparer.');return;}window.location.href=`compare.html?${p.slice(0,5).map(x=>`p=${encodeURIComponent(x.name)}`).join('&')}`;}
+
+// ══ REPLAY ════════════════════════════════════════════════════════════════════
+function initRoundsBar(){
+  if(!demoData)return;
+  const rounds=demoData.rounds||[],kills=demoData.kills||[],target=demoData.meta?.targetPlayer;
+  const bar=document.getElementById('roundsBar');
+  if(!bar)return;
+  let html=`<button class="rnd rnd-all sel" id="roundBtnAll" onclick="selectRound(null,this)">All</button>`;
+  rounds.forEach((rd,i)=>{
+    const r=i+1;
+    const rK=kills.filter(k=>k.round===r&&k.attacker===target).length;
+    const rD=kills.filter(k=>k.round===r&&k.victim===target).length;
+    if(r===16)html+=`<div class="rnd-sep"></div>`;
+    const winCls = rd.winner===2?'ct-win':rd.winner===3?'t-win':'loss';
+    html+=`<button class="rnd ${winCls}" id="roundBtn${r}" onclick="selectRound(${r},this)" title="R${r} · ${rK}K ${rD}D">${r}</button>`;
+  });
+  bar.innerHTML=html;
+}
+
+function selectRound(round,btn){
+  replayRound=round;
+  document.querySelectorAll('.rnd').forEach(b=>b.classList.remove('sel'));
+  if(btn)btn.classList.add('sel');
+  document.getElementById('replayRoundLabel').textContent=round?`Round ${round}`:'All les rounds';
+  if(round===null){
+    currentHeatmap='kills';
+    document.querySelectorAll('.heatmap-tab').forEach(b=>b.classList.remove('active'));
+    document.querySelector('.heatmap-tab').classList.add('active');
+    clearInterval(replayTimer);replayPlaying=false;setPlayPause(false);
+    loadMapImageThenDraw();
+  }else{
+    buildReplayFrames(round);
+    replayFrameIdx=0;
+    drawReplayFrame(0);
+  }
+}
+
+function buildReplayFrames(round){
+  const positions=demoData.positions||{},kills=demoData.kills||[];
+  const roundKills=kills.filter(k=>k.round===round);
+  const roundPos={};
+  // Tick de début réel du round (fin du freeze time)
+  const freezeEndTick = (demoData.roundStartTicks && demoData.roundStartTicks[round]) || 0;
+
+  Object.entries(positions).forEach(([name,pts])=>{
+    // Garder les positions du round, filtrer le freeze côté frontend
+    const rpts = pts.filter(p => {
+      if(p.round !== round) return false;
+      // Si on a le tick de fin de freeze, ignorer les positions avant
+      if(freezeEndTick > 0 && p.tick < freezeEndTick) return false;
+      return true;
+    });
+    if(rpts.length > 0) roundPos[name] = rpts;
+  });
+  if(Object.keys(roundPos).length===0&&roundKills.length===0){replayFrames=[];return;}
+  let allTicks=[];
+  Object.values(roundPos).forEach(pts=>pts.forEach(p=>allTicks.push(p.tick||0)));
+  roundKills.forEach(k=>allTicks.push(k.tick||0));
+
+  // Utiliser roundStartTicks si disponible (après freeze time)
+  const freezeStartTick = (demoData.roundStartTicks && demoData.roundStartTicks[round]) || 0;
+  const rawMin = Math.min(...allTicks, 0);
+  // Si on a le tick de fin de freeze, démarrer là
+  const minTick = freezeStartTick > 0 ? freezeStartTick : rawMin;
+  const maxTick = Math.max(...allTicks, minTick+1);
+  const span = Math.max(maxTick - minTick, 1);
+  // span = différence de ticks, tickrate CS2 = 128/sec
+  // On veut ~15 frames/sec × durée réelle du round (max 600 frames ~40sec)
+  const durationSec = span / 128;
+  const N = Math.min(600, Math.max(80, Math.round(durationSec * 15)));
+  replayFrames=[];
+  for(let f=0;f<=N;f++){
+    const progress=f/N,tick=minTick+progress*span;
+    const frame={progress,tick,players:{},deaths:[]};
+    Object.entries(roundPos).forEach(([name,pts])=>{
+      if(!pts.length)return;
+      let prev=pts[0],next=pts[pts.length-1];
+      for(let i=0;i<pts.length-1;i++){if((pts[i].tick||0)<=tick&&(pts[i+1].tick||0)>=tick){prev=pts[i];next=pts[i+1];break;}}
+      const s=Math.max((next.tick||0)-(prev.tick||0),1),t=Math.min(1,Math.max(0,(tick-(prev.tick||0))/s));
+      frame.players[name]={x:prev.x+(next.x-prev.x)*t,y:prev.y+(next.y-prev.y)*t,z:prev.z+(next.z-prev.z)*t,team:prev.team,alive:true};
+    });
+    roundKills.forEach(k=>{if((k.tick||0)<=tick){if(frame.players[k.victim])frame.players[k.victim].alive=false;frame.deaths.push({name:k.victim,x:k.victimX,y:k.victimY});}});
+    replayFrames.push(frame);
+  }
+  const secs=Math.round(span/64);
+  const el=document.getElementById('replayTimeTotal');
+  if(el)el.textContent=`${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;
+  const killsRow=document.getElementById('replayKillsRow');
+  if(killsRow)killsRow.innerHTML=roundKills.slice(0,8).map(k=>`<div class="rp-kill ${k.isHeadshot?'hs':''}">${escHtml(k.attacker)} → ${escHtml(k.victim)}${k.isHeadshot?' <strong style="color:var(--gold);font-size:.85em">HS</strong>':''}</div>`).join('');
+  const markers=document.getElementById('replayKillMarkers');
+  if(markers)markers.innerHTML=roundKills.map(k=>{const pct=Math.min(100,Math.max(0,((k.tick||0)-minTick)/span*100));return `<div class="rp-kill-mark" style="left:${pct}%"></div>`;}).join('');
+}
+
+function drawReplayFrame(idx){
+  if(!replayFrames.length||!demoData)return;
+  const frame=replayFrames[Math.min(idx,replayFrames.length-1)];
+  const mapName=(demoData.meta?.map||'de_dust2').toLowerCase();
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  if(mapImage){ctx.drawImage(mapImage,0,0,W,H);ctx.fillStyle='rgba(10,12,18,.4)';ctx.fillRect(0,0,W,H);}
+  else{ctx.fillStyle='#0A0C12';ctx.fillRect(0,0,W,H);}
+  ctx.fillStyle='rgba(12,14,19,.85)';ctx.fillRect(8,8,180,26);
+  ctx.fillStyle='#EDF0F7';ctx.font='500 11px JetBrains Mono,monospace';ctx.textAlign='left';
+  ctx.fillText(`REPLAY  - Round ${replayRound}`,14,25);
+  frame.deaths.forEach(d=>{
+    const{px,py}=w2c(d.x,d.y,mapName,W,H);if(!inBounds(px,py,W,H))return;
+    ctx.strokeStyle='rgba(240,107,107,.7)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(px-5,py-5);ctx.lineTo(px+5,py+5);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(px+5,py-5);ctx.lineTo(px-5,py+5);ctx.stroke();
+  });
+  Object.entries(frame.players).forEach(([name,p])=>{
+    if(!p.alive)return;
+    const{px,py}=w2c(p.x,p.y,mapName,W,H);if(!inBounds(px,py,W,H))return;
+    const color=getColor(name),isCT=p.team===3;
+    ctx.beginPath();ctx.arc(px,py,11,0,Math.PI*2);ctx.fillStyle=`rgba(${color.rgb},.15)`;ctx.fill();
+    ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fillStyle=color.solid;ctx.fill();
+    ctx.strokeStyle=isCT?'#4A9EFF':'#F5C842';ctx.lineWidth=2.5;ctx.stroke();
+    ctx.fillStyle='#EDF0F7';ctx.font='bold 9px JetBrains Mono,monospace';ctx.textAlign='center';
+    ctx.fillText(name.slice(0,8),px,py-11);
+  });
+  const pct=replayFrames.length>1?(idx/(replayFrames.length-1))*100:0;
+  const fillEl=document.getElementById('replayFill'),thumbEl=document.getElementById('replayThumb');
+  if(fillEl)fillEl.style.width=pct+'%';if(thumbEl)thumbEl.style.left=pct+'%';
+  const minTick=replayFrames[0]?.tick||0;
+  const secs=Math.round((frame.tick-minTick)/64);
+  const curEl=document.getElementById('replayTimeCurrent');
+  if(curEl)curEl.textContent=`${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;
+}
+
+function setPlayPause(playing){
+  const pi=document.getElementById('playIcon'),pa=document.getElementById('pauseIcon');
+  if(pi)pi.style.display=playing?'none':'block';
+  if(pa)pa.style.display=playing?'block':'none';
+}
+function toggleReplay(){
+  if(!replayFrames.length)return;
+  replayPlaying=!replayPlaying;setPlayPause(replayPlaying);
+  if(replayPlaying){
+    if(replayFrameIdx>=replayFrames.length-1)replayFrameIdx=0;
+    replayTimer=setInterval(()=>{
+      replayFrameIdx++;
+      if(replayFrameIdx>=replayFrames.length){replayFrameIdx=replayFrames.length-1;clearInterval(replayTimer);replayPlaying=false;setPlayPause(false);}
+      else drawReplayFrame(replayFrameIdx);
+    },Math.round(1000/FPS/replaySpeed));
+  }else clearInterval(replayTimer);
+}
+function setSpeed(s,btn){replaySpeed=s;document.querySelectorAll('.rps').forEach(b=>b.classList.remove('on'));btn.classList.add('on');if(replayPlaying){clearInterval(replayTimer);replayPlaying=false;toggleReplay();}}
+function replaySkipBack(){clearInterval(replayTimer);replayPlaying=false;setPlayPause(false);replayFrameIdx=0;drawReplayFrame(0);}
+function replaySkipFwd(){clearInterval(replayTimer);replayPlaying=false;setPlayPause(false);replayFrameIdx=replayFrames.length-1;drawReplayFrame(replayFrameIdx);}
+function replayStepBack(){clearInterval(replayTimer);replayPlaying=false;setPlayPause(false);replayFrameIdx=Math.max(0,replayFrameIdx-5);drawReplayFrame(replayFrameIdx);}
+function replayStepFwd(){clearInterval(replayTimer);replayPlaying=false;setPlayPause(false);replayFrameIdx=Math.min(replayFrames.length-1,replayFrameIdx+5);drawReplayFrame(replayFrameIdx);}
+function seekReplay(e){const rect=document.getElementById('replayTimeline').getBoundingClientRect();const pct=Math.min(1,Math.max(0,(e.clientX-rect.left)/rect.width));replayFrameIdx=Math.round(pct*(replayFrames.length-1));drawReplayFrame(replayFrameIdx);}
+
+// ══ REPLAY FULLSCREEN ════════════════════════════════════════════════════════
+let rfCanvas, rfCtx, rfMapImg=null, rfRound=null, rfFrames=[], rfIdx=0;
+let rfPlaying=false, rfTimer=null, rfSpeed=1, rfMapName='de_dust2';
+const RF_FPS=30;
+
+function getFirstRealRound(){
+  const _rnds = demoData.rounds||[];
+  for(let i=0;i<_rnds.length;i++){
+    if(!_rnds[i].isKnife) return _rnds[i].round ?? i;
+  }
+  return _rnds[0]?.round ?? 0;
+}
+
+function detectKnifeRounds(){
+  const rounds = demoData.rounds || [];
+  const kills = demoData.kills || [];
+  if(!rounds.length) return;
+  rounds.forEach((rd, i) => {
+    const roundNum = rd.round ?? i;
+    const killsR = rd.killsRound ?? (roundNum + 1);
+    const startT = rd.startTick || 0;
+    const endT = rd.endTick || (rounds[i+1]?.startTick || 0);
+    let rKills = [];
+    if(startT > 0 && endT > 0) rKills = kills.filter(k => (k.tick||0) >= startT && (k.tick||0) <= endT);
+    if(!rKills.length) rKills = kills.filter(k => k.round === killsR || k.round === roundNum);
+    if(!rKills.length){
+      // Garder le flag du parser si présent, sinon round 0 = knife (FACEIT)
+      if(rd.isKnife === undefined || rd.isKnife === null) rd.isKnife = (i === 0);
+      return;
+    }
+    rd.isKnife = rKills.every(k => {
+      const w = (k.weapon||'').toLowerCase();
+      return w.includes('knife') || w.includes('bayonet') || w.includes('melee') || w.includes('fists');
+    });
+  });
+  // Recalculer displayNum : seuls les rounds non-knife sont numerotes
+  let realNum = 0;
+  rounds.forEach(rd => {
+    if(rd.isKnife){ rd.displayNum = 0; return; }
+    realNum++;
+    rd.displayNum = realNum;
+  });
+  console.log('[FragValue] Knife rounds:', rounds.filter(r=>r.isKnife).length);
+}
+
+function convertPositionTicks(){
+  const rounds = demoData.rounds || [];
+  // Convertir positions ticks relatifs → absolus si nécessaire
+  const pos = demoData.positions || {};
+  const firstPts = Object.values(pos)[0];
+  if(!firstPts) return;
+  // Convertir chaque point dont le tick est petit (relatif)
+  const stMap = {};
+  (demoData.rounds||[]).forEach(r => { stMap[r.round ?? 0] = r.startTick || 0; });
+  let converted = 0;
+  Object.values(pos).forEach(pts => {
+    pts.forEach(p => {
+      if((p.tick||0) > 1000) return; // déjà absolu pour ce point
+      const freezeR = (p.round || 1) - 1;
+      p.tick = (stMap[freezeR] || 0) + (p.tick || 0);
+      converted++;
+    });
+  });
+  console.log(`[FragValue] ${converted} positions converties en ticks absolus`);
+  // Compter la distribution des rounds AVANT conversion
+  const rdDist = {};
+  Object.values(pos).forEach(pts => pts.forEach(p => { rdDist[p.round]=(rdDist[p.round]||0)+1; }));
+  console.log('[FragValue] Distribution rounds avant conversion:', JSON.stringify(rdDist));
+  console.log('[FragValue] Ticks positions convertis, sample:', firstPts[0]?.tick);
+  // Vérifier après conversion
+  const rdDist2 = {};
+  Object.values(pos).forEach(pts => pts.forEach(p => { rdDist2[p.round]=(rdDist2[p.round]||0)+1; }));
+  console.log('[FragValue] Distribution rounds après conversion:', JSON.stringify(rdDist2));
+}
+
+function openReplayFS(){
+  if(!demoData)return;
+  detectKnifeRounds();
+  convertPositionTicks();
+  rfMapName=(demoData.meta?.map||'de_dust2').toLowerCase().replace(/^.*\//,'').trim();
+  document.getElementById('rfMapName').textContent=rfMapName;
+  document.getElementById('replayFullscreen').classList.add('active');
+
+  rfCanvas=document.getElementById('replayCanvas');
+  rfCtx=rfCanvas.getContext('2d');
+
+  // Charger l'image de carte
+  const cfg=MAP_CONFIG[rfMapName];
+  if(cfg){
+    const img=new Image();
+    img.onload=()=>{
+      rfMapImg=img;
+      rfCanvas.width=img.width; rfCanvas.height=img.height;
+      initRfRoundsBar();
+      const firstReal = getFirstRealRound();
+      rfSelectRound(firstReal, document.getElementById('rfRoundBtn'+firstReal));
+    };
+    img.onerror=()=>{ rfMapImg=null; initRfRoundsBar();
+    const firstReal2 = getFirstRealRound();
+    rfSelectRound(firstReal2, document.getElementById('rfRoundBtn'+firstReal2)); };
+    img.src=cfg.upper?cfg.upper.img:cfg.img;
+  } else {
+    rfCanvas.width=1024; rfCanvas.height=1024;
+    initRfRoundsBar();
+    const firstReal3 = getFirstRealRound();
+    rfSelectRound(firstReal3, document.getElementById('rfRoundBtn'+firstReal3));
+  }
+  initRfPlayerList();
+}
+
+function closeReplayFS(){
+  document.getElementById('replayFullscreen').classList.remove('active');
+  clearInterval(rfTimer); rfPlaying=false; rfSetPlayPause(false);
+}
+
+function initRfRoundsBar(){
+  const rounds=demoData.rounds||[], kills=demoData.kills||[];
+  const target=demoData.meta?.targetPlayer;
+  const bar=document.getElementById('rfRoundsBar');
+  let html='';
+  let realNum = 0;
+  rounds.forEach((rd,i)=>{
+    const freezeR = rd.round ?? i;
+    const killsR  = rd.killsRound ?? (freezeR + 1);
+    if(rd.isKnife){
+      html+=`<button class="rnd2" id="rfRoundBtn${freezeR}" onclick="rfSelectRound(${freezeR},this)" title="Knife round" style="opacity:.35;font-size:8px">K</button>`;
+      return;
+    }
+    realNum++;
+    const rK=kills.filter(k=>k.tick>=rd.startTick&&(rd.endTick===0||k.tick<=rd.endTick)&&k.attacker===target).length;
+    if(realNum===13) html+=`<div class="rnd2-sep"></div>`;
+    const rdWon = rd.winner===2||rd.winner===3;
+    html+=`<button class="rnd2 ${rdWon?'win':'loss'}" id="rfRoundBtn${freezeR}" onclick="rfSelectRound(${freezeR},this)" title="R${realNum}·${rK}K">${realNum}</button>`;
+  });
+  bar.innerHTML=html;
+}
+
+function initRfPlayerList(){
+  const players=demoData.playerStats||[];
+  document.getElementById('rfPlayerList').innerHTML=players.map(p=>{
+    const c=getColor(p.name);
+    const id=p.name.replace(/[^a-zA-Z0-9]/g,'_');
+    return `<div class="rf-player active" id="rfp-${id}" onclick="rfTogglePlayer('${p.name.replace(/'/g,"\'")}',this)">
+      <div class="rf-player-dot" style="background:${c.solid}"></div>
+      <div class="rf-player-name">${p.name.slice(0,14)}</div>
+      <div class="rf-player-kd">${p.kd}</div>
+    </div>`;
+  }).join('');
+}
+
+
+let rfHiddenPlayers=new Set();
+let rfShotsConverted=false;
+function rfTogglePlayer(name,el){
+  if(rfHiddenPlayers.has(name)){rfHiddenPlayers.delete(name);el.classList.add('active');}
+  else{rfHiddenPlayers.add(name);el.classList.remove('active');}
+}
+
+// ── Effets visuels grenades et tirs ─────────────────────────────────────────
+// ══ Icon glyphs SCL-style ════════════════════════════════════════════════════
+function rfDrawCloudIcon(ctx, cx, cy, size, color) {
+  const s = size;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(cx - s * 0.5, cy + s * 0.1, s * 0.45, 0, Math.PI * 2);
+  ctx.arc(cx + s * 0.5, cy + s * 0.1, s * 0.45, 0, Math.PI * 2);
+  ctx.arc(cx,           cy - s * 0.15, s * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+function rfDrawFlameIcon(ctx, cx, cy, size, color) {
+  const s = size;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - s);
+  ctx.bezierCurveTo(cx + s * 0.8, cy - s * 0.4, cx + s * 0.7, cy + s * 0.6, cx, cy + s * 0.7);
+  ctx.bezierCurveTo(cx - s * 0.7, cy + s * 0.6, cx - s * 0.8, cy - s * 0.4, cx, cy - s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+function rfDrawFlashIcon(ctx, cx, cy, size, color) {
+  const s = size;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - s);
+  ctx.lineTo(cx + s * 0.3, cy - s * 0.3);
+  ctx.lineTo(cx + s, cy);
+  ctx.lineTo(cx + s * 0.3, cy + s * 0.3);
+  ctx.lineTo(cx, cy + s);
+  ctx.lineTo(cx - s * 0.3, cy + s * 0.3);
+  ctx.lineTo(cx - s, cy);
+  ctx.lineTo(cx - s * 0.3, cy - s * 0.3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+function rfDrawHEIcon(ctx, cx, cy, size, color) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function rfDrawEffects(frame, W, H) {
+  const tick = frame.tick||0;
+  const grenades = demoData.grenades || [];
+  const shots    = demoData.shots    || [];
+
+  // ── Traits de tir ────────────────────────────────────────────────────────
+  // Construire shots absolus une fois par round si ticks relatifs
+  if(!rfShotsConverted) {
+    const shotsRelative = shots.length > 0 && (shots[0].tick||0) < 5000; // relatif si < 5000 ticks
+    if(shotsRelative) {
+      // Pour chaque player, trouver l'offset entre ses positions absolues
+      // et ses shots relatifs via le premier kill (tick absolu connu)
+      const playerOffsets = {};
+      (demoData.kills||[]).forEach(k => {
+        if(playerOffsets[k.attacker]!==undefined) return;
+        // Trouver les shots de cet attaquant proches de ce kill
+        const matchShots = shots.filter(s =>
+          s.shooter===k.attacker && s.tick <= (k.tick||0) && s.tick > (k.tick||0)-500
+        );
+        if(matchShots.length > 0) {
+          // offset = kill.tick - shot.tick (les deux en relatif du même round)
+          // En réalité shot.tick est relatif au round, kill.tick est absolu
+          // Donc offset = kill.tick - shot.tick_relatif
+          playerOffsets[k.attacker] = (k.tick||0) - matchShots[matchShots.length-1].tick;
+        }
+      });
+      // Appliquer les offsets
+      shots.forEach(s => {
+        const off = playerOffsets[s.shooter];
+        if(off !== undefined) s.absTick = s.tick + off;
+      });
+    } else {
+      shots.forEach(s => { s.absTick = s.tick; });
+    }
+    rfShotsConverted = true;
+  }
+
+  const SHOT_DUR = 5;
+
+  // Debug shots (une fois)
+  if(!window._shotDebugDone && shots.length > 0) {
+    const r0shots = shots.filter(s => (s.absTick||s.tick||0) >= 5223 && (s.absTick||s.tick||0) <= 9431);
+    const validShots = shots.filter(s => s.x !== 0 || s.y !== 0);
+    console.log(`[Shots debug] total=${shots.length}, round0=${r0shots.length}, valid coords=${validShots.length}, sample absTick=${shots[0]?.absTick||shots[0]?.tick}, x=${shots[0]?.x}, y=${shots[0]?.y}`);
+    window._shotDebugDone = true;
+  }
+
+  // All les tirs : flash + trait directionnel (filtrés par round)
+  const rdData = (demoData.rounds||[]).find(r=>(r.round??-1)===rfRound)||{};
+  const rdStart = rdData.startTick||0, rdEnd = rdData.endTick||999999;
+  shots.forEach(s => {
+    const st = s.absTick || s.tick || 0;
+    if(st === 0 || (s.x===0 && s.y===0)) return;
+    if(st < rdStart || st > rdEnd + 1000) return; // hors round
+    if(tick < st || tick > st + SHOT_DUR) return;
+    // Vérifier que le tireur est vivant dans ce frame
+    const shooterState = frame.players[s.shooter];
+    if(!shooterState || !shooterState.alive) return;
+    const alpha = 1 - (tick - st) / SHOT_DUR;
+    // Utiliser position du player dans le frame (plus précis que s.x/s.y)
+    const _sp = frame.players[s.shooter];
+    const _sx = _sp ? _sp.x : s.x;
+    const _sy = _sp ? _sp.y : s.y;
+    const {px,py} = w2c(_sx, _sy, rfMapName, W, H);
+    if(!inBounds(px,py,W,H)) return;
+
+    // Chercher si ce tir correspond à un kill (trait vers victime)
+    const nearKill = (demoData.kills||[]).find(k =>
+      k.attacker === s.shooter &&
+      Math.abs((k.tick||0) - st) < 30 &&
+      k.victimX !== 0
+    );
+
+    if(nearKill) {
+      const {px:vx,py:vy} = w2c(nearKill.victimX, nearKill.victimY, rfMapName, W, H);
+      const dx=vx-px, dy=vy-py, dist=Math.sqrt(dx*dx+dy*dy)||1;
+      rfCtx.strokeStyle=`rgba(255,220,50,${alpha*0.9})`;
+      rfCtx.lineWidth=1.5; rfCtx.setLineDash([]);
+      rfCtx.beginPath(); rfCtx.moveTo(px,py);
+      rfCtx.lineTo(px+dx/dist*Math.min(45,dist), py+dy/dist*Math.min(45,dist));
+      rfCtx.stroke();
+    } else {
+      // Tir sans kill : trait court dans la direction du regard
+      // On utilisé la position précédente→suivante comme approximation
+      const pts = (demoData.positions[s.shooter]||[]);
+      const prevPt = [...pts].reverse().find(p=>(p.tick||0) <= st);
+      const nextPt = pts.find(p=>(p.tick||0) > st);
+      if(prevPt && nextPt) {
+        const {px:nx,py:ny} = w2c(nextPt.x, nextPt.y, rfMapName, W, H);
+        const {px:ppx,py:ppy} = w2c(prevPt.x, prevPt.y, rfMapName, W, H);
+        const dx=nx-ppx, dy=ny-ppy, dist=Math.sqrt(dx*dx+dy*dy)||1;
+        if(dist > 1) {
+          rfCtx.strokeStyle=`rgba(255,220,50,${alpha*0.6})`;
+          rfCtx.lineWidth=1.2; rfCtx.setLineDash([]);
+          rfCtx.beginPath(); rfCtx.moveTo(px,py);
+          rfCtx.lineTo(px+dx/dist*22, py+dy/dist*22); rfCtx.stroke();
+        }
+      }
+    }
+    // Flash de bouche
+    rfCtx.beginPath(); rfCtx.arc(px,py,3,0,Math.PI*2);
+    rfCtx.fillStyle=`rgba(255,240,120,${alpha})`; rfCtx.fill();
+  });
+
+  // Kills  - trait vers la victime (priorité visuelle)
+  const SHOT_DUR_K = 5;
+  (demoData.kills||[]).forEach(k => {
+    const kt = k.tick||0;
+    if(kt===0 || tick < kt || tick > kt + SHOT_DUR_K) return;
+    if(!k.attackerX && !k.attackerY) return;
+    const alpha = 1 - (tick - kt) / SHOT_DUR_K;
+    const {px:ax,py:ay} = w2c(k.attackerX, k.attackerY, rfMapName, W, H);
+    const {px:vx,py:vy} = w2c(k.victimX,   k.victimY,   rfMapName, W, H);
+    if(!inBounds(ax,ay,W,H)) return;
+    const dx=vx-ax, dy=vy-ay, dist=Math.sqrt(dx*dx+dy*dy)||1;
+    rfCtx.strokeStyle=`rgba(255,220,50,${alpha*0.9})`;
+    rfCtx.lineWidth=2; rfCtx.setLineDash([]);
+    rfCtx.beginPath(); rfCtx.moveTo(ax,ay);
+    rfCtx.lineTo(ax+dx/dist*Math.min(50,dist), ay+dy/dist*Math.min(50,dist)); rfCtx.stroke();
+    rfCtx.beginPath(); rfCtx.arc(ax,ay,3.5,0,Math.PI*2);
+    rfCtx.fillStyle=`rgba(255,240,120,${alpha})`; rfCtx.fill();
+  });
+
+  // Trajectoire + effet grenades
+  // Filtrer grenades du round courant
+  const _rd = (demoData.rounds||[]).find(r=>(r.round??-1)===rfRound)||{};
+  const _rStart = _rd.startTick||0, _rEnd = (_rd.endTick||999999) + 2000;
+
+  // Tri par zIndex pour que les smokes soient dessinees en dessous
+  // (sinon une smoke lancee après un molo recouvrirait la flamme).
+  const rfZ = (t) => {
+    t = t || '';
+    if (t.includes('smoke')) return 0;
+    if (t.includes('decoy')) return 1;
+    if (t.includes('flash')) return 2;
+    if (t.includes('hegre')) return 3;
+    if (t.includes('molotov') || t.includes('incgren')) return 4;
+    return 5;
+  };
+  const sortedGrenades = [...grenades].sort((a,b) => rfZ(a.type) - rfZ(b.type));
+
+  // Rendu en 2 passes : effets d'abord, labels par-dessus avec pill sombre.
+  const rfLabels = [];
+
+  // Debug : compter les grenades du round visible et leurs états (1 fois par round)
+  if (!window._rfGrenadeDebug || window._rfGrenadeDebug.round !== rfRound) {
+    window._rfGrenadeDebug = { round: rfRound };
+    const inRound = sortedGrenades.filter(g => g.tick && g.tick >= _rStart && g.tick <= _rEnd);
+    const withDeton = inRound.filter(g => g.detonX != null && g.detonY != null && g.detonTick != null);
+    const byType = {};
+    inRound.forEach(g => {
+      const key = (g.type || '').replace('weapon_', '');
+      byType[key] = (byType[key] || 0) + 1;
+    });
+    const smokeSample = withDeton.filter(g => (g.type || '').includes('smoke')).slice(0, 3);
+    console.log(`[rfDrawEffects] Round ${rfRound}: ${inRound.length} grenades, ${withDeton.length} avec deton, par type:`, byType);
+    if (smokeSample.length) {
+      console.log(`[rfDrawEffects] smokes sample:`, smokeSample.map(g => ({
+        thrower: g.thrower, tick: g.tick, detonTick: g.detonTick, endTick: g.endTick,
+        x: g.x, y: g.y, detonX: g.detonX, detonY: g.detonY, pathLen: g.path?.length || 0,
+      })));
+    } else {
+      console.log(`[rfDrawEffects] AUCUNE SMOKE avec deton trouvee dans ce round !`);
+    }
+  }
+
+  sortedGrenades.forEach(g => {
+    if (!g.tick) return;
+    if (g.tick < _rStart || g.tick > _rEnd) return;
+    // Si le parser n'à pas pu déterminer le point d'explosion, on SKIP.
+    if (g.detonX == null || g.detonY == null || g.detonTick == null) return;
+
+    const hasPathData = !!(g.path && g.path.length >= 4);
+    const launchPos = w2c(g.x, g.y, rfMapName, W, H);
+    const detonPos  = w2c(g.detonX, g.detonY, rfMapName, W, H);
+
+    // Label type pour identifier la grenade en vol
+    const gType = g.type || '';
+    const typeLabel = gType.includes('smoke') ? 'SMK'
+                    : gType.includes('flash') ? 'FL'
+                    : gType.includes('hegre') ? 'HE'
+                    : (gType.includes('molotov') || gType.includes('incgren')) ? 'MOLO'
+                    : gType.includes('decoy') ? 'DEC' : null;
+    const typeColor = gType.includes('smoke') ? '#ffffff'
+                    : gType.includes('flash') ? '#ffffaa'
+                    : gType.includes('hegre') ? '#ff6060'
+                    : (gType.includes('molotov') || gType.includes('incgren')) ? '#ffcc66'
+                    : gType.includes('decoy') ? '#ff6666' : '#ffffff';
+
+    // Trajectoire : polyline a rebonds si path dispo, sinon interpolation lineaire.
+    if (tick >= g.tick && tick < g.detonTick && inBounds(launchPos.px,launchPos.py,W,H)) {
+      if (hasPathData) {
+        const numPts = g.path.length / 2;
+        const progress = Math.max(0, Math.min(1, (tick - g.tick) / Math.max(g.detonTick - g.tick, 1)));
+        const fIdx = progress * (numPts - 1);
+        const i0 = Math.floor(fIdx);
+        const i1 = Math.min(numPts - 1, i0 + 1);
+        const f = fIdx - i0;
+        const wx0 = g.path[i0*2], wy0 = g.path[i0*2+1];
+        const wx1 = g.path[i1*2], wy1 = g.path[i1*2+1];
+        const curWX = wx0 * (1-f) + wx1 * f;
+        const curWY = wy0 * (1-f) + wy1 * f;
+        const _cp = w2c(curWX, curWY, rfMapName, W, H);
+        // Polyline a rebonds
+        rfCtx.beginPath();
+        const _p0 = w2c(g.path[0], g.path[1], rfMapName, W, H);
+        rfCtx.moveTo(_p0.px, _p0.py);
+        for (let i = 1; i <= i0; i++) {
+          const _pp = w2c(g.path[i*2], g.path[i*2+1], rfMapName, W, H);
+          rfCtx.lineTo(_pp.px, _pp.py);
+        }
+        rfCtx.lineTo(_cp.px, _cp.py);
+        rfCtx.setLineDash([3,3]);
+        rfCtx.strokeStyle = 'rgba(220,220,220,0.5)';
+        rfCtx.lineWidth = 1;
+        rfCtx.stroke();
+        rfCtx.setLineDash([]);
+        // Dot courant (plus petit)
+        rfCtx.beginPath(); rfCtx.arc(_cp.px, _cp.py, 2.2, 0, Math.PI*2);
+        rfCtx.fillStyle = 'rgba(255,255,255,0.85)'; rfCtx.fill();
+        // Label type bare
+        if (typeLabel) rfLabels.push({ text: typeLabel, x: _cp.px, y: _cp.py - 9, color: typeColor, size: 7, bare: true });
+      } else {
+        // Fallback : trait droit
+        const trajDx = detonPos.px - launchPos.px;
+        const trajDy = detonPos.py - launchPos.py;
+        const trajLen = Math.sqrt(trajDx*trajDx + trajDy*trajDy);
+        if (trajLen > 20) {
+          const progress = (tick - g.tick) / Math.max(g.detonTick - g.tick, 1);
+          const curX = launchPos.px + trajDx * progress;
+          const curY = launchPos.py + trajDy * progress;
+          rfCtx.setLineDash([3,3]);
+          rfCtx.strokeStyle = 'rgba(220,220,220,0.45)';
+          rfCtx.lineWidth = 1;
+          rfCtx.beginPath(); rfCtx.moveTo(launchPos.px, launchPos.py); rfCtx.lineTo(curX, curY); rfCtx.stroke();
+          rfCtx.setLineDash([]);
+          rfCtx.beginPath(); rfCtx.arc(curX, curY, 2.2, 0, Math.PI*2);
+          rfCtx.fillStyle = 'rgba(255,255,255,0.85)'; rfCtx.fill();
+          if (typeLabel) rfLabels.push({ text: typeLabel, x: curX, y: curY - 9, color: typeColor, size: 7, bare: true });
+        }
+      }
+    }
+
+    // Effet a l'impact
+    if (!g.endTick) return;
+    const isActive = tick >= g.detonTick && tick <= g.endTick;
+    if (!isActive) return;
+    const {px,py} = detonPos;
+    if (!inBounds(px,py,W,H)) return;
+    // Guard : explosion quasi au lancer → ne dessine pas (bug match)
+    const impDx = detonPos.px - launchPos.px;
+    const impDy = detonPos.py - launchPos.py;
+    const impDist = Math.sqrt(impDx*impDx + impDy*impDy);
+    if (impDist <= 15) return;
+    // Garde supplementaire si pas de path ET distance excessive
+    if (!hasPathData && impDist > 400) return;
+    const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
+    const type = g.type || '';
+
+    // Path statique : polyline complet visible pendant l'effet (rebonds
+    // visibles meme après detonation), faded par rapport au vol.
+    if (hasPathData && (type.includes('smoke') || type.includes('molotov') || type.includes('incgren'))) {
+      const numPts = g.path.length / 2;
+      rfCtx.beginPath();
+      const _p0 = w2c(g.path[0], g.path[1], rfMapName, W, H);
+      rfCtx.moveTo(_p0.px, _p0.py);
+      for (let i = 1; i < numPts; i++) {
+        const _pp = w2c(g.path[i*2], g.path[i*2+1], rfMapName, W, H);
+        rfCtx.lineTo(_pp.px, _pp.py);
+      }
+      rfCtx.setLineDash([3, 4]);
+      rfCtx.strokeStyle = 'rgba(255,255,255,0.32)';
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
+      rfCtx.setLineDash([]);
+    }
+
+    // Helper : defere le label vers la passe finale
+    const pushLabel = (text, x, y, color, size) => {
+      rfLabels.push({ text, x, y, color, size: size || 9 });
+    };
+
+    // Timer de dissipation : secondes réelles (demos FACEIT = 128 tick/s).
+    const secLeft = Math.max(0, (g.endTick - tick) / 128);
+    const timerTxt = secLeft >= 10 ? Math.round(secLeft) + 's' : secLeft.toFixed(1) + 's';
+
+    // Timer bare (pas de pill)
+    const pushBareTimer = (txt, x, y) => {
+      rfLabels.push({ text: txt, x, y, color: '#d8d8d8', size: 8, bare: true });
+    };
+
+    if (type.includes('smoke')) {
+      // SCL-style : cercle contour fin + glyph nuage au centre
+      // Fade-in quasi-instantane (~0.36s au lieu de 1.8s) pour afficher
+      // l'icone au moment exact de la detonation.
+      const r = 20;
+      const fadeInLen = 0.02, fadeOutLen = 0.08;
+      const a = progress < fadeInLen ? progress / fadeInLen
+             : progress > (1 - fadeOutLen) ? (1 - progress) / fadeOutLen : 1;
+      rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
+      rfCtx.strokeStyle = `rgba(220,220,220,${a * 0.9})`;
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
+      rfDrawCloudIcon(rfCtx, px, py, 6, `rgba(225,225,225,${a})`);
+      pushBareTimer(timerTxt, px, py - r - 5);
+    } else if (type.includes('flash')) {
+      const r = 5 + (1 - progress) * 16;
+      const a = Math.pow(1 - progress, 0.7) * 0.9;
+      rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
+      rfCtx.strokeStyle = `rgba(255,255,255,${a})`;
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
+      if (progress < 0.35) rfDrawFlashIcon(rfCtx, px, py, 4, `rgba(255,255,200,${a})`);
+    } else if (type.includes('hegre')) {
+      const r = 5 + progress * 22;
+      const a = Math.pow(1 - progress, 0.7) * 0.9;
+      rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
+      rfCtx.strokeStyle = `rgba(255,140,40,${a})`;
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
+      if (progress < 0.3) rfDrawHEIcon(rfCtx, px, py, 5, `rgba(255,140,40,${a})`);
+    } else if (type.includes('molotov') || type.includes('incgren')) {
+      const r = 18;
+      const a = 0.85;
+      rfCtx.beginPath(); rfCtx.arc(px, py, r, 0, Math.PI * 2);
+      rfCtx.strokeStyle = `rgba(255,80,40,${a})`;
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
+      rfDrawFlameIcon(rfCtx, px, py, 5, `rgba(255,120,40,${a})`);
+      pushBareTimer(timerTxt, px, py - r - 5);
+    } else if (type.includes('decoy')) {
+      rfCtx.beginPath(); rfCtx.arc(px, py, 3, 0, Math.PI * 2);
+      rfCtx.fillStyle = 'rgba(255,60,60,0.9)'; rfCtx.fill();
+      const pulseR = 3 + ((tick % 40) / 40) * 8;
+      const pulseA = 1 - ((tick % 40) / 40);
+      rfCtx.beginPath(); rfCtx.arc(px, py, pulseR, 0, Math.PI * 2);
+      rfCtx.strokeStyle = `rgba(255,60,60,${pulseA * 0.5})`;
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
+    }
+  });
+
+  // ── Bombe : plant / timer 40s / defuse / explode ─────────────────────────
+  const bombPlants = demoData.bombPlants || [];
+  const bombDefuses = demoData.bombDefuses || [];
+  const bombExplodes = demoData.bombExplodes || [];
+  bombPlants.forEach(bp => {
+    if (bp.tick < _rStart || bp.tick > _rEnd) return;
+    if (tick < bp.tick) return;
+    const defuse  = bombDefuses.find(d => d.round === bp.round && d.tick >= bp.tick);
+    const explode = bombExplodes.find(e => e.round === bp.round && e.tick >= bp.tick);
+    const endEventTick = defuse ? defuse.tick : (explode ? explode.tick : bp.tick + 40 * 128);
+    if (tick > endEventTick + 384) return;
+
+    const {px:bx, py:by} = w2c(bp.x, bp.y, rfMapName, W, H);
+    if (!inBounds(bx, by, W, H)) return;
+
+    const exploded = explode && tick >= explode.tick;
+    const defused  = defuse  && tick >= defuse.tick;
+    const secToEnd = Math.max(0, (endEventTick - tick) / 128);
+    const pulse = 1 + Math.sin(tick * 0.3) * 0.15;
+    const haloColor = defused ? '80,220,120' : (exploded ? '255,80,0' : '255,40,40');
+    const baseR = 8;
+    rfCtx.beginPath(); rfCtx.arc(bx, by, baseR * 2 * pulse, 0, Math.PI * 2);
+    rfCtx.strokeStyle = `rgba(${haloColor},0.5)`; rfCtx.lineWidth = 2; rfCtx.stroke();
+    rfCtx.beginPath(); rfCtx.arc(bx, by, baseR * 1.4 * pulse, 0, Math.PI * 2);
+    rfCtx.strokeStyle = `rgba(${haloColor},0.3)`; rfCtx.lineWidth = 1; rfCtx.stroke();
+    const bg = rfCtx.createRadialGradient(bx, by, 0, bx, by, baseR);
+    bg.addColorStop(0, `rgba(${haloColor},1)`);
+    bg.addColorStop(1, `rgba(${haloColor},0.4)`);
+    rfCtx.beginPath(); rfCtx.arc(bx, by, baseR, 0, Math.PI * 2);
+    rfCtx.fillStyle = bg; rfCtx.fill();
+    rfCtx.strokeStyle = '#000'; rfCtx.lineWidth = 1; rfCtx.stroke();
+    const label = defused ? 'DEFUSED' : (exploded ? 'BOOM' : 'C4');
+    rfLabels.push({ text: label, x: bx, y: by + baseR + 9, color: defused ? '#80dc78' : '#ff4444', size: 8 });
+    if (!defused && !exploded) {
+      const timerC4 = secToEnd >= 10 ? Math.round(secToEnd) + 's' : secToEnd.toFixed(1) + 's';
+      rfLabels.push({ text: timerC4, x: bx, y: by - baseR - 9, color: '#ffaa55', size: 9 });
+    }
+  });
+
+  // Passe 2 : tous les labels par-dessus avec pill sombre pour lisibilite
+  rfCtx.textAlign = 'center';
+  rfCtx.textBaseline = 'middle';
+  rfLabels.forEach(l => {
+    rfCtx.font = `bold ${l.size}px "Space Mono","JetBrains Mono",monospace`;
+    if (!l.bare) {
+      // Pill sombre (bomb C4 / DEFUSED / BOOM critique)
+      const metrics = rfCtx.measureText(l.text);
+      const padX = 4, padY = 2;
+      const w = Math.ceil(metrics.width) + padX * 2;
+      const h = l.size + padY * 2;
+      const rx = l.x - w / 2, ry = l.y - h / 2;
+      const rad = 2.5;
+      rfCtx.beginPath();
+      rfCtx.moveTo(rx + rad, ry);
+      rfCtx.lineTo(rx + w - rad, ry);
+      rfCtx.quadraticCurveTo(rx + w, ry, rx + w, ry + rad);
+      rfCtx.lineTo(rx + w, ry + h - rad);
+      rfCtx.quadraticCurveTo(rx + w, ry + h, rx + w - rad, ry + h);
+      rfCtx.lineTo(rx + rad, ry + h);
+      rfCtx.quadraticCurveTo(rx, ry + h, rx, ry + h - rad);
+      rfCtx.lineTo(rx, ry + rad);
+      rfCtx.quadraticCurveTo(rx, ry, rx + rad, ry);
+      rfCtx.closePath();
+      rfCtx.fillStyle = 'rgba(0,0,0,0.82)';
+      rfCtx.fill();
+      rfCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+      rfCtx.lineWidth = 1;
+      rfCtx.stroke();
+    } else {
+      // Mode bare : contour noir fin, pas de pill
+      rfCtx.lineWidth = 3;
+      rfCtx.strokeStyle = 'rgba(0,0,0,0.75)';
+      rfCtx.strokeText(l.text, l.x, l.y);
+    }
+    rfCtx.fillStyle = l.color;
+    rfCtx.fillText(l.text, l.x, l.y);
+  });
+  rfCtx.textBaseline = 'alphabetic';
+}
+
+function rfSelectRound(round,btn){
+  rfShotsConverted=false;
+  rfRound=round;
+  clearInterval(rfTimer); rfPlaying=false; rfSetPlayPause(false);
+  document.querySelectorAll('.rnd2').forEach(b=>b.classList.remove('sel'));
+  if(btn)btn.classList.add('sel');
+  const rdData=(demoData.rounds||[]).find(r=>(r.round??-1)===round)||{};
+  const dispN = rdData.displayNum ?? (round+1);
+  document.getElementById('rfRoundLabel').textContent=rdData.isKnife?`Knife Round`:`Round ${dispN}`;
+  rfBuildFrames(round);
+  rfIdx=0; rfDrawFrame(0);
+}
+
+function rfBuildFrames(round){
+  const positions=demoData.positions||{}, kills=demoData.kills||[];
+  const roundData=(demoData.rounds||[]).find(r=>(r.round??-1)===round)||{};
+  const startTick = roundData.startTick || 0;
+  const endTick   = roundData.endTick   || 0;
+
+  // Filtrer kills par plage de ticks absolus (plus fiable que killsRound)
+  const roundKills = kills.filter(k => {
+    const t = k.tick || 0;
+    return t >= startTick && (endTick === 0 || t <= endTick);
+  });
+
+  // Filtrer positions : par tick absolu OU par killsRound si ticks indisponibles
+  const killsR = round + 1; // round=freezeR, positions ont p.round=freezeR+1
+  const roundPos={};
+  Object.entries(positions).forEach(([name,pts])=>{
+    // Filtre par ticks absolus (après conversion par convertPositionTicks)
+    // startTick/endTick définissent exactement la plage du round
+    const rpts = pts.filter(p => {
+      const t = p.tick || 0;
+      return t >= startTick && t <= endTick;
+    });
+    if(rpts.length > 0) roundPos[name] = rpts;
+  });
+
+  // Debug : voir combien de players ont des positions pour ce round
+  const posPlayers = Object.keys(roundPos);
+  const allPlayers = Object.keys(demoData.positions||{});
+  // Debug : voir les ticks réels des positions
+  const allPosTicks = [];
+  Object.values(positions).forEach(pts => pts.slice(0,3).forEach(p => allPosTicks.push(p.tick)));
+  const samplePosTick = allPosTicks[0]||0;
+  console.log(`[rfBuildFrames] Round ${round}: ${posPlayers.length}/${allPlayers.length} players, roundKills=${roundKills.length}, startTick=${startTick}, endTick=${endTick}, samplePosTick=${samplePosTick}`);
+  // Debug kills
+
+  if(posPlayers.length < allPlayers.length){
+    const missing = allPlayers.filter(n=>!posPlayers.includes(n));
+    const sample = (demoData.positions[missing[0]]||[]).slice(0,3).map(p=>`r${p.round}t${p.tick}`).join(',');
+    console.log(`[rfBuildFrames] Manquants: ${missing.join(',')} | sample[0]: ${sample}`);
+  }
+  if(!Object.keys(roundPos).length&&!roundKills.length){rfFrames=[];return;}
+
+  const posTicks = [];
+  Object.values(roundPos).forEach(pts=>pts.forEach(p=>posTicks.push(p.tick||0)));
+  if(!posTicks.length && !roundKills.length){rfFrames=[];return;}
+
+  const minT = startTick > 0 ? startTick : (posTicks.length ? Math.min(...posTicks) : 0);
+
+  // maxT = dernier kill + buffer (fin naturelle du round)
+  const lastKillTick = roundKills.length > 0
+    ? Math.max(...roundKills.map(k=>k.tick||0)) : 0;
+  const postKillBuffer = 128;
+  const maxT = lastKillTick > minT
+    ? lastKillTick + postKillBuffer
+    : (endTick > minT ? endTick : (posTicks.length ? Math.max(...posTicks) : minT+1));
+
+  console.log(`[rfBuildFrames] minT=${minT} maxT=${maxT} lastKill=${lastKillTick} kills=${roundKills.length} positions=${Object.keys(roundPos).length}`);
+
+  const span = Math.max(maxT - minT, 1);
+  const durSec = span / 64; // FACEIT CS2 = 64 tick/s
+  const N = Math.min(1800, Math.max(80, Math.round(durSec * RF_FPS)));
+
+  // Seuil anti-traversée de mur : distance max entre 2 footsteps consécutifs
+  // Au-delà, on téléporte directement (pas d'interpolation linéaire)
+  // ~500 unités CS2 ≈ largeur d'un couloir étroit, valeur conservative
+  const MAX_INTERP_DIST = 500;
+
+  rfFrames=[];
+  for(let f=0;f<=N;f++){
+    const progress=f/N, tick=minT+progress*span;
+    const frame={tick,players:{},deaths:[]};
+    Object.entries(roundPos).forEach(([name,pts])=>{
+      if(!pts.length)return;
+      let prev=pts[0],next=pts[pts.length-1];
+      for(let i=0;i<pts.length-1;i++){
+        if((pts[i].tick||0)<=tick&&(pts[i+1].tick||0)>=tick){prev=pts[i];next=pts[i+1];break;}
+      }
+      const s=Math.max((next.tick||0)-(prev.tick||0),1);
+      const t=Math.min(1,Math.max(0,(tick-(prev.tick||0))/s));
+
+      // Distance entre les deux footsteps
+      const dx=next.x-prev.x, dy=next.y-prev.y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+
+      let px, py;
+      if(dist > MAX_INTERP_DIST){
+        // Trop loin = probablement un saut à travers un mur (ex: mort→respawn, missing data)
+        // On reste sur prev jusqu'à la fin, puis on "saute" à next
+        px = t < 0.5 ? prev.x : next.x;
+        py = t < 0.5 ? prev.y : next.y;
+      } else {
+        // Interpolation normale
+        px = prev.x + dx*t;
+        py = prev.y + dy*t;
+      }
+      frame.players[name]={x:px,y:py,team:prev.team,alive:true};
+    });
+    roundKills.forEach(k=>{
+      if((k.tick||0)<=tick){
+        if(frame.players[k.victim])frame.players[k.victim].alive=false;
+        frame.deaths.push({x:k.victimX,y:k.victimY});
+      }
+    });
+    rfFrames.push(frame);
+  }
+
+  // Timer
+  const tot=Math.round(span/64);
+  document.getElementById('rfTimeTot').textContent=`${Math.floor(tot/60)}:${String(tot%60).padStart(2,'0')}`;
+
+  // Kill chips
+  document.getElementById('rfKillChips').innerHTML=roundKills.slice(0,8).map(k=>
+    `<div class="rfc ${k.isHeadshot?'hs':''}">${k.attacker}→${k.victim}${k.isHeadshot?' <strong style="color:var(--gold);font-size:.85em">HS</strong>':''}</div>`
+  ).join('');
+
+  // Kill markers
+  document.getElementById('rfKillMarks').innerHTML=roundKills.map(k=>{
+    const pct=Math.min(100,Math.max(0,((k.tick||0)-minT)/span*100));
+    return `<div class="rf-kill-mark" style="left:${pct}%"></div>`;
+  }).join('');
+}
+
+function rfDrawFrame(idx){
+  if(!rfFrames.length||!rfCtx)return;
+  const frame=rfFrames[Math.min(idx,rfFrames.length-1)];
+  const W=rfCanvas.width, H=rfCanvas.height;
+  rfCtx.clearRect(0,0,W,H);
+  if(rfMapImg){rfCtx.drawImage(rfMapImg,0,0,W,H);rfCtx.fillStyle='rgba(10,12,18,.35)';rfCtx.fillRect(0,0,W,H);}
+  else{rfCtx.fillStyle='#0A0C12';rfCtx.fillRect(0,0,W,H);}
+
+  // Croix morts + traits de tir
+  // Croix de mort (permanentes une fois le player mort)
+  frame.deaths.forEach(d=>{
+    const{px,py}=w2c(d.x,d.y,rfMapName,W,H);
+    if(!inBounds(px,py,W,H))return;
+    rfCtx.strokeStyle='rgba(240,107,107,.8)';rfCtx.lineWidth=2;
+    rfCtx.beginPath();rfCtx.moveTo(px-5,py-5);rfCtx.lineTo(px+5,py+5);rfCtx.stroke();
+    rfCtx.beginPath();rfCtx.moveTo(px+5,py-5);rfCtx.lineTo(px-5,py+5);rfCtx.stroke();
+  });
+
+  // Joueurs
+  Object.entries(frame.players).forEach(([name,p])=>{
+    if(!p.alive)return;
+    if(rfHiddenPlayers.has(name))return;
+    const{px,py}=w2c(p.x,p.y,rfMapName,W,H);
+    if(!inBounds(px,py,W,H))return;
+    const color=getColor(name), isCT=p.team===3;
+    rfCtx.beginPath();rfCtx.arc(px,py,12,0,Math.PI*2);rfCtx.fillStyle=`rgba(${color.rgb},.12)`;rfCtx.fill();
+    rfCtx.beginPath();rfCtx.arc(px,py,6,0,Math.PI*2);rfCtx.fillStyle=color.solid;rfCtx.fill();
+    rfCtx.strokeStyle=isCT?'#4A9EFF':'#F5C842';rfCtx.lineWidth=2.5;rfCtx.stroke();
+    rfCtx.fillStyle='#fff';rfCtx.font='bold 9px JetBrains Mono,monospace';rfCtx.textAlign='center';
+    rfCtx.fillText(name.slice(0,8),px,py-11);
+  });
+
+  // Effets grenades et tirs
+  rfDrawEffects(frame, W, H);
+
+  // Timeline
+  const pct=rfFrames.length>1?(idx/(rfFrames.length-1))*100:0;
+  document.getElementById('rfFill').style.width=pct+'%';
+  document.getElementById('rfThumb').style.left=pct+'%';
+  const secs=Math.round((frame.tick-(rfFrames[0]?.tick||0))/128);
+  document.getElementById('rfTimeCur').textContent=`${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;
+
+  // Marquer morts dans panel players
+  Object.entries(frame.players).forEach(([name,p])=>{
+    const id=name.replace(/[^a-zA-Z0-9]/g,'_');
+    const el=document.getElementById('rfp-'+id);
+    if(el)el.classList.toggle('dead',!p.alive);
+  });
+}
+
+function rfSetPlayPause(playing){
+  const pi=document.getElementById('rfPlayIcon'),pa=document.getElementById('rfPauseIcon');
+  if(pi)pi.style.display=playing?'none':'block';
+  if(pa)pa.style.display=playing?'block':'none';
+}
+function rfTogglePlay(){
+  if(!rfFrames.length)return;
+  rfPlaying=!rfPlaying; rfSetPlayPause(rfPlaying);
+  if(rfPlaying){
+    if(rfIdx>=rfFrames.length-1)rfIdx=0;
+    rfTimer=setInterval(()=>{
+      rfIdx++;
+      if(rfIdx>=rfFrames.length){rfIdx=rfFrames.length-1;clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);}
+      else rfDrawFrame(rfIdx);
+    },Math.round(1000/RF_FPS/rfSpeed));
+  }else clearInterval(rfTimer);
+}
+function rfSetSpeed(s,btn){rfSpeed=s;document.querySelectorAll('.rfs').forEach(b=>b.classList.remove('on'));btn.classList.add('on');if(rfPlaying){clearInterval(rfTimer);rfPlaying=false;rfTogglePlay();}}
+function rfSkipBack(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);rfIdx=0;rfDrawFrame(0);}
+function rfSkipFwd(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);rfIdx=rfFrames.length-1;rfDrawFrame(rfIdx);}
+function rfStepBack(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);rfIdx=Math.max(0,rfIdx-5);rfDrawFrame(rfIdx);}
+function rfStepFwd(){clearInterval(rfTimer);rfPlaying=false;rfSetPlayPause(false);rfIdx=Math.min(rfFrames.length-1,rfIdx+5);rfDrawFrame(rfIdx);}
+function rfSeek(e){const rect=document.getElementById('rfTimeline').getBoundingClientRect();const pct=Math.min(1,Math.max(0,(e.clientX-rect.left)/rect.width));rfIdx=Math.round(pct*(rfFrames.length-1));rfDrawFrame(rfIdx);}
+
+// ── Sauvegarde FV Rating dans Supabase (_sbUrl / _sbAnon definis plus haut) ─
+
+// ── Export PDF Pro (v2 : focus player cible + bilan 3-col + QR code) ───
+async function exportPDF() {
+  const isP = await fvIsPro();
+  if(!isP){
+    fvShowProModal('Export PDF');
+    return;
+  }
+  const meta = demoData?.meta || {};
+  const kills = demoData?.kills || [];
+  const rounds = (demoData?.rounds || []).filter(r => !r.isKnife);
+  const playerStats = demoData?.playerStats || [];
+  const totalR = rounds.length || 1;
+  const mapName = (meta.map || '').replace('de_', '');
+  const matchDate = meta.date
+    ? new Date(meta.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' })
+    : new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+
+  // ── Compute per-player extended stats ────────────────────────────
+  const extended = playerStats.map(p => {
+    const pK = kills.filter(k => k.attacker === p.name);
+    const hsCount = pK.filter(k => k.isHeadshot).length;
+    const hsPct = typeof p.hsPct === 'number' ? p.hsPct : (pK.length > 0 ? Math.round(hsCount / pK.length * 100) : 0);
+    const adr  = typeof p.adr === 'number' ? p.adr : Math.round(pK.length * 80 / totalR);
+    const kast = typeof p.kast === 'number' ? p.kast : calcKAST(p.name, kills, rounds);
+    const fvr  = typeof p.fvr === 'number' ? p.fvr : calcFvRating(p.kills, p.deaths, 0, totalR);
+    const kd = p.kills - p.deaths;
+    // First kills + first deaths
+    let firstKills = 0, firstDeaths = 0;
+    for (let r = 1; r <= totalR; r++) {
+      const roundK = kills.filter(k => k.round === r);
+      if (!roundK.length) continue;
+      const minTick = Math.min(...roundK.map(k => k.tick));
+      const first = roundK.find(k => k.tick === minTick);
+      if (first && first.attacker === p.name) firstKills++;
+      if (first && first.victim === p.name) firstDeaths++;
+    }
+    let team = 0;
+    const asAttacker = kills.find(k => k.attacker === p.name);
+    if (asAttacker) team = asAttacker.attackerTeam;
+    return { name: p.name, kills: p.kills, deaths: p.deaths, kd, hsPct, adr, fvr, kast, firstKills, firstDeaths, team };
+  });
+
+  const ctPlayers = extended.filter(p => p.team === 3).sort((a, b) => b.fvr - a.fvr);
+  const tPlayers = extended.filter(p => p.team === 2).sort((a, b) => b.fvr - a.fvr);
+
+  let ctWins = 0, tWins = 0;
+  rounds.forEach(r => { if (r.winner === 3) ctWins++; else if (r.winner === 2) tWins++; });
+  const winnerTeam = ctWins === tWins ? '-' : (ctWins > tWins ? 'CT' : 'T');
+  const loserTeam = winnerTeam === 'CT' ? 'T' : winnerTeam === 'T' ? 'CT' : '-';
+  const winnerPlayers = winnerTeam === 'CT' ? ctPlayers : winnerTeam === 'T' ? tPlayers : ctPlayers;
+  const loserPlayers = winnerTeam === 'CT' ? tPlayers : winnerTeam === 'T' ? ctPlayers : tPlayers;
+  const winScore = Math.max(ctWins, tWins);
+  const loseScore = Math.min(ctWins, tWins);
+  const scoreDiff = Math.abs(ctWins - tWins);
+  const resultTag = scoreDiff === 0 ? 'Egalite' : scoreDiff <= 3 ? 'Match serre' : scoreDiff <= 7 ? 'Win nette' : 'Domination';
+
+  // ── Target player : focus du rapport ─────────────────────────────
+  const targetName = meta.targetPlayer;
+  let you = null;
+  if (targetName) you = extended.find(p => p.name === targetName);
+  if (!you) you = [...extended].sort((a, b) => b.fvr - a.fvr)[0]; // fallback MVP
+  const n = extended.length || 1;
+  const rank = [...extended].sort((a, b) => b.fvr - a.fvr).findIndex(p => p.name === you.name) + 1;
+  const youOpenTotal = (you.firstKills || 0) + (you.firstDeaths || 0);
+  const youOpenPct = youOpenTotal > 0 ? Math.round((you.firstKills / youOpenTotal) * 100) : 0;
+
+  // Moyennes match pour benchmarks
+  const avgFvr  = extended.reduce((s, p) => s + (p.fvr || 0), 0) / n;
+  const avgAdr  = Math.round(extended.reduce((s, p) => s + (p.adr || 0), 0) / n);
+  const avgKast = Math.round(extended.reduce((s, p) => s + (p.kast || 0), 0) / n);
+  const avgHs   = Math.round(extended.reduce((s, p) => s + (p.hsPct || 0), 0) / n);
+
+  const deltaFvr  = (you.fvr - avgFvr);
+  const deltaAdr  = (you.adr - avgAdr);
+  const deltaKast = (you.kast - avgKast);
+  const deltaHs   = (you.hsPct - avgHs);
+
+  function fmtDelta(v, decimals) {
+    if (decimals === void 0) decimals = 0;
+    if (Math.abs(v) < 0.5 && decimals === 0) return '=';
+    if (Math.abs(v) < 0.01 && decimals > 0) return '=';
+    const rounded = v.toFixed(decimals);
+    return (v > 0 ? '+' : '') + rounded;
+  }
+
+  // ── Trading + signaux pour le bilan tactique 3-col ───────────────
+  let tradedDeaths = 0, totalDeaths = 0;
+  const playerTeam = {};
+  kills.forEach(k => {
+    if (k.attacker !== 'Unknown' && !playerTeam[k.attacker]) playerTeam[k.attacker] = k.attackerTeam;
+    if (k.victim !== 'Unknown' && !playerTeam[k.victim]) playerTeam[k.victim] = k.victimTeam;
+  });
+  kills.forEach(k => {
+    if (k.victim === 'Unknown') return;
+    totalDeaths++;
+    const traded = kills.some(tk =>
+      tk.round === k.round && tk.attacker !== 'Unknown' &&
+      tk.victim === k.attacker &&
+      tk.tick > k.tick && tk.tick - k.tick <= 320 &&
+      (playerTeam[tk.attacker] || 0) === (playerTeam[k.victim] || 0)
+    );
+    if (traded) tradedDeaths++;
+  });
+  const tradePct = totalDeaths > 0 ? Math.round((tradedDeaths / totalDeaths) * 100) : 0;
+
+  // First blood conversion
+  const firstBloods = [];
+  for (let r = 1; r <= totalR; r++) {
+    const roundK = kills.filter(k => k.round === r).sort((a, b) => a.tick - b.tick);
+    if (roundK.length) {
+      const fb = roundK[0];
+      const rndWinner = rounds.find(x => x.round === r || x.displayNum === r)?.winner || 0;
+      firstBloods.push({ round: r, attackerTeam: fb.attackerTeam, roundWon: rndWinner === fb.attackerTeam });
+    }
+  }
+  const fbConv = firstBloods.length > 0 ? Math.round((firstBloods.filter(f => f.roundWon).length / firstBloods.length) * 100) : 0;
+
+  const mvp = [...extended].sort((a, b) => b.fvr - a.fvr)[0] || {};
+  const lowest = [...extended].sort((a, b) => a.fvr - b.fvr)[0] || {};
+  const weakOpeners = extended.filter(p => p.firstDeaths > p.firstKills && p.firstDeaths >= 3);
+  const lowKast = extended.filter(p => p.kast < 60).sort((a, b) => a.kast - b.kast);
+  const lowHsPlayers = extended.filter(p => p.kills >= 5 && p.hsPct < 30);
+  const highKast = extended.filter(p => p.kast >= 75).sort((a, b) => b.kast - a.kast);
+  const adrGap = (mvp.adr || 0) - (lowest.adr || 0);
+
+  const strengths = [];
+  const warnings = [];
+  if (mvp.fvr >= 1.20) strengths.push({ label: mvp.name + ' dominant', detail: 'FV Rating ' + mvp.fvr.toFixed(2) + ' / ' + mvp.kills + '-' + mvp.deaths + ' / ' + mvp.adr + ' ADR', score: (mvp.fvr - 1) * 100 });
+  if (highKast.length) strengths.push({ label: 'Player constant : ' + highKast[0].name, detail: 'KAST ' + highKast[0].kast + '% · impact sur presque chaque round', score: highKast[0].kast - 75 });
+  if (fbConv >= 65) strengths.push({ label: 'Gestion post-opening solide', detail: fbConv + '% de rounds gagnes apres le 1er kill (pro avg ~70%)', score: fbConv - 65 });
+  if (tradePct >= 25) strengths.push({ label: 'Trading discipline', detail: tradePct + '% de morts tradees · binomes coordonnes', score: tradePct - 25 });
+  if ((mvp.hsPct || 0) >= 55) strengths.push({ label: 'Precision elite', detail: mvp.name + ' a ' + mvp.hsPct + '% HS', score: mvp.hsPct - 55 });
+  if (tradePct < 20) warnings.push({ label: 'Trading insuffisant', detail: tradePct + '% de morts tradees seulement', severity: 80 - tradePct, action: 'Jouer systematiquement en binome, ne pas etre a plus de 1s de reaction d\'un coequipier sur les contacts.' });
+  if (fbConv < 50) warnings.push({ label: 'Mauvaise conversion du 1er kill', detail: fbConv + '% seulement (pro avg ~70%)', severity: 70 - fbConv, action: 'Apres le 1er kill, prendre immediatement un choke or infos. Interdit de camper en 5v4.' });
+  if (weakOpeners.length) warnings.push({ label: weakOpeners.map(p => p.name).join(', ') + ' perd' + (weakOpeners.length > 1 ? 'ent' : '') + ' ses duels d\'ouverture', detail: weakOpeners.map(p => p.name + ' ' + p.firstKills + 'W-' + p.firstDeaths + 'L').join(' · '), severity: weakOpeners.reduce((s, p) => s + (p.firstDeaths - p.firstKills) * 8, 0), action: 'Revoir le positionnement d\'ouverture. Eviter les peeks agressifs sur les angles pre-aimes.' });
+  if (adrGap > 40) warnings.push({ label: 'Equipe desequilibree en damage', detail: 'Ecart ADR de ' + adrGap + ' points entre ' + mvp.name + ' et ' + lowest.name, severity: adrGap - 40, action: 'Redistribuer les roles : plus de responsabilite (fragger, entry) aux players en retrait.' });
+  if (lowKast.length) warnings.push({ label: lowKast[0].name + ' absent des rounds', detail: 'KAST ' + lowKast[0].kast + '% · ne contribue pas a la majorite des rounds', severity: 60 - lowKast[0].kast, action: 'Changer son role : poste plus defensif or lurks decisifs.' });
+  if (lowHsPlayers.length) warnings.push({ label: 'Precision faible', detail: lowHsPlayers.map(p => p.name + ' ' + p.hsPct + '%').join(' · ') + ' de headshots', severity: 30, action: 'Routine quotidienne : 20 min aim_botz pre-aim angles + recoil control.' });
+
+  const topStrengths = strengths.sort((a, b) => b.score - a.score).slice(0, 3);
+  const topWarnings = warnings.sort((a, b) => b.severity - a.severity).slice(0, 3);
+  const priority = topWarnings[0];
+
+  // ── Timeline HTML (barres colorees) ──────────────────────────────
+  let timelineHtml = '<div style="display:flex;gap:1px;margin:8px 0 20px;align-items:end;padding-bottom:14px">';
+  rounds.forEach((r, i) => {
+    const rNum = r.displayNum || r.round || (i + 1);
+    const bg = r.winner === 3 ? '#2d6bb5' : r.winner === 2 ? '#c9a028' : '#ddd';
+    const leftBorder = i === 12 ? 'border-left:2px dashed #b8ff57;margin-left:6px;padding-left:6px;' : '';
+    const label = (rounds.length <= 30 && (i % 3 === 0 || rounds.length <= 12)) ? '<span style="position:absolute;bottom:-13px;left:50%;transform:translateX(-50%);font-size:7px;color:#888">' + rNum + '</span>' : '';
+    timelineHtml += '<div style="flex:1;height:20px;background:' + bg + ';border-radius:2px;position:relative;' + leftBorder + '">' + label + '</div>';
+  });
+  timelineHtml += '</div>';
+
+  // ── Team table helper ────────────────────────────────────────────
+  function fvrClass(v) { return v >= 1.0 ? 'good' : v >= 0.7 ? 'avg' : 'bad'; }
+  function fvrLabel(v) { if (v >= 1.3) return 'Elite'; if (v >= 1.2) return 'Excellent'; if (v >= 1.05) return 'Good'; if (v >= 0.9) return 'Correct'; if (v >= 0.75) return 'Insuffisant'; return 'Low'; }
+  function teamTable(players, label) {
+    if (!players.length) return '';
+    const tAvgAdr = Math.round(players.reduce((s, p) => s + p.adr, 0) / players.length);
+    const tAvgFvr = (players.reduce((s, p) => s + p.fvr, 0) / players.length).toFixed(2);
+    const tAvgKast = Math.round(players.reduce((s, p) => s + p.kast, 0) / players.length);
+    return '<table><thead><tr><th>Player</th><th>K</th><th>D</th><th>+/-</th><th>KAST</th><th>ADR</th><th>HS%</th><th>FV Rating</th></tr></thead><tbody>' +
+      players.map(p => {
+        const bold = p.name === you.name ? 'font-weight:900;background:rgba(184,255,87,.12) !important;' : '';
+        return '<tr style="' + bold + '"><td>' + p.name + (p.name === you.name ? ' (toi)' : '') + '</td><td>' + p.kills + '</td><td>' + p.deaths + '</td><td>' + (p.kd >= 0 ? '+' : '') + p.kd + '</td><td>' + p.kast + '%</td><td>' + p.adr + '</td><td>' + p.hsPct + '%</td><td class="' + fvrClass(p.fvr) + '">' + p.fvr.toFixed(2) + '</td></tr>';
+      }).join('') +
+      '<tr style="border-top:2px solid #000;font-style:italic;color:#666"><td>Moyenne ' + label + '</td><td>-</td><td>-</td><td>-</td><td>' + tAvgKast + '%</td><td>' + tAvgAdr + '</td><td>-</td><td>' + tAvgFvr + '</td></tr>' +
+      '</tbody></table>';
+  }
+
+  // ── Share URL + QR code ──────────────────────────────────────────
+  // Essaie de reutiliser un share URL stocke. Sinon fallback generic.
+  let shareUrl = sessionStorage.getItem('lastShareUrl') || 'https://fragvalue.com';
+  const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=2&bgcolor=ffffff&color=000000&data=' + encodeURIComponent(shareUrl);
+
+  // Delta color helper
+  function deltaColor(v, higherIsBetter) {
+    if (higherIsBetter === void 0) higherIsBetter = true;
+    if (Math.abs(v) < 0.01) return '#666';
+    return (v > 0) === higherIsBetter ? '#16a34a' : '#dc2626';
+  }
+
+  const pw = window.open('', '_blank');
+  if (!pw) return;
+
+  const ctScoreStyle = winnerTeam === 'CT' ? 'color:#000;font-weight:900' : 'color:#888;font-weight:700';
+  const tScoreStyle = winnerTeam === 'T' ? 'color:#000;font-weight:900' : 'color:#888;font-weight:700';
+
+  pw.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"/>' +
+    '<title>FragValue Report - ' + you.name + ' on ' + mapName.toUpperCase() + '</title>' +
+    '<style>' +
+    '* { margin: 0; padding: 0; box-sizing: border-box; }' +
+    'body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 11px; line-height: 1.5; }' +
+    '.page { padding: 32px 40px; page-break-after: always; }' +
+    '.page:last-child { page-break-after: auto; }' +
+    'h1 { font-size: 32px; font-weight: 900; letter-spacing: -1px; }' +
+    'h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 5px; margin: 20px 0 10px; letter-spacing: .04em; }' +
+    'h3 { font-size: 12px; font-weight: 700; margin: 12px 0 6px; }' +
+    'table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 10px; }' +
+    'th { background: #000; color: #fff; padding: 6px 8px; font-size: 9px; text-transform: uppercase; text-align: left; letter-spacing: .04em; }' +
+    'td { padding: 5px 8px; border-bottom: 1px solid #eee; }' +
+    'tr:nth-child(even) td { background: #f9f9f9; }' +
+    '.hero-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; }' +
+    '.score-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; padding: 16px 0; border-top: 1px solid #000; border-bottom: 1px solid #000; margin-bottom: 20px; }' +
+    '.score-team { text-align: center; }' +
+    '.score-team .label { font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: .1em; }' +
+    '.score-team .num { font-size: 56px; font-weight: 900; line-height: 1; }' +
+    '.score-mid { text-align: center; }' +
+    '.score-mid .map { font-size: 22px; font-weight: 900; letter-spacing: 2px; }' +
+    '.score-mid .tag { font-size: 10px; color: #666; margin-top: 4px; text-transform: uppercase; letter-spacing: .08em; }' +
+    '.your-match-card { border: 2px solid #000; padding: 16px 18px; margin-bottom: 16px; }' +
+    '.your-match-card .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }' +
+    '.your-match-card .nick { font-weight: 900; font-size: 14px; }' +
+    '.your-match-card .rank { font-size: 10px; color: #666; }' +
+    '.your-match-card .fvr { font-size: 36px; font-weight: 900; line-height: 1; }' +
+    '.your-match-card .fvr-lbl { display: inline-block; padding: 3px 8px; border: 1px solid #000; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-left: 8px; vertical-align: 8px; }' +
+    '.your-match-card .kpi-line { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc; }' +
+    '.your-match-card .kpi { text-align: center; }' +
+    '.your-match-card .kpi .v { font-size: 18px; font-weight: 900; line-height: 1; }' +
+    '.your-match-card .kpi .l { font-size: 8px; text-transform: uppercase; color: #666; margin-top: 2px; letter-spacing: .06em; }' +
+    '.your-match-card .kpi .d { font-size: 9px; margin-top: 3px; font-weight: 700; }' +
+    '.bilan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0 14px; }' +
+    '.bilan-col { border: 1px solid #000; padding: 12px 14px; }' +
+    '.bilan-col.strengths { border-color: #16a34a; background: #f0fdf4; }' +
+    '.bilan-col.warnings { border-color: #d97706; background: #fefce8; }' +
+    '.bilan-col .title { font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: .08em; }' +
+    '.bilan-col.strengths .title { color: #16a34a; }' +
+    '.bilan-col.warnings .title { color: #d97706; }' +
+    '.bilan-col ul { list-style: none; padding: 0; }' +
+    '.bilan-col li { margin-bottom: 8px; font-size: 10px; line-height: 1.4; }' +
+    '.bilan-col li strong { display: block; color: #000; margin-bottom: 2px; }' +
+    '.bilan-col li span { color: #555; font-size: 9px; }' +
+    '.priority-box { background: #000; color: #fff; padding: 16px 20px; margin: 14px 0 20px; }' +
+    '.priority-box .label { font-size: 10px; color: #b8ff57; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px; }' +
+    '.priority-box .text { font-size: 12px; line-height: 1.5; }' +
+    '.priority-box .text strong { color: #b8ff57; font-size: 13px; display: block; margin-bottom: 4px; }' +
+    '.qr-row { display: flex; gap: 20px; align-items: center; border-top: 1px solid #000; padding-top: 14px; margin-top: 20px; }' +
+    '.qr-row img { width: 100px; height: 100px; }' +
+    '.qr-row .qr-text { flex: 1; font-size: 10px; color: #666; line-height: 1.5; }' +
+    '.qr-row .qr-text strong { color: #000; font-size: 11px; display: block; margin-bottom: 4px; }' +
+    '.qr-row .qr-text a { color: #000; word-break: break-all; font-family: monospace; font-size: 10px; }' +
+    '.good { color: #16a34a; font-weight: 700; }' +
+    '.avg { color: #d97706; font-weight: 700; }' +
+    '.bad { color: #dc2626; font-weight: 700; }' +
+    '.footer { text-align: right; font-size: 9px; color: #999; margin-top: 18px; padding-top: 6px; border-top: 1px solid #eee; }' +
+    '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
+    '</style></head><body>' +
+
+    // ══════ PAGE 1 : Match + focus player ══════
+    '<div class="page">' +
+    '<div class="hero-head">' +
+      '<div>' +
+        '<h1>FRAGVALUE</h1>' +
+        '<div style="font-size:11px;color:#666;margin-top:2px">Rapport match CS2</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.08em">Rapport pour</div>' +
+        '<div style="font-size:16px;font-weight:900;margin-top:2px">' + you.name + '</div>' +
+        '<div style="font-size:10px;color:#666;margin-top:2px">' + matchDate + '</div>' +
+      '</div>' +
+    '</div>' +
+
+    // Score
+    '<div class="score-row">' +
+      '<div class="score-team"><div class="label">CT Side</div><div class="num" style="' + ctScoreStyle + '">' + ctWins + '</div></div>' +
+      '<div class="score-mid"><div class="map">' + mapName.toUpperCase() + '</div><div class="tag">' + resultTag + ' · ' + totalR + ' rounds</div></div>' +
+      '<div class="score-team"><div class="label">T Side</div><div class="num" style="' + tScoreStyle + '">' + tWins + '</div></div>' +
+    '</div>' +
+
+    // Ton match
+    '<h2>Ton match</h2>' +
+    '<div class="your-match-card">' +
+      '<div class="head">' +
+        '<div><span class="nick">' + you.name + '</span><span class="fvr-lbl">' + fvrLabel(you.fvr) + '</span></div>' +
+        '<div class="rank">Classe #' + rank + ' sur ' + n + ' players</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:baseline;gap:14px">' +
+        '<div class="fvr ' + fvrClass(you.fvr) + '">' + you.fvr.toFixed(2) + '</div>' +
+        '<div style="font-size:10px;color:' + deltaColor(deltaFvr) + ';font-weight:700">' + fmtDelta(deltaFvr, 2) + ' vs moyenne match (' + avgFvr.toFixed(2) + ')</div>' +
+      '</div>' +
+      '<div class="kpi-line">' +
+        '<div class="kpi"><div class="v">' + you.kills + '-' + you.deaths + '</div><div class="l">K - D</div><div class="d" style="color:#666">' + (you.kd >= 0 ? '+' : '') + you.kd + '</div></div>' +
+        '<div class="kpi"><div class="v">' + you.adr + '</div><div class="l">ADR</div><div class="d" style="color:' + deltaColor(deltaAdr) + '">' + fmtDelta(deltaAdr) + ' vs ' + avgAdr + '</div></div>' +
+        '<div class="kpi"><div class="v">' + you.kast + '%</div><div class="l">KAST</div><div class="d" style="color:' + deltaColor(deltaKast) + '">' + fmtDelta(deltaKast) + ' vs ' + avgKast + '%</div></div>' +
+        '<div class="kpi"><div class="v">' + you.hsPct + '%</div><div class="l">HS%</div><div class="d" style="color:' + deltaColor(deltaHs) + '">' + fmtDelta(deltaHs) + ' vs ' + avgHs + '%</div></div>' +
+        '<div class="kpi"><div class="v">' + youOpenPct + '%</div><div class="l">Opening</div><div class="d" style="color:#666">' + you.firstKills + 'W-' + you.firstDeaths + 'L</div></div>' +
+      '</div>' +
+    '</div>' +
+
+    // Timeline
+    '<h2>Deroulement des rounds</h2>' +
+    '<div style="font-size:9px;color:#666;margin-bottom:4px">Bleu = CT · Or = T · Ligne verte = mi-temps</div>' +
+    timelineHtml +
+
+    // Stats equipes
+    '<h2>Stats par equipe</h2>' +
+    '<h3>' + (winnerTeam === '-' ? 'CT' : winnerTeam) + (winnerTeam !== '-' ? ' (' + (winnerTeam === 'CT' ? 'Win' : 'Win') + ')' : '') + '</h3>' +
+    teamTable(winnerPlayers, winnerTeam === '-' ? 'CT' : winnerTeam) +
+    '<h3>' + (loserTeam === '-' ? 'T' : loserTeam) + '</h3>' +
+    teamTable(loserPlayers, loserTeam === '-' ? 'T' : loserTeam) +
+
+    '<div class="footer">FragValue · fragvalue.com · Generated on ' + new Date().toLocaleDateString('fr-FR') + '</div>' +
+    '</div>' +
+
+    // ══════ PAGE 2 : Bilan tactique + QR ══════
+    '<div class="page">' +
+    '<h2>Bilan tactique</h2>' +
+    '<div style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.5">Match ' + ctWins + '-' + tWins + ' pour ' + (winnerTeam === '-' ? 'egalite' : 'le side ' + winnerTeam) + ' sur ' + mapName.toUpperCase() + '. Analysis condensee en points d\'impact.</div>' +
+
+    '<div class="bilan-grid">' +
+      '<div class="bilan-col strengths">' +
+        '<div class="title">+ ' + topStrengths.length + ' force' + (topStrengths.length > 1 ? 's' : '') + '</div>' +
+        '<ul>' + (topStrengths.length ? topStrengths.map(s => '<li><strong>' + s.label + '</strong><span>' + s.detail + '</span></li>').join('') : '<li><em style="color:#999">Match difficile, peu de moments positifs.</em></li>') + '</ul>' +
+      '</div>' +
+      '<div class="bilan-col warnings">' +
+        '<div class="title">! ' + topWarnings.length + ' axe' + (topWarnings.length > 1 ? 's' : '') + ' a travailler</div>' +
+        '<ul>' + (topWarnings.length ? topWarnings.map(w => '<li><strong>' + w.label + '</strong><span>' + w.detail + '</span></li>').join('') : '<li><em style="color:#999">Good match, aucun axe critique detecte.</em></li>') + '</ul>' +
+      '</div>' +
+    '</div>' +
+
+    (priority ? (
+      '<div class="priority-box">' +
+        '<div class="label">Priorite numero 1</div>' +
+        '<div class="text"><strong>' + priority.label + '</strong>Action concrete : ' + priority.action + '</div>' +
+      '</div>'
+    ) : '') +
+
+    // QR code + share URL
+    '<div class="qr-row">' +
+      '<img src="' + qrSrc + '" alt="QR code"/>' +
+      '<div class="qr-text">' +
+        '<strong>Replonge sur la version interactive</strong>' +
+        'Scan le QR or ouvre le lien ci-dessous pour revoir ce match avec ' +
+        'heatmaps, 2D replay et stats round-par-round. Le rapport PDF ' +
+        'est une capture statique, la version online est toujours a day.' +
+        '<br/><br/>' +
+        '<a href="' + shareUrl + '">' + shareUrl + '</a>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="footer">FragValue · fragvalue.com · Generated on ' + new Date().toLocaleDateString('fr-FR') + '</div>' +
+    '</div>' +
+
+    '</body></html>');
+
+  pw.document.close();
+  setTimeout(() => { pw.print(); }, 500);
+}
+
+// ── Share la demo ─────────────────────────────────────────────
+async function shareDemo() {
+  const demoId = sessionStorage.getItem('lastDemoId');
+  if (!demoId) {
+    showShareStatus('Aucune demo sauvegardee. Analysis une demo d\'abord.');
+    return;
+  }
+  try {
+    if (typeof supabase === 'undefined') return;
+    const _sbShare = supabase.createClient(_sbUrl, _sbAnon);
+    const { data:{ session } } = await _sbShare.auth.getSession();
+    if (!session) {
+      showShareStatus('Connecte toi pour partager une demo.');
+      return;
+    }
+    const res = await fetch('/api/share-demo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+      body: JSON.stringify({ demo_id: demoId }),
+    });
+    const result = await res.json();
+    if (res.ok && result.share_id) {
+      const url = window.location.origin + '/share/' + result.share_id;
+      // Stocker pour que exportPDF puisse generer le QR code vers le match online
+      try { sessionStorage.setItem('lastShareUrl', url); } catch (_) {}
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url);
+        showShareStatus('Link copied: ' + url);
+      } else {
+        showShareStatus(url);
+      }
+    } else {
+      showShareStatus(result.error || 'Error lors du partage.');
+    }
+  } catch (e) {
+    showShareStatus('Error : ' + e.message);
+  }
+}
+
+function showShareStatus(msg) {
+  let el = document.getElementById('shareStatus');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'shareStatus';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f1010;border:1px solid #252727;color:#e8eaea;font-family:"Space Mono",monospace;font-size:11px;padding:12px 20px;border-radius:8px;z-index:9999;max-width:90%;word-break:break-all';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+// ── Sauvegarde FV Rating dans Supabase ───────────────────────────
+async function saveRatingToSupabase() {
+  try {
+    const demoId = sessionStorage.getItem('lastDemoId');
+    if (!demoId) return;
+    if (typeof supabase === 'undefined') return;
+    const _sb = supabase.createClient(_sbUrl, _sbAnon);
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) return;
+
+    // Calculer le FV Rating du targetPlayer or de la moyenne
+    const players = demoData?.playerStats || [];
+    const allRounds = demoData?.rounds || [];
+    const numR = allRounds.filter(r => !r.isKnife).length || 1;
+    const kills = demoData?.kills || [];
+
+    // Prendre le meilleur player or le target
+    const target = demoData?.meta?.targetPlayer;
+    let fvr = null;
+    if (typeof calcFvRating === 'function') {
+      const p = target
+        ? players.find(pl => pl.name === target)
+        : players.sort((a,b) => b.kills - a.kills)[0];
+      if (p) {
+        fvr = parseFloat(calcFvRating(p.kills, p.deaths, 0, numR).toFixed(2));
+      }
+    }
+
+    if (fvr !== null) {
+      await _sb.from('demos').update({ fv_rating: fvr }).eq('id', demoId).eq('user_id', session.user.id);
+      console.log('[FragValue] FV Rating sauvegardé:', fvr);
+    }
+
+    // Notification "AI diagnosis pret" : envoie une notif persistante
+    // visible sur la cloche de la nav (poussera l'user a re-engager s'il
+    // quitte le site puis revient). Idempotent via sessionStorage flag
+    // pour ne pas dupliquer au refresh.
+    const notifKey = 'fv_notif_sent_' + demoId;
+    if (!sessionStorage.getItem(notifKey)) {
+      sessionStorage.setItem(notifKey, '1');
+      const map = demoData?.meta?.map || 'de_cs2';
+      fetch('/api/notify-demo-analyzed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({ map, fvRating: fvr, demoId }),
+      }).catch(function(e) { console.warn('notify-demo-analyzed:', e.message); });
+    }
+  } catch(e) { console.warn('saveRatingToSupabase:', e.message); }
+}
+
+// ── Nav auth toggle ──────────────────────────────────────────────
+(function initNavAuth() {
+  if (typeof supabase === 'undefined') return;
+  const _sbNav = supabase.createClient(_sbUrl, _sbAnon);
+  _sbNav.auth.getSession().then(({ data: { session } }) => {
+    const loginBtn = document.getElementById('navLoginBtn');
+    const accountBtn = document.getElementById('navAccountBtn');
+    const matchesBtn = document.getElementById('navMatchesBtn');
+    if (!loginBtn || !accountBtn) return;
+    if (session) {
+      loginBtn.style.display = 'none';
+      accountBtn.style.display = '';
+      if (matchesBtn) matchesBtn.style.display = '';
+    } else {
+      loginBtn.style.display = '';
+      accountBtn.style.display = 'none';
+    }
+  });
+})();
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>

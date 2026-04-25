@@ -1,0 +1,2507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+
+<meta charset="UTF-8"/>
+<meta name="description" content="Pro analysis of your CS2 match: 8-parameter FV Rating, full scoreboards, opening duels, momentum, personalized AI Coach and concrete action plan.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<title>FragValue · CS2 Pro Analysis · FV Rating + AI Coach</title>
+<!-- Open Graph / Twitter Card : preview riche au partage de l'analyse pro -->
+<meta property="og:title" content="FragValue · CS2 Pro Analysis · FV Rating + AI Coach"/>
+<meta property="og:description" content="8-parameter FV Rating, full scoreboards, opening duels, personalized AI Coach. Compute your real impact for free."/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://fragvalue.com/en/analysis.html"/>
+<meta property="og:image" content="https://fragvalue.com/og/analysis.png"/>
+<meta property="og:image:alt" content="FragValue · Pro Analysis · FV Rating"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:locale" content="en_US"/>
+<meta property="og:site_name" content="FragValue"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:site" content="@fragvaluegg"/>
+<meta name="twitter:title" content="FragValue · CS2 Pro Analysis · FV Rating + AI Coach"/>
+<meta name="twitter:description" content="8-parameter FV Rating, full scoreboards, opening duels, personalized AI Coach. Compute your real impact for free."/>
+<meta name="twitter:image" content="https://fragvalue.com/og/analysis.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;
+  --border:#1c1e1e;--border2:#252727;
+  --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --danger:#ff4444;--success:#2dd4a0;--gold:#f5c842;
+  --ct:#5b8dd9;--t:#e8a838;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  --r:6px;--r2:12px
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:rgba(8,9,9,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.nav-logo{font-family:var(--display);font-size:20px;letter-spacing:.04em;color:var(--text);text-decoration:none}
+.nav-logo span{color:var(--accent)}
+.nav-right{display:flex;align-items:center;gap:14px}
+.nav-link{font-size:11px;color:var(--text3);text-decoration:none;letter-spacing:.06em;transition:color .15s}
+.nav-link:hover{color:var(--text)}
+.nav-cta{background:var(--accent);color:#000;padding:8px 16px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;transition:all .15s}
+.nav-cta:hover{background:var(--accent2)}
+
+/* LAYOUT */
+.page{max-width:1280px;margin:0 auto;padding:32px 24px 120px;position:relative;z-index:1}
+.header{display:flex;align-items:center;gap:16px;margin-bottom:8px;flex-wrap:wrap}
+.btn-back{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);text-decoration:none;letter-spacing:.04em;padding:8px 14px;border:1px solid var(--border);border-radius:var(--r);transition:all .15s}
+.btn-back:hover{border-color:var(--accent);color:var(--accent)}
+/* Bouton de partage analyse : cree un lien public shareable */
+.btn-share{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--text);text-decoration:none;letter-spacing:.04em;padding:8px 14px;border:1px solid var(--border2);border-radius:var(--r);background:transparent;cursor:pointer;font-family:var(--mono);font-weight:700;transition:all .15s;margin-left:auto}
+.btn-share:hover{border-color:var(--accent);color:var(--accent);background:rgba(184,255,87,.04)}
+.btn-share svg{opacity:.8}
+.share-popover{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.share-popover.open{display:flex}
+.share-popover-inner{background:linear-gradient(180deg, #111313 0%, #0d0e0e 100%);border:1px solid rgba(184,255,87,.25);border-top:2px solid #b8ff57;border-radius:12px;padding:24px 26px;max-width:440px;width:100%;position:relative}
+.share-popover-close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;line-height:1;padding:4px 8px}
+.share-popover-close:hover{color:var(--accent)}
+.share-popover-title{font-family:var(--display);font-size:20px;color:var(--text);letter-spacing:.04em;margin-bottom:6px;text-transform:uppercase}
+.share-popover-sub{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:16px;line-height:1.5}
+.share-url-row{display:flex;gap:8px;margin-bottom:14px}
+.share-url-input{flex:1;background:var(--card);border:1px solid var(--border);color:var(--accent);font-family:var(--mono);font-size:11px;padding:10px 12px;border-radius:6px;outline:none}
+.share-url-copy{background:var(--accent);color:#000;border:none;padding:10px 16px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;cursor:pointer;white-space:nowrap}
+.share-url-copy:hover{filter:brightness(1.08)}
+.share-social-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.share-social-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;transition:all .15s;border:1px solid var(--border2);color:var(--text)}
+.share-social-btn:hover{border-color:var(--accent);color:var(--accent)}
+.share-social-btn.twitter{background:#1d9bf0;color:#fff;border-color:#1d9bf0}
+.share-social-btn.twitter:hover{filter:brightness(1.1);color:#fff}
+.share-msg{font-family:var(--mono);font-size:11px;color:var(--success);margin-top:8px;min-height:14px}
+.page-title{font-family:var(--display);font-size:48px;letter-spacing:.02em;line-height:1}
+.pro-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);color:var(--accent);padding:4px 12px;border-radius:40px;font-size:10px;font-weight:700;letter-spacing:.1em;margin-left:12px;vertical-align:middle}
+
+/* SECTION LABEL */
+.sl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:10px;margin:36px 0 14px}
+.sl::after{content:'';flex:1;height:1px;background:var(--border)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:24px;margin-bottom:8px}
+
+/* ── MATCH SUMMARY CARD (Overview consolidee) ─────────────── */
+.match-summary{background:linear-gradient(180deg,var(--surface) 0%,var(--card) 100%);border:1px solid var(--border);border-radius:var(--r2);padding:28px 32px 24px;position:relative;overflow:hidden;margin-bottom:12px}
+.match-summary::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--ct) 0%,var(--ct) 50%,var(--t) 50%,var(--t) 100%);opacity:.6}
+
+/* Score Header */
+.ms-header{display:grid;grid-template-columns:1fr auto 1fr;gap:28px;align-items:center;padding-bottom:22px;border-bottom:1px solid var(--border)}
+.ms-team{text-align:center;min-width:0}
+.ms-team-label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:10px;display:inline-flex;align-items:center;gap:6px}
+.ms-team-label.ct{color:var(--ct)}
+.ms-team-label.t{color:var(--t)}
+.ms-team-label .ms-win-dot{display:none;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(184,255,87,.5);animation:ms-pulse 2s ease-in-out infinite}
+.ms-team.winner .ms-win-dot{display:inline-block}
+@keyframes ms-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.ms-team-score{font-family:var(--display);font-size:72px;line-height:.9;color:var(--text2);letter-spacing:.02em}
+.ms-team.winner .ms-team-score{color:var(--accent);text-shadow:0 0 24px rgba(184,255,87,.25)}
+.ms-team-roster{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.02em;margin-top:10px;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 6px}
+
+.ms-center{text-align:center;padding:0 16px;min-width:120px}
+.ms-vs{font-family:var(--display);font-size:14px;color:var(--text3);letter-spacing:.2em;margin-bottom:10px}
+.ms-map-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.25);color:var(--accent);padding:7px 14px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.ms-map-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(184,255,87,.6)}
+.ms-result-tag{display:block;margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+
+/* Timeline embedded dans la summary card */
+.ms-timeline-section{padding:16px 0 8px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.ms-timeline-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ms-timeline-label .ms-tl-legend{display:flex;gap:14px;font-size:9px}
+.ms-tl-legend-item{display:inline-flex;align-items:center;gap:4px;font-weight:400;text-transform:none;letter-spacing:.02em}
+.ms-tl-legend-dot{width:8px;height:8px;border-radius:2px}
+.round-tl{display:flex;gap:2px;align-items:end;padding-bottom:18px;position:relative}
+.round-tl-r{flex:1;height:26px;border-radius:3px;position:relative;transition:all .15s;min-width:0}
+.round-tl-r:hover{opacity:.85;transform:translateY(-2px)}
+.round-tl-r.ct-win{background:linear-gradient(180deg,var(--ct) 0%,rgba(74,158,255,.7) 100%)}
+.round-tl-r.t-win{background:linear-gradient(180deg,var(--t) 0%,rgba(245,200,66,.7) 100%)}
+.round-tl-r.no-data{background:var(--border)}
+.round-tl-r .rn{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--text3);white-space:nowrap;font-family:var(--mono)}
+.round-tl-half{margin-left:8px;padding-left:8px;border-left:2px dashed var(--accent)}
+.round-tl-fb{position:absolute;top:-7px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;box-shadow:0 0 0 1.5px var(--surface)}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
+.kpi-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:16px;text-align:center;position:relative}
+.kpi-value{font-family:var(--display);font-size:28px;line-height:1;margin-bottom:4px}
+.kpi-label{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+.kpi-bench{font-size:8px;color:var(--text3);letter-spacing:.06em;margin-top:6px;opacity:.75;font-family:var(--mono)}
+.kpi-bench strong{color:var(--text2);font-weight:700}
+
+/* TON MATCH : block personnel en haut */
+.your-match{background:linear-gradient(135deg,rgba(184,255,87,.04) 0%,var(--card) 50%,var(--card) 100%);border:1px solid rgba(184,255,87,.28);border-radius:var(--r2);padding:24px;margin-bottom:16px;display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
+.your-match-hero{min-width:160px;text-align:center;padding-right:24px;border-right:1px solid var(--border2)}
+.your-match-nick{font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.06em;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.your-match-fvr{font-family:var(--display);font-size:52px;line-height:1;margin-bottom:4px}
+.your-match-fvr-lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:40px;display:inline-block;margin-bottom:8px}
+.your-match-rank{font-size:10px;color:var(--text3);letter-spacing:.06em;font-family:var(--mono)}
+.your-match-rank strong{color:var(--accent);font-size:12px}
+.your-match-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.your-stat{text-align:center}
+.your-stat-val{font-family:var(--display);font-size:22px;line-height:1;color:var(--text)}
+.your-stat-lbl{font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:4px;font-family:var(--mono)}
+.your-stat-delta{font-size:9px;margin-top:4px;font-family:var(--mono);letter-spacing:.04em;display:inline-flex;align-items:center;gap:3px}
+.your-stat-delta.up{color:var(--success)}
+.your-stat-delta.down{color:var(--danger)}
+.your-stat-delta.flat{color:var(--text3)}
+
+/* MOMENTUM CHART */
+.momentum-wrap{padding:18px 20px 12px}
+.momentum-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.momentum-legend{display:flex;gap:16px;font-size:10px;color:var(--text3);letter-spacing:.04em}
+.momentum-legend-item{display:flex;align-items:center;gap:6px}
+.momentum-legend-dot{width:9px;height:9px;border-radius:2px}
+.momentum-canvas{width:100%;height:140px;display:block}
+.momentum-hint{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.02em;margin-top:8px;line-height:1.5}
+
+/* Timeline cliquable */
+.round-tl-r{cursor:pointer;border:0;padding:0;margin:0;font:inherit}
+.round-tl-r:hover{opacity:.9;transform:translateY(-2px)}
+.round-tl-r:focus-visible{outline:2px solid var(--accent);outline-offset:2px;opacity:1}
+.round-tl-r.highlighted{box-shadow:0 0 0 2px var(--accent);transform:translateY(-3px)}
+.round-tl-tooltip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;font-size:10px;color:var(--text);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10;font-family:var(--mono);letter-spacing:.02em;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.round-tl-r:hover .round-tl-tooltip{opacity:1}
+
+/* Moments cliquables : overide pour que le <button> match l'apparence de la card */
+.moment-card{cursor:pointer;width:100%;font:inherit;color:inherit;text-align:left}
+.moment-card:hover{border-color:var(--accent);background:rgba(184,255,87,.02)}
+.moment-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* BILAN TACTIQUE 3 COLONNES */
+.bilan-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.bilan-col{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:18px}
+.bilan-col.strengths{border-color:rgba(45,212,160,.3);background:linear-gradient(180deg,rgba(45,212,160,.04),var(--card))}
+.bilan-col.warnings{border-color:rgba(245,200,66,.25);background:linear-gradient(180deg,rgba(245,200,66,.04),var(--card))}
+.bilan-col-title{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.bilan-col.strengths .bilan-col-title{color:var(--success)}
+.bilan-col.warnings .bilan-col-title{color:var(--gold)}
+.bilan-priority{margin-top:16px;background:rgba(184,255,87,.05);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);padding:18px 20px}
+.bilan-priority-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+.bilan-priority-text{font-size:13px;color:var(--text);line-height:1.6}
+.bilan-priority-text strong{color:var(--accent)}
+
+@media(max-width:768px){
+  .your-match{grid-template-columns:1fr;gap:16px;padding:18px}
+  .your-match-hero{padding-right:0;border-right:none;border-bottom:1px solid var(--border2);padding-bottom:16px}
+  .your-match-stats{grid-template-columns:repeat(3,1fr);gap:10px}
+  .bilan-grid{grid-template-columns:1fr}
+}
+
+/* STATS TABLE */
+.stat-table{width:100%;border-collapse:collapse}
+.stat-table th{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 6px;text-align:center;border-bottom:2px solid var(--border);white-space:nowrap}
+.stat-table th:first-child{text-align:left;padding-left:12px}
+.stat-table td{padding:10px 6px;border-bottom:1px solid var(--border);text-align:center;font-size:11px}
+.stat-table td:first-child{text-align:left;padding-left:12px}
+.stat-table tr:hover td{background:rgba(255,255,255,.015)}
+.stat-table .team-divider td{padding:0;height:6px;border-bottom:2px solid var(--border2);background:none}
+.stat-table .team-divider:hover td{background:none}
+.stat-table .player-cell{display:flex;align-items:center;gap:8px}
+.stat-table .team-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.stat-table .player-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+.stat-table .mvp-star{color:var(--gold);font-size:12px;margin-left:4px}
+.stat-table .fvr-cell{display:flex;align-items:center;justify-content:center;gap:6px}
+.fvr-bar{height:4px;border-radius:2px;min-width:2px}
+.fvr-badge{font-size:8px;font-weight:700;letter-spacing:.06em;padding:2px 6px;border-radius:3px;white-space:nowrap}
+.diff-pos{color:var(--success)}
+.diff-neg{color:var(--danger)}
+
+/* OPENING TABLE */
+.open-table{width:100%;border-collapse:collapse}
+.open-table th{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 8px;text-align:center;border-bottom:2px solid var(--border);white-space:nowrap}
+.open-table th:first-child{text-align:left}
+.open-table td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:center;font-size:11px}
+.open-table td:first-child{text-align:left;font-weight:700}
+.open-table tr:hover td{background:rgba(255,255,255,.015)}
+.open-insight{margin-top:16px;padding:14px 18px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);font-size:11px;color:var(--text2);line-height:1.7}
+.open-insight strong{color:var(--text)}
+
+/* DUELS TABLE */
+.duels-table{width:100%;border-collapse:collapse}
+.duels-table th{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 10px;text-align:left;border-bottom:2px solid var(--border)}
+.duels-table td{padding:10px 10px;border-bottom:1px solid var(--border);font-size:11px}
+.duels-table tr:hover td{background:rgba(255,255,255,.015)}
+.duel-bar-wrap{display:flex;align-items:center;gap:6px;min-width:120px}
+.duel-bar-bg{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.duel-bar-fill{height:100%;border-radius:3px}
+.duel-pct{font-size:10px;font-weight:700;min-width:32px;text-align:right}
+
+/* MINIMAPS */
+.minimaps{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.minimap-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:14px;text-align:center;position:relative}
+.minimap-card canvas{width:240px;height:240px;border-radius:4px;background:#0a0a0a;display:block;margin:0 auto}
+.minimap-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.minimap-name{font-size:12px;font-weight:700;letter-spacing:.02em}
+.minimap-meta{font-size:9px;letter-spacing:.06em}
+.minimap-meta.ct{color:var(--ct)}
+.minimap-meta.t{color:var(--t)}
+
+/* PERF CHART */
+.player-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px}
+.player-tab{padding:6px 12px;font-size:10px;font-family:var(--mono);letter-spacing:.04em;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);cursor:pointer;color:var(--text2);transition:all .15s}
+.player-tab:hover{border-color:var(--text3);color:var(--text)}
+.player-tab.active{border-color:var(--accent);color:var(--accent);background:rgba(184,255,87,.05)}
+.perf-wrap{position:relative;width:100%;height:220px}
+.perf-wrap canvas{width:100%;height:100%}
+.perf-legend{display:flex;gap:16px;margin-top:10px;justify-content:center}
+.perf-legend-item{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3)}
+.perf-legend-dot{width:8px;height:8px;border-radius:2px}
+
+/* MOMENTS CLES */
+.moments-grid{display:grid;gap:10px}
+.moment-card{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:14px 18px;transition:border-color .15s}
+.moment-card:hover{border-color:var(--text3)}
+.moment-round{font-family:var(--display);font-size:22px;color:var(--text2);min-width:48px}
+.moment-badge{font-size:9px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:3px;margin-right:8px;white-space:nowrap}
+.moment-badge.ace{background:rgba(184,255,87,.12);color:var(--accent);border:1px solid rgba(184,255,87,.25)}
+.moment-badge.quad{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.2)}
+.moment-badge.triple{background:rgba(91,141,217,.1);color:var(--ct);border:1px solid rgba(91,141,217,.2)}
+.moment-info{flex:1}
+.moment-player{font-size:12px;font-weight:700;margin-bottom:2px}
+.moment-detail{font-size:10px;color:var(--text3);letter-spacing:.02em}
+.moment-result{font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;white-space:nowrap}
+.moment-result.win{background:rgba(45,212,160,.1);color:var(--success)}
+.moment-result.loss{background:rgba(255,68,68,.08);color:var(--danger)}
+
+/* COACH BILAN */
+.coach-card{padding:28px 24px}
+.coach-block{margin-bottom:22px}
+.coach-block:last-child{margin-bottom:0}
+.coach-label{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.coach-label::before{content:'';width:3px;height:12px;background:var(--accent);border-radius:2px}
+.coach-text{font-size:11px;color:var(--text2);line-height:1.8}
+.coach-text strong{color:var(--text);font-weight:700}
+.coach-bullet{margin:6px 0;padding-left:14px;position:relative}
+.coach-bullet::before{content:'';position:absolute;left:0;top:7px;width:4px;height:4px;background:var(--text3);border-radius:50%}
+
+/* PRO OVERLAY */
+.pro-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}
+.pro-overlay-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:40px 32px;max-width:440px;width:90%;text-align:center}
+.pro-overlay-title{font-family:var(--display);font-size:24px;letter-spacing:.02em;margin-bottom:12px}
+.pro-overlay-sub{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:22px}
+.pro-overlay-btn{display:inline-block;background:var(--accent);color:#000;padding:10px 24px;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em}
+
+.empty-msg{text-align:center;padding:32px;font-size:11px;color:var(--text3)}
+
+/* PRO INSIGHTS : ce que les pros auraient fait */
+.pro-insights-card{padding:24px 28px}
+.pro-insights-intro{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:18px}
+.pro-insights-trigger{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:linear-gradient(135deg,rgba(184,255,87,.1),rgba(184,255,87,.03));border:1px solid rgba(184,255,87,.3);color:var(--accent);padding:14px 22px;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%;justify-content:center}
+.pro-insights-trigger:hover:not(:disabled){border-color:var(--accent);background:linear-gradient(135deg,rgba(184,255,87,.15),rgba(184,255,87,.05));transform:translateY(-1px)}
+.pro-insights-trigger:disabled{opacity:.5;cursor:not-allowed}
+.pro-insights-trigger.loading{animation:qa-dots 1.2s steps(4,end) infinite}
+.pro-insights-meta{font-size:9px;color:var(--text3);font-weight:400;letter-spacing:.04em;text-transform:none;margin-left:6px}
+.pro-insights-list{display:flex;flex-direction:column;gap:14px}
+.pro-insight{background:var(--card);border:1px solid var(--border2);border-left:3px solid var(--accent);border-radius:var(--r);padding:18px 22px;position:relative}
+.pro-insight-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.pro-insight-round{font-family:var(--display);font-size:22px;color:var(--accent);line-height:1}
+.pro-insight-type{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border:1px solid var(--border2);border-radius:40px}
+.pro-insight-problem{font-size:12px;color:var(--text);line-height:1.6;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--border2)}
+.pro-insight-problem::before{content:'DIAGNOSTIC';display:block;font-family:var(--mono);font-size:9px;color:var(--danger);letter-spacing:.14em;margin-bottom:6px;font-weight:700}
+.pro-insight-pro{font-size:12px;color:var(--text);line-height:1.65;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--border2)}
+.pro-insight-pro::before{content:'APPROCHE PRO';display:block;font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:.14em;margin-bottom:6px;font-weight:700}
+.pro-insight-drill{font-size:12px;color:var(--text);line-height:1.5}
+.pro-insight-drill::before{content:'EXERCICE';display:block;font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:.14em;margin-bottom:6px;font-weight:700}
+.pro-insights-footer{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:16px;padding-top:12px;border-top:1px solid var(--border);letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+
+/* COACH Q&A : pose une question */
+.qa-card{padding:24px 28px}
+.qa-intro{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:16px}
+.qa-suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.qa-chip{background:var(--card);border:1px solid var(--border2);border-radius:40px;padding:7px 14px;font-family:var(--mono);font-size:11px;color:var(--text2);cursor:pointer;transition:all .15s;letter-spacing:.02em}
+.qa-chip:hover{border-color:var(--accent);color:var(--accent);background:rgba(184,255,87,.04)}
+.qa-form{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:14px 16px;margin-bottom:12px}
+.qa-input{width:100%;background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.6;resize:vertical;min-height:48px;outline:none}
+.qa-input::placeholder{color:var(--text3)}
+.qa-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.qa-counter{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.06em}
+.qa-counter.over{color:var(--danger)}
+.qa-submit{background:var(--accent);color:#000;border:none;padding:10px 18px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .15s}
+.qa-submit:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 12px rgba(184,255,87,.25)}
+.qa-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.qa-submit.loading .qa-submit-txt{animation:qa-dots 1.2s steps(4,end) infinite}
+@keyframes qa-dots{0%{opacity:1}50%{opacity:.4}100%{opacity:1}}
+.qa-response{background:linear-gradient(180deg,rgba(184,255,87,.03) 0%,var(--card) 100%);border:1px solid rgba(184,255,87,.25);border-left:3px solid var(--accent);border-radius:var(--r);padding:18px 22px;animation:qa-fade .3s ease}
+.qa-response.error{border-color:rgba(255,68,68,.3);border-left-color:var(--danger);background:rgba(255,68,68,.03)}
+.qa-response-label{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.qa-response.error .qa-response-label{color:var(--danger)}
+.qa-response-label svg{width:12px;height:12px}
+.qa-response-text{font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap}
+.qa-response-meta{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:14px;padding-top:10px;border-top:1px solid var(--border);letter-spacing:.04em}
+@keyframes qa-fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:768px){
+  .qa-card{padding:18px 16px}
+  .qa-input{font-size:12px}
+  .qa-footer{flex-direction:column;gap:10px;align-items:stretch}
+  .qa-submit{justify-content:center}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .minimaps{grid-template-columns:1fr 1fr}
+  .match-summary{padding:18px 16px}
+  .ms-header{grid-template-columns:1fr 1fr;gap:12px;padding-bottom:16px}
+  .ms-team-score{font-size:48px}
+  .ms-center{grid-column:1 / -1;order:-1;padding:0 0 12px;min-width:0;border-bottom:1px solid var(--border);margin-bottom:4px}
+  .ms-vs{display:none}
+  .ms-team-roster{font-size:9px}
+  .stat-table{font-size:10px}
+  .stat-table td,.stat-table th{padding:8px 4px}
+  .page-title{font-size:32px}
+}
+</style>
+<script src="/analytics.js" defer></script>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
+  <div class="nav-right">
+    <a href="demo.html" class="nav-link">Analyze</a>
+    <a href="matches.html" class="nav-link" id="navMatchesBtn" style="display:none">My matches</a>
+    <a href="login.html" class="nav-link" id="navLoginBtn">Sign in</a>
+    <a href="account.html" class="nav-cta" id="navAccountBtn" style="display:none">My account</a>
+  </div>
+</nav>
+
+<!-- Pro overlay -->
+<div class="pro-overlay" id="proOverlay" style="display:none">
+  <div class="pro-overlay-box">
+    <div class="pro-overlay-title">Analysis Pro</div>
+    <div class="pro-tag" style="margin:0 auto 16px;display:inline-flex">PRO</div>
+    <p class="pro-overlay-sub">
+      Advanced analysis is reserved for Pro and Team subscribers.<br>
+      Rapport tactique complet, ouverture de rounds, positionnement et bilan de coach.
+    </p>
+    <a href="index.html#pricing" class="pro-overlay-btn">Upgrade to Pro</a>
+    <div style="margin-top:14px"><a href="heatmap-results.html" style="color:var(--text3);font-size:11px;text-decoration:none">Back to results</a></div>
+  </div>
+</div>
+
+<div class="page" id="mainPage" style="display:none">
+  <div class="header">
+    <a href="heatmap-results.html" class="btn-back">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back
+    </a>
+    <div>
+      <span class="page-title">ANALYSE PRO</span>
+      <span class="pro-tag">PRO</span>
+    </div>
+    <button class="btn-share" id="btnSharePublic" onclick="openSharePopover()" title="Generer un lien public partageable">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Share
+    </button>
+  </div>
+
+  <!-- Popover de partage : cree un lien public + copy + social share -->
+  <div class="share-popover" id="sharePopover" onclick="if(event.target===this)closeSharePopover()">
+    <div class="share-popover-inner">
+      <button class="share-popover-close" onclick="closeSharePopover()" aria-label="Close">&times;</button>
+      <div class="share-popover-title">Share cette analyse</div>
+      <div class="share-popover-sub">Un lien public unique vers ton analyse. Sans login requis pour les destinataires. Fonctionne sur Twitter, Discord, etc.</div>
+      <div class="share-url-row">
+        <input type="text" class="share-url-input" id="sharePopoverUrl" readonly value="Generation du lien..."/>
+        <button class="share-url-copy" id="sharePopoverCopyBtn" onclick="copyShareUrl()">Copier</button>
+      </div>
+      <div class="share-social-row">
+        <a class="share-social-btn twitter" id="shareTwitterBtn" href="#" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          Share sur X
+        </a>
+        <a class="share-social-btn" id="shareDiscordBtn" href="#" onclick="copyForDiscord();return false;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515 0.074 0.074 0 0 0-0.079 0.037c-0.21 0.375-0.444 0.864-0.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-0.617-1.25 0.077 0.077 0 0 0-0.079-0.037A19.736 19.736 0 0 0 3.677 4.37a0.07 0.07 0 0 0-0.032 0.027C0.533 9.046-0.32 13.58 0.099 18.057a0.082 0.082 0 0 0 0.031 0.057 19.9 19.9 0 0 0 5.993 3.03 0.078 0.078 0 0 0 0.084-0.028 14.09 14.09 0 0 0 1.226-1.994 0.076 0.076 0 0 0-0.041-0.106 13.107 13.107 0 0 1-1.872-0.892 0.077 0.077 0 0 1-0.008-0.128 10.2 10.2 0 0 0 0.372-0.292 0.074 0.074 0 0 1 0.077-0.01c3.928 1.793 8.18 1.793 12.062 0a0.074 0.074 0 0 1 0.078 0.01c0.12 0.098 0.246 0.198 0.373 0.292a0.077 0.077 0 0 1-0.006 0.127 12.299 12.299 0 0 1-1.873 0.892 0.077 0.077 0 0 0-0.041 0.107c0.36 0.698 0.772 1.362 1.225 1.993a0.076 0.076 0 0 0 0.084 0.028 19.839 19.839 0 0 0 6.002-3.03 0.077 0.077 0 0 0 0.032-0.054c0.5-5.177-0.838-9.674-3.549-13.66a0.061 0.061 0 0 0-0.031-0.03zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333 0.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-0.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333 0.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-0.946 2.418-2.157 2.418z"/></svg>
+          Copier pour Discord
+        </a>
+      </div>
+      <div class="share-msg" id="sharePopoverMsg"></div>
+    </div>
+  </div>
+
+  <!-- 1. TON MATCH (personnel, target player first) -->
+  <div class="sl" id="section-ton-match">Ton match</div>
+  <div class="your-match" id="yourMatchBlock"></div>
+
+  <!-- 2. VUE D'ENSEMBLE : match summary card consolidee -->
+  <div class="sl" id="section-vue">Overview</div>
+  <div class="match-summary">
+    <div class="ms-header" id="msHeader"></div>
+    <div class="ms-timeline-section">
+      <div class="ms-timeline-label">
+        <span>Round breakdown</span>
+        <span class="ms-tl-legend">
+          <span class="ms-tl-legend-item"><span class="ms-tl-legend-dot" style="background:var(--ct)"></span>CT win</span>
+          <span class="ms-tl-legend-item"><span class="ms-tl-legend-dot" style="background:var(--t)"></span>T win</span>
+          <span class="ms-tl-legend-item"><span class="ms-tl-legend-dot" style="background:var(--accent);border-radius:50%;width:6px;height:6px"></span>First blood</span>
+        </span>
+      </div>
+      <div class="round-tl" id="roundTimeline"></div>
+    </div>
+    <div class="kpi-row" id="kpiRow"></div>
+  </div>
+
+  <!-- 3. MOMENTUM (courbe de probabilite de victoire) -->
+  <div class="sl" id="section-momentum">Momentum</div>
+  <div class="card">
+    <div class="momentum-wrap">
+      <div class="momentum-header">
+        <div style="font-size:11px;color:var(--text2);font-family:var(--mono);letter-spacing:.04em">Advantage over rounds · 4-round sliding window</div>
+        <div class="momentum-legend">
+          <span class="momentum-legend-item"><span class="momentum-legend-dot" style="background:var(--ct)"></span>CT lead</span>
+          <span class="momentum-legend-item"><span class="momentum-legend-dot" style="background:var(--t)"></span>T lead</span>
+        </div>
+      </div>
+      <canvas id="momentumCanvas" class="momentum-canvas"></canvas>
+      <div class="momentum-hint" id="momentumHint"></div>
+    </div>
+  </div>
+
+  <!-- 4. CLASSEMENT -->
+  <div class="sl" id="section-classement">Classement</div>
+  <div class="card" style="padding:0;overflow-x:auto">
+    <table class="stat-table" id="statsTable"></table>
+  </div>
+
+  <!-- 5. OUVERTURE -->
+  <div class="sl" id="section-ouverture">Ouverture</div>
+  <div class="card" id="openingCard"><div class="empty-msg">Loading...</div></div>
+
+  <!-- 6. CONFRONTATIONS -->
+  <div class="sl" id="section-confrontations">Confrontations</div>
+  <div class="card" id="duelsCard"><div class="empty-msg">Loading...</div></div>
+
+  <!-- 7. POSITIONNEMENT -->
+  <div class="sl" id="section-positions">Positionnement</div>
+  <div class="card">
+    <div class="minimaps" id="minimapsGrid"></div>
+  </div>
+
+  <!-- 8. PERFORMANCE -->
+  <div class="sl" id="section-perf">Performance</div>
+  <div class="card">
+    <div class="player-tabs" id="playerTabs"></div>
+    <div class="perf-wrap">
+      <canvas id="perfCanvas"></canvas>
+    </div>
+    <div class="perf-legend">
+      <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--accent)"></div>Multi-kill</div>
+      <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--t)"></div>1 kill</div>
+      <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--border2)"></div>0 kill</div>
+      <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--success);width:6px;height:6px;border-radius:50%"></div>Round won</div>
+      <div class="perf-legend-item"><div class="perf-legend-dot" style="background:var(--danger);width:6px;height:6px;border-radius:50%"></div>Round perdu</div>
+    </div>
+  </div>
+
+  <!-- 9. MOMENTS CLES -->
+  <div class="sl" id="section-moments">Key moments</div>
+  <div class="card" id="momentsCard"><div class="empty-msg">Loading...</div></div>
+
+  <!-- 10. BILAN -->
+  <div class="sl" id="section-bilan">Bilan tactique</div>
+  <div class="card coach-card" id="coachCard"><div class="empty-msg">Loading...</div></div>
+
+  <!-- 11. PRO INSIGHTS : ce que les pros auraient fait -->
+  <div class="sl" id="section-pros">Ce que les pros auraient fait</div>
+  <div class="card pro-insights-card" id="proInsightsCard">
+    <div class="pro-insights-intro">
+      Analysis des 3 moments les plus critiques de ton match : diagnostic, approche pro et exercice a travailler.
+    </div>
+    <div id="proInsightsBody">
+      <button type="button" class="pro-insights-trigger" onclick="generateProInsights()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
+        Generer l'analyse pro
+        <span class="pro-insights-meta">5 analyses par day · Claude IA</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 12. COACH Q&A : pose une question sur ce match a Claude IA -->
+  <div class="sl" id="section-qa">Pose ta question</div>
+  <div class="card qa-card">
+    <div class="qa-intro">Une question sur ce match ? Le AI Coach te repond en se basant sur les stats et le deroulement que tu viens de voir. Limite de 10 questions par day.</div>
+    <div class="qa-suggestions" id="qaSuggestions"></div>
+    <form class="qa-form" id="qaForm" onsubmit="return submitQuestion(event)">
+      <textarea class="qa-input" id="qaInput" placeholder="Ex : Pourquoi j'ai perdu le round 14 ? Qu'est-ce que j'aurais du faire differemment en CT ?" maxlength="500" rows="2"></textarea>
+      <div class="qa-footer">
+        <div class="qa-counter"><span id="qaCharCount">0</span>/500</div>
+        <button type="submit" class="qa-submit" id="qaSubmitBtn">
+          <span class="qa-submit-txt">Demander au AI Coach</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </form>
+    <div class="qa-response" id="qaResponse" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+// XSS escape helper pour les noms de players / contenu demo parse
+function escHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// =====================================================================
+// MAP CONFIG
+// =====================================================================
+const MAP_CONFIG = {
+  'de_dust2':   { img:'maps/de_dust2_radar_psd.png',   posX:-2476, posY:3239,  scale:4.4  },
+  'de_mirage':  { img:'maps/de_mirage_radar_psd.png',  posX:-3230, posY:1713,  scale:5.0  },
+  'de_inferno': { img:'maps/de_inferno_radar_psd.png', posX:-2087, posY:3870,  scale:4.9  },
+  'de_anubis':  { img:'maps/de_anubis_radar_psd.png',  posX:-2796, posY:3328,  scale:5.22 },
+  'de_nuke': {
+    upper: { img:'maps/nuke/de_nuke_radar_psd.png',       posX:-3453, posY:2887, scale:7.0 },
+    lower: { img:'maps/nuke/de_nuke_lower_radar_psd.png', posX:-3453, posY:2887, scale:7.0 },
+  },
+  'de_ancient':  { img:'maps/de_ancient_radar_psd.png',  posX:-2953, posY:2164, scale:5.0 },
+  'de_overpass': { img:'maps/de_overpass_radar_psd.png', posX:-4831, posY:1781, scale:5.2 },
+  'de_vertigo':  { img:'maps/de_vertigo_radar_psd.png', posX:-3168, posY:1762, scale:4.0  },
+};
+
+let demoData = null;
+let mapName = 'de_dust2';
+let currentPerfPlayer = null;
+
+// =====================================================================
+// HELPERS
+// =====================================================================
+function w2c(wx, wy, size) {
+  const cfg = MAP_CONFIG[mapName];
+  if (!cfg) return { x: size / 2, y: size / 2 };
+  const c = cfg.upper ? cfg.upper : cfg;
+  return {
+    x: ((wx - c.posX) / c.scale) * (size / 1024),
+    y: ((c.posY - wy) / c.scale) * (size / 1024),
+  };
+}
+
+function expandPositions(pos) {
+  if (!pos || typeof pos !== 'object') return pos;
+  const sample = Object.values(pos)[0];
+  if (!sample || !sample.length) return pos;
+  if (sample[0].tick !== undefined) return pos;
+  if (sample[0].k === undefined) return pos;
+  Object.keys(pos).forEach(name => {
+    pos[name] = pos[name].map(p => ({ x:p.x, y:p.y, team:p.t??0, round:p.r??0, tick:p.k??0, hp:p.h??100 }));
+  });
+  return pos;
+}
+
+function expandKills(kills) {
+  if (!kills || !kills.length) return kills;
+  if (kills[0].attacker !== undefined) return kills;
+  return kills.map(k => ({
+    round:k.r??0, tick:k.t??0,
+    attacker:k.a||'Unknown', attackerTeam:k.at??0,
+    victim:k.v||'Unknown', victimTeam:k.vt??0,
+    weapon:k.w||'', isHeadshot:!!k.h,
+    thruSmoke:!!k.s, isWallbang:!!k.wb,
+  }));
+}
+
+function detectKnifeRounds() {
+  const rounds = demoData.rounds || [];
+  const kills = demoData.kills || [];
+  if (!rounds.length) return;
+  rounds.forEach((rd, i) => {
+    const roundNum = rd.round ?? i;
+    const killsR = rd.killsRound ?? (roundNum + 1);
+    const startT = rd.startTick || 0;
+    const endT = rd.endTick || (rounds[i + 1]?.startTick || 0);
+    let rKills = [];
+    if (startT > 0 && endT > 0) rKills = kills.filter(k => (k.tick || 0) >= startT && (k.tick || 0) <= endT);
+    if (!rKills.length) rKills = kills.filter(k => k.round === killsR || k.round === roundNum);
+    if (!rKills.length) {
+      // Garder le flag du parser si présent, sinon round 0 = knife (FACEIT)
+      if (rd.isKnife === undefined || rd.isKnife === null) rd.isKnife = (i === 0);
+      return;
+    }
+    rd.isKnife = rKills.every(k => {
+      const w = (k.weapon || '').toLowerCase();
+      return w.includes('knife') || w.includes('bayonet') || w.includes('melee') || w.includes('fists');
+    });
+  });
+  // Recalculer displayNum : seuls les rounds non-knife sont numerotes
+  let realNum = 0;
+  rounds.forEach(rd => {
+    if (rd.isKnife) { rd.displayNum = 0; return; }
+    realNum++;
+    rd.displayNum = realNum;
+  });
+}
+
+function cleanWeapon(w) {
+  return (w || '').replace('weapon_', '').replace('_', ' ');
+}
+
+// Weapon SVG icon mapping (matches filenames in /icons/)
+const WEAPON_FILE_MAP = {
+  ak47:'ak47', m4a1:'m4a1', m4a1_silencer:'m4a1_silencer', m4a4:'m4a1',
+  galil:'galilar', galilar:'galilar', famas:'famas', aug:'aug', sg556:'sg556',
+  awp:'awp', ssg08:'ssg08', scar20:'scar20', g3sg1:'g3sg1',
+  mp9:'mp9', mac10:'mac10', mp7:'mp7', ump45:'ump45', p90:'p90', mp5sd:'mp5sd', bizon:'bizon',
+  deagle:'deagle', glock:'glock', usp_silencer:'usp_silencer', hkp2000:'hkp2000',
+  p2000:'p2000', p250:'p250', fiveseven:'fiveseven', tec9:'tec9',
+  elite:'elite', cz75a:'cz75a', cz75_auto:'cz75a', revolver:'revolver',
+  nova:'nova', xm1014:'xm1014', mag7:'mag7', sawedoff:'sawedoff', m249:'m249', negev:'negev',
+  knife:'knife', knife_t:'knife_t', bayonet:'bayonet',
+  knife_karambit:'knife_karambit', knife_butterfly:'knife_butterfly', knife_flip:'knife_flip',
+  knife_m9_bayonet:'knife_m9_bayonet', knife_gut:'knife_gut',
+  hegrenade:'hegrenade', flashbang:'flashbang', smokegrenade:'smokegrenade',
+  molotov:'molotov', incgrenade:'incgrenade', decoy:'decoy',
+  c4:'c4', taser:'taser',
+};
+
+function weaponIcon(weaponName, h) {
+  if (!weaponName) return '';
+  const clean = weaponName.replace('weapon_', '').replace(/\s/g, '_').toLowerCase();
+  const file = WEAPON_FILE_MAP[clean];
+  if (!file) return '<span style="font-size:9px;color:var(--text3)">' + cleanWeapon(weaponName) + '</span>';
+  return '<img src="icons/' + file + '.svg" alt="' + clean + '" height="' + (h || 14) + '" style="vertical-align:middle;opacity:.85" loading="lazy">';
+}
+
+// FV Rating : adaptation de la HLTV 2.0. Formule officielle documentee :
+// R = 0.0073 × KAST(%) + 0.3591 × KPR - 0.5329 × DPR + 0.2372 × Impact +
+//     0.0032 × ADR + 0.1587
+// or Impact = 2.13 × KPR + 0.42 × APR - 0.41
+// Ici on accepte kastPct et adr en parametres pour les vraies valeurs parser.
+// Fallbacks : si absents, approximations conservatrices (moyenne match).
+function calcFvRating(kills, deaths, assists, rounds, kastPct, adr) {
+  if (!rounds) return 0;
+  const kpr = kills / rounds;
+  const dpr = deaths / rounds;
+  const apr = (assists || 0) / rounds;
+  // KAST fallback : 70% (moyenne typique d'un player compétitif)
+  const kastP = typeof kastPct === 'number' ? kastPct : 70;
+  // ADR fallback : 75 (moyenne typique)
+  const adrV = typeof adr === 'number' ? adr : 75;
+  const impact = 2.13 * kpr + 0.42 * apr - 0.41;
+  const r = 0.0073 * kastP + 0.3591 * kpr - 0.5329 * dpr + 0.2372 * impact + 0.0032 * adrV + 0.1587;
+  return parseFloat(r.toFixed(2));
+}
+
+function fvrColor(r) {
+  if (r >= 1.20) return 'var(--accent)';
+  if (r >= 1.05) return 'var(--success)';
+  if (r >= 0.90) return 'var(--gold)';
+  return 'var(--danger)';
+}
+
+function fvrLabel(r) {
+  if (r >= 1.30) return 'Elite';
+  if (r >= 1.20) return 'Excellent';
+  if (r >= 1.05) return 'Good';
+  if (r >= 0.90) return 'Correct';
+  if (r >= 0.75) return 'Insuffisant';
+  return 'Low';
+}
+
+function fvrBadgeBg(r) {
+  if (r >= 1.20) return 'rgba(184,255,87,.12)';
+  if (r >= 1.05) return 'rgba(45,212,160,.1)';
+  if (r >= 0.90) return 'rgba(245,200,66,.1)';
+  return 'rgba(255,68,68,.08)';
+}
+
+// Team identification
+function getTeamRosters(kills) {
+  const pTeam = {};
+  for (const k of kills) {
+    if (k.round <= 3) {
+      if (k.attacker !== 'Unknown' && !pTeam[k.attacker]) pTeam[k.attacker] = k.attackerTeam;
+      if (k.victim !== 'Unknown' && !pTeam[k.victim]) pTeam[k.victim] = k.victimTeam;
+    }
+  }
+  // fill from all kills if incomplete
+  if (Object.keys(pTeam).length < 8) {
+    for (const k of kills) {
+      if (k.attacker !== 'Unknown' && !pTeam[k.attacker]) pTeam[k.attacker] = k.attackerTeam;
+      if (k.victim !== 'Unknown' && !pTeam[k.victim]) pTeam[k.victim] = k.victimTeam;
+    }
+  }
+  const team2 = Object.entries(pTeam).filter(([_,t]) => t === 2).map(([n]) => n);
+  const team3 = Object.entries(pTeam).filter(([_,t]) => t === 3).map(([n]) => n);
+  return { team2, team3, playerTeam: pTeam };
+}
+
+// KAST
+function calcKAST(playerName, kills, rounds) {
+  const totalR = rounds.filter(r => !r.isKnife).length || 1;
+  let kastCount = 0;
+  for (let i = 1; i <= totalR; i++) {
+    const hadKill = kills.some(k => k.round === i && k.attacker === playerName);
+    const died = kills.some(k => k.round === i && k.victim === playerName);
+    const traded = died && kills.some(k => {
+      if (k.round !== i || k.attacker === playerName) return false;
+      const deathTick = kills.find(d => d.round === i && d.victim === playerName)?.tick || 0;
+      return k.tick > deathTick && k.tick - deathTick <= 320 && k.attackerTeam !== k.victimTeam;
+    });
+    if (hadKill || !died || traded) kastCount++;
+  }
+  return Math.round((kastCount / totalR) * 100);
+}
+
+// =====================================================================
+// PRO GATING
+// =====================================================================
+async function checkAccess() {
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) return false;
+    const res = await fetch('/api/check-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + session.access_token },
+    });
+    if (res.ok) {
+      const d = await res.json();
+      if (d.plan === 'pro' || d.plan === 'elite' || d.plan === 'team') return true;
+    }
+    return false;
+  } catch (_) { return true; }
+}
+
+// =====================================================================
+// COMPUTED STATS
+// =====================================================================
+function computeAllStats(kills, rounds, playerStats) {
+  const totalRounds = rounds.filter(r => !r.isKnife).length || 1;
+  const { team2, team3, playerTeam } = getTeamRosters(kills);
+  const allPlayers = [...new Set([...team2, ...team3])];
+
+  // If playerStats has players not in kills, add them
+  (playerStats || []).forEach(ps => {
+    if (!allPlayers.includes(ps.name)) allPlayers.push(ps.name);
+    if (!playerTeam[ps.name]) playerTeam[ps.name] = team2.length <= team3.length ? 2 : 3;
+  });
+
+  // Index playerStats by name pour accès O(1). Ces stats viennent du parser
+  // (backend Railway) et sont la source de verite côté produit : memes valeurs
+  // sur dashboard, heatmap-results et compare. On les privilegie sur un recompute.
+  const psByName = Object.fromEntries((playerStats || []).map(ps => [ps.name, ps]));
+
+  const stats = allPlayers.map(name => {
+    const ps = psByName[name] || {};
+    // Kills / deaths : on utilisé les events kills (plus fiable que playerStats
+    // qui peut etre absent pour les players hors de la demo)
+    const k = kills.filter(x => x.attacker === name).length;
+    const d = kills.filter(x => x.victim === name).length;
+    const hs = kills.filter(x => x.attacker === name && x.isHeadshot).length;
+
+    // Privilegie les valeurs parsees si disponibles, sinon fallback computed
+    const hsPct = typeof ps.hsPct === 'number' ? ps.hsPct : (k > 0 ? Math.round((hs / k) * 100) : 0);
+    const adr  = typeof ps.adr === 'number' ? ps.adr : Math.round((k * 80) / totalRounds);
+    const kast = typeof ps.kast === 'number' ? ps.kast : calcKAST(name, kills, rounds);
+    const assists = typeof ps.assists === 'number' ? ps.assists : 0;
+    // Passe les vraies valeurs kast+adr a calcFvRating au lieu d'approximations
+    const fvr = typeof ps.fvr === 'number' ? ps.fvr : calcFvRating(k, d, assists, totalRounds, kast, adr);
+
+    // Opening duels
+    let fk = 0, fd = 0;
+    for (let r = 1; r <= totalRounds; r++) {
+      const roundK = kills.filter(x => x.round === r).sort((a, b) => a.tick - b.tick);
+      if (roundK.length) {
+        if (roundK[0].attacker === name) fk++;
+        if (roundK[0].victim === name) fd++;
+      }
+    }
+
+    // Multi-kills
+    const multiKills = { three: 0, four: 0, ace: 0 };
+    for (let r = 1; r <= totalRounds; r++) {
+      const rk = kills.filter(x => x.round === r && x.attacker === name).length;
+      if (rk >= 5) multiKills.ace++;
+      else if (rk >= 4) multiKills.four++;
+      else if (rk >= 3) multiKills.three++;
+    }
+
+    // Weapons (raw names for icon mapping)
+    const weapons = {};
+    kills.filter(x => x.attacker === name).forEach(x => {
+      const w = (x.weapon || '').replace('weapon_', '').toLowerCase();
+      weapons[w] = (weapons[w] || 0) + 1;
+    });
+    const topWeapon = Object.entries(weapons).sort((a, b) => b[1] - a[1])[0];
+
+    return {
+      name, team: playerTeam[name] || 0,
+      kills: k, deaths: d, diff: k - d,
+      hs, hsPct, adr, kast, fvr,
+      fk, fd, fkDiff: fk - fd,
+      multiKills, topWeapon: topWeapon ? topWeapon[0] : '-',
+    };
+  });
+
+  // Sort each team by FV Rating
+  const team2Stats = stats.filter(s => s.team === 2).sort((a, b) => b.fvr - a.fvr);
+  const team3Stats = stats.filter(s => s.team === 3).sort((a, b) => b.fvr - a.fvr);
+
+  // Scores
+  const team2Score = rounds.filter(r => !r.isKnife && r.winner === 2).length;
+  const team3Score = rounds.filter(r => !r.isKnife && r.winner === 3).length;
+  const winner = team2Score > team3Score ? 2 : team3Score > team2Score ? 3 : 0;
+
+  // First bloods
+  const firstBloods = [];
+  for (let r = 1; r <= totalRounds; r++) {
+    const roundK = kills.filter(x => x.round === r).sort((a, b) => a.tick - b.tick);
+    if (roundK.length) {
+      const fb = roundK[0];
+      const rndWinner = rounds.find(x => x.round === r || x.displayNum === r)?.winner || 0;
+      firstBloods.push({ round: r, attacker: fb.attacker, attackerTeam: fb.attackerTeam, victim: fb.victim, roundWon: rndWinner === fb.attackerTeam });
+    }
+  }
+
+  return { stats, team2Stats, team3Stats, team2Score, team3Score, winner, totalRounds, firstBloods, team2, team3, playerTeam };
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+async function init() {
+  const hasAccess = await checkAccess();
+  if (!hasAccess) {
+    document.getElementById('proOverlay').style.display = 'flex';
+    return;
+  }
+
+  const raw = sessionStorage.getItem('demoData');
+  if (!raw) {
+    document.getElementById('mainPage').innerHTML = ''
+      + '<div class="empty-msg" style="padding:80px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px">'
+      + '  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.7"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>'
+      + '  <div style="font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em">Aucune analyse disponible</div>'
+      + '  <div style="font-size:13px;color:var(--text2);max-width:380px;line-height:1.6">Lance ta premiere analyse de demo pour debloquer le FV Rating, les heatmaps et le diagnostic AI Coach.</div>'
+      + '  <a href="/en/demo.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:12px 24px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.06em;text-decoration:none;margin-top:6px">Analyze a demo <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>'
+      + '</div>';
+    document.getElementById('mainPage').style.display = 'block';
+    return;
+  }
+
+  demoData = JSON.parse(raw);
+  if (demoData.positions) demoData.positions = expandPositions(demoData.positions);
+  if (demoData.kills) demoData.kills = expandKills(demoData.kills);
+  mapName = (demoData.meta?.map || 'de_dust2').toLowerCase().replace(/^.*\//, '').trim();
+
+  // Detection des knife rounds
+  detectKnifeRounds();
+
+  const kills = demoData.kills || [];
+  const rounds = demoData.rounds || [];
+  const computed = computeAllStats(kills, rounds, demoData.playerStats);
+
+  document.getElementById('mainPage').style.display = 'block';
+
+  renderYourMatch(computed, rounds);
+  renderOverview(computed, rounds);
+  renderMomentum(computed, rounds);
+  renderStatsTable(computed);
+  renderOpenings(computed);
+  renderDuels(kills, computed);
+  renderMinimaps(computed);
+  renderPerformance(kills, rounds, computed);
+  renderMoments(kills, rounds, computed);
+  renderCoachBilan(computed, kills, rounds);
+  initCoachQA(computed, rounds);
+}
+
+// =====================================================================
+// COACH Q&A : pose une question sur ce match a Claude IA
+// =====================================================================
+let _qaContext = null;
+
+function initCoachQA(c, rounds) {
+  // Stocke le contexte match pour construire le prompt au moment de la question
+  const you = getTargetPlayer(c);
+  _qaContext = {
+    map: (mapName || '').replace('de_', '').toUpperCase(),
+    score: [c.team3Score, c.team2Score],
+    winner: c.winner === 3 ? 'CT' : c.winner === 2 ? 'T' : '-',
+    rounds: c.totalRounds,
+    targetPlayer: you ? {
+      name: you.name,
+      fvr: you.fvr,
+      kast: you.kast,
+      adr: you.adr,
+      hsPct: you.hsPct,
+      kd: you.diff,
+      kills: you.kills,
+      deaths: you.deaths,
+      fk: you.fk,
+      fd: you.fd,
+    } : null,
+    matchStats: (c.stats || []).map(p => ({
+      name: p.name,
+      team: p.team === 3 ? 'CT' : 'T',
+      fvr: p.fvr,
+      kast: p.kast,
+      adr: p.adr,
+      hsPct: p.hsPct,
+      kills: p.kills,
+      deaths: p.deaths,
+    })),
+  };
+
+  // Suggestions de questions pre-remplies pour lever la friction de la page blanche
+  const you2 = _qaContext.targetPlayer;
+  const suggestions = [];
+  if (you2) {
+    suggestions.push("Pourquoi mon FV Rating est de " + you2.fvr.toFixed(2) + " sur ce match ?");
+    if (you2.fd > you2.fk) suggestions.push("Comment ameliorer mes duels d'ouverture ?");
+    if (you2.kast < 65) suggestions.push("Pourquoi mon KAST est bas ?");
+    suggestions.push("Sur quelle map je devrais m'entrainer d'apres ce match ?");
+    suggestions.push("Donne-moi 3 actions concretes pour progresser");
+  }
+  const sugContainer = document.getElementById('qaSuggestions');
+  if (sugContainer) {
+    sugContainer.innerHTML = suggestions.slice(0, 4).map(s =>
+      '<button type="button" class="qa-chip" onclick="fillQuestion(\'' + s.replace(/'/g, "\\'") + '\')">' + escHtml(s) + '</button>'
+    ).join('');
+  }
+
+  // Counter caracteres en live
+  const input = document.getElementById('qaInput');
+  const counter = document.getElementById('qaCharCount');
+  if (input && counter) {
+    input.addEventListener('input', () => {
+      const len = input.value.length;
+      counter.textContent = len;
+      counter.parentElement.classList.toggle('over', len > 500);
+    });
+  }
+}
+
+function fillQuestion(q) {
+  const input = document.getElementById('qaInput');
+  if (!input) return;
+  input.value = q;
+  input.focus();
+  document.getElementById('qaCharCount').textContent = q.length;
+}
+
+async function submitQuestion(e) {
+  e.preventDefault();
+  const input = document.getElementById('qaInput');
+  const btn = document.getElementById('qaSubmitBtn');
+  const resp = document.getElementById('qaResponse');
+  const question = input.value.trim();
+
+  if (!question) {
+    input.focus();
+    return false;
+  }
+  if (question.length > 500) {
+    showQAResponse('La question est trop longue (500 caracteres max).', null, true);
+    return false;
+  }
+
+  // Check session auth
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) {
+    showQAResponse('Sign in pour utiliser le AI Coach.', null, true);
+    return false;
+  }
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+  const btnTxt = btn.querySelector('.qa-submit-txt');
+  const originalLabel = btnTxt.textContent;
+  btnTxt.textContent = 'Le Coach reflechit';
+  resp.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/coach-qa', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+      body: JSON.stringify({ question, context: _qaContext }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (res.status === 403) {
+        showQAResponse(data.message || 'Feature Pro uniquement.', null, true);
+      } else if (res.status === 429) {
+        showQAResponse(data.message || 'Tu as atteint ta limite quotidienne.', null, true);
+      } else {
+        showQAResponse(data.message || data.error || 'Error lors de la requete.', null, true);
+      }
+      return false;
+    }
+    showQAResponse(data.answer, data.tokensUsed, false);
+  } catch (err) {
+    showQAResponse('Error reseau : ' + (err.message || 'inconnue'), null, true);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btnTxt.textContent = originalLabel;
+  }
+  return false;
+}
+
+function showQAResponse(text, tokens, isError) {
+  const resp = document.getElementById('qaResponse');
+  resp.className = 'qa-response' + (isError ? ' error' : '');
+  const label = isError ? 'Error' : 'Reponse du AI Coach';
+  const icon = isError
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>';
+  const meta = tokens ? '<div class="qa-response-meta">' + tokens + ' tokens · Claude Haiku 4.5</div>' : '';
+  resp.innerHTML = '<div class="qa-response-label">' + icon + label + '</div><div class="qa-response-text">' + escHtml(text) + '</div>' + meta;
+  resp.style.display = 'block';
+  resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// =====================================================================
+// PRO INSIGHTS : ce que les pros auraient fait (3 moments cles)
+// =====================================================================
+// Detecte les 3 situations les plus critiques du player cible :
+//   1) Clutches perdus (dernier en vie, contre 2+)
+//   2) Duels d'ouverture perdus
+//   3) Rounds a faible impact (0 kill + mort)
+// Envoi au backend qui appelle Claude avec prompt structure.
+function detectCriticalSituations(c, kills, rounds) {
+  const you = getTargetPlayer(c);
+  if (!you) return [];
+  const nonKnife = rounds.filter(r => !r.isKnife);
+  const youTeam = c.playerTeam[you.name] || 0;
+  const situations = [];
+
+  // Helper : side effectif au round (swap apres mi-temps)
+  function sideAtRound(roundIdx, baseTeam) {
+    return roundIdx < 12 ? baseTeam : (baseTeam === 2 ? 3 : baseTeam === 3 ? 2 : 0);
+  }
+
+  // 1) Clutches perdus : player seul survivant, round perdu
+  nonKnife.forEach((r, i) => {
+    const roundKills = kills.filter(k => k.round === (r.round || (i + 1)));
+    const teamDeathsThisRound = roundKills.filter(k => {
+      return (c.playerTeam[k.victim] || 0) === youTeam;
+    });
+    // Le player cible n'est pas mort mais tous ses coequipiers sont morts (4 deaths)
+    const youDied = roundKills.some(k => k.victim === you.name);
+    if (!youDied && teamDeathsThisRound.length === 4) {
+      const effectiveSide = sideAtRound(i, youTeam);
+      const sideLabel = effectiveSide === 3 ? 'CT' : 'T';
+      const won = r.winner === effectiveSide;
+      if (!won) {
+        situations.push({
+          roundNum: r.displayNum || r.round || (i + 1),
+          outcome: 'lost',
+          situationType: 'clutch',
+          severity: 10,
+          details: `Clutch 1v? en ${sideLabel}. All tes coequipiers sont tombes. Tu as perdu le round.`,
+        });
+      }
+    }
+  });
+
+  // 2) Duels d'ouverture perdus : player first death sur un round
+  const firstDeaths = [];
+  nonKnife.forEach((r, i) => {
+    const rNum = r.round || (i + 1);
+    const roundKills = kills.filter(k => k.round === rNum).sort((a, b) => a.tick - b.tick);
+    if (roundKills.length && roundKills[0].victim === you.name) {
+      const effectiveSide = sideAtRound(i, youTeam);
+      const sideLabel = effectiveSide === 3 ? 'CT' : 'T';
+      const attacker = roundKills[0].attacker;
+      const weapon = roundKills[0].weapon || 'arme inconnue';
+      firstDeaths.push({
+        roundNum: r.displayNum || rNum,
+        outcome: r.winner === effectiveSide ? 'won' : 'lost',
+        situationType: 'lost_opening',
+        severity: 6,
+        details: `Duel d'ouverture en ${sideLabel} perdu contre ${attacker} (${weapon}). ${r.winner === effectiveSide ? 'Tes coequipiers ont trade/gagne le round' : 'Round perdu'}.`,
+      });
+    }
+  });
+  // Prendre les 2 first deaths les plus impactants (round perdus en priorite)
+  firstDeaths.sort((a, b) => (a.outcome === 'lost' ? -1 : 1) - (b.outcome === 'lost' ? -1 : 1));
+  situations.push(...firstDeaths.slice(0, 2));
+
+  // 3) Rounds a faible impact : 0 kill + mort + round perdu (gap a combler)
+  nonKnife.forEach((r, i) => {
+    const rNum = r.round || (i + 1);
+    const yourKillsRound = kills.filter(k => k.round === rNum && k.attacker === you.name).length;
+    const youDied = kills.some(k => k.round === rNum && k.victim === you.name);
+    const effectiveSide = sideAtRound(i, youTeam);
+    const roundLost = r.winner !== effectiveSide && r.winner !== 0;
+    if (yourKillsRound === 0 && youDied && roundLost) {
+      const sideLabel = effectiveSide === 3 ? 'CT' : 'T';
+      situations.push({
+        roundNum: r.displayNum || rNum,
+        outcome: 'lost',
+        situationType: 'low_impact',
+        severity: 4,
+        details: `En ${sideLabel}, tu as finis ce round sans kill et mort. Round perdu.`,
+      });
+    }
+  });
+
+  // Prioriser par severity desc, deduplicate par round, garder max 3
+  situations.sort((a, b) => b.severity - a.severity);
+  const seen = new Set();
+  const unique = [];
+  for (const s of situations) {
+    if (seen.has(s.roundNum)) continue;
+    seen.add(s.roundNum);
+    unique.push(s);
+    if (unique.length >= 3) break;
+  }
+  return unique;
+}
+
+async function generateProInsights() {
+  const body = document.getElementById('proInsightsBody');
+  const trigger = body.querySelector('.pro-insights-trigger');
+  if (trigger) trigger.disabled = true;
+
+  // Recupere le contexte stocke par initCoachQA (appele apres renderCoachBilan)
+  if (!_qaContext) {
+    body.innerHTML = '<div class="empty-msg">Contexte match non disponible.</div>';
+    return;
+  }
+
+  // Retrouve kills et rounds depuis demoData
+  const kills = demoData?.kills || [];
+  const rounds = demoData?.rounds || [];
+  const computed = computeAllStats(kills, rounds, demoData?.playerStats);
+  const situations = detectCriticalSituations(computed, kills, rounds);
+
+  if (!situations.length) {
+    body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">
+      Aucun moment critique detecte dans ce match. Tu as bien joue !
+    </div>`;
+    return;
+  }
+
+  // Loading state
+  if (trigger) trigger.classList.add('loading');
+  const originalHtml = body.innerHTML;
+  body.innerHTML = `
+    <div style="text-align:center;padding:32px 20px;color:var(--text2);font-size:12px;font-family:var(--mono)">
+      <div style="margin-bottom:10px">Le AI Coach analyse ${situations.length} moment${situations.length > 1 ? 's' : ''} critique${situations.length > 1 ? 's' : ''}...</div>
+      <div style="color:var(--text3);font-size:10px">Peut prendre 5-10 secondes</div>
+    </div>
+  `;
+
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) {
+    body.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Sign in pour utiliser Pro Insights.</div>';
+    return;
+  }
+
+  try {
+    const you = _qaContext.targetPlayer || {};
+    const res = await fetch('/api/pro-insights', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+      body: JSON.stringify({
+        context: {
+          map: _qaContext.map,
+          side: 'both',
+          targetName: you.name || 'anonyme',
+          situations,
+        },
+      }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      body.innerHTML = `<div class="empty-msg" style="color:var(--danger)">${escHtml(data.message || data.error || 'Error')}</div>`;
+      return;
+    }
+
+    renderProInsights(data.insights, data.cached, data.tokensUsed);
+  } catch (e) {
+    body.innerHTML = `<div class="empty-msg" style="color:var(--danger)">Error reseau : ${escHtml(e.message || 'inconnue')}</div>`;
+  }
+}
+
+function renderProInsights(insights, cached, tokens) {
+  const body = document.getElementById('proInsightsBody');
+  if (!insights || !insights.length) {
+    body.innerHTML = '<div class="empty-msg">Aucune analyse disponible.</div>';
+    return;
+  }
+  const cards = insights.map(ins => `
+    <div class="pro-insight">
+      <div class="pro-insight-header">
+        <div class="pro-insight-round">R${escHtml(ins.roundNum)}</div>
+        <div class="pro-insight-type">${ins.situationType === 'clutch' ? 'Clutch' : ins.situationType === 'lost_opening' ? 'Duel ouverture' : 'Impact faible'}</div>
+      </div>
+      <div class="pro-insight-problem">${escHtml(ins.problem || '')}</div>
+      <div class="pro-insight-pro">${escHtml(ins.proApproach || '')}</div>
+      <div class="pro-insight-drill">${escHtml(ins.drill || '')}</div>
+    </div>
+  `).join('');
+  const footer = `
+    <div class="pro-insights-footer">
+      <span>${insights.length} analyse${insights.length > 1 ? 's' : ''} ${cached ? '(cache 1h)' : 'fraiche' + (insights.length > 1 ? 's' : '')}</span>
+      <span>${tokens ? tokens + ' tokens · ' : ''}Claude Haiku 4.5</span>
+    </div>
+  `;
+  body.innerHTML = '<div class="pro-insights-list">' + cards + '</div>' + footer;
+}
+
+// =====================================================================
+// 0. TON MATCH (personnel, target player first)
+// =====================================================================
+// Detecte le player cible (demo analysee pour LUI) via demoData.meta.targetPlayer.
+// Fallback sur le MVP si absent. Affiche ses stats vs moyenne du match.
+function getTargetPlayer(c) {
+  const targetName = demoData.meta?.targetPlayer;
+  if (targetName) {
+    const found = c.stats.find(s => s.name === targetName);
+    if (found) return found;
+  }
+  // Fallback : MVP du match (plus haut FVR)
+  return [...c.stats].sort((a, b) => b.fvr - a.fvr)[0];
+}
+
+function fmtDelta(val, isHigherBetter) {
+  if (isHigherBetter === void 0) isHigherBetter = true;
+  const rounded = Math.round(val * 100) / 100;
+  if (Math.abs(rounded) < 0.01) return { text: 'au niveau', cls: 'flat', arrow: '=' };
+  const positive = (rounded > 0) === isHigherBetter;
+  const arrow = rounded > 0 ? '↑' : '↓';
+  const sign = rounded > 0 ? '+' : '';
+  return {
+    text: `${sign}${rounded} vs moy`,
+    cls: positive ? 'up' : 'down',
+    arrow
+  };
+}
+
+async function renderYourMatch(c, rounds) {
+  const you = getTargetPlayer(c);
+  if (!you) {
+    document.getElementById('yourMatchBlock').innerHTML = '<div class="empty-msg">No player targeted for this demo.</div>';
+    return;
+  }
+
+  // Fetch async : moyenne perso sur les Last 20 matches (si dispo)
+  // Fallback sur moyenne du match si API indisponible or nouveau player
+  let historical = null;
+  try {
+    const r = await fetch('/api/player-history?nickname=' + encodeURIComponent(you.name) + '&limit=20');
+    if (r.ok) {
+      const d = await r.json();
+      if (d.matchCount >= 2) historical = d;
+    }
+  } catch (_) {}
+
+  // Si on a des donnees historiques -> compare vs moyenne perso 20 matches
+  // Sinon fallback sur moyenne du match courant
+  const n = c.stats.length || 1;
+  let avgFvr, avgAdr, avgKast, avgHs, comparisonLabel;
+  if (historical && historical.averages) {
+    avgFvr  = historical.averages.fvr;
+    avgAdr  = historical.averages.adr;
+    avgKast = historical.averages.kast;
+    avgHs   = historical.averages.hsPct;
+    comparisonLabel = 'vs ta moy ' + historical.matchCount + 'M';
+  } else {
+    avgFvr  = c.stats.reduce((s, p) => s + (p.fvr || 0), 0) / n;
+    avgAdr  = c.stats.reduce((s, p) => s + (p.adr || 0), 0) / n;
+    avgKast = c.stats.reduce((s, p) => s + (p.kast || 0), 0) / n;
+    avgHs   = c.stats.reduce((s, p) => s + (p.hsPct || 0), 0) / n;
+    comparisonLabel = 'vs moy match';
+  }
+
+  // Rank (1-indexed) par FV Rating descendant
+  const rank = [...c.stats].sort((a, b) => b.fvr - a.fvr).findIndex(p => p.name === you.name) + 1;
+
+  // Opening duels % : FK / (FK + FD)
+  const totalOpen = (you.fk || 0) + (you.fd || 0);
+  const openPct = totalOpen > 0 ? Math.round(((you.fk || 0) / totalOpen) * 100) : 0;
+  // Moyenne opening des autres players pour comparer
+  const othersOpen = c.stats.map(p => {
+    const t = (p.fk || 0) + (p.fd || 0);
+    return t > 0 ? ((p.fk || 0) / t) * 100 : 50;
+  });
+  const avgOpen = othersOpen.length ? othersOpen.reduce((s, v) => s + v, 0) / othersOpen.length : 50;
+
+  // Injecte le label de comparaison dans fmtDelta pour preciser la reference
+  const deltaFvr  = fmtDelta(you.fvr - avgFvr);
+  deltaFvr.text = deltaFvr.text.replace('vs moy', comparisonLabel);
+  const deltaAdr  = fmtDelta(you.adr - avgAdr);
+  deltaAdr.text = deltaAdr.text.replace('vs moy', comparisonLabel);
+  const deltaKast = fmtDelta(you.kast - avgKast);
+  deltaKast.text = deltaKast.text.replace('vs moy', comparisonLabel);
+  const deltaHs   = fmtDelta(you.hsPct - avgHs);
+  deltaHs.text = deltaHs.text.replace('vs moy', comparisonLabel);
+  const deltaOpen = fmtDelta(openPct - avgOpen);
+  deltaOpen.text = deltaOpen.text.replace('vs moy', comparisonLabel);
+
+  const kd = you.deaths > 0 ? (you.kills / you.deaths) : you.kills;
+  const fvrC = fvrColor(you.fvr);
+  const fvrL = fvrLabel(you.fvr);
+  const fvrBg = fvrBadgeBg(you.fvr);
+
+  const html = `
+    <div class="your-match-hero">
+      <div class="your-match-nick">${escHtml(you.name)}</div>
+      <div class="your-match-fvr" style="color:${fvrC}">${you.fvr.toFixed(2)}</div>
+      <div class="your-match-fvr-lbl" style="background:${fvrBg};color:${fvrC}">${fvrL}</div>
+      <div class="your-match-rank">Ranked <strong>#${rank}</strong> of ${n} players</div>
+    </div>
+    <div class="your-match-stats">
+      <div class="your-stat">
+        <div class="your-stat-val">${you.kills}-${you.deaths}</div>
+        <div class="your-stat-lbl">K - D</div>
+        <div class="your-stat-delta flat">K/D ${kd.toFixed(2)}</div>
+      </div>
+      <div class="your-stat">
+        <div class="your-stat-val">${you.adr}</div>
+        <div class="your-stat-lbl">ADR</div>
+        <div class="your-stat-delta ${deltaAdr.cls}">${deltaAdr.arrow} ${deltaAdr.text}</div>
+      </div>
+      <div class="your-stat">
+        <div class="your-stat-val">${you.kast}%</div>
+        <div class="your-stat-lbl">KAST</div>
+        <div class="your-stat-delta ${deltaKast.cls}">${deltaKast.arrow} ${deltaKast.text}</div>
+      </div>
+      <div class="your-stat">
+        <div class="your-stat-val">${you.hsPct}%</div>
+        <div class="your-stat-lbl">HS %</div>
+        <div class="your-stat-delta ${deltaHs.cls}">${deltaHs.arrow} ${deltaHs.text}</div>
+      </div>
+      <div class="your-stat">
+        <div class="your-stat-val">${openPct}%</div>
+        <div class="your-stat-lbl">Opening</div>
+        <div class="your-stat-delta ${deltaOpen.cls}">${deltaOpen.arrow} ${deltaOpen.text}</div>
+      </div>
+    </div>
+  `;
+  document.getElementById('yourMatchBlock').innerHTML = html;
+}
+
+// =====================================================================
+// 1. VUE D'ENSEMBLE
+// =====================================================================
+function renderOverview(c, rounds) {
+  const mapLabel = mapName.replace('de_', '').toUpperCase();
+
+  // Match summary header : scores compacts + map + result tag
+  const winnerSide = c.winner;
+  const scoreDiff = Math.abs(c.team3Score - c.team2Score);
+  const resultTag = scoreDiff === 0 ? 'Tie' : scoreDiff <= 3 ? 'Close match' : scoreDiff <= 7 ? 'Win nette' : 'Domination';
+  const rosterCT = c.team3.slice(0, 5).map(escHtml).join(' · ');
+  const rosterT = c.team2.slice(0, 5).map(escHtml).join(' · ');
+
+  document.getElementById('msHeader').innerHTML = `
+    <div class="ms-team ${winnerSide === 3 ? 'winner' : ''}">
+      <div class="ms-team-label ct"><span class="ms-win-dot"></span>CT Side</div>
+      <div class="ms-team-score">${c.team3Score}</div>
+      <div class="ms-team-roster" title="${rosterCT}">${rosterCT || '—'}</div>
+    </div>
+    <div class="ms-center">
+      <div class="ms-vs">VS</div>
+      <div class="ms-map-badge">${mapLabel}</div>
+      <div class="ms-result-tag">${resultTag}</div>
+    </div>
+    <div class="ms-team ${winnerSide === 2 ? 'winner' : ''}">
+      <div class="ms-team-label t"><span class="ms-win-dot"></span>T Side</div>
+      <div class="ms-team-score">${c.team2Score}</div>
+      <div class="ms-team-roster" title="${rosterT}">${rosterT || '—'}</div>
+    </div>
+  `;
+
+  // Round timeline : chaque round est un <button> cliquable (a11y keyboard)
+  const tl = document.getElementById('roundTimeline');
+  tl.innerHTML = '';
+  const nonKnife = rounds.filter(r => !r.isKnife);
+  const halfPoint = 12;
+  // Calcule le score cumulatif au fur et a mesure pour tooltip enrichi
+  let ctScore = 0, tScore = 0;
+
+  nonKnife.forEach((r, i) => {
+    const rNum = r.displayNum || r.round || (i + 1);
+    if (r.winner === 3) ctScore++;
+    if (r.winner === 2) tScore++;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'round-tl-r ' + (r.winner === 3 ? 'ct-win' : r.winner === 2 ? 't-win' : 'no-data');
+    if (i === halfPoint) btn.classList.add('round-tl-half');
+    btn.dataset.round = String(rNum);
+    const winnerTxt = r.winner === 3 ? 'CT win' : r.winner === 2 ? 'T win' : 'aucun';
+
+    // First blood indicator
+    const fb = c.firstBloods.find(f => f.round === rNum);
+    if (fb) {
+      const dot = document.createElement('div');
+      dot.className = 'round-tl-fb';
+      dot.style.background = fb.attackerTeam === 3 ? 'var(--ct)' : 'var(--t)';
+      btn.appendChild(dot);
+    }
+
+    // Tooltip enrichi (score + first blood)
+    const tooltip = document.createElement('span');
+    tooltip.className = 'round-tl-tooltip';
+    const fbTxt = fb ? ` · FB ${escHtml(fb.attacker).slice(0, 12)}` : '';
+    tooltip.textContent = `R${rNum} · ${ctScore}-${tScore} · ${winnerTxt}${fbTxt}`;
+    btn.setAttribute('aria-label', `Round ${rNum}, score ${ctScore}-${tScore}, ${winnerTxt}. Cliquer pour voir ce round.`);
+    btn.appendChild(tooltip);
+
+    if (nonKnife.length <= 30 && (i % 2 === 0 || nonKnife.length <= 15)) {
+      const lbl = document.createElement('span');
+      lbl.className = 'rn';
+      lbl.textContent = rNum;
+      btn.appendChild(lbl);
+    }
+
+    // Click : scroll vers section moments et highlight le round si trouve
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.round-tl-r.highlighted').forEach(el => el.classList.remove('highlighted'));
+      btn.classList.add('highlighted');
+      const mSection = document.getElementById('section-moments');
+      if (mSection) mSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Aussi highlight la moment-card correspondante si elle existe
+      const mCard = document.querySelector(`.moment-card[data-round="${rNum}"]`);
+      if (mCard) {
+        mCard.style.transition = 'border-color .3s, background .3s';
+        mCard.style.borderColor = 'var(--accent)';
+        mCard.style.background = 'rgba(184,255,87,.04)';
+        setTimeout(() => {
+          mCard.style.borderColor = '';
+          mCard.style.background = '';
+        }, 2000);
+      }
+    });
+    tl.appendChild(btn);
+  });
+
+  // KPIs
+  const totalK = c.stats.reduce((s, p) => s + p.kills, 0);
+  // Taux de conversion du first blood en win de round (mesure la puissance
+  // des 1ers kills, toutes equipes confondues). Clarifie le label pour
+  // lever l'ambiguite team-level vs player-level.
+  const fbWinnerPct = c.firstBloods.length > 0
+    ? Math.round((c.firstBloods.filter(f => f.roundWon).length / c.firstBloods.length) * 100)
+    : 0;
+  const mvp = [...c.stats].sort((a, b) => b.fvr - a.fvr)[0];
+  // Average ADR du match : reference comparative
+  const avgADR = c.stats.length ? Math.round(c.stats.reduce((s, p) => s + (p.adr || 0), 0) / c.stats.length) : 0;
+  // Tronque le nom MVP pour eviter cassage de layout si pseudo long
+  const mvpName = (mvp?.name || '-');
+  const mvpShort = mvpName.length > 14 ? mvpName.slice(0, 12) + '...' : mvpName;
+
+  // Pace (rounds par heure) - indicateur de duree
+  const avgKillsPerRound = c.totalRounds > 0 ? (totalK / c.totalRounds).toFixed(1) : '0';
+
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-value">${c.totalRounds}</div>
+      <div class="kpi-label">Rounds played</div>
+      <div class="kpi-bench">Format <strong>MR12</strong> (BO1 · max 24)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">${totalK}</div>
+      <div class="kpi-label">Kills totaux</div>
+      <div class="kpi-bench"><strong>${avgKillsPerRound}</strong> kills/round</div>
+    </div>
+    <div class="kpi-card" title="Share of rounds where the team that got the 1st kill won the round. Measures first duel impact.">
+      <div class="kpi-value" style="color:var(--accent)">${fbWinnerPct}%</div>
+      <div class="kpi-label">Conversion 1er kill</div>
+      <div class="kpi-bench">Pro avg <strong>~70%</strong></div>
+    </div>
+    <div class="kpi-card" title="Player avec le meilleur FV Rating du match">
+      <div class="kpi-value" style="color:${fvrColor(mvp?.fvr || 0)}">${mvp?.fvr?.toFixed(2) || '-'}</div>
+      <div class="kpi-label">Top impact</div>
+      <div class="kpi-bench" style="color:${fvrColor(mvp?.fvr || 0)}">${escHtml(mvpShort)}</div>
+    </div>
+  `;
+}
+
+// =====================================================================
+// 1b. MOMENTUM : courbe de probabilite de victoire au fil des rounds
+// =====================================================================
+// Dessine un canvas avec une courbe qui represente l'avantage relatif
+// (fenetre glissante de 4 rounds) de chaque equipe au fil du match.
+// Zone remplie positive = CT lead, negative = T lead.
+// Signature visuelle unique - differenciateur vs concurrents.
+function renderMomentum(c, rounds) {
+  const canvas = document.getElementById('momentumCanvas');
+  const hintEl = document.getElementById('momentumHint');
+  if (!canvas) return;
+  const nonKnife = rounds.filter(r => !r.isKnife);
+  if (!nonKnife.length) {
+    hintEl.textContent = 'No round data available.';
+    return;
+  }
+
+  // Ratio retina
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const W = Math.max(rect.width, 640);
+  const H = 140;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  // Fenetre glissante de 4 rounds : pour chaque round, compte wins CT vs T
+  // dans la window [i-3, i]. Difference normalisee [-1, 1].
+  const WIN = 4;
+  const momentum = [];
+  nonKnife.forEach((r, i) => {
+    let ct = 0, t = 0;
+    const start = Math.max(0, i - WIN + 1);
+    for (let j = start; j <= i; j++) {
+      if (nonKnife[j].winner === 3) ct++;
+      if (nonKnife[j].winner === 2) t++;
+    }
+    const total = ct + t;
+    const m = total > 0 ? (ct - t) / total : 0; // -1 (T dominant) -> 1 (CT dominant)
+    momentum.push(m);
+  });
+
+  // Layout
+  const padX = 28, padY = 12;
+  const plotW = W - padX * 2;
+  const plotH = H - padY * 2;
+  const midY = padY + plotH / 2;
+  const xStep = nonKnife.length > 1 ? plotW / (nonKnife.length - 1) : 0;
+
+  // Zero axis
+  ctx.strokeStyle = 'rgba(122,128,128,.2)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 4]);
+  ctx.beginPath();
+  ctx.moveTo(padX, midY);
+  ctx.lineTo(padX + plotW, midY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Half-time divider
+  const halfIdx = Math.min(12, nonKnife.length - 1);
+  const halfX = padX + halfIdx * xStep;
+  ctx.strokeStyle = 'rgba(184,255,87,.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(halfX, padY);
+  ctx.lineTo(halfX, padY + plotH);
+  ctx.stroke();
+  ctx.font = '9px "Space Mono", monospace';
+  ctx.fillStyle = '#8a9090';
+  ctx.textAlign = 'center';
+  ctx.fillText('Mi-temps', halfX, padY - 2);
+
+  // Area fills (split above/below zero)
+  ctx.save();
+  // CT area (positive, haut)
+  ctx.beginPath();
+  ctx.moveTo(padX, midY);
+  momentum.forEach((m, i) => {
+    const x = padX + i * xStep;
+    const y = midY - (m > 0 ? m : 0) * (plotH / 2);
+    ctx.lineTo(x, y);
+  });
+  ctx.lineTo(padX + (nonKnife.length - 1) * xStep, midY);
+  ctx.closePath();
+  const gradCT = ctx.createLinearGradient(0, padY, 0, midY);
+  gradCT.addColorStop(0, 'rgba(74,158,255,.45)');
+  gradCT.addColorStop(1, 'rgba(74,158,255,0)');
+  ctx.fillStyle = gradCT;
+  ctx.fill();
+
+  // T area (negative, bas)
+  ctx.beginPath();
+  ctx.moveTo(padX, midY);
+  momentum.forEach((m, i) => {
+    const x = padX + i * xStep;
+    const y = midY - (m < 0 ? m : 0) * (plotH / 2);
+    ctx.lineTo(x, y);
+  });
+  ctx.lineTo(padX + (nonKnife.length - 1) * xStep, midY);
+  ctx.closePath();
+  const gradT = ctx.createLinearGradient(0, midY, 0, padY + plotH);
+  gradT.addColorStop(0, 'rgba(245,200,66,0)');
+  gradT.addColorStop(1, 'rgba(245,200,66,.45)');
+  ctx.fillStyle = gradT;
+  ctx.fill();
+  ctx.restore();
+
+  // Momentum line
+  ctx.strokeStyle = '#e8eaea';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  momentum.forEach((m, i) => {
+    const x = padX + i * xStep;
+    const y = midY - m * (plotH / 2);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Y labels
+  ctx.fillStyle = '#8a9090';
+  ctx.font = '8px "Space Mono", monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('CT +', padX - 4, padY + 4);
+  ctx.fillText('T  +', padX - 4, padY + plotH + 4);
+
+  // Hint texte : resume du momentum
+  const finalM = momentum[momentum.length - 1];
+  const biggestShift = (() => {
+    let maxDelta = 0, idx = 0;
+    for (let i = 1; i < momentum.length; i++) {
+      const d = Math.abs(momentum[i] - momentum[i - 1]);
+      if (d > maxDelta) { maxDelta = d; idx = i; }
+    }
+    return idx;
+  })();
+  const shiftRoundNum = (nonKnife[biggestShift]?.displayNum || nonKnife[biggestShift]?.round || biggestShift + 1);
+  const overallLeader = c.team3Score > c.team2Score ? 'CT' : c.team2Score > c.team3Score ? 'T' : 'tie';
+  hintEl.innerHTML = `Pivot principal : <strong style="color:var(--text2)">round ${shiftRoundNum}</strong> · ${overallLeader === 'tie' ? 'Close match, no side breaks away' : overallLeader + ' dominates the end of match'}`;
+}
+
+// =====================================================================
+// 2. CLASSEMENT & STATS TABLE
+// =====================================================================
+function renderStatsTable(c) {
+  const table = document.getElementById('statsTable');
+  const winnerStats = c.winner === 3 ? c.team3Stats : c.team2Stats;
+  const loserStats = c.winner === 3 ? c.team2Stats : c.team3Stats;
+  const winnerTeam = c.winner || 3;
+  const loserTeam = winnerTeam === 3 ? 2 : 3;
+  const mvpName = [...c.stats].sort((a, b) => b.fvr - a.fvr)[0]?.name;
+
+  let html = `<thead><tr>
+    <th style="min-width:150px">Player</th>
+    <th>K</th><th>D</th><th>+/-</th>
+    <th>HS%</th><th>ADR</th><th>KAST</th>
+    <th>FK</th><th>FD</th>
+    <th>Arme</th>
+    <th style="min-width:140px">FV Rating</th>
+  </tr></thead><tbody>`;
+
+  function playerRow(p) {
+    const teamColor = p.team === 3 ? 'var(--ct)' : 'var(--t)';
+    const diffStr = p.diff > 0 ? '+' + p.diff : p.diff;
+    const diffClass = p.diff > 0 ? 'diff-pos' : p.diff < 0 ? 'diff-neg' : '';
+    const isMvp = p.name === mvpName;
+    const kastColor = p.kast >= 75 ? 'var(--success)' : p.kast >= 65 ? 'var(--text)' : p.kast >= 55 ? 'var(--gold)' : 'var(--danger)';
+    const barW = Math.min(60, Math.max(8, p.fvr * 40));
+
+    html += `<tr>
+      <td><div class="player-cell">
+        <span class="team-dot" style="background:${teamColor}"></span>
+        <span class="player-name">${p.name}</span>
+        ${isMvp ? '<span class="mvp-star">*</span>' : ''}
+      </div></td>
+      <td style="font-weight:700">${p.kills}</td>
+      <td>${p.deaths}</td>
+      <td class="${diffClass}" style="font-weight:700">${diffStr}</td>
+      <td>${p.hsPct}%</td>
+      <td>${p.adr}</td>
+      <td style="color:${kastColor}">${p.kast}%</td>
+      <td style="color:var(--success)">${p.fk}</td>
+      <td style="color:var(--danger)">${p.fd}</td>
+      <td>${weaponIcon(p.topWeapon, 16)}</td>
+      <td><div class="fvr-cell">
+        <span style="font-weight:700;color:${fvrColor(p.fvr)}">${p.fvr.toFixed(2)}</span>
+        <span class="fvr-bar" style="width:${barW}px;background:${fvrColor(p.fvr)}"></span>
+      </div></td>
+    </tr>`;
+  }
+
+  winnerStats.forEach(playerRow);
+  html += '<tr class="team-divider"><td colspan="11"></td></tr>';
+  loserStats.forEach(playerRow);
+
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+// =====================================================================
+// 3. OUVERTURE DE ROUND
+// =====================================================================
+function renderOpenings(c) {
+  const card = document.getElementById('openingCard');
+  const playersWithFB = c.stats.filter(p => p.fk > 0 || p.fd > 0).sort((a, b) => b.fk - a.fk);
+
+  if (!playersWithFB.length) {
+    card.innerHTML = '<div class="empty-msg">No opening data available</div>';
+    return;
+  }
+
+  let html = `<table class="open-table"><thead><tr>
+    <th style="min-width:140px">Player</th>
+    <th>FK</th><th>FD</th><th>+/-</th><th>FK %</th><th>Conversion</th>
+  </tr></thead><tbody>`;
+
+  playersWithFB.forEach(p => {
+    const total = p.fk + p.fd;
+    const fkPct = total > 0 ? Math.round((p.fk / total) * 100) : 0;
+    const fkPctColor = fkPct >= 60 ? 'var(--success)' : fkPct >= 40 ? 'var(--text)' : 'var(--danger)';
+    const diffStr = p.fkDiff > 0 ? '+' + p.fkDiff : p.fkDiff;
+    const diffClass = p.fkDiff > 0 ? 'diff-pos' : p.fkDiff < 0 ? 'diff-neg' : '';
+
+    // Conversion: rounds where this player got FK and team won
+    const fbRounds = c.firstBloods.filter(f => f.attacker === p.name);
+    const fbWon = fbRounds.filter(f => f.roundWon).length;
+    const convPct = fbRounds.length > 0 ? Math.round((fbWon / fbRounds.length) * 100) : 0;
+    const convColor = convPct >= 70 ? 'var(--success)' : convPct >= 50 ? 'var(--text)' : 'var(--danger)';
+
+    html += `<tr>
+      <td>${p.name}</td>
+      <td style="color:var(--success);font-weight:700">${p.fk}</td>
+      <td style="color:var(--danger)">${p.fd}</td>
+      <td class="${diffClass}" style="font-weight:700">${diffStr}</td>
+      <td style="color:${fkPctColor};font-weight:700">${fkPct}%</td>
+      <td style="color:${convColor}">${convPct}% (${fbWon}/${fbRounds.length})</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+
+  // Insight box
+  const team2FB = c.firstBloods.filter(f => f.attackerTeam === 2).length;
+  const team3FB = c.firstBloods.filter(f => f.attackerTeam === 3).length;
+  const dominantTeam = team3FB >= team2FB ? 'CT' : 'T';
+  const dominantPct = Math.round((Math.max(team2FB, team3FB) / c.firstBloods.length) * 100);
+  const globalConv = c.firstBloods.length > 0
+    ? Math.round((c.firstBloods.filter(f => f.roundWon).length / c.firstBloods.length) * 100)
+    : 0;
+
+  const bestOpener = [...playersWithFB].sort((a, b) => b.fk - a.fk)[0];
+
+  html += `<div class="open-insight">
+    Le side <strong>${dominantTeam}</strong> a domine les ouvertures avec <strong>${dominantPct}%</strong> des first bloods.
+    When a team takes the first kill, they convert the round in <strong>${globalConv}%</strong> of cases.
+    <strong>${bestOpener.name}</strong> est le meilleur ouvreur avec ${bestOpener.fk} first kills sur ${c.totalRounds} rounds.
+  </div>`;
+
+  card.innerHTML = html;
+}
+
+// =====================================================================
+// 4. CONFRONTATIONS DIRECTES
+// =====================================================================
+function renderDuels(kills, c) {
+  const card = document.getElementById('duelsCard');
+  const duels = {};
+
+  kills.forEach(k => {
+    if (k.attacker === 'Unknown' || k.victim === 'Unknown') return;
+    if ((c.playerTeam[k.attacker] || 0) === (c.playerTeam[k.victim] || 0)) return;
+    const sorted = [k.attacker, k.victim].sort();
+    const pair = sorted.join(' vs ');
+    if (!duels[pair]) duels[pair] = { p1: sorted[0], p2: sorted[1], p1k: 0, p2k: 0, weapons: [] };
+    const d = duels[pair];
+    if (k.attacker === sorted[0]) d.p1k++;
+    else d.p2k++;
+    d.weapons.push(cleanWeapon(k.weapon));
+  });
+
+  const entries = Object.values(duels).filter(d => (d.p1k + d.p2k) >= 2).sort((a, b) => (b.p1k + b.p2k) - (a.p1k + a.p2k));
+
+  if (!entries.length) {
+    card.innerHTML = '<div class="empty-msg">Pas assez de confrontations directes (minimum 2 rencontres)</div>';
+    return;
+  }
+
+  let html = `<table class="duels-table"><thead><tr>
+    <th>Player A</th><th>Score</th><th>Player B</th><th>Avantage</th><th>Rencontres</th>
+  </tr></thead><tbody>`;
+
+  entries.slice(0, 15).forEach(d => {
+    const total = d.p1k + d.p2k;
+    const wr = Math.round((d.p1k / total) * 100);
+    const barColor = wr >= 60 ? 'var(--success)' : wr >= 40 ? 'var(--gold)' : 'var(--danger)';
+    const advantagePlayer = wr >= 55 ? d.p1 : wr <= 45 ? d.p2 : '-';
+    const t1 = c.playerTeam[d.p1] || 0;
+    const t2 = c.playerTeam[d.p2] || 0;
+
+    html += `<tr>
+      <td style="font-weight:700;color:${t1 === 3 ? 'var(--ct)' : 'var(--t)'}">${d.p1}</td>
+      <td style="text-align:center">
+        <span style="font-family:var(--display);font-size:16px">${d.p1k}</span>
+        <span style="color:var(--text3);margin:0 4px">-</span>
+        <span style="font-family:var(--display);font-size:16px">${d.p2k}</span>
+      </td>
+      <td style="font-weight:700;color:${t2 === 3 ? 'var(--ct)' : 'var(--t)'}">${d.p2}</td>
+      <td>
+        <div class="duel-bar-wrap">
+          <div class="duel-bar-bg"><div class="duel-bar-fill" style="width:${wr}%;background:${barColor}"></div></div>
+          <span class="duel-pct" style="color:${barColor}">${wr}%</span>
+        </div>
+      </td>
+      <td style="color:var(--text3)">${total}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  card.innerHTML = html;
+}
+
+// =====================================================================
+// 5. POSITIONNEMENT
+// =====================================================================
+function renderMinimaps(c) {
+  const positions = demoData.positions || {};
+  const grid = document.getElementById('minimapsGrid');
+  const players = Object.keys(positions);
+
+  if (!players.length) {
+    grid.innerHTML = '<div class="empty-msg">No position data available</div>';
+    return;
+  }
+
+  const mapImgSrc = MAP_CONFIG[mapName]?.img || MAP_CONFIG[mapName]?.upper?.img || '';
+  const cvSize = 240;
+
+  // Sort: CT first, then T
+  const sorted = [...players].sort((a, b) => {
+    const ta = c.playerTeam[a] || 0;
+    const tb = c.playerTeam[b] || 0;
+    if (ta !== tb) return tb - ta; // CT (3) first
+    return a.localeCompare(b);
+  });
+
+  sorted.forEach(name => {
+    const pts = positions[name];
+    if (!pts || !pts.length) return;
+
+    const team = c.playerTeam[name] || pts[0].team || 0;
+    const teamLabel = team === 3 ? 'CT' : team === 2 ? 'T' : '?';
+    const teamClass = team === 3 ? 'ct' : 't';
+    const pKills = (demoData.kills || []).filter(k => k.attacker === name).length;
+
+    const card = document.createElement('div');
+    card.className = 'minimap-card';
+
+    // Header
+    const hdr = document.createElement('div');
+    hdr.className = 'minimap-header';
+    hdr.innerHTML = `<span class="minimap-name">${escHtml(name)}</span><span class="minimap-meta ${teamClass}">${escHtml(teamLabel)} - ${pKills} kills</span>`;
+    card.appendChild(hdr);
+
+    const cvs = document.createElement('canvas');
+    cvs.width = cvSize; cvs.height = cvSize;
+    card.appendChild(cvs);
+    grid.appendChild(card);
+
+    // Draw heatmap
+    const ctx = cvs.getContext('2d');
+    const img = new Image();
+
+    function drawHeatmap(withBg) {
+      if (withBg) ctx.drawImage(img, 0, 0, cvSize, cvSize);
+      else { ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, 0, cvSize, cvSize); }
+
+      const color = team === 3 ? [91, 141, 217] : [232, 168, 56];
+
+      // Density heatmap: draw larger semi-transparent circles
+      ctx.globalCompositeOperation = 'lighter';
+      pts.forEach(p => {
+        const { x, y } = w2c(p.x, p.y, cvSize);
+        if (x < 0 || x > cvSize || y < 0 || y > cvSize) return;
+        const grad = ctx.createRadialGradient(x, y, 0, x, y, 6);
+        grad.addColorStop(0, `rgba(${color[0]},${color[1]},${color[2]},0.12)`);
+        grad.addColorStop(1, `rgba(${color[0]},${color[1]},${color[2]},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Sharp dots on top
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 0.6;
+      pts.forEach(p => {
+        const { x, y } = w2c(p.x, p.y, cvSize);
+        if (x < 0 || x > cvSize || y < 0 || y > cvSize) return;
+        ctx.fillStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+
+      // Death positions (red X marks)
+      const deaths = (demoData.kills || []).filter(k => k.victim === name);
+      deaths.forEach(dk => {
+        // Find victim position from kill coordinates if available
+        const vx = dk.victimX || dk.vx;
+        const vy = dk.victimY || dk.vy;
+        if (!vx && !vy) return;
+        const { x, y } = w2c(vx, vy, cvSize);
+        if (x < 0 || x > cvSize || y < 0 || y > cvSize) return;
+        ctx.strokeStyle = 'rgba(255,68,68,0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x - 3, y - 3); ctx.lineTo(x + 3, y + 3);
+        ctx.moveTo(x + 3, y - 3); ctx.lineTo(x - 3, y + 3);
+        ctx.stroke();
+      });
+    }
+
+    img.onload = () => drawHeatmap(true);
+    img.onerror = () => drawHeatmap(false);
+    if (mapImgSrc) img.src = mapImgSrc;
+    else drawHeatmap(false);
+  });
+}
+
+// =====================================================================
+// 6. PERFORMANCE PAR ROUND
+// =====================================================================
+function renderPerformance(kills, rounds, c) {
+  const allPlayers = c.stats.sort((a, b) => b.fvr - a.fvr);
+  const target = demoData.meta?.targetPlayer || allPlayers[0]?.name;
+  currentPerfPlayer = target;
+
+  // Player tabs
+  const tabsEl = document.getElementById('playerTabs');
+  allPlayers.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'player-tab' + (p.name === target ? ' active' : '');
+    btn.textContent = p.name;
+    btn.onclick = () => {
+      currentPerfPlayer = p.name;
+      tabsEl.querySelectorAll('.player-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      drawPerfChart(kills, rounds, c);
+    };
+    tabsEl.appendChild(btn);
+  });
+
+  drawPerfChart(kills, rounds, c);
+}
+
+function drawPerfChart(kills, rounds, c) {
+  const canvas = document.getElementById('perfCanvas');
+  const ctx = canvas.getContext('2d');
+  const name = currentPerfPlayer;
+
+  const nonKnife = rounds.filter(r => !r.isKnife);
+  const numRounds = nonKnife.length || 1;
+
+  const killsByRound = {};
+  kills.forEach(k => {
+    if (k.attacker === name) killsByRound[k.round] = (killsByRound[k.round] || 0) + 1;
+  });
+
+  const W = canvas.parentElement.offsetWidth;
+  const H = 220;
+  canvas.width = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  // Clear
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = { t: 28, r: 8, b: 36, l: 8 };
+  const cW = W - pad.l - pad.r;
+  const cH = H - pad.t - pad.b;
+  const maxK = Math.max(5, ...Object.values(killsByRound));
+  const barW = Math.max(4, Math.min(22, (cW / numRounds) - 3));
+
+  // Player label
+  ctx.font = "700 10px 'Space Mono'";
+  ctx.fillStyle = '#7a8080';
+  ctx.textAlign = 'left';
+  ctx.fillText(name, pad.l, 16);
+
+  // Player FVR
+  const pStat = c.stats.find(s => s.name === name);
+  if (pStat) {
+    ctx.textAlign = 'right';
+    ctx.fillStyle = fvrColor(pStat.fvr);
+    ctx.fillText('FV ' + pStat.fvr.toFixed(2) + ' - ' + fvrLabel(pStat.fvr), W - pad.r, 16);
+  }
+
+  // Grid
+  ctx.strokeStyle = 'rgba(28,30,30,.5)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= maxK; i++) {
+    const y = pad.t + cH - (i / maxK) * cH;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
+  }
+
+  // Bars + round indicators
+  for (let i = 0; i < numRounds; i++) {
+    const rnd = nonKnife[i];
+    const rNum = rnd?.displayNum || rnd?.round || (i + 1);
+    const k = killsByRound[rNum] || 0;
+    const x = pad.l + ((i + 0.5) / numRounds) * cW;
+    const barH = (k / maxK) * cH;
+    const y = pad.t + cH - barH;
+
+    // Bar color
+    let color;
+    if (k >= 3) color = '#b8ff57';
+    else if (k === 2) color = '#7ddd1a';
+    else if (k === 1) color = '#e8a838';
+    else color = '#252727';
+
+    // Draw bar
+    ctx.fillStyle = color;
+    if (k > 0) {
+      ctx.beginPath();
+      ctx.roundRect(x - barW / 2, y, barW, barH, [3, 3, 0, 0]);
+      ctx.fill();
+    } else {
+      ctx.fillRect(x - barW / 2, pad.t + cH - 2, barW, 2);
+    }
+
+    // Kill count
+    if (k > 0) {
+      ctx.font = "700 9px 'Space Mono'";
+      ctx.fillStyle = '#e8eaea';
+      ctx.textAlign = 'center';
+      ctx.fillText(k, x, y - 5);
+    }
+
+    // Round outcome dot
+    const pTeam = c.playerTeam[name] || 0;
+    // Déterminé if player's team won this round
+    // First half: player team is pTeam. Second half (after round 12): teams swap
+    const effectiveTeam = i < 12 ? pTeam : (pTeam === 2 ? 3 : pTeam === 3 ? 2 : 0);
+    const won = rnd && rnd.winner === effectiveTeam;
+    const dotY = H - 14;
+    ctx.fillStyle = rnd ? (won ? 'rgba(45,212,160,0.7)' : 'rgba(255,68,68,0.5)') : '#252727';
+    ctx.beginPath();
+    ctx.arc(x, dotY, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Round number
+    if (numRounds <= 30 && (numRounds <= 15 || i % 2 === 0)) {
+      ctx.font = "7px 'Space Mono'";
+      ctx.fillStyle = '#4a5050';
+      ctx.textAlign = 'center';
+      ctx.fillText(rNum, x, H - 2);
+    }
+  }
+}
+
+// =====================================================================
+// 7. MOMENTS CLES
+// =====================================================================
+function renderMoments(kills, rounds, c) {
+  const card = document.getElementById('momentsCard');
+  const totalR = rounds.filter(r => !r.isKnife).length || 1;
+
+  // Multi-kills per round per player
+  const moments = [];
+  for (let r = 1; r <= totalR; r++) {
+    const roundKills = kills.filter(k => k.round === r);
+    const byPlayer = {};
+    roundKills.forEach(k => {
+      if (k.attacker === 'Unknown') return;
+      if (!byPlayer[k.attacker]) byPlayer[k.attacker] = { kills: [], team: k.attackerTeam };
+      byPlayer[k.attacker].kills.push(k);
+    });
+
+    Object.entries(byPlayer).forEach(([player, data]) => {
+      if (data.kills.length >= 3) {
+        const weapons = [...new Set(data.kills.map(k => k.weapon))];
+        const hs = data.kills.filter(k => k.isHeadshot).length;
+        const rndData = rounds.find(x => x.round === r || x.displayNum === r);
+        const effectiveTeam = r <= 12 ? data.team : (data.team === 2 ? 3 : data.team === 3 ? 2 : 0);
+        const won = rndData ? rndData.winner === effectiveTeam : null;
+
+        moments.push({
+          round: r, player, killCount: data.kills.length,
+          weapons, hs, team: data.team, won,
+        });
+      }
+    });
+  }
+
+  moments.sort((a, b) => b.killCount - a.killCount || a.round - b.round);
+
+  if (!moments.length) {
+    card.innerHTML = '<div class="empty-msg">Aucun multi-kill detecte (3+ kills dans un round)</div>';
+    return;
+  }
+
+  let html = '<div class="moments-grid">';
+  moments.forEach(m => {
+    const badge = m.killCount >= 5 ? 'ace' : m.killCount >= 4 ? 'quad' : 'triple';
+    const badgeText = m.killCount >= 5 ? 'ACE' : m.killCount >= 4 ? '4K' : '3K';
+    const resultClass = m.won === true ? 'win' : m.won === false ? 'loss' : '';
+    const resultText = m.won === true ? 'Win' : m.won === false ? 'Loss' : '?';
+
+    html += `<button type="button" class="moment-card" data-round="${m.round}" aria-label="Round ${m.round} · ${m.killCount} kills par ${escHtml(m.player)}. Cliquer pour voir sur la timeline.">
+      <div class="moment-round">R${m.round}</div>
+      <span class="moment-badge ${badge}">${badgeText}</span>
+      <div class="moment-info">
+        <div class="moment-player" style="color:${m.team === 3 ? 'var(--ct)' : 'var(--t)'}">${escHtml(m.player)}</div>
+        <div class="moment-detail">${m.killCount} kills (${m.hs} HS) ${m.weapons.map(w => weaponIcon(w, 14)).join(' ')}</div>
+      </div>
+      <span class="moment-result ${resultClass}">${resultText}</span>
+    </button>`;
+  });
+  html += '</div>';
+  card.innerHTML = html;
+
+  // Click handler : scroll vers timeline + highlight du round correspondant
+  card.querySelectorAll('.moment-card').forEach(el => {
+    el.addEventListener('click', () => {
+      const rNum = el.dataset.round;
+      // Scroll vers la vue d'ensemble (or la timeline vit)
+      const vue = document.getElementById('section-vue');
+      if (vue) vue.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Highlight le bouton timeline correspondant
+      document.querySelectorAll('.round-tl-r.highlighted').forEach(e => e.classList.remove('highlighted'));
+      const tlBtn = document.querySelector(`.round-tl-r[data-round="${rNum}"]`);
+      if (tlBtn) {
+        tlBtn.classList.add('highlighted');
+        setTimeout(() => tlBtn.classList.remove('highlighted'), 3000);
+      }
+    });
+  });
+}
+
+// =====================================================================
+// BILAN TACTIQUE : format 3 colonnes Forces / Axes / Priorité #1
+// =====================================================================
+function renderCoachBilan(c, kills, rounds) {
+  const card = document.getElementById('coachCard');
+  const mvp = [...c.stats].sort((a, b) => b.fvr - a.fvr)[0];
+  const lowest = [...c.stats].sort((a, b) => a.fvr - b.fvr)[0];
+  const winnerLabel = c.winner === 3 ? 'CT' : c.winner === 2 ? 'T' : '-';
+  const nonKnife = rounds.filter(r => !r.isKnife);
+
+  // Calculs prealables
+  const fbConv = c.firstBloods.length > 0
+    ? Math.round((c.firstBloods.filter(f => f.roundWon).length / c.firstBloods.length) * 100) : 0;
+
+  // Trading
+  let tradedDeaths = 0, totalDeaths = 0;
+  kills.forEach(k => {
+    if (k.victim === 'Unknown') return;
+    totalDeaths++;
+    const traded = kills.some(tk =>
+      tk.round === k.round && tk.attacker !== 'Unknown' &&
+      tk.victim === k.attacker &&
+      tk.tick > k.tick && tk.tick - k.tick <= 320 &&
+      (c.playerTeam[tk.attacker] || 0) === (c.playerTeam[k.victim] || 0)
+    );
+    if (traded) tradedDeaths++;
+  });
+  const tradePct = totalDeaths > 0 ? Math.round((tradedDeaths / totalDeaths) * 100) : 0;
+
+  // High/low consistency
+  const highKast = c.stats.filter(p => p.kast >= 75).sort((a, b) => b.kast - a.kast);
+  const lowKast = c.stats.filter(p => p.kast < 60).sort((a, b) => a.kast - b.kast);
+  const weakOpeners = c.stats.filter(p => p.fd > p.fk && p.fd >= 3);
+  const lowHsPlayers = c.stats.filter(p => p.kills >= 5 && p.hsPct < 30);
+  const adrGap = mvp.adr - lowest.adr;
+
+  // ── Scoring pour extraire les 3 meilleures forces + 3 pires axes ──
+  // Chaque insight = { type, label, detail, severity (0-100) }
+  const strengths = [];
+  const warnings = [];
+
+  // Forces possibles
+  if (mvp.fvr >= 1.20) {
+    strengths.push({
+      label: `${mvp.name} dominant`,
+      detail: `FV Rating <strong>${mvp.fvr.toFixed(2)}</strong> (${fvrLabel(mvp.fvr)}) · ${mvp.kills} kills pour ${mvp.deaths} morts`,
+      score: Math.round((mvp.fvr - 1.0) * 100)
+    });
+  }
+  if (highKast.length) {
+    strengths.push({
+      label: `Player constant : ${highKast[0].name}`,
+      detail: `KAST <strong>${highKast[0].kast}%</strong> · impact sur presque chaque round`,
+      score: highKast[0].kast - 75
+    });
+  }
+  if (fbConv >= 65) {
+    strengths.push({
+      label: `Gestion post-opening solide`,
+      detail: `<strong>${fbConv}%</strong> de rounds gagnés après le 1er kill (pro avg ~70%)`,
+      score: fbConv - 65
+    });
+  }
+  if (tradePct >= 25) {
+    strengths.push({
+      label: `Disciplined trading`,
+      detail: `<strong>${tradePct}%</strong> de morts tradées · binômes bien coordonnés`,
+      score: tradePct - 25
+    });
+  }
+  if (mvp.hsPct >= 55) {
+    strengths.push({
+      label: `Elite accuracy`,
+      detail: `${mvp.name} à <strong>${mvp.hsPct}%</strong> HS · crosshair placement maîtrisé`,
+      score: mvp.hsPct - 55
+    });
+  }
+
+  // Axes a travailler possibles
+  if (tradePct < 20) {
+    warnings.push({
+      label: `Trading insuffisant`,
+      detail: `Seulement <strong>${tradePct}%</strong> de morts tradées. Joue systématiquement en binôme.`,
+      severity: 80 - tradePct,
+      action: `Work on pair spacing: never be more than 1s reaction time from a teammate on contacts.`
+    });
+  }
+  if (fbConv < 50) {
+    warnings.push({
+      label: `Mauvaise conversion du 1er kill`,
+      detail: `<strong>${fbConv}%</strong> seulement (pro avg ~70%). L'équipe décroche après le first blood.`,
+      severity: 70 - fbConv,
+      action: `After the 1st kill, immediately take a choke or info. No camping in 5v4.`
+    });
+  }
+  if (weakOpeners.length) {
+    warnings.push({
+      label: `${weakOpeners.map(p => p.name).join(', ')} perd${weakOpeners.length > 1 ? 'ent' : ''} ses duels d'ouverture`,
+      detail: weakOpeners.map(p => `<strong>${p.name}</strong> ${p.fk}W-${p.fd}L`).join(' · '),
+      severity: weakOpeners.reduce((s, p) => s + (p.fd - p.fk) * 8, 0),
+      action: `Review opening positioning. Avoid aggressive peeks on angles pre-aimed by opponents.`
+    });
+  }
+  if (adrGap > 40) {
+    warnings.push({
+      label: `Team imbalanced in damage`,
+      detail: `Gap ADR de <strong>${adrGap} points</strong> entre ${mvp.name} (${mvp.adr}) et ${lowest.name} (${lowest.adr})`,
+      severity: adrGap - 40,
+      action: `Redistribute roles: give more responsibility (fragger, entry) to players staying back.`
+    });
+  }
+  if (lowKast.length) {
+    warnings.push({
+      label: `${lowKast[0].name} absent des rounds`,
+      detail: `KAST <strong>${lowKast[0].kast}%</strong> · ne contribue pas à la majorité des rounds`,
+      severity: 60 - lowKast[0].kast,
+      action: `Change his role: give him a more defensive position or more lurks where he can be decisive.`
+    });
+  }
+  if (lowHsPlayers.length) {
+    warnings.push({
+      label: `Low accuracy`,
+      detail: `${lowHsPlayers.map(p => `<strong>${p.name}</strong> ${p.hsPct}%`).join(' · ')} de headshots`,
+      severity: 30,
+      action: `Routine quotidienne : 20 min aim_botz pre-aim angles + recoil control sur FPS-Freaks Hard.`
+    });
+  }
+
+  // Top 3 forces (tri par score desc) et top 3 axes (tri par severity desc)
+  const topStrengths = strengths.sort((a, b) => b.score - a.score).slice(0, 3);
+  const topWarnings = warnings.sort((a, b) => b.severity - a.severity).slice(0, 3);
+  const priority = topWarnings[0]; // le plus critique
+
+  // Render
+  let html = `
+    <div style="font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.6">
+      Match <strong style="color:var(--text)">${c.team3Score}-${c.team2Score}</strong> pour le side <strong style="color:${c.winner === 3 ? 'var(--ct)' : 'var(--t)'}">${winnerLabel}</strong> sur ${mapName.replace('de_', '').toUpperCase()}. Analysis condensée en 3 points d'impact.
+    </div>
+    <div class="bilan-grid">
+      <div class="bilan-col strengths">
+        <div class="bilan-col-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          ${topStrengths.length} force${topStrengths.length > 1 ? 's' : ''}
+        </div>
+        ${topStrengths.length ? topStrengths.map(s =>
+          `<div class="coach-bullet"><strong>${s.label}</strong><br><span style="color:var(--text2);font-size:11px">${s.detail}</span></div>`
+        ).join('') : '<div style="color:var(--text3);font-size:11px;font-style:italic">Tough match, few positive moments to highlight.</div>'}
+      </div>
+      <div class="bilan-col warnings">
+        <div class="bilan-col-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          ${topWarnings.length} axe${topWarnings.length > 1 ? 's' : ''} à travailler
+        </div>
+        ${topWarnings.length ? topWarnings.map(w =>
+          `<div class="coach-bullet"><strong>${w.label}</strong><br><span style="color:var(--text2);font-size:11px">${w.detail}</span></div>`
+        ).join('') : '<div style="color:var(--text3);font-size:11px;font-style:italic">Good match, no critical area detected.</div>'}
+      </div>
+    </div>
+    ${priority ? `
+    <div class="bilan-priority">
+      <div class="bilan-priority-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
+        Priorité numéro 1
+      </div>
+      <div class="bilan-priority-text">
+        <strong>${priority.label}</strong><br>
+        Action concrète : ${priority.action}
+      </div>
+    </div>
+    ` : ''}
+  `;
+  card.innerHTML = html;
+}
+
+// =====================================================================
+// LAUNCH
+// =====================================================================
+init();
+
+// Nav auth toggle
+_sb.auth.getSession().then(({ data: { session } }) => {
+  const loginBtn = document.getElementById('navLoginBtn');
+  const accountBtn = document.getElementById('navAccountBtn');
+  const matchesBtn = document.getElementById('navMatchesBtn');
+  if (!loginBtn || !accountBtn) return;
+  if (session) {
+    loginBtn.style.display = 'none';
+    accountBtn.style.display = '';
+    if (matchesBtn) matchesBtn.style.display = '';
+  } else {
+    loginBtn.style.display = '';
+    accountBtn.style.display = 'none';
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// Share popover : genere un lien public via /api/share-demo et propose
+// copy + partage Twitter / Discord.
+// ══════════════════════════════════════════════════════════════════════
+let _shareUrlCache = null;
+
+async function openSharePopover() {
+  const pop = document.getElementById('sharePopover');
+  const urlInput = document.getElementById('sharePopoverUrl');
+  const msg = document.getElementById('sharePopoverMsg');
+  const twitterBtn = document.getElementById('shareTwitterBtn');
+  msg.textContent = '';
+  pop.classList.add('open');
+
+  if (_shareUrlCache) {
+    urlInput.value = _shareUrlCache;
+    setupSocialLinks(_shareUrlCache);
+    return;
+  }
+
+  urlInput.value = 'Generation du lien...';
+
+  try {
+    // Recupere la demo courante (fallback via l'URL ?demo= or via window._demo)
+    const params = new URLSearchParams(window.location.search);
+    const demoId = params.get('demo') || (window._demo && window._demo.id);
+    if (!demoId) {
+      urlInput.value = '';
+      msg.textContent = 'Error : demo introuvable';
+      msg.style.color = 'var(--danger)';
+      return;
+    }
+
+    const { data: { session } } = await window._sbClient.auth.getSession();
+    if (!session) {
+      urlInput.value = '';
+      msg.textContent = 'Sign in pour partager cette analyse';
+      msg.style.color = 'var(--danger)';
+      return;
+    }
+
+    const res = await fetch('/api/share-demo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+      body: JSON.stringify({ demo_id: demoId }),
+    });
+    const d = await res.json();
+    if (!res.ok || !d.share_id) {
+      urlInput.value = '';
+      msg.textContent = 'Error : ' + (d.error || 'creation du lien impossible');
+      msg.style.color = 'var(--danger)';
+      return;
+    }
+
+    const url = `https://fragvalue.com/share.html?id=${d.share_id}`;
+    _shareUrlCache = url;
+    urlInput.value = url;
+    setupSocialLinks(url);
+  } catch (e) {
+    urlInput.value = '';
+    msg.textContent = 'Error reseau : ' + e.message;
+    msg.style.color = 'var(--danger)';
+  }
+}
+
+function setupSocialLinks(url) {
+  const twitterBtn = document.getElementById('shareTwitterBtn');
+  const tweet = `Je viens d'analyser mon match CS2 avec @FragValue. FV Rating, KAST, impact par round, tout decortique. Jette un oeil : ${url}`;
+  twitterBtn.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweet);
+}
+
+function closeSharePopover() {
+  document.getElementById('sharePopover').classList.remove('open');
+}
+
+async function copyShareUrl() {
+  const urlInput = document.getElementById('sharePopoverUrl');
+  const msg = document.getElementById('sharePopoverMsg');
+  if (!urlInput.value || urlInput.value.startsWith('Generation')) return;
+  try {
+    await navigator.clipboard.writeText(urlInput.value);
+    msg.textContent = 'Lien copie. Partage-le or tu veux.';
+    msg.style.color = 'var(--success)';
+  } catch {
+    urlInput.select();
+    document.execCommand('copy');
+    msg.textContent = 'Link copied (fallback)';
+    msg.style.color = 'var(--success)';
+  }
+  setTimeout(() => { msg.textContent = ''; }, 4000);
+}
+
+async function copyForDiscord() {
+  const urlInput = document.getElementById('sharePopoverUrl');
+  const msg = document.getElementById('sharePopoverMsg');
+  if (!urlInput.value || urlInput.value.startsWith('Generation')) return;
+  // Discord rend automatiquement les URLs avec OG preview
+  const text = `Mon analyse CS2 sur FragValue (FV Rating, KAST, impact par round) : ${urlInput.value}`;
+  try {
+    await navigator.clipboard.writeText(text);
+    msg.textContent = 'Message copie. Colle-le dans ton Discord.';
+    msg.style.color = 'var(--success)';
+  } catch {
+    msg.textContent = 'Copie manuellement le lien ci-dessus';
+    msg.style.color = 'var(--gold)';
+  }
+  setTimeout(() => { msg.textContent = ''; }, 4000);
+}
+
+// Escape ferme le popover
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('sharePopover').classList.contains('open')) {
+    closeSharePopover();
+  }
+});
+
+// Expose le client Supabase pour la popover
+window._sbClient = _sb;
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>

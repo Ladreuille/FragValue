@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="description" content="FragValue · CS2 Match Analytics">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<title>FragValue · Connecter l'extension</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;
+  --border:#1c1e1e;--border2:#252727;
+  --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --danger:#ff4444;--success:#2dd4a0;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  --r:6px;--r2:12px
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4}
+
+.wrap{position:relative;z-index:1;width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:40px 36px;box-shadow:0 40px 100px rgba(0,0,0,.6)}
+.logo{font-family:var(--display);font-size:32px;letter-spacing:.03em;margin-bottom:4px}
+.logo span{color:var(--accent)}
+.sub{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--text3);margin-bottom:24px}
+
+h1{font-family:var(--display);font-size:26px;letter-spacing:.02em;margin-bottom:12px;line-height:1.2}
+p.desc{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:22px}
+
+.state{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:22px;display:flex;align-items:center;gap:14px}
+.state-dot{width:10px;height:10px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.state-dot.ok{background:var(--accent);box-shadow:0 0 0 4px rgba(184,255,87,.15)}
+.state-dot.err{background:var(--danger)}
+.state-txt{flex:1;font-size:11px;letter-spacing:.02em}
+.state-txt b{display:block;color:var(--text);font-weight:700;margin-bottom:2px}
+.state-txt span{color:var(--text3);font-size:10px}
+
+.btn{display:block;width:100%;padding:14px 18px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:var(--r);cursor:pointer;transition:all .15s;border:1px solid var(--border2);background:transparent;color:var(--text);text-align:center;text-decoration:none;margin-bottom:10px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent2);border-color:var(--accent2);color:#000}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.hint{font-size:10px;color:var(--text3);line-height:1.7;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.hint code{font-family:var(--mono);background:var(--card);padding:2px 6px;border-radius:3px;color:var(--text2);font-size:10px}
+
+.back{display:inline-block;margin-top:18px;font-size:10px;color:var(--text3);text-decoration:none;letter-spacing:.06em;text-transform:uppercase}
+.back:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="logo">FRAG<span>VALUE</span></div>
+  <div class="sub">Extension · Sign in</div>
+
+  <h1>Authorize extension navigateur</h1>
+  <p class="desc">
+    L'extension FragValue synchronise automatiquement les demos de vos matches
+    FACEIT CS2 vers votre compte. Pour fonctionner, elle a besoin d'une session
+    temporaire pour s'authentifier aupres de FragValue.
+  </p>
+
+  <div class="state" id="stExt">
+    <div class="state-dot" id="stExtDot"></div>
+    <div class="state-txt"><b id="stExtTitle">Detection de l'extension...</b><span id="stExtSub">Verifiez qu'elle est bien installee dans votre navigateur</span></div>
+  </div>
+
+  <div class="state" id="stAuth">
+    <div class="state-dot" id="stAuthDot"></div>
+    <div class="state-txt"><b id="stAuthTitle">Account FragValue</b><span id="stAuthSub">...</span></div>
+  </div>
+
+  <button class="btn primary" id="pairBtn" disabled>Authorize extension</button>
+  <button class="btn" id="unpairBtn" style="display:none">Revoke access</button>
+
+  <div class="hint" id="installHint" style="display:none">
+    <b style="color:var(--text2);font-weight:700;display:block;margin-bottom:8px">L'extension n'est pas encore installee dans ce navigateur.</b>
+    Load it manually in developer mode:
+    <ol style="margin:8px 0 8px 18px;padding:0;color:var(--text3);font-size:10px;line-height:1.9">
+      <li>Ouvrez <code>chrome://extensions</code></li>
+      <li>Enable <b>Developer Mode</b> (top right)</li>
+      <li>Cliquez sur <b>Charger l'extension non empaquetee</b></li>
+      <li>Selectionnez le dossier <code>fragvalue-extension/</code></li>
+      <li>Rechargez cette page</li>
+    </ol>
+    Don't have the extension locally yet? The source code is in the FragValue repo under <code>/fragvalue-extension</code> (next to <code>/FragValue</code> and <code>/fragvalue-demo-parser</code>).
+  </div>
+
+  <a class="back" href="/en/matches.html">&larr; Back aux matches</a>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const els = {
+  extDot: document.getElementById('stExtDot'),
+  extTitle: document.getElementById('stExtTitle'),
+  extSub: document.getElementById('stExtSub'),
+  authDot: document.getElementById('stAuthDot'),
+  authTitle: document.getElementById('stAuthTitle'),
+  authSub: document.getElementById('stAuthSub'),
+  pairBtn: document.getElementById('pairBtn'),
+  unpairBtn: document.getElementById('unpairBtn'),
+  installHint: document.getElementById('installHint'),
+};
+
+let currentSession = null;
+let extInstalled = false;
+let extPaired = false;
+
+function setExtState(installed, paired) {
+  extInstalled = installed;
+  extPaired = paired;
+  if (!installed) {
+    els.extDot.className = 'state-dot err';
+    els.extTitle.textContent = 'Extension non detectee';
+    els.extSub.textContent = 'Installez l\'extension FragValue FACEIT Sync dans votre navigateur';
+    els.installHint.style.display = '';
+  } else if (paired) {
+    els.extDot.className = 'state-dot ok';
+    els.extTitle.textContent = 'Extension connectee';
+    els.extSub.textContent = 'Your extension is already linked to this account';
+    els.installHint.style.display = 'none';
+  } else {
+    els.extDot.className = 'state-dot ok';
+    els.extTitle.textContent = 'Extension detectee';
+    els.extSub.textContent = 'Ready to be authorized';
+    els.installHint.style.display = 'none';
+  }
+  updateButtons();
+}
+
+function setAuthState(session) {
+  currentSession = session;
+  if (session) {
+    els.authDot.className = 'state-dot ok';
+    els.authTitle.textContent = 'Connecte a FragValue';
+    els.authSub.textContent = session.user.email;
+  } else {
+    els.authDot.className = 'state-dot err';
+    els.authTitle.textContent = 'Non connecte';
+    els.authSub.textContent = 'Connectez-vous d\'abord a FragValue';
+  }
+  updateButtons();
+}
+
+function updateButtons() {
+  const canPair = extInstalled && !extPaired && currentSession;
+  els.pairBtn.disabled = !canPair;
+  els.pairBtn.textContent = extPaired ? 'Extension already connected' : 'Authorize extension';
+  els.unpairBtn.style.display = extPaired ? 'block' : 'none';
+}
+
+// ─────────────────────────────── extension detection & pairing ──────────────
+// The content-pairing.js content script is injected on this page; it sets
+// data-fv-ext-installed="1" on <html> and bridges window.postMessage events
+// to chrome.runtime.sendMessage.
+
+function detectExtension() {
+  if (document.documentElement.getAttribute('data-fv-ext-installed') === '1') {
+    window.postMessage({ type: 'FV_EXT_STATUS' }, '*');
+  } else {
+    setExtState(false, false);
+  }
+}
+
+window.addEventListener('message', (e) => {
+  if (e.source !== window) return;
+  const d = e.data;
+  if (!d || typeof d !== 'object') return;
+  if (d.type === 'FV_EXT_STATUS_REPLY') {
+    setExtState(true, !!d.paired);
+  } else if (d.type === 'FV_EXT_PAIRED') {
+    if (d.ok) {
+      setExtState(true, true);
+      els.pairBtn.textContent = 'Extension connectee';
+    } else {
+      alert('Error d\'autorisation : ' + (d.error || 'inconnue'));
+    }
+  } else if (d.type === 'FV_EXT_UNPAIRED') {
+    setExtState(true, false);
+  }
+});
+
+els.pairBtn.addEventListener('click', () => {
+  if (!currentSession) {
+    window.location.href = 'login.html?redirect=/extension-auth.html';
+    return;
+  }
+  const payload = {
+    type: 'FV_EXT_PAIR',
+    accessToken: currentSession.access_token,
+    refreshToken: currentSession.refresh_token,
+    expiresAt: currentSession.expires_at,
+    user: { id: currentSession.user.id, email: currentSession.user.email },
+  };
+  window.postMessage(payload, '*');
+});
+
+els.unpairBtn.addEventListener('click', () => {
+  window.postMessage({ type: 'FV_EXT_UNPAIR' }, '*');
+});
+
+// ─────────────────────────────── init ───────────────────────────────────────
+(async () => {
+  const { data: { session } } = await _sb.auth.getSession();
+  setAuthState(session);
+  // Wait a tick for the content script to inject its marker, then detect.
+  setTimeout(detectExtension, 120);
+})();
+</script>
+
+</body>
+</html>
