@@ -148,6 +148,64 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       to{opacity:1;transform:scale(1)}
     }
 
+    /* ── Multi-kill banner : DOUBLE/TRIPLE/QUAD/ACE pop-up ───────────
+       Position absolue centree top du canvas. Animation slide-down +
+       fade-out sur 1.6s. Display:flex inline pour layout. */
+    .multikill-banner{
+      position:absolute;top:14px;left:50%;transform:translateX(-50%) translateY(-30px);
+      z-index:50;pointer-events:none;
+      background:linear-gradient(135deg,rgba(15,16,16,.95),rgba(8,9,9,.92));
+      border:1.5px solid var(--accent);border-radius:10px;
+      padding:12px 28px;text-align:center;
+      box-shadow:0 12px 32px rgba(0,0,0,.6),0 0 0 1px rgba(184,255,87,.15),
+                 0 0 24px rgba(184,255,87,.25);
+      opacity:0;
+      animation:mkPop 1.6s cubic-bezier(.2,.8,.3,1.05) forwards
+    }
+    .multikill-banner.tier-2{border-color:#b8ff57}
+    .multikill-banner.tier-3{border-color:#f5c842}
+    .multikill-banner.tier-4{border-color:#ff8a3d}
+    .multikill-banner.tier-5{border-color:#ff4444;box-shadow:0 12px 32px rgba(0,0,0,.6),0 0 32px rgba(255,68,68,.45)}
+    .mk-tier{
+      font-family:'Anton',sans-serif;font-size:22px;letter-spacing:.06em;
+      color:var(--accent);line-height:1
+    }
+    .multikill-banner.tier-3 .mk-tier{color:#f5c842}
+    .multikill-banner.tier-4 .mk-tier{color:#ff8a3d}
+    .multikill-banner.tier-5 .mk-tier{color:#ff4444}
+    .mk-by{
+      font-family:'Space Mono',monospace;font-size:10px;color:#a8b0b0;
+      letter-spacing:.08em;text-transform:uppercase;margin-top:4px
+    }
+    @keyframes mkPop{
+      0%   {opacity:0;transform:translateX(-50%) translateY(-30px) scale(.85)}
+      18%  {opacity:1;transform:translateX(-50%) translateY(0) scale(1.05)}
+      28%  {opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+      82%  {opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+      100% {opacity:0;transform:translateX(-50%) translateY(-12px) scale(.92)}
+    }
+
+    /* ── Damage floats : "+HP" qui floate au tick d'une mort ─────────
+       Positionnees absolues par JS via cx/cy en px. Fade up + opacity
+       sur 900ms. Couleur gold si HS, rouge sinon. */
+    .damage-floats{position:absolute;inset:0;pointer-events:none;z-index:30}
+    .dmg-float{
+      position:absolute;
+      font-family:'Anton',sans-serif;font-size:18px;font-weight:700;
+      letter-spacing:.04em;text-shadow:0 2px 6px rgba(0,0,0,.85),0 0 12px rgba(0,0,0,.5);
+      opacity:0;transform:translate(-50%,-50%);
+      animation:dmgFloat 900ms cubic-bezier(.3,.6,.2,1) forwards;
+      will-change:opacity,transform
+    }
+    .dmg-float.headshot{color:#f5c842}
+    .dmg-float:not(.headshot){color:#ff5050}
+    @keyframes dmgFloat{
+      0%   {opacity:0;transform:translate(-50%,-50%) scale(.6)}
+      15%  {opacity:1;transform:translate(-50%,-110%) scale(1.1)}
+      35%  {opacity:1;transform:translate(-50%,-170%) scale(1)}
+      100% {opacity:0;transform:translate(-50%,-280%) scale(.95)}
+    }
+
     /* ── Player tooltip overlay : hover sur dot ──────────────────────────
        Position absolue, suivi du curseur via JS. Z-index haut pour passer
        au-dessus de la canvas. Anti-jitter via pointer-events:none. */
@@ -458,6 +516,10 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <button class="sl-tool" id="btnTrail" onclick="toggleTrail()" data-tip="Trainee de mouvement">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         </button>
+        <!-- Call-outs toggle : nom des zones de la map (Long, A Site, Mid...) -->
+        <button class="sl-tool" id="btnCallouts" onclick="toggleCallouts()" data-tip="Call-outs map">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </button>
       </div>
 
       <!-- Floor toggle Nuke -->
@@ -472,6 +534,16 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     <!-- Canvas -->
     <div class="canvas-area">
       <canvas id="replayCanvas"></canvas>
+      <!-- Multi-kill banner : DOUBLE / TRIPLE / QUAD / ACE pop-up animé.
+           Triggered par checkMultikillBanner() au moment du kill final
+           d'une chain (>= 2 kills meme attacker en < 8s). -->
+      <div id="multikillBanner" class="multikill-banner" style="display:none">
+        <div class="mk-tier" id="mkTier">DOUBLE KILL</div>
+        <div class="mk-by" id="mkBy">by player</div>
+      </div>
+      <!-- Damage floats container : positionnees dynamiquement par drawFrame.
+           Pop +HP au moment d'une mort, slide-up et fade en 800ms. -->
+      <div id="damageFloats" class="damage-floats"></div>
       <!-- Tooltip live : suit le curseur sur hover joueur (positionne en JS).
            Affiche K/D/ADR/HP courant tick-precis. Toujours dans le DOM,
            toggled via display:none / block. -->
@@ -566,6 +638,105 @@ const MAP_CONFIG = {
   'de_vertigo':  { img:'maps/de_vertigo_radar_psd.png', posX:-3168, posY:1762, scale:4.0  },
 };
 
+// ══ MAP CALL-OUTS ════════════════════════════════════════════════════════════
+// Coords = world space (Source engine units). Le call-out est positionne via
+// w2c() comme les joueurs. Toggle via btnCallouts (off par defaut).
+//
+// Note : ces valeurs sont des approximations basees sur les call-outs CS2
+// communautaires standards. Si une position parait off, on peut tuner ici.
+// Format : { name, x, y, [size:'sm'|'md'|'lg'] }  (sm=zone, md=defaut, lg=site)
+const MAP_CALLOUTS = {
+  'de_dust2': [
+    { name: 'A Site',    x: 1250,  y: 2400, size: 'lg' },
+    { name: 'B Site',    x: -1530, y: 2540, size: 'lg' },
+    { name: 'Long',      x: 600,   y: 700,  size: 'md' },
+    { name: 'Long Doors',x: -700,  y: 1380, size: 'sm' },
+    { name: 'Pit',       x: 1700,  y: 2050, size: 'sm' },
+    { name: 'Goose',     x: 850,   y: 2550, size: 'sm' },
+    { name: 'Catwalk',   x: 480,   y: 1880, size: 'sm' },
+    { name: 'Short',     x: 600,   y: 2200, size: 'md' },
+    { name: 'Mid',       x: -100,  y: 1100, size: 'md' },
+    { name: 'Tunnels',   x: -1200, y: 800,  size: 'md' },
+    { name: 'B Doors',   x: -1450, y: 1860, size: 'sm' },
+    { name: 'CT Spawn',  x: 1900,  y: 2450, size: 'sm' },
+    { name: 'T Spawn',   x: 0,     y: 200,  size: 'sm' },
+  ],
+  'de_mirage': [
+    { name: 'A Site',    x: 1180,  y: 50,   size: 'lg' },
+    { name: 'B Site',    x: -1750, y: 470,  size: 'lg' },
+    { name: 'Mid',       x: -300,  y: -300, size: 'md' },
+    { name: 'Top Mid',   x: -200,  y: 200,  size: 'sm' },
+    { name: 'Connector', x: 600,   y: 0,    size: 'sm' },
+    { name: 'Apartments',x: -1500, y: -350, size: 'md' },
+    { name: 'Underpass', x: -700,  y: -1100,size: 'sm' },
+    { name: 'Palace',    x: 1300,  y: -700, size: 'sm' },
+    { name: 'Ramp',      x: -1700, y: 1200, size: 'sm' },
+    { name: 'Catwalk',   x: 200,   y: 350,  size: 'sm' },
+    { name: 'Tetris',    x: -1900, y: 280,  size: 'sm' },
+  ],
+  'de_inferno': [
+    { name: 'A Site',    x: 1900,  y: 600,  size: 'lg' },
+    { name: 'B Site',    x: 350,   y: 2820, size: 'lg' },
+    { name: 'Banana',    x: -180,  y: 1880, size: 'md' },
+    { name: 'Apartments',x: 2400,  y: 1900, size: 'md' },
+    { name: 'Mid',       x: 1300,  y: 1500, size: 'md' },
+    { name: 'Library',   x: 950,   y: 100,  size: 'sm' },
+    { name: 'Arch',      x: 1700,  y: 1200, size: 'sm' },
+    { name: 'Pit',       x: 2500,  y: 600,  size: 'sm' },
+    { name: 'Construction', x: 0,  y: 2850, size: 'sm' },
+    { name: 'Boiler',    x: 750,   y: 2520, size: 'sm' },
+    { name: 'Top Banana',x: -100,  y: 2300, size: 'sm' },
+  ],
+  'de_nuke': [
+    { name: 'A Site',    x: 800,   y: -750, size: 'lg' },
+    { name: 'B Site',    x: 600,   y: -1200,size: 'lg' },
+    { name: 'Outside',   x: -1100, y: -650, size: 'md' },
+    { name: 'Ramp',      x: 1500,  y: -700, size: 'sm' },
+    { name: 'Heaven',    x: 1100,  y: -350, size: 'sm' },
+    { name: 'Vents',     x: 600,   y: -900, size: 'sm' },
+    { name: 'Lobby',     x: 2600,  y: -700, size: 'sm' },
+    { name: 'Hut',       x: 0,     y: -300, size: 'sm' },
+    { name: 'Silo',      x: -1700, y: -800, size: 'sm' },
+  ],
+  'de_anubis': [
+    { name: 'A Site',    x: 1450,  y: 250,  size: 'lg' },
+    { name: 'B Site',    x: -1300, y: 250,  size: 'lg' },
+    { name: 'Mid',       x: 0,     y: -300, size: 'md' },
+    { name: 'Connector', x: 800,   y: 100,  size: 'sm' },
+    { name: 'Heaven',    x: 1700,  y: 700,  size: 'sm' },
+    { name: 'Water',     x: -1700, y: -300, size: 'sm' },
+    { name: 'Palace',    x: 1900,  y: -200, size: 'sm' },
+    { name: 'Canal',     x: -800,  y: -700, size: 'sm' },
+  ],
+  'de_ancient': [
+    { name: 'A Site',    x: -700,  y: 600,  size: 'lg' },
+    { name: 'B Site',    x: 1700,  y: -1000,size: 'lg' },
+    { name: 'Mid',       x: 200,   y: -300, size: 'md' },
+    { name: 'Cave',      x: 1400,  y: -1500,size: 'sm' },
+    { name: 'Donut',     x: -800,  y: 0,    size: 'sm' },
+    { name: 'Heaven',    x: 1100,  y: -700, size: 'sm' },
+    { name: 'Temple',    x: -1300, y: 200,  size: 'sm' },
+  ],
+  'de_vertigo': [
+    { name: 'A Site',    x: 1100,  y: -600, size: 'lg' },
+    { name: 'B Site',    x: -900,  y: 200,  size: 'lg' },
+    { name: 'Mid',       x: 200,   y: -200, size: 'md' },
+    { name: 'Ramp',      x: 1100,  y: 0,    size: 'sm' },
+    { name: 'Stairs',    x: -300,  y: -800, size: 'sm' },
+    { name: 'Heaven',    x: 700,   y: -1100,size: 'sm' },
+  ],
+  'de_overpass': [
+    { name: 'A Site',    x: -2400, y: -800, size: 'lg' },
+    { name: 'B Site',    x: -2000, y: 800,  size: 'lg' },
+    { name: 'Long',      x: -2700, y: -200, size: 'md' },
+    { name: 'Short',     x: -1900, y: -700, size: 'sm' },
+    { name: 'Connector', x: -2200, y: 200,  size: 'sm' },
+    { name: 'Toilets',   x: -1700, y: 600,  size: 'sm' },
+    { name: 'Park',      x: -3400, y: 1200, size: 'md' },
+    { name: 'Heaven',    x: -2900, y: -900, size: 'sm' },
+  ],
+};
+
 const PLAYER_COLORS = [
   {solid:'#60a5fa',rgb:'96,165,250'},{solid:'#F06B6B',rgb:'240,107,107'},
   {solid:'#2DD4A0',rgb:'45,212,160'},{solid:'#F5C842',rgb:'245,200,66'},
@@ -581,6 +752,7 @@ let playerColorMap = {}, hiddenPlayers = new Set();
 let canvas, ctx, mapImg = null, mapName = 'de_dust2';
 let currentFloor = 'upper';
 let showTrail = true;
+let showCallouts = false; // Call-outs labels (Long, A Site, Mid, ...) overlay
 
 let currentRound = null, frames = [], frameIdx = 0;
 let playing = false, timer = null, speed = 1;
@@ -595,6 +767,121 @@ let playStartTime = 0;     // performance.now() au moment du start
 let playStartIdx = 0;      // frameIdx au moment du start (peut etre fractionnaire si reseed)
 let isolatedPlayer = null; // nom du joueur isolé via click sur dot (path highlight)
 let hoveredPlayer = null;  // nom du joueur hover pour tooltip live
+
+// Track les events visuels deja triggered pour ne pas re-spawn au scrub
+// arriere ou au replay du round. Cle = 'kill-<tick>-<victim>' / 'mk-<tick>-<attacker>'
+const _firedEvents = new Set();
+let _lastFiredTick = -1; // tick du dernier drawFrame, sert a detecter le scrub backward
+
+// Multi-kill detection : retourne le tier (2-5) si le tick correspond au
+// dernier kill d'une chain >= 2 par meme attacker dans une window de 8s
+// (1024 ticks @ 128hz). Sinon null.
+const MK_TICK_WINDOW = 1024;
+function detectMultikillAt(tick) {
+  const allKills = (demoData.kills || []);
+  // Trouve le kill exactement a ce tick (si plusieurs, peu importe : meme attacker)
+  const kHere = allKills.find(k => (k.tick || 0) === tick);
+  if (!kHere) return null;
+  const attacker = kHere.attacker;
+  if (!attacker) return null;
+  // Compte les kills par cet attacker dans [tick-MK_WINDOW, tick]
+  const chain = allKills.filter(k => k.attacker === attacker
+    && (k.tick || 0) >= tick - MK_TICK_WINDOW
+    && (k.tick || 0) <= tick);
+  if (chain.length < 2) return null;
+  // Verifie qu'il n'y a pas un kill futur dans la window (pour ne trigger
+  // qu'au DERNIER kill de la chain, pas aux intermediaires).
+  const hasLater = allKills.some(k => k.attacker === attacker
+    && (k.tick || 0) > tick
+    && (k.tick || 0) <= tick + MK_TICK_WINDOW);
+  if (hasLater) return null;
+  return Math.min(5, chain.length); // cap a 5 (ACE)
+}
+
+const MK_LABELS = { 2: 'DOUBLE KILL', 3: 'TRIPLE KILL', 4: 'QUAD KILL', 5: 'ACE' };
+
+function showMultikillBanner(tier, by) {
+  const banner = document.getElementById('multikillBanner');
+  if (!banner) return;
+  // Reset classes + content
+  banner.classList.remove('tier-2','tier-3','tier-4','tier-5');
+  banner.classList.add('tier-' + tier);
+  document.getElementById('mkTier').textContent = MK_LABELS[tier] || (tier + 'K');
+  document.getElementById('mkBy').textContent = 'by ' + (by || 'player');
+  banner.style.display = 'block';
+  // Re-trigger l'animation : retire/ajoute la classe via reflow forcee
+  banner.style.animation = 'none';
+  void banner.offsetWidth;
+  banner.style.animation = '';
+  // Auto-hide apres l'animation (matched a CSS keyframe duration)
+  clearTimeout(showMultikillBanner._t);
+  showMultikillBanner._t = setTimeout(() => { banner.style.display = 'none'; }, 1700);
+}
+
+// Damage floats : spawn un element HTML "+HP" qui floate au-dessus du
+// victim au moment de sa mort. Couleur gold si headshot.
+function spawnDamageFloat(killEvent, frame) {
+  const container = document.getElementById('damageFloats');
+  if (!container || !canvas) return;
+  // Position : preferer victim's location au tick du kill
+  // (k.victimX/Y est en world coords)
+  const vx = killEvent.victimX, vy = killEvent.victimY;
+  if (vx == null || vy == null) return;
+  const W = canvas.width, H = canvas.height;
+  const scaleX = W / 1024, scaleY = H / 1024;
+  const pos = w2c(vx, vy, mapName);
+  const cx = pos.x * scaleX, cy = pos.y * scaleY;
+  if (!inBounds(cx, cy)) return;
+  // Convert canvas coords -> CSS pixels pour positionner le HTML element
+  const rect = canvas.getBoundingClientRect();
+  const cssX = (cx / W) * rect.width;
+  const cssY = (cy / H) * rect.height;
+
+  const el = document.createElement('div');
+  // Note : la propriete dans demoData.kills est isHeadshot (cf expandKills)
+  const isHS = !!(killEvent.isHeadshot || killEvent.headshot);
+  el.className = 'dmg-float' + (isHS ? ' headshot' : '');
+  el.textContent = '-100' + (isHS ? ' HS' : '');
+  el.style.left = cssX + 'px';
+  el.style.top = cssY + 'px';
+  container.appendChild(el);
+  // Cleanup apres l'animation (940ms = duration + safety)
+  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 940);
+}
+
+// Check les events qui doivent fire visuellement a ce tick (kills, multikills).
+// Idempotent via _firedEvents Set : si on rejoue le meme tick (RAF interp),
+// on ne re-spawn pas les floats. Si on scrub backward (le tick courant
+// devient < dernier fired), on clear le set pour autoriser un replay.
+function checkKillEventsAtTick(tick) {
+  if (tick < _lastFiredTick) {
+    // Scrub backward detecte : reset les events firees
+    _firedEvents.clear();
+  }
+  _lastFiredTick = tick;
+  const allKills = (demoData.kills || []);
+  // Window large car le RAF peut sauter plusieurs ticks entre 2 frames.
+  // On cherche les kills entre _lastCheckedTick exclus et tick inclus.
+  const recentKills = allKills.filter(k => {
+    const t = k.tick || 0;
+    return t > 0 && t <= tick && t >= tick - 30; // 30 ticks ~= 234ms a 128hz
+  });
+  for (const k of recentKills) {
+    const key = 'kill-' + k.tick + '-' + (k.victim || '');
+    if (_firedEvents.has(key)) continue;
+    _firedEvents.add(key);
+    spawnDamageFloat(k, null);
+    // Multi-kill check sur ce kill
+    const tier = detectMultikillAt(k.tick);
+    if (tier && tier >= 2) {
+      const mkKey = 'mk-' + k.tick + '-' + (k.attacker || '');
+      if (!_firedEvents.has(mkKey)) {
+        _firedEvents.add(mkKey);
+        showMultikillBanner(tier, k.attacker);
+      }
+    }
+  }
+}
 let shotsConverted = false;
 // Per-round filtered positions, shared by buildFrames and drawTrails so trails
 // cannot include samples from outside the current round.
@@ -1852,6 +2139,12 @@ function drawFrame(idx, interp = 0) {
   const scaleY = H / 1024;
   ctx.clearRect(0, 0, W, H);
 
+  // ── Kill events trigger : damage floats + multi-kill banners ─────────
+  // Idempotent : _firedEvents Set garantit 1 fire / kill, meme si RAF
+  // appelle drawFrame plusieurs fois sur le meme tick (interp).
+  // Scrub backward (slider) : detection auto via _lastFiredTick reset.
+  checkKillEventsAtTick(frame.tick || 0);
+
   // Map background
   if (mapImg) {
     ctx.drawImage(mapImg, 0, 0, W, H);
@@ -1870,6 +2163,11 @@ function drawFrame(idx, interp = 0) {
 
   // Movement trails
   if (showTrail) drawTrails(frame, W, H);
+
+  // Call-outs overlay : zones de la map (Long, A, Mid, ...)
+  // Placé après le fond et la vignette mais avant les joueurs, donc
+  // visible mais sans masquer les dots.
+  if (showCallouts) drawCallouts(W, H);
 
   // ── Isolated player path (click sur dot) ─────────────────────────────
   // Dessine la trajectoire complete du joueur selectionne dans le round
@@ -3015,6 +3313,20 @@ function drawEffects(frame, W, H) {
       ctx.strokeStyle = `rgba(255,255,255,${a})`;
       ctx.lineWidth = 2;
       ctx.stroke();
+
+      // ── Duration ring : arc qui se vide en 18s autour du smoke ───
+      // Lecture visuelle immediate du temps restant sans lire le timer.
+      // Sweep clockwise du top, couleur accent vert qui s'etiole avec a.
+      // -PI/2 = top du cercle (12h), +2*PI*progress = sweep clockwise.
+      const ringR = r + 4;
+      ctx.beginPath();
+      ctx.arc(px, py, ringR, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * (1 - progress), false);
+      ctx.strokeStyle = `rgba(184,255,87,${a * 0.85})`;
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.lineCap = 'butt';
+
       // Cloud icon au centre
       drawCloudIcon(ctx, px, py, 8, `rgba(255,255,255,${a})`);
       drawBareTimer(timerTxt, px, py - r - 6);
@@ -3377,6 +3689,68 @@ function toggleTrail() {
   showTrail = !showTrail;
   document.getElementById('btnTrail').classList.toggle('active', showTrail);
   drawFrame(frameIdx);
+}
+
+function toggleCallouts() {
+  showCallouts = !showCallouts;
+  const btn = document.getElementById('btnCallouts');
+  if (btn) btn.classList.toggle('active', showCallouts);
+  drawFrame(frameIdx);
+}
+
+// ══ CALL-OUTS RENDERING ══════════════════════════════════════════════════════
+// Dessine les noms de zones de la map (Long, A Site, Mid, Tunnels, ...)
+// pour aider a la lecture tactique. Toggle par btnCallouts.
+//
+// Sizes : sm = zone secondaire (10px, alpha 0.55)
+//         md = zone principale (12px, alpha 0.7)
+//         lg = bombsite       (15px, alpha 0.85, bold)
+function drawCallouts(W, H) {
+  const callouts = MAP_CALLOUTS[mapName];
+  if (!callouts || !callouts.length) return;
+  const scaleX = W / 1024;
+  const scaleY = H / 1024;
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const c of callouts) {
+    const pos = w2c(c.x, c.y, mapName);
+    const px = pos.x * scaleX, py = pos.y * scaleY;
+    if (!inBounds(px, py)) continue;
+    let fontSize, alpha, weight;
+    if (c.size === 'lg')      { fontSize = 15; alpha = 0.85; weight = '700'; }
+    else if (c.size === 'md') { fontSize = 12; alpha = 0.70; weight = '600'; }
+    else                      { fontSize = 10; alpha = 0.55; weight = '500'; }
+    // Text shadow pour lisibilite sur map claire
+    ctx.font = weight + ' ' + fontSize + 'px "Space Mono", monospace';
+    const text = c.name.toUpperCase();
+    const tw = ctx.measureText(text).width;
+    // Background pill pour contraste
+    const padX = 5, padY = 3;
+    const bgW = tw + padX * 2, bgH = fontSize + padY * 2;
+    ctx.fillStyle = 'rgba(8,10,16,' + (alpha * 0.65) + ')';
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(px - bgW/2, py - bgH/2, bgW, bgH, 3);
+      ctx.fill();
+    } else {
+      ctx.fillRect(px - bgW/2, py - bgH/2, bgW, bgH);
+    }
+    // Border subtil accent
+    ctx.strokeStyle = 'rgba(184,255,87,' + (alpha * 0.35) + ')';
+    ctx.lineWidth = 0.5;
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(px - bgW/2, py - bgH/2, bgW, bgH, 3);
+      ctx.stroke();
+    } else {
+      ctx.strokeRect(px - bgW/2, py - bgH/2, bgW, bgH);
+    }
+    // Texte
+    ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+    ctx.fillText(text, px, py);
+  }
+  ctx.restore();
 }
 
 // ══ NAV ROUNDS HELPERS ═══════════════════════════════════════════════════════
