@@ -363,6 +363,42 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     .coach-ai-panel .ca-icon{
       color:var(--accent);font-size:14px;margin-right:4px
     }
+    .ca-player-select{
+      padding:8px 12px;
+      border-bottom:1px solid rgba(255,255,255,.04)
+    }
+    .ca-player-label{
+      font-family:'Space Mono',monospace;font-size:9px;
+      color:var(--muted);letter-spacing:.18em;text-transform:uppercase;
+      margin-bottom:4px
+    }
+    .ca-player-dropdown{
+      width:100%;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:5px;
+      padding:7px 10px;
+      color:var(--text);
+      font-family:'Space Mono',monospace;font-size:11px;
+      letter-spacing:.04em;
+      cursor:pointer;
+      outline:none;
+      transition:border-color .15s,background .15s;
+      appearance:none;
+      -webkit-appearance:none;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%23b8ff57' d='M5 6L0 0h10z'/></svg>");
+      background-repeat:no-repeat;
+      background-position:right 10px center;
+      padding-right:28px
+    }
+    .ca-player-dropdown:hover,.ca-player-dropdown:focus{
+      border-color:var(--accent);
+      background-color:rgba(184,255,87,.04)
+    }
+    .ca-player-dropdown option{
+      background:var(--card);color:var(--text);
+      padding:6px 8px
+    }
     .ca-context{
       padding:8px 12px;
       font-family:'Space Mono',monospace;font-size:10px;
@@ -922,6 +958,15 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <div class="bp-header">
           <div class="bp-title"><span class="ca-icon">★</span> Coach IA</div>
           <button class="bp-close" onclick="toggleCoachAIPanel()" aria-label="Fermer">×</button>
+        </div>
+        <!-- Selecteur joueur cible : tous les 10 joueurs du match.
+             Au change, sync avec isolatedPlayer (path highlight canvas) pour
+             feedback visuel immediat de qui est analyse. -->
+        <div class="ca-player-select">
+          <div class="ca-player-label">Joueur cible</div>
+          <select id="coachAIPlayer" class="ca-player-dropdown" onchange="onCoachAIPlayerChange()">
+            <option value="">Choisir un joueur</option>
+          </select>
         </div>
         <div class="ca-context" id="coachAIContext"></div>
         <div class="ca-actions">
@@ -4578,15 +4623,93 @@ function toggleBookmarksPanel() {
 // si l'utilisateur revient sur le meme round.
 
 let showCoachAI = false;
+// Selection explicite du joueur cible via le dropdown du panel.
+// Persistante entre les rounds tant que le panel est ouvert/utilise.
+let coachAITargetPlayer = null;
 
 const CA_STORAGE_PREFIX = 'fv_coachai_';
 
 function getTargetPlayerName() {
-  // Player cible = isolatedPlayer si actif, sinon le 1er du scoreboard
-  // (proxy pour "moi" si demo perso). Fallback : nom le mieux classé en FV Rating.
+  // Priorite : selection explicite via dropdown > isolatedPlayer (click dot)
+  // > top FV Rating du scoreboard (fallback "auto").
+  if (coachAITargetPlayer) return coachAITargetPlayer;
   if (isolatedPlayer) return isolatedPlayer;
   const stats = (demoData?.playerStats || []).slice().sort((a, b) => (b.fvRating || 0) - (a.fvRating || 0));
   return stats[0]?.name || null;
+}
+
+// Peuple le dropdown avec les 10 joueurs de la demo, groupes par equipe
+// (CT puis T) et sortes par FV Rating decroissant pour mettre les MVP en haut.
+function populateCoachAIPlayerDropdown() {
+  const sel = document.getElementById('coachAIPlayer');
+  if (!sel) return;
+  const stats = (demoData?.playerStats || []).slice();
+  if (!stats.length) return;
+
+  // Resolve team name -> CT/T pour grouper. La team est stockee differement
+  // selon les versions du parser (number 2/3 ou string "CT"/"T").
+  const teamLabel = (t) => (t === 3 || t === 'CT') ? 'CT' : 'T';
+
+  // Sort : team CT first, then by FV Rating desc within each team
+  const ctPlayers = stats.filter(p => teamLabel(p.team) === 'CT')
+    .sort((a, b) => (b.fvRating || 0) - (a.fvRating || 0));
+  const tPlayers = stats.filter(p => teamLabel(p.team) === 'T')
+    .sort((a, b) => (b.fvRating || 0) - (a.fvRating || 0));
+
+  // Build options HTML
+  const currentValue = coachAITargetPlayer || isolatedPlayer || '';
+  let html = '<option value="">Choisir un joueur</option>';
+  if (ctPlayers.length) {
+    html += '<optgroup label="CT side">';
+    for (const p of ctPlayers) {
+      const fvr = (p.fvRating || 0).toFixed(2);
+      const sel = p.name === currentValue ? ' selected' : '';
+      html += '<option value="' + escapeHtml(p.name) + '"' + sel + '>' + escapeHtml(p.name) + ' · FV ' + fvr + '</option>';
+    }
+    html += '</optgroup>';
+  }
+  if (tPlayers.length) {
+    html += '<optgroup label="T side">';
+    for (const p of tPlayers) {
+      const fvr = (p.fvRating || 0).toFixed(2);
+      const sel = p.name === currentValue ? ' selected' : '';
+      html += '<option value="' + escapeHtml(p.name) + '"' + sel + '>' + escapeHtml(p.name) + ' · FV ' + fvr + '</option>';
+    }
+    html += '</optgroup>';
+  }
+  sel.innerHTML = html;
+}
+
+// Au changement du dropdown : on stocke la selection + on sync avec
+// isolatedPlayer pour que le path soit visible sur la map (feedback visuel
+// immediat). On reset l affichage du resultat (cache different par player).
+function onCoachAIPlayerChange() {
+  const sel = document.getElementById('coachAIPlayer');
+  if (!sel) return;
+  const newPlayer = sel.value || null;
+  coachAITargetPlayer = newPlayer;
+  // Sync avec isolatedPlayer si le joueur existe dans les positions du round
+  if (newPlayer && currentRoundPos && currentRoundPos[newPlayer]) {
+    isolatedPlayer = newPlayer;
+    drawFrame(frameIdx);
+  } else if (!newPlayer) {
+    // Si dropdown reset a "Choisir un joueur", on enleve l isolation
+    isolatedPlayer = null;
+    drawFrame(frameIdx);
+  }
+  // Refresh du context display + check si on a deja un cache pour ce player
+  renderCoachAIContext();
+  if (newPlayer && currentRound != null) {
+    const cached = loadCoachAICache(getDemoId(), currentRound, newPlayer);
+    if (cached) {
+      renderCoachAISummary(cached);
+    } else {
+      // Hide previous result si le player change
+      document.getElementById('coachAIResult').style.display = 'none';
+      document.getElementById('coachAILoading').style.display = 'none';
+      document.getElementById('coachAIError').style.display = 'none';
+    }
+  }
 }
 
 function loadCoachAICache(demoId, round, playerName) {
@@ -4703,9 +4826,17 @@ function renderCoachAIContext() {
     el.innerHTML = '<span class="ca-ctx-tag">Selectionne un round + un joueur</span>';
     return;
   }
+  // Source de la selection : explicite (dropdown) ou implicite (isolated/top FV)
+  const isExplicit = !!coachAITargetPlayer;
+  const isIsolated = !coachAITargetPlayer && !!isolatedPlayer;
+  let sourceTag = '';
+  if (isExplicit) sourceTag = ' <span style="opacity:.6">(via selecteur)</span>';
+  else if (isIsolated) sourceTag = ' <span style="opacity:.6">(joueur isole)</span>';
+  else sourceTag = ' <span style="opacity:.6">(top FV par defaut)</span>';
+
   el.innerHTML = '<span class="ca-ctx-tag">R' + dispN + '</span> · '
-    + 'Joueur cible · <span class="ca-ctx-tag">' + escapeHtml(playerName) + '</span>'
-    + (isolatedPlayer ? '' : ' <span style="opacity:.6">(isole un dot pour cibler quelqu un d autre)</span>');
+    + '<span class="ca-ctx-tag">' + escapeHtml(playerName) + '</span>'
+    + sourceTag;
 }
 
 function renderCoachAISummary(summary) {
@@ -4809,6 +4940,8 @@ function toggleCoachAIPanel() {
   if (panel) panel.style.display = showCoachAI ? 'flex' : 'none';
   if (btn) btn.classList.toggle('active', showCoachAI);
   if (showCoachAI) {
+    // Peuple le dropdown des joueurs (10 max, groupes CT/T, tries par FV)
+    populateCoachAIPlayerDropdown();
     renderCoachAIContext();
     // Si on a deja un cache pour ce round + player, l'afficher d office
     const playerName = getTargetPlayerName();
