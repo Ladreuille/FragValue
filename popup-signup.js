@@ -5,6 +5,27 @@
 (function () {
   'use strict';
 
+  // i18n : detection langue + dictionnaire
+  var FV_LANG = (document.documentElement.lang === 'en'
+              || window.location.pathname.startsWith('/en/')) ? 'en' : 'fr';
+  var T = FV_LANG === 'en' ? {
+    close: 'Close',
+    title: 'Analyze your CS2 performance',
+    subtitle: 'Create a free account and access your advanced FACEIT stats, personalized FV Score, and progression tracking.',
+    primary: 'Create my account',
+    secondary: 'I already have an account',
+    footer: 'Free, no commitment',
+    loginHref: '/en/login.html',
+  } : {
+    close: 'Fermer',
+    title: 'Analyse tes performances CS2',
+    subtitle: 'Cree ton compte gratuitement et accede a tes statistiques FACEIT avancees, ton FV Score personnalise et le suivi de ta progression.',
+    primary: 'Creer mon compte',
+    secondary: 'J\'ai deja un compte',
+    footer: 'Gratuit, sans engagement',
+    loginHref: 'login.html',
+  };
+
   var DISMISS_KEY   = 'fv_popup_dismissed';
   var DISMISS_DAYS  = 7;
   var DELAY_MS      = 12000;
@@ -111,19 +132,19 @@
 
   overlay.innerHTML = [
     '<div class="fv-popup-modal">',
-    '  <button class="fv-popup-close" aria-label="Fermer">',
+    '  <button class="fv-popup-close" aria-label="' + T.close + '">',
     '    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#7a8080" stroke-width="1.5" stroke-linecap="round">',
     '      <line x1="1" y1="1" x2="13" y2="13"/>',
     '      <line x1="13" y1="1" x2="1" y2="13"/>',
     '    </svg>',
     '  </button>',
-    '  <div class="fv-popup-title">Analyse tes performances CS2</div>',
-    '  <div class="fv-popup-subtitle">Cree ton compte gratuitement et accede a tes statistiques FACEIT avancees, ton FV Score personnalise et le suivi de ta progression.</div>',
+    '  <div class="fv-popup-title">' + T.title + '</div>',
+    '  <div class="fv-popup-subtitle">' + T.subtitle + '</div>',
     '  <div class="fv-popup-actions">',
-    '    <a href="login.html" class="fv-popup-btn-primary">Creer mon compte</a>',
-    '    <a href="login.html" class="fv-popup-btn-secondary">J\'ai deja un compte</a>',
+    '    <a href="' + T.loginHref + '" class="fv-popup-btn-primary">' + T.primary + '</a>',
+    '    <a href="' + T.loginHref + '" class="fv-popup-btn-secondary">' + T.secondary + '</a>',
     '  </div>',
-    '  <div class="fv-popup-footer">Gratuit, sans engagement</div>',
+    '  <div class="fv-popup-footer">' + T.footer + '</div>',
     '</div>',
   ].join('\n');
 

@@ -90,7 +90,19 @@ function clearPlanCache() {
 // Show a Pro upgrade modal anchored on a feature name.
 // featureName is displayed in the modal title. ctaHref defaults to pricing.html.
 function showProUpgradeModal(featureName, ctaHref) {
-  ctaHref = ctaHref || 'pricing.html';
+  // i18n : EN si <html lang="en"> ou URL /en/*
+  var FV_LANG = (document.documentElement.lang === 'en'
+              || window.location.pathname.startsWith('/en/')) ? 'en' : 'fr';
+  var T = FV_LANG === 'en' ? {
+    close: 'Close', defaultTitle: 'Pro feature',
+    body: 'This feature is reserved for Pro subscribers. Upgrade to the Pro plan starting at 9 euros/month to unlock all advanced analyses.',
+    seePlans: 'See plans', later: 'Later',
+  } : {
+    close: 'Fermer', defaultTitle: 'Fonctionnalite Pro',
+    body: 'Cette fonctionnalite est reservee aux abonnes Pro. Passe au plan Pro des 9 euros/mois pour debloquer toutes les analyses avancees.',
+    seePlans: 'Voir les plans', later: 'Plus tard',
+  };
+  ctaHref = ctaHref || (FV_LANG === 'en' ? '/en/pricing.html' : 'pricing.html');
   const existing = document.getElementById('fvProUpgradeModal');
   if (existing) { existing.style.display = 'flex'; return; }
 
@@ -110,21 +122,21 @@ function showProUpgradeModal(featureName, ctaHref) {
 
   overlay.innerHTML = [
     '<div style="background:#0f1010;border:1px solid #1c1e1e;border-radius:12px;padding:36px 32px;max-width:420px;width:90%;text-align:center;position:relative">',
-    '  <button aria-label="Fermer" onclick="document.getElementById(\'fvProUpgradeModal\').style.display=\'none\'" style="position:absolute;top:14px;right:14px;width:28px;height:28px;background:transparent;border:1px solid #252727;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center">',
+    '  <button aria-label="' + T.close + '" onclick="document.getElementById(\'fvProUpgradeModal\').style.display=\'none\'" style="position:absolute;top:14px;right:14px;width:28px;height:28px;background:transparent;border:1px solid #252727;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center">',
     '    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#7a8080" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/></svg>',
     '  </button>',
     '  <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);color:#b8ff57;padding:4px 10px;border-radius:40px;font-family:\'Space Mono\',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;margin-bottom:18px">',
     '    PRO',
     '  </div>',
     '  <div style="font-family:\'Anton\',sans-serif;font-size:24px;line-height:1.15;letter-spacing:.01em;color:#e8eaea;margin-bottom:12px">',
-    (featureName || 'Fonctionnalite Pro'),
+    (featureName || T.defaultTitle),
     '  </div>',
     '  <p style="font-family:\'Space Mono\',monospace;font-size:12px;color:#7a8080;line-height:1.7;margin-bottom:24px">',
-    '    Cette fonctionnalite est reservee aux abonnes Pro. Passe au plan Pro des 9 euros/mois pour debloquer toutes les analyses avancees.',
+    '    ' + T.body,
     '  </p>',
-    '  <a href="' + ctaHref + '" style="display:inline-block;background:#b8ff57;color:#000;padding:12px 28px;border-radius:6px;font-family:\'Space Mono\',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">Voir les plans</a>',
+    '  <a href="' + ctaHref + '" style="display:inline-block;background:#b8ff57;color:#000;padding:12px 28px;border-radius:6px;font-family:\'Space Mono\',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">' + T.seePlans + '</a>',
     '  <div style="margin-top:14px">',
-    '    <button onclick="document.getElementById(\'fvProUpgradeModal\').style.display=\'none\'" style="background:none;border:none;color:#4a5050;font-family:\'Space Mono\',monospace;font-size:11px;cursor:pointer;letter-spacing:.04em">Plus tard</button>',
+    '    <button onclick="document.getElementById(\'fvProUpgradeModal\').style.display=\'none\'" style="background:none;border:none;color:#4a5050;font-family:\'Space Mono\',monospace;font-size:11px;cursor:pointer;letter-spacing:.04em">' + T.later + '</button>',
     '  </div>',
     '</div>',
   ].join('');

@@ -22,7 +22,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 
   <meta charset="UTF-8"/>
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
-  <meta name="description" content="FragValue Pro Demos · Scorecards HLTV détaillés des matches Major, Blast, ESL Pro League. Ratings, ADR, KAST, opening duels par joueur.">
+  <meta name="description" content="FragValue Pro Demos · Detailed HLTV scorecards from Major, Blast, ESL Pro League matches. Ratings, ADR, KAST, opening duels per player.">
   <meta name="keywords" content="CS2, HLTV, pro demos, scorecard, tactique, Major, ESL, Blast, BLAST, Vitality, NAVI, G2, FaZe, Spirit">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
   <link rel="canonical" href="https://fragvalue.com/en/pro-demos.html">
@@ -30,7 +30,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <link rel="alternate" hreflang="en" href="https://fragvalue.com/en/pro-demos.html">
 <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/pro-demos.html">
   <meta property="og:title" content="FragValue · Pro Demos Viewer">
-  <meta property="og:description" content="Scorecards HLTV détaillés des matches des pros, filtrables par tournoi, équipe et map.">
+  <meta property="og:description" content="Detailed HLTV scorecards of pro matches, filterable by tournament, team and map.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_US">
   <meta property="og:url" content="https://fragvalue.com/en/pro-demos.html">
@@ -40,7 +40,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="FragValue · Pro Demos Viewer">
-<meta name="twitter:description" content="Scorecards HLTV détaillés des matches des pros, filtrables par tournoi, équipe et map.">
+<meta name="twitter:description" content="Detailed HLTV scorecards of pro matches, filterable by tournament, team and map.">
 <meta name="twitter:image" content="https://fragvalue.com/og/pro-demos.png">
   <title>FragValue · Pro Demos Viewer (HLTV scorecards)</title>
   <script type="application/ld+json">
@@ -258,7 +258,7 @@ async function load() {
     const totalMatches = data.total || data.matches.length;
     document.getElementById('heroTag').textContent = totalMatches > 0
       ? '● Live · ' + totalMatches + ' match' + (totalMatches > 1 ? 's' : '') + ' ingere' + (totalMatches > 1 ? 's' : '')
-      : '● Aucun match pour l\'instant';
+      : '● No matches yet';
     document.getElementById('statMatches').textContent = totalMatches;
     document.getElementById('statEvents').textContent = data.events?.length || '-';
     const teams = new Set();
@@ -279,7 +279,7 @@ async function load() {
     }
 
     if (!data.matches.length) {
-      grid.innerHTML = '<div class="empty"><div class="empty-title">Aucun match pour ces filtres</div><div>Essaie de reinitialiser les filtres ou reviens plus tard.</div></div>';
+      grid.innerHTML = '<div class="empty"><div class="empty-title">No matches for these filters</div><div>Try resetting the filters or come back later.</div></div>';
       return;
     }
     grid.innerHTML = '<div class="match-grid">' + data.matches.map(renderMatchCard).join('') + '</div>';

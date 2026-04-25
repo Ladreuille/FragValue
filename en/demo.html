@@ -830,7 +830,7 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
     <div class="welcome-toast-dot"></div>
     <div class="welcome-toast-body">
       <div class="welcome-toast-title">Welcome <span id="welcomeToastNick"></span></div>
-      <div class="welcome-toast-msg">Depose ton fichier <strong>.dem FACEIT</strong> pour decouvrir ton FV Rating et ton plan d'action personnalise.</div>
+      <div class="welcome-toast-msg">Drop your <strong>.dem FACEIT</strong> file to discover your FV Rating and your personalized action plan.</div>
     </div>
     <button class="welcome-toast-close" onclick="document.getElementById('welcomeToast').classList.remove('show');setTimeout(()=>document.getElementById('welcomeToast').style.display='none',400)" aria-label="Close">&times;</button>
   </div>
@@ -952,10 +952,10 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
     <!-- MINI PREVIEW 2D REPLAY : capture reelle d'une analyse FragValue
          (de_dust2, round 9, avec positions players, score, timeline).
          Montre concretement la value prop. Clic ouvre un apercu plein ecran. -->
-    <a href="#" class="replay-preview" id="replayPreview" aria-label="Apercu 2D Replay">
+    <a href="#" class="replay-preview" id="replayPreview" aria-label="2D Replay preview">
       <img
         src="/images/previews/demo-2d-replay.png"
-        alt="Apercu 2D Replay FragValue - analyse dust2 round 9"
+        alt="FragValue 2D Replay preview - dust2 round 9 analysis"
         class="rpv-image"
         loading="lazy"
         decoding="async"
@@ -981,7 +981,7 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
          Remplie par renderQuotaBar() au load. Masque pour non connecte. -->
     <div class="quota-bar" id="quotaBar" style="display:none">
       <div class="quota-bar-hd">
-        <span id="quotaBarLabel">Analysiss ce mois</span>
+        <span id="quotaBarLabel">Analyses this month</span>
         <span class="qb-count" id="quotaBarCount">0<em>/3</em></span>
       </div>
       <div class="quota-bar-track"><div class="quota-bar-fill" id="quotaBarFill" style="width:0%"></div></div>
@@ -1001,7 +1001,7 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
       <button class="upload-btn" onclick="document.getElementById('fileInput').click();event.stopPropagation()">
         Choose a file
       </button>
-      <span class="upload-shortcut">Raccourci <kbd id="kbdShortcut">Ctrl U</kbd> pour ouvrir le selecteur</span>
+      <span class="upload-shortcut">Shortcut <kbd id="kbdShortcut">Ctrl U</kbd> to open the file picker</span>
     </div>
 
     <div class="file-bar" id="fileSelected">
@@ -1152,7 +1152,7 @@ async function checkPlanGating() {
     const { data:{ session } } = await _sb.auth.getSession();
     if (!session) return true; // non connecte = on laisse passer (free)
 
-    // Accountr les demos ce mois-ci
+    // Compter les demos ce mois-ci
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const { count } = await _sb.from('demos')
@@ -1480,7 +1480,7 @@ function injectMapOverlays() {
 }
 injectMapOverlays();
 
-// Raccourci clavier : Ctrl/Cmd + U ouvre le file picker.
+// Shortcut clavier : Ctrl/Cmd + U ouvre le file picker.
 // Detecte Mac pour afficher le bon symbole dans le kbd visuel.
 (function setupKeyShortcut() {
   const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || '');
@@ -1534,7 +1534,7 @@ async function renderQuotaBar(session) {
       const pct = Math.min(100, (u / 3) * 100);
       fill.style.width = pct + '%';
       count.innerHTML = u + '<em>/3</em>';
-      label.textContent = 'Analysiss ce mois';
+      label.textContent = 'Analyses this month';
       if (u >= 3) {
         bar.classList.add('quota-full');
         // Bloque l'upload avant meme que l'user ne commence :

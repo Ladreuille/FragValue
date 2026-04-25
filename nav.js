@@ -13,6 +13,55 @@
 (function () {
   'use strict';
 
+  // ── i18n : detection de la langue + dictionnaire de labels ────────────
+  // EN si <html lang="en"> (build-i18n.js le pose) OU URL /en/*.
+  // Tous les labels user-facing du nav passent par T[key].
+  const FV_LANG = (document.documentElement.lang === 'en'
+                || window.location.pathname.startsWith('/en/')) ? 'en' : 'fr';
+  const T_FR = {
+    monJeu: 'Mon jeu', progresser: 'Progresser', pros: 'Pros', equipe: 'Équipe',
+    apercu: 'Aperçu', mesMatchs: 'Mes matchs', nouvelleDemo: 'Nouvelle démo',
+    scout: 'Scout', comparer: 'Comparer',
+    roadmap: 'Roadmap', guideStats: 'Guide des stats', lineupLib: 'Lineup library', blog: 'Blog',
+    proDemos: 'Pro demos (HLTV)', proBenchmarks: 'Pro benchmarks',
+    teamDash: 'Team dashboard', prepVeto: 'Prep veto', antiStrat: 'Anti-strat',
+    soonBadge: 'BIENTÔT',
+    tarifs: 'Tarifs', connexion: 'Connexion', monEspace: 'Mon espace',
+    skipLink: 'Aller au contenu principal',
+    ariaLang: 'Changer la langue', titleLang: 'Switch language',
+    ariaSwitchFR: 'Switch to French', ariaSwitchEN: 'Passer en anglais',
+    ariaNotifs: 'Notifications', ariaBurgerOpen: 'Ouvrir le menu', ariaBurgerClose: 'Fermer le menu',
+    ariaMenu: 'Menu principal',
+    feedbackTooltip: 'Tu as une réponse à ton feedback',
+    notifTitle: 'Notifications', notifMarkAll: 'Tout marquer lu',
+    notifLoading: 'Chargement...', notifEmpty: 'Pas encore de notification.',
+    notifViewTickets: 'Voir mes tickets', notifFallbackTitle: 'Notification',
+    timeNow: "a l'instant", timeMin: 'min', timeHour: 'h', timeDay: 'j',
+    locale: 'fr-FR',
+  };
+  const T_EN = {
+    monJeu: 'My game', progresser: 'Improve', pros: 'Pros', equipe: 'Team',
+    apercu: 'Overview', mesMatchs: 'My matches', nouvelleDemo: 'New demo',
+    scout: 'Scout', comparer: 'Compare',
+    roadmap: 'Roadmap', guideStats: 'Stats guide', lineupLib: 'Lineup library', blog: 'Blog',
+    proDemos: 'Pro demos (HLTV)', proBenchmarks: 'Pro benchmarks',
+    teamDash: 'Team dashboard', prepVeto: 'Veto prep', antiStrat: 'Anti-strat',
+    soonBadge: 'SOON',
+    tarifs: 'Pricing', connexion: 'Login', monEspace: 'My account',
+    skipLink: 'Skip to main content',
+    ariaLang: 'Switch language', titleLang: 'Switch language',
+    ariaSwitchFR: 'Switch to French', ariaSwitchEN: 'Switch to English',
+    ariaNotifs: 'Notifications', ariaBurgerOpen: 'Open menu', ariaBurgerClose: 'Close menu',
+    ariaMenu: 'Main menu',
+    feedbackTooltip: 'You have a reply to your feedback',
+    notifTitle: 'Notifications', notifMarkAll: 'Mark all read',
+    notifLoading: 'Loading...', notifEmpty: 'No notifications yet.',
+    notifViewTickets: 'View my tickets', notifFallbackTitle: 'Notification',
+    timeNow: 'just now', timeMin: 'min', timeHour: 'h', timeDay: 'd',
+    locale: 'en-US',
+  };
+  const T = FV_LANG === 'en' ? T_EN : T_FR;
+
   // ── Styles injectés (scope navbar + global focus-visible pour A11y) ──
   const css = `
     /* Global focus-visible : bordure accent verte visible au clavier sur
@@ -151,43 +200,54 @@
   document.head.appendChild(styleTag);
 
   // ── Définition des 4 sections ───────────────────────────────────────────
+  // Si EN, prefixe les liens internes avec /en/ (sauf /blog.html qui n'a pas
+  // de version traduite pour le moment).
+  const enPrefix = FV_LANG === 'en' ? '/en' : '';
+  const link = (path) => {
+    // Pages traduites par build-i18n.js : on prefixe /en/. Sinon on garde tel quel.
+    const TRANSLATED = ['/index.html', '/pricing.html', '/demo.html', '/login.html',
+      '/cgv.html', '/mentions-legales.html', '/privacy.html', '/lineup-library.html',
+      '/pro-demos.html', '/pro-benchmarks.html', '/prep-veto.html', '/anti-strat.html',
+      '/levels.html', '/stats-guide.html', '/compare-outils.html'];
+    return TRANSLATED.includes(path) ? (enPrefix + path) : path;
+  };
   const sections = [
     {
       key: 'mon-jeu',
-      label: 'Mon jeu',
+      label: T.monJeu,
       items: [
-        { href: '/dashboard.html', label: 'Aperçu' },
-        { href: '/matches.html', label: 'Mes matchs' },
-        { href: '/demo.html', label: 'Nouvelle démo' },
-        { href: '/scout.html', label: 'Scout', badge: 'pro' },
-        { href: '/compare.html', label: 'Comparer' },
+        { href: link('/dashboard.html'), label: T.apercu },
+        { href: link('/matches.html'), label: T.mesMatchs },
+        { href: link('/demo.html'), label: T.nouvelleDemo },
+        { href: link('/scout.html'), label: T.scout, badge: 'pro' },
+        { href: link('/compare.html'), label: T.comparer },
       ],
     },
     {
       key: 'progresser',
-      label: 'Progresser',
+      label: T.progresser,
       items: [
-        { href: '/levels.html', label: 'Roadmap' },
-        { href: '/stats-guide.html', label: 'Guide des stats' },
-        { href: '/lineup-library.html', label: 'Lineup library' },
-        { href: '/blog.html', label: 'Blog' },
+        { href: link('/levels.html'), label: T.roadmap },
+        { href: link('/stats-guide.html'), label: T.guideStats },
+        { href: link('/lineup-library.html'), label: T.lineupLib },
+        { href: link('/blog.html'), label: T.blog },
       ],
     },
     {
       key: 'pros',
-      label: 'Pros',
+      label: T.pros,
       items: [
-        { href: '/pro-demos.html', label: 'Pro demos (HLTV)', badge: 'soon' },
-        { href: '/pro-benchmarks.html', label: 'Pro benchmarks', badge: 'elite' },
+        { href: link('/pro-demos.html'), label: T.proDemos, badge: 'soon' },
+        { href: link('/pro-benchmarks.html'), label: T.proBenchmarks, badge: 'elite' },
       ],
     },
     {
       key: 'equipe',
-      label: 'Équipe',
+      label: T.equipe,
       items: [
-        { href: '/team.html', label: 'Team dashboard', badge: 'elite' },
-        { href: '/prep-veto.html', label: 'Prep veto', badge: 'elite' },
-        { href: '/anti-strat.html', label: 'Anti-strat', badge: 'elite' },
+        { href: link('/team.html'), label: T.teamDash, badge: 'elite' },
+        { href: link('/prep-veto.html'), label: T.prepVeto, badge: 'elite' },
+        { href: link('/anti-strat.html'), label: T.antiStrat, badge: 'elite' },
       ],
     },
   ];
@@ -204,7 +264,7 @@
   // ── Construction du HTML ────────────────────────────────────────────────
   function buildSectionHTML(section) {
     const activeCls = section.key === activeKey ? ' active' : '';
-    const badgeLabels = { pro: 'PRO', elite: 'ELITE', soon: 'BIENTÔT' };
+    const badgeLabels = { pro: 'PRO', elite: 'ELITE', soon: T.soonBadge };
     const items = section.items.map(it => {
       const badge = it.badge ? `<span class="fv-badge ${it.badge}">${badgeLabels[it.badge] || it.badge.toUpperCase()}</span>` : '';
       return `<a href="${it.href}">${it.label}${badge}</a>`;
@@ -221,22 +281,22 @@
   }
 
   const navHTML = `
-    <a href="/index.html" class="logo">Frag<span class="logo-accent">Value</span></a>
+    <a href="${link('/index.html')}" class="logo">Frag<span class="logo-accent">Value</span></a>
     <div class="fv-sections">${sections.map(buildSectionHTML).join('')}</div>
     <div class="fv-right">
-      <a href="/pricing.html" class="fv-login">Tarifs</a>
-      <button class="fv-lang" id="navLangBtn" type="button" aria-label="Changer la langue" title="Switch language">
+      <a href="${link('/pricing.html')}" class="fv-login">${T.tarifs}</a>
+      <button class="fv-lang" id="navLangBtn" type="button" aria-label="${T.ariaLang}" title="${T.titleLang}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         <span id="navLangLabel">EN</span>
       </button>
-      <button class="fv-bell" id="navBellBtn" type="button" aria-label="Notifications" aria-haspopup="true" aria-expanded="false" style="display:none">
+      <button class="fv-bell" id="navBellBtn" type="button" aria-label="${T.ariaNotifs}" aria-haspopup="true" aria-expanded="false" style="display:none">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
         <span class="fv-bell-badge" id="navBellBadge" style="display:none">0</span>
       </button>
-      <a href="/login.html" class="fv-login" id="navLoginBtn">Connexion</a>
-      <a href="/account.html#feedback" class="fv-cta" id="navAccountBtn" style="display:none">Mon espace<span class="fv-account-dot" id="navFeedbackDot" title="Tu as une réponse à ton feedback"></span></a>
+      <a href="${link('/login.html')}" class="fv-login" id="navLoginBtn">${T.connexion}</a>
+      <a href="/account.html#feedback" class="fv-cta" id="navAccountBtn" style="display:none">${T.monEspace}<span class="fv-account-dot" id="navFeedbackDot" title="${T.feedbackTooltip}"></span></a>
     </div>
-    <button class="fv-burger" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="fvMobileDrawer">
+    <button class="fv-burger" type="button" aria-label="${T.ariaBurgerOpen}" aria-expanded="false" aria-controls="fvMobileDrawer">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
     </button>
   `;
@@ -249,7 +309,7 @@
     skip.id = 'fv-skip-link';
     skip.className = 'fv-skip-link';
     skip.href = '#main-content';
-    skip.textContent = 'Aller au contenu principal';
+    skip.textContent = T.skipLink;
     document.body.insertBefore(skip, document.body.firstChild);
     // Au click, cible le <main> ou le 1er h1 et lui donne le focus programmatique
     skip.addEventListener('click', e => {
@@ -282,11 +342,10 @@
     const langLabel = navEl.querySelector('#navLangLabel');
     if (!langBtn || !langLabel) return;
 
-    const isEN = document.documentElement.lang === 'en'
-              || window.location.pathname.startsWith('/en/');
+    const isEN = FV_LANG === 'en';
     const target = isEN ? 'fr' : 'en';
     langLabel.textContent = target.toUpperCase();
-    langBtn.setAttribute('aria-label', isEN ? 'Switch to French' : 'Passer en anglais');
+    langBtn.setAttribute('aria-label', isEN ? T.ariaSwitchFR : T.ariaSwitchEN);
 
     langBtn.addEventListener('click', function () {
       // Cookie fv_lang : 1 an, SameSite=Lax (lu par middleware.js Vercel Edge)
@@ -335,7 +394,7 @@
   // Construit le drawer mobile avec toutes les sections + Tarifs/Connexion/Mon espace.
   // Injecté dans document.body pour éviter tout conflit de stacking context avec la nav.
   function buildMobileDrawer() {
-    const badgeLabels = { pro: 'PRO', elite: 'ELITE', soon: 'BIENTÔT' };
+    const badgeLabels = { pro: 'PRO', elite: 'ELITE', soon: T.soonBadge };
     const sectionsHTML = sections.map(s => {
       const links = s.items.map(it => {
         const activeCls = it.href.endsWith(path) ? ' active' : '';
@@ -350,16 +409,16 @@
     drawer.id = 'fvMobileDrawer';
     drawer.setAttribute('role', 'dialog');
     drawer.setAttribute('aria-modal', 'true');
-    drawer.setAttribute('aria-label', 'Menu principal');
+    drawer.setAttribute('aria-label', T.ariaMenu);
     drawer.innerHTML = `
-      <button class="fv-mobile-close" type="button" aria-label="Fermer le menu">
+      <button class="fv-mobile-close" type="button" aria-label="${T.ariaBurgerClose}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
       </button>
       ${sectionsHTML}
       <div class="fv-mobile-divider"></div>
-      <a href="/pricing.html" class="fv-mobile-link">Tarifs</a>
-      <a href="/login.html" class="fv-mobile-link" id="navMobileLoginBtn">Connexion</a>
-      <a href="/account.html#feedback" class="fv-mobile-cta" id="navMobileAccountBtn" style="display:none">Mon espace</a>
+      <a href="${link('/pricing.html')}" class="fv-mobile-link">${T.tarifs}</a>
+      <a href="${link('/login.html')}" class="fv-mobile-link" id="navMobileLoginBtn">${T.connexion}</a>
+      <a href="/account.html#feedback" class="fv-mobile-cta" id="navMobileAccountBtn" style="display:none">${T.monEspace}</a>
     `;
 
     const backdrop = document.createElement('div');
@@ -520,16 +579,19 @@
     const then = new Date(iso).getTime();
     if (!then || isNaN(then)) return '';
     const diff = Date.now() - then;
-    if (diff < 0) return 'a l\'instant';
+    if (diff < 0) return T.timeNow;
     const sec = Math.floor(diff / 1000);
-    if (sec < 60) return 'a l\'instant';
+    if (sec < 60) return T.timeNow;
     const min = Math.floor(sec / 60);
-    if (min < 60) return `il y a ${min} min`;
+    const ago = FV_LANG === 'en'
+      ? (n, u) => `${n}${u} ago`
+      : (n, u) => `il y a ${n} ${u}`;
+    if (min < 60) return ago(min, T.timeMin);
     const hours = Math.floor(min / 60);
-    if (hours < 24) return `il y a ${hours} h`;
+    if (hours < 24) return ago(hours, T.timeHour);
     const days = Math.floor(hours / 24);
-    if (days < 7) return `il y a ${days} j`;
-    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+    if (days < 7) return ago(days, T.timeDay);
+    return new Date(iso).toLocaleDateString(T.locale, { day: '2-digit', month: 'short' });
   }
 
   function escapeHtmlNotif(s) {
@@ -542,19 +604,19 @@
     panel.id = 'fvNotifPanel';
     panel.className = 'fv-notif-panel';
     panel.setAttribute('role', 'dialog');
-    panel.setAttribute('aria-label', 'Notifications');
+    panel.setAttribute('aria-label', T.notifTitle);
     panel.innerHTML = `
       <div class="fv-notif-header">
-        <div class="fv-notif-title">Notifications</div>
+        <div class="fv-notif-title">${T.notifTitle}</div>
         <div class="fv-notif-actions">
-          <button class="fv-notif-action" id="fvNotifMarkAll" type="button" disabled>Tout marquer lu</button>
+          <button class="fv-notif-action" id="fvNotifMarkAll" type="button" disabled>${T.notifMarkAll}</button>
         </div>
       </div>
       <div class="fv-notif-list" id="fvNotifList">
-        <div class="fv-notif-empty">Chargement...</div>
+        <div class="fv-notif-empty">${T.notifLoading}</div>
       </div>
       <div class="fv-notif-footer">
-        <a href="/account.html#feedback">Voir mes tickets</a>
+        <a href="/account.html#feedback">${T.notifViewTickets}</a>
       </div>
     `;
     document.body.appendChild(panel);
@@ -619,12 +681,12 @@
   function renderNotifList(notifs) {
     if (!notifListEl) return;
     if (!notifs.length) {
-      notifListEl.innerHTML = '<div class="fv-notif-empty">Pas encore de notification.</div>';
+      notifListEl.innerHTML = `<div class="fv-notif-empty">${T.notifEmpty}</div>`;
       return;
     }
     notifListEl.innerHTML = notifs.map(n => {
       const unreadCls = !n.read ? ' unread' : '';
-      const title = escapeHtmlNotif(n.title || 'Notification');
+      const title = escapeHtmlNotif(n.title || T.notifFallbackTitle);
       const msg = escapeHtmlNotif(n.message || '');
       const time = formatRelativeTime(n.created_at);
       const iconKey = n.icon || n.type || 'info';

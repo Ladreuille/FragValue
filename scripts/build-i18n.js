@@ -41,21 +41,6 @@ const PAGES = [
   'compare-outils.html',
 ];
 
-// Strings à NE JAMAIS traduire (noms propres, brand, technical)
-const PROTECTED_PATTERNS = [
-  /\bFragValue\b/g,
-  /\bCS2\b/g,
-  /\bCounter-Strike\b/g,
-  /\bFACEIT\b/g,
-  /\bHLTV\b/g,
-  /\bStripe\b/g,
-  /\bSupabase\b/g,
-  /\bAnthropic\b/g,
-  /\bClaude\b/g,
-  /\bResend\b/g,
-  /\bVercel\b/g,
-];
-
 // Charge le dictionnaire (objet plat { "fr": "en" })
 function loadDictionary() {
   if (!fs.existsSync(TRANSLATIONS)) {
@@ -72,25 +57,42 @@ function escapeRegex(s) {
 }
 
 // Remplace dans le HTML toutes les occurrences FR par EN.
-// Trie par longueur décroissante pour matcher les phrases longues d'abord.
-// Pour chaque entrée, on tente aussi la variante avec apostrophes échappées
-// (\') et l'EN ré-échappée, pour matcher les strings JS (ex: desc: 'l\'utility').
+//
+// Strategie :
+//   - Trie les entrees par longueur DECROISSANTE (longest-first), pour que les
+//     phrases completes matchent avant les fragments courts.
+//   - Pour les entrees qui sont un MOT UNIQUE court (<=15 chars, pas d'espace,
+//     commence par une lettre), on borne avec des word-boundaries Unicode-aware
+//     pour empecher le match mid-mot (ex: "Analyse" -> "Analysis" ne doit pas
+//     casser "Analyses" en "Analysiss").
+//   - Pour chaque entree avec apostrophe, on tente aussi la variante echappee
+//     (\') pour matcher les strings JS (ex: desc: 'l\'utility').
 function translateHtml(html, dict) {
   const entries = Object.entries(dict).sort((a, b) => b[0].length - a[0].length);
   let out = html;
+
   for (const [fr, en] of entries) {
     if (!fr || fr === en) continue;
-    // Pass 1 : version directe (HTML)
-    const re = new RegExp(escapeRegex(fr), 'g');
-    out = out.replace(re, en);
-    // Pass 2 : version JS-escaped si l'entrée contient des apostrophes
+    if (fr.startsWith('_')) continue; // section markers, ne rien faire
+
+    // Mot unique court : utilise word-boundary Unicode-aware
+    const isWordOnly = !/\s/.test(fr) && /^[A-Za-zÀ-ſ]/.test(fr);
+    if (isWordOnly && fr.length <= 15) {
+      const pattern = '(?<![A-Za-z\\u00C0-\\u017F])' + escapeRegex(fr) + '(?![A-Za-z\\u00C0-\\u017F])';
+      out = out.replace(new RegExp(pattern, 'g'), en);
+    } else {
+      const re = new RegExp(escapeRegex(fr), 'g');
+      out = out.replace(re, en);
+    }
+
+    // Variante avec apostrophes echappees (pour strings JS comme desc: 'l\'utility')
     if (fr.includes("'")) {
-      const frEscaped = fr.replace(/'/g, "\\'");
-      const enEscaped = en.replace(/'/g, "\\'");
-      const reEsc = new RegExp(escapeRegex(frEscaped), 'g');
-      out = out.replace(reEsc, enEscaped);
+      const frEsc = fr.replace(/'/g, "\\'");
+      const enEsc = en.replace(/'/g, "\\'");
+      out = out.replace(new RegExp(escapeRegex(frEsc), 'g'), enEsc);
     }
   }
+
   return out;
 }
 

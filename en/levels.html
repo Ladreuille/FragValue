@@ -29,7 +29,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <link rel="alternate" hreflang="en" href="https://fragvalue.com/en/levels.html">
 <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/levels.html">
 <meta property="og:title" content="FragValue · FACEIT Roadmap: the 10 levels and how to climb">
-<meta property="og:description" content="ELO thresholds, stats attendues par niveau, personal roadmap si compte FACEIT lié. Classement top Challengers EU en temps réel.">
+<meta property="og:description" content="ELO thresholds, expected stats per level, personalized roadmap if FACEIT account linked. Top EU Challengers leaderboard in real-time.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://fragvalue.com/en/levels.html">
 <meta property="og:image" content="https://fragvalue.com/og/home.png">
@@ -129,7 +129,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .perso-elo-remaining{font-size:10px;color:var(--text2);letter-spacing:.04em;margin-top:5px;text-align:right}
 .perso-elo-remaining strong{color:var(--accent)}
 
-/* Diagnostic : stats vs thresholds */
+/* Diagnostic : stats vs seuils */
 .perso-diag{padding:24px 28px}
 .perso-diag-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;font-weight:700}
 .perso-diag-title span{color:var(--accent)}
@@ -210,7 +210,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .perso-ai-goal-val strong{color:var(--accent);display:block;margin-bottom:3px;font-family:var(--display);font-size:14px}
 .perso-ai-footer{margin-top:14px;font-size:10px;color:var(--text3);letter-spacing:.04em;text-align:right}
 
-/* Newx blocs HLTV-style : pro-ref, warmup, roadmap 7j, map setups, mental */
+/* Nouveaux blocs HLTV-style : pro-ref, warmup, roadmap 7j, map setups, mental */
 .perso-ai-block{margin-top:18px;padding:16px 18px;background:var(--card);border:1px solid var(--border);border-radius:var(--r)}
 .perso-ai-block-title{
   display:flex;align-items:center;gap:8px;
@@ -848,9 +848,9 @@ function renderPersonalRoadmap(profile, level, scoutData) {
   };
 
   // ELO progress bar
-  const eloRanke = LEVEL_ELO_RANGES[level] || { min: 0, max: 0 };
+  const eloRange = LEVEL_ELO_RANGES[level] || { min: 0, max: 0 };
   const eloTarget = level >= 10 ? 2400 : (LEVEL_ELO_RANGES[level].max + 1); // Challenger estimé ~2400
-  const eloStart = eloRanke.min;
+  const eloStart = eloRange.min;
   const eloPct = Math.max(0, Math.min(100, ((currentElo - eloStart) / (eloTarget - eloStart)) * 100));
   const eloRemaining = Math.max(0, eloTarget - currentElo);
 
@@ -965,7 +965,7 @@ function renderPersonalRoadmap(profile, level, scoutData) {
     + '  <div class="perso-ai-head">'
     + '    <div class="perso-ai-title">'
     + '      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/><line x1="9" y1="22" x2="15" y2="22"/></svg>'
-    + '      AI Diagnostic personnalise'
+    + '      Personalized AI Diagnosis'
     + '      <span class="perso-ai-badge">AI COACH</span>'
     + '    </div>'
     + '  </div>'
@@ -995,7 +995,7 @@ async function loadAIDiagnosis(sessionToken) {
     }
     const data = await res.json();
     const d = data.diagnosis || {};
-    if (!d.summary) throw new Error('AI Diagnostic vide');
+    if (!d.summary) throw new Error('Empty AI Diagnosis');
 
     const cachedWhen = data.cachedAt
       ? new Date(data.cachedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
@@ -1021,7 +1021,7 @@ async function loadAIDiagnosis(sessionToken) {
       + '  <div class="perso-ai-goal-val"><strong>' + escapeHtml((d.mapTip || {}).map || '-') + '</strong>' + escapeHtml((d.mapTip || {}).advice || '-') + '</div>'
       + '</div>';
 
-    // Newx champs HLTV-style : pro reference, warmup routine, roadmap 7 jours,
+    // Nouveaux champs HLTV-style : pro reference, warmup routine, roadmap 7 jours,
     // map setups, mental tip. Chacun est render seulement si Claude l'a produit
     // (backward-compat avec les diagnoses cached de l'ancien prompt).
     const proRef = d.proReference;
@@ -1100,7 +1100,7 @@ async function loadAIDiagnosis(sessionToken) {
       + '<div class="perso-ai-head">'
       + '  <div class="perso-ai-title">'
       + '    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/><line x1="9" y1="22" x2="15" y2="22"/></svg>'
-      + '    AI Diagnostic personnalise'
+      + '    Personalized AI Diagnosis'
       + '    <span class="perso-ai-badge">AI COACH</span>'
       + '  </div>'
       + '  <button class="perso-ai-refresh" onclick="refreshAI(this)">'
@@ -1126,7 +1126,7 @@ async function loadAIDiagnosis(sessionToken) {
       + '<div class="perso-ai-head">'
       + '  <div class="perso-ai-title">'
       + '    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/><line x1="9" y1="22" x2="15" y2="22"/></svg>'
-      + '    AI Diagnostic personnalise'
+      + '    Personalized AI Diagnosis'
       + '  </div>'
       + '</div>'
       + '<div style="padding:16px;font-size:11px;color:var(--text3);line-height:1.7;background:var(--card);border:1px dashed var(--border2);border-radius:var(--r)">'

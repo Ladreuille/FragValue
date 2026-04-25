@@ -524,6 +524,20 @@ function showError(msg) { const el = document.getElementById('errorMsg'); if(el)
 function hideError()    { const el = document.getElementById('errorMsg'); if(el) el.style.display='none'; }
 
 function showScoutLimitModal(message, used, limit) {
+  // i18n : EN si <html lang="en"> ou URL /en/*
+  var FV_LANG = (document.documentElement.lang === 'en'
+              || window.location.pathname.startsWith('/en/')) ? 'en' : 'fr';
+  var T = FV_LANG === 'en' ? {
+    close: 'Close', limitTitle: 'Daily limit reached',
+    body: function(n){ return 'You have used your ' + n + ' scouts of the day.'; },
+    upgrade: 'Upgrade to Pro', later: 'Later',
+    pricingHref: '/en/pricing.html',
+  } : {
+    close: 'Fermer', limitTitle: 'Limite quotidienne atteinte',
+    body: function(n){ return 'Tu as utilise tes ' + n + ' scouts du jour.'; },
+    upgrade: 'Passer a Pro', later: 'Plus tard',
+    pricingHref: 'pricing.html',
+  };
   const existing = document.getElementById('fvScoutLimitModal');
   if (existing) { existing.style.display = 'flex'; return; }
   const ov = document.createElement('div');
@@ -531,14 +545,14 @@ function showScoutLimitModal(message, used, limit) {
   ov.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(8,9,12,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)';
   ov.innerHTML =
     '<div style="background:#0F1119;border:1px solid #1F2433;border-radius:12px;padding:36px 32px;max-width:420px;width:90%;text-align:center;position:relative">' +
-      '<button aria-label="Fermer" onclick="document.getElementById(\'fvScoutLimitModal\').style.display=\'none\'" style="position:absolute;top:14px;right:14px;width:28px;height:28px;background:transparent;border:1px solid #252B3B;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8892A4">' +
+      '<button aria-label="' + T.close + '" onclick="document.getElementById(\'fvScoutLimitModal\').style.display=\'none\'" style="position:absolute;top:14px;right:14px;width:28px;height:28px;background:transparent;border:1px solid #252B3B;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8892A4">' +
         '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/></svg>' +
       '</button>' +
       '<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);color:#b8ff57;padding:4px 10px;border-radius:40px;font-family:JetBrains Mono,monospace;font-size:10px;font-weight:700;letter-spacing:.08em;margin-bottom:18px">PLAN FREE</div>' +
-      '<div style="font-size:22px;font-weight:700;letter-spacing:-.4px;color:#EDF0F7;margin-bottom:12px">Limite quotidienne atteinte</div>' +
-      '<p style="font-family:JetBrains Mono,monospace;font-size:12px;color:#8892A4;line-height:1.7;margin-bottom:24px">' + (message || ('Tu as utilise tes ' + (limit||3) + ' scouts du jour.')) + '</p>' +
-      '<a href="pricing.html" style="display:inline-block;background:#b8ff57;color:#000;padding:12px 28px;border-radius:6px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">Passer a Pro</a>' +
-      '<div style="margin-top:14px"><button onclick="document.getElementById(\'fvScoutLimitModal\').style.display=\'none\'" style="background:none;border:none;color:#4A5568;font-family:JetBrains Mono,monospace;font-size:11px;cursor:pointer;letter-spacing:.04em">Plus tard</button></div>' +
+      '<div style="font-size:22px;font-weight:700;letter-spacing:-.4px;color:#EDF0F7;margin-bottom:12px">' + T.limitTitle + '</div>' +
+      '<p style="font-family:JetBrains Mono,monospace;font-size:12px;color:#8892A4;line-height:1.7;margin-bottom:24px">' + (message || T.body(limit || 3)) + '</p>' +
+      '<a href="' + T.pricingHref + '" style="display:inline-block;background:#b8ff57;color:#000;padding:12px 28px;border-radius:6px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">' + T.upgrade + '</a>' +
+      '<div style="margin-top:14px"><button onclick="document.getElementById(\'fvScoutLimitModal\').style.display=\'none\'" style="background:none;border:none;color:#4A5568;font-family:JetBrains Mono,monospace;font-size:11px;cursor:pointer;letter-spacing:.04em">' + T.later + '</button></div>' +
     '</div>';
   ov.addEventListener('click', e => { if (e.target === ov) ov.style.display = 'none'; });
   document.body.appendChild(ov);
@@ -690,7 +704,7 @@ function analyzeLastMatch(m, recent) {
     advice: 'Sois plus actif dans chaque round : trade, assist ou survive. Évite de mourir sans impact.'
   });
   if ((m.firstDeaths||0) > (m.firstKills||0) + 1) warnings.push({
-    icon: 'open', label: 'Trop de duels d'ouverture perdus',
+    icon: 'open', label: 'Trop de duels d\'ouverture perdus',
     detail: `${m.firstKills||0} opening kills vs ${m.firstDeaths||0} opening deaths`,
     advice: `Sur ${m.map || 'cette map'}, attends que tes coéquipiers prennent les duels d'info en premier.`
   });
@@ -737,7 +751,7 @@ function analyzeGlobal(recent, cs2, fvScore, matches) {
   if (adr >= 85)   strengths.push({ icon:'dmg',  label:'Impact offensif',       detail:`${adr.toFixed(0)} ADR moyen sur 20 matchs`,  color:'#2DD4A0' });
   if (kast >= 72)  strengths.push({ icon:'pres', label:'Présence constante',    detail:`${kast.toFixed(0)}% KAST en moyenne`,        color:'#2DD4A0' });
   if (winRate >= 58) strengths.push({ icon:'win', label:'Win rate solide',      detail:`${winRate.toFixed(0)}% de victoires`,         color:'#2DD4A0' });
-  if (opening >= 1.2) strengths.push({ icon:'open', label:'Bon duelliste d'ouverture', detail:`Opening ratio ${opening.toFixed(2)}`, color:'#3B7FF5' });
+  if (opening >= 1.2) strengths.push({ icon:'open', label:'Bon duelliste d\'ouverture', detail:`Opening ratio ${opening.toFixed(2)}`, color:'#3B7FF5' });
   if (cv <= 0.12)  strengths.push({ icon:'cons', label:'Très consistant',       detail:`Écart-type faible sur 20 matchs`,            color:'#A78BFA' });
   if (recent.totalClutch1v1 + recent.totalClutch1v2 >= 5)
                    strengths.push({ icon:'clutch', label:'Clutcheur',           detail:`${recent.totalClutch1v1 + recent.totalClutch1v2} clutches gagnés`, color:'#F5C842' });
@@ -748,7 +762,7 @@ function analyzeGlobal(recent, cs2, fvScore, matches) {
   if (opening < 0.85) improvements.push({
     icon: 'open', label: 'Opening ratio faible',
     detail: `${opening.toFixed(2)} sur 20 matchs`,
-    advice: 'Évite de prendre les duels d'information en premier. Laisse un coéquipier peeaker et prends le trade si nécessaire.',
+    advice: 'Évite de prendre les duels d\'information en premier. Laisse un coéquipier peeaker et prends le trade si nécessaire.',
     priority: 'high',
     metric: `${opening.toFixed(2)} ratio`,
   });
@@ -791,9 +805,9 @@ function analyzeGlobal(recent, cs2, fvScore, matches) {
 
   // Utility passive
   if (flashPR < 0.25 && elo > 1500) improvements.push({
-    icon: 'util', label: 'Utilisation de l'utility limitée',
+    icon: 'util', label: 'Utilisation de l\'utility limitée',
     detail: `${flashPR.toFixed(2)} flash par round`,
-    advice: 'Flash avant d'entrer sur un site ou de peeaker un angle difficile. Une bonne flash peut te sauver le duel.',
+    advice: 'Flash avant d\'entrer sur un site ou de peeaker un angle difficile. Une bonne flash peut te sauver le duel.',
     priority: 'medium',
     metric: `${flashPR.toFixed(2)} flash/round`,
   });

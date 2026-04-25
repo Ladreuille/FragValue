@@ -9,12 +9,53 @@
   if (window.__fvFeedbackInit) return;
   window.__fvFeedbackInit = true;
 
+  // i18n : detection langue + dictionnaire
+  const FV_LANG = (document.documentElement.lang === 'en'
+                || window.location.pathname.startsWith('/en/')) ? 'en' : 'fr';
+  const T = FV_LANG === 'en' ? {
+    btnTitle: 'Give your feedback', btnAria: 'Open feedback form',
+    modalTitle: 'Your feedback',
+    modalSub: 'Tell us what works, what breaks, or what you want to see. We read everything.',
+    typesLabel: 'Type of feedback',
+    typeAriaPrefix: 'Type:',
+    descIntro: 'Choose a type to start',
+    descMissing: 'Choose a type (bug, idea, positive or negative) before sending',
+    msgLabel: 'Your message',
+    msgPlaceholder: 'Describe what you want to share...',
+    emailLabel: 'Email (optional - so we can reply)',
+    cancel: 'Cancel', send: 'Send', sending: 'Sending...',
+    close: 'Close',
+    msgTooShort: 'Write at least a few words to describe your feedback.',
+    success: 'Thanks for your feedback', error: 'Network error',
+    typePositive: 'Positive', typeNegative: 'Negative', typeIdea: 'Idea', typeBug: 'Bug',
+    descPositive: 'Something that works well', descNegative: 'Something that does not work',
+    descIdea: 'A suggestion for improvement', descBug: 'Something is not working',
+  } : {
+    btnTitle: 'Donner ton feedback', btnAria: 'Ouvrir le formulaire de feedback',
+    modalTitle: 'Ton feedback',
+    modalSub: 'Dis-nous ce qui marche, ce qui coince, ou ce que tu aimerais voir. On lit tout.',
+    typesLabel: 'Type de retour',
+    typeAriaPrefix: 'Type :',
+    descIntro: 'Choisis un type pour commencer',
+    descMissing: 'Choisis un type (bug, idée, positif ou négatif) avant d\'envoyer',
+    msgLabel: 'Ton message',
+    msgPlaceholder: 'Decris ce que tu veux nous partager...',
+    emailLabel: 'Email (optionnel - pour qu\'on puisse te repondre)',
+    cancel: 'Annuler', send: 'Envoyer', sending: 'Envoi...',
+    close: 'Fermer',
+    msgTooShort: 'Écris au moins quelques mots pour décrire ton retour.',
+    success: 'Merci pour ton feedback', error: 'Erreur reseau',
+    typePositive: 'Positif', typeNegative: 'Negatif', typeIdea: 'Idee', typeBug: 'Bug',
+    descPositive: 'Quelque chose qui marche bien', descNegative: 'Quelque chose qui ne va pas',
+    descIdea: 'Une suggestion d\'amelioration', descBug: 'Quelque chose ne fonctionne pas',
+  };
+
   const LS_OPENED_ONCE = 'fv_feedback_opened';
   const TYPES = [
-    { key: 'positive', label: 'Positif',  icon: '+', color: '#b8ff57', desc: 'Quelque chose qui marche bien' },
-    { key: 'negative', label: 'Negatif',  icon: '-', color: '#ff4444', desc: 'Quelque chose qui ne va pas' },
-    { key: 'idea',     label: 'Idee',     icon: '!', color: '#f5c842', desc: 'Une suggestion d\'amelioration' },
-    { key: 'bug',      label: 'Bug',      icon: 'x', color: '#ff8a3d', desc: 'Quelque chose ne fonctionne pas' },
+    { key: 'positive', label: T.typePositive, icon: '+', color: '#b8ff57', desc: T.descPositive },
+    { key: 'negative', label: T.typeNegative, icon: '-', color: '#ff4444', desc: T.descNegative },
+    { key: 'idea',     label: T.typeIdea,     icon: '!', color: '#f5c842', desc: T.descIdea },
+    { key: 'bug',      label: T.typeBug,      icon: 'x', color: '#ff8a3d', desc: T.descBug },
   ];
 
   // Recupere le token Supabase depuis localStorage (si page n'expose pas window._sb)
@@ -82,8 +123,8 @@
   // Bouton flottant
   const btn = document.createElement('button');
   btn.className = 'fv-fb-btn';
-  btn.title = 'Donner ton feedback';
-  btn.setAttribute('aria-label', 'Ouvrir le formulaire de feedback');
+  btn.title = T.btnTitle;
+  btn.setAttribute('aria-label', T.btnAria);
   btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
   if (!localStorage.getItem(LS_OPENED_ONCE)) btn.classList.add('fv-pulse');
   document.body.appendChild(btn);
@@ -100,34 +141,34 @@
     overlay.innerHTML = `
       <div class="fv-fb-modal" role="dialog" aria-labelledby="fv-fb-title">
         <div class="fv-fb-head">
-          <h3 class="fv-fb-title" id="fv-fb-title">Ton feedback</h3>
-          <button class="fv-fb-close" aria-label="Fermer">×</button>
+          <h3 class="fv-fb-title" id="fv-fb-title">${T.modalTitle}</h3>
+          <button class="fv-fb-close" aria-label="${T.close}">×</button>
         </div>
-        <p class="fv-fb-sub">Dis-nous ce qui marche, ce qui coince, ou ce que tu aimerais voir. On lit tout.</p>
+        <p class="fv-fb-sub">${T.modalSub}</p>
 
-        <div class="fv-fb-types-label">Type de retour</div>
+        <div class="fv-fb-types-label">${T.typesLabel}</div>
         <div class="fv-fb-types" data-role="types-container">
           ${TYPES.map(t => `
-            <button class="fv-fb-type" data-type="${t.key}" type="button" aria-label="Type : ${t.label}">
+            <button class="fv-fb-type" data-type="${t.key}" type="button" aria-label="${T.typeAriaPrefix} ${t.label}">
               <span class="fv-fb-type-icon" style="color:${t.color}">${t.icon}</span>
               <span class="fv-fb-type-label">${t.label}</span>
             </button>
           `).join('')}
         </div>
-        <div class="fv-fb-type-desc" data-role="type-desc">Choisis un type pour commencer</div>
+        <div class="fv-fb-type-desc" data-role="type-desc">${T.descIntro}</div>
 
-        <label class="fv-fb-label" for="fv-fb-msg">Ton message</label>
-        <textarea class="fv-fb-textarea" id="fv-fb-msg" maxlength="2000" placeholder="Decris ce que tu veux nous partager..."></textarea>
+        <label class="fv-fb-label" for="fv-fb-msg">${T.msgLabel}</label>
+        <textarea class="fv-fb-textarea" id="fv-fb-msg" maxlength="2000" placeholder="${T.msgPlaceholder}"></textarea>
         <div class="fv-fb-counter" data-role="counter">0 / 2000</div>
 
         <div data-role="email-block" style="display:none">
-          <label class="fv-fb-label" for="fv-fb-email">Email (optionnel - pour qu'on puisse te repondre)</label>
+          <label class="fv-fb-label" for="fv-fb-email">${T.emailLabel}</label>
           <input class="fv-fb-input" id="fv-fb-email" type="email" placeholder="ton@email.com" maxlength="200" />
         </div>
 
         <div class="fv-fb-actions">
-          <button class="fv-fb-cancel" type="button">Annuler</button>
-          <button class="fv-fb-submit" type="button" aria-disabled="true" data-state="invalid">Envoyer</button>
+          <button class="fv-fb-cancel" type="button">${T.cancel}</button>
+          <button class="fv-fb-submit" type="button" aria-disabled="true" data-state="invalid">${T.send}</button>
         </div>
       </div>
     `;
@@ -152,7 +193,7 @@
       // Force reflow pour retrigger l'animation
       void typesContainer.offsetWidth;
       typesContainer.classList.add('shake', 'required-highlight');
-      typeDesc.textContent = 'Choisis un type (bug, idée, positif ou négatif) avant d\'envoyer';
+      typeDesc.textContent = T.descMissing;
       typeDesc.classList.add('warning');
       typeDesc.style.color = '#ff8a3d';
       setTimeout(() => {
@@ -227,13 +268,13 @@
           msgInput.style.borderColor = '';
           msgInput.style.boxShadow = '';
         }, 1400);
-        showToast('Écris au moins quelques mots pour décrire ton retour.', true);
+        showToast(T.msgTooShort, true);
         return;
       }
 
       isSubmitting = true;
       const originalText = submitBtn.textContent;
-      submitBtn.textContent = 'Envoi...';
+      submitBtn.textContent = T.sending;
       submitBtn.setAttribute('aria-disabled', 'true');
 
       try {
@@ -258,20 +299,20 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Erreur ' + res.status);
 
-        showToast('Merci pour ton feedback');
+        showToast(T.success);
         close();
         // Reset complet du form pour la prochaine ouverture
         selectedType = null;
         msgInput.value = '';
         if (emailInput) emailInput.value = '';
         typeBtns.forEach(x => x.classList.remove('active'));
-        typeDesc.textContent = 'Choisis un type pour commencer';
+        typeDesc.textContent = T.descIntro;
         typeDesc.style.color = '#4a5050';
         typeDesc.classList.remove('warning');
         typesContainer.classList.remove('required-highlight', 'shake');
         counter.textContent = '0 / 2000';
       } catch (e) {
-        showToast(e.message || 'Erreur reseau', true);
+        showToast(e.message || T.error, true);
       } finally {
         isSubmitting = false;
         submitBtn.textContent = originalText;

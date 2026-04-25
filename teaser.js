@@ -4,6 +4,19 @@
    - Active la CTA "Activer les notifications" et la passe en "Intérêt enregistré"
 */
 (function(){
+  // i18n : detection langue + dictionnaire
+  const FV_LANG = (document.documentElement.lang === 'en'
+                || window.location.pathname.startsWith('/en/')) ? 'en' : 'fr';
+  const T = FV_LANG === 'en' ? {
+    saved: 'Interest registered', saving: 'Saving...',
+    netError: 'Network error. Try again in a moment.',
+    locale: 'en-US',
+  } : {
+    saved: 'Intérêt enregistré', saving: 'Enregistrement...',
+    netError: 'Erreur reseau. Reessaie dans un instant.',
+    locale: 'fr-FR',
+  };
+
   const ls = window.localStorage;
   const KEY = 'fv_teaser_interests';
   const API = '/api/feature-waitlist';
@@ -65,11 +78,11 @@
       btn.dataset.state = 'saved';
       btn.innerHTML =
         '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
-        'Intérêt enregistré';
+        T.saved;
     };
 
     const renderCount = (n) => {
-      if (counter) counter.textContent = (Number(n) || 0).toLocaleString('fr-FR');
+      if (counter) counter.textContent = (Number(n) || 0).toLocaleString(T.locale);
     };
 
     // 1. Optimistic : si localStorage dit "deja inscrit", on affiche tout de suite
@@ -106,7 +119,7 @@
       btn.dataset.state = 'loading';
       btn.innerHTML =
         '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:fvspin 0.8s linear infinite"><circle cx="12" cy="12" r="9" stroke-dasharray="42" stroke-dashoffset="12"/></svg>' +
-        'Enregistrement...';
+        T.saving;
       try {
         const d = await postInterest(slug);
         renderCount(d.total);
@@ -119,7 +132,7 @@
         btn.innerHTML = prev;
         console.warn('feature-waitlist failed', e);
         // Toast user : signale l'echec pour qu'il puisse retry ou comprendre
-        showFeedbackToast('Erreur reseau. Reessaie dans un instant.', 'error');
+        showFeedbackToast(T.netError, 'error');
       }
     });
   }
