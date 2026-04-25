@@ -440,7 +440,7 @@ async function startComparison() {
   document.getElementById('loadingBar').classList.add('active');
   document.getElementById('errorCard').style.display = 'none';
   document.getElementById('results').style.display = 'none';
-  document.getElementById('searchHint').textContent = `Chargement de ${nicks.length} profils...`;
+  document.getElementById('searchHint').textContent = `Loading ${nicks.length} profiles...`;
 
   try {
     const headers = {};
@@ -461,10 +461,10 @@ async function startComparison() {
     });
 
     if (playersData.length < 2) {
-      showError(`Unable to load les profils. Vérifie les pseudos : ${errors.join(', ')}`);
+      showError(`Unable to load profiles. Check the usernames: ${errors.join(', ')}`);
       return;
     }
-    if (errors.length > 0) showError(`Ignorés (introuvables) : ${errors.join(', ')}`, 'warn');
+    if (errors.length > 0) showError(`Ignored (not found): ${errors.join(', ')}`, 'warn');
 
     renderAll();
     updateShareUrl(nicks);

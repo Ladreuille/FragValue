@@ -338,7 +338,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
           <div style="font-family:var(--display);font-size:14px;color:var(--accent);letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px" id="grantBannerTitle">Free Pro access active</div>
           <div style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5" id="grantBannerMsg">Loading...</div>
         </div>
-        <a href="/en/pricing.html" class="settings-btn" style="background:var(--accent);color:#000;border-color:var(--accent)">Passer a Pro</a>
+        <a href="/en/pricing.html" class="settings-btn" style="background:var(--accent);color:#000;border-color:var(--accent)">Upgrade to Pro</a>
       </div>
 
       <div class="settings-card" id="referralCard">
@@ -361,7 +361,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
           <div id="referralTiers" style="margin-top:8px"></div>
           <!-- Explication succincte -->
           <div style="font-family:var(--mono);font-size:11px;color:var(--text3);line-height:1.6;margin-top:8px">
-            <strong style="color:var(--accent)">How it works :</strong> chaque ami qui s'inscrit avec ton lien te fait avancer dans les paliers. Ton referral recoit 7 days Pro de bienvenue. You, tu debloques des recompenses majeures aux seuils 15 / 50 / 100 / 500 referrals.
+            <strong style="color:var(--accent)">How it works:</strong> every friend who signs up with your link moves you up the tiers. Your referral gets 7 days of Pro as welcome. You unlock major rewards at the 15 / 50 / 100 / 500 referral milestones.
           </div>
         </div>
       </div>
@@ -409,7 +409,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
           <input class="settings-input" id="scoutBirthYear" type="number" min="1970" max="2015" placeholder="Ex: 2003"/>
           <div class="scout-row-text">
             <div class="settings-label">Birth year</div>
-            <div class="settings-value">Permet le classement "Rookie Gems" (talents &lt; 22 ans). Non visible publiquement.</div>
+            <div class="settings-value">Enables the "Rookie Gems" ranking (talents under 22). Not publicly visible.</div>
           </div>
         </div>
         <div class="settings-row scout-row" data-requires-optin style="display:none">
@@ -822,7 +822,7 @@ async function loadSubscription() {
     const usage = d.usage || {};
 
     // Cas special : plan Pro/Team via un grant (parrainage, admin) et non Stripe.
-    // On affiche un libelle specifique + CTA "Passer a Pro" pour continuer
+    // On affiche un libelle specifique + CTA "Upgrade to Pro" pour continuer
     // apres expiration du trial.
     const isGrantTrial = d._source === 'grant' && !!d.grant;
     const grantReasonLabel = {
@@ -1057,15 +1057,15 @@ function renderGrantBanner(grant) {
   }
   const planLabel = (grant.plan || 'pro').toUpperCase();
   const reasonMsg = {
-    'referral_referee'        : 'Welcome. Ton parrainage te donne acces aux features Pro.',
-    'referral_referrer'       : 'Merci d\'avoir parraine un player.',
-    'referral_tier_pro_1y'    : 'Palier 15 referrals atteint. Pro 1 year debloque.',
-    'referral_tier_elite_1y'  : 'Palier 50 referrals atteint. Elite 1 year debloque.',
-    'referral_tier_pro_life'  : 'Palier 100 referrals atteint. Pro for life debloque, ce grant ne peut plus etre revoque.',
-    'referral_tier_elite_life': 'Palier 500 referrals atteint. Elite for life debloque, niveau ultime.',
-    'admin_grant'             : 'Acces Pro offered par l\'equipe FragValue.',
-    'promo_code'              : 'Acces Pro via un code promo.',
-    'compensation'            : 'Acces Pro offered en compensation.',
+    'referral_referee'        : 'Welcome. Your referral gives you access to Pro features.',
+    'referral_referrer'       : 'Thanks for referring a player.',
+    'referral_tier_pro_1y'    : '15 referrals reached. 1 year of Pro unlocked.',
+    'referral_tier_elite_1y'  : '50 referrals reached. 1 year of Elite unlocked.',
+    'referral_tier_pro_life'  : '100 referrals reached. Pro for life unlocked, this grant can no longer be revoked.',
+    'referral_tier_elite_life': '500 referrals reached. Elite for life unlocked, ultimate tier.',
+    'admin_grant'             : 'Free Pro access from the FragValue team.',
+    'promo_code'              : 'Pro access via promo code.',
+    'compensation'            : 'Free Pro access as compensation.',
   }[grant.reason] || 'Free Pro access active.';
   const title = document.getElementById('grantBannerTitle');
   const msg = document.getElementById('grantBannerMsg');
