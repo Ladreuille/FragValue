@@ -417,6 +417,62 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       color:var(--text);line-height:1.5
     }
 
+    /* ── Drawing toolbar : annotations tactiques (pencil/arrow/circle/text) ── */
+    .drawing-toolbar{
+      position:absolute;top:14px;left:50%;
+      transform:translateX(-50%);
+      z-index:56;
+      display:flex;align-items:center;gap:8px;
+      background:rgba(15,16,16,.96);
+      border:1px solid rgba(184,255,87,.25);
+      border-radius:8px;padding:6px 10px;
+      box-shadow:0 12px 32px rgba(0,0,0,.5),0 0 16px rgba(184,255,87,.08);
+      animation:bpSlideIn 220ms cubic-bezier(.2,.8,.3,1)
+    }
+    .drawing-toolbar .dt-tools,
+    .drawing-toolbar .dt-colors{
+      display:flex;align-items:center;gap:4px
+    }
+    .drawing-toolbar .dt-divider{
+      width:1px;height:18px;background:rgba(255,255,255,.1);margin:0 2px
+    }
+    .dt-tool{
+      width:28px;height:28px;
+      display:flex;align-items:center;justify-content:center;
+      background:transparent;border:1px solid transparent;
+      color:var(--muted);cursor:pointer;border-radius:5px;
+      transition:background .15s,color .15s,border-color .15s
+    }
+    .dt-tool:hover{background:rgba(184,255,87,.06);color:var(--text)}
+    .dt-tool.active{
+      background:rgba(184,255,87,.12);
+      border-color:var(--accent);color:var(--accent)
+    }
+    .dt-color{
+      width:18px;height:18px;
+      border:1.5px solid transparent;cursor:pointer;border-radius:50%;
+      padding:0;transition:transform .15s,border-color .15s;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)
+    }
+    .dt-color:hover{transform:scale(1.15)}
+    .dt-color.active{
+      border-color:var(--text);transform:scale(1.15);
+      box-shadow:0 0 0 2px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.2)
+    }
+    .dt-clear{
+      display:flex;align-items:center;gap:4px;
+      background:transparent;border:1px solid rgba(255,80,80,.4);
+      color:#ff5050;cursor:pointer;border-radius:5px;
+      font-family:'Space Mono',monospace;font-size:10px;
+      letter-spacing:.06em;text-transform:uppercase;
+      padding:5px 8px;
+      transition:background .15s
+    }
+    .dt-clear:hover{background:rgba(255,80,80,.12)}
+
+    /* Cursor crosshair sur canvas en mode dessin */
+    .canvas-area.drawing-mode canvas{cursor:crosshair !important}
+
     /* ── Player tooltip overlay : hover sur dot ──────────────────────────
        Position absolue, suivi du curseur via JS. Z-index haut pour passer
        au-dessus de la canvas. Anti-jitter via pointer-events:none. */
@@ -747,6 +803,10 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <button class="sl-tool" id="btnGrenadeTraj" onclick="toggleGrenadeTraj()" data-tip="Trajectoires grenades">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 Q 8 4, 21 6"/><circle cx="21" cy="6" r="2.5" fill="currentColor"/></svg>
         </button>
+        <!-- Drawing tool : annotations tactiques (pencil/arrow/circle/text) sauvees par round -->
+        <button class="sl-tool" id="btnDrawing" onclick="toggleDrawingMode()" data-tip="Annoter ce round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+        </button>
       </div>
 
       <!-- Floor toggle Nuke -->
@@ -806,6 +866,37 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <div class="bp-empty" id="bookmarksEmpty" style="display:none">
           Pas de moment fort detecte. Mets-en un toi-meme avec le bouton ci-dessus.
         </div>
+      </div>
+      <!-- Drawing toolbar : pencil / arrow / circle / text + couleurs + clear.
+           Visible uniquement quand drawingMode ON. Position top-center canvas. -->
+      <div id="drawingToolbar" class="drawing-toolbar" style="display:none">
+        <div class="dt-tools">
+          <button class="dt-tool active" data-tool="pencil" onclick="selectDrawTool('pencil')" title="Pinceau libre">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+          </button>
+          <button class="dt-tool" data-tool="arrow" onclick="selectDrawTool('arrow')" title="Fleche">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+          <button class="dt-tool" data-tool="circle" onclick="selectDrawTool('circle')" title="Cercle">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
+          </button>
+          <button class="dt-tool" data-tool="text" onclick="selectDrawTool('text')" title="Texte">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+          </button>
+        </div>
+        <div class="dt-divider"></div>
+        <div class="dt-colors">
+          <button class="dt-color active" data-color="#b8ff57" onclick="selectDrawColor('#b8ff57')" style="background:#b8ff57"></button>
+          <button class="dt-color" data-color="#ff5050" onclick="selectDrawColor('#ff5050')" style="background:#ff5050"></button>
+          <button class="dt-color" data-color="#f5c842" onclick="selectDrawColor('#f5c842')" style="background:#f5c842"></button>
+          <button class="dt-color" data-color="#60a5fa" onclick="selectDrawColor('#60a5fa')" style="background:#60a5fa"></button>
+          <button class="dt-color" data-color="#ffffff" onclick="selectDrawColor('#ffffff')" style="background:#ffffff"></button>
+        </div>
+        <div class="dt-divider"></div>
+        <button class="dt-clear" onclick="clearRoundAnnotations()" title="Effacer toutes les annotations du round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          Effacer
+        </button>
       </div>
       <!-- Coach IA panel : analyse tactique du round par Claude (Pro+).
            3 sections : Force / Axe / Action. Cache localStorage par
@@ -1039,6 +1130,14 @@ let currentFloor = 'upper';
 let showTrail = true;
 let showCallouts = false; // Call-outs labels (Long, A Site, Mid, ...) overlay
 let showGrenadeTraj = false; // Trajectoires de toutes les grenades du round (overlay tactique)
+
+// ── Drawing tool state (Sprint 3.5) ──────────────────────────────────────
+let drawingMode = false;          // toggle global du mode annotation
+let drawingTool = 'pencil';       // 'pencil' | 'arrow' | 'circle' | 'text'
+let drawingColor = '#b8ff57';     // couleur active
+let annotations = [];             // toutes les annotations de la demo (filtered par round au render)
+let currentStroke = null;         // stroke en cours de creation (mousedown -> mouseup)
+let isDrawingStroke = false;      // mouse down active
 
 let currentRound = null, frames = [], frameIdx = 0;
 let playing = false, timer = null, speed = 1;
@@ -1324,6 +1423,9 @@ window.addEventListener('load', async () => {
       // localStorage par demoId. Calcule UNE FOIS apres parse, list est
       // statique cote auto. Manual bookmarks updates a chaque add/remove.
       refreshBookmarks();
+      // Drawing : load des annotations utilisateur sauvegardees pour cette demo.
+      // Filtrage par round se fait au render dans drawAnnotations.
+      annotations = loadAnnotations();
       // Deep-link : si l URL specifie ?round=N, on charge ce round.
       // Sinon le premier round non-knife. Apres selectRound, on applique
       // tick + iso si fournis (params persistent dans le state pour replay).
@@ -2750,6 +2852,11 @@ function drawFrame(idx, interp = 0) {
   // Killfeed (top-right of the map)
   drawKillfeed(frame, W, H);
 
+  // Drawing tool : annotations utilisateur dessinees sur la map
+  // (Sprint 3.5). Render UNIQUEMENT en drawingMode pour eviter le clutter.
+  // Place a la fin pour etre au-dessus de tout (joueurs, kills, grenades).
+  if (drawingMode) drawAnnotations(W, H);
+
   // ── DIAGNOSTIC OVERLAY (gate derriere ?debug=1 uniquement) ──
   if (window._fvDebugOverlay) {
     const firstName = Object.keys(frame.players)[0];
@@ -3814,9 +3921,13 @@ function mouseToCanvas(e) {
 function setupCanvasInteractions() {
   if (!canvas) return;
 
-  // Click : toggle isolation. Click sur un autre player switch sur lui ;
-  // click hors d'un dot deselectionne.
+  // Click : toggle isolation OU place text annotation si drawingMode + tool=text
   canvas.addEventListener('click', (e) => {
+    if (drawingMode && drawingTool === 'text') {
+      handleDrawTextClick(e);
+      return;
+    }
+    if (drawingMode) return; // pencil/arrow/circle handled via mousedown/up
     if (!frames.length) return;
     const { x, y } = mouseToCanvas(e);
     const frame = frames[Math.min(frameIdx, frames.length - 1)];
@@ -3830,9 +3941,12 @@ function setupCanvasInteractions() {
   });
 
   // Hover : update curseur (pointer si over un dot) + state pour tooltip.
-  // Un re-render leger n'est PAS necessaire ici car le tooltip est en HTML
-  // overlay (pas dessine sur le canvas).
+  // En drawing mode, on extend le stroke en cours via cette callback.
   canvas.addEventListener('mousemove', (e) => {
+    if (drawingMode) {
+      if (isDrawingStroke) handleDrawMove(e);
+      return;
+    }
     if (!frames.length) return;
     const { x, y } = mouseToCanvas(e);
     const frame = frames[Math.min(frameIdx, frames.length - 1)];
@@ -3842,15 +3956,31 @@ function setupCanvasInteractions() {
       canvas.style.cursor = player ? 'pointer' : 'default';
       updateHoverTooltip(player, e.clientX, e.clientY);
     } else if (player) {
-      // Meme player : juste update la position du tooltip pour qu'il suive
       updateHoverTooltip(player, e.clientX, e.clientY);
     }
   });
 
   canvas.addEventListener('mouseleave', () => {
+    if (drawingMode && isDrawingStroke) {
+      // Finaliser le stroke quand le curseur quitte le canvas
+      handleDrawEnd();
+    }
     hoveredPlayer = null;
-    canvas.style.cursor = 'default';
+    if (!drawingMode) canvas.style.cursor = 'default';
     updateHoverTooltip(null);
+  });
+
+  // Drawing handlers : mousedown commence un stroke, mouseup le finalise.
+  // Pour pencil : suit le mouvement. Pour arrow/circle : start + preview + end.
+  canvas.addEventListener('mousedown', (e) => {
+    if (!drawingMode) return;
+    if (drawingTool === 'text') return; // gere via click
+    handleDrawStart(e);
+  });
+
+  canvas.addEventListener('mouseup', (e) => {
+    if (!drawingMode || !isDrawingStroke) return;
+    handleDrawEnd(e);
   });
 }
 
@@ -4668,6 +4798,292 @@ function toggleCoachAIPanel() {
       }
     }
   }
+}
+
+// ══ DRAWING TOOL TACTICAL ════════════════════════════════════════════════════
+// Annotations dessinees sur la map (pencil/arrow/circle/text), sauvees par
+// (demoId, round) en localStorage. Render persistent : visibles tant que
+// drawingMode ON et qu'on est sur le bon round.
+//
+// World coords : on stocke en 0-1024 (ratio canvas) pour etre resolution-
+// independant. Au render, on multiplie par scaleX/scaleY = W/1024 / H/1024.
+
+const ANN_STORAGE_PREFIX = 'fv_annotations_';
+
+function loadAnnotations() {
+  try {
+    const raw = localStorage.getItem(ANN_STORAGE_PREFIX + getDemoId());
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(a => a && a.id && a.type && a.round != null);
+  } catch(_) { return []; }
+}
+
+function saveAnnotations() {
+  try {
+    localStorage.setItem(ANN_STORAGE_PREFIX + getDemoId(), JSON.stringify(annotations));
+  } catch(_) {}
+}
+
+// Convert mouse event -> world coords (0-1024 referential).
+// Reuse mouseToCanvas qui donne canvas pixel coords, puis on normalise.
+function mouseToWorld(e) {
+  const { x: cx, y: cy } = mouseToCanvas(e);
+  const W = canvas.width || 1024;
+  const H = canvas.height || 1024;
+  return {
+    x: (cx / W) * 1024,
+    y: (cy / H) * 1024,
+  };
+}
+
+function handleDrawStart(e) {
+  if (currentRound == null) return;
+  const w = mouseToWorld(e);
+  isDrawingStroke = true;
+  if (drawingTool === 'pencil') {
+    currentStroke = {
+      id: 'ann-' + Date.now(),
+      type: 'pencil',
+      color: drawingColor,
+      points: [{ x: w.x, y: w.y }],
+      round: currentRound,
+      createdAt: Date.now(),
+    };
+  } else if (drawingTool === 'arrow') {
+    currentStroke = {
+      id: 'ann-' + Date.now(),
+      type: 'arrow',
+      color: drawingColor,
+      start: { x: w.x, y: w.y },
+      end: { x: w.x, y: w.y },
+      round: currentRound,
+      createdAt: Date.now(),
+    };
+  } else if (drawingTool === 'circle') {
+    currentStroke = {
+      id: 'ann-' + Date.now(),
+      type: 'circle',
+      color: drawingColor,
+      center: { x: w.x, y: w.y },
+      edge: { x: w.x, y: w.y },
+      round: currentRound,
+      createdAt: Date.now(),
+    };
+  }
+  drawFrame(frameIdx);
+}
+
+function handleDrawMove(e) {
+  if (!currentStroke) return;
+  const w = mouseToWorld(e);
+  if (currentStroke.type === 'pencil') {
+    // Throttle : skip si trop proche du dernier point (reduit le bruit)
+    const last = currentStroke.points[currentStroke.points.length - 1];
+    const dx = w.x - last.x, dy = w.y - last.y;
+    if ((dx * dx + dy * dy) < 9) return; // 3 units min en world coords
+    currentStroke.points.push({ x: w.x, y: w.y });
+  } else if (currentStroke.type === 'arrow') {
+    currentStroke.end = { x: w.x, y: w.y };
+  } else if (currentStroke.type === 'circle') {
+    currentStroke.edge = { x: w.x, y: w.y };
+  }
+  drawFrame(frameIdx);
+}
+
+function handleDrawEnd() {
+  if (!currentStroke) {
+    isDrawingStroke = false;
+    return;
+  }
+  // Validation minimale : ne pas sauver les strokes degeneres (1 point pour pencil,
+  // start === end pour arrow/circle)
+  let valid = true;
+  if (currentStroke.type === 'pencil' && currentStroke.points.length < 2) valid = false;
+  if (currentStroke.type === 'arrow') {
+    const dx = currentStroke.end.x - currentStroke.start.x;
+    const dy = currentStroke.end.y - currentStroke.start.y;
+    if (dx * dx + dy * dy < 16) valid = false; // < 4 units en world
+  }
+  if (currentStroke.type === 'circle') {
+    const dx = currentStroke.edge.x - currentStroke.center.x;
+    const dy = currentStroke.edge.y - currentStroke.center.y;
+    if (dx * dx + dy * dy < 16) valid = false;
+  }
+
+  if (valid) {
+    // Pour circle : finaliser radius depuis edge
+    if (currentStroke.type === 'circle') {
+      const dx = currentStroke.edge.x - currentStroke.center.x;
+      const dy = currentStroke.edge.y - currentStroke.center.y;
+      currentStroke.radius = Math.sqrt(dx * dx + dy * dy);
+      delete currentStroke.edge;
+    }
+    annotations.push(currentStroke);
+    saveAnnotations();
+  }
+
+  currentStroke = null;
+  isDrawingStroke = false;
+  drawFrame(frameIdx);
+}
+
+function handleDrawTextClick(e) {
+  if (currentRound == null) return;
+  const w = mouseToWorld(e);
+  const text = (window.prompt('Texte a afficher ?', 'Note') || '').trim();
+  if (!text) return;
+  annotations.push({
+    id: 'ann-' + Date.now(),
+    type: 'text',
+    color: drawingColor,
+    pos: { x: w.x, y: w.y },
+    text: text.slice(0, 64),
+    round: currentRound,
+    createdAt: Date.now(),
+  });
+  saveAnnotations();
+  drawFrame(frameIdx);
+}
+
+function selectDrawTool(tool) {
+  drawingTool = tool;
+  document.querySelectorAll('.dt-tool').forEach(b => {
+    b.classList.toggle('active', b.dataset.tool === tool);
+  });
+}
+
+function selectDrawColor(color) {
+  drawingColor = color;
+  document.querySelectorAll('.dt-color').forEach(b => {
+    b.classList.toggle('active', b.dataset.color === color);
+  });
+}
+
+function clearRoundAnnotations() {
+  if (currentRound == null) return;
+  const remaining = annotations.filter(a => a.round !== currentRound);
+  if (remaining.length === annotations.length) return; // rien a clear
+  if (!window.confirm('Effacer toutes les annotations du round courant ?')) return;
+  annotations = remaining;
+  saveAnnotations();
+  drawFrame(frameIdx);
+}
+
+function toggleDrawingMode() {
+  drawingMode = !drawingMode;
+  const toolbar = document.getElementById('drawingToolbar');
+  const btn = document.getElementById('btnDrawing');
+  const canvasArea = document.querySelector('.canvas-area');
+  if (toolbar) toolbar.style.display = drawingMode ? 'flex' : 'none';
+  if (btn) btn.classList.toggle('active', drawingMode);
+  if (canvasArea) canvasArea.classList.toggle('drawing-mode', drawingMode);
+  // Cancel un stroke en cours si on quitte le mode
+  if (!drawingMode && isDrawingStroke) {
+    currentStroke = null;
+    isDrawingStroke = false;
+  }
+  drawFrame(frameIdx);
+}
+
+// Render toutes les annotations du round courant + le stroke en cours.
+function drawAnnotations(W, H) {
+  // Pas de render si drawingMode OFF (annotations cachees mais persistees)
+  if (!drawingMode) return;
+  const scaleX = W / 1024, scaleY = H / 1024;
+  const roundAnns = annotations.filter(a => a.round === currentRound);
+  if (!roundAnns.length && !currentStroke) return;
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const drawOne = (ann, alpha = 1) => {
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = ann.color;
+    ctx.fillStyle = ann.color;
+    ctx.lineWidth = 3;
+
+    if (ann.type === 'pencil' && ann.points && ann.points.length >= 2) {
+      ctx.beginPath();
+      ctx.moveTo(ann.points[0].x * scaleX, ann.points[0].y * scaleY);
+      for (let i = 1; i < ann.points.length; i++) {
+        ctx.lineTo(ann.points[i].x * scaleX, ann.points[i].y * scaleY);
+      }
+      ctx.stroke();
+    } else if (ann.type === 'arrow' && ann.start && ann.end) {
+      const sx = ann.start.x * scaleX, sy = ann.start.y * scaleY;
+      const ex = ann.end.x * scaleX, ey = ann.end.y * scaleY;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
+      // Arrowhead : triangle filled
+      const angle = Math.atan2(ey - sy, ex - sx);
+      const arrLen = 14;
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex - arrLen * Math.cos(angle - Math.PI / 6), ey - arrLen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(ex - arrLen * Math.cos(angle + Math.PI / 6), ey - arrLen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+    } else if (ann.type === 'circle') {
+      // Stroke en cours : center + edge -> radius dynamique
+      // Stroke finalise : center + radius
+      let cx, cy, r;
+      if (ann.radius != null) {
+        cx = ann.center.x * scaleX;
+        cy = ann.center.y * scaleY;
+        r = ann.radius * scaleX;
+      } else if (ann.edge) {
+        cx = ann.center.x * scaleX;
+        cy = ann.center.y * scaleY;
+        const ex = ann.edge.x * scaleX, ey = ann.edge.y * scaleY;
+        r = Math.sqrt((ex - cx) * (ex - cx) + (ey - cy) * (ey - cy));
+      }
+      if (r > 0) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    } else if (ann.type === 'text' && ann.pos && ann.text) {
+      const px = ann.pos.x * scaleX, py = ann.pos.y * scaleY;
+      ctx.font = 'bold 14px "Anton", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      const tw = ctx.measureText(ann.text).width;
+      const padX = 6, padY = 4, txtH = 14;
+      // Background pill semi-opaque
+      ctx.fillStyle = 'rgba(8,10,16,0.85)';
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(px - padX, py - padY, tw + padX * 2, txtH + padY * 2, 3);
+        ctx.fill();
+      } else {
+        ctx.fillRect(px - padX, py - padY, tw + padX * 2, txtH + padY * 2);
+      }
+      // Border accent color
+      ctx.strokeStyle = ann.color;
+      ctx.lineWidth = 1;
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(px - padX, py - padY, tw + padX * 2, txtH + padY * 2, 3);
+        ctx.stroke();
+      }
+      // Texte
+      ctx.fillStyle = ann.color;
+      ctx.fillText(ann.text, px, py);
+    }
+  };
+
+  // Draw saved annotations (alpha plein)
+  for (const ann of roundAnns) drawOne(ann, 1);
+
+  // Draw stroke en cours par-dessus (alpha 0.7 pour preview)
+  if (currentStroke) drawOne(currentStroke, 0.75);
+
+  ctx.restore();
 }
 
 // ══ CALL-OUTS RENDERING ══════════════════════════════════════════════════════
