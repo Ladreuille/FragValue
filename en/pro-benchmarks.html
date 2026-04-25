@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="description" content="FragValue Pro Benchmarks · Compare tes stats CS2 aux 20 meilleurs players HLTV. Gap chiffré, cible par cible, map par map.">
+  <meta name="keywords" content="CS2, HLTV, benchmark, pro comparison, top 20, ZywOo, s1mple, donk, NiKo, Rating, KAST, ADR">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <link rel="canonical" href="https://fragvalue.com/en/pro-benchmarks.html">
+<link rel="alternate" hreflang="fr" href="https://fragvalue.com/pro-benchmarks.html">
+<link rel="alternate" hreflang="en" href="https://fragvalue.com/en/pro-benchmarks.html">
+<link rel="alternate" hreflang="x-default" href="https://fragvalue.com/pro-benchmarks.html">
+  <meta property="og:title" content="FragValue · Pro Benchmarks">
+  <meta property="og:description" content="Mesure l'écart entre ton jeu et le top 20 HLTV, stat par stat.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://fragvalue.com/en/pro-benchmarks.html">
+  <meta property="og:image" content="https://fragvalue.com/og/pro-benchmarks.png">
+  <meta property="og:image:alt" content="FragValue">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FragValue · Pro Benchmarks">
+<meta name="twitter:description" content="Mesure l'écart entre ton jeu et le top 20 HLTV, stat par stat.">
+<meta name="twitter:image" content="https://fragvalue.com/og/pro-benchmarks.png">
+  <title>FragValue · Pro Benchmarks (top 20 HLTV)</title>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "FragValue Pro Benchmarks",
+  "description": "Compare tes stats CS2 aux 20 meilleurs players HLTV sur 18 métriques, map par map et par rôle.",
+  "url": "https://fragvalue.com/pro-benchmarks.html",
+  "inLanguage": "fr-FR",
+  "isPartOf": { "@type": "WebSite", "name": "FragValue", "url": "https://fragvalue.com" },
+  "publisher": { "@type": "Organization", "name": "FragValue", "logo": { "@type": "ImageObject", "url": "https://fragvalue.com/fragvalue_icon.svg" } }
+}
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/teaser.css">
+  <style>
+    .bench-wrap{position:relative}
+    .bench-table{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .bench-row{display:grid;grid-template-columns:160px 1fr 80px 80px 80px;gap:16px;padding:14px 20px;align-items:center;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:12px}
+    .bench-row.head{background:var(--card);color:var(--text3);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+    .bench-row:last-child{border-bottom:none}
+    .bench-stat{font-family:var(--display);font-size:15px;letter-spacing:.02em;color:var(--text)}
+    .bench-bar{height:10px;background:var(--card);border-radius:5px;overflow:hidden;position:relative}
+    .bench-bar-user{position:absolute;left:0;top:0;bottom:0;background:var(--accent);opacity:.7;border-radius:5px}
+    .bench-bar-mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--gold);border-radius:2px;z-index:2}
+    .bench-val{text-align:right;font-weight:700}
+    .bench-val.user{color:var(--accent)}
+    .bench-val.pro{color:var(--gold)}
+    .bench-delta{text-align:right;font-weight:700}
+    .bench-delta.pos{color:var(--success)}
+    .bench-delta.neg{color:var(--danger)}
+    @media(max-width:720px){.bench-row{grid-template-columns:120px 1fr 60px;gap:8px;padding:10px 14px;font-size:11px} .bench-row .hide-mobile{display:none}}
+  </style>
+</head>
+<body>
+
+<nav></nav>
+
+<div class="page">
+  <div class="hero">
+    <div class="hero-tag gold">● Elite · Réservé aux coachs et teams</div>
+    <h1 class="hero-title">Your game vs<br>the <span>HLTV top 20</span></h1>
+    <p class="hero-sub">Compare your CS2 stats to the HLTV top 20, metric by metric. Quantified gap on HLTV Rating, KAST, ADR, opening duels, util damage, clutches. See how close you are to pro level, and which stats to focus on first.</p>
+  </div>
+
+  <div class="stats-row">
+    <a class="stat-card" href="/scout.html"><div class="stat-val">20</div><div class="stat-label">Pros tracked</div></a>
+    <a class="stat-card" href="/en/stats-guide.html"><div class="stat-val">18</div><div class="stat-label">Metrics compared</div></a>
+    <div class="stat-card"><div class="stat-val">90j</div><div class="stat-label">Rolling window</div></div>
+    <div class="stat-card"><div class="stat-val">7</div><div class="stat-label">Maps par side</div></div>
+  </div>
+
+  <div class="roadmap">
+    <div class="roadmap-title">Ou on en est</div>
+    <div class="roadmap-sub">Status des benchmarks pros</div>
+    <div class="roadmap-steps">
+      <div class="roadmap-step done"><div class="roadmap-step-label">Phase 1</div><div class="roadmap-step-text">Ingestion stats HLTV top 20</div></div>
+      <div class="roadmap-step done"><div class="roadmap-step-label">Phase 2</div><div class="roadmap-step-text">Normalisation par role</div></div>
+      <div class="roadmap-step current"><div class="roadmap-step-label">Phase 3</div><div class="roadmap-step-text">Comparaison live ton profil vs top 20</div></div>
+      <div class="roadmap-step"><div class="roadmap-step-label">Phase 4</div><div class="roadmap-step-text">Drill prescriptif par gap identifie</div></div>
+    </div>
+  </div>
+
+  <div class="sec-label">Apercu : ton profil vs averagene top 20</div>
+  <div class="bench-wrap">
+    <div class="bench-table">
+      <div class="bench-row head">
+        <div>Metric</div>
+        <div class="hide-mobile">Distribution</div>
+        <div class="bench-val">You</div>
+        <div class="bench-val hide-mobile">Pro avg</div>
+        <div class="bench-delta">Gap</div>
+      </div>
+      <div class="bench-row">
+        <div class="bench-stat">HLTV Rating 2.1</div>
+        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:58%"></div><div class="bench-bar-mark" style="left:82%"></div></div>
+        <div class="bench-val user">1.08</div>
+        <div class="bench-val pro hide-mobile">1.28</div>
+        <div class="bench-delta neg">-0.20</div>
+      </div>
+      <div class="bench-row">
+        <div class="bench-stat">KAST %</div>
+        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:68%"></div><div class="bench-bar-mark" style="left:79%"></div></div>
+        <div class="bench-val user">68%</div>
+        <div class="bench-val pro hide-mobile">79%</div>
+        <div class="bench-delta neg">-11pts</div>
+      </div>
+      <div class="bench-row">
+        <div class="bench-stat">ADR</div>
+        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:74%"></div><div class="bench-bar-mark" style="left:88%"></div></div>
+        <div class="bench-val user">81.2</div>
+        <div class="bench-val pro hide-mobile">96.4</div>
+        <div class="bench-delta neg">-15.2</div>
+      </div>
+      <div class="bench-row">
+        <div class="bench-stat">K/D ratio</div>
+        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:80%"></div><div class="bench-bar-mark" style="left:83%"></div></div>
+        <div class="bench-val user">1.19</div>
+        <div class="bench-val pro hide-mobile">1.24</div>
+        <div class="bench-delta neg">-0.05</div>
+      </div>
+      <div class="bench-row">
+        <div class="bench-stat">Opening WR %</div>
+        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:57%"></div><div class="bench-bar-mark" style="left:55%"></div></div>
+        <div class="bench-val user">57%</div>
+        <div class="bench-val pro hide-mobile">55%</div>
+        <div class="bench-delta pos">+2pts</div>
+      </div>
+      <div class="bench-row">
+        <div class="bench-stat">Util damage / round</div>
+        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:40%"></div><div class="bench-bar-mark" style="left:68%"></div></div>
+        <div class="bench-val user">6.1</div>
+        <div class="bench-val pro hide-mobile">10.4</div>
+        <div class="bench-delta neg">-4.3</div>
+      </div>
+      <div class="bench-row">
+        <div class="bench-stat">Multi-kill rounds %</div>
+        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:71%"></div><div class="bench-bar-mark" style="left:77%"></div></div>
+        <div class="bench-val user">28%</div>
+        <div class="bench-val pro hide-mobile">31%</div>
+        <div class="bench-delta neg">-3pts</div>
+      </div>
+      <div class="bench-row">
+        <div class="bench-stat">Clutch 1vX win</div>
+        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:49%"></div><div class="bench-bar-mark" style="left:61%"></div></div>
+        <div class="bench-val user">32%</div>
+        <div class="bench-val pro hide-mobile">42%</div>
+        <div class="bench-delta neg">-10pts</div>
+      </div>
+    </div>
+    <div class="teaser-overlay"></div>
+    <div class="teaser-badge">● Benchmarks Elite · En préparation</div>
+  </div>
+
+  <div class="cta-card">
+    <h2 class="cta-title">Prends la mesure du gap</h2>
+    <p class="cta-sub">Les Pro Benchmarks arrivent dans le plan Elite. Compare-toi semaine après semaine, par map et par side, aux meilleurs players actuels (ZywOo, donk, m0NESY, ropz, NiKo). Active ton profil Scout pour être prévenu du lancement.</p>
+    <a href="account.html#settings" class="cta-btn" data-teaser-cta="pro-benchmarks">
+      Enable notifications
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+    <div class="cta-waitlist">
+      <span class="cta-waitlist-dot"></span>
+      <strong data-teaser-counter="pro-benchmarks">-</strong>
+      <span>players activated their interest</span>
+    </div>
+  </div>
+
+  <div class="sec-label">What awaits you</div>
+  <div class="features">
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      </div>
+      <div class="feature-title">18 métriques comparées</div>
+      <div class="feature-desc">HLTV Rating, KAST, ADR, opening, util damage, clutches, multi-kills, AWP kills. All celles que FragValue calcule pour toi.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+      </div>
+      <div class="feature-title">Fenêtre 90 jours glissante</div>
+      <div class="feature-desc">Les stats du top 20 sont recalculées chaque semaine sur leurs matches S-tier des 90 derniers jours. Benchmark toujours à jour.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </div>
+      <div class="feature-title">Breakdown map par map</div>
+      <div class="feature-desc">Compare ton HLTV Rating sur Inferno CT aux pros qui dominent cette side. Identifie les maps où tu es proche du niveau pro.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L15 8 L22 9 L17 14 L18 21 L12 18 L6 21 L7 14 L2 9 L9 8 Z"/></svg>
+      </div>
+      <div class="feature-title">Benchmark par rôle</div>
+      <div class="feature-desc">Choisis ton rôle (AWPer, entry, support, IGL). Les stats sont comparées aux pros du même rôle pour un écart pertinent.</div>
+    </div>
+  </div>
+</div>
+
+<script src="/nav.js"></script>
+<script src="/teaser.js"></script>
+<script>FVTeaser.initCTA("pro-benchmarks", { base: 46, perDay: 0.5 });</script>
+</body>
+</html>

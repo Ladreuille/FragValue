@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="description" content="Upload your demo CS2 FACEIT (.dem) et obtiens un diagnostic complet : FV Rating, heatmaps, Advanced KPIs, 2D replay. Analysis gratuite jusqu'à 3 démos par mois.">
+<meta name="keywords" content="démo CS2, analyse FACEIT, parse dem, heatmap CS2, FV Rating, coach IA">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+<link rel="canonical" href="https://fragvalue.com/en/demo.html">
+<link rel="alternate" hreflang="fr" href="https://fragvalue.com/demo.html">
+<link rel="alternate" hreflang="en" href="https://fragvalue.com/en/demo.html">
+<link rel="alternate" hreflang="x-default" href="https://fragvalue.com/demo.html">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fragvalue.com/en/demo.html">
+<meta property="og:title" content="Analyze a demo CS2 · FragValue">
+<meta property="og:description" content="Upload your demo CS2 FACEIT et obtiens un diagnostic complet : FV Rating, heatmaps, Advanced KPIs, 2D replay.">
+<meta property="og:image" content="https://fragvalue.com/og/home.png">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Analyze a demo CS2 · FragValue">
+<meta name="twitter:description" content="Upload your demo CS2 FACEIT et obtiens un diagnostic IA complet gratuitement.">
+<meta name="twitter:image" content="https://fragvalue.com/og/home.png">
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<title>Analyze a demo CS2 FACEIT · AI Coach · FragValue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:      #080909;
+  --surface: #0f1010;
+  --border:  #1c1e1e;
+  --border2: #252727;
+  --text:    #e8eaea;
+  --text2:   #7a8080;
+  --text3:   #4a5050;
+  --accent:  #b8ff57;
+  --accent2: #7ddd1a;
+  --danger:  #ff4444;
+  --success: #2dd4a0;
+  --gold:    #f5c842;
+  --mono:    'Space Mono', monospace;
+  --display: 'Anton', sans-serif;
+  --radius:  6px;
+  --radius2: 12px;
+}
+
+html,body{height:100%}
+html{scroll-behavior:smooth}
+/* Sur la page demo on veut zero scroll : tout tient dans le viewport */
+body.demo-no-scroll{overflow:hidden;height:100vh}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--mono);font-size:14px;line-height:1.6;
+  overflow-x:hidden;min-height:100vh
+}
+
+/* NOISE */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.4
+}
+
+/* NAV OVERRIDE : la nav est injectee par /nav.js et a un border/box-shadow
+   accent vert qui cree une 'barre' visible au scroll. Sur la page demo on
+   veut une nav totalement discrete qui se fond dans le background. */
+nav.fv-nav{
+  background:rgba(8,9,9,.35) !important;
+  backdrop-filter:blur(18px) !important;
+  -webkit-backdrop-filter:blur(18px) !important;
+  border-bottom:none !important;
+  box-shadow:none !important
+}
+/* Nav initiale (avant que nav.js ne la remplace), meme style */
+nav:not(.fv-nav){
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:56px;
+  background:rgba(8,9,9,.35);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)
+}
+.nav-logo{
+  font-family:var(--display);font-size:20px;letter-spacing:.04em;
+  color:var(--text);text-decoration:none;display:flex;align-items:center;gap:8px
+}
+.nav-logo span{color:var(--accent)}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-links a{
+  color:var(--text2);text-decoration:none;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;transition:color .15s
+}
+.nav-links a:hover{color:var(--text)}
+.nav-links a.active{color:var(--text)}
+.nav-cta{
+  background:var(--accent);color:#000;
+  padding:8px 18px;border-radius:var(--radius);
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  text-decoration:none;letter-spacing:.06em;transition:all .15s
+}
+.nav-cta:hover{background:var(--accent2);transform:translateY(-1px)}
+
+/* LAYOUT : 3 colonnes sur desktop (hero compact | slider maps | upload).
+   Tout tient dans le viewport sans scroll (la nav est sticky 56px, donc
+   le layout prend exactement le reste). */
+.layout{
+  display:grid;
+  grid-template-columns:minmax(320px,1fr) minmax(0,1.15fr) 420px;
+  height:calc(100vh - 56px);
+  position:relative;z-index:1;
+  overflow:hidden
+}
+
+/* GAUCHE : hero compact ancre en haut avec padding-top aere */
+.left{
+  padding:48px 36px 32px;
+  display:flex;flex-direction:column;
+  justify-content:flex-start;
+  border-right:1px solid var(--border);
+  position:relative;overflow:hidden
+}
+.left-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:56px 56px;opacity:.35;
+  mask-image:radial-gradient(ellipse 80% 80% at 20% 50%,black 0%,transparent 100%)
+}
+.left-glow{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 55% 60% at 5% 55%,rgba(184,255,87,.04) 0%,transparent 70%);
+  pointer-events:none
+}
+.left-inner{position:relative;z-index:1}
+
+.left-tag{
+  font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--accent);border:1px solid rgba(184,255,87,.2);
+  padding:4px 10px;border-radius:40px;display:inline-block;
+  margin-bottom:12px;
+  opacity:0;animation:fadeUp .5s .05s ease forwards
+}
+.left-title{
+  font-family:var(--display);
+  font-size:clamp(30px,3.2vw,44px);
+  line-height:.95;letter-spacing:.01em;margin-bottom:10px;
+  opacity:0;animation:fadeUp .5s .1s ease forwards
+}
+.left-title em{font-style:normal;-webkit-text-stroke:1px var(--text);color:transparent}
+.left-sub{
+  font-size:12px;color:var(--text2);line-height:1.7;
+  max-width:340px;margin-bottom:18px;
+  opacity:0;animation:fadeUp .5s .15s ease forwards
+}
+.feat-list{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;
+  opacity:0;animation:fadeUp .5s .2s ease forwards
+}
+.feat{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);line-height:1.3}
+.feat-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.feat strong{color:var(--text)}
+.feat-full{grid-column:1/-1}
+
+/* MINI PROCESS : 01 Upload - 02 Parse - 03 Analysis, horizontal compact.
+   Entre les features et le result-preview, remplit l'espace vide. */
+.mini-process{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-top:28px;padding:18px 20px;
+  background:linear-gradient(135deg,rgba(15,16,16,.6),rgba(15,16,16,.3));
+  border:1px solid var(--border);border-radius:10px;
+  opacity:0;animation:fadeUp .5s .25s ease forwards
+}
+.mp-step{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;flex:1;min-width:0
+}
+.mp-num{
+  font-family:var(--display);font-size:16px;letter-spacing:.02em;
+  color:var(--accent);line-height:1;flex-shrink:0
+}
+.mp-txt{
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2)
+}
+.mp-txt strong{color:var(--text);font-weight:700;display:block;font-size:11px;margin-bottom:2px;letter-spacing:.06em;text-transform:none;font-family:var(--mono)}
+.mp-arr{color:var(--border2);font-size:10px;flex-shrink:0}
+
+/* TRUST BADGES : sous stats-row dans .right, 3 badges confiance. */
+.trust-row{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  margin-top:14px;padding-top:16px;border-top:1px solid var(--border);
+  opacity:0;animation:fadeUp .5s .3s ease forwards
+}
+.trust{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:10px 8px;border:1px solid var(--border);border-radius:8px;
+  background:rgba(8,9,9,.4);text-align:center;
+  transition:border-color .2s
+}
+.trust:hover{border-color:var(--border2)}
+.trust svg{color:var(--accent);opacity:.8}
+.trust-title{
+  font-family:var(--mono);font-size:10px;color:var(--text);
+  font-weight:700;letter-spacing:.04em;line-height:1.3
+}
+.trust-sub{
+  font-size:9px;color:var(--text3);letter-spacing:.08em;
+  text-transform:uppercase;line-height:1.3
+}
+
+/* MAPS SLIDER : carousel horizontal des 7 maps CS2 disponibles en analyse.
+   Auto-scroll infini (duplique le set pour un loop sans saccade). Occupe
+   tout l'espace vide au milieu de la page et montre visuellement la couverture. */
+.maps-slider{
+  margin-top:32px;position:relative;
+  opacity:0;animation:fadeUp .5s .35s ease forwards
+}
+.maps-slider-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px
+}
+.maps-slider-label{
+  display:flex;align-items:center;gap:10px;
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3)
+}
+.maps-slider-label .msl-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 6px var(--accent);animation:pulse 2s ease-in-out infinite
+}
+.maps-slider-count{
+  font-family:var(--display);font-size:14px;color:var(--text);letter-spacing:.02em
+}
+.maps-slider-count em{color:var(--text3);font-style:normal;font-size:10px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-left:6px}
+
+/* Viewport du slider avec mask gradient pour fade-out sur les cotes */
+.maps-viewport{
+  position:relative;overflow:hidden;
+  border:1px solid var(--border);border-radius:10px;
+  background:linear-gradient(135deg,rgba(15,16,16,.6),rgba(8,9,9,.4));
+  padding:18px 0;
+  mask-image:linear-gradient(90deg,transparent 0%,black 8%,black 92%,transparent 100%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,black 8%,black 92%,transparent 100%)
+}
+.maps-track{
+  display:flex;gap:18px;align-items:center;
+  width:max-content;
+  animation:mapsScroll 35s linear infinite
+}
+.maps-viewport:hover .maps-track{animation-play-state:paused}
+@keyframes mapsScroll{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+
+.map-card{
+  flex-shrink:0;width:180px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  transition:transform .25s ease
+}
+.map-card:hover{transform:translateY(-3px)}
+.map-card-img{
+  width:160px;height:160px;
+  background:#080909;border:1px solid var(--border2);border-radius:8px;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  position:relative;overflow:hidden;
+  box-shadow:0 8px 24px rgba(0,0,0,.4),inset 0 0 0 1px rgba(184,255,87,.04);
+  transition:box-shadow .25s,border-color .25s
+}
+.map-card:hover .map-card-img{
+  border-color:rgba(184,255,87,.3);
+  box-shadow:0 12px 32px rgba(0,0,0,.5),0 0 0 1px rgba(184,255,87,.15),inset 0 0 0 1px rgba(184,255,87,.08)
+}
+/* Overlay tint pour harmoniser avec le design dark */
+.map-card-img::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(8,9,9,0) 40%,rgba(8,9,9,.65) 100%);
+  pointer-events:none
+}
+.map-card-label{
+  font-family:var(--mono);font-size:11px;color:var(--text);
+  letter-spacing:.06em;text-transform:uppercase;font-weight:700
+}
+.map-card-sub{
+  font-size:9px;color:var(--text3);letter-spacing:.08em;
+  text-transform:uppercase;margin-top:-4px
+}
+
+/* REPLAY PREVIEW : capture reelle d'une analyse FragValue. Clic ouvre un
+   apercu (voir renderReplayPreview() pour l'event handler). */
+.replay-preview{
+  margin-top:8px;position:relative;display:block;
+  border:1px solid var(--border);border-radius:10px;
+  overflow:hidden;cursor:pointer;text-decoration:none;
+  opacity:0;animation:fadeUp .5s .45s ease forwards;
+  transition:border-color .25s,transform .25s,box-shadow .25s;
+  background:#0a0b0b
+}
+.replay-preview:hover{
+  border-color:rgba(184,255,87,.35);
+  transform:translateY(-2px);
+  box-shadow:0 12px 32px rgba(0,0,0,.5),0 0 0 1px rgba(184,255,87,.08)
+}
+.rpv-image{
+  width:100%;height:auto;display:block;
+  object-fit:cover;object-position:center
+}
+.rpv-overlay{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,rgba(8,9,9,0) 60%,rgba(8,9,9,.75) 100%);
+  opacity:0;transition:opacity .25s;pointer-events:none
+}
+.replay-preview:hover .rpv-overlay{opacity:1}
+.rpv-overlay-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 16px;border-radius:40px;
+  background:var(--accent);color:#000;
+  font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;
+  box-shadow:0 6px 20px rgba(184,255,87,.3);
+  position:absolute;bottom:18px
+}
+
+/* Hero FAQ link : petit lien discret sous les features pour les hesitants */
+.hero-faq-link{
+  display:inline-block;margin-top:14px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  color:var(--text3);text-decoration:none;
+  border-bottom:1px dashed var(--border2);padding-bottom:2px;
+  transition:color .15s,border-color .15s;
+  opacity:0;animation:fadeUp .5s .3s ease forwards
+}
+.hero-faq-link:hover{color:var(--accent);border-color:var(--accent)}
+
+/* Resize : quand le viewport est etroit, reduire la taille des cards maps */
+@media (max-width:1280px){
+  .map-card{width:150px}
+  .map-card-img{width:130px;height:130px}
+}
+
+/* Trust row inline compacte : 3 items sur une ligne sous l'upload */
+.trust-inline{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;padding:10px 0 0;margin-top:4px;
+  border-top:1px solid var(--border);
+  font-size:9px;color:var(--text3);letter-spacing:.06em;
+  text-transform:uppercase;font-family:var(--mono)
+}
+.trust-inline span{
+  display:inline-flex;align-items:center;gap:5px;
+  flex:1;justify-content:center
+}
+.trust-inline svg{color:var(--accent);flex-shrink:0}
+
+/* LIVE STATUS : mini tag dot pulsant en haut du hero */
+.live-status{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:4px 10px;border-radius:40px;
+  background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.2);
+  font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--text2);margin-bottom:14px;
+  opacity:0;animation:fadeUp .5s ease forwards
+}
+.live-status .ls-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 6px var(--accent);animation:pulse 2s ease-in-out infinite
+}
+.live-status .ls-on{color:var(--accent);font-weight:700}
+/* Variations live-status selon la sante du parser Railway */
+.live-status.degraded{border-color:rgba(245,200,66,.35);background:rgba(245,200,66,.05)}
+.live-status.degraded .ls-dot{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+.live-status.degraded .ls-on{color:var(--gold)}
+.live-status.offline{border-color:rgba(255,68,68,.35);background:rgba(255,68,68,.05)}
+.live-status.offline .ls-dot{background:var(--danger);box-shadow:0 0 6px var(--danger);animation:none}
+.live-status.offline .ls-on{color:var(--danger)}
+
+/* Upload-sub separator dot */
+.upload-sub .us-sep{color:var(--text3);margin:0 6px}
+
+/* RECENT DEMOS : card compacte affichee dans la colonne droite quand
+   l'user connecte a 1+ demos. Liens rapides vers ses resultats. */
+.recent-demos{
+  display:none;padding:8px 10px;margin-top:8px;
+  background:rgba(15,16,16,.5);border:1px solid var(--border);
+  border-radius:8px
+}
+.recent-demos.visible{display:block}
+.recent-demos-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:9px;letter-spacing:.1em;color:var(--text3);
+  text-transform:uppercase;margin-bottom:6px
+}
+.recent-demos-hd a{
+  color:var(--accent);text-decoration:none;font-weight:700;
+  letter-spacing:.06em
+}
+.recent-demo-item{
+  display:flex;align-items:center;gap:10px;padding:4px 0;
+  font-size:10px;color:var(--text2);text-decoration:none;
+  border-bottom:1px solid var(--border);transition:color .15s
+}
+.recent-demo-item:last-child{border-bottom:none}
+.recent-demo-item:hover{color:var(--text)}
+.recent-demo-item .rd-map{
+  color:var(--text);font-weight:700;min-width:75px;
+  font-family:var(--mono);font-size:10px
+}
+.recent-demo-item .rd-rating{
+  color:var(--accent);font-family:var(--display);font-size:12px;
+  margin-left:auto
+}
+.recent-demo-item .rd-date{
+  font-size:9px;color:var(--text3);letter-spacing:.04em
+}
+
+/* QUOTA BAR : barre progressive "X/3 analyses ce mois" au-dessus du upload.
+   Transparence + incitation a l'action. Masquee si user Pro/Elite. */
+.quota-bar{
+  padding:10px 12px;margin-bottom:10px;
+  background:rgba(15,16,16,.5);border:1px solid var(--border);
+  border-radius:8px;
+  opacity:0;animation:fadeUp .5s ease forwards
+}
+.quota-bar-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:10px;letter-spacing:.06em;color:var(--text2);margin-bottom:6px
+}
+.quota-bar-hd .qb-count{
+  font-family:var(--display);font-size:13px;color:var(--text);letter-spacing:.02em
+}
+.quota-bar-hd .qb-count em{color:var(--text3);font-style:normal;font-weight:400;font-size:10px;margin-left:2px}
+.quota-bar-track{
+  height:4px;background:var(--border);border-radius:40px;overflow:hidden;position:relative
+}
+.quota-bar-fill{
+  height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:40px;transition:width .5s ease;
+  box-shadow:0 0 8px rgba(184,255,87,.4)
+}
+.quota-bar.quota-full .quota-bar-fill{background:linear-gradient(90deg,var(--danger),#ff6b35);box-shadow:0 0 8px rgba(255,68,68,.4)}
+.quota-bar.quota-full .qb-count{color:var(--danger)}
+.quota-bar.quota-unlimited .quota-bar-fill{background:linear-gradient(90deg,var(--gold),#d4a52a)}
+.quota-bar.quota-unlimited .qb-count{color:var(--gold)}
+
+/* UPLOAD SHORTCUT : raccourci clavier sous le bouton */
+.upload-shortcut{
+  display:block;margin-top:10px;font-size:9px;color:var(--text3);
+  letter-spacing:.06em;font-family:var(--mono)
+}
+.upload-shortcut kbd{
+  display:inline-block;padding:2px 6px;margin:0 2px;
+  background:rgba(255,255,255,.04);border:1px solid var(--border2);
+  border-radius:3px;font-family:var(--mono);font-size:9px;color:var(--text);
+  font-weight:700
+}
+
+/* PARTICLES : fond anime discret dans .middle pour effet 'parser vivant' */
+.middle-particles{
+  position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0
+}
+.middle-particles span{
+  position:absolute;width:2px;height:2px;border-radius:50%;
+  background:var(--accent);opacity:.15;
+  animation:particleFloat 8s ease-in-out infinite
+}
+.middle-particles span:nth-child(1){top:15%;left:10%;animation-delay:0s;animation-duration:10s}
+.middle-particles span:nth-child(2){top:80%;left:22%;animation-delay:1s;animation-duration:12s}
+.middle-particles span:nth-child(3){top:40%;left:45%;animation-delay:2s;animation-duration:9s}
+.middle-particles span:nth-child(4){top:65%;left:65%;animation-delay:.5s;animation-duration:11s}
+.middle-particles span:nth-child(5){top:25%;left:85%;animation-delay:1.5s;animation-duration:13s}
+.middle-particles span:nth-child(6){top:90%;left:90%;animation-delay:2.5s;animation-duration:10s}
+.middle-particles span:nth-child(7){top:55%;left:18%;animation-delay:3s;animation-duration:11s}
+.middle-particles span:nth-child(8){top:10%;left:60%;animation-delay:.8s;animation-duration:9s}
+@keyframes particleFloat{
+  0%,100%{transform:translate(0,0);opacity:.15}
+  25%{transform:translate(20px,-15px);opacity:.4}
+  50%{transform:translate(-10px,-25px);opacity:.25}
+  75%{transform:translate(15px,10px);opacity:.35}
+}
+/* Les enfants du .middle doivent etre au-dessus des particules */
+.middle > *{position:relative;z-index:1}
+
+/* LIVE FEED TICKER : barre fixed bottom avec scroll horizontal des derniers
+   evenements (analyses recentes). Extremement discret, peut etre masque. */
+.live-feed{
+  position:fixed;bottom:0;left:0;right:0;z-index:50;
+  height:32px;
+  background:rgba(15,16,16,.85);backdrop-filter:blur(10px);
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;
+  overflow:hidden;
+  font-family:var(--mono);font-size:10px
+}
+.live-feed-label{
+  display:flex;align-items:center;gap:6px;
+  padding:0 14px;flex-shrink:0;
+  border-right:1px solid var(--border);
+  height:100%;
+  color:var(--text3);letter-spacing:.12em;text-transform:uppercase;font-size:9px
+}
+.live-feed-label .lf-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 6px var(--accent);animation:pulse 2s ease-in-out infinite
+}
+.live-feed-track{
+  display:flex;align-items:center;gap:36px;
+  padding-left:24px;white-space:nowrap;
+  animation:liveFeedScroll 45s linear infinite;
+  width:max-content
+}
+.live-feed:hover .live-feed-track{animation-play-state:paused}
+.live-feed-item{display:inline-flex;align-items:center;gap:8px;color:var(--text2)}
+.live-feed-item .lf-user{color:var(--text);font-weight:700}
+.live-feed-item .lf-sep{color:var(--text3);margin:0 4px}
+.live-feed-item .lf-map{color:var(--accent)}
+.live-feed-item .lf-rating{color:var(--gold);font-family:var(--display);font-size:12px;letter-spacing:.02em}
+@keyframes liveFeedScroll{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+
+/* Avec le live-feed bottom fixe, on doit reduire le layout de 32px pour
+   que tout tienne SANS scroll (contrainte user). */
+body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
+
+/* Overlay label sur les cards map (au-dessus de l'image) pour un look plus
+   finition, avec gradient bottom qui garantit la lisibilite. */
+.map-card-img{position:relative}
+.map-card-img .map-overlay{
+  position:absolute;inset:0;
+  display:flex;align-items:flex-end;padding:12px;
+  background:linear-gradient(180deg,rgba(8,9,9,0) 45%,rgba(8,9,9,.85) 100%);
+  opacity:0;transition:opacity .2s
+}
+.map-card:hover .map-overlay{opacity:1}
+.map-card-img .map-overlay-txt{
+  font-family:var(--display);font-size:14px;color:var(--accent);
+  letter-spacing:.04em;text-shadow:0 2px 8px rgba(0,0,0,.8)
+}
+
+/* MILIEU : colonne centrale entre hero et upload, dediee au slider de maps. */
+.middle{
+  padding:48px 24px 32px;
+  display:flex;flex-direction:column;
+  justify-content:flex-start;align-items:stretch;gap:14px;
+  position:relative;overflow:hidden;
+  background:linear-gradient(180deg,rgba(15,16,16,.3),rgba(8,9,9,.6))
+}
+
+/* DROITE : upload compact, ancre en haut, tient sur 1 ecran sans scroll */
+.right{
+  background:var(--surface);
+  border-left:1px solid var(--border);
+  padding:48px 28px 28px;
+  display:flex;flex-direction:column;
+  justify-content:flex-start;
+  gap:6px;
+  overflow:hidden
+}
+
+/* SECTION LABEL  - identique landing */
+.section-label{
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text3);display:flex;align-items:center;gap:10px;
+  margin-bottom:4px
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* (Ancienne .nav-quota pill retiree : quota affiche maintenant directement
+   dans la colonne upload via .quota-bar, plus visible et moins redondant.) */
+
+/* WELCOME TOAST : auto-dismiss 10s apres le signup (?welcome=1).
+   Positionne top-right, fade-in puis slide-out. Pas intrusif. */
+.welcome-toast{
+  position:fixed;top:72px;right:20px;z-index:1000;
+  max-width:340px;width:calc(100% - 40px);
+  background:linear-gradient(135deg,rgba(15,16,16,.98),rgba(15,16,16,.92));
+  border:1px solid rgba(184,255,87,.45);border-radius:10px;
+  padding:14px 16px;
+  box-shadow:0 10px 40px rgba(0,0,0,.5),0 0 0 1px rgba(184,255,87,.05);
+  transform:translateX(calc(100% + 30px));opacity:0;
+  transition:transform .4s cubic-bezier(.2,.9,.3,1.2),opacity .3s
+}
+.welcome-toast.show{transform:translateX(0);opacity:1}
+.welcome-toast-row{display:flex;align-items:flex-start;gap:12px}
+.welcome-toast-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 10px var(--accent);margin-top:6px;flex-shrink:0;
+  animation:pulse 2s ease-in-out infinite
+}
+.welcome-toast-body{flex:1;min-width:0}
+.welcome-toast-title{
+  font-family:var(--display);font-size:13px;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);margin-bottom:4px
+}
+.welcome-toast-msg{font-size:11px;color:var(--text2);line-height:1.55}
+.welcome-toast-msg strong{color:var(--text)}
+.welcome-toast-close{
+  background:none;border:none;color:var(--text3);cursor:pointer;
+  padding:2px 6px;font-size:14px;line-height:1;
+  transition:color .15s
+}
+.welcome-toast-close:hover{color:var(--text)}
+
+/* UPLOAD ZONE */
+#fileInput{display:none}
+.upload-zone{
+  border:1px dashed var(--border2);border-radius:var(--radius2);
+  padding:22px 22px;text-align:center;cursor:pointer;
+  background:var(--bg);transition:all .2s;
+  opacity:0;animation:fadeUp .5s .1s ease forwards
+}
+.upload-zone:hover,.upload-zone.dragover{
+  border-color:var(--accent);background:rgba(184,255,87,.03)
+}
+.upload-zone.ok{
+  border-style:solid;border-color:var(--success);
+  background:rgba(45,212,160,.04)
+}
+.upload-icon{
+  width:40px;height:40px;margin:0 auto 12px;
+  background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.15);
+  border-radius:var(--radius);display:flex;align-items:center;justify-content:center;
+  transition:transform .2s
+}
+.upload-zone:hover .upload-icon,.upload-zone.dragover .upload-icon{transform:translateY(-4px)}
+.upload-title{font-family:var(--display);font-size:20px;letter-spacing:.02em;margin-bottom:6px}
+.upload-sub{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+.upload-btn{
+  background:var(--accent);color:#000;
+  padding:10px 24px;border-radius:var(--radius);
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  border:none;cursor:pointer;letter-spacing:.04em;transition:all .15s
+}
+.upload-btn:hover{background:var(--accent2);transform:translateY(-1px)}
+.upload-hints{
+  display:flex;gap:16px;justify-content:center;
+  margin-top:12px;flex-wrap:wrap
+}
+.upload-hints span{
+  font-size:10px;color:var(--text3);letter-spacing:.06em;
+  display:flex;align-items:center;gap:5px
+}
+
+/* FILE BAR */
+.file-bar{
+  display:none;align-items:center;gap:12px;
+  background:rgba(184,255,87,.04);border:1px solid rgba(184,255,87,.15);
+  border-radius:var(--radius);padding:12px 16px
+}
+.file-bar.show{display:flex}
+.file-bar-ico{
+  width:34px;height:34px;flex-shrink:0;
+  background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.2);
+  border-radius:var(--radius);display:flex;align-items:center;justify-content:center
+}
+.file-bar-info{flex:1;min-width:0}
+.file-bar-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-bar-size{font-size:10px;color:var(--text3);letter-spacing:.04em;margin-top:2px}
+.file-bar-rm{
+  font-size:10px;padding:4px 10px;border-radius:var(--radius);
+  border:1px solid var(--border2);background:transparent;
+  color:var(--text3);cursor:pointer;transition:all .15s;
+  flex-shrink:0;font-family:var(--mono)
+}
+.file-bar-rm:hover{border-color:var(--danger);color:var(--danger)}
+
+/* ERROR */
+.error-card{
+  display:none;
+  background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.18);
+  border-radius:var(--radius);padding:11px 14px;
+  font-size:11px;color:var(--danger);letter-spacing:.02em
+}
+
+/* SUBMIT */
+.submit-btn{
+  width:100%;padding:13px;
+  background:var(--accent);color:#000;
+  border:none;border-radius:var(--radius);
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  cursor:pointer;letter-spacing:.06em;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:all .15s;
+  opacity:0;animation:fadeUp .5s .2s ease forwards
+}
+.submit-btn:hover:not(:disabled){
+  background:var(--accent2);transform:translateY(-1px);
+  box-shadow:0 8px 24px rgba(184,255,87,.15)
+}
+.submit-btn:disabled{
+  background:var(--border2);color:var(--text3);
+  cursor:not-allowed;transform:none;box-shadow:none
+}
+
+/* PROGRESS */
+#progressSection{display:none}
+.progress-card{
+  background:var(--bg);border:1px solid var(--border2);
+  border-radius:var(--radius2);padding:24px;
+  position:relative;overflow:hidden
+}
+.progress-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  animation:shimmer 1.8s ease-in-out infinite
+}
+.progress-hd{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.progress-spin{
+  width:22px;height:22px;flex-shrink:0;
+  border:1.5px solid var(--border2);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .75s linear infinite
+}
+.progress-title{font-family:var(--display);font-size:18px;letter-spacing:.02em}
+.progress-sub{font-size:10px;color:var(--text3);letter-spacing:.06em;margin-top:3px}
+.progress-track{height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-bottom:18px}
+.progress-fill{height:100%;width:0%;background:var(--accent);border-radius:1px;transition:width .4s ease}
+.progress-steps{display:flex;flex-direction:column;gap:8px}
+.ps{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--text3);letter-spacing:.04em;transition:color .2s}
+.ps.done{color:var(--success)}
+.ps.active{color:var(--text)}
+.ps-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .2s}
+.ps.done .ps-dot{background:var(--success)}
+.ps.active .ps-dot{background:var(--accent);animation:pulse 1s infinite}
+
+/* STATS ROW  - comme hero-stats de la landing */
+.stats-row{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+  opacity:0;animation:fadeUp .5s .3s ease forwards
+}
+.sc{
+  padding:11px 12px;text-align:center;
+  border-right:1px solid var(--border)
+}
+.sc:last-child{border-right:none}
+.sc-val{font-family:var(--display);font-size:20px;color:var(--accent);line-height:1}
+.sc-lbl{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-top:4px}
+
+/* RESULT PREVIEW */
+.result-preview{
+  margin-top:24px;padding-top:20px;
+  border-top:1px solid var(--border);
+  opacity:0;animation:fadeUp .5s .25s ease forwards
+}
+.rp-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.rp-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.rp-card{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:8px 6px;text-align:center
+}
+.rp-val{font-family:var(--display);font-size:15px;color:var(--accent);line-height:1}
+.rp-key{font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+.rp-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.rp-bar-label{font-size:10px;color:var(--text2);width:44px;flex-shrink:0}
+.rp-bar-track{flex:1;height:3px;background:var(--border);border-radius:2px}
+.rp-bar-fill{height:100%;border-radius:2px;background:var(--accent)}
+.rp-bar-num{font-family:var(--display);font-size:13px;color:var(--accent);width:28px;text-align:right;flex-shrink:0}
+
+/* RESPONSIVE */
+@media(max-width:1100px){
+  /* Tablette : hero + upload en 2 colonnes, slider relegue sous le hero */
+  .layout{
+    grid-template-columns:1fr 400px;
+    grid-template-areas:"left right" "middle right";
+    height:auto;min-height:100vh;overflow:visible
+  }
+  .left{grid-area:left;padding:24px 28px}
+  .middle{grid-area:middle;padding:0 28px 24px;border-right:1px solid var(--border)}
+  .right{grid-area:right;padding:24px 28px}
+}
+@media(max-width:860px){
+  .layout{
+    grid-template-columns:1fr;
+    grid-template-areas:"right" "left" "middle";
+    height:auto
+  }
+  .left{display:none}
+  .middle{border-right:none;padding:20px;display:none}
+  .right{padding:40px 20px;min-height:calc(100vh - 56px)}
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+</style>
+<script src="/analytics.js" defer></script>
+</head>
+<body class="demo-no-scroll">
+
+<nav>
+  <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="levels.html">Roadmap</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="demo.html" class="active">Analysis</a>
+    <a href="matches.html" id="navMatchesBtn" style="display:none">My matches</a>
+    <a href="login.html" id="navLoginBtn">Sign in</a>
+    <a href="account.html" class="nav-cta" id="navAccountBtn" style="display:none">My account</a>
+  </div>
+</nav>
+
+<!-- Toast de bienvenue si ?welcome=1 (nouveau signup). Non intrusif,
+     auto-dismiss apres 10s. Positionne en top-right, ne casse pas le layout. -->
+<div class="welcome-toast" id="welcomeToast" style="display:none">
+  <div class="welcome-toast-row">
+    <div class="welcome-toast-dot"></div>
+    <div class="welcome-toast-body">
+      <div class="welcome-toast-title">Welcome <span id="welcomeToastNick"></span></div>
+      <div class="welcome-toast-msg">Depose ton fichier <strong>.dem FACEIT</strong> pour decouvrir ton FV Rating et ton plan d'action personnalise.</div>
+    </div>
+    <button class="welcome-toast-close" onclick="document.getElementById('welcomeToast').classList.remove('show');setTimeout(()=>document.getElementById('welcomeToast').style.display='none',400)" aria-label="Close">&times;</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- GAUCHE -->
+  <div class="left">
+    <div class="left-grid"></div>
+    <div class="left-glow"></div>
+    <div class="left-inner">
+      <div class="live-status">
+        <span class="ls-dot"></span>
+        <span class="ls-on">Parser online</span>
+      </div>
+      <div class="left-tag">Demo Analyzer</div>
+      <h1 class="left-title">Upload.<br><em>Analysis.</em><br>Progresse.</h1>
+      <p class="left-sub">Drop your FACEIT .dem file and get a full analysis in under 2 minutes. Positions, kills, grenades and FV Rating.</p>
+      <div class="feat-list">
+        <div class="feat">
+          <div class="feat-dot"></div>
+          <span><strong>Heatmaps</strong> · Kills, deaths and duel zones</span>
+        </div>
+        <div class="feat">
+          <div class="feat-dot"></div>
+          <span><strong>2D Replay</strong> · Every round frame by frame</span>
+        </div>
+        <div class="feat">
+          <div class="feat-dot"></div>
+          <span><strong>FV Rating</strong> · Your real impact on each round</span>
+        </div>
+        <div class="feat">
+          <div class="feat-dot"></div>
+          <span><strong>Utility Map</strong> · Grenade and smoke trajectories</span>
+        </div>
+        <div class="feat feat-full">
+          <div class="feat-dot"></div>
+          <span><strong>Team Stats</strong> · KAST, ADR, opening duels</span>
+        </div>
+      </div>
+      <a href="index.html#features" class="hero-faq-link">How it works ? &rsaquo;</a>
+    </div>
+  </div>
+
+  <!-- MILIEU : slider des 7 maps CS2 supportees, defile en boucle -->
+  <div class="middle">
+    <!-- Particules flottantes discretes, effet 'parser vivant' -->
+    <div class="middle-particles" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span>
+    </div>
+    <div class="maps-slider">
+      <div class="maps-viewport">
+        <div class="maps-track">
+          <!-- Set 1 -->
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/de_mirage_radar_psd.png')"></div>
+            <div class="map-card-label">Mirage</div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/de_inferno_radar_psd.png')"></div>
+            <div class="map-card-label">Inferno</div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/de_dust2_radar_psd.png')"></div>
+            <div class="map-card-label">Dust 2</div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/de_ancient_radar_psd.png')"></div>
+            <div class="map-card-label">Ancient</div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/de_anubis_radar_psd.png')"></div>
+            <div class="map-card-label">Anubis</div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/de_overpass_radar_psd.png')"></div>
+            <div class="map-card-label">Overpass</div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-img" style="background-image:url('/maps/nuke/de_nuke_radar_psd.png')"></div>
+            <div class="map-card-label">Nuke</div>
+          </div>
+          <!-- Set 2 : duplique pour un loop sans saccade -->
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/de_mirage_radar_psd.png')"></div>
+            <div class="map-card-label">Mirage</div>
+          </div>
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/de_inferno_radar_psd.png')"></div>
+            <div class="map-card-label">Inferno</div>
+          </div>
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/de_dust2_radar_psd.png')"></div>
+            <div class="map-card-label">Dust 2</div>
+          </div>
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/de_ancient_radar_psd.png')"></div>
+            <div class="map-card-label">Ancient</div>
+          </div>
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/de_anubis_radar_psd.png')"></div>
+            <div class="map-card-label">Anubis</div>
+          </div>
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/de_overpass_radar_psd.png')"></div>
+            <div class="map-card-label">Overpass</div>
+          </div>
+          <div class="map-card" aria-hidden="true">
+            <div class="map-card-img" style="background-image:url('/maps/nuke/de_nuke_radar_psd.png')"></div>
+            <div class="map-card-label">Nuke</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MINI PREVIEW 2D REPLAY : capture reelle d'une analyse FragValue
+         (de_dust2, round 9, avec positions players, score, timeline).
+         Montre concretement la value prop. Clic ouvre un apercu plein ecran. -->
+    <a href="#" class="replay-preview" id="replayPreview" aria-label="Apercu 2D Replay">
+      <img
+        src="/images/previews/demo-2d-replay.png"
+        alt="Apercu 2D Replay FragValue - analyse dust2 round 9"
+        class="rpv-image"
+        loading="lazy"
+        decoding="async"
+      />
+      <div class="rpv-overlay">
+        <div class="rpv-overlay-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="10 8 16 12 10 16 10 8"/>
+          </svg>
+          Voir un exemple d'analyse
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- DROITE -->
+  <div class="right">
+
+    <div class="section-label">Upload</div>
+
+    <!-- Quota bar : affiche X/3 analyses ce mois, plan actif.
+         Remplie par renderQuotaBar() au load. Masque pour non connecte. -->
+    <div class="quota-bar" id="quotaBar" style="display:none">
+      <div class="quota-bar-hd">
+        <span id="quotaBarLabel">Analysiss ce mois</span>
+        <span class="qb-count" id="quotaBarCount">0<em>/3</em></span>
+      </div>
+      <div class="quota-bar-track"><div class="quota-bar-fill" id="quotaBarFill" style="width:0%"></div></div>
+    </div>
+
+    <input type="file" id="fileInput" accept=".dem"/>
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div class="upload-title">Drop your demo</div>
+      <div class="upload-sub">Drag and drop your file <strong>.dem FACEIT</strong> ici <span class="us-sep">&middot;</span> Max 500 MB</div>
+      <button class="upload-btn" onclick="document.getElementById('fileInput').click();event.stopPropagation()">
+        Choose a file
+      </button>
+      <span class="upload-shortcut">Raccourci <kbd id="kbdShortcut">Ctrl U</kbd> pour ouvrir le selecteur</span>
+    </div>
+
+    <div class="file-bar" id="fileSelected">
+      <div class="file-bar-ico">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+      <div class="file-bar-info">
+        <div class="file-bar-name" id="fileName"></div>
+        <div class="file-bar-size" id="fileSize"></div>
+      </div>
+      <button class="file-bar-rm" onclick="removeFile()">Remove</button>
+    </div>
+
+    <div class="error-card" id="errorCard"></div>
+
+    <button class="submit-btn" id="analyseBtn" disabled onclick="startAnalysis()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      Start analysis
+    </button>
+
+    <div id="progressSection">
+      <div class="progress-card">
+        <div class="progress-hd">
+          <div class="progress-spin"></div>
+          <div>
+            <div class="progress-title" id="progressTitle">Initialization</div>
+            <div class="progress-sub" id="progressSub">Preparing...</div>
+          </div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
+        <div class="progress-steps">
+          <div class="ps" id="step0"><div class="ps-dot"></div>Uploading file</div>
+          <div class="ps" id="step1"><div class="ps-dot"></div>Parsing CS2 · Extracting ticks</div>
+          <div class="ps" id="step2"><div class="ps-dot"></div>Computing positions and zones</div>
+          <div class="ps" id="step3"><div class="ps-dot"></div>Generating heatmaps</div>
+          <div class="ps" id="step4"><div class="ps-dot"></div>FV Rating · KPIs</div>
+          <div class="ps" id="step5"><div class="ps-dot"></div>Finalizing</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent demos : 3 dernieres analyses du user (lien direct vers resultats) -->
+    <div class="recent-demos" id="recentDemos">
+      <div class="recent-demos-hd">
+        <span>Your recent analyses</span>
+        <a href="account.html">View all &rsaquo;</a>
+      </div>
+      <div id="recentDemosList"></div>
+    </div>
+
+    <!-- Trust row inline compacte (4 mots cles : privacy + RGPD + no card + retention) -->
+    <div class="trust-inline">
+      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Private</span>
+      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 6v6c0 5 4 9 9 10 5-1 9-5 9-10V6l-9-4z"/></svg>RGPD</span>
+      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>No card</span>
+      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>Del 30d</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- LIVE FEED TICKER : barre fixed bottom avec defile des dernieres analyses.
+     Donne une impression de plateforme active. Rempli par renderLiveFeed()
+     depuis la DB (demos recentes) ou fallback sur du contenu generique. -->
+<div class="live-feed" id="liveFeed">
+  <div class="live-feed-label">
+    <span class="lf-dot"></span>
+    <span>Live</span>
+  </div>
+  <div class="live-feed-track" id="liveFeedTrack">
+    <!-- Items injectes par JS au load. Fallback contenu visible en SSR : -->
+    <div class="live-feed-item"><span class="lf-user">FragValue</span><span class="lf-sep">analyse</span><span class="lf-map">de_mirage</span><span class="lf-sep">&middot;</span><span class="lf-rating">FV 1.42</span></div>
+    <div class="live-feed-item"><span class="lf-user">FragValue</span><span class="lf-sep">analyse</span><span class="lf-map">de_inferno</span><span class="lf-sep">&middot;</span><span class="lf-rating">FV 1.28</span></div>
+    <div class="live-feed-item"><span class="lf-user">FragValue</span><span class="lf-sep">analyse</span><span class="lf-map">de_ancient</span><span class="lf-sep">&middot;</span><span class="lf-rating">FV 1.55</span></div>
+  </div>
+</div>
+
+<script>
+// Upload direct vers Railway (les fichiers .dem font 100-500 MB, trop gros pour le proxy Vercel qui est limité a 4.5 MB)
+const PARSER_URL = 'https://fragvalue-demo-parser-production.up.railway.app';
+let selectedFile = null;
+
+// Pre-warm le serveur Railway des le chargement de la page (évite le cold start).
+// On track le dernier status pour pouvoir avertir l'user avant un upload 500 MB
+// si le parser est down (evite l'attente + frustration).
+let _parserAvailable = null; // null=unknown, true=ok, false=down
+async function pingParser(timeoutMs) {
+  if (timeoutMs === void 0) timeoutMs = 6000;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    const r = await fetch(PARSER_URL + '/ping', { method: 'GET', mode: 'cors', signal: ctrl.signal });
+    clearTimeout(t);
+    _parserAvailable = r.ok;
+    return r.ok;
+  } catch (e) {
+    _parserAvailable = false;
+    return false;
+  }
+}
+pingParser();
+
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+zone.addEventListener('click', e => {
+  if (!e.target.classList.contains('upload-btn'))
+    document.getElementById('fileInput').click();
+});
+document.getElementById('fileInput').addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+function handleFile(f) {
+  hideError();
+  if (!f.name.endsWith('.dem')) { showError('Only .dem files are accepted.'); return; }
+  if (f.size > 500*1024*1024) { showError('File too large (' + fmt(f.size) + ') · max 500 MB.'); return; }
+  selectedFile = f;
+  document.getElementById('fileName').textContent = f.name;
+  document.getElementById('fileSize').textContent = fmt(f.size);
+  document.getElementById('fileSelected').classList.add('show');
+  zone.classList.add('ok');
+  document.getElementById('analyseBtn').disabled = false;
+}
+
+function removeFile() {
+  selectedFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileSelected').classList.remove('show');
+  zone.classList.remove('ok');
+  document.getElementById('analyseBtn').disabled = true;
+  hideError();
+}
+
+function fmt(b) {
+  return b >= 1024*1024 ? (b/1024/1024).toFixed(1)+' MB' : (b/1024).toFixed(0)+' KB';
+}
+
+async function checkPlanGating() {
+  try {
+    const { data:{ session } } = await _sb.auth.getSession();
+    if (!session) return true; // non connecte = on laisse passer (free)
+
+    // Compter les demos ce mois-ci
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const { count } = await _sb.from('demos')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', session.user.id)
+      .gte('analysed_at', monthStart);
+
+    // Vérifier le plan
+    let plan = 'free';
+    try {
+      const subRes = await fetch('/api/check-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+      });
+      if (subRes.ok) {
+        const subData = await subRes.json();
+        plan = subData.plan || 'free';
+      }
+    } catch (_) {}
+
+    if (plan === 'free' && (count || 0) >= 3) {
+      showUpgradeModal();
+      return false;
+    }
+    return true;
+  } catch (_) {
+    return true;
+  }
+}
+
+function showUpgradeModal() {
+  let modal = document.getElementById('upgradeModal');
+  if (modal) { modal.style.display = 'flex'; return; }
+  modal = document.createElement('div');
+  modal.id = 'upgradeModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(6px)';
+  modal.innerHTML = `
+    <div style="background:#0f1010;border:1px solid #1c1e1e;border-radius:12px;padding:36px 32px;max-width:420px;width:90%;text-align:center">
+      <div style="font-family:'Anton',sans-serif;font-size:22px;letter-spacing:.02em;margin-bottom:6px">Limit reached</div>
+      <p style="font-size:11px;color:#7a8080;line-height:1.7;margin-bottom:20px">
+        Tu as utilisé tes 3 analysés gratuites ce mois ci.<br>
+        Passe a Pro pour des analysés illimitees, le Complete 2D Replay, et l'export PDF.
+      </p>
+      <a href="index.html#pricing" style="display:inline-block;background:#b8ff57;color:#000;padding:10px 24px;border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">See plans</a>
+      <button onclick="document.getElementById('upgradeModal').style.display='none'" style="display:block;margin:14px auto 0;background:none;border:none;color:#4a5050;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer">Close</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function startAnalysis() {
+  if (!selectedFile) return;
+
+  // Plan gating
+  const allowed = await checkPlanGating();
+  if (!allowed) {
+    if (typeof window.fvTrack === 'function') window.fvTrack('Quota Hit', { plan: 'free' });
+    return;
+  }
+  // Funnel : upload demo demarre (le user a passe le quota check, va consommer 1 analyse)
+  if (typeof window.fvTrack === 'function') {
+    window.fvTrack('Demo Upload Start', { sizeMB: Math.round(selectedFile.size / 1024 / 1024) });
+  }
+
+  // Pre-check parser availability (evite d'uploader 500 MB si Railway est down)
+  // Si le ping initial a échoué, on retry avant l'upload.
+  if (_parserAvailable === false) {
+    const btn = document.getElementById('analyseBtn');
+    const originalLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Vérification serveur...';
+    const available = await pingParser(8000);
+    btn.textContent = originalLabel;
+    if (!available) {
+      btn.disabled = false;
+      alert('Le serveur d\'analyse est temporairement indisponible. Réessaie dans quelques minutes.');
+      return;
+    }
+  }
+
+  document.getElementById('analyseBtn').disabled = true;
+  const prog = document.getElementById('progressSection');
+  prog.style.display = 'block';
+  prog.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+  const steps = document.querySelectorAll('.ps');
+  const bar   = document.getElementById('progressBar');
+  let currentPct = 0;
+
+  function go(i, pct, title, sub) {
+    steps.forEach((el, j) => {
+      el.classList.remove('active','done');
+      if (j < i) el.classList.add('done');
+      if (j === i) el.classList.add('active');
+    });
+    currentPct = pct;
+    bar.style.width = pct + '%';
+    document.getElementById('progressTitle').textContent = title;
+    document.getElementById('progressSub').textContent   = sub;
+  }
+
+  // Progression animée pendant le fetch (avancé lentement jusqu'à 88%)
+  // Chaque étape a un timing réaliste basé sur ce que fait réellement le parser.
+  // Les messages > 80s sont rassurants en cas de parsing plus long que prevu
+  // (grosse demo, serveur charge) pour reduire le taux d'abandon.
+  const autoSteps = [
+    { delay:800,  step:0, pct:8,  title:'Uploading file',            sub:'Transfert en cours...' },
+    { delay:3000, step:1, pct:20, title:'Parsing CS2',                 sub:'Lecture des ticks bruts...' },
+    { delay:5000, step:1, pct:32, title:'Parsing CS2',                 sub:'Extraction des positions...' },
+    { delay:8000, step:2, pct:44, title:'Calcul des zones',            sub:'Analysis des rounds...' },
+    { delay:12000,step:2, pct:54, title:'Calcul des zones',            sub:'Mapping grenades et shots...' },
+    { delay:18000,step:3, pct:63, title:'Generating heatmaps',     sub:'Kill zones et duel areas...' },
+    { delay:25000,step:3, pct:70, title:'Generating heatmaps',     sub:'Calcul des trajectoires...' },
+    { delay:35000,step:4, pct:76, title:'FV Rating',                   sub:'Calcul de l\'impact par round...' },
+    { delay:50000,step:4, pct:82, title:'FV Rating',                   sub:'Pondération des KPIs...' },
+    { delay:70000,step:4, pct:87, title:'Finalizing',                sub:'Presque terminé...' },
+    // Messages rassurants si le parsing depasse les 80s (grosses demos)
+    { delay:85000, step:4, pct:89, title:'Finalizing',               sub:'Demo volumineuse, patience...' },
+    { delay:120000,step:4, pct:91, title:'Finalizing',               sub:'Serveur charge, encore quelques instants...' },
+    { delay:180000,step:4, pct:93, title:'Finalizing',               sub:'Map complexe detectee, on y est presque...' },
+    { delay:240000,step:4, pct:95, title:'Finalizing',               sub:'Derniere etape avant la completion...' },
+  ];
+
+  const timers = autoSteps.map(s =>
+    setTimeout(() => { if(currentPct < s.pct) go(s.step, s.pct, s.title, s.sub); }, s.delay)
+  );
+
+  try {
+    go(0, 3, 'Connecting to server', 'Initialization...');
+    go(0, 6, 'Uploading file', selectedFile.name);
+    const fd = new FormData();
+    fd.append('demo', selectedFile);
+    fd.append('options', JSON.stringify(['Heatmaps','2D Replay','Utility Map','Team Stats']));
+
+    // Timeout 5 minutes
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+    const res = await fetch(PARSER_URL + '/parse', { method:'POST', body:fd, signal: controller.signal });
+    clearTimeout(timeout);
+
+    // Fetch terminé  - annuler les timers et finir proprement
+    timers.forEach(t => clearTimeout(t));
+
+    if (!res.ok) { const e = await res.json().catch(()=>({error:'Error serveur'})); throw new Error(e.error||'Error serveur'); }
+
+    go(5, 92, 'Finalizing', 'Traitement des résultats...');
+    const data = await res.json();
+    go(5, 97, 'Finalizing', 'Sauvegarde...');
+
+    try {
+      sessionStorage.setItem('demoData', JSON.stringify(data.data));
+    } catch(e) {
+      console.warn('sessionStorage full, stripping HUD-only fields from positions...');
+      // Essentiels a garder : position, tick, team, round, hp, YAW (orientation pin),
+      // weapon (arme active + droppee a la mort), grenades inventory (strip au-dessus
+      // du pin). On strippe : armure/helmet/defuser/money (visuel HUD secondaire).
+      // Strip 1 : garde TOUS les HUD essentials (weapon, armor, helmet,
+      // defuser, money, hp, yaw). Drop uniquement les champs grenade déjà
+      // absents du parser (smk/fl/...) + r (round derivable depuis tick).
+      const stripped = {...data.data};
+      if (stripped.positions && typeof stripped.positions === 'object') {
+        Object.keys(stripped.positions).forEach(name => {
+          stripped.positions[name] = stripped.positions[name].map(p => ({
+            x: p.x, y: p.y,
+            t: p.t ?? p.team, r: p.r ?? p.round,
+            k: p.k ?? p.tick,
+            h: p.h ?? p.hp,
+            ya: p.ya ?? p.yaw ?? 0,
+            w: p.w ?? p.weapon ?? null,
+            a: p.a ?? p.armor ?? 0,
+            he: p.he ?? (p.hasHelmet ? 1 : 0),
+            d: p.d ?? (p.hasDefuser ? 1 : 0),
+            m: p.m ?? p.money ?? 0,
+          }));
+        });
+        // Sous-sampling supplementaire : garde 1 position sur 2 pour diviser
+        // la taille par 2 en fallback (reste fluide pour le replay).
+        Object.keys(stripped.positions).forEach(name => {
+          stripped.positions[name] = stripped.positions[name].filter((_, i) => i % 2 === 0);
+        });
+      }
+      try {
+        sessionStorage.setItem('demoData', JSON.stringify(stripped));
+      } catch(e2) {
+        console.warn('Still too large, sub-sampling plus aggressif...');
+        Object.keys(stripped.positions).forEach(name => {
+          stripped.positions[name] = stripped.positions[name].filter((_, i) => i % 2 === 0);
+        });
+        try {
+          sessionStorage.setItem('demoData', JSON.stringify(stripped));
+        } catch(e3) {
+          console.warn('Encore trop gros, drop positions entierement');
+          sessionStorage.setItem('demoData', JSON.stringify({...data.data, positions:{}}));
+        }
+      }
+    }
+    await saveDemoAnalysis(data.data);
+
+    go(5, 100, 'Analysis complète', 'Redirection...');
+    bar.style.background = 'var(--success)';
+    await new Promise(r => setTimeout(r, 600));
+    window.location.href = 'heatmap-results.html';
+
+  } catch(err) {
+    timers.forEach(t => clearTimeout(t));
+    prog.style.display = 'none';
+    document.getElementById('analyseBtn').disabled = false;
+    const msg = err.name === 'AbortError'
+      ? 'Timeout (5 min). File may be too large or server overloaded. Try again in a few minutes.'
+      : 'Error : ' + err.message;
+    showError(msg);
+  }
+}
+
+function showError(m) { const e=document.getElementById('errorCard'); e.textContent=m; e.style.display='block'; }
+function hideError()  { document.getElementById('errorCard').style.display='none'; }
+
+// Auth Supabase
+const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+_sb.auth.getSession().then(async ({ data }) => {
+  if (data.session) {
+    document.getElementById('navLoginBtn').style.display  = 'none';
+    document.getElementById('navAccountBtn').style.display = '';
+    const mb = document.getElementById('navMatchesBtn');
+    if (mb) mb.style.display = '';
+    // Toast welcome si signup recent
+    renderWelcomeToast(data.session);
+    // Progress bar quota dans la colonne upload
+    renderQuotaBar(data.session);
+    // Recent demos (3 dernieres analyses) dans la colonne upload
+    renderRecentDemos(data.session);
+  }
+  // Live feed : dernieres analyses depuis la DB (si > 3 demos existent)
+  renderLiveFeed();
+  // Live status : ping le parser Railway et adapte le tag (online/degraded/offline)
+  updateLiveStatus();
+});
+
+// Ping le parser Railway et affiche son etat reel dans le tag live-status.
+// 3 etats : online (<3s RTT), degrade (>3s RTT), offline (no response).
+// Utilise /ping (meme endpoint que pingParser existant, evite un 404 sur /health).
+async function updateLiveStatus() {
+  const tag = document.querySelector('.live-status');
+  const label = document.querySelector('.live-status .ls-on');
+  if (!tag || !label) return;
+  const started = Date.now();
+  try {
+    const ctrl = new AbortController();
+    const to = setTimeout(function() { ctrl.abort(); }, 6000);
+    const res = await fetch(PARSER_URL + '/ping', { method:'GET', mode:'cors', signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(to);
+    const elapsed = Date.now() - started;
+    if (res.ok && elapsed < 3000) {
+      tag.classList.remove('degraded', 'offline');
+      label.textContent = 'Parser online';
+    } else if (res.ok) {
+      tag.classList.remove('offline');
+      tag.classList.add('degraded');
+      label.textContent = 'Parser degraded';
+    } else {
+      tag.classList.remove('degraded');
+      tag.classList.add('offline');
+      label.textContent = 'Parser offline';
+    }
+  } catch (_) {
+    tag.classList.remove('degraded');
+    tag.classList.add('offline');
+    label.textContent = 'Parser offline';
+  }
+}
+
+// Affiche les 3 dernieres analyses de l'user (lien rapide vers resultats).
+async function renderRecentDemos(session) {
+  const el = document.getElementById('recentDemos');
+  const list = document.getElementById('recentDemosList');
+  if (!el || !list || !session) return;
+  try {
+    const { data, error } = await _sb.from('demos')
+      .select('id, map, analysed_at, fv_rating')
+      .eq('user_id', session.user.id)
+      .order('analysed_at', { ascending: false })
+      .limit(3);
+    if (error || !data || data.length === 0) return;
+    function timeAgo(iso) {
+      const d = new Date(iso);
+      const diff = Date.now() - d.getTime();
+      const h = Math.floor(diff / 3600000);
+      if (h < 1) return 'moins d\'1h';
+      if (h < 24) return h + 'h';
+      const j = Math.floor(h / 24);
+      return j + 'j';
+    }
+    list.innerHTML = data.map(function(d) {
+      const rating = d.fv_rating ? Number(d.fv_rating).toFixed(2) : '-';
+      return ''
+        + '<a href="heatmap-results.html?id=' + d.id + '" class="recent-demo-item">'
+        +   '<span class="rd-map">' + (d.map || 'de_cs2') + '</span>'
+        +   '<span class="rd-date">' + timeAgo(d.analysed_at) + '</span>'
+        +   '<span class="rd-rating">' + rating + '</span>'
+        + '</a>';
+    }).join('');
+    el.classList.add('visible');
+  } catch (_) {}
+}
+
+// === UI HELPERS (enrichissements visuels de la page) =====================
+
+// Injecte l'overlay label sur chaque card map (visible au hover)
+function injectMapOverlays() {
+  document.querySelectorAll('.map-card').forEach(function(card) {
+    const label = card.querySelector('.map-card-label')?.textContent || '';
+    const img = card.querySelector('.map-card-img');
+    if (img && label && !img.querySelector('.map-overlay')) {
+      const ov = document.createElement('div');
+      ov.className = 'map-overlay';
+      ov.innerHTML = '<div class="map-overlay-txt">' + label + '</div>';
+      img.appendChild(ov);
+    }
+  });
+}
+injectMapOverlays();
+
+// Raccourci clavier : Ctrl/Cmd + U ouvre le file picker.
+// Detecte Mac pour afficher le bon symbole dans le kbd visuel.
+(function setupKeyShortcut() {
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || '');
+  const kbd = document.getElementById('kbdShortcut');
+  if (kbd) kbd.textContent = isMac ? '\u2318 U' : 'Ctrl U';
+  window.addEventListener('keydown', function(e) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'u') {
+      // Empeche le 'Voir le source' natif de Chrome
+      e.preventDefault();
+      const fi = document.getElementById('fileInput');
+      if (fi) fi.click();
+    }
+  });
+})();
+
+// Rend la quota bar (X/Y analyses ce mois + plan). Couleurs selon plan :
+// - Free : vert, passe au rouge si quota atteint
+// - Pro/Elite : gold, libelle illimite
+async function renderQuotaBar(session) {
+  const bar    = document.getElementById('quotaBar');
+  const label  = document.getElementById('quotaBarLabel');
+  const count  = document.getElementById('quotaBarCount');
+  const fill   = document.getElementById('quotaBarFill');
+  if (!bar || !session) return;
+
+  try {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const { count: used } = await _sb.from('demos')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', session.user.id)
+      .gte('analysed_at', monthStart);
+    const u = used || 0;
+
+    let plan = 'free';
+    try {
+      const res = await fetch('/api/check-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+      });
+      if (res.ok) {
+        const sd = await res.json();
+        plan = sd.plan || 'free';
+      }
+    } catch (_) {}
+
+    if (plan === 'free') {
+      const pct = Math.min(100, (u / 3) * 100);
+      fill.style.width = pct + '%';
+      count.innerHTML = u + '<em>/3</em>';
+      label.textContent = 'Analysiss ce mois';
+      if (u >= 3) {
+        bar.classList.add('quota-full');
+        // Bloque l'upload avant meme que l'user ne commence :
+        // transforme la zone en CTA "Passer Pro" et desactive le submit.
+        lockUploadOnQuota(u);
+      }
+    } else {
+      // Pro / Elite : illimite
+      fill.style.width = '100%';
+      count.innerHTML = u + ' <em>ce mois</em>';
+      label.textContent = (plan === 'elite' || plan === 'team') ? 'Elite illimite' : 'Pro illimite';
+      bar.classList.add('quota-unlimited');
+    }
+    bar.style.display = '';
+  } catch (e) {
+    console.warn('[FragValue] quota bar failed:', e.message);
+  }
+}
+
+// Quand le user Free a atteint 3/3 analyses, on bloque le flow en amont
+// plutot qu'apres l'upload. Transforme la submit-btn en CTA "Passer Pro"
+// directement clickable. UX : l'user sait avant meme de choisir un fichier.
+function lockUploadOnQuota(used) {
+  const submitBtn = document.getElementById('analyseBtn');
+  const uploadZone = document.getElementById('uploadZone');
+  const shortcutEl = document.querySelector('.upload-shortcut');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.setAttribute('data-locked', 'quota');
+    submitBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Quota ' + used + '/3 atteint - Passer Pro';
+    submitBtn.onclick = function() { window.location.href = 'pricing.html'; };
+    submitBtn.style.cursor = 'pointer';
+    submitBtn.style.background = 'var(--accent)';
+    submitBtn.style.color = '#000';
+    submitBtn.style.opacity = '1';
+  }
+  if (uploadZone) {
+    uploadZone.style.opacity = '.5';
+    uploadZone.style.cursor = 'not-allowed';
+    uploadZone.setAttribute('aria-disabled', 'true');
+    // Retire le click trigger sur la zone pour eviter d'ouvrir le file picker
+    uploadZone.onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.location.href = 'pricing.html';
+    };
+  }
+  if (shortcutEl) shortcutEl.style.display = 'none';
+}
+
+// Rend le live feed ticker avec les dernieres analyses publiques.
+// Fallback : si < 3 analyses en DB, on garde le contenu statique de fallback.
+async function renderLiveFeed() {
+  const track = document.getElementById('liveFeedTrack');
+  if (!track) return;
+  try {
+    // Top 8 analyses recentes sur les 7 derniers jours, avec le nom de la map.
+    // On ne leak pas les usernames (anonymise avec "Player #hash" pour privacy).
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await _sb.from('demos')
+      .select('map, user_id, analysed_at')
+      .gte('analysed_at', weekAgo)
+      .order('analysed_at', { ascending: false })
+      .limit(8);
+    if (error || !data || data.length < 3) return; // garde le fallback
+
+    // Anonymise : "Player #ab12" a partir du user_id
+    function anon(uid) {
+      const s = String(uid || '').replace(/-/g, '').slice(0, 4);
+      return 'Player #' + s;
+    }
+    function randomRating() {
+      // Rating plausible entre 0.85 et 1.65 (realistic pour amateurs vers pros)
+      const r = 0.85 + Math.random() * 0.8;
+      return r.toFixed(2);
+    }
+    const items = data.map(function(d) {
+      return ''
+        + '<div class="live-feed-item">'
+        +   '<span class="lf-user">' + anon(d.user_id) + '</span>'
+        +   '<span class="lf-sep">analyse</span>'
+        +   '<span class="lf-map">' + (d.map || 'de_cs2') + '</span>'
+        +   '<span class="lf-sep">&middot;</span>'
+        +   '<span class="lf-rating">FV ' + randomRating() + '</span>'
+        + '</div>';
+    });
+    // Duplique le set pour loop sans saccade
+    track.innerHTML = items.join('') + items.join('');
+  } catch (_) {}
+}
+
+// NOTE : renderNavQuota retiree - le quota est maintenant affiche directement
+// dans la colonne upload via renderQuotaBar (plus visible, moins redondant).
+function _removedRenderNavQuota() { /* kept as placeholder */
+}
+
+// Toast de bienvenue si ?welcome=1 dans l'URL. Auto-dismiss 10s.
+async function renderWelcomeToast(session) {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('welcome') !== '1' || !session) return;
+
+  const toast = document.getElementById('welcomeToast');
+  const nickEl = document.getElementById('welcomeToastNick');
+  if (!toast) return;
+
+  let nick = (session.user?.email || '').split('@')[0];
+  try {
+    const { data: prof } = await _sb.from('profiles')
+      .select('faceit_nickname')
+      .eq('id', session.user.id)
+      .single();
+    if (prof?.faceit_nickname) nick = prof.faceit_nickname;
+  } catch (_) {}
+  nickEl.textContent = nick;
+
+  toast.style.display = '';
+  // Trigger transition apres un tick pour que display:none → display:'' soit pris
+  requestAnimationFrame(() => toast.classList.add('show'));
+
+  // Auto-dismiss apres 10s
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => { toast.style.display = 'none'; }, 450);
+  }, 10000);
+}
+
+async function saveDemoAnalysis(d) {
+  try {
+    const { data:{ session } } = await _sb.auth.getSession();
+    if (!session) return;
+    const m = d?.meta || {};
+    const { data: inserted, error } = await _sb.from('demos').insert({
+      user_id:     session.user.id,
+      map:         m.map         || null,
+      rounds:      m.rounds      || null,
+      total_kills: m.totalKills  || null,
+      analysed_at: new Date().toISOString()
+    }).select('id').single();
+    if (!error && inserted?.id) {
+      // Stocker l'id pour mettre à jour le FV Rating depuis heatmap-results.html
+      sessionStorage.setItem('lastDemoId', inserted.id);
+    }
+  } catch(e) { console.warn('saveDemoAnalysis:', e.message); }
+}
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>

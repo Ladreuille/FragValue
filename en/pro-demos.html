@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="description" content="FragValue Pro Demos · Scorecards HLTV détaillés des matches Major, Blast, ESL Pro League. Ratings, ADR, KAST, opening duels par joueur.">
+  <meta name="keywords" content="CS2, HLTV, pro demos, scorecard, tactique, Major, ESL, Blast, BLAST, Vitality, NAVI, G2, FaZe, Spirit">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <link rel="canonical" href="https://fragvalue.com/en/pro-demos.html">
+<link rel="alternate" hreflang="fr" href="https://fragvalue.com/pro-demos.html">
+<link rel="alternate" hreflang="en" href="https://fragvalue.com/en/pro-demos.html">
+<link rel="alternate" hreflang="x-default" href="https://fragvalue.com/pro-demos.html">
+  <meta property="og:title" content="FragValue · Pro Demos Viewer">
+  <meta property="og:description" content="Scorecards HLTV détaillés des matches des pros, filtrables par tournoi, équipe et map.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://fragvalue.com/en/pro-demos.html">
+  <meta property="og:image" content="https://fragvalue.com/og/pro-demos.png">
+  <meta property="og:image:alt" content="FragValue">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FragValue · Pro Demos Viewer">
+<meta name="twitter:description" content="Scorecards HLTV détaillés des matches des pros, filtrables par tournoi, équipe et map.">
+<meta name="twitter:image" content="https://fragvalue.com/og/pro-demos.png">
+  <title>FragValue · Pro Demos Viewer (HLTV scorecards)</title>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "FragValue Pro Demos Viewer",
+  "description": "Matchs Majors, Blast, ESL Pro League avec scorecards HLTV détaillés par joueur.",
+  "url": "https://fragvalue.com/pro-demos.html",
+  "inLanguage": "fr-FR",
+  "isPartOf": { "@type": "WebSite", "name": "FragValue", "url": "https://fragvalue.com" },
+  "publisher": { "@type": "Organization", "name": "FragValue", "logo": { "@type": "ImageObject", "url": "https://fragvalue.com/fragvalue_icon.svg" } }
+}
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/teaser.css">
+  <style>
+    .filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px}
+    .filter-label{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+    .filter-select,.filter-input{background:var(--card);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;border-radius:6px;font-weight:700;outline:none;min-width:140px}
+    .filter-select:focus,.filter-input:focus{border-color:rgba(184,255,87,.4)}
+    .filter-input{min-width:120px}
+    .filter-clear{background:transparent;color:var(--text3);border:1px solid var(--border2);font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 12px;border-radius:6px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;margin-left:auto}
+    .filter-clear:hover{color:var(--accent);border-color:rgba(184,255,87,.4)}
+
+    .match-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;filter:blur(2.5px) saturate(.7);pointer-events:none;user-select:none;opacity:.7}
+    .match-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;overflow:hidden;text-decoration:none;color:inherit;display:block;cursor:not-allowed;transition:all .18s}
+    .match-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+    .match-event{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+    .match-date{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.04em}
+    .match-teams{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+    .team-block{flex:1;min-width:0;text-align:center}
+    .team-name{font-family:var(--display);font-size:18px;letter-spacing:.02em;color:var(--text);line-height:1.1;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .team-score{font-family:var(--display);font-size:34px;line-height:1}
+    .team-score.win{color:var(--accent)}
+    .team-score.loss{color:var(--text3)}
+    .match-vs{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+    .match-meta{display:flex;gap:10px;font-family:var(--mono);font-size:10px;color:var(--text2);letter-spacing:.04em;justify-content:space-between;margin-bottom:10px}
+    .match-meta strong{color:var(--text)}
+    .match-maps{display:flex;gap:4px;flex-wrap:wrap}
+    .match-map-chip{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:40px;background:var(--card);border:1px solid var(--border2);color:var(--text2);letter-spacing:.04em;text-transform:uppercase}
+
+    .loading{padding:60px 20px;text-align:center;color:var(--text3);font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+    .empty{padding:60px 20px;text-align:center;color:var(--text2);font-family:var(--mono);font-size:13px}
+    .empty-title{font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:10px;letter-spacing:.02em}
+  </style>
+<script src="/analytics.js" defer></script>
+</head>
+<body>
+
+<nav></nav>
+
+<div class="page">
+  <div class="hero">
+    <div class="hero-tag" id="heroTag">● En développement · Sortie imminente</div>
+    <h1 class="hero-title">Pro matches<br><span>decrypted round by round</span></h1>
+    <p class="hero-sub">Scorecards complètes : ratings, ADR, KAST, opening duels par joueur. Filtre par tournoi, équipe ou map pour explorer comment les meilleurs gagnent leurs rounds.</p>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val" id="statMatches">-</div><div class="stat-label">Matches analyzed</div></div>
+    <div class="stat-card"><div class="stat-val" id="statEvents">-</div><div class="stat-label">S-tier tournaments</div></div>
+    <div class="stat-card"><div class="stat-val" id="statTeams">-</div><div class="stat-label">Top 20 teams</div></div>
+    <div class="stat-card"><div class="stat-val">128t</div><div class="stat-label">Server tickrate</div></div>
+  </div>
+
+  <div class="filters locked">
+    <span class="filter-label">Tournament</span>
+    <select class="filter-select" id="eventFilter" disabled><option value="">Tous</option></select>
+    <span class="filter-label">Team</span>
+    <input class="filter-input" id="teamFilter" placeholder="NAVI, Vitality, G2..." disabled />
+    <span class="filter-label">Map</span>
+    <select class="filter-select" id="mapFilter" disabled>
+      <option value="">All</option>
+      <option>Mirage</option>
+      <option>Inferno</option>
+      <option>Nuke</option>
+      <option>Ancient</option>
+      <option>Anubis</option>
+      <option>Dust2</option>
+      <option>Vertigo</option>
+    </select>
+    <button class="filter-clear" disabled>Reset</button>
+  </div>
+
+  <div class="sec-label">Derniers matches ingérés</div>
+  <div style="position:relative">
+    <div id="matchGrid"><div class="loading">Loading matches...</div></div>
+    <div class="teaser-overlay"></div>
+    <div class="teaser-badge">● Scorecards pros en préparation · Early access bientôt</div>
+  </div>
+
+  <div class="roadmap" style="margin-top:40px">
+    <div class="roadmap-title">Où on en est</div>
+    <div class="roadmap-sub">Statut du pipeline pro scorecards</div>
+    <div class="roadmap-steps">
+      <div class="roadmap-step done"><div class="roadmap-step-label">Phase 1</div><div class="roadmap-step-text">Infrastructure d'ingestion (API + DB + cron)</div></div>
+      <div class="roadmap-step done"><div class="roadmap-step-label">Phase 2</div><div class="roadmap-step-text">Parser scorecards + stats par joueur</div></div>
+      <div class="roadmap-step current"><div class="roadmap-step-label">Phase 3</div><div class="roadmap-step-text">Activation du flux de données officiel</div></div>
+      <div class="roadmap-step"><div class="roadmap-step-label">Phase 4</div><div class="roadmap-step-text">Filtres avancés + benchmarks AI Coach</div></div>
+    </div>
+  </div>
+
+  <!-- CTA early access -->
+  <div class="cta-card" style="margin-top:40px">
+    <h2 class="cta-title">Be notified at launch</h2>
+    <p class="cta-sub">Les scorecards pros arrivent très bientôt. Pendant ce temps, le vrai game-changer pour toi c'est d'analyser ta propre démo : diagnostic IA en 2 minutes, moments clés cliquables, recommandations actionnables.</p>
+    <a href="/en/demo.html" class="cta-btn">
+      Analyze ma démo maintenant
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+    <div class="cta-waitlist">
+      <span class="cta-waitlist-dot"></span>
+      <strong data-teaser-counter="pro-demos">-</strong>
+      <span>players activated their interest</span>
+    </div>
+  </div>
+
+  <div class="sec-label" style="margin-top:48px">What's coming soon</div>
+  <div class="features">
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </div>
+      <div class="feature-title">Interactive 2D Replay</div>
+      <div class="feature-desc">Tick-by-tick positions, kills, grenades, round-by-round timeline. HLTV demo parsing pipeline in preparation.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div class="feature-title">Advanced tactical filters</div>
+      <div class="feature-desc">Isolate decisive rounds: clutches, pistols, last stands, executes. Learn only from situations that matter.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="feature-title">Updated weekly</div>
+      <div class="feature-desc">All S-tier BO3s available within 48h after match end. New batch with each major tournament.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20V4M3 20h18"/><path d="M7 16V9M12 16V6M17 16V12"/></svg>
+      </div>
+      <div class="feature-title">Comparison with your stats</div>
+      <div class="feature-desc">See your HLTV rating vs pros on the same map, and identify where you lose rounds.</div>
+    </div>
+  </div>
+</div>
+
+<script src="/nav.js"></script>
+<script>
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function renderMatchCard(m) {
+  const winA = m.winner === 'a';
+  const winB = m.winner === 'b';
+  const maps = m.maps.map(mp =>
+    '<span class="match-map-chip">' + escapeHtml(mp.name) + ' ' + mp.score_a + ' · ' + mp.score_b + '</span>'
+  ).join('');
+  const stage = m.stage ? escapeHtml(m.stage) : fmtDate(m.match_date);
+  const best = m.best_player
+    ? '<span>MVP ' + escapeHtml(m.best_player) + ' <strong style="color:var(--accent)">' + (m.best_rating != null ? m.best_rating.toFixed(2) : '-') + '</strong></span>'
+    : '';
+  return `
+    <a class="match-card" href="/pro-match.html?id=${encodeURIComponent(m.id)}">
+      <div class="match-head">
+        <span class="match-event">${escapeHtml(m.event?.short_name || '-')}</span>
+        <span class="match-date">${stage}</span>
+      </div>
+      <div class="match-teams">
+        <div class="team-block">
+          <div class="team-name">${escapeHtml(m.team_a)}</div>
+          <div class="team-score ${winA ? 'win' : 'loss'}">${m.team_a_score}</div>
+        </div>
+        <span class="match-vs">vs</span>
+        <div class="team-block">
+          <div class="team-name">${escapeHtml(m.team_b)}</div>
+          <div class="team-score ${winB ? 'win' : 'loss'}">${m.team_b_score}</div>
+        </div>
+      </div>
+      <div class="match-meta">
+        <span>${escapeHtml(m.format)} · <strong>${m.maps.length} map${m.maps.length > 1 ? 's' : ''}</strong></span>
+        ${best}
+      </div>
+      <div class="match-maps">${maps}</div>
+    </div>
+  `;
+}
+
+async function load() {
+  const grid = document.getElementById('matchGrid');
+  grid.innerHTML = '<div class="loading">Loading...</div>';
+  const params = new URLSearchParams();
+  const evt  = (document.getElementById('eventFilter').value || '').trim();
+  const team = (document.getElementById('teamFilter').value || '').trim();
+  const map  = (document.getElementById('mapFilter').value || '').trim();
+  if (evt)  params.set('event', evt);
+  if (team) params.set('team', '%' + team + '%');
+  if (map)  params.set('map', map);
+  params.set('limit', '30');
+
+  try {
+    const res = await fetch('/api/pro-matches?' + params.toString());
+    if (!res.ok) throw new Error('API ' + res.status);
+    const data = await res.json();
+
+    const totalMatches = data.total || data.matches.length;
+    document.getElementById('heroTag').textContent = totalMatches > 0
+      ? '● Live · ' + totalMatches + ' match' + (totalMatches > 1 ? 's' : '') + ' ingere' + (totalMatches > 1 ? 's' : '')
+      : '● Aucun match pour l\'instant';
+    document.getElementById('statMatches').textContent = totalMatches;
+    document.getElementById('statEvents').textContent = data.events?.length || '-';
+    const teams = new Set();
+    for (const m of data.matches) { teams.add(m.team_a); teams.add(m.team_b); }
+    document.getElementById('statTeams').textContent = teams.size + '+';
+
+    // Peuple le filtre event au premier chargement (si la liste events est retournee)
+    if (data.events && data.events.length) {
+      const sel = document.getElementById('eventFilter');
+      if (sel.options.length <= 1) {
+        for (const ev of data.events) {
+          const o = document.createElement('option');
+          o.value = ev.short_name;
+          o.textContent = ev.short_name || ev.name;
+          sel.appendChild(o);
+        }
+      }
+    }
+
+    if (!data.matches.length) {
+      grid.innerHTML = '<div class="empty"><div class="empty-title">Aucun match pour ces filtres</div><div>Essaie de reinitialiser les filtres ou reviens plus tard.</div></div>';
+      return;
+    }
+    grid.innerHTML = '<div class="match-grid">' + data.matches.map(renderMatchCard).join('') + '</div>';
+  } catch (e) {
+    grid.innerHTML = '<div class="empty"><div class="empty-title">Error</div><div>' + escapeHtml(e.message) + '</div></div>';
+  }
+}
+
+function clearFilters() {
+  document.getElementById('eventFilter').value = '';
+  document.getElementById('teamFilter').value = '';
+  document.getElementById('mapFilter').value  = '';
+  load();
+}
+
+// Bind filters (debounce typing sur team)
+let _teamDebounce = null;
+document.getElementById('eventFilter').addEventListener('change', load);
+document.getElementById('mapFilter').addEventListener('change', load);
+document.getElementById('teamFilter').addEventListener('input', () => {
+  clearTimeout(_teamDebounce);
+  _teamDebounce = setTimeout(load, 400);
+});
+
+load();
+</script>
+<script src="/teaser.js"></script>
+<script>FVTeaser.initCTA("pro-demos", { base: 84, perDay: 0.9 });</script>
+</body>
+</html>

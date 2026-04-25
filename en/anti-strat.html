@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="description" content="FragValue Anti-Strat · Identifie les patterns d'une équipe CS2 adverse : exécutes A default, retakes B, utility waste, timings. Anti-strats prêts à l'emploi.">
+  <meta name="keywords" content="CS2, anti-strat, opponent patterns, FACEIT, tactique, execute, retake, utility, timing, scout tactique">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <link rel="canonical" href="https://fragvalue.com/en/anti-strat.html">
+<link rel="alternate" hreflang="fr" href="https://fragvalue.com/anti-strat.html">
+<link rel="alternate" hreflang="en" href="https://fragvalue.com/en/anti-strat.html">
+<link rel="alternate" hreflang="x-default" href="https://fragvalue.com/anti-strat.html">
+  <meta property="og:title" content="FragValue · Anti-Strat Tool">
+  <meta property="og:description" content="Démonte les patterns d'une équipe CS2 adverse sur N matches. Executes, retakes, utility, timings révélés.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://fragvalue.com/en/anti-strat.html">
+  <meta property="og:image" content="https://fragvalue.com/og/anti-strat.png">
+  <meta property="og:image:alt" content="FragValue">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FragValue · Anti-Strat Tool">
+<meta name="twitter:description" content="Démonte les patterns d'une équipe CS2 adverse sur N matches. Executes, retakes, utility, timings révélés.">
+<meta name="twitter:image" content="https://fragvalue.com/og/anti-strat.png">
+  <title>FragValue · Anti-Strat Tool CS2 (opponent patterns)</title>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "FragValue Anti-Strat Tool",
+  "description": "Détecte les patterns d'une équipe CS2 adverse sur N matches. Executes, retakes, timings et counters actionnables.",
+  "url": "https://fragvalue.com/anti-strat.html",
+  "inLanguage": "fr-FR",
+  "isPartOf": { "@type": "WebSite", "name": "FragValue", "url": "https://fragvalue.com" },
+  "publisher": { "@type": "Organization", "name": "FragValue", "logo": { "@type": "ImageObject", "url": "https://fragvalue.com/fragvalue_icon.svg" } }
+}
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/teaser.css">
+  <style>
+    .pat-wrap{position:relative}
+    .pat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+    .pat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;overflow:hidden}
+    .pat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+    .pat-type{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:40px}
+    .pat-type.exec{background:rgba(255,68,68,.1);color:var(--danger);border:1px solid rgba(255,68,68,.25)}
+    .pat-type.retake{background:rgba(91,155,213,.12);color:#5b9bd5;border:1px solid rgba(91,155,213,.25)}
+    .pat-type.util{background:rgba(245,200,66,.12);color:var(--gold);border:1px solid rgba(245,200,66,.3)}
+    .pat-type.timing{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.25)}
+    .pat-map{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em;font-weight:700}
+    .pat-title{font-family:var(--display);font-size:19px;letter-spacing:.02em;line-height:1.15;color:var(--text);margin-bottom:8px}
+    .pat-desc{font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+    .pat-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+    .pat-metric{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 10px}
+    .pat-metric-label{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+    .pat-metric-val{font-family:var(--display);font-size:18px;color:var(--accent);line-height:1}
+    .pat-counter{background:rgba(184,255,87,.06);border-left:2px solid var(--accent);padding:10px 12px;border-radius:0 6px 6px 0}
+    .pat-counter-label{font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:4px}
+    .pat-counter-text{font-family:var(--mono);font-size:11px;color:var(--text);line-height:1.55}
+  </style>
+</head>
+<body>
+
+<nav></nav>
+
+<div class="page">
+  <div class="hero">
+    <div class="hero-tag gold">● Elite · Outil coach</div>
+    <h1 class="hero-title">Break down<br>their <span>setups</span></h1>
+    <p class="hero-sub">Enter a FACEIT team nickname: FragValue analyzes the last N matches and detects their repeated patterns. A default executes, B retakes, utility waste, plant timings, save behavior. You enter the match knowing what to expect.</p>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val">20</div><div class="stat-label">Matches analyzed</div></div>
+    <div class="stat-card"><div class="stat-val">8</div><div class="stat-label">Pattern types</div></div>
+    <div class="stat-card"><div class="stat-val">7</div><div class="stat-label">Maps covered</div></div>
+    <div class="stat-card"><div class="stat-val">30j</div><div class="stat-label">Rolling window</div></div>
+  </div>
+
+  <div class="roadmap">
+    <div class="roadmap-title">Ou on en est</div>
+    <div class="roadmap-sub">Status du moteur Anti-Strat Elite</div>
+    <div class="roadmap-steps">
+      <div class="roadmap-step done"><div class="roadmap-step-label">Phase 1</div><div class="roadmap-step-text">Detection executes et retakes</div></div>
+      <div class="roadmap-step done"><div class="roadmap-step-label">Phase 2</div><div class="roadmap-step-text">Analysis utility et timings</div></div>
+      <div class="roadmap-step current"><div class="roadmap-step-label">Phase 3</div><div class="roadmap-step-text">Agregation patterns repetes</div></div>
+      <div class="roadmap-step"><div class="roadmap-step-label">Phase 4</div><div class="roadmap-step-text">Generation counters + export PDF</div></div>
+    </div>
+  </div>
+
+  <div class="sec-label">Apercu des patterns detectes chez l'adversaire</div>
+  <div class="pat-wrap">
+    <div class="pat-grid">
+      <div class="pat-card">
+        <div class="pat-head"><span class="pat-type exec">Execute</span><span class="pat-map">Mirage · T side</span></div>
+        <div class="pat-title">A default with jungle + CT smoke</div>
+        <div class="pat-desc">In 73% of A push rounds, their IGL throws the same jungle+CT double smoke, then palace entry with flash pop. Average plant timing: 0:48 remaining.</div>
+        <div class="pat-metrics">
+          <div class="pat-metric"><div class="pat-metric-label">Frequency</div><div class="pat-metric-val">73%</div></div>
+          <div class="pat-metric"><div class="pat-metric-label">Win rate</div><div class="pat-metric-val">61%</div></div>
+        </div>
+        <div class="pat-counter">
+          <div class="pat-counter-label">Counter</div>
+          <div class="pat-counter-text">Stack 2 CT palace with HE pre-grenade timed at 1:20. Anchor ticket with molo when smoke is called.</div>
+        </div>
+      </div>
+      <div class="pat-card">
+        <div class="pat-head"><span class="pat-type retake">Retake</span><span class="pat-map">Inferno · CT side</span></div>
+        <div class="pat-title">Retake B via apartments (late)</div>
+        <div class="pat-desc">If plant is on B late (under 20s), 4 out of 5 players systematically retake via apartments with double flash short. Never direct banana retake.</div>
+        <div class="pat-metrics">
+          <div class="pat-metric"><div class="pat-metric-label">Frequency</div><div class="pat-metric-val">81%</div></div>
+          <div class="pat-metric"><div class="pat-metric-label">Win rate</div><div class="pat-metric-val">48%</div></div>
+        </div>
+        <div class="pat-counter">
+          <div class="pat-counter-label">Counter</div>
+          <div class="pat-counter-text">Post-plant default: 1 player apps with molo lineup + 1 new box with AK ready. Ignore banana, focus apps.</div>
+        </div>
+      </div>
+      <div class="pat-card">
+        <div class="pat-head"><span class="pat-type util">Utility</span><span class="pat-map">Dust2 · T side</span></div>
+        <div class="pat-title">Utility waste on opening rounds</div>
+        <div class="pat-desc">In the first 6 rounds, they spend on average 4 utility for 2 kills. 28% utility efficiency, lowest in the pool. Their catwalk smokes are 2s short on B.</div>
+        <div class="pat-metrics">
+          <div class="pat-metric"><div class="pat-metric-label">Util / round</div><div class="pat-metric-val">3.8</div></div>
+          <div class="pat-metric"><div class="pat-metric-label">Efficiency</div><div class="pat-metric-val">28%</div></div>
+        </div>
+        <div class="pat-counter">
+          <div class="pat-counter-label">Counter</div>
+          <div class="pat-counter-text">Aggressive long push opening round. Aggressive mid hold until their smokes are placed. Their transition is slow.</div>
+        </div>
+      </div>
+      <div class="pat-card">
+        <div class="pat-head"><span class="pat-type timing">Timing</span><span class="pat-map">Ancient · T side</span></div>
+        <div class="pat-title">Fake B default to A at 0:30</div>
+        <div class="pat-desc">Quand ils posent smoke B cave au début du round, 55% de chance qu'ils rotate A via mid / cave à 0:30. Peu de commit réel B quand smoke cave arrive en early.</div>
+        <div class="pat-metrics">
+          <div class="pat-metric"><div class="pat-metric-label">Frequency</div><div class="pat-metric-val">55%</div></div>
+          <div class="pat-metric"><div class="pat-metric-label">Win rate</div><div class="pat-metric-val">42%</div></div>
+        </div>
+        <div class="pat-counter">
+          <div class="pat-counter-label">Counter</div>
+          <div class="pat-counter-text">Never stack B if cave smoke is early (before 1:45). Keep 2A + 2 mid, 1 rotating. If fake B, you have the tempo.</div>
+        </div>
+      </div>
+      <div class="pat-card">
+        <div class="pat-head"><span class="pat-type exec">Execute</span><span class="pat-map">Nuke · T side</span></div>
+        <div class="pat-title">Outside A rush lower</div>
+        <div class="pat-desc">In 10 T Nuke rounds, 4 outside A rushes via lower with hut + heaven smokes. If first kill goes through, they plant A lower 100% of the time.</div>
+        <div class="pat-metrics">
+          <div class="pat-metric"><div class="pat-metric-label">Frequency</div><div class="pat-metric-val">40%</div></div>
+          <div class="pat-metric"><div class="pat-metric-label">Win rate</div><div class="pat-metric-val">65%</div></div>
+        </div>
+        <div class="pat-counter">
+          <div class="pat-counter-label">Counter</div>
+          <div class="pat-counter-text">Early info play on outside (flash + peek squeaky) by 1:40. If info, molo lower + stack heaven. Their rush without info flops.</div>
+        </div>
+      </div>
+      <div class="pat-card">
+        <div class="pat-head"><span class="pat-type retake">Save</span><span class="pat-map">Global</span></div>
+        <div class="pat-title">Systematic save on lost 3v5</div>
+        <div class="pat-desc">Once they hit 3v5 without plant, they save 4 guns out of 5. No clutch attempts. Economy reset by the 3rd round after.</div>
+        <div class="pat-metrics">
+          <div class="pat-metric"><div class="pat-metric-label">Save rate</div><div class="pat-metric-val">89%</div></div>
+          <div class="pat-metric"><div class="pat-metric-label">Bounce back</div><div class="pat-metric-val">R+3</div></div>
+        </div>
+        <div class="pat-counter">
+          <div class="pat-counter-label">Counter</div>
+          <div class="pat-counter-text">Push to catch them at site exit once 3v5. Predictable exits: they rarely attempt a bold rotation.</div>
+        </div>
+      </div>
+    </div>
+    <div class="teaser-overlay"></div>
+    <div class="teaser-badge">● Anti-Strat Elite · En préparation</div>
+  </div>
+
+  <div class="cta-card">
+    <h2 class="cta-title">Entre en match déjà préparé</h2>
+    <p class="cta-sub">Anti-Strat arrive dans le plan Elite. Entre un pseudo FACEIT (team leader), choisis la map et la fenêtre de matches : tu reçois les 8 patterns les plus répétés avec leurs timings, fréquences, win rates et counters actionnables. Active ton profil pour être prévenu du lancement.</p>
+    <a href="account.html#settings" class="cta-btn" data-teaser-cta="anti-strat">
+      Enable notifications
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+    <div class="cta-waitlist">
+      <span class="cta-waitlist-dot"></span>
+      <strong data-teaser-counter="anti-strat">-</strong>
+      <span>players activated their interest</span>
+    </div>
+  </div>
+
+  <div class="sec-label">What awaits you</div>
+  <div class="features">
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20V4M3 20h18"/><path d="M7 16V9M12 16V6M17 16V12"/></svg>
+      </div>
+      <div class="feature-title">Quantified patterns</div>
+      <div class="feature-desc">Each detected setup comes with its frequency, average timing and win rate over the analysis window.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <div class="feature-title">Actionable counter</div>
+      <div class="feature-desc">For each pattern, a ready-to-apply counter-strategy: utility, positioning, peek timing.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </div>
+      <div class="feature-title">Map and side filtering</div>
+      <div class="feature-desc">Choose the upcoming match map and the side played by the opponent: only relevant patterns appear.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+      </div>
+      <div class="feature-title">Coach sheet export</div>
+      <div class="feature-desc">PDF / image export to brief the team before the match. Counters readable in 30 seconds on mobile.</div>
+    </div>
+  </div>
+</div>
+
+<script src="/nav.js"></script>
+<script src="/teaser.js"></script>
+<script>FVTeaser.initCTA("anti-strat", { base: 61, perDay: 0.8 });</script>
+</body>
+</html>

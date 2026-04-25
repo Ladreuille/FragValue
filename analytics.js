@@ -19,9 +19,8 @@
 (function () {
   'use strict';
 
-  // ⚠ TODO USER : remplacer par ton Measurement ID GA4 (G-XXXXXXXXXX)
-  // Tant que c'est laisse a la valeur placeholder, le script est NO-OP.
-  const GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
+  // GA4 Measurement ID FragValue (production)
+  const GA_MEASUREMENT_ID = 'G-H6PLDKSCJR';
 
   const STORAGE_KEY = 'fv_consent_v1';
   const UTM_KEY = 'fv_utm_v1';

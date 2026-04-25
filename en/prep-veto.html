@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="description" content="FragValue Prep Véto · Prépare ton véto CS2 avec la data. Win rate par map, side préférence adverse, bans recommandés.">
+  <meta name="keywords" content="CS2, véto, map pool, ban pick, FACEIT, Dust2, Mirage, Inferno, Ancient, Nuke, Anubis, Vertigo">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <link rel="canonical" href="https://fragvalue.com/en/prep-véto.html">
+<link rel="alternate" hreflang="fr" href="https://fragvalue.com/prep-véto.html">
+<link rel="alternate" hreflang="en" href="https://fragvalue.com/en/prep-véto.html">
+<link rel="alternate" hreflang="x-default" href="https://fragvalue.com/prep-véto.html">
+  <meta property="og:title" content="FragValue · Prep Véto">
+  <meta property="og:description" content="Ton véto optimal en BO3 FACEIT, calculé sur la data de ton équipe et de l'adversaire.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://fragvalue.com/en/prep-véto.html">
+  <meta property="og:image" content="https://fragvalue.com/og/prep-véto.png">
+  <meta property="og:image:alt" content="FragValue">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FragValue · Prep Véto">
+<meta name="twitter:description" content="Ton véto optimal en BO3 FACEIT, calculé sur la data de ton équipe et de l'adversaire.">
+<meta name="twitter:image" content="https://fragvalue.com/og/prep-véto.png">
+  <title>FragValue · Prep Véto CS2 (ban / pick maps)</title>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "FragValue Prep Véto",
+  "description": "Prépare ton véto CS2 BO1/BO3/BO5 avec la data : séquence optimale de bans, picks et decider recommandée.",
+  "url": "https://fragvalue.com/prep-véto.html",
+  "inLanguage": "fr-FR",
+  "isPartOf": { "@type": "WebSite", "name": "FragValue", "url": "https://fragvalue.com" },
+  "publisher": { "@type": "Organization", "name": "FragValue", "logo": { "@type": "ImageObject", "url": "https://fragvalue.com/fragvalue_icon.svg" } }
+}
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/teaser.css">
+  <style>
+    .map-wrap{position:relative}
+    .map-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+    .map-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+    .map-card.ban{border-color:rgba(255,68,68,.35);background:linear-gradient(180deg,rgba(255,68,68,.04),var(--surface))}
+    .map-card.pick{border-color:rgba(184,255,87,.45);background:linear-gradient(180deg,rgba(184,255,87,.06),var(--surface))}
+    .map-card.decider{border-color:rgba(245,200,66,.35);background:linear-gradient(180deg,rgba(245,200,66,.04),var(--surface))}
+    .map-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .map-name{font-family:var(--display);font-size:20px;letter-spacing:.02em;color:var(--text);line-height:1}
+    .map-action{font-family:var(--mono);font-size:9px;padding:3px 9px;border-radius:40px;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+    .map-action.ban{background:rgba(255,68,68,.15);color:var(--danger);border:1px solid rgba(255,68,68,.3)}
+    .map-action.pick{background:rgba(184,255,87,.15);color:var(--accent);border:1px solid rgba(184,255,87,.3)}
+    .map-action.decider{background:rgba(245,200,66,.15);color:var(--gold);border:1px solid rgba(245,200,66,.3)}
+    .map-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+    .map-stat-block{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 10px}
+    .map-stat-label{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+    .map-stat-val{font-family:var(--display);font-size:18px;line-height:1}
+    .map-stat-val.team{color:var(--accent)}
+    .map-stat-val.opp{color:var(--danger)}
+    .map-reason{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.55;padding-top:10px;border-top:1px solid var(--border)}
+  </style>
+</head>
+<body>
+
+<nav></nav>
+
+<div class="page">
+  <div class="hero">
+    <div class="hero-tag gold">● Elite · Outil coach</div>
+    <h1 class="hero-title">Gagne le véto<br>avant <span>la partie</span></h1>
+    <p class="hero-sub">Between your team and the opponent: FragValue crosses stats of 5 players vs 5 opponents on each active pool map. You get the optimal ban sequence, the map to pick, the most favorable decider.</p>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val">7</div><div class="stat-label">Pool maps</div></div>
+    <a class="stat-card" href="/en/stats-guide.html"><div class="stat-val">14</div><div class="stat-label">Side win rates</div></a>
+    <a class="stat-card" href="/dashboard.html#roster"><div class="stat-val">20</div><div class="stat-label">Matches analyzed / side</div></a>
+    <div class="stat-card"><div class="stat-val">BO1<br>BO3<br>BO5</div><div class="stat-label">Supported formats</div></div>
+  </div>
+
+  <div class="roadmap">
+    <div class="roadmap-title">Ou on en est</div>
+    <div class="roadmap-sub">Status du module Prep Veto Elite</div>
+    <div class="roadmap-steps">
+      <div class="roadmap-step done"><div class="roadmap-step-label">Phase 1</div><div class="roadmap-step-text">Stats par map par joueur</div></div>
+      <div class="roadmap-step done"><div class="roadmap-step-label">Phase 2</div><div class="roadmap-step-text">Side split CT / T par map</div></div>
+      <div class="roadmap-step current"><div class="roadmap-step-label">Phase 3</div><div class="roadmap-step-text">Algo sequence optimale BO3</div></div>
+      <div class="roadmap-step"><div class="roadmap-step-label">Phase 4</div><div class="roadmap-step-text">Integration roster + live veto</div></div>
+    </div>
+  </div>
+
+  <div class="sec-label">Apercu de ta sequence optimale (BO3)</div>
+  <div class="map-wrap">
+    <div class="map-grid">
+      <div class="map-card ban">
+        <div class="map-head"><div class="map-name">Nuke</div><div class="map-action ban">Ban 1</div></div>
+        <div class="map-stats">
+          <div class="map-stat-block"><div class="map-stat-label">You</div><div class="map-stat-val team">38%</div></div>
+          <div class="map-stat-block"><div class="map-stat-label">Them</div><div class="map-stat-val opp">71%</div></div>
+        </div>
+        <div class="map-reason">Their best map (7 wins out of 10), your weakest. Clear first-round ban.</div>
+      </div>
+      <div class="map-card ban">
+        <div class="map-head"><div class="map-name">Anubis</div><div class="map-action ban">Ban 2</div></div>
+        <div class="map-stats">
+          <div class="map-stat-block"><div class="map-stat-label">You</div><div class="map-stat-val team">42%</div></div>
+          <div class="map-stat-block"><div class="map-stat-label">Them</div><div class="map-stat-val opp">63%</div></div>
+        </div>
+        <div class="map-reason">Their CT Anubis runs at 68%. Your gap is too big to play the swing.</div>
+      </div>
+      <div class="map-card pick">
+        <div class="map-head"><div class="map-name">Mirage</div><div class="map-action pick">Pick 1</div></div>
+        <div class="map-stats">
+          <div class="map-stat-block"><div class="map-stat-label">You</div><div class="map-stat-val team">68%</div></div>
+          <div class="map-stat-block"><div class="map-stat-label">Them</div><div class="map-stat-val opp">52%</div></div>
+        </div>
+        <div class="map-reason">Your signature map. 16pt gap and your CT Mirage at 72% vs their T at 45%.</div>
+      </div>
+      <div class="map-card pick">
+        <div class="map-head"><div class="map-name">Dust2</div><div class="map-action pick">Pick 2</div></div>
+        <div class="map-stats">
+          <div class="map-stat-block"><div class="map-stat-label">You</div><div class="map-stat-val team">64%</div></div>
+          <div class="map-stat-block"><div class="map-stat-label">Them</div><div class="map-stat-val opp">55%</div></div>
+        </div>
+        <div class="map-reason">Positive +9pt gap and their opening WR T Dust2 is only 47%. Force long entries.</div>
+      </div>
+      <div class="map-card ban">
+        <div class="map-head"><div class="map-name">Inferno</div><div class="map-action ban">Ban 5</div></div>
+        <div class="map-stats">
+          <div class="map-stat-block"><div class="map-stat-label">You</div><div class="map-stat-val team">55%</div></div>
+          <div class="map-stat-block"><div class="map-stat-label">Them</div><div class="map-stat-val opp">58%</div></div>
+        </div>
+        <div class="map-reason">Close but their T Inferno is a notch above. Ban rather than risk it as decider.</div>
+      </div>
+      <div class="map-card ban">
+        <div class="map-head"><div class="map-name">Ancient</div><div class="map-action ban">Ban 6</div></div>
+        <div class="map-stats">
+          <div class="map-stat-block"><div class="map-stat-label">You</div><div class="map-stat-val team">48%</div></div>
+          <div class="map-stat-block"><div class="map-stat-label">Them</div><div class="map-stat-val opp">52%</div></div>
+        </div>
+        <div class="map-reason">Map where you're both average. Ban to force the decider onto Vertigo.</div>
+      </div>
+      <div class="map-card decider">
+        <div class="map-head"><div class="map-name">Vertigo</div><div class="map-action decider">Decider</div></div>
+        <div class="map-stats">
+          <div class="map-stat-block"><div class="map-stat-label">You</div><div class="map-stat-val team">59%</div></div>
+          <div class="map-stat-block"><div class="map-stat-label">Them</div><div class="map-stat-val opp">44%</div></div>
+        </div>
+        <div class="map-reason">If the BO3 goes the distance, Vertigo is the most favorable remaining map. +15pt gap.</div>
+      </div>
+    </div>
+    <div class="teaser-overlay"></div>
+    <div class="teaser-badge">● Prep Véto Elite · En préparation</div>
+  </div>
+
+  <div class="cta-card">
+    <h2 class="cta-title">Data before the match</h2>
+    <p class="cta-sub">Prep Véto arrive dans le plan Elite. Entre les 5 pseudos FACEIT de chaque camp, choisis le format (BO1, BO3, BO5), obtiens en un clic la séquence de bans, la map à pick et la decider la plus favorable. Active ton profil pour être prévenu du lancement.</p>
+    <a href="account.html#settings" class="cta-btn" data-teaser-cta="prep-véto">
+      Enable notifications
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+    <div class="cta-waitlist">
+      <span class="cta-waitlist-dot"></span>
+      <strong data-teaser-counter="prep-véto">-</strong>
+      <span>players activated their interest</span>
+    </div>
+  </div>
+
+  <div class="sec-label">What awaits you</div>
+  <div class="features">
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="feature-title">Optimal sequence</div>
+      <div class="feature-desc">Recommended ban order to maximize your edge on the 7 pool maps, based on match format.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+      </div>
+      <div class="feature-title">Side split CT vs T</div>
+      <div class="feature-desc">Win rate par side, par map et par équipe. Compare leurs CT Mirage contre tes T Mirage pour savoir sur quel half forcer le round.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="feature-title">Recent window</div>
+      <div class="feature-desc">Analysis of the 20 most recent matches per side (30-day rolling). Old out-of-form matches are excluded.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+      </div>
+      <div class="feature-title">Integrate the roster</div>
+      <div class="feature-desc">Crée ton roster FragValue, invite tes 4 coéquipiers et lance le véto en un clic. Les stats sont pré-chargées depuis leurs profils.</div>
+    </div>
+  </div>
+</div>
+
+<script src="/nav.js"></script>
+<script src="/teaser.js"></script>
+<script>FVTeaser.initCTA("prep-véto", { base: 52, perDay: 0.6 });</script>
+</body>
+</html>

@@ -1,21 +1,22 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="description" content="Connecte-toi à FragValue : analyse CS2 FACEIT, Coach IA, heatmaps et 2D replay. Authentification Google, FACEIT OAuth ou email.">
+<meta name="description" content="Connecte-toi à FragValue : analyse CS2 FACEIT, AI Coach, heatmaps et 2D replay. Authentification Google, FACEIT OAuth ou email.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
 <meta name="robots" content="noindex, follow">
-<link rel="canonical" href="https://fragvalue.com/login.html">
+<link rel="canonical" href="https://fragvalue.com/en/login.html">
   <link rel="alternate" hreflang="fr" href="https://fragvalue.com/login.html">
   <link rel="alternate" hreflang="en" href="https://fragvalue.com/en/login.html">
   <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/login.html">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://fragvalue.com/login.html">
-<meta property="og:title" content="Connexion · FragValue">
-<meta property="og:description" content="Accède à ton espace Coach IA FragValue.">
+  <meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://fragvalue.com/en/login.html">
+<meta property="og:title" content="Sign in · FragValue">
+<meta property="og:description" content="Accède à ton espace AI Coach FragValue.">
 <meta property="og:image" content="https://fragvalue.com/og/home.png">
 <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
-<title>Connexion · FragValue Coach IA CS2</title>
+<title>Sign in · FragValue AI Coach CS2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -131,13 +132,13 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
 <div class="wrapper">
   <div class="card">
-    <div class="card-title">Connexion</div>
-    <p class="card-sub">Accède à ton historique de démos et tes stats de progression.</p>
+    <div class="card-title">Sign in</div>
+    <p class="card-sub">Access your demo history and progression stats.</p>
 
     <!-- TABS -->
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('login',this)">Se connecter</button>
-      <button class="tab" onclick="switchTab('signup',this)">Créer un compte</button>
+      <button class="tab active" onclick="switchTab('login',this)">Sign in</button>
+      <button class="tab" onclick="switchTab('signup',this)">Create account</button>
     </div>
 
     <!-- SOCIAL PROVIDERS -->
@@ -145,7 +146,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/>
       </svg>
-      Continuer avec FACEIT
+      Continue with FACEIT
     </button>
 
     <button class="social-btn" onclick="loginGoogle()">
@@ -155,39 +156,39 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
       </svg>
-      Continuer avec Google
+      Continue with Google
     </button>
 
     <!-- DIVIDER -->
     <div class="divider">
       <div class="divider-line"></div>
-      <div class="divider-text">OU PAR EMAIL</div>
+      <div class="divider-text">OR BY EMAIL</div>
       <div class="divider-line"></div>
     </div>
 
     <!-- EMAIL FORM -->
     <div id="loginForm">
       <div class="field">
-        <label class="field-label" for="emailInput">Adresse email</label>
-        <input type="email" class="field-input" id="emailInput" placeholder="ton@email.com" autocomplete="email" required/>
+        <label class="field-label" for="emailInput">Email address</label>
+        <input type="email" class="field-input" id="emailInput" placeholder="your@email.com" autocomplete="email" required/>
       </div>
       <div class="field" id="passwordField">
-        <label class="field-label" for="passwordInput">Mot de passe</label>
+        <label class="field-label" for="passwordInput">Password</label>
         <input type="password" class="field-input" id="passwordInput" placeholder="••••••••" autocomplete="current-password" minlength="6" required/>
       </div>
       <div class="field" id="passwordConfirmField" style="display:none">
-        <label class="field-label" for="passwordConfirmInput">Confirmer le mot de passe</label>
+        <label class="field-label" for="passwordConfirmInput">Confirm password</label>
         <input type="password" class="field-input" id="passwordConfirmInput" placeholder="••••••••" minlength="6"/>
       </div>
 
       <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        <span id="submitLabel">Se connecter</span>
+        <span id="submitLabel">Sign in</span>
       </button>
 
       <div id="magicLinkRow" style="text-align:center;margin-top:12px">
         <a href="#" onclick="sendMagicLink(event)" style="font-size:11px;color:var(--text3);text-decoration:none;letter-spacing:.04em;transition:color .15s" onmouseover="this.style.color='var(--text2)'" onmouseout="this.style.color='var(--text3)'">
-          Recevoir un lien magique par email →
+          Receive a magic link by email →
         </a>
       </div>
     </div>
@@ -195,7 +196,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <div class="msg" id="msgBox"></div>
 
     <div class="switch-link" id="switchText">
-      Pas encore de compte ? <a href="#" onclick="switchTab('signup',null);return false">Créer un compte</a>
+      Don't have an account yet? <a href="#" onclick="switchTab('signup',null);return false">Create account</a>
     </div>
   </div>
 </div>
@@ -260,8 +261,8 @@ async function attributeReferrer(session) {
   }
 }
 
-// Rediriger si déjà connecté + lier FACEIT en attente
-// Choisit la destination post-login : users qui n'ont jamais upload de demo
+// Rediriger si déjà connecté + lier FACEIT waiting
+// Choisit la destination post-login : users qui n'ont jabut upload de demo
 // atterrissent direct sur /demo.html?welcome=1 pour les guider vers la 1re
 // analyse (le "aha moment"). Users qui ont deja des demos : account.html
 // (abonnement, historique, parrainage).
@@ -337,11 +338,11 @@ function switchTab(m, btn) {
 
   const isSignup = m === 'signup';
   document.getElementById('passwordConfirmField').style.display = isSignup ? '' : 'none';
-  document.getElementById('submitLabel').textContent = isSignup ? 'Créer mon compte' : 'Se connecter';
+  document.getElementById('submitLabel').textContent = isSignup ? 'Create my account' : 'Sign in';
   document.getElementById('magicLinkRow').style.display = isSignup ? 'none' : '';
   document.getElementById('switchText').innerHTML = isSignup
-    ? 'Déjà un compte ? <a href="#" onclick="switchTab(\'login\',null);return false">Se connecter</a>'
-    : 'Pas encore de compte ? <a href="#" onclick="switchTab(\'signup\',null);return false">Créer un compte</a>';
+    ? 'Already have an account? <a href="#" onclick="switchTab(\'login\',null);return false">Sign in</a>'
+    : 'Don't have an account yet? <a href="#" onclick="switchTab(\'signup\',null);return false">Create account</a>';
   hideMsg();
 }
 
@@ -351,9 +352,9 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 async function handleSubmit() {
   const email = document.getElementById('emailInput').value.trim();
   const pass  = document.getElementById('passwordInput').value;
-  if (!email) { showMsg('Saisis ton adresse email.', 'error'); return; }
-  if (!EMAIL_REGEX.test(email)) { showMsg('Adresse email invalide. Vérifie le format (ex: nom@domaine.com).', 'error'); return; }
-  if (!pass)  { showMsg('Saisis ton mot de passe.', 'error'); return; }
+  if (!email) { showMsg('Enter your email address.', 'error'); return; }
+  if (!EMAIL_REGEX.test(email)) { showMsg('Email address invalide. Vérifie le format (ex: nom@domaine.com).', 'error'); return; }
+  if (!pass)  { showMsg('Enter your password.', 'error'); return; }
   if (pass.length < 6) { showMsg('Le mot de passe doit faire au moins 6 caractères.', 'error'); return; }
 
   const btn = document.getElementById('submitBtn');
@@ -362,7 +363,7 @@ async function handleSubmit() {
   try {
     if (mode === 'signup') {
       const confirm = document.getElementById('passwordConfirmInput').value;
-      if (pass !== confirm) { showMsg('Les mots de passe ne correspondent pas.', 'error'); btn.disabled=false; return; }
+      if (pass !== confirm) { showMsg('Passwords do not match.', 'error'); btn.disabled=false; return; }
       const { data: signupData, error } = await _sb.auth.signUp({ email, password: pass });
       if (error) throw error;
       if (typeof window.fvTrack === 'function') window.fvTrack('Signup', { method: 'email' });
@@ -415,7 +416,7 @@ function translateAuthError(err) {
   if (msg.includes('user already registered') || msg.includes('already been registered')) return 'Cet email est déjà utilisé. Connecte-toi ou utilisé le lien magique.';
   if (msg.includes('email rate limit') || msg.includes('rate limit')) return 'Trop de tentatives. Attends une minute avant de réessayer.';
   if (msg.includes('password should be at least')) return 'Le mot de passe doit faire au moins 6 caractères.';
-  if (msg.includes('unable to validate email') || msg.includes('invalid email')) return 'Adresse email invalide.';
+  if (msg.includes('unable to validate email') || msg.includes('invalid email')) return 'Email address invalide.';
   if (msg.includes('email not confirmed')) return 'Ton email n\'est pas encore confirmé. Vérifie ta boîte de réception.';
   if (msg.includes('user not found')) return 'Aucun compte associé à cet email.';
   if (msg.includes('network') || msg.includes('fetch')) return 'Problème de connexion. Vérifie ton internet et réessaie.';
@@ -429,7 +430,7 @@ async function sendMagicLink(e) {
   e.preventDefault();
   const email = document.getElementById('emailInput').value.trim();
   if (!email) { showMsg('Saisis ton adresse email d\'abord.', 'error'); return; }
-  if (!EMAIL_REGEX.test(email)) { showMsg('Adresse email invalide.', 'error'); return; }
+  if (!EMAIL_REGEX.test(email)) { showMsg('Email address invalide.', 'error'); return; }
   try {
     const { error } = await _sb.auth.signInWithOtp({ email, options: { emailRedirectTo: getAuthOrigin() + '/account.html' } });
     if (error) throw error;
