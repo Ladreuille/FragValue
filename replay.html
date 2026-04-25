@@ -743,6 +743,10 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <button class="sl-tool" id="btnCoachAI" onclick="toggleCoachAIPanel()" data-tip="Coach IA · analyse tactique">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
         </button>
+        <!-- Trajectoires grenades : visualise toutes les utilities du round (smoke/HE/flash/molo/decoy) en polylines colorees -->
+        <button class="sl-tool" id="btnGrenadeTraj" onclick="toggleGrenadeTraj()" data-tip="Trajectoires grenades">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 Q 8 4, 21 6"/><circle cx="21" cy="6" r="2.5" fill="currentColor"/></svg>
+        </button>
       </div>
 
       <!-- Floor toggle Nuke -->
@@ -1034,6 +1038,7 @@ let canvas, ctx, mapImg = null, mapName = 'de_dust2';
 let currentFloor = 'upper';
 let showTrail = true;
 let showCallouts = false; // Call-outs labels (Long, A Site, Mid, ...) overlay
+let showGrenadeTraj = false; // Trajectoires de toutes les grenades du round (overlay tactique)
 
 let currentRound = null, frames = [], frameIdx = 0;
 let playing = false, timer = null, speed = 1;
@@ -2466,6 +2471,11 @@ function drawFrame(idx, interp = 0) {
   // Placé après le fond et la vignette mais avant les joueurs, donc
   // visible mais sans masquer les dots.
   if (showCallouts) drawCallouts(W, H);
+
+  // Grenade trajectories overlay : visualise toutes les utilities du round
+  // (smoke/HE/flash/molo/decoy) en polylines colorees + markers detonation.
+  // Placé apres callouts mais avant joueurs pour rester en arriere-plan.
+  if (showGrenadeTraj) drawGrenadeTrajectories(W, H);
 
   // ── Isolated player path (click sur dot) ─────────────────────────────
   // Dessine la trajectoire complete du joueur selectionne dans le round
@@ -3994,6 +4004,107 @@ function toggleCallouts() {
   const btn = document.getElementById('btnCallouts');
   if (btn) btn.classList.toggle('active', showCallouts);
   drawFrame(frameIdx);
+}
+
+function toggleGrenadeTraj() {
+  showGrenadeTraj = !showGrenadeTraj;
+  const btn = document.getElementById('btnGrenadeTraj');
+  if (btn) btn.classList.toggle('active', showGrenadeTraj);
+  drawFrame(frameIdx);
+}
+
+// ══ GRENADE TRAJECTORIES OVERLAY ══════════════════════════════════════════════
+// Dessine TOUTES les grenades du round courant simultanement, en polylines
+// colorees par type (smoke blanc, HE orange, flash jaune, molo rouge, decoy
+// rose) avec marker de detonation. Toggle via btnGrenadeTraj, off par defaut.
+//
+// Utilise g.path (polyline qui rebondit) si dispo, sinon ligne droite throw->deton.
+// Filtre par tick range du round courant (getRoundBounds).
+//
+// Different du rendu existant tick-par-tick dans drawEffects qui anime les
+// grenades pendant leur vol/effet. Ici on montre TOUT en static pour analyse
+// tactique : reading utility patterns de l adversaire / de soi.
+function drawGrenadeTrajectories(W, H) {
+  const grenades = demoData.grenades || [];
+  if (!grenades.length) return;
+  const { start: _rStart, end: _rEnd } = getRoundBounds();
+  const scaleX = W / 1024, scaleY = H / 1024;
+
+  // Couleurs par type (cohérentes avec le rendu en vol mais plus opaques pour
+  // que la trajectoire static soit lisible au milieu des autres elements).
+  const TYPE_STYLE = {
+    smoke:    { color: 'rgba(220,225,235,0.55)',  width: 1.5, dash: [],     glow: 'rgba(220,225,235,.25)' },
+    hegre:    { color: 'rgba(255,140,40,0.70)',   width: 1.5, dash: [],     glow: 'rgba(255,140,40,.30)' },
+    flash:    { color: 'rgba(255,224,80,0.70)',   width: 1.2, dash: [4,3],  glow: 'rgba(255,224,80,.30)' },
+    molotov:  { color: 'rgba(255,80,40,0.70)',    width: 1.5, dash: [],     glow: 'rgba(255,80,40,.30)' },
+    incgren:  { color: 'rgba(255,80,40,0.70)',    width: 1.5, dash: [],     glow: 'rgba(255,80,40,.30)' },
+    decoy:    { color: 'rgba(255,96,176,0.55)',   width: 1.0, dash: [3,3],  glow: 'rgba(255,96,176,.25)' },
+  };
+  const typeKey = (t) => {
+    if (!t) return null;
+    if (t.includes('smoke')) return 'smoke';
+    if (t.includes('hegre')) return 'hegre';
+    if (t.includes('flash')) return 'flash';
+    if (t.includes('molotov')) return 'molotov';
+    if (t.includes('incgren')) return 'incgren';
+    if (t.includes('decoy')) return 'decoy';
+    return null;
+  };
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  for (const g of grenades) {
+    if (!g.tick) continue;
+    if (g.tick < _rStart || g.tick > _rEnd) continue;
+    if (g.detonX == null || g.detonY == null) continue;
+    const key = typeKey(g.type);
+    if (!key) continue;
+    const style = TYPE_STYLE[key];
+
+    // Trajectoire : preferer g.path (rebondit sur murs) sinon ligne droite
+    const hasPath = !!(g.path && g.path.length >= 4);
+
+    ctx.beginPath();
+    if (hasPath) {
+      const numPts = g.path.length / 2;
+      const _p0 = w2c(g.path[0], g.path[1]);
+      ctx.moveTo(_p0.x * scaleX, _p0.y * scaleY);
+      for (let i = 1; i < numPts; i++) {
+        const _pp = w2c(g.path[i * 2], g.path[i * 2 + 1]);
+        ctx.lineTo(_pp.x * scaleX, _pp.y * scaleY);
+      }
+    } else {
+      const _ps = w2c(g.x, g.y);
+      const _pe = w2c(g.detonX, g.detonY);
+      ctx.moveTo(_ps.x * scaleX, _ps.y * scaleY);
+      ctx.lineTo(_pe.x * scaleX, _pe.y * scaleY);
+    }
+    if (style.dash.length) ctx.setLineDash(style.dash); else ctx.setLineDash([]);
+    ctx.strokeStyle = style.color;
+    ctx.lineWidth = style.width;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Marker de detonation : cercle rempli + ring autour
+    const _pe = w2c(g.detonX, g.detonY);
+    const dx = _pe.x * scaleX, dy = _pe.y * scaleY;
+    if (!inBounds(dx, dy)) continue;
+    // Ring exterieur (glow effect)
+    ctx.beginPath();
+    ctx.arc(dx, dy, 5, 0, Math.PI * 2);
+    ctx.strokeStyle = style.glow;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Dot interieur
+    ctx.beginPath();
+    ctx.arc(dx, dy, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = style.color;
+    ctx.fill();
+  }
+
+  ctx.restore();
 }
 
 // ══ DEEP-LINK SHARE ══════════════════════════════════════════════════════════
