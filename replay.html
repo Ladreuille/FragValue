@@ -206,6 +206,34 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       100% {opacity:0;transform:translate(-50%,-280%) scale(.95)}
     }
 
+    /* ── Share toast : confirmation copie deep-link ─────────────────────
+       Pop bottom-center du canvas-area, fade in + slide up + auto-hide. */
+    .share-toast{
+      position:absolute;bottom:24px;left:50%;
+      transform:translateX(-50%) translateY(20px);
+      z-index:60;pointer-events:none;
+      display:flex;align-items:center;gap:8px;
+      background:rgba(8,10,16,.95);
+      border:1px solid var(--accent);
+      color:var(--accent);
+      padding:10px 18px;border-radius:8px;
+      font-family:'Space Mono',monospace;font-size:12px;
+      letter-spacing:.06em;text-transform:uppercase;
+      box-shadow:0 8px 24px rgba(0,0,0,.5),0 0 16px rgba(184,255,87,.18);
+      opacity:0;
+      animation:shareToastIn 2.5s cubic-bezier(.2,.8,.3,1) forwards;
+    }
+    @keyframes shareToastIn{
+      0%   {opacity:0;transform:translateX(-50%) translateY(20px)}
+      10%  {opacity:1;transform:translateX(-50%) translateY(0)}
+      80%  {opacity:1;transform:translateX(-50%) translateY(0)}
+      100% {opacity:0;transform:translateX(-50%) translateY(-10px)}
+    }
+    .share-toast.error{
+      border-color:#ff5050;color:#ff5050;
+      box-shadow:0 8px 24px rgba(0,0,0,.5),0 0 16px rgba(255,80,80,.25);
+    }
+
     /* ── Player tooltip overlay : hover sur dot ──────────────────────────
        Position absolue, suivi du curseur via JS. Z-index haut pour passer
        au-dessus de la canvas. Anti-jitter via pointer-events:none. */
@@ -520,6 +548,10 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <button class="sl-tool" id="btnCallouts" onclick="toggleCallouts()" data-tip="Call-outs map">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         </button>
+        <!-- Share : copie dans presse-papier un lien deep-link vers le moment courant -->
+        <button class="sl-tool" id="btnShare" onclick="shareCurrentMoment()" data-tip="Partager ce moment">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
       </div>
 
       <!-- Floor toggle Nuke -->
@@ -556,6 +588,11 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
           <div class="pt-stat"><span class="pt-stat-lbl">HP</span><span class="pt-stat-val" id="ptHp">-</span></div>
         </div>
         <div class="pt-weapon" id="ptWeapon"></div>
+      </div>
+      <!-- Toast notification : confirmation copie lien partage. Auto-hide 2.5s -->
+      <div id="shareToast" class="share-toast" style="display:none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="shareToastMsg">Lien copie</span>
       </div>
     </div>
 
@@ -1034,8 +1071,21 @@ window.addEventListener('load', async () => {
     loadMapImage(() => {
       initRoundsBar();
       initTeamPanels();
+      // Deep-link : si l URL specifie ?round=N, on charge ce round.
+      // Sinon le premier round non-knife. Apres selectRound, on applique
+      // tick + iso si fournis (params persistent dans le state pour replay).
+      const dl = parseDeepLink();
       const firstReal = getFirstRealRound();
-      selectRound(firstReal, document.getElementById('rndBtn' + firstReal));
+      const targetRound = (dl.round != null && (demoData.rounds || []).some(r => (r.round ?? -1) === dl.round))
+        ? dl.round : firstReal;
+      const targetBtn = document.getElementById('rndBtn' + targetRound);
+      selectRound(targetRound, targetBtn);
+      // Apres selectRound (qui reset isolatedPlayer + frameIdx=0), on applique
+      // les params secondaires (tick + iso) sur le round selectionne.
+      if (dl.tick != null || dl.iso) {
+        // Defer 1 frame pour que buildFrames + currentRoundPos soient prets
+        requestAnimationFrame(() => applyDeepLinkPostRound(dl));
+      }
     });
   } catch (e) { console.error('replay init error:', e); }
 });
@@ -3696,6 +3746,131 @@ function toggleCallouts() {
   const btn = document.getElementById('btnCallouts');
   if (btn) btn.classList.toggle('active', showCallouts);
   drawFrame(frameIdx);
+}
+
+// ══ DEEP-LINK SHARE ══════════════════════════════════════════════════════════
+// URL params supportes :
+//   ?id=DEMOID       (deja gere ailleurs : load la demo)
+//   ?round=N         (round number, pas displayNum)
+//   ?tick=T          (tick exact a seek apres le selectRound)
+//   ?iso=NAME        (isolated player path highlight)
+//
+// Flow :
+// - parseDeepLink() lit l URL au load et retourne un objet { round, tick, iso }
+// - applyDeepLink() est appelee dans le init flow apres loadMapImage callback,
+//   AVANT le selectRound default. Elle remplace le round par defaut si present.
+//   Apres selectRound, elle seek au tick et active l isolation.
+// - shareCurrentMoment() construit l URL depuis l etat actuel et la copie.
+
+function parseDeepLink() {
+  try {
+    const qs = new URLSearchParams(window.location.search);
+    const result = {};
+    if (qs.has('round')) {
+      const r = parseInt(qs.get('round'), 10);
+      if (!isNaN(r) && r >= 0) result.round = r;
+    }
+    if (qs.has('tick')) {
+      const t = parseInt(qs.get('tick'), 10);
+      if (!isNaN(t) && t >= 0) result.tick = t;
+    }
+    if (qs.has('iso')) {
+      const name = String(qs.get('iso')).slice(0, 64).trim();
+      if (name) result.iso = name;
+    }
+    return result;
+  } catch(_) { return {}; }
+}
+
+// Applique les deep-link params APRES selectRound (donc apres buildFrames).
+// Cherche le frame le plus proche du tick demande (binary search-style),
+// set frameIdx, set isolatedPlayer si valide, redraw.
+function applyDeepLinkPostRound(params) {
+  if (!params || !frames || !frames.length) return;
+
+  if (params.tick != null) {
+    // Trouver l index du frame dont le tick est >= params.tick (clamp)
+    let lo = 0, hi = frames.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if ((frames[mid].tick || 0) < params.tick) lo = mid + 1;
+      else hi = mid;
+    }
+    frameIdx = Math.max(0, Math.min(frames.length - 1, lo));
+  }
+
+  if (params.iso) {
+    // Verifier que le joueur existe dans le round courant
+    if (currentRoundPos && currentRoundPos[params.iso]) {
+      isolatedPlayer = params.iso;
+    }
+  }
+
+  drawFrame(frameIdx, 0);
+}
+
+// Construit l URL depuis l etat actuel : id (preserve), round, tick, iso.
+// Utilise URLSearchParams pour escape correct (joueurs avec - / espaces).
+function generateShareLink() {
+  const url = new URL(window.location.href);
+  // Preserver le param id existant (chargement de la demo), drop les autres
+  const id = url.searchParams.get('id');
+  url.search = '';
+  if (id) url.searchParams.set('id', id);
+  if (currentRound != null && currentRound >= 0) {
+    url.searchParams.set('round', String(currentRound));
+  }
+  // Tick courant : depuis le frame actuel (interp = 0 pour pointer le tick A)
+  if (frames && frames.length && frames[frameIdx]) {
+    const t = frames[frameIdx].tick || 0;
+    if (t > 0) url.searchParams.set('tick', String(t));
+  }
+  if (isolatedPlayer) {
+    url.searchParams.set('iso', isolatedPlayer);
+  }
+  return url.toString();
+}
+
+// Trigger from sidebar btnShare. Copie clipboard + toast confirmation.
+async function shareCurrentMoment() {
+  const link = generateShareLink();
+  const toast = document.getElementById('shareToast');
+  const msg = document.getElementById('shareToastMsg');
+  if (!toast || !msg) return;
+
+  // Format relatif du moment partage : "Round X · Tick Y · Joueur Z"
+  let label = 'Lien copie';
+  try {
+    const parts = [];
+    if (currentRound != null) {
+      const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
+      const dispN = rdData.displayNum ?? (currentRound + 1);
+      parts.push('R' + dispN);
+    }
+    if (isolatedPlayer) parts.push(isolatedPlayer);
+    if (parts.length) label = 'Lien copie · ' + parts.join(' · ');
+  } catch(_) {}
+
+  try {
+    await navigator.clipboard.writeText(link);
+    msg.textContent = label;
+    toast.classList.remove('error');
+  } catch (e) {
+    msg.textContent = 'Erreur copie · selectionne et copie manuellement : ' + link;
+    toast.classList.add('error');
+  }
+
+  // Re-trigger animation : remove display + reflow + readd
+  toast.style.display = 'none';
+  void toast.offsetWidth;
+  toast.style.display = 'flex';
+  toast.style.animation = 'none';
+  void toast.offsetWidth;
+  toast.style.animation = '';
+
+  // Auto-hide apres animation (matched a CSS keyframe duration 2.5s)
+  clearTimeout(shareCurrentMoment._t);
+  shareCurrentMoment._t = setTimeout(() => { toast.style.display = 'none'; }, 2500);
 }
 
 // ══ CALL-OUTS RENDERING ══════════════════════════════════════════════════════
