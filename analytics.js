@@ -1,26 +1,21 @@
 // FragValue analytics + cookie consent
 // ─────────────────────────────────────────────────────────────────────────
-// GA4 + Consent Mode v2 (RGPD-compliant pour audience EU/France).
+// COOKIE BANNER + CONSENT MANAGEMENT pour GA4 (deja initialise dans <head>).
 //
-// Comportement :
-// - Au load, on initialise gtag avec ad_storage='denied' + analytics_storage='denied'
-//   par defaut (Consent Mode v2 obligatoire pour GA4 dans l'EEE).
-// - Le banner cookie reste affiche jusqu'a choix explicite.
-// - Si Accepter : gtag('consent','update', { analytics_storage:'granted' })
-// - Si Refuser : on garde les valeurs 'denied' (GA4 envoie quand meme des
-//   pings cookieless / signal-based : page_view comptes mais pas de visiteur
-//   identifie ni de cohorts publicitaires).
-// - Le choix est memorise localStorage : 1 an si Accept, 30j si Refuse.
+// IMPORTANT : le snippet GA4 + Consent Mode v2 default est inline dans le
+// <head> de chaque page HTML (necessaire pour que le crawler 'Google Tag
+// installation tester' le detecte dans le HTML statique). Cf le bloc
+// "Google tag (gtag.js)" inline avant ce script.
 //
-// Pour activer : remplacer GA_MEASUREMENT_ID par ton vrai ID (format G-XXXXXXXXXX)
-// que tu trouves sur analytics.google.com -> Admin -> Property -> Data streams.
+// Ce fichier gere :
+// - Le banner cookie (Accept / Refuse)
+// - Le consent update (gtag('consent', 'update', ...)) post-banner
+// - La capture UTM pour attribution signup
+// - L'helper window.fvTrack(event, props) -> gtag('event', ...)
 // ─────────────────────────────────────────────────────────────────────────
 
 (function () {
   'use strict';
-
-  // GA4 Measurement ID FragValue (production)
-  const GA_MEASUREMENT_ID = 'G-H6PLDKSCJR';
 
   const STORAGE_KEY = 'fv_consent_v1';
   const UTM_KEY = 'fv_utm_v1';
@@ -28,24 +23,13 @@
   const ACCEPTED_TTL_DAYS = 365;
   const UTM_TTL_DAYS = 30;
 
-  // === Consent Mode v2 init (avant tout chargement de tag) ================
-  // gtag DOIT etre defini avant que le script GA4 ne charge, sinon les
-  // 'consent default' sont ignores et GA collecte avec consent par defaut
-  // (= violation RGPD).
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){ window.dataLayer.push(arguments); }
-  window.gtag = gtag;
-
-  gtag('consent', 'default', {
-    'ad_storage': 'denied',
-    'ad_user_data': 'denied',
-    'ad_personalization': 'denied',
-    'analytics_storage': 'denied',
-    'functionality_storage': 'granted',  // necessaire pour preferences (theme)
-    'security_storage': 'granted',       // anti-fraude, toujours allume
-    'wait_for_update': 500,              // attend 500ms le choix avant de fire
-    'region': ['EEA', 'CH', 'GB'],       // strict consent pour EU/UK/CH
-  });
+  // gtag est deja defini dans le <head> inline. Si pas la (page sans tag),
+  // on stub pour eviter les ReferenceError.
+  if (typeof window.gtag !== 'function') {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+  }
+  const gtag = window.gtag;
 
   // === Helpers consent ====================================================
   function readConsent() {
@@ -94,30 +78,6 @@
       return raw ? JSON.parse(raw) : null;
     } catch (_) { return null; }
   };
-
-  // === GA4 loader =========================================================
-  function loadGA4() {
-    if (window._fvGaLoaded) return;
-    if (!GA_MEASUREMENT_ID || GA_MEASUREMENT_ID === 'G-XXXXXXXXXX') {
-      console.warn('[analytics] GA_MEASUREMENT_ID non configure - GA4 desactive');
-      return;
-    }
-    window._fvGaLoaded = true;
-    const s = document.createElement('script');
-    s.async = true;
-    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_MEASUREMENT_ID;
-    document.head.appendChild(s);
-
-    gtag('js', new Date());
-    // anonymize_ip recommande pour RGPD strict (mais GA4 le fait par defaut
-    // en EU). On ajoute send_page_view:true pour le pageview initial.
-    gtag('config', GA_MEASUREMENT_ID, {
-      anonymize_ip: true,
-      send_page_view: true,
-      // Cookie flags : SameSite=Strict + Secure pour eviter CSRF
-      cookie_flags: 'SameSite=Strict;Secure',
-    });
-  }
 
   // === Public tracking helper =============================================
   // Utilise depuis n'importe quelle page : window.fvTrack('Signup', { method: 'email' })
@@ -190,13 +150,9 @@
   }
 
   // === Init flow ==========================================================
-  // Best practice Google Consent Mode v2 : on charge TOUJOURS gtag.js, et
-  // on laisse le script gerer le respect du consent (denied par defaut =
-  // pings cookieless / signal-only ; granted = collecte normale).
-  // Cela permet :
-  // - Au crawler Google "Tag installation tester" de detecter le tag
-  // - Aux pings cookieless de fonctionner meme en cas de refus
-  // - A l'EU/EEA de rester conforme RGPD (consent 'denied' par defaut)
+  // GA4 est deja charge via le snippet inline du <head>. Ici on :
+  // - Restore le consent precedent si le user avait deja choisi
+  // - Affiche le banner sinon (pour collecter le choix)
   function init() {
     const consent = readConsent();
 
@@ -210,11 +166,7 @@
       });
     }
     // Si consent 'refuse' ou null : on garde 'denied' par defaut (deja set
-    // au top du script avec gtag('consent', 'default', ...))
-
-    // GA4 charge dans tous les cas (Consent Mode v2 gere la collecte selon
-    // l'etat consent_storage / analytics_storage)
-    loadGA4();
+    // dans le snippet inline du <head> avec gtag('consent', 'default', ...))
 
     // Si pas de choix encore : affiche le banner pour solliciter consentement
     if (!consent) {
