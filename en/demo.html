@@ -21,8 +21,8 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
 
 <meta charset="UTF-8"/>
-<meta name="description" content="Upload your demo CS2 FACEIT (.dem) et obtiens un diagnostic complet : FV Rating, heatmaps, Advanced KPIs, 2D replay. Analysis gratuite jusqu'à 3 démos par mois.">
-<meta name="keywords" content="démo CS2, analyse FACEIT, parse dem, heatmap CS2, FV Rating, coach IA">
+<meta name="description" content="Upload your CS2 FACEIT demo (.dem) and get a complete diagnosis: FV Rating, heatmaps, advanced KPIs, 2D replay. Free analysis up to 3 demos per month.">
+<meta name="keywords" content="CS2 demo, FACEIT analysis, parse dem, CS2 heatmap, FV Rating, AI coach">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
 <link rel="canonical" href="https://fragvalue.com/en/demo.html">
 <link rel="alternate" hreflang="fr" href="https://fragvalue.com/demo.html">
@@ -1196,8 +1196,8 @@ function showUpgradeModal() {
     <div style="background:#0f1010;border:1px solid #1c1e1e;border-radius:12px;padding:36px 32px;max-width:420px;width:90%;text-align:center">
       <div style="font-family:'Anton',sans-serif;font-size:22px;letter-spacing:.02em;margin-bottom:6px">Limit reached</div>
       <p style="font-size:11px;color:#7a8080;line-height:1.7;margin-bottom:20px">
-        Tu as utilisé tes 3 analysés gratuites ce mois ci.<br>
-        Passe a Pro pour des analysés illimitees, le Complete 2D Replay, et l'export PDF.
+        You have used your 3 free analyses this month.<br>
+        Upgrade to Pro for unlimited analyses, le Complete 2D Replay, et l'export PDF.
       </p>
       <a href="index.html#pricing" style="display:inline-block;background:#b8ff57;color:#000;padding:10px 24px;border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">See plans</a>
       <button onclick="document.getElementById('upgradeModal').style.display='none'" style="display:block;margin:14px auto 0;background:none;border:none;color:#4a5050;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer">Close</button>
@@ -1225,7 +1225,7 @@ async function startAnalysis() {
     const btn = document.getElementById('analyseBtn');
     const originalLabel = btn.textContent;
     btn.disabled = true;
-    btn.textContent = 'Vérification serveur...';
+    btn.textContent = 'Checking server...';
     const available = await pingParser(8000);
     btn.textContent = originalLabel;
     if (!available) {
@@ -1264,13 +1264,13 @@ async function startAnalysis() {
     { delay:800,  step:0, pct:8,  title:'Uploading file',            sub:'Transfert en cours...' },
     { delay:3000, step:1, pct:20, title:'Parsing CS2',                 sub:'Lecture des ticks bruts...' },
     { delay:5000, step:1, pct:32, title:'Parsing CS2',                 sub:'Extraction des positions...' },
-    { delay:8000, step:2, pct:44, title:'Calcul des zones',            sub:'Analysis des rounds...' },
-    { delay:12000,step:2, pct:54, title:'Calcul des zones',            sub:'Mapping grenades et shots...' },
+    { delay:8000, step:2, pct:44, title:'Computing zones',            sub:'Analysis des rounds...' },
+    { delay:12000,step:2, pct:54, title:'Computing zones',            sub:'Mapping grenades and shots...' },
     { delay:18000,step:3, pct:63, title:'Generating heatmaps',     sub:'Kill zones et duel areas...' },
     { delay:25000,step:3, pct:70, title:'Generating heatmaps',     sub:'Calcul des trajectoires...' },
     { delay:35000,step:4, pct:76, title:'FV Rating',                   sub:'Calcul de l\'impact par round...' },
-    { delay:50000,step:4, pct:82, title:'FV Rating',                   sub:'Pondération des KPIs...' },
-    { delay:70000,step:4, pct:87, title:'Finalizing',                sub:'Presque terminé...' },
+    { delay:50000,step:4, pct:82, title:'FV Rating',                   sub:'Weighting KPIs...' },
+    { delay:70000,step:4, pct:87, title:'Finalizing',                sub:'Almost done...' },
     // Messages rassurants si le parsing depasse les 80s (grosses demos)
     { delay:85000, step:4, pct:89, title:'Finalizing',               sub:'Demo volumineuse, patience...' },
     { delay:120000,step:4, pct:91, title:'Finalizing',               sub:'Serveur charge, encore quelques instants...' },
@@ -1300,7 +1300,7 @@ async function startAnalysis() {
 
     if (!res.ok) { const e = await res.json().catch(()=>({error:'Error serveur'})); throw new Error(e.error||'Error serveur'); }
 
-    go(5, 92, 'Finalizing', 'Traitement des résultats...');
+    go(5, 92, 'Finalizing', 'Processing results...');
     const data = await res.json();
     go(5, 97, 'Finalizing', 'Sauvegarde...');
 
@@ -1353,7 +1353,7 @@ async function startAnalysis() {
     }
     await saveDemoAnalysis(data.data);
 
-    go(5, 100, 'Analysis complète', 'Redirection...');
+    go(5, 100, 'Analysis complete', 'Redirection...');
     bar.style.background = 'var(--success)';
     await new Promise(r => setTimeout(r, 600));
     window.location.href = 'heatmap-results.html';
@@ -1498,7 +1498,7 @@ injectMapOverlays();
 
 // Rend la quota bar (X/Y analyses ce mois + plan). Couleurs selon plan :
 // - Free : vert, passe au rouge si quota atteint
-// - Pro/Elite : gold, libelle illimite
+// - Pro/Elite : gold, libelle unlimited
 async function renderQuotaBar(session) {
   const bar    = document.getElementById('quotaBar');
   const label  = document.getElementById('quotaBarLabel');
@@ -1542,10 +1542,10 @@ async function renderQuotaBar(session) {
         lockUploadOnQuota(u);
       }
     } else {
-      // Pro / Elite : illimite
+      // Pro / Elite : unlimited
       fill.style.width = '100%';
       count.innerHTML = u + ' <em>ce mois</em>';
-      label.textContent = (plan === 'elite' || plan === 'team') ? 'Elite illimite' : 'Pro illimite';
+      label.textContent = (plan === 'elite' || plan === 'team') ? 'Elite unlimited' : 'Pro unlimited';
       bar.classList.add('quota-unlimited');
     }
     bar.style.display = '';

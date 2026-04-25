@@ -21,7 +21,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
 
 <meta charset="UTF-8"/>
-<meta name="description" content="Connecte-toi à FragValue : analyse CS2 FACEIT, AI Coach, heatmaps et 2D replay. Authentification Google, FACEIT OAuth ou email.">
+<meta name="description" content="Sign in to FragValue : analyse CS2 FACEIT, AI Coach, heatmaps et 2D replay. Authentification Google, FACEIT OAuth ou email.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
 <meta name="robots" content="noindex, follow">
 <link rel="canonical" href="https://fragvalue.com/en/login.html">
@@ -32,7 +32,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://fragvalue.com/en/login.html">
 <meta property="og:title" content="Sign in · FragValue">
-<meta property="og:description" content="Accède à ton espace AI Coach FragValue.">
+<meta property="og:description" content="Access your AI Coach space FragValue.">
 <meta property="og:image" content="https://fragvalue.com/og/home.png">
 <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
 <title>Sign in · FragValue AI Coach CS2</title>
@@ -146,7 +146,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
 <nav>
   <a href="index.html" class="nav-logo">Frag<span>Value</span></a>
-  <a href="index.html" class="nav-back">← Retour</a>
+  <a href="index.html" class="nav-back">← Back</a>
 </nav>
 
 <div class="wrapper">
@@ -374,7 +374,7 @@ async function handleSubmit() {
   if (!email) { showMsg('Enter your email address.', 'error'); return; }
   if (!EMAIL_REGEX.test(email)) { showMsg('Email address invalide. Vérifie le format (ex: nom@domaine.com).', 'error'); return; }
   if (!pass)  { showMsg('Enter your password.', 'error'); return; }
-  if (pass.length < 6) { showMsg('Le mot de passe doit faire au moins 6 caractères.', 'error'); return; }
+  if (pass.length < 6) { showMsg('Password must be at least 6 characters.', 'error'); return; }
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
@@ -398,7 +398,7 @@ async function handleSubmit() {
           }
         }
       } catch (_) {}
-      showMsg('Compte créé. Vérifie ta boîte mail pour confirmer.', 'success');
+      showMsg('Account created. Check your inbox to confirm.', 'success');
     } else {
       const { data: signinData, error } = await _sb.auth.signInWithPassword({ email, password: pass });
       if (error) throw error;
@@ -432,17 +432,17 @@ function getAuthOrigin() {
 function translateAuthError(err) {
   const msg = String(err?.message || err || '').toLowerCase();
   if (msg.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
-  if (msg.includes('user already registered') || msg.includes('already been registered')) return 'Cet email est déjà utilisé. Connecte-toi ou utilisé le lien magique.';
-  if (msg.includes('email rate limit') || msg.includes('rate limit')) return 'Trop de tentatives. Attends une minute avant de réessayer.';
-  if (msg.includes('password should be at least')) return 'Le mot de passe doit faire au moins 6 caractères.';
+  if (msg.includes('user already registered') || msg.includes('already been registered')) return 'This email is already in use. Sign in or use the magic link.';
+  if (msg.includes('email rate limit') || msg.includes('rate limit')) return 'Too many attempts. Wait a minute before retrying.';
+  if (msg.includes('password should be at least')) return 'Password must be at least 6 characters.';
   if (msg.includes('unable to validate email') || msg.includes('invalid email')) return 'Email address invalide.';
   if (msg.includes('email not confirmed')) return 'Ton email n\'est pas encore confirmé. Vérifie ta boîte de réception.';
-  if (msg.includes('user not found')) return 'Aucun compte associé à cet email.';
-  if (msg.includes('network') || msg.includes('fetch')) return 'Problème de connexion. Vérifie ton internet et réessaie.';
-  if (msg.includes('popup') && msg.includes('closed')) return 'Fenêtre de connexion fermée avant la fin.';
-  if (msg.includes('popup') && msg.includes('blocked')) return 'Ton navigateur a bloqué la fenêtre OAuth. Autorise les popups pour fragvalue.com.';
+  if (msg.includes('user not found')) return 'No account associated with this email.';
+  if (msg.includes('network') || msg.includes('fetch')) return 'Connection problem. Check your internet and try again.';
+  if (msg.includes('popup') && msg.includes('closed')) return 'Login window closed before completion.';
+  if (msg.includes('popup') && msg.includes('blocked')) return 'Your browser blocked the OAuth window. Allow popups for fragvalue.com.';
   // Fallback : retourne le message original si on ne le reconnaît pas
-  return err?.message || 'Une erreur est survenue. Réessaie.';
+  return err?.message || 'An error occurred. Try again.';
 }
 
 async function sendMagicLink(e) {
@@ -453,7 +453,7 @@ async function sendMagicLink(e) {
   try {
     const { error } = await _sb.auth.signInWithOtp({ email, options: { emailRedirectTo: getAuthOrigin() + '/account.html' } });
     if (error) throw error;
-    showMsg('Lien envoyé. Vérifie ta boîte mail.', 'success');
+    showMsg('Link sent. Check your inbox.', 'success');
   } catch(e) { showMsg(translateAuthError(e), 'error'); }
 }
 
