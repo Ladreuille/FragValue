@@ -1,65 +1,54 @@
 // FragValue analytics + cookie consent
 // ─────────────────────────────────────────────────────────────────────────
-// Comportement RGPD-compliant :
-// - Au 1er load, affiche un banner cookie pour demander consentement.
-// - Tant que le user n'a pas accepte, AUCUN script analytics n'est charge
-//   (Plausible est privacy-friendly mais on respecte quand meme le standard EU).
-// - Le choix est memorise dans localStorage (1 an).
-// - Si "Refuser", on ne charge rien et on ne re-demande pas pendant 30j.
-// - Si "Accepter", on charge Plausible et on expose window.plausible('Event').
+// GA4 + Consent Mode v2 (RGPD-compliant pour audience EU/France).
 //
-// Inclusion : <script src="/analytics.js" defer></script> dans tous les <head>.
-// Pages auth (login.html, account.html) qui ont deja Supabase n'en ont pas
-// besoin (mais c'est OK de l'inclure, pas de side effect).
+// Comportement :
+// - Au load, on initialise gtag avec ad_storage='denied' + analytics_storage='denied'
+//   par defaut (Consent Mode v2 obligatoire pour GA4 dans l'EEE).
+// - Le banner cookie reste affiche jusqu'a choix explicite.
+// - Si Accepter : gtag('consent','update', { analytics_storage:'granted' })
+// - Si Refuser : on garde les valeurs 'denied' (GA4 envoie quand meme des
+//   pings cookieless / signal-based : page_view comptes mais pas de visiteur
+//   identifie ni de cohorts publicitaires).
+// - Le choix est memorise localStorage : 1 an si Accept, 30j si Refuse.
+//
+// Pour activer : remplacer GA_MEASUREMENT_ID par ton vrai ID (format G-XXXXXXXXXX)
+// que tu trouves sur analytics.google.com -> Admin -> Property -> Data streams.
 // ─────────────────────────────────────────────────────────────────────────
 
 (function () {
   'use strict';
 
-  const PLAUSIBLE_DOMAIN = 'fragvalue.com';
-  const PLAUSIBLE_SCRIPT = 'https://plausible.io/js/script.outbound-links.js';
+  // ⚠ TODO USER : remplacer par ton Measurement ID GA4 (G-XXXXXXXXXX)
+  // Tant que c'est laisse a la valeur placeholder, le script est NO-OP.
+  const GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
+
   const STORAGE_KEY = 'fv_consent_v1';
   const UTM_KEY = 'fv_utm_v1';
   const REFUSED_TTL_DAYS = 30;
   const ACCEPTED_TTL_DAYS = 365;
   const UTM_TTL_DAYS = 30;
 
-  // Capture les params UTM + referrer + landing au tout 1er load.
-  // Stocke en localStorage pour pouvoir les attribuer au signup meme si
-  // l'user navigue sur 5 pages avant. Pas de PII, pas de consent requis.
-  function captureUtm() {
-    try {
-      const existing = JSON.parse(localStorage.getItem(UTM_KEY) || 'null');
-      // Si deja capture il y a moins de 30j, on garde la 1re attribution
-      if (existing && existing.ts && (Date.now() - existing.ts) < UTM_TTL_DAYS * 86400000) return;
-      const params = new URLSearchParams(window.location.search);
-      const utm = {
-        source:   params.get('utm_source')   || null,
-        medium:   params.get('utm_medium')   || null,
-        campaign: params.get('utm_campaign') || null,
-        term:     params.get('utm_term')     || null,
-        content:  params.get('utm_content')  || null,
-        referrer: (document.referrer || '').slice(0, 200) || null,
-        landing:  (window.location.origin + window.location.pathname).slice(0, 200),
-        ts:       Date.now(),
-      };
-      // Ne stocke que si au moins une donnee utile
-      if (utm.source || utm.medium || utm.campaign || utm.referrer) {
-        localStorage.setItem(UTM_KEY, JSON.stringify(utm));
-      }
-    } catch (_) {}
-  }
-  captureUtm();
+  // === Consent Mode v2 init (avant tout chargement de tag) ================
+  // gtag DOIT etre defini avant que le script GA4 ne charge, sinon les
+  // 'consent default' sont ignores et GA collecte avec consent par defaut
+  // (= violation RGPD).
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ window.dataLayer.push(arguments); }
+  window.gtag = gtag;
 
-  // Helper public : recupere les UTM stockees pour les passer au backend
-  // au moment du signup (POST /api/profile-utm).
-  window.fvGetSignupUtm = function () {
-    try {
-      const raw = localStorage.getItem(UTM_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch (_) { return null; }
-  };
+  gtag('consent', 'default', {
+    'ad_storage': 'denied',
+    'ad_user_data': 'denied',
+    'ad_personalization': 'denied',
+    'analytics_storage': 'denied',
+    'functionality_storage': 'granted',  // necessaire pour preferences (theme)
+    'security_storage': 'granted',       // anti-fraude, toujours allume
+    'wait_for_update': 500,              // attend 500ms le choix avant de fire
+    'region': ['EEA', 'CH', 'GB'],       // strict consent pour EU/UK/CH
+  });
 
+  // === Helpers consent ====================================================
   function readConsent() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -78,28 +67,70 @@
     } catch (_) { /* quota / private mode */ }
   }
 
-  function loadPlausible() {
-    if (window._fvPlausibleLoaded) return;
-    window._fvPlausibleLoaded = true;
-    const s = document.createElement('script');
-    s.defer = true;
-    s.src = PLAUSIBLE_SCRIPT;
-    s.setAttribute('data-domain', PLAUSIBLE_DOMAIN);
-    document.head.appendChild(s);
-    // Stub avant chargement complet
-    window.plausible = window.plausible || function () {
-      (window.plausible.q = window.plausible.q || []).push(arguments);
-    };
+  // === UTM capture (pre-consent, no PII) ==================================
+  function captureUtm() {
+    try {
+      const existing = JSON.parse(localStorage.getItem(UTM_KEY) || 'null');
+      if (existing && existing.ts && (Date.now() - existing.ts) < UTM_TTL_DAYS * 86400000) return;
+      const params = new URLSearchParams(window.location.search);
+      const utm = {
+        source:   params.get('utm_source')   || null,
+        medium:   params.get('utm_medium')   || null,
+        campaign: params.get('utm_campaign') || null,
+        term:     params.get('utm_term')     || null,
+        content:  params.get('utm_content')  || null,
+        referrer: (document.referrer || '').slice(0, 200) || null,
+        landing:  (window.location.origin + window.location.pathname).slice(0, 200),
+        ts:       Date.now(),
+      };
+      if (utm.source || utm.medium || utm.campaign || utm.referrer) {
+        localStorage.setItem(UTM_KEY, JSON.stringify(utm));
+      }
+    } catch (_) {}
   }
+  captureUtm();
+  window.fvGetSignupUtm = function () {
+    try {
+      const raw = localStorage.getItem(UTM_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) { return null; }
+  };
 
-  function trackEvent(name, props) {
-    if (typeof window.plausible === 'function') {
-      window.plausible(name, props ? { props } : undefined);
+  // === GA4 loader =========================================================
+  function loadGA4() {
+    if (window._fvGaLoaded) return;
+    if (!GA_MEASUREMENT_ID || GA_MEASUREMENT_ID === 'G-XXXXXXXXXX') {
+      console.warn('[analytics] GA_MEASUREMENT_ID non configure - GA4 desactive');
+      return;
     }
-  }
-  // Helper public : utilisable depuis n'importe quelle page connectee a analytics.js
-  window.fvTrack = trackEvent;
+    window._fvGaLoaded = true;
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_MEASUREMENT_ID;
+    document.head.appendChild(s);
 
+    gtag('js', new Date());
+    // anonymize_ip recommande pour RGPD strict (mais GA4 le fait par defaut
+    // en EU). On ajoute send_page_view:true pour le pageview initial.
+    gtag('config', GA_MEASUREMENT_ID, {
+      anonymize_ip: true,
+      send_page_view: true,
+      // Cookie flags : SameSite=Strict + Secure pour eviter CSRF
+      cookie_flags: 'SameSite=Strict;Secure',
+    });
+  }
+
+  // === Public tracking helper =============================================
+  // Utilise depuis n'importe quelle page : window.fvTrack('Signup', { method: 'email' })
+  // Si le user n'a pas accepte, gtag fonctionne en mode signal-only (cookieless)
+  // qui envoie des pings agreges sans tracker l'individu - conforme RGPD.
+  window.fvTrack = function (eventName, props) {
+    try {
+      gtag('event', eventName, props || {});
+    } catch (_) {}
+  };
+
+  // === Banner cookie ======================================================
   function showBanner() {
     if (document.getElementById('fvCookieBanner')) return;
     const b = document.createElement('div');
@@ -125,8 +156,8 @@
       '</style>' +
       '<div id="fvCookieBanner-text">' +
         '<strong>Cookies & confidentialite</strong> &middot; ' +
-        'Nous utilisons Plausible (analytics anonymes, pas de donnees personnelles) pour comprendre comment tu utilises FragValue. ' +
-        'Tes donnees de jeu (FACEIT, demos) sont privees et necessaires au fonctionnement. ' +
+        'Nous utilisons <strong>Google Analytics 4</strong> (mesure d\'audience anonymisee) pour comprendre comment tu utilises FragValue. ' +
+        'Tu peux refuser : aucune trace individuelle ne sera collectee, juste des statistiques agregees. ' +
         '<a href="/privacy.html" target="_blank" rel="noopener">En savoir plus</a>.' +
       '</div>' +
       '<div id="fvCookieBanner-actions">' +
@@ -137,30 +168,53 @@
 
     document.getElementById('fvCookieAccept').addEventListener('click', function () {
       writeConsent('accept');
+      // Update Consent Mode : autorise GA4 + ads cookies
+      gtag('consent', 'update', {
+        ad_storage: 'granted',
+        ad_user_data: 'granted',
+        ad_personalization: 'granted',
+        analytics_storage: 'granted',
+      });
+      loadGA4();
+      // Track le consent pour mesurer le taux d'acceptation
+      setTimeout(function () { gtag('event', 'consent_accepted'); }, 200);
       b.remove();
-      loadPlausible();
-      // Track le consent comme premier event (utile pour mesurer le taux)
-      setTimeout(function () { trackEvent('Consent Accepted'); }, 200);
     });
     document.getElementById('fvCookieRefuse').addEventListener('click', function () {
       writeConsent('refuse');
+      // Garde 'denied'. GA4 va quand meme charger en mode signal-only qui
+      // envoie des pings agreges (page_view sans cookie ni client_id stable).
+      // C'est conforme RGPD et permet de mesurer tendance trafic global.
+      loadGA4();
       b.remove();
     });
   }
 
+  // === Init flow ==========================================================
   function init() {
     const consent = readConsent();
     if (consent === 'accept') {
-      loadPlausible();
-    } else if (consent === null) {
-      // Affiche le banner apres un court delai pour ne pas spoiler le LCP
+      // Consent deja accepte (visite precedente)
+      gtag('consent', 'update', {
+        ad_storage: 'granted',
+        ad_user_data: 'granted',
+        ad_personalization: 'granted',
+        analytics_storage: 'granted',
+      });
+      loadGA4();
+    } else if (consent === 'refuse') {
+      // Refus deja exprime - on charge GA4 en mode signal-only
+      // (le 'denied' par defaut reste applique)
+      loadGA4();
+    } else {
+      // Aucun choix : affiche le banner. GA4 NE charge PAS encore (on attend
+      // le choix). Si l'user navigue sans repondre, on capture rien.
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () { setTimeout(showBanner, 800); });
       } else {
         setTimeout(showBanner, 800);
       }
     }
-    // 'refuse' : ne fait rien, on ne re-affiche pas avant 30j
   }
 
   init();

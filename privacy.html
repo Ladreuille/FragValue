@@ -148,6 +148,7 @@
         <tr><td><strong>Anthropic PBC</strong></td><td>Generation de diagnostics IA (Claude)</td><td>USA (DPF)</td></tr>
         <tr><td><strong>Resend Inc.</strong></td><td>Emails transactionnels</td><td>USA (DPF)</td></tr>
         <tr><td><strong>FACEIT</strong></td><td>Source des données de matchs (API publique)</td><td>UE (UK / IE)</td></tr>
+        <tr><td><strong>Google Analytics 4 (Google LLC)</strong></td><td>Mesure d'audience anonymisee (uniquement apres consentement explicite)</td><td>USA (DPF) / EU edge nodes</td></tr>
       </tbody>
     </table>
 
@@ -185,14 +186,24 @@
       <strong>Site :</strong> <a href="https://www.cnil.fr/fr/plaintes" target="_blank" rel="noopener">cnil.fr/fr/plaintes</a>
     </p>
 
-    <h2>8. Cookies</h2>
-    <p>FragValue utilisé un nombre limité de cookies <strong>strictement nécessaires</strong> :</p>
+    <h2>8. Cookies & mesure d'audience</h2>
+    <p>FragValue utilise un nombre limité de cookies, classes en deux categories :</p>
+
+    <h3>Cookies strictement necessaires (deposes sans consentement)</h3>
     <ul>
-      <li><strong>Authentification (Supabase) :</strong> token de session, persiste l'état connecte</li>
+      <li><strong>Authentification (Supabase) :</strong> token de session, persiste l'etat connecte</li>
       <li><strong>Préférences UI :</strong> theme, langue, dernier onglet ouvert</li>
-      <li><strong>Feedback widget :</strong> retient si l'utilisateur a déjà ouvert le widget (pour eviter le pulse repetitif)</li>
+      <li><strong>Consentement cookies :</strong> retient ton choix (accept / refus) pendant 30 jours a 1 an</li>
+      <li><strong>Anti-fraude (Stripe) :</strong> verification des paiements et anti-CSRF</li>
     </ul>
-    <p>Aucun cookie publicitaire, aucun pixel de tracking marketing tiers (Facebook Pixel, Google Analytics, etc.) n'est déposé. La conformite RGPD ne necessite donc pas de banniere de consentement bloquante.</p>
+
+    <h3>Cookies de mesure d'audience (apres consentement explicite uniquement)</h3>
+    <p>Apres avoir clique <strong>"Accepter"</strong> sur la banniere a ta 1re visite :</p>
+    <ul>
+      <li><strong>Google Analytics 4 (_ga, _ga_*) :</strong> mesure d'audience anonymisee (pages vues, parcours, conversion). Configure avec Consent Mode v2 et anonymisation IP. Duree : 24 mois.</li>
+    </ul>
+    <p>Si tu cliques <strong>"Refuser"</strong>, GA4 fonctionne en <strong>mode signal-only sans cookie</strong> : seules des statistiques agregees sont collectees (pages vues globales, sans identifiant individuel). Aucun pixel publicitaire (Facebook, TikTok, etc.) n'est jamais depose.</p>
+    <p>Tu peux <strong>changer ton choix a tout moment</strong> en supprimant le cookie <code>fv_consent_v1</code> dans tes parametres navigateur, la banniere reapparaitra a la visite suivante.</p>
 
     <h2>9. Sécurité</h2>
     <p>Mesures techniques mises en place :</p>
