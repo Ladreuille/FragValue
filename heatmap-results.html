@@ -2816,8 +2816,7 @@ async function exportPDF() {
     '.bad { color: #dc2626; font-weight: 700; }' +
     '.footer { text-align: right; font-size: 9px; color: #999; margin-top: 18px; padding-top: 6px; border-top: 1px solid #eee; }' +
     '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }' +
-    '</style><script src="/analytics.js" defer></script>
-</head><body>' +
+    '</style></head><body>' +
 
     // ══════ PAGE 1 : Match + focus joueur ══════
     '<div class="page">' +
@@ -3006,6 +3005,24 @@ async function saveRatingToSupabase() {
     if (fvr !== null) {
       await _sb.from('demos').update({ fv_rating: fvr }).eq('id', demoId).eq('user_id', session.user.id);
       console.log('[FragValue] FV Rating sauvegardé:', fvr);
+    }
+
+    // Notification "Diagnostic IA pret" : envoie une notif persistante
+    // visible sur la cloche de la nav (poussera l'user a re-engager s'il
+    // quitte le site puis revient). Idempotent via sessionStorage flag
+    // pour ne pas dupliquer au refresh.
+    const notifKey = 'fv_notif_sent_' + demoId;
+    if (!sessionStorage.getItem(notifKey)) {
+      sessionStorage.setItem(notifKey, '1');
+      const map = demoData?.meta?.map || 'de_cs2';
+      fetch('/api/notify-demo-analyzed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({ map, fvRating: fvr, demoId }),
+      }).catch(function(e) { console.warn('notify-demo-analyzed:', e.message); });
     }
   } catch(e) { console.warn('saveRatingToSupabase:', e.message); }
 }
