@@ -4629,32 +4629,47 @@ let coachAITargetPlayer = null;
 
 const CA_STORAGE_PREFIX = 'fv_coachai_';
 
+// Helper : resolve la team d un joueur via window._playerTeams (calcule
+// par refreshTeamPanels avec fallback chain). 3 = CT, 2 = T, 0 = unknown.
+function getPlayerTeam(name) {
+  if (window._playerTeams && window._playerTeams[name]) return window._playerTeams[name];
+  // Fallback : 1er kill du joueur
+  const kills = demoData?.kills || [];
+  const k1 = kills.find(k => k.attacker === name) || kills.find(k => k.victim === name);
+  if (k1) return k1.attacker === name ? (k1.attackerTeam || 0) : (k1.victimTeam || 0);
+  return 0;
+}
+
 function getTargetPlayerName() {
   // Priorite : selection explicite via dropdown > isolatedPlayer (click dot)
   // > top FV Rating du scoreboard (fallback "auto").
   if (coachAITargetPlayer) return coachAITargetPlayer;
   if (isolatedPlayer) return isolatedPlayer;
-  const stats = (demoData?.playerStats || []).slice().sort((a, b) => (b.fvRating || 0) - (a.fvRating || 0));
+  // FV Rating est stocke en p.fvr (pas fvRating !)
+  const stats = (demoData?.playerStats || []).slice().sort((a, b) => (b.fvr || 0) - (a.fvr || 0));
   return stats[0]?.name || null;
 }
 
 // Peuple le dropdown avec les 10 joueurs de la demo, groupes par equipe
 // (CT puis T) et sortes par FV Rating decroissant pour mettre les MVP en haut.
+//
+// Champs reels playerStats : p.fvr (pas fvRating), team via window._playerTeams.
 function populateCoachAIPlayerDropdown() {
   const sel = document.getElementById('coachAIPlayer');
   if (!sel) return;
   const stats = (demoData?.playerStats || []).slice();
   if (!stats.length) return;
 
-  // Resolve team name -> CT/T pour grouper. La team est stockee differement
-  // selon les versions du parser (number 2/3 ou string "CT"/"T").
-  const teamLabel = (t) => (t === 3 || t === 'CT') ? 'CT' : 'T';
-
-  // Sort : team CT first, then by FV Rating desc within each team
-  const ctPlayers = stats.filter(p => teamLabel(p.team) === 'CT')
-    .sort((a, b) => (b.fvRating || 0) - (a.fvRating || 0));
-  const tPlayers = stats.filter(p => teamLabel(p.team) === 'T')
-    .sort((a, b) => (b.fvRating || 0) - (a.fvRating || 0));
+  // Sort : team CT (3) first, then T (2), then by FV Rating desc within each team
+  const ctPlayers = stats.filter(p => getPlayerTeam(p.name) === 3)
+    .sort((a, b) => (b.fvr || 0) - (a.fvr || 0));
+  const tPlayers = stats.filter(p => getPlayerTeam(p.name) === 2)
+    .sort((a, b) => (b.fvr || 0) - (a.fvr || 0));
+  // Joueurs avec team unknown : fallback group
+  const unknownPlayers = stats.filter(p => {
+    const t = getPlayerTeam(p.name);
+    return t !== 2 && t !== 3;
+  }).sort((a, b) => (b.fvr || 0) - (a.fvr || 0));
 
   // Build options HTML
   const currentValue = coachAITargetPlayer || isolatedPlayer || '';
@@ -4662,18 +4677,27 @@ function populateCoachAIPlayerDropdown() {
   if (ctPlayers.length) {
     html += '<optgroup label="CT side">';
     for (const p of ctPlayers) {
-      const fvr = (p.fvRating || 0).toFixed(2);
-      const sel = p.name === currentValue ? ' selected' : '';
-      html += '<option value="' + escapeHtml(p.name) + '"' + sel + '>' + escapeHtml(p.name) + ' · FV ' + fvr + '</option>';
+      const fvr = (p.fvr || 0).toFixed(2);
+      const isSel = p.name === currentValue ? ' selected' : '';
+      html += '<option value="' + escapeHtml(p.name) + '"' + isSel + '>' + escapeHtml(p.name) + ' · FV ' + fvr + '</option>';
     }
     html += '</optgroup>';
   }
   if (tPlayers.length) {
     html += '<optgroup label="T side">';
     for (const p of tPlayers) {
-      const fvr = (p.fvRating || 0).toFixed(2);
-      const sel = p.name === currentValue ? ' selected' : '';
-      html += '<option value="' + escapeHtml(p.name) + '"' + sel + '>' + escapeHtml(p.name) + ' · FV ' + fvr + '</option>';
+      const fvr = (p.fvr || 0).toFixed(2);
+      const isSel = p.name === currentValue ? ' selected' : '';
+      html += '<option value="' + escapeHtml(p.name) + '"' + isSel + '>' + escapeHtml(p.name) + ' · FV ' + fvr + '</option>';
+    }
+    html += '</optgroup>';
+  }
+  if (unknownPlayers.length) {
+    html += '<optgroup label="Autres">';
+    for (const p of unknownPlayers) {
+      const fvr = (p.fvr || 0).toFixed(2);
+      const isSel = p.name === currentValue ? ' selected' : '';
+      html += '<option value="' + escapeHtml(p.name) + '"' + isSel + '>' + escapeHtml(p.name) + ' · FV ' + fvr + '</option>';
     }
     html += '</optgroup>';
   }
@@ -4743,12 +4767,14 @@ function buildCoachAIContext() {
   const startT = rdData.startTick || 0;
   const endT = rdData.endTick || rdData.gameplayEnd || 0;
 
-  // Trouver la team du joueur (CT/T) au moment du round
-  // playerStats contient le team final, mais pour swap on doit regarder positions
+  // Trouver la team du joueur (CT/T) au moment du round.
+  // Source canonique : positions[name][tickInRound].team (2 = T, 3 = CT)
+  // car la team SWAP au halftime. Fallback : window._playerTeams (set par
+  // refreshTeamPanels). Last fallback : helper getPlayerTeam.
   const playerStat = (demoData.playerStats || []).find(p => p.name === playerName) || {};
   const ps = (demoData.positions || {})[playerName] || [];
   const firstSampleInRound = ps.find(p => (p.tick || 0) >= startT);
-  const sideTeam = firstSampleInRound?.team ?? playerStat.team ?? 0;
+  const sideTeam = firstSampleInRound?.team ?? getPlayerTeam(playerName);
   const side = (sideTeam === 3 || sideTeam === 'CT') ? 'CT' : 'T';
 
   // Kills du round
@@ -4796,7 +4822,8 @@ function buildCoachAIContext() {
       kills: playerKills,
       deaths: playerDeaths,
       adr: playerStat.adr || 0,
-      fvr: playerStat.fvRating || 0,
+      // Champs reels : p.fvr (pas fvRating). Idem pour les autres.
+      fvr: playerStat.fvr || 0,
       kast: playerStat.kast || 0,
       hsPct: playerStat.hsPct || 0,
     },
