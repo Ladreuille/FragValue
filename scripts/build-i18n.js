@@ -73,13 +73,23 @@ function escapeRegex(s) {
 
 // Remplace dans le HTML toutes les occurrences FR par EN.
 // Trie par longueur décroissante pour matcher les phrases longues d'abord.
+// Pour chaque entrée, on tente aussi la variante avec apostrophes échappées
+// (\') et l'EN ré-échappée, pour matcher les strings JS (ex: desc: 'l\'utility').
 function translateHtml(html, dict) {
   const entries = Object.entries(dict).sort((a, b) => b[0].length - a[0].length);
   let out = html;
   for (const [fr, en] of entries) {
     if (!fr || fr === en) continue;
+    // Pass 1 : version directe (HTML)
     const re = new RegExp(escapeRegex(fr), 'g');
     out = out.replace(re, en);
+    // Pass 2 : version JS-escaped si l'entrée contient des apostrophes
+    if (fr.includes("'")) {
+      const frEscaped = fr.replace(/'/g, "\\'");
+      const enEscaped = en.replace(/'/g, "\\'");
+      const reEsc = new RegExp(escapeRegex(frEscaped), 'g');
+      out = out.replace(reEsc, enEscaped);
+    }
   }
   return out;
 }

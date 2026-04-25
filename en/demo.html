@@ -1152,7 +1152,7 @@ async function checkPlanGating() {
     const { data:{ session } } = await _sb.auth.getSession();
     if (!session) return true; // non connecte = on laisse passer (free)
 
-    // Compter les demos ce mois-ci
+    // Accountr les demos ce mois-ci
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const { count } = await _sb.from('demos')
@@ -1230,7 +1230,7 @@ async function startAnalysis() {
     btn.textContent = originalLabel;
     if (!available) {
       btn.disabled = false;
-      alert('Le serveur d\'analyse est temporairement indisponible. Réessaie dans quelques minutes.');
+      alert('The analysis server is temporarily unavailable. Try again in a few minutes.');
       return;
     }
   }
@@ -1268,7 +1268,7 @@ async function startAnalysis() {
     { delay:12000,step:2, pct:54, title:'Computing zones',            sub:'Mapping grenades and shots...' },
     { delay:18000,step:3, pct:63, title:'Generating heatmaps',     sub:'Kill zones et duel areas...' },
     { delay:25000,step:3, pct:70, title:'Generating heatmaps',     sub:'Computing trajectories...' },
-    { delay:35000,step:4, pct:76, title:'FV Rating',                   sub:'Calcul de l\'impact par round...' },
+    { delay:35000,step:4, pct:76, title:'FV Rating',                   sub:'Computing per-round impact...' },
     { delay:50000,step:4, pct:82, title:'FV Rating',                   sub:'Weighting KPIs...' },
     { delay:70000,step:4, pct:87, title:'Finalizing',                sub:'Almost done...' },
     // Messages rassurants si le parsing depasse les 80s (grosses demos)
