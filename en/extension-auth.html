@@ -5,7 +5,7 @@
 <meta name="description" content="FragValue · CS2 Match Analytics">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
 <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
-<title>FragValue · Connecter l'extension</title>
+<title>FragValue · Connect the extension</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -58,7 +58,7 @@ p.desc{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:22px}
   <div class="logo">FRAG<span>VALUE</span></div>
   <div class="sub">Extension · Sign in</div>
 
-  <h1>Authorize extension navigateur</h1>
+  <h1>Authorize browser extension</h1>
   <p class="desc">
     L'extension FragValue synchronise automatiquement les demos de vos matches
     FACEIT CS2 vers votre compte. Pour fonctionner, elle a besoin d'une session
@@ -67,7 +67,7 @@ p.desc{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:22px}
 
   <div class="state" id="stExt">
     <div class="state-dot" id="stExtDot"></div>
-    <div class="state-txt"><b id="stExtTitle">Detection de l'extension...</b><span id="stExtSub">Verifiez qu'elle est bien installee dans votre navigateur</span></div>
+    <div class="state-txt"><b id="stExtTitle">Detecting extension...</b><span id="stExtSub">Verify it is properly installed in your browser</span></div>
   </div>
 
   <div class="state" id="stAuth">
@@ -79,19 +79,19 @@ p.desc{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:22px}
   <button class="btn" id="unpairBtn" style="display:none">Revoke access</button>
 
   <div class="hint" id="installHint" style="display:none">
-    <b style="color:var(--text2);font-weight:700;display:block;margin-bottom:8px">L'extension n'est pas encore installee dans ce navigateur.</b>
+    <b style="color:var(--text2);font-weight:700;display:block;margin-bottom:8px">The extension is not yet installed in this browser.</b>
     Load it manually in developer mode:
     <ol style="margin:8px 0 8px 18px;padding:0;color:var(--text3);font-size:10px;line-height:1.9">
       <li>Ouvrez <code>chrome://extensions</code></li>
       <li>Enable <b>Developer Mode</b> (top right)</li>
       <li>Cliquez sur <b>Charger l'extension non empaquetee</b></li>
       <li>Selectionnez le dossier <code>fragvalue-extension/</code></li>
-      <li>Rechargez cette page</li>
+      <li>Reload this page</li>
     </ol>
     Don't have the extension locally yet? The source code is in the FragValue repo under <code>/fragvalue-extension</code> (next to <code>/FragValue</code> and <code>/fragvalue-demo-parser</code>).
   </div>
 
-  <a class="back" href="/en/matches.html">&larr; Back aux matches</a>
+  <a class="back" href="/en/matches.html">&larr; Back to matches</a>
 </div>
 
 <script>
@@ -120,17 +120,17 @@ function setExtState(installed, paired) {
   extPaired = paired;
   if (!installed) {
     els.extDot.className = 'state-dot err';
-    els.extTitle.textContent = 'Extension non detectee';
-    els.extSub.textContent = 'Installez l\'extension FragValue FACEIT Sync dans votre navigateur';
+    els.extTitle.textContent = 'Extension not detected';
+    els.extSub.textContent = 'Install the FragValue FACEIT Sync extension in your browser';
     els.installHint.style.display = '';
   } else if (paired) {
     els.extDot.className = 'state-dot ok';
-    els.extTitle.textContent = 'Extension connectee';
+    els.extTitle.textContent = 'Extension connected';
     els.extSub.textContent = 'Your extension is already linked to this account';
     els.installHint.style.display = 'none';
   } else {
     els.extDot.className = 'state-dot ok';
-    els.extTitle.textContent = 'Extension detectee';
+    els.extTitle.textContent = 'Extension detected';
     els.extSub.textContent = 'Ready to be authorized';
     els.installHint.style.display = 'none';
   }
@@ -141,12 +141,12 @@ function setAuthState(session) {
   currentSession = session;
   if (session) {
     els.authDot.className = 'state-dot ok';
-    els.authTitle.textContent = 'Connecte a FragValue';
+    els.authTitle.textContent = 'Connected to FragValue';
     els.authSub.textContent = session.user.email;
   } else {
     els.authDot.className = 'state-dot err';
-    els.authTitle.textContent = 'Non connecte';
-    els.authSub.textContent = 'Connectez-vous d\'abord a FragValue';
+    els.authTitle.textContent = 'Not connected';
+    els.authSub.textContent = 'Sign in to FragValue first';
   }
   updateButtons();
 }
@@ -180,9 +180,9 @@ window.addEventListener('message', (e) => {
   } else if (d.type === 'FV_EXT_PAIRED') {
     if (d.ok) {
       setExtState(true, true);
-      els.pairBtn.textContent = 'Extension connectee';
+      els.pairBtn.textContent = 'Extension connected';
     } else {
-      alert('Error d\'autorisation : ' + (d.error || 'inconnue'));
+      alert('Authorization error: ' + (d.error || 'inconnue'));
     }
   } else if (d.type === 'FV_EXT_UNPAIRED') {
     setExtState(true, false);

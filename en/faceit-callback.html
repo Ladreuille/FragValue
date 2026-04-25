@@ -36,7 +36,7 @@
 <div class="card" id="card">
   <div class="spinner" id="spinner"></div>
   <div class="title" id="title">FACEIT login</div>
-  <p class="sub" id="sub">Recuperation de ton profil...</p>
+  <p class="sub" id="sub">Fetching your profile...</p>
 </div>
 
 <script>
@@ -50,7 +50,7 @@ async function handleCallback() {
   const errorParam = params.get('error');
 
   if (errorParam) {
-    showError('Error FACEIT : ' + (params.get('error_description') || errorParam));
+    showError('FACEIT error: ' + (params.get('error_description') || errorParam));
     return;
   }
 
@@ -80,7 +80,7 @@ async function handleCallback() {
       }
     } catch (_) {}
     // Not session : l'utilisateur doit refaire le flow.
-    showError('Ce code FACEIT a expire. Recommence la connexion.');
+    showError('This FACEIT code has expired. Restart sign-in.');
     return;
   }
 
@@ -120,7 +120,7 @@ async function handleCallback() {
   const redirectUri = window.location.origin + '/faceit-callback.html';
 
   // Step 1: Exchange code for FACEIT profile
-  updateStatus('Echange du token FACEIT...');
+  updateStatus('Exchanging FACEIT token...');
   let faceitData;
   try {
     const res = await fetch('/api/faceit-auth', {
@@ -165,7 +165,7 @@ async function handleCallback() {
   localStorage.removeItem('faceit_redirect_uri');
 
   // Step 2: Auto-login Supabase via session token
-  updateStatus('Sign in automatique...');
+  updateStatus('Automatic sign-in...');
 
   let session = null;
 
@@ -200,7 +200,7 @@ async function handleCallback() {
       // showSuccess qui afficherait a tort 'Account lie' alors qu'il ne l'est pas.
       document.getElementById('card').innerHTML = `
         <div class="error-icon" style="color:var(--danger);font-size:40px;margin-bottom:12px">!</div>
-        <div class="title" style="color:var(--danger)">Liaison incomplete</div>
+        <div class="title" style="color:var(--danger)">Incomplete linking</div>
         <p class="sub" style="margin-top:12px">Your FACEIT account could not be linked to your FragValue profile. Try again from your account.</p>
         <a href="/en/account.html" class="link-btn" style="margin-top:16px;display:inline-block">Back a mon espace</a>
       `;
@@ -249,7 +249,7 @@ function showSuccess(data) {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>
       ${data.nickname}${data.level ? ' . Lvl ' + data.level : ''}${data.elo ? ' . ' + data.elo + ' ELO' : ''}
     </div>
-    <p class="sub" style="margin-top:12px">Redirection...</p>
+    <p class="sub" style="margin-top:12px">Redirecting...</p>
   `;
   if (window.opener && !window.opener.closed) {
     window.opener.postMessage({ type: 'FACEIT_AUTH_SUCCESS' }, window.location.origin);

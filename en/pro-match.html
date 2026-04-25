@@ -101,7 +101,7 @@
   </div>
 
   <div id="content">
-    <div class="loading">Chargement du match...</div>
+    <div class="loading">Loading match...</div>
   </div>
 </div>
 
@@ -129,7 +129,7 @@ async function loadMatch() {
     if (session?.access_token) headers['Authorization'] = 'Bearer ' + session.access_token;
 
     const res = await fetch('/api/pro-match?id=' + encodeURIComponent(id), { headers });
-    if (res.status === 404) throw new Error('Match introuvable');
+    if (res.status === 404) throw new Error('Match not found');
     if (!res.ok) throw new Error('API ' + res.status);
     const data = await res.json();
     // Debug auth : si le paywall apparait alors que tu es admin, check la console
@@ -142,7 +142,7 @@ async function loadMatch() {
     });
     renderMatch(data);
   } catch (e) {
-    document.getElementById('content').innerHTML = '<div class="empty"><h2>Error</h2><p>' + escapeHtml(e.message) + '</p><p style="margin-top:14px"><a href="pro-demos.html">← Back aux matches</a></p></div>';
+    document.getElementById('content').innerHTML = '<div class="empty"><h2>Error</h2><p>' + escapeHtml(e.message) + '</p><p style="margin-top:14px"><a href="pro-demos.html">← Back to matches</a></p></div>';
   }
 }
 
@@ -297,13 +297,13 @@ function renderPaywall() {
         <div class="paywall-title">Scorecards unlocked in Pro</div>
         <div class="paywall-sub">HLTV 2.1 ratings, ADR, KAST, opening duels, multi-kills and clutches for every player on every map of the match. Unlimited access to all S-tier matches.</div>
         <ul class="paywall-feats">
-          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Scorecards complets</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Full scorecards</li>
           <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>500+ matches S-tier</li>
           <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>2D Replay (soon)</li>
-          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>7 days gratuits</li>
+          <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>7 days free</li>
         </ul>
         <a href="pricing.html" class="paywall-cta">
-          Passer en Pro
+          Upgrade to Pro
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
       </div>

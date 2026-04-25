@@ -79,7 +79,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     @media(max-width:640px){.coach-ai-highlights{grid-template-columns:1fr}}
     .coach-ai-col{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
     .coach-ai-col-label{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
-    .coach-ai-col.force .coach-ai-col-label{color:#2dd4a0}
+    .coach-ai-col.strength .coach-ai-col-label{color:#2dd4a0}
     .coach-ai-col.axe .coach-ai-col-label{color:#f06b6b}
     .coach-ai-col-text{font-size:11px;color:var(--text2);line-height:1.6}
     .coach-ai-goal{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg);border-radius:8px;border:1px solid var(--border);position:relative;z-index:1}
@@ -871,7 +871,7 @@ async function renderCoachAi(forceRefresh = false) {
 
 function renderCoachDiagnosis(card, data) {
   const d = data.diagnosis || {};
-  const force = (d.strengths || [])[0] || '-';
+  const strength = (d.strengths || [])[0] || '-';
   const axe   = (d.weaknesses || [])[0] || '-';
   const goal  = d.weeklyGoal || '-';
   const refreshLabel = (data.plan === 'pro' || data.plan === 'elite' || data.plan === 'team') ? 'Regenerate' : '1/mois';
@@ -892,7 +892,7 @@ function renderCoachDiagnosis(card, data) {
     + '</div>'
     + '<div class="coach-ai-quote">' + escapeHtml(d.summary) + '</div>'
     + '<div class="coach-ai-highlights">'
-    + '  <div class="coach-ai-col force"><div class="coach-ai-col-label">TOP STRENGTH</div><div class="coach-ai-col-text">' + escapeHtml(force) + '</div></div>'
+    + '  <div class="coach-ai-col strength"><div class="coach-ai-col-label">TOP STRENGTH</div><div class="coach-ai-col-text">' + escapeHtml(strength) + '</div></div>'
     + '  <div class="coach-ai-col axe"><div class="coach-ai-col-label">MAIN AREA</div><div class="coach-ai-col-text">' + escapeHtml(axe) + '</div></div>'
     + '</div>'
     + '<div class="coach-ai-goal">'

@@ -390,7 +390,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <div class="pro-tag" style="margin:0 auto 16px;display:inline-flex">PRO</div>
     <p class="pro-overlay-sub">
       Advanced analysis is reserved for Pro and Team subscribers.<br>
-      Rapport tactique complet, ouverture de rounds, positionnement et bilan de coach.
+      Complete tactical report, round opening, positioning and coach summary.
     </p>
     <a href="index.html#pricing" class="pro-overlay-btn">Upgrade to Pro</a>
     <div style="margin-top:14px"><a href="heatmap-results.html" style="color:var(--text3);font-size:11px;text-decoration:none">Back to results</a></div>
@@ -438,7 +438,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   </div>
 
   <!-- 1. TON MATCH (personnel, target player first) -->
-  <div class="sl" id="section-ton-match">Ton match</div>
+  <div class="sl" id="section-ton-match">Your match</div>
   <div class="your-match" id="yourMatchBlock"></div>
 
   <!-- 2. VUE D'ENSEMBLE : match summary card consolidee -->
@@ -482,7 +482,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   </div>
 
   <!-- 5. OUVERTURE -->
-  <div class="sl" id="section-ouverture">Ouverture</div>
+  <div class="sl" id="section-ouverture">Opening</div>
   <div class="card" id="openingCard"><div class="empty-msg">Loading...</div></div>
 
   <!-- 6. CONFRONTATIONS -->
@@ -516,11 +516,11 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   <div class="card" id="momentsCard"><div class="empty-msg">Loading...</div></div>
 
   <!-- 10. BILAN -->
-  <div class="sl" id="section-bilan">Bilan tactique</div>
+  <div class="sl" id="section-bilan">Tactical summary</div>
   <div class="card coach-card" id="coachCard"><div class="empty-msg">Loading...</div></div>
 
   <!-- 11. PRO INSIGHTS : ce que les pros auraient fait -->
-  <div class="sl" id="section-pros">Ce que les pros auraient fait</div>
+  <div class="sl" id="section-pros">What the pros would have done</div>
   <div class="card pro-insights-card" id="proInsightsCard">
     <div class="pro-insights-intro">
       Analysis des 3 moments les plus critiques de ton match : diagnostic, approche pro et exercice a travailler.
@@ -528,23 +528,23 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <div id="proInsightsBody">
       <button type="button" class="pro-insights-trigger" onclick="generateProInsights()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
-        Generer l'analyse pro
+        Generate pro analysis
         <span class="pro-insights-meta">5 analyses par day · Claude IA</span>
       </button>
     </div>
   </div>
 
   <!-- 12. COACH Q&A : pose une question sur ce match a Claude IA -->
-  <div class="sl" id="section-qa">Pose ta question</div>
+  <div class="sl" id="section-qa">Ask your question</div>
   <div class="card qa-card">
     <div class="qa-intro">Une question sur ce match ? Le AI Coach te repond en se basant sur les stats et le deroulement que tu viens de voir. Limite de 10 questions par day.</div>
     <div class="qa-suggestions" id="qaSuggestions"></div>
     <form class="qa-form" id="qaForm" onsubmit="return submitQuestion(event)">
-      <textarea class="qa-input" id="qaInput" placeholder="Ex : Pourquoi j'ai perdu le round 14 ? Qu'est-ce que j'aurais du faire differemment en CT ?" maxlength="500" rows="2"></textarea>
+      <textarea class="qa-input" id="qaInput" placeholder="Ex : Pourquoi j'ai perdu le round 14 ? What should I have done differently on CT?" maxlength="500" rows="2"></textarea>
       <div class="qa-footer">
         <div class="qa-counter"><span id="qaCharCount">0</span>/500</div>
         <button type="submit" class="qa-submit" id="qaSubmitBtn">
-          <span class="qa-submit-txt">Demander au AI Coach</span>
+          <span class="qa-submit-txt">Ask the AI Coach</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
       </div>
@@ -711,8 +711,8 @@ function fvrLabel(r) {
   if (r >= 1.30) return 'Elite';
   if (r >= 1.20) return 'Excellent';
   if (r >= 1.05) return 'Good';
-  if (r >= 0.90) return 'Correct';
-  if (r >= 0.75) return 'Insuffisant';
+  if (r >= 0.90) return 'Decent';
+  if (r >= 0.75) return 'Insufficient';
   return 'Low';
 }
 
@@ -1132,7 +1132,7 @@ function detectCriticalSituations(c, kills, rounds) {
         outcome: r.winner === effectiveSide ? 'won' : 'lost',
         situationType: 'lost_opening',
         severity: 6,
-        details: `Duel d'ouverture en ${sideLabel} perdu contre ${attacker} (${weapon}). ${r.winner === effectiveSide ? 'Tes coequipiers ont trade/gagne le round' : 'Round perdu'}.`,
+        details: `Opening duel en ${sideLabel} perdu contre ${attacker} (${weapon}). ${r.winner === effectiveSide ? 'Tes coequipiers ont trade/gagne le round' : 'Round perdu'}.`,
       });
     }
   });
@@ -1202,7 +1202,7 @@ async function generateProInsights() {
   body.innerHTML = `
     <div style="text-align:center;padding:32px 20px;color:var(--text2);font-size:12px;font-family:var(--mono)">
       <div style="margin-bottom:10px">Le AI Coach analyse ${situations.length} moment${situations.length > 1 ? 's' : ''} critique${situations.length > 1 ? 's' : ''}...</div>
-      <div style="color:var(--text3);font-size:10px">Peut prendre 5-10 secondes</div>
+      <div style="color:var(--text3);font-size:10px">Can take 5-10 seconds</div>
     </div>
   `;
 
@@ -1339,7 +1339,7 @@ async function renderYourMatch(c, rounds) {
   // Opening duels % : FK / (FK + FD)
   const totalOpen = (you.fk || 0) + (you.fd || 0);
   const openPct = totalOpen > 0 ? Math.round(((you.fk || 0) / totalOpen) * 100) : 0;
-  // Moyenne opening des autres players pour comparer
+  // Average opening des autres players pour comparer
   const othersOpen = c.stats.map(p => {
     const t = (p.fk || 0) + (p.fd || 0);
     return t > 0 ? ((p.fk || 0) / t) * 100 : 50;
@@ -1410,7 +1410,7 @@ function renderOverview(c, rounds) {
   // Match summary header : scores compacts + map + result tag
   const winnerSide = c.winner;
   const scoreDiff = Math.abs(c.team3Score - c.team2Score);
-  const resultTag = scoreDiff === 0 ? 'Tie' : scoreDiff <= 3 ? 'Close match' : scoreDiff <= 7 ? 'Win nette' : 'Domination';
+  const resultTag = scoreDiff === 0 ? 'Tie' : scoreDiff <= 3 ? 'Close match' : scoreDiff <= 7 ? 'Clear victory' : 'Domination';
   const rosterCT = c.team3.slice(0, 5).map(escHtml).join(' · ');
   const rosterT = c.team2.slice(0, 5).map(escHtml).join(' · ');
 
@@ -2221,7 +2221,7 @@ function renderCoachBilan(c, kills, rounds) {
   const lowHsPlayers = c.stats.filter(p => p.kills >= 5 && p.hsPct < 30);
   const adrGap = mvp.adr - lowest.adr;
 
-  // ── Scoring pour extraire les 3 meilleures forces + 3 pires axes ──
+  // ── Scoring pour extraire les 3 meilleures strengths + 3 pires axes ──
   // Chaque insight = { type, label, detail, severity (0-100) }
   const strengths = [];
   const warnings = [];
@@ -2244,21 +2244,21 @@ function renderCoachBilan(c, kills, rounds) {
   if (fbConv >= 65) {
     strengths.push({
       label: `Gestion post-opening solide`,
-      detail: `<strong>${fbConv}%</strong> de rounds gagnés après le 1er kill (pro avg ~70%)`,
+      detail: `<strong>${fbConv}%</strong> of rounds won after 1st kill (pro avg ~70%)`,
       score: fbConv - 65
     });
   }
   if (tradePct >= 25) {
     strengths.push({
       label: `Disciplined trading`,
-      detail: `<strong>${tradePct}%</strong> de morts tradées · binômes bien coordonnés`,
+      detail: `<strong>${tradePct}%</strong> of deaths traded · well-coordinated pairs`,
       score: tradePct - 25
     });
   }
   if (mvp.hsPct >= 55) {
     strengths.push({
       label: `Elite accuracy`,
-      detail: `${mvp.name} à <strong>${mvp.hsPct}%</strong> HS · crosshair placement maîtrisé`,
+      detail: `${mvp.name} at <strong>${mvp.hsPct}%</strong> HS · mastered crosshair placement`,
       score: mvp.hsPct - 55
     });
   }
@@ -2267,7 +2267,7 @@ function renderCoachBilan(c, kills, rounds) {
   if (tradePct < 20) {
     warnings.push({
       label: `Trading insuffisant`,
-      detail: `Seulement <strong>${tradePct}%</strong> de morts tradées. Joue systématiquement en binôme.`,
+      detail: `Only <strong>${tradePct}%</strong> of deaths traded. Always play in pairs.`,
       severity: 80 - tradePct,
       action: `Work on pair spacing: never be more than 1s reaction time from a teammate on contacts.`
     });
@@ -2275,7 +2275,7 @@ function renderCoachBilan(c, kills, rounds) {
   if (fbConv < 50) {
     warnings.push({
       label: `Mauvaise conversion du 1er kill`,
-      detail: `<strong>${fbConv}%</strong> seulement (pro avg ~70%). L'équipe décroche après le first blood.`,
+      detail: `<strong>${fbConv}%</strong> only (pro avg ~70%). The team breaks down after first blood.`,
       severity: 70 - fbConv,
       action: `After the 1st kill, immediately take a choke or info. No camping in 5v4.`
     });
@@ -2299,7 +2299,7 @@ function renderCoachBilan(c, kills, rounds) {
   if (lowKast.length) {
     warnings.push({
       label: `${lowKast[0].name} absent des rounds`,
-      detail: `KAST <strong>${lowKast[0].kast}%</strong> · ne contribue pas à la majorité des rounds`,
+      detail: `KAST <strong>${lowKast[0].kast}%</strong> · does not contribute to most rounds`,
       severity: 60 - lowKast[0].kast,
       action: `Change his role: give him a more defensive position or more lurks where he can be decisive.`
     });
@@ -2313,7 +2313,7 @@ function renderCoachBilan(c, kills, rounds) {
     });
   }
 
-  // Top 3 forces (tri par score desc) et top 3 axes (tri par severity desc)
+  // Top 3 strengths (tri par score desc) et top 3 axes (tri par severity desc)
   const topStrengths = strengths.sort((a, b) => b.score - a.score).slice(0, 3);
   const topWarnings = warnings.sort((a, b) => b.severity - a.severity).slice(0, 3);
   const priority = topWarnings[0]; // le plus critique
@@ -2321,13 +2321,13 @@ function renderCoachBilan(c, kills, rounds) {
   // Render
   let html = `
     <div style="font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.6">
-      Match <strong style="color:var(--text)">${c.team3Score}-${c.team2Score}</strong> pour le side <strong style="color:${c.winner === 3 ? 'var(--ct)' : 'var(--t)'}">${winnerLabel}</strong> sur ${mapName.replace('de_', '').toUpperCase()}. Analysis condensée en 3 points d'impact.
+      Match <strong style="color:var(--text)">${c.team3Score}-${c.team2Score}</strong> pour le side <strong style="color:${c.winner === 3 ? 'var(--ct)' : 'var(--t)'}">${winnerLabel}</strong> sur ${mapName.replace('de_', '').toUpperCase()}. Analysis condensed into 3 impact points.
     </div>
     <div class="bilan-grid">
       <div class="bilan-col strengths">
         <div class="bilan-col-title">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          ${topStrengths.length} force${topStrengths.length > 1 ? 's' : ''}
+          ${topStrengths.length} strength${topStrengths.length > 1 ? 's' : ''}
         </div>
         ${topStrengths.length ? topStrengths.map(s =>
           `<div class="coach-bullet"><strong>${s.label}</strong><br><span style="color:var(--text2);font-size:11px">${s.detail}</span></div>`
@@ -2336,7 +2336,7 @@ function renderCoachBilan(c, kills, rounds) {
       <div class="bilan-col warnings">
         <div class="bilan-col-title">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-          ${topWarnings.length} axe${topWarnings.length > 1 ? 's' : ''} à travailler
+          ${topWarnings.length} area${topWarnings.length > 1 ? 's' : ''} to work on
         </div>
         ${topWarnings.length ? topWarnings.map(w =>
           `<div class="coach-bullet"><strong>${w.label}</strong><br><span style="color:var(--text2);font-size:11px">${w.detail}</span></div>`
@@ -2347,11 +2347,11 @@ function renderCoachBilan(c, kills, rounds) {
     <div class="bilan-priority">
       <div class="bilan-priority-label">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
-        Priorité numéro 1
+        Priority #1
       </div>
       <div class="bilan-priority-text">
         <strong>${priority.label}</strong><br>
-        Action concrète : ${priority.action}
+        Concrete action: ${priority.action}
       </div>
     </div>
     ` : ''}

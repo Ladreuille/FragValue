@@ -588,7 +588,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     <circle cx="15" cy="9" r="1.5" fill="currentColor"/>
     <path d="M7 14h10"/>
   </svg>
-  <div class="no-data-title">Aucune demo analysee</div>
+  <div class="no-data-title">No demo analyzed</div>
   <p class="no-data-sub" style="max-width:380px">Importe ta premiere demo .dem FACEIT pour debloquer les heatmaps, le FV Rating et le diagnostic AI Coach.</p>
   <a href="demo.html" class="no-data-btn" style="display:inline-flex;align-items:center;gap:8px;min-width:180px;justify-content:center">
     Analyze a demo
@@ -1598,7 +1598,7 @@ function renderSideStats(){
   document.getElementById('sideStatsBar').style.display=activePlayers.size>0?'grid':'none';
 }
 function exportHeatmap(){const link=document.createElement('a');link.download=`fragvalue-${currentHeatmap}-${[...activePlayers].join('-')||'all'}.png`;link.href=canvas.toDataURL('image/png');link.click();}
-function goCompare(){const p=demoData.playerStats||[];if(p.length<2){showShareStatus('Pas assez de players pour comparer.');return;}window.location.href=`compare.html?${p.slice(0,5).map(x=>`p=${encodeURIComponent(x.name)}`).join('&')}`;}
+function goCompare(){const p=demoData.playerStats||[];if(p.length<2){showShareStatus('Not enough players to compare.');return;}window.location.href=`compare.html?${p.slice(0,5).map(x=>`p=${encodeURIComponent(x.name)}`).join('&')}`;}
 
 // ══ REPLAY ════════════════════════════════════════════════════════════════════
 function initRoundsBar(){
@@ -2648,7 +2648,7 @@ async function exportPDF() {
   const winScore = Math.max(ctWins, tWins);
   const loseScore = Math.min(ctWins, tWins);
   const scoreDiff = Math.abs(ctWins - tWins);
-  const resultTag = scoreDiff === 0 ? 'Egalite' : scoreDiff <= 3 ? 'Match serre' : scoreDiff <= 7 ? 'Win nette' : 'Domination';
+  const resultTag = scoreDiff === 0 ? 'Tie' : scoreDiff <= 3 ? 'Close match' : scoreDiff <= 7 ? 'Clear victory' : 'Domination';
 
   // ── Target player : focus du rapport ─────────────────────────────
   const targetName = meta.targetPlayer;
@@ -2750,7 +2750,7 @@ async function exportPDF() {
 
   // ── Team table helper ────────────────────────────────────────────
   function fvrClass(v) { return v >= 1.0 ? 'good' : v >= 0.7 ? 'avg' : 'bad'; }
-  function fvrLabel(v) { if (v >= 1.3) return 'Elite'; if (v >= 1.2) return 'Excellent'; if (v >= 1.05) return 'Good'; if (v >= 0.9) return 'Correct'; if (v >= 0.75) return 'Insuffisant'; return 'Low'; }
+  function fvrLabel(v) { if (v >= 1.3) return 'Elite'; if (v >= 1.2) return 'Excellent'; if (v >= 1.05) return 'Good'; if (v >= 0.9) return 'Decent'; if (v >= 0.75) return 'Insufficient'; return 'Low'; }
   function teamTable(players, label) {
     if (!players.length) return '';
     const tAvgAdr = Math.round(players.reduce((s, p) => s + p.adr, 0) / players.length);
@@ -2759,9 +2759,9 @@ async function exportPDF() {
     return '<table><thead><tr><th>Player</th><th>K</th><th>D</th><th>+/-</th><th>KAST</th><th>ADR</th><th>HS%</th><th>FV Rating</th></tr></thead><tbody>' +
       players.map(p => {
         const bold = p.name === you.name ? 'font-weight:900;background:rgba(184,255,87,.12) !important;' : '';
-        return '<tr style="' + bold + '"><td>' + p.name + (p.name === you.name ? ' (toi)' : '') + '</td><td>' + p.kills + '</td><td>' + p.deaths + '</td><td>' + (p.kd >= 0 ? '+' : '') + p.kd + '</td><td>' + p.kast + '%</td><td>' + p.adr + '</td><td>' + p.hsPct + '%</td><td class="' + fvrClass(p.fvr) + '">' + p.fvr.toFixed(2) + '</td></tr>';
+        return '<tr style="' + bold + '"><td>' + p.name + (p.name === you.name ? ' (you)' : '') + '</td><td>' + p.kills + '</td><td>' + p.deaths + '</td><td>' + (p.kd >= 0 ? '+' : '') + p.kd + '</td><td>' + p.kast + '%</td><td>' + p.adr + '</td><td>' + p.hsPct + '%</td><td class="' + fvrClass(p.fvr) + '">' + p.fvr.toFixed(2) + '</td></tr>';
       }).join('') +
-      '<tr style="border-top:2px solid #000;font-style:italic;color:#666"><td>Moyenne ' + label + '</td><td>-</td><td>-</td><td>-</td><td>' + tAvgKast + '%</td><td>' + tAvgAdr + '</td><td>-</td><td>' + tAvgFvr + '</td></tr>' +
+      '<tr style="border-top:2px solid #000;font-style:italic;color:#666"><td>Average ' + label + '</td><td>-</td><td>-</td><td>-</td><td>' + tAvgKast + '%</td><td>' + tAvgAdr + '</td><td>-</td><td>' + tAvgFvr + '</td></tr>' +
       '</tbody></table>';
   }
 
@@ -2848,10 +2848,10 @@ async function exportPDF() {
     '<div class="hero-head">' +
       '<div>' +
         '<h1>FRAGVALUE</h1>' +
-        '<div style="font-size:11px;color:#666;margin-top:2px">Rapport match CS2</div>' +
+        '<div style="font-size:11px;color:#666;margin-top:2px">CS2 match report</div>' +
       '</div>' +
       '<div style="text-align:right">' +
-        '<div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.08em">Rapport pour</div>' +
+        '<div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.08em">Report for</div>' +
         '<div style="font-size:16px;font-weight:900;margin-top:2px">' + you.name + '</div>' +
         '<div style="font-size:10px;color:#666;margin-top:2px">' + matchDate + '</div>' +
       '</div>' +
@@ -2864,8 +2864,8 @@ async function exportPDF() {
       '<div class="score-team"><div class="label">T Side</div><div class="num" style="' + tScoreStyle + '">' + tWins + '</div></div>' +
     '</div>' +
 
-    // Ton match
-    '<h2>Ton match</h2>' +
+    // Your match
+    '<h2>Your match</h2>' +
     '<div class="your-match-card">' +
       '<div class="head">' +
         '<div><span class="nick">' + you.name + '</span><span class="fvr-lbl">' + fvrLabel(you.fvr) + '</span></div>' +
@@ -2873,7 +2873,7 @@ async function exportPDF() {
       '</div>' +
       '<div style="display:flex;align-items:baseline;gap:14px">' +
         '<div class="fvr ' + fvrClass(you.fvr) + '">' + you.fvr.toFixed(2) + '</div>' +
-        '<div style="font-size:10px;color:' + deltaColor(deltaFvr) + ';font-weight:700">' + fmtDelta(deltaFvr, 2) + ' vs moyenne match (' + avgFvr.toFixed(2) + ')</div>' +
+        '<div style="font-size:10px;color:' + deltaColor(deltaFvr) + ';font-weight:700">' + fmtDelta(deltaFvr, 2) + ' vs match average (' + avgFvr.toFixed(2) + ')</div>' +
       '</div>' +
       '<div class="kpi-line">' +
         '<div class="kpi"><div class="v">' + you.kills + '-' + you.deaths + '</div><div class="l">K - D</div><div class="d" style="color:#666">' + (you.kd >= 0 ? '+' : '') + you.kd + '</div></div>' +
@@ -2885,12 +2885,12 @@ async function exportPDF() {
     '</div>' +
 
     // Timeline
-    '<h2>Deroulement des rounds</h2>' +
-    '<div style="font-size:9px;color:#666;margin-bottom:4px">Bleu = CT · Or = T · Ligne verte = mi-temps</div>' +
+    '<h2>Round breakdown</h2>' +
+    '<div style="font-size:9px;color:#666;margin-bottom:4px">Blue = CT · Gold = T · Green line = halftime</div>' +
     timelineHtml +
 
     // Stats equipes
-    '<h2>Stats par equipe</h2>' +
+    '<h2>Team stats</h2>' +
     '<h3>' + (winnerTeam === '-' ? 'CT' : winnerTeam) + (winnerTeam !== '-' ? ' (' + (winnerTeam === 'CT' ? 'Win' : 'Win') + ')' : '') + '</h3>' +
     teamTable(winnerPlayers, winnerTeam === '-' ? 'CT' : winnerTeam) +
     '<h3>' + (loserTeam === '-' ? 'T' : loserTeam) + '</h3>' +
@@ -2899,26 +2899,26 @@ async function exportPDF() {
     '<div class="footer">FragValue · fragvalue.com · Generated on ' + new Date().toLocaleDateString('fr-FR') + '</div>' +
     '</div>' +
 
-    // ══════ PAGE 2 : Bilan tactique + QR ══════
+    // ══════ PAGE 2 : Tactical summary + QR ══════
     '<div class="page">' +
-    '<h2>Bilan tactique</h2>' +
+    '<h2>Tactical summary</h2>' +
     '<div style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.5">Match ' + ctWins + '-' + tWins + ' pour ' + (winnerTeam === '-' ? 'egalite' : 'le side ' + winnerTeam) + ' sur ' + mapName.toUpperCase() + '. Analysis condensee en points d\'impact.</div>' +
 
     '<div class="bilan-grid">' +
       '<div class="bilan-col strengths">' +
-        '<div class="title">+ ' + topStrengths.length + ' force' + (topStrengths.length > 1 ? 's' : '') + '</div>' +
-        '<ul>' + (topStrengths.length ? topStrengths.map(s => '<li><strong>' + s.label + '</strong><span>' + s.detail + '</span></li>').join('') : '<li><em style="color:#999">Match difficile, peu de moments positifs.</em></li>') + '</ul>' +
+        '<div class="title">+ ' + topStrengths.length + ' strength' + (topStrengths.length > 1 ? 's' : '') + '</div>' +
+        '<ul>' + (topStrengths.length ? topStrengths.map(s => '<li><strong>' + s.label + '</strong><span>' + s.detail + '</span></li>').join('') : '<li><em style="color:#999">Tough match, few positive moments.</em></li>') + '</ul>' +
       '</div>' +
       '<div class="bilan-col warnings">' +
         '<div class="title">! ' + topWarnings.length + ' axe' + (topWarnings.length > 1 ? 's' : '') + ' a travailler</div>' +
-        '<ul>' + (topWarnings.length ? topWarnings.map(w => '<li><strong>' + w.label + '</strong><span>' + w.detail + '</span></li>').join('') : '<li><em style="color:#999">Good match, aucun axe critique detecte.</em></li>') + '</ul>' +
+        '<ul>' + (topWarnings.length ? topWarnings.map(w => '<li><strong>' + w.label + '</strong><span>' + w.detail + '</span></li>').join('') : '<li><em style="color:#999">Good match, no critical area detected.</em></li>') + '</ul>' +
       '</div>' +
     '</div>' +
 
     (priority ? (
       '<div class="priority-box">' +
-        '<div class="label">Priorite numero 1</div>' +
-        '<div class="text"><strong>' + priority.label + '</strong>Action concrete : ' + priority.action + '</div>' +
+        '<div class="label">Priority #1</div>' +
+        '<div class="text"><strong>' + priority.label + '</strong>Concrete action: ' + priority.action + '</div>' +
       '</div>'
     ) : '') +
 
@@ -2926,7 +2926,7 @@ async function exportPDF() {
     '<div class="qr-row">' +
       '<img src="' + qrSrc + '" alt="QR code"/>' +
       '<div class="qr-text">' +
-        '<strong>Replonge sur la version interactive</strong>' +
+        '<strong>Dive back into the interactive version</strong>' +
         'Scan le QR or ouvre le lien ci-dessous pour revoir ce match avec ' +
         'heatmaps, 2D replay et stats round-par-round. Le rapport PDF ' +
         'est une capture statique, la version online est toujours a day.' +
@@ -2956,7 +2956,7 @@ async function shareDemo() {
     const _sbShare = supabase.createClient(_sbUrl, _sbAnon);
     const { data:{ session } } = await _sbShare.auth.getSession();
     if (!session) {
-      showShareStatus('Connecte toi pour partager une demo.');
+      showShareStatus('Sign in to share a demo.');
       return;
     }
     const res = await fetch('/api/share-demo', {

@@ -1095,7 +1095,7 @@ function toggleBilling() {
 /* ── Checkout ──────────────────────────────────────────────────────────
    Lance une Stripe Checkout Session via /api/stripe-checkout puis redirige.
    Le bouton cliqué passe `btn` au handler pour gerer l'etat de loading
-   (spinner + texte "Redirection..." + disable) pendant les 1-3s d'attente.
+   (spinner + texte "Redirecting..." + disable) pendant les 1-3s d'attente.
 */
 async function startCheckout(plan, btn) {
   // Sauvegarde l'etat initial pour restore en cas d'erreur
@@ -1105,7 +1105,7 @@ async function startCheckout(plan, btn) {
     if (loading) {
       btn.disabled = true;
       btn.style.cursor = 'wait';
-      btn.innerHTML = '<span class="spinner-inline" aria-hidden="true"></span><span style="margin-left:8px">Redirection...</span>';
+      btn.innerHTML = '<span class="spinner-inline" aria-hidden="true"></span><span style="margin-left:8px">Redirecting...</span>';
     } else {
       btn.disabled = false;
       btn.style.cursor = '';
