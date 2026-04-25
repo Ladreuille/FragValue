@@ -167,47 +167,57 @@
 
     document.getElementById('fvCookieAccept').addEventListener('click', function () {
       writeConsent('accept');
-      // Update Consent Mode : autorise GA4 + ads cookies
+      // Update Consent Mode : autorise GA4 + ads cookies. GA4 est deja
+      // charge via init() ; le 'consent update' suffit a switcher en mode
+      // collecte complete (avec cookie client_id, sessions, conversions).
       gtag('consent', 'update', {
         ad_storage: 'granted',
         ad_user_data: 'granted',
         ad_personalization: 'granted',
         analytics_storage: 'granted',
       });
-      loadGA4();
       // Track le consent pour mesurer le taux d'acceptation
-      setTimeout(function () { gtag('event', 'consent_accepted'); }, 200);
+      gtag('event', 'consent_accepted');
       b.remove();
     });
     document.getElementById('fvCookieRefuse').addEventListener('click', function () {
       writeConsent('refuse');
-      // Garde 'denied'. GA4 va quand meme charger en mode signal-only qui
-      // envoie des pings agreges (page_view sans cookie ni client_id stable).
-      // C'est conforme RGPD et permet de mesurer tendance trafic global.
-      loadGA4();
+      // Garde 'denied'. GA4 deja charge fonctionne en mode signal-only :
+      // pings agreges (page_view sans cookie ni client_id stable) qui
+      // restent conformes RGPD et permettent de mesurer tendance trafic.
       b.remove();
     });
   }
 
   // === Init flow ==========================================================
+  // Best practice Google Consent Mode v2 : on charge TOUJOURS gtag.js, et
+  // on laisse le script gerer le respect du consent (denied par defaut =
+  // pings cookieless / signal-only ; granted = collecte normale).
+  // Cela permet :
+  // - Au crawler Google "Tag installation tester" de detecter le tag
+  // - Aux pings cookieless de fonctionner meme en cas de refus
+  // - A l'EU/EEA de rester conforme RGPD (consent 'denied' par defaut)
   function init() {
     const consent = readConsent();
+
     if (consent === 'accept') {
-      // Consent deja accepte (visite precedente)
+      // Consent deja accepte sur visite precedente -> upgrade direct
       gtag('consent', 'update', {
         ad_storage: 'granted',
         ad_user_data: 'granted',
         ad_personalization: 'granted',
         analytics_storage: 'granted',
       });
-      loadGA4();
-    } else if (consent === 'refuse') {
-      // Refus deja exprime - on charge GA4 en mode signal-only
-      // (le 'denied' par defaut reste applique)
-      loadGA4();
-    } else {
-      // Aucun choix : affiche le banner. GA4 NE charge PAS encore (on attend
-      // le choix). Si l'user navigue sans repondre, on capture rien.
+    }
+    // Si consent 'refuse' ou null : on garde 'denied' par defaut (deja set
+    // au top du script avec gtag('consent', 'default', ...))
+
+    // GA4 charge dans tous les cas (Consent Mode v2 gere la collecte selon
+    // l'etat consent_storage / analytics_storage)
+    loadGA4();
+
+    // Si pas de choix encore : affiche le banner pour solliciter consentement
+    if (!consent) {
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () { setTimeout(showBanner, 800); });
       } else {
