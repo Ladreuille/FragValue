@@ -51,6 +51,19 @@
     nav.fv-nav .fv-badge.elite{background:linear-gradient(135deg,#f5c842,#d4a52a);color:#000;box-shadow:0 0 8px rgba(245,200,66,.3)}
     nav.fv-nav .fv-badge.soon{background:rgba(184,255,87,.08);color:#b8ff57;border:1px solid rgba(184,255,87,.25);box-shadow:none}
     nav.fv-nav .fv-right{display:flex;align-items:center;gap:10px}
+    /* Toggle FR/EN : montre la langue OPPOSEE a la langue actuelle (clic
+       pour switcher). Lit document.documentElement.lang ou /en/ prefix. */
+    nav.fv-nav .fv-lang{
+      background:none;border:1px solid rgba(184,255,87,.2);border-radius:6px;
+      padding:6px 10px;color:#a8b0b0;cursor:pointer;
+      font-family:'Space Mono',monospace;font-size:10px;font-weight:700;
+      letter-spacing:.1em;transition:all .15s;text-decoration:none;
+      display:inline-flex;align-items:center;gap:5px;line-height:1
+    }
+    nav.fv-nav .fv-lang:hover,nav.fv-nav .fv-lang:focus-visible{
+      color:#b8ff57;border-color:rgba(184,255,87,.5);background:rgba(184,255,87,.06);outline:none
+    }
+    nav.fv-nav .fv-lang svg{width:11px;height:11px;opacity:.7}
     nav.fv-nav .fv-login{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#a8b0b0;text-decoration:none;text-transform:uppercase;letter-spacing:.09em;padding:8px 14px;border-radius:6px;transition:all .18s}
     nav.fv-nav .fv-login:hover{color:#b8ff57;background:rgba(184,255,87,.06)}
     nav.fv-nav .fv-cta{background:#b8ff57;color:#000;padding:8px 18px;border-radius:6px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .18s;box-shadow:0 0 0 0 rgba(184,255,87,.5);position:relative}
@@ -212,6 +225,10 @@
     <div class="fv-sections">${sections.map(buildSectionHTML).join('')}</div>
     <div class="fv-right">
       <a href="/pricing.html" class="fv-login">Tarifs</a>
+      <button class="fv-lang" id="navLangBtn" type="button" aria-label="Changer la langue" title="Switch language">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span id="navLangLabel">EN</span>
+      </button>
       <button class="fv-bell" id="navBellBtn" type="button" aria-label="Notifications" aria-haspopup="true" aria-expanded="false" style="display:none">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
         <span class="fv-bell-badge" id="navBellBadge" style="display:none">0</span>
@@ -252,6 +269,48 @@
   }
   navEl.className = 'fv-nav';
   navEl.innerHTML = navHTML;
+
+  // ── Toggle FR/EN ────────────────────────────────────────────────────────
+  // Detection de la langue actuelle :
+  //   - <html lang="en"> ajoute par build-i18n -> EN
+  //   - URL commence par /en/ -> EN
+  //   - sinon -> FR
+  // Le bouton montre la langue OPPOSEE (cliquable pour switcher).
+  // Cookie fv_lang lu par middleware.js pour le routing futur.
+  (function setupLangToggle() {
+    const langBtn = navEl.querySelector('#navLangBtn');
+    const langLabel = navEl.querySelector('#navLangLabel');
+    if (!langBtn || !langLabel) return;
+
+    const isEN = document.documentElement.lang === 'en'
+              || window.location.pathname.startsWith('/en/');
+    const target = isEN ? 'fr' : 'en';
+    langLabel.textContent = target.toUpperCase();
+    langBtn.setAttribute('aria-label', isEN ? 'Switch to French' : 'Passer en anglais');
+
+    langBtn.addEventListener('click', function () {
+      // Cookie fv_lang : 1 an, SameSite=Lax (lu par middleware.js Vercel Edge)
+      document.cookie = 'fv_lang=' + target + '; path=/; max-age=' + (365 * 24 * 60 * 60) + '; SameSite=Lax';
+
+      // Calcule le path equivalent dans la langue cible
+      const path = window.location.pathname;
+      let newPath;
+      if (target === 'en') {
+        // FR -> EN : ajoute /en prefix (ou /en/ pour la home)
+        newPath = '/en' + (path === '/' ? '/' : path);
+      } else {
+        // EN -> FR : retire le /en prefix
+        newPath = path.replace(/^\/en/, '') || '/';
+      }
+      const url = newPath + window.location.search + window.location.hash;
+
+      // Track GA4 si dispo
+      if (typeof window.fvTrack === 'function') {
+        window.fvTrack('Lang Switch', { from: isEN ? 'en' : 'fr', to: target });
+      }
+      window.location.href = url;
+    });
+  })();
 
   // ── Toggle dropdowns (click + outside-close) ────────────────────────────
   navEl.querySelectorAll('.fv-section-btn').forEach(btn => {
