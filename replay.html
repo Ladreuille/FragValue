@@ -331,6 +331,92 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       color:var(--muted);line-height:1.5
     }
 
+    /* ── Coach IA panel : analyse tactique Claude top-left canvas ────── */
+    .coach-ai-panel{
+      position:absolute;top:14px;left:14px;
+      width:300px;max-height:calc(100% - 28px);
+      z-index:55;
+      background:rgba(15,16,16,.96);
+      border:1px solid rgba(184,255,87,.25);
+      border-radius:8px;
+      box-shadow:0 12px 32px rgba(0,0,0,.5),0 0 16px rgba(184,255,87,.08);
+      display:flex;flex-direction:column;
+      animation:bpSlideIn 220ms cubic-bezier(.2,.8,.3,1)
+    }
+    .coach-ai-panel .ca-icon{
+      color:var(--accent);font-size:14px;margin-right:4px
+    }
+    .ca-context{
+      padding:8px 12px;
+      font-family:'Space Mono',monospace;font-size:10px;
+      color:var(--muted);letter-spacing:.06em;
+      border-bottom:1px solid rgba(255,255,255,.04)
+    }
+    .ca-context .ca-ctx-tag{color:var(--accent)}
+    .ca-actions{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04)}
+    .ca-run{
+      width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
+      background:var(--accent);border:none;color:var(--bg);
+      font-family:'Space Mono',monospace;font-size:11px;font-weight:bold;
+      letter-spacing:.06em;text-transform:uppercase;
+      padding:9px 10px;border-radius:5px;cursor:pointer;
+      transition:filter .15s,opacity .15s
+    }
+    .ca-run:hover{filter:brightness(1.1)}
+    .ca-run:disabled{opacity:.5;cursor:not-allowed}
+    .ca-loading{
+      padding:18px 14px;text-align:center;
+      font-family:'Space Mono',monospace;font-size:10px;
+      color:var(--muted);letter-spacing:.06em;
+      display:flex;flex-direction:column;align-items:center;gap:10px
+    }
+    .ca-spinner{
+      width:24px;height:24px;
+      border:2px solid rgba(184,255,87,.18);
+      border-top-color:var(--accent);
+      border-radius:50%;
+      animation:caSpin .8s linear infinite
+    }
+    @keyframes caSpin{to{transform:rotate(360deg)}}
+    .ca-error{
+      margin:8px 12px;padding:10px;
+      background:rgba(255,80,80,.08);
+      border:1px solid rgba(255,80,80,.35);
+      border-radius:5px;
+      font-family:'Space Mono',monospace;font-size:10px;
+      color:#ff5050;line-height:1.5
+    }
+    .ca-result{
+      padding:6px 10px 10px 10px;
+      max-height:55vh;overflow-y:auto;
+      scrollbar-width:thin;scrollbar-color:rgba(184,255,87,.3) transparent
+    }
+    .ca-result::-webkit-scrollbar{width:5px}
+    .ca-result::-webkit-scrollbar-thumb{background:rgba(184,255,87,.25);border-radius:3px}
+    .ca-section{
+      padding:8px 10px;margin-top:6px;
+      background:rgba(184,255,87,.04);
+      border-left:2px solid var(--accent);
+      border-radius:4px
+    }
+    .ca-section.type-axe{
+      background:rgba(245,200,66,.04);border-left-color:#f5c842
+    }
+    .ca-section.type-action{
+      background:rgba(96,165,250,.04);border-left-color:#60a5fa
+    }
+    .ca-label{
+      font-family:'Space Mono',monospace;font-size:9px;
+      color:var(--accent);letter-spacing:.18em;text-transform:uppercase;
+      margin-bottom:3px
+    }
+    .ca-section.type-axe .ca-label{color:#f5c842}
+    .ca-section.type-action .ca-label{color:#60a5fa}
+    .ca-text{
+      font-family:'Space Mono',monospace;font-size:11px;
+      color:var(--text);line-height:1.5
+    }
+
     /* ── Player tooltip overlay : hover sur dot ──────────────────────────
        Position absolue, suivi du curseur via JS. Z-index haut pour passer
        au-dessus de la canvas. Anti-jitter via pointer-events:none. */
@@ -653,6 +739,10 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <button class="sl-tool" id="btnBookmarks" onclick="toggleBookmarksPanel()" data-tip="Moments forts">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
         </button>
+        <!-- Coach IA : analyse tactique du round courant via Claude (Pro+) -->
+        <button class="sl-tool" id="btnCoachAI" onclick="toggleCoachAIPanel()" data-tip="Coach IA · analyse tactique">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        </button>
       </div>
 
       <!-- Floor toggle Nuke -->
@@ -711,6 +801,41 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <div id="bookmarksList" class="bp-list"></div>
         <div class="bp-empty" id="bookmarksEmpty" style="display:none">
           Pas de moment fort detecte. Mets-en un toi-meme avec le bouton ci-dessus.
+        </div>
+      </div>
+      <!-- Coach IA panel : analyse tactique du round par Claude (Pro+).
+           3 sections : Force / Axe / Action. Cache localStorage par
+           (demoId, round, player). Position absolute top-left canvas. -->
+      <div id="coachAIPanel" class="coach-ai-panel" style="display:none">
+        <div class="bp-header">
+          <div class="bp-title"><span class="ca-icon">★</span> Coach IA</div>
+          <button class="bp-close" onclick="toggleCoachAIPanel()" aria-label="Fermer">×</button>
+        </div>
+        <div class="ca-context" id="coachAIContext"></div>
+        <div class="ca-actions">
+          <button class="ca-run" id="btnCoachAIRun" onclick="runCoachAIAnalysis()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Analyser ce round
+          </button>
+        </div>
+        <div class="ca-loading" id="coachAILoading" style="display:none">
+          <div class="ca-spinner"></div>
+          <div>Claude analyse le round...</div>
+        </div>
+        <div class="ca-error" id="coachAIError" style="display:none"></div>
+        <div class="ca-result" id="coachAIResult" style="display:none">
+          <div class="ca-section type-force">
+            <div class="ca-label">Force</div>
+            <div class="ca-text" id="caForce"></div>
+          </div>
+          <div class="ca-section type-axe">
+            <div class="ca-label">Axe d amelioration</div>
+            <div class="ca-text" id="caAxe"></div>
+          </div>
+          <div class="ca-section type-action">
+            <div class="ca-label">Action concrete</div>
+            <div class="ca-text" id="caAction"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -4186,6 +4311,252 @@ function toggleBookmarksPanel() {
   if (panel) panel.style.display = showBookmarks ? 'flex' : 'none';
   if (btn) btn.classList.toggle('active', showBookmarks);
   if (showBookmarks) renderBookmarksList();
+}
+
+// ══ COACH IA REPLAY ANALYSIS ═════════════════════════════════════════════════
+// Analyse tactique du round courant via Claude (api/ai-replay-summary).
+// Pro+ uniquement, rate-limited cote serveur (20/jour).
+// Cache localStorage par (demoId, round, player) pour eviter les re-fetch
+// si l'utilisateur revient sur le meme round.
+
+let showCoachAI = false;
+
+const CA_STORAGE_PREFIX = 'fv_coachai_';
+
+function getTargetPlayerName() {
+  // Player cible = isolatedPlayer si actif, sinon le 1er du scoreboard
+  // (proxy pour "moi" si demo perso). Fallback : nom le mieux classé en FV Rating.
+  if (isolatedPlayer) return isolatedPlayer;
+  const stats = (demoData?.playerStats || []).slice().sort((a, b) => (b.fvRating || 0) - (a.fvRating || 0));
+  return stats[0]?.name || null;
+}
+
+function loadCoachAICache(demoId, round, playerName) {
+  try {
+    const key = CA_STORAGE_PREFIX + demoId + '_r' + round + '_' + playerName;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.summary) return null;
+    return parsed.summary;
+  } catch(_) { return null; }
+}
+
+function saveCoachAICache(demoId, round, playerName, summary) {
+  try {
+    const key = CA_STORAGE_PREFIX + demoId + '_r' + round + '_' + playerName;
+    localStorage.setItem(key, JSON.stringify({
+      summary,
+      cachedAt: Date.now(),
+    }));
+  } catch(_) {}
+}
+
+// Construit le contexte qu'on envoie au backend pour Claude.
+// Round courant : kills filtree par tick range, score state, side, etc.
+function buildCoachAIContext() {
+  const playerName = getTargetPlayerName();
+  if (!playerName) return null;
+
+  const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
+  const startT = rdData.startTick || 0;
+  const endT = rdData.endTick || rdData.gameplayEnd || 0;
+
+  // Trouver la team du joueur (CT/T) au moment du round
+  // playerStats contient le team final, mais pour swap on doit regarder positions
+  const playerStat = (demoData.playerStats || []).find(p => p.name === playerName) || {};
+  const ps = (demoData.positions || {})[playerName] || [];
+  const firstSampleInRound = ps.find(p => (p.tick || 0) >= startT);
+  const sideTeam = firstSampleInRound?.team ?? playerStat.team ?? 0;
+  const side = (sideTeam === 3 || sideTeam === 'CT') ? 'CT' : 'T';
+
+  // Kills du round
+  const allKills = demoData.kills || [];
+  const roundKills = allKills.filter(k => {
+    const t = k.tick || 0;
+    return t >= startT && (endT === 0 || t <= endT);
+  });
+
+  // Stats joueur sur ce round
+  const playerKills = roundKills.filter(k => k.attacker === playerName).length;
+  const playerDeaths = roundKills.filter(k => k.victim === playerName).length;
+
+  // Score apres ce round (depuis demoData.rounds, displayNum + winner)
+  // On somme les rounds joues jusqu'a celui-ci (inclus)
+  const rounds = demoData.rounds || [];
+  let scoreCT = 0, scoreT = 0;
+  for (const r of rounds) {
+    if ((r.round ?? -1) > currentRound) break;
+    if (r.winner === 3 || r.winner === 'CT') scoreCT++;
+    else if (r.winner === 2 || r.winner === 'T') scoreT++;
+  }
+
+  // Round gagne par mon cote ?
+  const roundWinner = rdData.winner;
+  const won = (side === 'CT' && (roundWinner === 3 || roundWinner === 'CT'))
+           || (side === 'T'  && (roundWinner === 2 || roundWinner === 'T'));
+
+  // Bombe state
+  const bombPlanted = (demoData.bombPlants || []).some(bp => bp.round === (rdData.killsRound ?? currentRound + 1));
+  const bombDefused = (demoData.bombDefuses || []).some(bd => bd.round === (rdData.killsRound ?? currentRound + 1));
+  const bombExploded = (demoData.bombExplodes || []).some(be => be.round === (rdData.killsRound ?? currentRound + 1));
+
+  // Duree du round
+  const roundDurationSec = (endT > startT) ? Math.round((endT - startT) / 64) : 0;
+
+  return {
+    map: mapName,
+    round: rdData.displayNum ?? (currentRound + 1),
+    side,
+    score: [scoreCT, scoreT],
+    won,
+    targetPlayer: {
+      name: playerName,
+      kills: playerKills,
+      deaths: playerDeaths,
+      adr: playerStat.adr || 0,
+      fvr: playerStat.fvRating || 0,
+      kast: playerStat.kast || 0,
+      hsPct: playerStat.hsPct || 0,
+    },
+    roundKills: roundKills.map(k => ({
+      tick: k.tick,
+      attacker: k.attacker,
+      victim: k.victim,
+      weapon: k.weapon,
+      isHeadshot: k.isHeadshot,
+      thruSmoke: k.thruSmoke,
+      isWallbang: k.isWallbang,
+    })),
+    bombPlanted,
+    bombDefused,
+    bombExploded,
+    roundDurationSec,
+  };
+}
+
+function renderCoachAIContext() {
+  const el = document.getElementById('coachAIContext');
+  if (!el) return;
+  const playerName = getTargetPlayerName();
+  const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
+  const dispN = rdData.displayNum ?? (currentRound + 1);
+  if (!playerName || currentRound == null) {
+    el.innerHTML = '<span class="ca-ctx-tag">Selectionne un round + un joueur</span>';
+    return;
+  }
+  el.innerHTML = '<span class="ca-ctx-tag">R' + dispN + '</span> · '
+    + 'Joueur cible · <span class="ca-ctx-tag">' + escapeHtml(playerName) + '</span>'
+    + (isolatedPlayer ? '' : ' <span style="opacity:.6">(isole un dot pour cibler quelqu un d autre)</span>');
+}
+
+function renderCoachAISummary(summary) {
+  document.getElementById('caForce').textContent = summary.force || '-';
+  document.getElementById('caAxe').textContent = summary.axe || '-';
+  document.getElementById('caAction').textContent = summary.action || '-';
+  document.getElementById('coachAIResult').style.display = 'block';
+  document.getElementById('coachAILoading').style.display = 'none';
+  document.getElementById('coachAIError').style.display = 'none';
+}
+
+function showCoachAIError(msg) {
+  const errEl = document.getElementById('coachAIError');
+  errEl.textContent = msg;
+  errEl.style.display = 'block';
+  document.getElementById('coachAIResult').style.display = 'none';
+  document.getElementById('coachAILoading').style.display = 'none';
+}
+
+async function runCoachAIAnalysis() {
+  const ctx = buildCoachAIContext();
+  if (!ctx) {
+    showCoachAIError('Impossible de construire le contexte. Selectionne un round.');
+    return;
+  }
+  const demoId = getDemoId();
+  const round = currentRound;
+  const playerName = ctx.targetPlayer.name;
+
+  // Cache hit ?
+  const cached = loadCoachAICache(demoId, round, playerName);
+  if (cached) {
+    renderCoachAISummary(cached);
+    return;
+  }
+
+  // Loading state
+  document.getElementById('coachAILoading').style.display = 'flex';
+  document.getElementById('coachAIResult').style.display = 'none';
+  document.getElementById('coachAIError').style.display = 'none';
+  const runBtn = document.getElementById('btnCoachAIRun');
+  if (runBtn) runBtn.disabled = true;
+
+  try {
+    // Auth header depuis Supabase session (pattern utilise ailleurs)
+    const token = await getAuthToken();
+    if (!token) {
+      showCoachAIError('Connecte-toi pour utiliser le Coach IA.');
+      return;
+    }
+    const res = await fetch('/api/ai-replay-summary', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
+      },
+      body: JSON.stringify({ demoId, round, context: ctx }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showCoachAIError(data.message || data.error || 'Erreur ' + res.status);
+      return;
+    }
+    if (!data.summary) {
+      showCoachAIError('Reponse Claude invalide.');
+      return;
+    }
+    saveCoachAICache(demoId, round, playerName, data.summary);
+    renderCoachAISummary(data.summary);
+  } catch (e) {
+    console.error('[coach-ai] error:', e);
+    showCoachAIError('Erreur reseau · reessaye dans un instant.');
+  } finally {
+    if (runBtn) runBtn.disabled = false;
+  }
+}
+
+// Helper : recupere le JWT Supabase depuis la session active.
+// Utilise le client supabase-js charge globalement (via nav.js / supabase-init.js).
+async function getAuthToken() {
+  try {
+    if (window.supabase && typeof window.supabase.auth?.getSession === 'function') {
+      const { data } = await window.supabase.auth.getSession();
+      return data?.session?.access_token || null;
+    }
+    return null;
+  } catch(_) { return null; }
+}
+
+function toggleCoachAIPanel() {
+  showCoachAI = !showCoachAI;
+  const panel = document.getElementById('coachAIPanel');
+  const btn = document.getElementById('btnCoachAI');
+  if (panel) panel.style.display = showCoachAI ? 'flex' : 'none';
+  if (btn) btn.classList.toggle('active', showCoachAI);
+  if (showCoachAI) {
+    renderCoachAIContext();
+    // Si on a deja un cache pour ce round + player, l'afficher d office
+    const playerName = getTargetPlayerName();
+    if (playerName && currentRound != null) {
+      const cached = loadCoachAICache(getDemoId(), currentRound, playerName);
+      if (cached) renderCoachAISummary(cached);
+      else {
+        document.getElementById('coachAIResult').style.display = 'none';
+        document.getElementById('coachAILoading').style.display = 'none';
+        document.getElementById('coachAIError').style.display = 'none';
+      }
+    }
+  }
 }
 
 // ══ CALL-OUTS RENDERING ══════════════════════════════════════════════════════
