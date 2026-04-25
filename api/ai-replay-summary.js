@@ -121,7 +121,12 @@ function buildPrompt(context) {
         if (k.isHeadshot) tags.push('HS');
         if (k.thruSmoke) tags.push('through smoke');
         if (k.isWallbang) tags.push('wallbang');
-        return `${minSec} ${attacker} kills ${victim} (${weapon}${tags.length ? ', ' + tags.join(', ') : ''})`;
+        // Annotation tactique : ou s est passe le kill (zones de la map).
+        // Format : "attacker (Long) kills victim (A Site)" pour donner du contexte
+        // spatial precis a Claude. Si pas de call-out, on omet.
+        const attackerLoc = k.attackerCallout ? ` (${k.attackerCallout})` : '';
+        const victimLoc = k.victimCallout ? ` (${k.victimCallout})` : '';
+        return `${minSec} ${attacker}${attackerLoc} kills ${victim}${victimLoc} (${weapon}${tags.length ? ', ' + tags.join(', ') : ''})`;
       }).join('\n')
     : 'Aucun kill ce round';
 
@@ -136,6 +141,15 @@ function buildPrompt(context) {
   const wonStr = context.won ? 'gagne' : 'perdu';
   const durStr = context.roundDurationSec ? Math.floor(context.roundDurationSec) + 's' : '?';
 
+  // Liste des call-outs disponibles sur la map (pour que Claude puisse les
+  // referencer meme pour des positions tactiques hors kills, comme "tu aurais
+  // du jouer Long" ou "anti-eco vers Tunnels"). Limite a 40 noms pour eviter
+  // de bloater le prompt sur les maps tres detaillees (Vertigo / Inferno).
+  const calloutsList = (context.mapCallouts || []).slice(0, 40);
+  const calloutsStr = calloutsList.length
+    ? `ZONES DE LA MAP (call-outs CS2 standards de ${context.map || 'la map'}) :\n${calloutsList.join(' · ')}\n\nUtilise ces noms pour referer aux positions tactiques.`
+    : '';
+
   return `Tu es un coach CS2 expert. Analyse tactiquement ce round du point de vue du joueur cible.
 
 CONTEXTE
@@ -149,7 +163,10 @@ Bombe: ${bombStatus}
 STATS DU JOUEUR CIBLE SUR LE ROUND
 ${tp.kills || 0} kills, ${tp.deaths || 0} deaths, ${tp.adr || 0} ADR (round)
 
+${calloutsStr}
+
 DEROULEMENT DU ROUND (kills par ordre chronologique)
+Format : minute attacker (zone_attacker) kills victim (zone_victim) (arme, tags)
 ${killsLine}
 
 CONSIGNE
@@ -164,7 +181,8 @@ Format exact :
 REGLES
 - Parle en francais a la 2e personne (tu)
 - Reste tactique CS2 (positionning, timing, utility, peek pattern, info gathering)
-- Cite des elements concrets du deroulement (qui kill qui, quel angle, quelle arme)
+- Cite des elements concrets du deroulement avec les NOMS DE ZONES quand pertinent
+  (ex: "tu peek Long sans flash", "ton anti-eco a Tunnels a marche")
 - Pas de generalites bidons type "joue mieux", reste specifique
 - Si le joueur n'a pas eu d'impact (0K, mort tot), focus sur ce qu'il aurait du faire
 - Pas de markdown, pas de listes, juste le JSON {"force":"...","axe":"...","action":"..."}`;

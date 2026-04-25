@@ -1077,101 +1077,356 @@ const MAP_CONFIG = {
 };
 
 // ══ MAP CALL-OUTS ════════════════════════════════════════════════════════════
-// Coords = world space (Source engine units). Le call-out est positionne via
-// w2c() comme les joueurs. Toggle via btnCallouts (off par defaut).
+// Format : { name, col, row, [size:'sm'|'md'|'lg'] }
+// - col = lettre A-P (16 colonnes du radar TotalCSGO)
+// - row = nombre 1-16 (16 lignes du radar)
+// - size = 'lg' (sites) > 'md' (zones principales) > 'sm' (positions secondaires)
 //
-// Note : ces valeurs sont des approximations basees sur les call-outs CS2
-// communautaires standards. Si une position parait off, on peut tuner ici.
-// Format : { name, x, y, [size:'sm'|'md'|'lg'] }  (sm=zone, md=defaut, lg=site)
+// Le helper gridToWorld(mapName, col, row) convertit en world coords :
+//   canvasX = (colIdx + 0.5) * 64        (avec colIdx = 'A'=0 .. 'P'=15)
+//   canvasY = (row - 0.5) * 64           (row 1-16)
+//   worldX  = canvasX * scale + posX     (depuis MAP_CONFIG)
+//   worldY  = posY - canvasY * scale
+//
+// Source des positions : reference TotalCSGO (annotated radar maps).
+function gridToWorld(mapName, col, row) {
+  const cfg = MAP_CONFIG[mapName];
+  if (!cfg) return null;
+  const c = cfg.upper ? cfg.upper : cfg;
+  const colIdx = String(col).toUpperCase().charCodeAt(0) - 65; // A=0, P=15
+  const canvasX = (colIdx + 0.5) * 64;
+  const canvasY = (row - 0.5) * 64;
+  return {
+    x: canvasX * c.scale + c.posX,
+    y: c.posY - canvasY * c.scale,
+  };
+}
+
+// Trouve la call-out la plus proche d une position world (x, y) sur la map.
+// Utilise par buildCoachAIContext pour annoter chaque kill avec sa zone.
+function getCalloutForPosition(mapName, worldX, worldY) {
+  const callouts = MAP_CALLOUTS[mapName];
+  if (!callouts || !callouts.length || worldX == null || worldY == null) return null;
+  let bestName = null, bestDist = Infinity;
+  for (const c of callouts) {
+    const w = gridToWorld(mapName, c.col, c.row);
+    if (!w) continue;
+    const dx = w.x - worldX, dy = w.y - worldY;
+    const dist = dx * dx + dy * dy;
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestName = c.name;
+    }
+  }
+  return bestName;
+}
+
 const MAP_CALLOUTS = {
+  // ── DE_DUST2 ────────────────────────────────────────────────────────────
+  // Standard CS2 callouts (no reference image for dust2 v1)
   'de_dust2': [
-    { name: 'A Site',    x: 1250,  y: 2400, size: 'lg' },
-    { name: 'B Site',    x: -1530, y: 2540, size: 'lg' },
-    { name: 'Long',      x: 600,   y: 700,  size: 'md' },
-    { name: 'Long Doors',x: -700,  y: 1380, size: 'sm' },
-    { name: 'Pit',       x: 1700,  y: 2050, size: 'sm' },
-    { name: 'Goose',     x: 850,   y: 2550, size: 'sm' },
-    { name: 'Catwalk',   x: 480,   y: 1880, size: 'sm' },
-    { name: 'Short',     x: 600,   y: 2200, size: 'md' },
-    { name: 'Mid',       x: -100,  y: 1100, size: 'md' },
-    { name: 'Tunnels',   x: -1200, y: 800,  size: 'md' },
-    { name: 'B Doors',   x: -1450, y: 1860, size: 'sm' },
-    { name: 'CT Spawn',  x: 1900,  y: 2450, size: 'sm' },
-    { name: 'T Spawn',   x: 0,     y: 200,  size: 'sm' },
+    { name: 'A Site',     col: 'L', row: 4,  size: 'lg' },
+    { name: 'B Site',     col: 'C', row: 3,  size: 'lg' },
+    { name: 'Mid',        col: 'I', row: 9,  size: 'md' },
+    { name: 'Long',       col: 'K', row: 8,  size: 'md' },
+    { name: 'Long Doors', col: 'J', row: 7,  size: 'sm' },
+    { name: 'Short',      col: 'I', row: 5,  size: 'md' },
+    { name: 'Catwalk',    col: 'I', row: 6,  size: 'sm' },
+    { name: 'Pit',        col: 'M', row: 4,  size: 'sm' },
+    { name: 'Goose',      col: 'L', row: 3,  size: 'sm' },
+    { name: 'Tunnels',    col: 'D', row: 7,  size: 'md' },
+    { name: 'B Doors',    col: 'D', row: 5,  size: 'sm' },
+    { name: 'Top Mid',    col: 'I', row: 7,  size: 'sm' },
+    { name: 'CT Spawn',   col: 'L', row: 2,  size: 'sm' },
+    { name: 'T Spawn',    col: 'I', row: 13, size: 'sm' },
+    { name: 'Lower Tunnels', col: 'D', row: 9, size: 'sm' },
+    { name: 'Outside Long',  col: 'M', row: 10, size: 'sm' },
   ],
+
+  // ── DE_MIRAGE ───────────────────────────────────────────────────────────
   'de_mirage': [
-    { name: 'A Site',    x: 1180,  y: 50,   size: 'lg' },
-    { name: 'B Site',    x: -1750, y: 470,  size: 'lg' },
-    { name: 'Mid',       x: -300,  y: -300, size: 'md' },
-    { name: 'Top Mid',   x: -200,  y: 200,  size: 'sm' },
-    { name: 'Connector', x: 600,   y: 0,    size: 'sm' },
-    { name: 'Apartments',x: -1500, y: -350, size: 'md' },
-    { name: 'Underpass', x: -700,  y: -1100,size: 'sm' },
-    { name: 'Palace',    x: 1300,  y: -700, size: 'sm' },
-    { name: 'Ramp',      x: -1700, y: 1200, size: 'sm' },
-    { name: 'Catwalk',   x: 200,   y: 350,  size: 'sm' },
-    { name: 'Tetris',    x: -1900, y: 280,  size: 'sm' },
+    { name: 'A Site',         col: 'L', row: 13, size: 'lg' },
+    { name: 'B Site',         col: 'C', row: 5,  size: 'lg' },
+    { name: 'Mid',            col: 'I', row: 8,  size: 'md' },
+    { name: 'Top Mid',        col: 'I', row: 6,  size: 'md' },
+    { name: 'Catwalk',        col: 'I', row: 7,  size: 'sm' },
+    { name: 'Connector',      col: 'I', row: 9,  size: 'sm' },
+    { name: 'Mid Boxes',      col: 'M', row: 8,  size: 'sm' },
+    { name: 'Apartments',     col: 'F', row: 4,  size: 'md' },
+    { name: 'Apps Ramp',      col: 'L', row: 3,  size: 'sm' },
+    { name: 'Underpass',      col: 'F', row: 6,  size: 'sm' },
+    { name: 'Palace',         col: 'M', row: 14, size: 'sm' },
+    { name: 'Ramp',           col: 'M', row: 11, size: 'sm' },
+    { name: 'Tetris',         col: 'L', row: 10, size: 'sm' },
+    { name: 'Sandwich',       col: 'L', row: 11, size: 'sm' },
+    { name: 'Jungle',         col: 'D', row: 10, size: 'sm' },
+    { name: 'Triple Box',     col: 'F', row: 12, size: 'sm' },
+    { name: 'Ticket Booth',   col: 'F', row: 14, size: 'sm' },
+    { name: 'Window',         col: 'B', row: 7,  size: 'sm' },
+    { name: 'Market',         col: 'C', row: 7,  size: 'sm' },
+    { name: 'CT Spawn',       col: 'D', row: 12, size: 'sm' },
+    { name: 'T Spawn',        col: 'O', row: 6,  size: 'sm' },
+    { name: 'Sniper Nest',    col: 'F', row: 8,  size: 'sm' },
+    { name: 'B Apartments',   col: 'D', row: 4,  size: 'sm' },
   ],
+
+  // ── DE_INFERNO ──────────────────────────────────────────────────────────
   'de_inferno': [
-    { name: 'A Site',    x: 1900,  y: 600,  size: 'lg' },
-    { name: 'B Site',    x: 350,   y: 2820, size: 'lg' },
-    { name: 'Banana',    x: -180,  y: 1880, size: 'md' },
-    { name: 'Apartments',x: 2400,  y: 1900, size: 'md' },
-    { name: 'Mid',       x: 1300,  y: 1500, size: 'md' },
-    { name: 'Library',   x: 950,   y: 100,  size: 'sm' },
-    { name: 'Arch',      x: 1700,  y: 1200, size: 'sm' },
-    { name: 'Pit',       x: 2500,  y: 600,  size: 'sm' },
-    { name: 'Construction', x: 0,  y: 2850, size: 'sm' },
-    { name: 'Boiler',    x: 750,   y: 2520, size: 'sm' },
-    { name: 'Top Banana',x: -100,  y: 2300, size: 'sm' },
+    { name: 'A Site',         col: 'L', row: 12, size: 'lg' },
+    { name: 'B Site',         col: 'F', row: 4,  size: 'lg' },
+    { name: 'Mid',            col: 'I', row: 11, size: 'md' },
+    { name: 'Banana',         col: 'F', row: 7,  size: 'md' },
+    { name: 'Top Banana',     col: 'F', row: 6,  size: 'sm' },
+    { name: 'Apartments',     col: 'F', row: 13, size: 'md' },
+    { name: 'A Long',         col: 'L', row: 9,  size: 'md' },
+    { name: 'A Short',        col: 'L', row: 13, size: 'sm' },
+    { name: 'Top Mid',        col: 'L', row: 11, size: 'sm' },
+    { name: 'Library',        col: 'O', row: 9,  size: 'sm' },
+    { name: 'Pit',            col: 'O', row: 14, size: 'sm' },
+    { name: 'Construction',   col: 'F', row: 2,  size: 'sm' },
+    { name: 'Boiler',         col: 'F', row: 11, size: 'sm' },
+    { name: 'Quad',           col: 'D', row: 4,  size: 'sm' },
+    { name: 'Coffins',        col: 'D', row: 2,  size: 'sm' },
+    { name: 'Garden',         col: 'F', row: 2,  size: 'sm' },
+    { name: 'Fountain',       col: 'C', row: 4,  size: 'sm' },
+    { name: 'CT Spawn',       col: 'O', row: 6,  size: 'sm' },
+    { name: 'T Spawn',        col: 'B', row: 11, size: 'sm' },
+    { name: 'Arch',           col: 'M', row: 9,  size: 'sm' },
+    { name: 'Truck',          col: 'I', row: 4,  size: 'sm' },
+    { name: 'Sand Bags',      col: 'J', row: 7,  size: 'sm' },
+    { name: 'Patio',          col: 'I', row: 13, size: 'sm' },
+    { name: 'Pit Dosia',      col: 'M', row: 16, size: 'sm' },
   ],
+
+  // ── DE_NUKE ─────────────────────────────────────────────────────────────
   'de_nuke': [
-    { name: 'A Site',    x: 800,   y: -750, size: 'lg' },
-    { name: 'B Site',    x: 600,   y: -1200,size: 'lg' },
-    { name: 'Outside',   x: -1100, y: -650, size: 'md' },
-    { name: 'Ramp',      x: 1500,  y: -700, size: 'sm' },
-    { name: 'Heaven',    x: 1100,  y: -350, size: 'sm' },
-    { name: 'Vents',     x: 600,   y: -900, size: 'sm' },
-    { name: 'Lobby',     x: 2600,  y: -700, size: 'sm' },
-    { name: 'Hut',       x: 0,     y: -300, size: 'sm' },
-    { name: 'Silo',      x: -1700, y: -800, size: 'sm' },
+    { name: 'A Site',         col: 'I', row: 9,  size: 'lg' },
+    { name: 'B Site',         col: 'C', row: 4,  size: 'lg' },
+    { name: 'Outside',        col: 'I', row: 12, size: 'md' },
+    { name: 'CT Spawn',       col: 'M', row: 8,  size: 'md' },
+    { name: 'T Spawn',        col: 'C', row: 10, size: 'md' },
+    { name: 'Ramp',           col: 'I', row: 6,  size: 'sm' },
+    { name: 'Heaven',         col: 'L', row: 8,  size: 'sm' },
+    { name: 'Hell',           col: 'L', row: 7,  size: 'sm' },
+    { name: 'Lobby',          col: 'F', row: 10, size: 'sm' },
+    { name: 'Hut',            col: 'I', row: 10, size: 'sm' },
+    { name: 'Silo',           col: 'H', row: 11, size: 'sm' },
+    { name: 'Garage',         col: 'L', row: 12, size: 'sm' },
+    { name: 'Mustang',        col: 'F', row: 7,  size: 'sm' },
+    { name: 'Headshot',       col: 'I', row: 5,  size: 'sm' },
+    { name: 'Tunnels',        col: 'E', row: 6,  size: 'sm' },
+    { name: 'Bottom Ramp',    col: 'C', row: 2,  size: 'sm' },
+    { name: 'Window',         col: 'D', row: 3,  size: 'sm' },
+    { name: 'Doors',          col: 'D', row: 4,  size: 'sm' },
+    { name: 'Decon Vent',     col: 'B', row: 6,  size: 'sm' },
+    { name: 'Back Vents',     col: 'C', row: 6,  size: 'sm' },
+    { name: 'Secret',         col: 'D', row: 8,  size: 'sm' },
+    { name: 'Control',        col: 'F', row: 7,  size: 'sm' },
+    { name: 'Trophy',         col: 'F', row: 7,  size: 'sm' },
+    { name: 'Radio',          col: 'F', row: 8,  size: 'sm' },
+    { name: 'Sand Bags',      col: 'F', row: 8,  size: 'sm' },
+    { name: 'Lockers',        col: 'I', row: 9,  size: 'sm' },
+    { name: 'Big Box',        col: 'H', row: 6,  size: 'sm' },
+    { name: 'Bridge',         col: 'L', row: 10, size: 'sm' },
+    { name: 'CT Box',         col: 'M', row: 9,  size: 'sm' },
+    { name: 'CT Red',         col: 'L', row: 11, size: 'sm' },
+    { name: 'T Roof',         col: 'D', row: 11, size: 'sm' },
+    { name: 'Vent',           col: 'F', row: 11, size: 'sm' },
+    { name: 'Main',           col: 'I', row: 11, size: 'sm' },
+    { name: 'T Red',          col: 'I', row: 12, size: 'sm' },
   ],
+
+  // ── DE_ANUBIS ───────────────────────────────────────────────────────────
   'de_anubis': [
-    { name: 'A Site',    x: 1450,  y: 250,  size: 'lg' },
-    { name: 'B Site',    x: -1300, y: 250,  size: 'lg' },
-    { name: 'Mid',       x: 0,     y: -300, size: 'md' },
-    { name: 'Connector', x: 800,   y: 100,  size: 'sm' },
-    { name: 'Heaven',    x: 1700,  y: 700,  size: 'sm' },
-    { name: 'Water',     x: -1700, y: -300, size: 'sm' },
-    { name: 'Palace',    x: 1900,  y: -200, size: 'sm' },
-    { name: 'Canal',     x: -800,  y: -700, size: 'sm' },
+    { name: 'A Site',         col: 'M', row: 5,  size: 'lg' },
+    { name: 'B Site',         col: 'E', row: 9,  size: 'lg' },
+    { name: 'Middle',         col: 'I', row: 7,  size: 'md' },
+    { name: 'Top Mid',        col: 'I', row: 11, size: 'md' },
+    { name: 'Heaven',         col: 'L', row: 4,  size: 'sm' },
+    { name: 'Back A Site',    col: 'L', row: 3,  size: 'sm' },
+    { name: 'Fountain',       col: 'N', row: 3,  size: 'sm' },
+    { name: 'Tunnel',         col: 'J', row: 4,  size: 'sm' },
+    { name: 'Beach',          col: 'G', row: 3,  size: 'sm' },
+    { name: 'CT Spawn',       col: 'E', row: 4,  size: 'md' },
+    { name: 'T Spawn',        col: 'F', row: 16, size: 'md' },
+    { name: 'Cave',           col: 'F', row: 6,  size: 'sm' },
+    { name: 'Sniper',         col: 'D', row: 5,  size: 'sm' },
+    { name: 'Street',         col: 'D', row: 7,  size: 'sm' },
+    { name: 'Palace',         col: 'F', row: 7,  size: 'sm' },
+    { name: 'Plateau',        col: 'L', row: 6,  size: 'sm' },
+    { name: 'A Connector',    col: 'L', row: 7,  size: 'sm' },
+    { name: 'Headshot',       col: 'M', row: 8,  size: 'sm' },
+    { name: 'Main',           col: 'N', row: 7,  size: 'sm' },
+    { name: 'Boat',           col: 'L', row: 9,  size: 'md' },
+    { name: 'Drop',           col: 'N', row: 9,  size: 'sm' },
+    { name: 'Default',        col: 'D', row: 8,  size: 'sm' },
+    { name: 'Ninja',          col: 'F', row: 9,  size: 'sm' },
+    { name: 'Back Site',      col: 'E', row: 8,  size: 'sm' },
+    { name: 'Pillar',         col: 'F', row: 10, size: 'sm' },
+    { name: 'Gate',           col: 'D', row: 10, size: 'sm' },
+    { name: 'Ivy',            col: 'B', row: 9,  size: 'sm' },
+    { name: 'Corner',         col: 'C', row: 8,  size: 'sm' },
+    { name: 'B Long',         col: 'C', row: 11, size: 'sm' },
+    { name: 'E Box',          col: 'G', row: 10, size: 'sm' },
+    { name: 'Bridge',         col: 'I', row: 9,  size: 'sm' },
+    { name: 'Water',          col: 'K', row: 10, size: 'sm' },
+    { name: 'Wood',           col: 'M', row: 11, size: 'sm' },
+    { name: 'Stairs',         col: 'L', row: 11, size: 'sm' },
+    { name: 'Upper',          col: 'N', row: 10, size: 'sm' },
+    { name: 'Arches',         col: 'J', row: 11, size: 'sm' },
+    { name: 'Ruins',          col: 'F', row: 13, size: 'md' },
+    { name: 'Alley',          col: 'J', row: 13, size: 'sm' },
   ],
+
+  // ── DE_ANCIENT ──────────────────────────────────────────────────────────
   'de_ancient': [
-    { name: 'A Site',    x: -700,  y: 600,  size: 'lg' },
-    { name: 'B Site',    x: 1700,  y: -1000,size: 'lg' },
-    { name: 'Mid',       x: 200,   y: -300, size: 'md' },
-    { name: 'Cave',      x: 1400,  y: -1500,size: 'sm' },
-    { name: 'Donut',     x: -800,  y: 0,    size: 'sm' },
-    { name: 'Heaven',    x: 1100,  y: -700, size: 'sm' },
-    { name: 'Temple',    x: -1300, y: 200,  size: 'sm' },
+    { name: 'A Site',         col: 'E', row: 5,  size: 'lg' },
+    { name: 'B Site',         col: 'M', row: 8,  size: 'lg' },
+    { name: 'Mid',            col: 'F', row: 9,  size: 'md' },
+    { name: 'Top Mid',        col: 'G', row: 7,  size: 'md' },
+    { name: 'CT Spawn',       col: 'H', row: 2,  size: 'md' },
+    { name: 'T Spawn',        col: 'F', row: 15, size: 'md' },
+    { name: 'Long',           col: 'B', row: 6,  size: 'md' },
+    { name: 'Tunnels',        col: 'D', row: 8,  size: 'md' },
+    { name: 'Short',          col: 'D', row: 7,  size: 'sm' },
+    { name: 'A Main',         col: 'B', row: 7,  size: 'sm' },
+    { name: 'A Halls',        col: 'B', row: 8,  size: 'sm' },
+    { name: 'Plat',           col: 'B', row: 3,  size: 'sm' },
+    { name: 'Single',         col: 'C', row: 4,  size: 'sm' },
+    { name: 'Big Box',        col: 'B', row: 5,  size: 'sm' },
+    { name: 'Boost',          col: 'D', row: 6,  size: 'sm' },
+    { name: 'Triple Box',     col: 'F', row: 5,  size: 'sm' },
+    { name: 'Snipers Nest',   col: 'H', row: 5,  size: 'sm' },
+    { name: 'CT Lane',        col: 'E', row: 4,  size: 'sm' },
+    { name: 'Temple',         col: 'D', row: 3,  size: 'sm' },
+    { name: 'Alley',          col: 'K', row: 5,  size: 'sm' },
+    { name: 'Back Halls',     col: 'L', row: 5,  size: 'sm' },
+    { name: 'Square',         col: 'M', row: 6,  size: 'sm' },
+    { name: 'House',          col: 'K', row: 7,  size: 'sm' },
+    { name: 'Dark',           col: 'J', row: 8,  size: 'sm' },
+    { name: 'Pit',            col: 'H', row: 8,  size: 'sm' },
+    { name: 'Lamp Room',      col: 'J', row: 9,  size: 'sm' },
+    { name: 'T Lower',        col: 'L', row: 10, size: 'sm' },
+    { name: 'Ramp',           col: 'N', row: 10, size: 'sm' },
+    { name: 'Heaven',         col: 'J', row: 10, size: 'sm' },
+    { name: 'Xbox',           col: 'H', row: 10, size: 'sm' },
+    { name: 'Elbow',          col: 'E', row: 10, size: 'sm' },
+    { name: 'Stairs',         col: 'B', row: 10, size: 'sm' },
+    { name: 'Window',         col: 'G', row: 11, size: 'sm' },
+    { name: 'Doors',          col: 'N', row: 11, size: 'sm' },
+    { name: 'Split',          col: 'D', row: 12, size: 'sm' },
+    { name: 'Pillar',         col: 'N', row: 7,  size: 'sm' },
+    { name: 'Ruins',          col: 'L', row: 12, size: 'sm' },
+    { name: 'Water',          col: 'J', row: 13, size: 'sm' },
+    { name: 'Tunnel',         col: 'H', row: 14, size: 'sm' },
   ],
+
+  // ── DE_VERTIGO ──────────────────────────────────────────────────────────
   'de_vertigo': [
-    { name: 'A Site',    x: 1100,  y: -600, size: 'lg' },
-    { name: 'B Site',    x: -900,  y: 200,  size: 'lg' },
-    { name: 'Mid',       x: 200,   y: -200, size: 'md' },
-    { name: 'Ramp',      x: 1100,  y: 0,    size: 'sm' },
-    { name: 'Stairs',    x: -300,  y: -800, size: 'sm' },
-    { name: 'Heaven',    x: 700,   y: -1100,size: 'sm' },
+    { name: 'A Site',         col: 'M', row: 4,  size: 'lg' },
+    { name: 'B Site',         col: 'D', row: 3,  size: 'lg' },
+    { name: 'Mid',            col: 'H', row: 8,  size: 'md' },
+    { name: 'Top Mid',        col: 'I', row: 11, size: 'md' },
+    { name: 'CT Spawn',       col: 'I', row: 4,  size: 'md' },
+    { name: 'T Spawn',        col: 'I', row: 16, size: 'md' },
+    { name: 'A Short',        col: 'L', row: 4,  size: 'sm' },
+    { name: 'A Long',         col: 'L', row: 7,  size: 'md' },
+    { name: 'A Ramp',         col: 'O', row: 4,  size: 'sm' },
+    { name: 'A Plat',         col: 'L', row: 3,  size: 'sm' },
+    { name: 'A Default Plant',col: 'M', row: 4,  size: 'sm' },
+    { name: 'A Cross',        col: 'O', row: 5,  size: 'sm' },
+    { name: 'A Car',          col: 'P', row: 6,  size: 'sm' },
+    { name: 'Elevator',       col: 'M', row: 5,  size: 'sm' },
+    { name: 'Short Boost',    col: 'M', row: 6,  size: 'sm' },
+    { name: 'Long Corner',    col: 'O', row: 7,  size: 'sm' },
+    { name: 'Blue',           col: 'L', row: 8,  size: 'sm' },
+    { name: 'Long Doors',     col: 'L', row: 11, size: 'sm' },
+    { name: 'Side Pit',       col: 'M', row: 11, size: 'sm' },
+    { name: 'Pit',            col: 'N', row: 11, size: 'sm' },
+    { name: 'Pit Plat',       col: 'O', row: 10, size: 'sm' },
+    { name: 'B Plat',         col: 'B', row: 3,  size: 'sm' },
+    { name: 'B Window',       col: 'F', row: 2,  size: 'sm' },
+    { name: 'Big Box',        col: 'B', row: 4,  size: 'sm' },
+    { name: 'Double Stack',   col: 'C', row: 4,  size: 'sm' },
+    { name: 'B Default Plant',col: 'D', row: 4,  size: 'sm' },
+    { name: 'B Doors',        col: 'D', row: 5,  size: 'sm' },
+    { name: 'CT Mid',         col: 'F', row: 5,  size: 'sm' },
+    { name: 'B Boxes',        col: 'D', row: 6,  size: 'sm' },
+    { name: 'Mid Doors',      col: 'F', row: 6,  size: 'sm' },
+    { name: 'Close Mid Doors',col: 'G', row: 6,  size: 'sm' },
+    { name: 'Stairs',         col: 'I', row: 7,  size: 'sm' },
+    { name: 'B Closet',       col: 'C', row: 7,  size: 'sm' },
+    { name: 'Lower Tunnels',  col: 'D', row: 7,  size: 'sm' },
+    { name: 'Xbox',           col: 'F', row: 7,  size: 'sm' },
+    { name: 'Catwalk',        col: 'I', row: 9,  size: 'sm' },
+    { name: 'Palm',           col: 'F', row: 9,  size: 'sm' },
+    { name: 'Right Side Mid', col: 'F', row: 11, size: 'sm' },
+    { name: 'Outside',        col: 'B', row: 11, size: 'md' },
+    { name: 'Outside Long',   col: 'L', row: 12, size: 'sm' },
+    { name: 'Tunnels',        col: 'C', row: 12, size: 'sm' },
+    { name: 'Suicide',        col: 'I', row: 12, size: 'sm' },
+    { name: 'T Ramp',         col: 'B', row: 14, size: 'sm' },
+    { name: 'T Plat',         col: 'D', row: 14, size: 'sm' },
+    { name: 'Upper Tunnels',  col: 'A', row: 7,  size: 'sm' },
+    { name: 'Back Plat',      col: 'C', row: 1,  size: 'sm' },
+    { name: 'Scaffolding',    col: 'F', row: 3,  size: 'sm' },
+    { name: 'Ninja',          col: 'I', row: 2,  size: 'sm' },
+    { name: 'Goose',          col: 'L', row: 2,  size: 'sm' },
+    { name: 'Barrels',        col: 'O', row: 3,  size: 'sm' },
+    { name: 'Fence',          col: 'A', row: 5,  size: 'sm' },
+    { name: 'B Car',          col: 'C', row: 5,  size: 'sm' },
+    { name: 'Close',          col: 'A', row: 6,  size: 'sm' },
   ],
+
+  // ── DE_OVERPASS ─────────────────────────────────────────────────────────
   'de_overpass': [
-    { name: 'A Site',    x: -2400, y: -800, size: 'lg' },
-    { name: 'B Site',    x: -2000, y: 800,  size: 'lg' },
-    { name: 'Long',      x: -2700, y: -200, size: 'md' },
-    { name: 'Short',     x: -1900, y: -700, size: 'sm' },
-    { name: 'Connector', x: -2200, y: 200,  size: 'sm' },
-    { name: 'Toilets',   x: -1700, y: 600,  size: 'sm' },
-    { name: 'Park',      x: -3400, y: 1200, size: 'md' },
-    { name: 'Heaven',    x: -2900, y: -900, size: 'sm' },
+    { name: 'A Site',         col: 'H', row: 4,  size: 'lg' },
+    { name: 'B Site',         col: 'M', row: 5,  size: 'lg' },
+    { name: 'Mid',            col: 'G', row: 10, size: 'md' },
+    { name: 'A Long',         col: 'C', row: 9,  size: 'md' },
+    { name: 'A Short',        col: 'I', row: 6,  size: 'md' },
+    { name: 'CT Spawn',       col: 'F', row: 4,  size: 'sm' },
+    { name: 'T Spawn',        col: 'I', row: 16, size: 'md' },
+    { name: 'Heaven',         col: 'K', row: 4,  size: 'sm' },
+    { name: 'Pit',            col: 'J', row: 5,  size: 'sm' },
+    { name: 'Pillar',         col: 'M', row: 4,  size: 'sm' },
+    { name: 'Sewers',         col: 'O', row: 6,  size: 'sm' },
+    { name: 'Monster',        col: 'N', row: 7,  size: 'sm' },
+    { name: 'Bridge',         col: 'L', row: 7,  size: 'sm' },
+    { name: 'Walkway',        col: 'J', row: 6,  size: 'sm' },
+    { name: 'Bank',           col: 'G', row: 2,  size: 'sm' },
+    { name: 'Storage',        col: 'G', row: 1,  size: 'sm' },
+    { name: 'Bins',           col: 'I', row: 3,  size: 'sm' },
+    { name: 'Van',            col: 'F', row: 3,  size: 'sm' },
+    { name: 'Optimus',        col: 'I', row: 4,  size: 'sm' },
+    { name: 'Sign Post',      col: 'G', row: 4,  size: 'sm' },
+    { name: 'A Default',      col: 'D', row: 5,  size: 'sm' },
+    { name: 'Close Left',     col: 'C', row: 4,  size: 'sm' },
+    { name: 'Bench',          col: 'D', row: 7,  size: 'sm' },
+    { name: 'Long Boost',     col: 'B', row: 7,  size: 'sm' },
+    { name: 'Cafe',           col: 'D', row: 7,  size: 'sm' },
+    { name: 'Long Toilets',   col: 'D', row: 8,  size: 'sm' },
+    { name: 'Toilets',        col: 'F', row: 8,  size: 'sm' },
+    { name: 'Tree',           col: 'C', row: 11, size: 'sm' },
+    { name: 'Rock',           col: 'D', row: 12, size: 'sm' },
+    { name: 'Party',          col: 'F', row: 11, size: 'sm' },
+    { name: 'Connector',      col: 'L', row: 10, size: 'sm' },
+    { name: 'Short Tunnel',   col: 'L', row: 9,  size: 'sm' },
+    { name: 'Tracks',         col: 'M', row: 9,  size: 'sm' },
+    { name: 'Lower Tunnels',  col: 'I', row: 11, size: 'sm' },
+    { name: 'Upper Tunnels',  col: 'L', row: 12, size: 'sm' },
+    { name: 'Ladder',         col: 'I', row: 12, size: 'sm' },
+    { name: 'Alley',          col: 'L', row: 11, size: 'sm' },
+    { name: 'Fountain',       col: 'G', row: 13, size: 'sm' },
+    { name: 'Playground',     col: 'F', row: 14, size: 'sm' },
+    { name: 'Hitmarker',      col: 'D', row: 13, size: 'sm' },
+    { name: 'Squeaky',        col: 'I', row: 9,  size: 'sm' },
+    { name: 'Boost',          col: 'I', row: 7,  size: 'sm' },
+    { name: 'Sand Bags',      col: 'L', row: 7,  size: 'sm' },
+    { name: 'Water',          col: 'K', row: 8,  size: 'sm' },
+    { name: 'Graffiti',       col: 'I', row: 7,  size: 'sm' },
+    { name: 'Flowers',        col: 'I', row: 6,  size: 'sm' },
+    { name: 'Barrels',        col: 'M', row: 3,  size: 'sm' },
   ],
 };
 
@@ -4835,7 +5090,15 @@ function buildCoachAIContext() {
       isHeadshot: k.isHeadshot,
       thruSmoke: k.thruSmoke,
       isWallbang: k.isWallbang,
+      // Annotation tactique : zone (call-out) ou le kill a eu lieu.
+      // Permet a Claude de raisonner avec des references precises
+      // ("ton peek catwalk", "ce duel A long...").
+      victimCallout: getCalloutForPosition(mapName, k.victimX, k.victimY),
+      attackerCallout: getCalloutForPosition(mapName, k.attackerX, k.attackerY),
     })),
+    // Liste complete des call-outs de la map pour que Claude puisse
+    // les referencer dans son analyse meme pour les positions hors kills.
+    mapCallouts: (MAP_CALLOUTS[mapName] || []).map(c => c.name),
     bombPlanted,
     bombDefused,
     bombExploded,
@@ -5286,7 +5549,17 @@ function drawCallouts(W, H) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   for (const c of callouts) {
-    const pos = w2c(c.x, c.y, mapName);
+    // Nouveau format : col + row (grille A-P / 1-16 du radar TotalCSGO).
+    // Backward compat : si c.x / c.y presents, les utiliser directement.
+    let worldX, worldY;
+    if (c.col && c.row != null) {
+      const w = gridToWorld(mapName, c.col, c.row);
+      if (!w) continue;
+      worldX = w.x; worldY = w.y;
+    } else if (c.x != null && c.y != null) {
+      worldX = c.x; worldY = c.y;
+    } else continue;
+    const pos = w2c(worldX, worldY, mapName);
     const px = pos.x * scaleX, py = pos.y * scaleY;
     if (!inBounds(px, py)) continue;
     let fontSize, alpha, weight;
