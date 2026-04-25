@@ -4,7 +4,7 @@
 User-agent: *
 Allow: /
 
-# Pages authentifiees ou sensibles - pas d'indexation
+# Pages auth-required ou sensibles - pas d'indexation
 Disallow: /admin/
 Disallow: /api/
 Disallow: /account.html
@@ -15,11 +15,32 @@ Disallow: /pro-match.html
 Disallow: /heatmap-results.html
 Disallow: /analysis.html
 Disallow: /share.html
+Disallow: /team.html
+Disallow: /scout.html
+Disallow: /compare.html
 Disallow: /faceit-callback.html
 Disallow: /extension-auth.html
 Disallow: /onboarding.html
 
-# Bots agressifs commerciaux - blocage complet
+# Versions /en/ : memes regles d'exclusion
+Disallow: /en/account.html
+Disallow: /en/dashboard.html
+Disallow: /en/matches.html
+Disallow: /en/replay.html
+Disallow: /en/pro-match.html
+Disallow: /en/heatmap-results.html
+Disallow: /en/analysis.html
+Disallow: /en/share.html
+Disallow: /en/team.html
+Disallow: /en/scout.html
+Disallow: /en/compare.html
+Disallow: /en/onboarding.html
+
+# Crawl rate confortable (1 req/sec) pour ne pas saturer Vercel
+Crawl-delay: 1
+
+# Bots agressifs commerciaux / IA - blocage complet
+# (on ne veut pas que nos contenus alimentent les LLM concurrents)
 User-agent: GPTBot
 Disallow: /
 
@@ -41,5 +62,11 @@ Disallow: /
 User-agent: FacebookBot
 Disallow: /
 
-# Sitemap
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+# Sitemap (FR + EN unifies avec hreflang)
 Sitemap: https://fragvalue.com/sitemap.xml
