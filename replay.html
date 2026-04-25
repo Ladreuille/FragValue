@@ -836,10 +836,9 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <button class="sl-tool" id="btnTrail" onclick="toggleTrail()" data-tip="Trainee de mouvement">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         </button>
-        <!-- Call-outs toggle : nom des zones de la map (Long, A Site, Mid...) -->
-        <button class="sl-tool" id="btnCallouts" onclick="toggleCallouts()" data-tip="Call-outs map">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        </button>
+        <!-- Note : bouton call-outs retire de la sidebar (les joueurs CS2
+             connaissent les zones par coeur). Les data MAP_CALLOUTS sont
+             conservees pour enrichir l analyse Coach IA tactiquement. -->
         <!-- Share : copie dans presse-papier un lien deep-link vers le moment courant -->
         <button class="sl-tool" id="btnShare" onclick="shareCurrentMoment()" data-tip="Partager ce moment">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -1445,7 +1444,6 @@ let playerColorMap = {}, hiddenPlayers = new Set();
 let canvas, ctx, mapImg = null, mapName = 'de_dust2';
 let currentFloor = 'upper';
 let showTrail = true;
-let showCallouts = false; // Call-outs labels (Long, A Site, Mid, ...) overlay
 let showGrenadeTraj = false; // Trajectoires de toutes les grenades du round (overlay tactique)
 
 // ── Drawing tool state (Sprint 3.5) ──────────────────────────────────────
@@ -2886,14 +2884,9 @@ function drawFrame(idx, interp = 0) {
   // Movement trails
   if (showTrail) drawTrails(frame, W, H);
 
-  // Call-outs overlay : zones de la map (Long, A, Mid, ...)
-  // Placé après le fond et la vignette mais avant les joueurs, donc
-  // visible mais sans masquer les dots.
-  if (showCallouts) drawCallouts(W, H);
-
   // Grenade trajectories overlay : visualise toutes les utilities du round
   // (smoke/HE/flash/molo/decoy) en polylines colorees + markers detonation.
-  // Placé apres callouts mais avant joueurs pour rester en arriere-plan.
+  // Placé en arriere-plan pour ne pas masquer les dots joueurs.
   if (showGrenadeTraj) drawGrenadeTrajectories(W, H);
 
   // ── Isolated player path (click sur dot) ─────────────────────────────
@@ -4446,13 +4439,6 @@ function toggleTrail() {
   drawFrame(frameIdx);
 }
 
-function toggleCallouts() {
-  showCallouts = !showCallouts;
-  const btn = document.getElementById('btnCallouts');
-  if (btn) btn.classList.toggle('active', showCallouts);
-  drawFrame(frameIdx);
-}
-
 function toggleGrenadeTraj() {
   showGrenadeTraj = !showGrenadeTraj;
   const btn = document.getElementById('btnGrenadeTraj');
@@ -5533,70 +5519,12 @@ function drawAnnotations(W, H) {
   ctx.restore();
 }
 
-// ══ CALL-OUTS RENDERING ══════════════════════════════════════════════════════
-// Dessine les noms de zones de la map (Long, A Site, Mid, Tunnels, ...)
-// pour aider a la lecture tactique. Toggle par btnCallouts.
-//
-// Sizes : sm = zone secondaire (10px, alpha 0.55)
-//         md = zone principale (12px, alpha 0.7)
-//         lg = bombsite       (15px, alpha 0.85, bold)
-function drawCallouts(W, H) {
-  const callouts = MAP_CALLOUTS[mapName];
-  if (!callouts || !callouts.length) return;
-  const scaleX = W / 1024;
-  const scaleY = H / 1024;
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  for (const c of callouts) {
-    // Nouveau format : col + row (grille A-P / 1-16 du radar TotalCSGO).
-    // Backward compat : si c.x / c.y presents, les utiliser directement.
-    let worldX, worldY;
-    if (c.col && c.row != null) {
-      const w = gridToWorld(mapName, c.col, c.row);
-      if (!w) continue;
-      worldX = w.x; worldY = w.y;
-    } else if (c.x != null && c.y != null) {
-      worldX = c.x; worldY = c.y;
-    } else continue;
-    const pos = w2c(worldX, worldY, mapName);
-    const px = pos.x * scaleX, py = pos.y * scaleY;
-    if (!inBounds(px, py)) continue;
-    let fontSize, alpha, weight;
-    if (c.size === 'lg')      { fontSize = 15; alpha = 0.85; weight = '700'; }
-    else if (c.size === 'md') { fontSize = 12; alpha = 0.70; weight = '600'; }
-    else                      { fontSize = 10; alpha = 0.55; weight = '500'; }
-    // Text shadow pour lisibilite sur map claire
-    ctx.font = weight + ' ' + fontSize + 'px "Space Mono", monospace';
-    const text = c.name.toUpperCase();
-    const tw = ctx.measureText(text).width;
-    // Background pill pour contraste
-    const padX = 5, padY = 3;
-    const bgW = tw + padX * 2, bgH = fontSize + padY * 2;
-    ctx.fillStyle = 'rgba(8,10,16,' + (alpha * 0.65) + ')';
-    if (ctx.roundRect) {
-      ctx.beginPath();
-      ctx.roundRect(px - bgW/2, py - bgH/2, bgW, bgH, 3);
-      ctx.fill();
-    } else {
-      ctx.fillRect(px - bgW/2, py - bgH/2, bgW, bgH);
-    }
-    // Border subtil accent
-    ctx.strokeStyle = 'rgba(184,255,87,' + (alpha * 0.35) + ')';
-    ctx.lineWidth = 0.5;
-    if (ctx.roundRect) {
-      ctx.beginPath();
-      ctx.roundRect(px - bgW/2, py - bgH/2, bgW, bgH, 3);
-      ctx.stroke();
-    } else {
-      ctx.strokeRect(px - bgW/2, py - bgH/2, bgW, bgH);
-    }
-    // Texte
-    ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
-    ctx.fillText(text, px, py);
-  }
-  ctx.restore();
-}
+// Note : la fonction drawCallouts (rendu visuel des call-outs sur la map)
+// a ete retiree. Les joueurs CS2 connaissent les zones, le toggle ajoutait
+// du bruit visuel sans valeur. Les data MAP_CALLOUTS + helpers gridToWorld
+// + getCalloutForPosition sont conserves : utilises par buildCoachAIContext
+// pour annoter chaque kill avec sa zone, et envoyer la liste des call-outs
+// a Claude pour qu il refere aux positions precisement dans son analyse.
 
 // ══ NAV ROUNDS HELPERS ═══════════════════════════════════════════════════════
 function navRound(delta) {
