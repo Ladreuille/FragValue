@@ -57,26 +57,26 @@ function sb() {
 // assignments updated for April 2026 (transferts post-publication).
 // Stats indicatives basees sur la moyenne saison 2025 + Q1 2026.
 const SEED_TOP20_2026 = [
-  { rank:  1, nickname: 'ZywOo',    team: 'Vitality', country: 'FR', role: 'awp',     maps_played: 38, hltv_rating: 1.30, kast_pct: 78, adr: 89, kpr: 0.83, hs_pct: 56, kd: 1.28 },
-  { rank:  2, nickname: 'donk',     team: 'Spirit',   country: 'RU', role: 'rifler',  maps_played: 42, hltv_rating: 1.32, kast_pct: 76, adr: 92, kpr: 0.86, hs_pct: 60, kd: 1.31 },
-  { rank:  3, nickname: 'ropz',     team: 'Vitality', country: 'EE', role: 'rifler',  maps_played: 35, hltv_rating: 1.20, kast_pct: 75, adr: 86, kpr: 0.76, hs_pct: 55, kd: 1.18 },
-  { rank:  4, nickname: 'm0NESY',   team: 'Falcons',  country: 'RU', role: 'awp',     maps_played: 36, hltv_rating: 1.18, kast_pct: 73, adr: 85, kpr: 0.76, hs_pct: 58, kd: 1.16 },
-  { rank:  5, nickname: 'sh1ro',    team: 'Spirit',   country: 'RU', role: 'awp',     maps_played: 40, hltv_rating: 1.15, kast_pct: 76, adr: 78, kpr: 0.69, hs_pct: 49, kd: 1.13 },
-  { rank:  6, nickname: 'molodoy',  team: 'FURIA',    country: 'KZ', role: 'rifler',  maps_played: 32, hltv_rating: 1.14, kast_pct: 72, adr: 82, kpr: 0.74, hs_pct: 56, kd: 1.12 },
-  { rank:  7, nickname: 'flameZ',   team: 'Vitality', country: 'IL', role: 'entry',   maps_played: 33, hltv_rating: 1.13, kast_pct: 73, adr: 80, kpr: 0.72, hs_pct: 56, kd: 1.10 },
-  { rank:  8, nickname: 'frozen',   team: 'FaZe',     country: 'SK', role: 'rifler',  maps_played: 30, hltv_rating: 1.12, kast_pct: 73, adr: 79, kpr: 0.71, hs_pct: 53, kd: 1.09 },
-  { rank:  9, nickname: 'KSCERATO', team: 'FURIA',    country: 'BR', role: 'rifler',  maps_played: 32, hltv_rating: 1.11, kast_pct: 72, adr: 80, kpr: 0.71, hs_pct: 54, kd: 1.08 },
-  { rank: 10, nickname: 'Spinx',    team: 'MOUZ',     country: 'IL', role: 'support', maps_played: 36, hltv_rating: 1.10, kast_pct: 75, adr: 76, kpr: 0.68, hs_pct: 51, kd: 1.07 },
-  { rank: 11, nickname: 'Twistzz',  team: 'FaZe',     country: 'CA', role: 'rifler',  maps_played: 28, hltv_rating: 1.09, kast_pct: 73, adr: 78, kpr: 0.70, hs_pct: 53, kd: 1.07 },
-  { rank: 12, nickname: 'mezii',    team: 'Vitality', country: 'GB', role: 'support', maps_played: 30, hltv_rating: 1.08, kast_pct: 74, adr: 74, kpr: 0.66, hs_pct: 50, kd: 1.05 },
-  { rank: 13, nickname: 'Senzu',    team: 'MongolZ',  country: 'MN', role: 'igl',     maps_played: 30, hltv_rating: 1.08, kast_pct: 73, adr: 74, kpr: 0.65, hs_pct: 50, kd: 1.05 },
-  { rank: 14, nickname: 'XANTARES', team: 'Aurora',   country: 'TR', role: 'rifler',  maps_played: 32, hltv_rating: 1.07, kast_pct: 71, adr: 78, kpr: 0.71, hs_pct: 56, kd: 1.04 },
-  { rank: 15, nickname: 'YEKINDAR', team: 'FURIA',    country: 'LV', role: 'entry',   maps_played: 30, hltv_rating: 1.07, kast_pct: 71, adr: 80, kpr: 0.71, hs_pct: 55, kd: 1.04 },
-  { rank: 16, nickname: 'xertioN',  team: 'MOUZ',     country: 'IL', role: 'igl',     maps_played: 35, hltv_rating: 1.06, kast_pct: 72, adr: 76, kpr: 0.68, hs_pct: 52, kd: 1.04 },
-  { rank: 17, nickname: 'torzsi',   team: 'MOUZ',     country: 'HU', role: 'awp',     maps_played: 35, hltv_rating: 1.06, kast_pct: 72, adr: 75, kpr: 0.66, hs_pct: 48, kd: 1.04 },
-  { rank: 18, nickname: 'NiKo',     team: 'Falcons',  country: 'BA', role: 'rifler',  maps_played: 34, hltv_rating: 1.05, kast_pct: 71, adr: 82, kpr: 0.74, hs_pct: 58, kd: 1.03 },
-  { rank: 19, nickname: 'iM',       team: 'NaVi',     country: 'RO', role: 'rifler',  maps_played: 33, hltv_rating: 1.05, kast_pct: 71, adr: 74, kpr: 0.67, hs_pct: 53, kd: 1.03 },
-  { rank: 20, nickname: 'b1t',      team: 'NaVi',     country: 'UA', role: 'support', maps_played: 33, hltv_rating: 1.04, kast_pct: 72, adr: 73, kpr: 0.66, hs_pct: 54, kd: 1.02 },
+  { rank:  1, nickname: 'ZywOo',    team: 'Vitality', country: 'FR', role: 'awp',     hltv_id: 11893, maps_played: 38, hltv_rating: 1.30, kast_pct: 78, adr: 89, kpr: 0.83, hs_pct: 56, kd: 1.28 },
+  { rank:  2, nickname: 'donk',     team: 'Spirit',   country: 'RU', role: 'rifler',  hltv_id: 24220, maps_played: 42, hltv_rating: 1.32, kast_pct: 76, adr: 92, kpr: 0.86, hs_pct: 60, kd: 1.31 },
+  { rank:  3, nickname: 'ropz',     team: 'Vitality', country: 'EE', role: 'rifler',  hltv_id: 11816, maps_played: 35, hltv_rating: 1.20, kast_pct: 75, adr: 86, kpr: 0.76, hs_pct: 55, kd: 1.18 },
+  { rank:  4, nickname: 'm0NESY',   team: 'Falcons',  country: 'RU', role: 'awp',     hltv_id: 18053, maps_played: 36, hltv_rating: 1.18, kast_pct: 73, adr: 85, kpr: 0.76, hs_pct: 58, kd: 1.16 },
+  { rank:  5, nickname: 'sh1ro',    team: 'Spirit',   country: 'RU', role: 'awp',     hltv_id: 18116, maps_played: 40, hltv_rating: 1.15, kast_pct: 76, adr: 78, kpr: 0.69, hs_pct: 49, kd: 1.13 },
+  { rank:  6, nickname: 'molodoy',  team: 'FURIA',    country: 'KZ', role: 'rifler',  hltv_id: 26256, maps_played: 32, hltv_rating: 1.14, kast_pct: 72, adr: 82, kpr: 0.74, hs_pct: 56, kd: 1.12 },
+  { rank:  7, nickname: 'flameZ',   team: 'Vitality', country: 'IL', role: 'entry',   hltv_id: 19222, maps_played: 33, hltv_rating: 1.13, kast_pct: 73, adr: 80, kpr: 0.72, hs_pct: 56, kd: 1.10 },
+  { rank:  8, nickname: 'frozen',   team: 'FaZe',     country: 'SK', role: 'rifler',  hltv_id: 11843, maps_played: 30, hltv_rating: 1.12, kast_pct: 73, adr: 79, kpr: 0.71, hs_pct: 53, kd: 1.09 },
+  { rank:  9, nickname: 'KSCERATO', team: 'FURIA',    country: 'BR', role: 'rifler',  hltv_id: 14176, maps_played: 32, hltv_rating: 1.11, kast_pct: 72, adr: 80, kpr: 0.71, hs_pct: 54, kd: 1.08 },
+  { rank: 10, nickname: 'Spinx',    team: 'MOUZ',     country: 'IL', role: 'support', hltv_id: 16732, maps_played: 36, hltv_rating: 1.10, kast_pct: 75, adr: 76, kpr: 0.68, hs_pct: 51, kd: 1.07 },
+  { rank: 11, nickname: 'Twistzz',  team: 'FaZe',     country: 'CA', role: 'rifler',  hltv_id: 10394, maps_played: 28, hltv_rating: 1.09, kast_pct: 73, adr: 78, kpr: 0.70, hs_pct: 53, kd: 1.07 },
+  { rank: 12, nickname: 'mezii',    team: 'Vitality', country: 'GB', role: 'support', hltv_id: 18933, maps_played: 30, hltv_rating: 1.08, kast_pct: 74, adr: 74, kpr: 0.66, hs_pct: 50, kd: 1.05 },
+  { rank: 13, nickname: 'Senzu',    team: 'MongolZ',  country: 'MN', role: 'rifler',  hltv_id: 23158, maps_played: 30, hltv_rating: 1.08, kast_pct: 73, adr: 74, kpr: 0.65, hs_pct: 50, kd: 1.05 },
+  { rank: 14, nickname: 'XANTARES', team: 'Aurora',   country: 'TR', role: 'rifler',  hltv_id: 4805,  maps_played: 32, hltv_rating: 1.07, kast_pct: 71, adr: 78, kpr: 0.71, hs_pct: 56, kd: 1.04 },
+  { rank: 15, nickname: 'YEKINDAR', team: 'FURIA',    country: 'LV', role: 'entry',   hltv_id: 18062, maps_played: 30, hltv_rating: 1.07, kast_pct: 71, adr: 80, kpr: 0.71, hs_pct: 55, kd: 1.04 },
+  { rank: 16, nickname: 'xertioN',  team: 'MOUZ',     country: 'IL', role: 'awp',     hltv_id: 21770, maps_played: 35, hltv_rating: 1.06, kast_pct: 72, adr: 76, kpr: 0.68, hs_pct: 52, kd: 1.04 },
+  { rank: 17, nickname: 'torzsi',   team: 'MOUZ',     country: 'HU', role: 'awp',     hltv_id: 19887, maps_played: 35, hltv_rating: 1.06, kast_pct: 72, adr: 75, kpr: 0.66, hs_pct: 48, kd: 1.04 },
+  { rank: 18, nickname: 'NiKo',     team: 'Falcons',  country: 'BA', role: 'rifler',  hltv_id: 3741,  maps_played: 34, hltv_rating: 1.05, kast_pct: 71, adr: 82, kpr: 0.74, hs_pct: 58, kd: 1.03 },
+  { rank: 19, nickname: 'iM',       team: 'NaVi',     country: 'RO', role: 'rifler',  hltv_id: 21176, maps_played: 33, hltv_rating: 1.05, kast_pct: 71, adr: 74, kpr: 0.67, hs_pct: 53, kd: 1.03 },
+  { rank: 20, nickname: 'b1t',      team: 'NaVi',     country: 'UA', role: 'support', hltv_id: 18987, maps_played: 33, hltv_rating: 1.04, kast_pct: 72, adr: 73, kpr: 0.66, hs_pct: 54, kd: 1.02 },
 ];
 
 // ── PLAYER_METADATA : dict elargi nickname → role/country/team ──────────
@@ -86,87 +86,88 @@ const SEED_TOP20_2026 = [
 // Source de verite : Liquipedia rosters (verifies avril 2026).
 const PLAYER_METADATA = {
   // ─── Vitality (Champions IEM Krakow 2026) ───
-  'zywoo':    { role: 'awp',     country: 'FR', team: 'Vitality' },
-  'apex':     { role: 'igl',     country: 'FR', team: 'Vitality' },
-  'ropz':     { role: 'rifler',  country: 'EE', team: 'Vitality' },
-  'flamez':   { role: 'entry',   country: 'IL', team: 'Vitality' },
-  'mezii':    { role: 'support', country: 'GB', team: 'Vitality' },
+  'zywoo':    { role: 'awp',     country: 'FR', team: 'Vitality',     hltv_id: 11893 },
+  'apex':     { role: 'igl',     country: 'FR', team: 'Vitality',     hltv_id: 4674  },
+  'ropz':     { role: 'rifler',  country: 'EE', team: 'Vitality',     hltv_id: 11816 },
+  'flamez':   { role: 'entry',   country: 'IL', team: 'Vitality',     hltv_id: 19222 },
+  'mezii':    { role: 'support', country: 'GB', team: 'Vitality',     hltv_id: 18933 },
 
   // ─── Spirit ───
-  'donk':     { role: 'rifler',  country: 'RU', team: 'Spirit' },
-  'sh1ro':    { role: 'awp',     country: 'RU', team: 'Spirit' },
-  'magixx':   { role: 'igl',     country: 'RU', team: 'Spirit' },
-  'zont1x':   { role: 'rifler',  country: 'UA', team: 'Spirit' },
-  'tn1r':     { role: 'rifler',  country: 'RU', team: 'Spirit' },
-  'chopper':  { role: 'igl',     country: 'RU', team: 'Spirit' }, // benche dec 2025
+  'donk':     { role: 'rifler',  country: 'RU', team: 'Spirit',       hltv_id: 24220 },
+  'sh1ro':    { role: 'awp',     country: 'RU', team: 'Spirit',       hltv_id: 18116 },
+  'magixx':   { role: 'rifler',  country: 'RU', team: 'Spirit',       hltv_id: 18117 },
+  'zont1x':   { role: 'rifler',  country: 'UA', team: 'Spirit',       hltv_id: 21708 },
+  'tn1r':     { role: 'rifler',  country: 'RU', team: 'Spirit',       hltv_id: 22585 },
+  'chopper':  { role: 'igl',     country: 'RU', team: 'Spirit',       hltv_id: 13784 }, // benche dec 2025
   'zweih':    { role: 'rifler',  country: 'RU', team: 'Spirit' }, // benche dec 2025
 
   // ─── Falcons (apres transferts m0NESY + karrigan) ───
-  'm0nesy':   { role: 'awp',     country: 'RU', team: 'Falcons' },
-  'niko':     { role: 'rifler',  country: 'BA', team: 'Falcons' },
-  'karrigan': { role: 'igl',     country: 'DK', team: 'Falcons' },
-  'teses':    { role: 'rifler',  country: 'DK', team: 'Falcons' },
-  'kyousuke': { role: 'rifler',  country: 'KZ', team: 'Falcons' },
-  'kyxsan':   { role: 'rifler',  country: 'PL', team: 'Falcons' }, // benche apr 2026
+  'm0nesy':   { role: 'awp',     country: 'RU', team: 'Falcons',      hltv_id: 18053 },
+  'niko':     { role: 'rifler',  country: 'BA', team: 'Falcons',      hltv_id: 3741  },
+  'karrigan': { role: 'igl',     country: 'DK', team: 'Falcons',      hltv_id: 429   },
+  'teses':    { role: 'rifler',  country: 'DK', team: 'Falcons',      hltv_id: 19937 },
+  'kyousuke': { role: 'rifler',  country: 'KZ', team: 'Falcons',      hltv_id: 24598 },
+  'kyxsan':   { role: 'rifler',  country: 'PL', team: 'Falcons',      hltv_id: 19374 }, // benche apr 2026
 
   // ─── FaZe (post-karrigan depart) ───
-  'frozen':   { role: 'rifler',  country: 'SK', team: 'FaZe' },
-  'twistzz':  { role: 'rifler',  country: 'CA', team: 'FaZe' },
-  'broky':    { role: 'awp',     country: 'BA', team: 'FaZe' },
-  'jcobbb':   { role: 'rifler',  country: 'PL', team: 'FaZe' },
-  'rain':     { role: 'entry',   country: 'NO', team: 'FaZe' }, // veteran
+  'frozen':   { role: 'rifler',  country: 'SK', team: 'FaZe',         hltv_id: 11843 },
+  'twistzz':  { role: 'rifler',  country: 'CA', team: 'FaZe',         hltv_id: 10394 },
+  'broky':    { role: 'awp',     country: 'BA', team: 'FaZe',         hltv_id: 16341 },
+  'jcobbb':   { role: 'rifler',  country: 'PL', team: 'FaZe',         hltv_id: 22377 },
+  'rain':     { role: 'entry',   country: 'NO', team: 'FaZe',         hltv_id: 8568  }, // veteran
 
   // ─── MOUZ ───
-  'spinx':    { role: 'support', country: 'IL', team: 'MOUZ' },
-  'xertion':  { role: 'igl',     country: 'IL', team: 'MOUZ' },
-  'torzsi':   { role: 'awp',     country: 'HU', team: 'MOUZ' },
-  'jl':       { role: 'rifler',  country: 'LV', team: 'MOUZ' }, // loan from NaVi
+  'spinx':    { role: 'support', country: 'IL', team: 'MOUZ',         hltv_id: 16732 },
+  'xertion':  { role: 'awp',     country: 'IL', team: 'MOUZ',         hltv_id: 21770 },
+  'torzsi':   { role: 'awp',     country: 'HU', team: 'MOUZ',         hltv_id: 19887 },
+  'jl':       { role: 'rifler',  country: 'LV', team: 'MOUZ',         hltv_id: 21709 }, // loan from NaVi
   'xelex':    { role: 'rifler',  country: 'CZ', team: 'MOUZ' },
-  'brollan':  { role: 'rifler',  country: 'SE', team: 'MOUZ' }, // benche
-  'jimpphat': { role: 'rifler',  country: 'FI', team: 'MOUZ' }, // benche
+  'brollan':  { role: 'rifler',  country: 'SE', team: 'MOUZ',         hltv_id: 14176 }, // benche
+  'jimpphat': { role: 'rifler',  country: 'FI', team: 'MOUZ',         hltv_id: 19400 }, // benche
+  'siuhy':    { role: 'igl',     country: 'PL', team: 'MOUZ',         hltv_id: 19831 }, // IGL post-shuffle
 
   // ─── Natus Vincere (NaVi) ───
-  'aleksib':  { role: 'igl',     country: 'FI', team: 'NaVi' },
-  'iM':       { role: 'rifler',  country: 'RO', team: 'NaVi' },
-  'b1t':      { role: 'support', country: 'UA', team: 'NaVi' },
-  'w0nderful':{ role: 'awp',     country: 'UA', team: 'NaVi' },
+  'aleksib':  { role: 'igl',     country: 'FI', team: 'NaVi',         hltv_id: 9960  },
+  'im':       { role: 'rifler',  country: 'RO', team: 'NaVi',         hltv_id: 21176 },
+  'b1t':      { role: 'support', country: 'UA', team: 'NaVi',         hltv_id: 18987 },
+  'w0nderful':{ role: 'awp',     country: 'UA', team: 'NaVi',         hltv_id: 22600 },
   'makazze':  { role: 'rifler',  country: 'XK', team: 'NaVi' },
 
   // ─── FURIA (apres transferts molodoy + YEKINDAR) ───
-  'molodoy':  { role: 'rifler',  country: 'KZ', team: 'FURIA' },
-  'kscerato': { role: 'rifler',  country: 'BR', team: 'FURIA' },
-  'yuurih':   { role: 'rifler',  country: 'BR', team: 'FURIA' },
-  'yekindar': { role: 'entry',   country: 'LV', team: 'FURIA' },
-  'fallen':   { role: 'awp',     country: 'BR', team: 'FURIA' },
+  'molodoy':  { role: 'rifler',  country: 'KZ', team: 'FURIA',        hltv_id: 26256 },
+  'kscerato': { role: 'rifler',  country: 'BR', team: 'FURIA',        hltv_id: 14176 },
+  'yuurih':   { role: 'rifler',  country: 'BR', team: 'FURIA',        hltv_id: 14159 },
+  'yekindar': { role: 'entry',   country: 'LV', team: 'FURIA',        hltv_id: 18062 },
+  'fallen':   { role: 'awp',     country: 'BR', team: 'FURIA',        hltv_id: 1225  },
 
   // ─── G2 (apres NiKo + m0NESY depart) ───
-  'hunter-':  { role: 'rifler',  country: 'BA', team: 'G2' },
-  'nertz':    { role: 'rifler',  country: 'IL', team: 'G2' },
-  'sunpayus': { role: 'awp',     country: 'ES', team: 'G2' },
-  'heavygod': { role: 'rifler',  country: 'IL', team: 'G2' },
-  'matys':    { role: 'rifler',  country: 'SK', team: 'G2' },
+  'huntr':    { role: 'rifler',  country: 'BA', team: 'G2',           hltv_id: 11816 }, // alias huNter-
+  'hunter-':  { role: 'rifler',  country: 'BA', team: 'G2',           hltv_id: 11816 },
+  'nertz':    { role: 'rifler',  country: 'IL', team: 'G2',           hltv_id: 19815 },
+  'sunpayus': { role: 'awp',     country: 'ES', team: 'G2',           hltv_id: 19887 },
+  'heavygod': { role: 'rifler',  country: 'IL', team: 'G2',           hltv_id: 22510 },
+  'matys':    { role: 'rifler',  country: 'SK', team: 'G2',           hltv_id: 21677 },
+  'malbsmd':  { role: 'rifler',  country: 'GT', team: 'G2',           hltv_id: 21554 }, // ex-Liquid
 
   // ─── Team Liquid (apres Twistzz depart) ───
-  'siuhy':    { role: 'igl',     country: 'PL', team: 'Liquid' },
-  'naf':      { role: 'rifler',  country: 'CA', team: 'Liquid' },
-  'elige':    { role: 'rifler',  country: 'US', team: 'Liquid' },
+  'naf':      { role: 'rifler',  country: 'CA', team: 'Liquid',       hltv_id: 8520  },
+  'elige':    { role: 'rifler',  country: 'US', team: 'Liquid',       hltv_id: 8738  },
   'ultimate': { role: 'rifler',  country: 'PL', team: 'Liquid' },
-  'malbsmd':  { role: 'rifler',  country: 'GT', team: 'Liquid' },
 
   // ─── Aurora (Turkish core) ───
-  'xantares': { role: 'rifler',  country: 'TR', team: 'Aurora' },
-  'woxic':    { role: 'awp',     country: 'TR', team: 'Aurora' },
-  'maj3r':    { role: 'igl',     country: 'TR', team: 'Aurora' },
+  'xantares': { role: 'rifler',  country: 'TR', team: 'Aurora',       hltv_id: 4805  },
+  'woxic':    { role: 'awp',     country: 'TR', team: 'Aurora',       hltv_id: 11070 },
+  'maj3r':    { role: 'igl',     country: 'TR', team: 'Aurora',       hltv_id: 7320  },
   'soulfly':  { role: 'rifler',  country: 'TR', team: 'Aurora' },
   'wicadia':  { role: 'rifler',  country: 'TR', team: 'Aurora' },
 
-  // ─── The MongolZ (apres Senzu benche) ───
-  'blitz':    { role: 'igl',     country: 'MN', team: 'MongolZ' },
-  'techno4k': { role: 'rifler',  country: 'MN', team: 'MongolZ' },
-  '910':      { role: 'awp',     country: 'MN', team: 'MongolZ' },
-  'mzinho':   { role: 'rifler',  country: 'MN', team: 'MongolZ' },
-  'cobrazera':{ role: 'rifler',  country: 'MN', team: 'MongolZ' },
-  'senzu':    { role: 'igl',     country: 'MN', team: 'MongolZ' }, // benche
+  // ─── The MongolZ ───
+  'blitz':    { role: 'igl',     country: 'MN', team: 'MongolZ',      hltv_id: 21277 },
+  'techno4k': { role: 'rifler',  country: 'MN', team: 'MongolZ',      hltv_id: 22533 },
+  '910':      { role: 'awp',     country: 'MN', team: 'MongolZ',      hltv_id: 23158 },
+  'mzinho':   { role: 'rifler',  country: 'MN', team: 'MongolZ',      hltv_id: 22660 },
+  'senzu':    { role: 'rifler',  country: 'MN', team: 'MongolZ',      hltv_id: 23148 },
+  'cobrazera':{ role: 'rifler',  country: 'MN', team: 'MongolZ' }, // benche
 
   // ─── Eternal Fire (international 2026) ───
   'mistem':   { role: 'rifler',  country: 'TR', team: 'Eternal Fire' },
@@ -174,15 +175,16 @@ const PLAYER_METADATA = {
   'demqq':    { role: 'rifler',  country: 'BG', team: 'Eternal Fire' },
   'regali':   { role: 'awp',     country: 'TR', team: 'Eternal Fire' },
   'jottaaa':  { role: 'rifler',  country: 'TR', team: 'Eternal Fire' },
-  'woro2k':   { role: 'rifler',  country: 'UA', team: 'Eternal Fire' },
+  'woro2k':   { role: 'rifler',  country: 'UA', team: 'Eternal Fire',  hltv_id: 19873 },
+  'maden':    { role: 'igl',     country: 'TR', team: 'Eternal Fire',  hltv_id: 17427 }, // IGL EF
 
   // ─── 3DMAX (FR scene) ───
-  'lucky':    { role: 'awp',     country: 'FR', team: '3DMAX' },
-  'maka':     { role: 'igl',     country: 'FR', team: '3DMAX' },
-  'misutaaa': { role: 'rifler',  country: 'FR', team: '3DMAX' },
+  'lucky':    { role: 'awp',     country: 'FR', team: '3DMAX',         hltv_id: 12244 },
+  'maka':     { role: 'igl',     country: 'FR', team: '3DMAX',         hltv_id: 11842 },
+  'misutaaa': { role: 'rifler',  country: 'FR', team: '3DMAX',         hltv_id: 16733 },
   'ex3rcice': { role: 'rifler',  country: 'FR', team: '3DMAX' },
   'graviti':  { role: 'rifler',  country: 'FR', team: '3DMAX' },
-  'bodyy':    { role: 'rifler',  country: 'FR', team: 'OG' }, // loan apr 2026
+  'bodyy':    { role: 'rifler',  country: 'FR', team: 'OG',            hltv_id: 8254 }, // loan apr 2026
 
   // ─── HEROIC (rebuilt 2026) ───
   'chr1zn':   { role: 'igl',     country: 'DK', team: 'HEROIC' },
@@ -193,32 +195,58 @@ const PLAYER_METADATA = {
   'yxngstxr': { role: 'rifler',  country: 'GB', team: 'HEROIC' },
 
   // ─── Astralis (post-device + stavn) ───
-  'hooxi':    { role: 'igl',     country: 'DK', team: 'Astralis' },
-  'jabbi':    { role: 'rifler',  country: 'DK', team: 'Astralis' },
+  'hooxi':    { role: 'igl',     country: 'DK', team: 'Astralis',      hltv_id: 16920 },
+  'jabbi':    { role: 'rifler',  country: 'DK', team: 'Astralis',      hltv_id: 19887 },
   'phzy':     { role: 'awp',     country: 'SE', team: 'Astralis' },
-  'staehr':   { role: 'rifler',  country: 'DK', team: 'Astralis' },
+  'staehr':   { role: 'rifler',  country: 'DK', team: 'Astralis',      hltv_id: 20460 },
   'ryu':      { role: 'rifler',  country: 'LT', team: 'Astralis' },
 
   // ─── BIG (German + blameF) ───
-  'tabsen':   { role: 'igl',     country: 'DE', team: 'BIG' },
+  'tabsen':   { role: 'igl',     country: 'DE', team: 'BIG',           hltv_id: 7322  },
   'jdc':      { role: 'rifler',  country: 'DE', team: 'BIG' },
   'faven':    { role: 'rifler',  country: 'DE', team: 'BIG' },
-  'blamef':   { role: 'rifler',  country: 'DK', team: 'BIG' },
+  'blamef':   { role: 'rifler',  country: 'DK', team: 'BIG',           hltv_id: 11219 },
   'gr1ks':    { role: 'awp',     country: 'BY', team: 'BIG' },
 
-  // ─── ENCE ───
+  // ─── ENCE (post-Aleksib era) ───
   'f1ku':     { role: 'rifler',  country: 'PL', team: 'ENCE' },
   'krasnal':  { role: 'awp',     country: 'PL', team: 'ENCE' },
-  'maden':    { role: 'rifler',  country: 'TR', team: 'ENCE' },
+  'snappi':   { role: 'igl',     country: 'DK', team: 'ENCE',          hltv_id: 1146 },
 
   // ─── 100 Thieves (apres device signing) ───
-  'device':   { role: 'awp',     country: 'DK', team: '100 Thieves' },
-  'dev1ce':   { role: 'awp',     country: 'DK', team: '100 Thieves' },
-  'stavn':    { role: 'rifler',  country: 'DK', team: '100 Thieves' }, // ex-Astralis
+  'device':   { role: 'awp',     country: 'DK', team: '100 Thieves',   hltv_id: 7592  },
+  'dev1ce':   { role: 'awp',     country: 'DK', team: '100 Thieves',   hltv_id: 7592  },
+  'stavn':    { role: 'rifler',  country: 'DK', team: '100 Thieves',   hltv_id: 18548 }, // ex-Astralis
+  'jks':      { role: 'rifler',  country: 'AU', team: '100 Thieves',   hltv_id: 7322  },
 
   // ─── Fnatic ───
-  'magisk':   { role: 'support', country: 'DK', team: 'Fnatic' }, // ex-Astralis fin 2025
-  'fnatic_blamef': { role: 'rifler', country: 'DK', team: 'BIG' }, // disambig
+  'magisk':   { role: 'support', country: 'DK', team: 'Fnatic',        hltv_id: 4954  }, // ex-Astralis fin 2025
+
+  // ─── Apeks / ECSTATIC scene EU tier 2 ───
+  'aragorn':  { role: 'igl',     country: 'NO', team: 'Apeks' },
+
+  // ─── NA scene (M80, Wildcard, MIBR) ───
+  'spaze':    { role: 'igl',     country: 'US', team: 'Cloud9' },
+  'jt':       { role: 'rifler',  country: 'US', team: 'M80' },
+  'adamb':    { role: 'igl',     country: 'US', team: 'Wildcard' },
+  's1n':      { role: 'rifler',  country: 'US', team: 'M80' },
+  'reazy':    { role: 'rifler',  country: 'US', team: 'M80' },
+  'gxx':      { role: 'awp',     country: 'US', team: 'Wildcard' },
+
+  // ─── CN/Asia scene (TYLOO, Lynn Vision) ───
+  'mercury':  { role: 'igl',     country: 'CN', team: 'TYLOO' },
+  'jamyoung': { role: 'rifler',  country: 'CN', team: 'TYLOO' },
+  'westmelon':{ role: 'rifler',  country: 'CN', team: 'TYLOO' },
+  'somebody': { role: 'igl',     country: 'CN', team: 'Lynn Vision' },
+  'z4kr':     { role: 'rifler',  country: 'CN', team: 'Lynn Vision' },
+
+  // ─── BR/SA scene tier 2 (paiN, MIBR) ───
+  'fnx':      { role: 'rifler',  country: 'BR', team: 'paiN' },
+  'biguzera': { role: 'awp',     country: 'BR', team: 'paiN' },
+  'snow':     { role: 'igl',     country: 'BR', team: 'MIBR' },
+
+  // ─── Vétérans/coachs encore actifs ou récemment retirés ───
+  'gla1ve':   { role: 'igl',     country: 'DK', team: 'Astralis Coach', hltv_id: 7166 }, // coach
 };
 
 // ── SEED par map / side : derive du top 20 ci-dessus ────────────────────
@@ -284,6 +312,7 @@ function getSeedByMap(map, side) {
         rank: i + 1,
         nickname: data.nickname,
         team: data.team,
+        hltv_id: data.hltv_id || null,
         hltv_rating: data.hltv_rating,
         kast_pct: data.kast_pct,
         adr: data.adr,
@@ -420,8 +449,8 @@ module.exports = async function handler(req, res) {
     }
 
     // ─── Overall : top 20 + averages ──────────────────────────────────
-    // Cache key v3 : invalidate apres expansion PLAYER_METADATA (97 pros)
-    const cacheKey = 'overall:v3:' + (roleFilter || 'all');
+    // Cache key v4 : invalidate apres ajout hltv_id + expansion IGLs/scenes
+    const cacheKey = 'overall:v4:' + (roleFilter || 'all');
     const cache = getCache();
     if (cache.data && cache.data._key === cacheKey && (Date.now() - cache.ts) < CACHE_TTL_MS) {
       res.setHeader('Cache-Control', 'public, s-maxage=900, stale-while-revalidate=3600');
@@ -465,9 +494,10 @@ module.exports = async function handler(req, res) {
       if (meta) {
         return {
           ...p,
-          role: p.role || meta.role,
+          role:    p.role    || meta.role,
           country: p.country || meta.country,
-          team: p.team || meta.team,
+          team:    p.team    || meta.team,
+          hltv_id: p.hltv_id || meta.hltv_id || null,
         };
       }
       return p;
