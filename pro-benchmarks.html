@@ -523,12 +523,13 @@ function renderUserCompare(user, proAvg) {
   const twin = findProTwin(user) || benchData.top20[0];
   if (!twin) return;
 
-  // Met a jour le header section avec le nom du twin
+  // Met a jour le header section avec le nom du twin + role detecte
   const sectionLabel = document.getElementById('userCompareSectionLabel');
   if (sectionLabel) {
+    const roleLbl = user.scoutRole ? ' · role ' + user.scoutRole.toUpperCase() : '';
     sectionLabel.textContent = isEN
-      ? 'Your profile vs ' + (twin.nickname || '-') + ' (your pro twin)'
-      : 'Ton profil vs ' + (twin.nickname || '-') + ' (ton pro twin)';
+      ? 'Your profile vs ' + (twin.nickname || '-') + ' (your pro twin' + roleLbl + ')'
+      : 'Ton profil vs ' + (twin.nickname || '-') + ' (ton pro twin' + roleLbl + ')';
   }
 
   document.getElementById('userNick').textContent = user.nickname || '-';
@@ -602,12 +603,27 @@ function renderUserCompare(user, proAvg) {
 }
 
 // Helper : trouve le pro le plus proche stylistiquement dans le pool elargi.
-// Utilise d'abord benchData.pool (60 pros), fallback sur benchData.top20.
+// SCOUT-AWARE : si l'user a un role detecte par scout.js (AWPer / Entry /
+// Support / Clutch / Rifler), on filtre d'abord le pool par role pour
+// matcher categorie a categorie (un AWP user matche a un AWP pro, pas a
+// un rifler proche en stats brutes mais avec un style different).
+//
+// Distance : 5 dimensions normalisees (FV Rating, KAST, ADR, K/D, HS%).
+// HS% ajoute en plus des 4 KPIs pour discriminer riflers head-shot heavy
+// (donk, NiKo) vs riflers utility-style (Spinx, mezii).
 function findProTwin(user) {
-  const pool = (benchData && benchData.pool && benchData.pool.length)
+  let pool = (benchData && benchData.pool && benchData.pool.length)
     ? benchData.pool
     : (benchData && benchData.top20) || [];
   if (!pool.length) return null;
+
+  // Filtrage par role detecte (si fiable et si pool a au moins 3 candidats)
+  if (user.scoutRole) {
+    const filtered = pool.filter(p => p.role === user.scoutRole);
+    if (filtered.length >= 3) {
+      pool = filtered;
+    }
+  }
 
   function norm(v, max) { return Math.max(0, Math.min(1, (v || 0) / max)); }
   const u = {
@@ -615,6 +631,7 @@ function findProTwin(user) {
     kast:   norm(user.kast, 100),
     adr:    norm(user.adr, 110),
     kd:     norm(user.kd, 1.5),
+    hs:     norm(user.hs, 70),
   };
 
   let best = null, bestDist = Infinity;
@@ -624,12 +641,14 @@ function findProTwin(user) {
       kast:   norm(p.kast_pct, 100),
       adr:    norm(p.adr, 110),
       kd:     norm(p.kd, 1.5),
+      hs:     norm(p.hs_pct, 70),
     };
     const d = Math.sqrt(
       Math.pow(u.rating - pn.rating, 2) +
       Math.pow(u.kast - pn.kast, 2) +
       Math.pow(u.adr - pn.adr, 2) +
-      Math.pow(u.kd - pn.kd, 2)
+      Math.pow(u.kd - pn.kd, 2) +
+      Math.pow(u.hs - pn.hs, 2) * 0.5  // poids reduit (moins critique que les autres)
     );
     if (d < bestDist) { bestDist = d; best = p; }
   }
@@ -1173,6 +1192,22 @@ async function loadUserStats() {
     const lifetime = (scoutData && scoutData.lifetime) || {};
     const cs2info  = (scoutData && scoutData.cs2)      || {};
 
+    // ── Role detection : convertit le label scout en code role interne ──
+    // scout.js retourne : 'Rifler' | 'AWPer' | 'Support' | 'Entry fragger'
+    //                   | 'Clutch player' (cf. scout.js ligne 643).
+    // On mappe vers nos codes pour le matching pro twin scout-aware.
+    function mapScoutRole(label) {
+      if (!label) return null;
+      const s = String(label).toLowerCase();
+      if (s.includes('awp'))     return 'awp';
+      if (s.includes('entry'))   return 'entry';
+      if (s.includes('support')) return 'support';
+      if (s.includes('clutch'))  return 'rifler'; // clutch player = lurker rifler
+      if (s.includes('rifler'))  return 'rifler';
+      return null;
+    }
+    const scoutRole = mapScoutRole(recent.role);
+
     // Cascade recent (20 derniers matchs FACEIT) -> lifetime (carriere) ->
     // estimation a partir des stats FACEIT publiques (kd, hs, winrate).
     // FACEIT API ne fournit pas d'HLTV Rating ni de KAST/ADR au niveau
@@ -1219,6 +1254,12 @@ async function loadUserStats() {
       kast: kast,
       adr: adr,
       kd: kd,
+      // Stats etendues pour pro twin scout-aware
+      scoutRole: scoutRole,                                    // role detecte par scout.js
+      hs: parseFloat(recent.avgHs)        || lifeHs || 0,      // HS% pour distance enrichie
+      openingRatio: parseFloat(recent.openingRatio) || 0,      // proxy entry/support
+      sniperRate: parseFloat(recent.sniperKillRate) || 0,      // proxy AWP
+      utilDmg: parseFloat(recent.avgUtilDmg) || 0,             // proxy support/IGL
     };
 
     if (benchData && benchData.proAvg) renderUserCompare(userStats, benchData.proAvg);

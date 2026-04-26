@@ -258,7 +258,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         </div>
         <div class="plan-mini" data-plan="elite">
           <div class="plan-mini-name">Elite</div>
-          <div class="plan-mini-price" style="color:var(--text2)">?<span style="color:var(--text3)">€/mois</span></div>
+          <div class="plan-mini-price">29€<span>/mois</span></div>
           <ul class="plan-mini-feats">
             <li>Tout Pro + team tools</li>
             <li>Pro strats DB</li>
@@ -269,6 +269,27 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       </div>
       <div style="text-align:center;margin-top:18px">
         <a href="pricing.html" class="teaser-link-inline">Voir la grille complète →</a>
+      </div>
+
+      <!-- ═════ AFFINE TON PRO TWIN (donnees scout) ═════ -->
+      <div class="sec-label" style="margin-top:32px">Affine ton pro twin</div>
+      <div id="proTwinDataCard" style="background:linear-gradient(135deg,rgba(184,255,87,.04),rgba(184,255,87,.01));border:1px solid rgba(184,255,87,.25);border-radius:12px;padding:20px 22px">
+        <div style="display:flex;align-items:flex-start;gap:14px">
+          <div style="flex-shrink:0;width:40px;height:40px;border-radius:50%;background:rgba(184,255,87,.1);display:flex;align-items:center;justify-content:center;color:var(--accent)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+          </div>
+          <div style="flex:1">
+            <div style="font-family:var(--display);font-size:16px;letter-spacing:.02em;margin-bottom:4px">Donnees scout pour matching pro twin</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:14px" id="proTwinDataDesc">Pour matcher ton style de jeu au pro le plus proche sur la page Pro Benchmarks (role, sniper rate, opening, util damage, HS%), on a besoin de stats recentes sur tes 20 derniers matchs FACEIT.</div>
+            <div id="proTwinDataStatus" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px 18px;font-family:var(--mono);font-size:11px;margin-bottom:16px">
+              <div><span style="color:var(--text3)">Role detecte :</span> <span id="ptdRole" style="color:var(--text)">-</span></div>
+              <div><span style="color:var(--text3)">Matchs analyses :</span> <span id="ptdMatches" style="color:var(--text)">-</span></div>
+              <div><span style="color:var(--text3)">FV Rating moyen :</span> <span id="ptdFv" style="color:var(--text)">-</span></div>
+              <div><span style="color:var(--text3)">Stats avancees :</span> <span id="ptdStats" style="color:var(--text)">-</span></div>
+            </div>
+            <div id="proTwinDataCta" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -352,7 +373,10 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <input type="text" id="referralLinkInput" readonly value="" style="flex:1;min-width:220px;background:var(--card);border:1px solid var(--border);color:var(--accent);font-family:var(--mono);font-size:12px;padding:9px 12px;border-radius:6px;outline:none"/>
-            <a class="settings-btn" id="referralTwitterBtn" href="#" target="_blank" rel="noopener" style="background:#1d9bf0;color:#fff;border-color:#1d9bf0">Partager X</a>
+            <a class="settings-btn" id="referralTwitterBtn" href="#" target="_blank" rel="noopener" style="background:#000;color:#fff;border-color:#000;display:inline-flex;align-items:center;gap:7px;padding:9px 14px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              <span>Partager</span>
+            </a>
           </div>
           <div class="settings-msg" id="referralMsg"></div>
           <!-- Progression vers le prochain palier -->
@@ -512,6 +536,8 @@ async function init() {
   refreshFeedbackBadge();
   // Banner d'activation : si l'user n'a jamais analyse de demo, on l'y invite.
   renderFirstDemoBanner(session.user.id);
+  // Status des donnees scout pour matching pro twin
+  renderProTwinDataStatus(session.user.id);
   if (window.location.search.includes('checkout=success')) {
     // Banner riche dedie post-checkout : reste visible jusqu'au clic et propose
     // un CTA direct vers l'analyse demo. Pousse l'activation apres conversion.
@@ -569,6 +595,79 @@ async function renderFirstDemoBanner(userId) {
     console.warn('[FragValue] firstDemoBanner failed:', e.message);
   }
 }
+
+// ─── Affine ton pro twin : status des donnees scout ───────────────────────
+// Charge les stats scout du user pour afficher la qualite de matching
+// pro twin. Si donnees insuffisantes -> CTA pour analyser une demo ou
+// jouer plus de matchs FACEIT.
+async function renderProTwinDataStatus(userId) {
+  const ctaEl = document.getElementById('proTwinDataCta');
+  if (!ctaEl) return;
+
+  try {
+    const { data: profile } = await sb.from('profiles')
+      .select('faceit_nickname')
+      .eq('id', userId)
+      .single();
+
+    if (!profile || !profile.faceit_nickname) {
+      // Pas de FACEIT lie : CTA prioritaire
+      document.getElementById('ptdRole').textContent     = '-';
+      document.getElementById('ptdMatches').textContent  = '-';
+      document.getElementById('ptdFv').textContent       = '-';
+      document.getElementById('ptdStats').textContent    = 'FACEIT non lie';
+      document.getElementById('ptdStats').style.color    = 'var(--danger)';
+      ctaEl.innerHTML =
+        '<a href="onboarding.html" class="settings-btn" style="background:var(--accent);color:#000;border-color:var(--accent)">Lier mon FACEIT →</a>';
+      return;
+    }
+
+    const { data: { session } } = await sb.auth.getSession();
+    const headers = session?.access_token ? { 'Authorization': 'Bearer ' + session.access_token } : {};
+    const r = await fetch('/api/scout?nickname=' + encodeURIComponent(profile.faceit_nickname), { headers });
+    if (!r.ok) {
+      document.getElementById('ptdStats').textContent  = 'Erreur API scout';
+      document.getElementById('ptdStats').style.color  = 'var(--danger)';
+      return;
+    }
+    const d = await r.json();
+    const recent = d.recent || {};
+    const matches = (recent.matches && recent.matches.length) || 0;
+    const role    = recent.role || null;
+    const fv      = parseFloat(recent.fvRating) || 0;
+
+    // Stats avancees : presence d'au moins une stat utility/clutch/opening
+    const hasAdvanced =
+      (recent.totalFlashesThrown > 0) ||
+      (recent.totalUtilDmg > 0) ||
+      (recent.totalFirstKills > 0) ||
+      (recent.totalClutch1v1 + recent.totalClutch1v2 > 0);
+
+    document.getElementById('ptdRole').textContent    = role || (isEN ? 'undetected' : 'non detecte');
+    document.getElementById('ptdMatches').textContent = matches > 0 ? matches + (isEN ? ' / 20' : ' / 20') : (isEN ? 'no recent matches' : 'aucun match recent');
+    document.getElementById('ptdFv').textContent      = fv > 0 ? fv.toFixed(2) : '-';
+    document.getElementById('ptdStats').textContent   = hasAdvanced ? (isEN ? 'OK' : 'OK') : (isEN ? 'incomplete' : 'incompletes');
+    document.getElementById('ptdStats').style.color   = hasAdvanced ? 'var(--success)' : 'var(--text3)';
+
+    // Decide le CTA selon l'etat de remplissage
+    const ctas = [];
+    if (matches < 10) {
+      ctas.push('<a href="https://www.faceit.com" target="_blank" rel="noopener" class="settings-btn" style="background:var(--accent);color:#000;border-color:var(--accent)">Jouer sur FACEIT →</a>');
+    }
+    if (!hasAdvanced) {
+      ctas.push('<a href="demo.html" class="settings-btn" style="background:var(--card);color:var(--text);border-color:var(--accent)">Analyser une demo →</a>');
+    }
+    ctas.push('<a href="pro-benchmarks.html" class="settings-btn" style="background:transparent;color:var(--accent);border-color:var(--border2)">Voir mon pro twin →</a>');
+    ctaEl.innerHTML = ctas.join('');
+  } catch (e) {
+    console.warn('[FragValue] renderProTwinDataStatus failed:', e.message);
+    if (ctaEl) ctaEl.innerHTML =
+      '<a href="pro-benchmarks.html" class="settings-btn">Voir Pro Benchmarks →</a>';
+  }
+}
+
+// Locale pour ce panel (utilise par renderProTwinDataStatus)
+const isEN = document.documentElement.lang === 'en' || window.location.pathname.startsWith('/en/');
 
 function setTab(tab, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
