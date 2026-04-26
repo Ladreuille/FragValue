@@ -251,12 +251,6 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <div class="s">On a besoin de tes stats FACEIT pour calculer ton ecart vs le top 20. Configure-le depuis ton espace.</div>
       <a href="account.html#settings">Link my FACEIT</a>
     </div>
-    <!-- Etat 3 : FACEIT lie mais not de stats recentes -->
-    <div id="userCompareNoStats" class="connect-faceit" style="display:none">
-      <div class="t">Analyze a demo to activate comparison</div>
-      <div class="s">We have your FACEIT linked, but no recent stats to compare yet. Upload a .dem demo to calculate your FV Rating, KAST, ADR over your last 20 matches.</div>
-      <a href="demo.html">Analyze my 1st demo</a>
-    </div>
     <!-- Etat 4 : comparison live -->
     <div id="userCompareLive" class="compare-card" style="display:none">
       <div class="compare-card-head">
@@ -503,7 +497,6 @@ function mapRow(p, i) {
 function renderUserCompare(user, proAvg) {
   document.getElementById('userCompareGuest').style.display = 'none';
   document.getElementById('userCompareNoFaceit').style.display = 'none';
-  document.getElementById('userCompareNoStats').style.display = 'none';
   document.getElementById('userCompareLive').style.display = 'block';
 
   document.getElementById('userNick').textContent = user.nickname || '-';
@@ -1094,9 +1087,12 @@ async function loadMap(map) {
 }
 
 // ─── Fetch user stats (auth required) ────────────────────────────────────
-// Robuste : ne laisse JAMAIS le user connecte voir l'etat "Guest" qui dit
-// "Sign me in". Des qu'on detecte une session, on bascule au minimum sur
-// NoFaceit (si not de FACEIT) or NoStats (si FACEIT mais not de stats).
+// Logique : on se base sur les stats du profil FACEIT directement (not
+// besoin d'uploader une demo). 3 etats seulement :
+//  - Pas connecte         -> Guest (CTA Sign me in)
+//  - Connecte sans FACEIT -> NoFaceit (CTA Link my FACEIT)
+//  - Connecte + FACEIT    -> Live avec lifetime stats en fallback si recent
+//                            est vide (nouveau player, scout API down, etc.)
 async function loadUserStats() {
   try {
     const { data: { session } } = await sb.auth.getSession();
@@ -1124,27 +1120,26 @@ async function loadUserStats() {
       if (scoutRes.ok) scoutData = await scoutRes.json();
     } catch (_) {}
 
-    const recent = (scoutData && scoutData.recent) || {};
-    const fvr = parseFloat(recent.avgFvr);
-    const kast = parseFloat(recent.avgKast);
-    const adr = parseFloat(recent.avgAdr);
-    const kd = parseFloat(recent.avgKd);
+    const recent   = (scoutData && scoutData.recent)   || {};
+    const lifetime = (scoutData && scoutData.lifetime) || {};
+    const cs2info  = (scoutData && scoutData.cs2)      || {};
 
-    const hasValidStats = !isNaN(fvr) && fvr > 0 && !isNaN(kast) && kast > 0;
-    if (!hasValidStats) {
-      // FACEIT lie mais not (encore) de stats valides -> CTA "Analyze a demo"
-      document.getElementById('userCompareNoStats').style.display = 'block';
-      return;
-    }
+    // Cascade : recent (Last 20 matches FACEIT) -> lifetime (carriere).
+    // Si tout vide, on affiche '-' pour les KPIs manquants (mode degrade
+    // mais on garde la comparison visible avec K/D + ELO).
+    const fvr  = parseFloat(recent.avgFvr)  || 0;
+    const kast = parseFloat(recent.avgKast) || 0;
+    const adr  = parseFloat(recent.avgAdr)  || 0;
+    const kd   = parseFloat(recent.avgKd)   || parseFloat(lifetime.kd) || 0;
 
     userStats = {
       nickname: profile.faceit_nickname,
-      level: profile.faceit_level,
-      elo: profile.faceit_elo || (scoutData && scoutData.cs2 && scoutData.cs2.elo),
+      level: profile.faceit_level || cs2info.level || null,
+      elo: profile.faceit_elo || cs2info.elo || null,
       fvRating: fvr,
       kast: kast,
-      adr: !isNaN(adr) ? adr : 0,
-      kd: !isNaN(kd) ? kd : 0,
+      adr: adr,
+      kd: kd,
     };
 
     if (benchData && benchData.proAvg) renderUserCompare(userStats, benchData.proAvg);
@@ -1163,7 +1158,6 @@ sb.auth.onAuthStateChange((event, session) => {
     userStats = null;
     document.getElementById('userCompareGuest').style.display = 'block';
     document.getElementById('userCompareNoFaceit').style.display = 'none';
-    document.getElementById('userCompareNoStats').style.display = 'none';
     document.getElementById('userCompareLive').style.display = 'none';
   }
 });
