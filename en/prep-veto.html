@@ -137,6 +137,31 @@ h1 span{color:var(--accent)}
 .sequence-gap.up{color:var(--accent)}
 .sequence-gap.down{color:var(--danger)}
 
+/* ─── Dual sim (sequence auto + manuelle) ──────────────────────── */
+.dual-sim{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:980px){.dual-sim{grid-template-columns:1fr}}
+
+/* Manual sim chips ───── */
+.manual-sim-help{font-family:var(--mono);font-size:10px;color:var(--text3);line-height:1.6;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.manual-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;margin-bottom:14px}
+.manual-chip{background:var(--card);border:1px solid var(--border2);border-radius:6px;padding:9px 6px;text-align:center;cursor:pointer;font-family:var(--display);font-size:11px;letter-spacing:.02em;transition:all .15s;user-select:none;position:relative}
+.manual-chip:hover{border-color:var(--text2)}
+.manual-chip-state{position:absolute;top:2px;right:3px;font-family:var(--mono);font-size:7px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:1px 3px;border-radius:2px}
+.manual-chip[data-state="ban-you"]{background:rgba(255,68,68,.06);border-color:rgba(255,68,68,.3);color:var(--danger);text-decoration:line-through}
+.manual-chip[data-state="ban-you"] .manual-chip-state{background:rgba(255,68,68,.15);color:var(--danger)}
+.manual-chip[data-state="ban-opp"]{background:rgba(255,68,68,.06);border-color:rgba(255,68,68,.3);color:var(--danger);text-decoration:line-through;opacity:.7}
+.manual-chip[data-state="ban-opp"] .manual-chip-state{background:rgba(255,68,68,.15);color:var(--danger)}
+.manual-chip[data-state="pick-you"]{background:rgba(184,255,87,.08);border-color:rgba(184,255,87,.4);color:var(--accent)}
+.manual-chip[data-state="pick-you"] .manual-chip-state{background:rgba(184,255,87,.15);color:var(--accent)}
+.manual-chip[data-state="pick-opp"]{background:rgba(184,255,87,.04);border-color:rgba(184,255,87,.3);color:var(--accent);opacity:.85}
+.manual-chip[data-state="pick-opp"] .manual-chip-state{background:rgba(184,255,87,.15);color:var(--accent)}
+.manual-chip[data-state="decider"]{background:rgba(245,200,66,.08);border-color:rgba(245,200,66,.4);color:var(--gold)}
+.manual-chip[data-state="decider"] .manual-chip-state{background:rgba(245,200,66,.15);color:var(--gold)}
+.manual-summary{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.7;padding-top:10px;border-top:1px solid var(--border)}
+.manual-summary-row{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
+.manual-summary-row strong{color:var(--text)}
+.manual-summary-prob{font-family:var(--display);font-size:18px;color:var(--accent);margin-top:6px}
+
 /* ─── Recommendations ─── */
 .reco-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:720px){.reco-grid{grid-template-columns:1fr}}
@@ -298,10 +323,16 @@ h1 span{color:var(--accent)}
     <!-- Format selector + win prob (mode H2H seulement) -->
     <div id="formatBarWrap" style="display:none">
       <div class="format-bar">
-        <div class="format-tabs" id="formatTabs">
-          <button class="format-tab" data-format="bo1">BO1</button>
-          <button class="format-tab active" data-format="bo3">BO3</button>
-          <button class="format-tab" data-format="bo5">BO5</button>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+          <div class="format-tabs" id="formatTabs">
+            <button class="format-tab" data-format="bo1">BO1</button>
+            <button class="format-tab active" data-format="bo3">BO3</button>
+            <button class="format-tab" data-format="bo5">BO5</button>
+          </div>
+          <div class="format-tabs" id="starterTabs" title="Choisis qui commence le veto">
+            <button class="format-tab active" data-starter="you">You commences</button>
+            <button class="format-tab" data-starter="opp">Them commencent</button>
+          </div>
         </div>
         <div class="win-prob">
           <div>
@@ -310,9 +341,22 @@ h1 span{color:var(--accent)}
           <div class="win-prob-val" id="winProbVal">-</div>
         </div>
       </div>
-      <div class="sequence-card">
-        <div class="sec-label" style="margin-top:0;margin-bottom:10px">Sequence officielle · alternee toi/eux</div>
-        <div class="sequence-list" id="sequenceList"></div>
+
+      <!-- 2 colonnes : sequence auto a gauche, sim manuelle a droite -->
+      <div class="dual-sim">
+        <div class="sequence-card">
+          <div class="sec-label" style="margin-top:0;margin-bottom:10px;color:var(--accent)">Sequence auto · data-driven</div>
+          <div class="sequence-list" id="sequenceList"></div>
+        </div>
+        <div class="sequence-card">
+          <div class="sec-label" style="margin-top:0;margin-bottom:10px;color:var(--gold);display:flex;justify-content:space-between;align-items:center">
+            <span>Sim manuelle · clique les chips</span>
+            <button class="btn-secondary" style="padding:5px 10px;font-size:9px" onclick="resetManualSim()">Reset</button>
+          </div>
+          <div class="manual-sim-help">Click cycle : neutre → ban toi → ban eux → pick toi → pick eux → neutre. La map qui reste = decider.</div>
+          <div class="manual-chips" id="manualChips"></div>
+          <div class="manual-summary" id="manualSummary"></div>
+        </div>
       </div>
     </div>
 
@@ -386,8 +430,15 @@ const sb = supabase.createClient(SB_URL, SB_ANON);
 const isEN = document.documentElement.lang === 'en' || window.location.pathname.startsWith('/en/');
 
 let currentResults = null;
-let currentFormat = 'bo3';      // selected format tab
+let currentFormat = 'bo3';        // selected format tab
+let currentStarter = 'you';       // 'you' (default) or 'opp'
 let currentSortMode = 'ban-pick'; // 'ban-pick' (default) or 'pick-ban'
+
+// Etat de la sim manuelle : map -> 'neutral' | 'ban-you' | 'ban-opp' | 'pick-you' | 'pick-opp'
+// Le decider est calcule automatiquement (la map qui reste en 'neutral'
+// quand toutes les autres sont assignees).
+const MANUAL_STATES = ['neutral', 'ban-you', 'ban-opp', 'pick-you', 'pick-opp'];
+let manualSimStates = {}; // { 'de_mirage': 'neutral', ... }
 
 // ─── Boot ────────────────────────────────────────────────────────────────
 async function init() {
@@ -580,10 +631,11 @@ function renderResults(data) {
   document.getElementById('teamsSummary').innerHTML = teamsHtml;
   document.getElementById('teamsSummary').style.gridTemplateColumns = isH2H ? '1fr 1fr' : '1fr';
 
-  // ── Format selector + sequence (H2H only, requires data.formats)
-  if (isH2H && data.formats) {
+  // ── Format selector + sequence (H2H only, requires data.formatsByStarter)
+  if (isH2H && data.formatsByStarter) {
     document.getElementById('formatBarWrap').style.display = 'block';
-    renderFormatTab(currentFormat, data.formats);
+    renderFormatTab(currentFormat, currentStarter, data.formatsByStarter);
+    initManualSim(data);
   } else {
     document.getElementById('formatBarWrap').style.display = 'none';
   }
@@ -632,8 +684,16 @@ function renderResults(data) {
   renderMetaBar(data);
 }
 
-function renderFormatTab(format, formats) {
-  document.querySelectorAll('.format-tab').forEach(t => t.classList.toggle('active', t.dataset.format === format));
+function renderFormatTab(format, starter, formatsByStarter) {
+  document.querySelectorAll('.format-tab[data-format]').forEach(t => t.classList.toggle('active', t.dataset.format === format));
+  document.querySelectorAll('.format-tab[data-starter]').forEach(t => t.classList.toggle('active', t.dataset.starter === starter));
+  const formats = formatsByStarter[starter];
+  if (!formats) {
+    document.getElementById('sequenceList').innerHTML = '<div style="color:var(--text3);font-size:11px;text-align:center;padding:14px">'
+      + (isEN ? 'No data for this starter.' : 'No data pour ce starter.')
+      + '</div>';
+    return;
+  }
   const f = formats[format];
   if (!f) {
     document.getElementById('sequenceList').innerHTML = '<div style="color:var(--text3);font-size:11px;text-align:center;padding:14px">'
@@ -663,6 +723,110 @@ function renderFormatTab(format, formats) {
       + '<div>' + gapTxt + '</div>'
     + '</div>';
   }).join('');
+}
+
+// ─── Sim manuelle : chips cliquables avec 5 etats ────────────────────────
+function initManualSim(data) {
+  // Reset states
+  manualSimStates = {};
+  (data.activeMapsList || []).forEach(m => { manualSimStates[m.map] = 'neutral'; });
+  renderManualSim(data);
+}
+
+function cycleChipState(mapKey, data) {
+  const cur = manualSimStates[mapKey] || 'neutral';
+  const idx = MANUAL_STATES.indexOf(cur);
+  const next = MANUAL_STATES[(idx + 1) % MANUAL_STATES.length];
+  manualSimStates[mapKey] = next;
+  renderManualSim(data);
+}
+
+function resetManualSim() {
+  if (!currentResults) return;
+  initManualSim(currentResults);
+}
+
+function renderManualSim(data) {
+  const chipsEl = document.getElementById('manualChips');
+  const summaryEl = document.getElementById('manualSummary');
+  if (!chipsEl || !summaryEl) return;
+
+  const maps = data.activeMapsList || [];
+  // Calcul du decider : si 1 seule map en 'neutral', c'est le decider auto.
+  const neutralMaps = maps.filter(m => manualSimStates[m.map] === 'neutral');
+  const isDeciderResolved = neutralMaps.length === 1;
+
+  chipsEl.innerHTML = maps.map(m => {
+    let state = manualSimStates[m.map] || 'neutral';
+    // Affichage : si 1 seule neutre + d'autres traites, marker decider
+    let displayState = state;
+    if (state === 'neutral' && isDeciderResolved) displayState = 'decider';
+    const stateLbl = {
+      'neutral': '',
+      'ban-you': 'BAN T',
+      'ban-opp': 'BAN E',
+      'pick-you': 'PICK T',
+      'pick-opp': 'PICK E',
+      'decider': 'DEC',
+    }[displayState] || '';
+    return '<div class="manual-chip" data-state="' + displayState + '" data-map="' + m.map + '" onclick="cycleChipState(\'' + m.map + '\', currentResults)">'
+      + (stateLbl ? '<div class="manual-chip-state">' + stateLbl + '</div>' : '')
+      + m.displayName
+    + '</div>';
+  }).join('');
+
+  // Summary : maps a jouer = picks + decider, win prob basee sur les h2h gaps
+  const playedMaps = maps.filter(m => {
+    const s = manualSimStates[m.map];
+    return s === 'pick-you' || s === 'pick-opp' || (s === 'neutral' && isDeciderResolved);
+  });
+
+  if (playedMaps.length === 0) {
+    summaryEl.innerHTML = '<div style="color:var(--text3);font-size:10px">Click sur les maps pour assigner ban/pick. Le decider sera la derniere map neutre.</div>';
+    return;
+  }
+
+  // Calcul win prob : trouve les gaps des maps jouees dans data.h2h
+  const h2hMap = {};
+  (data.h2h || []).forEach(h => { h2hMap[h.map] = h; });
+  const winRates = playedMaps.map(m => {
+    const h = h2hMap[m.map];
+    return h ? h.yourWinRate / 100 : 0.5;
+  });
+  let winProb = null;
+  if (winRates.length === 1) winProb = Math.round(winRates[0] * 100);
+  else if (winRates.length === 3) {
+    const [p1, p2, p3] = winRates;
+    const win3 = p1 * p2 * p3;
+    const win2 = (p1*p2*(1-p3)) + (p1*(1-p2)*p3) + ((1-p1)*p2*p3);
+    winProb = Math.round((win3 + win2) * 100);
+  } else if (winRates.length === 5) {
+    const avg = winRates.reduce((s, v) => s + v, 0) / 5;
+    let total = 0;
+    for (let k = 3; k <= 5; k++) {
+      const binom = [1,5,10,10,5,1][k];
+      total += binom * Math.pow(avg, k) * Math.pow(1 - avg, 5 - k);
+    }
+    winProb = Math.round(total * 100);
+  } else {
+    const avg = winRates.reduce((s, v) => s + v, 0) / winRates.length;
+    winProb = Math.round(avg * 100);
+  }
+
+  const playedNames = playedMaps.map(m => {
+    const s = manualSimStates[m.map];
+    const lbl = s === 'neutral' ? 'decider' : s === 'pick-you' ? 'pick toi' : 'pick eux';
+    return m.displayName + ' (' + lbl + ')';
+  }).join(' · ');
+
+  // Format detection : 1 map = BO1, 3 = BO3, 5 = BO5
+  const fmtLbl = playedMaps.length === 1 ? 'BO1' : playedMaps.length === 3 ? 'BO3' : playedMaps.length === 5 ? 'BO5' : `${playedMaps.length} maps`;
+  const wpCls = winProb >= 60 ? 'var(--accent)' : winProb >= 45 ? 'var(--gold)' : 'var(--danger)';
+
+  summaryEl.innerHTML =
+    '<div class="manual-summary-row"><span>Format detecte</span><strong>' + fmtLbl + '</strong></div>'
+    + '<div class="manual-summary-row"><span>Maps jouees</span><strong style="font-size:10px;text-align:right">' + playedNames + '</strong></div>'
+    + '<div class="manual-summary-prob" style="color:' + wpCls + '">Win prob : ' + (winProb != null ? winProb + '%' : '-') + '</div>';
 }
 
 function renderGapViz(h2hMaps) {
@@ -856,12 +1020,22 @@ function resetForm() {
   showForm();
 }
 
-// Format tabs
-document.querySelectorAll('.format-tab').forEach(tab => {
+// Format tabs (BO1/BO3/BO5)
+document.querySelectorAll('.format-tab[data-format]').forEach(tab => {
   tab.addEventListener('click', () => {
     currentFormat = tab.dataset.format;
-    if (currentResults && currentResults.formats) {
-      renderFormatTab(currentFormat, currentResults.formats);
+    if (currentResults && currentResults.formatsByStarter) {
+      renderFormatTab(currentFormat, currentStarter, currentResults.formatsByStarter);
+    }
+  });
+});
+
+// Starter tabs (You commences / Them commencent)
+document.querySelectorAll('.format-tab[data-starter]').forEach(tab => {
+  tab.addEventListener('click', () => {
+    currentStarter = tab.dataset.starter;
+    if (currentResults && currentResults.formatsByStarter) {
+      renderFormatTab(currentFormat, currentStarter, currentResults.formatsByStarter);
     }
   });
 });

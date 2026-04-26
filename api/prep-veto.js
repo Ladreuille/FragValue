@@ -409,87 +409,81 @@ function computeWinProbability(mapsToPlay, h2hMaps) {
   return Math.round(avg * 100);
 }
 
-// Genere les sequences de veto BO1/BO3/BO5 + maps suggerees + win prob.
-// Pool actif : 7 maps (post-Vertigo retire avril 2026).
-//   BO1 : 6 bans alternes -> 1 decider auto
-//   BO3 : 4 bans + 2 picks alternes -> 1 decider auto
-//   BO5 : 2 bans + 4 picks alternes -> 1 decider auto
-//
-// Ordre standard ESEA/FACEIT (toi commences) :
-//   BO1 : ban-ban-ban-ban-ban-ban  (toi-eux-toi-eux-toi-eux) -> decider
-//   BO3 : ban-ban-pick-pick-ban-ban (toi-eux-toi-eux-toi-eux) -> decider
-//   BO5 : ban-ban-pick-pick-pick-pick (toi-eux-toi-eux-toi-eux) -> decider
-function generateVetoFormats(h2hMaps) {
-  const reliable = h2hMaps.filter(h => h.confidence !== 'low');
-  if (reliable.length < 5) {
-    // Pas assez de data fiable pour generer des sequences solides.
-    // Fallback sur tous les h2h sans filtre confidence.
-  }
-  const pool = (reliable.length >= 5 ? reliable : h2hMaps);
-  if (pool.length < 5) return null; // Impossible de simuler un veto
+// Templates ordonnes de veto (FACEIT / ESEA standard, pool 7 maps).
+// Le decider final (1 map restante) est ajoute automatiquement.
+// L'alternance toi/eux est implicite par la parite de l'index :
+//   index pair = team starter, impair = team adverse.
+// Si youStart=true : index 0 = toi. Si youStart=false : index 0 = eux.
+const SEQUENCE_TEMPLATES = {
+  bo1: ['ban', 'ban', 'ban', 'ban', 'ban', 'ban'],         // 6 bans → 1 decider
+  bo3: ['ban', 'ban', 'pick', 'pick', 'ban', 'ban'],       // 2-2-2 interleaved
+  bo5: ['ban', 'ban', 'pick', 'pick', 'pick', 'pick'],     // 2 bans, 4 picks
+};
 
-  // Tri pour decisions :
-  //   - sortedByGapAsc : pire pour toi en haut (a ban)
-  //   - sortedByGapDesc : meilleur pour toi en haut (a pick)
-  const byGapAsc  = [...pool].sort((a, b) => a.gap - b.gap);
-  const byGapDesc = [...pool].sort((a, b) => b.gap - a.gap);
+// Construit la sequence pour 1 format donne.
+// pool : maps disponibles (avec gap calcule), youStart : qui commence.
+function buildSequence(template, youStart, pool) {
+  const remaining = new Set(pool.map(m => m.map));
+  const sequence = [];
 
-  function buildSequence(banCount, pickCount) {
-    const remaining = new Set(pool.map(m => m.map));
-    const sequence = [];
-
-    // Ban phase (alternee toi/eux)
-    for (let i = 0; i < banCount; i++) {
-      const isYou = i % 2 === 0;
-      const candidates = pool.filter(m => remaining.has(m.map));
-      // Toi : ban leur meilleure map (gap le plus negatif pour toi)
-      // Eux : ban ta meilleure map (gap le plus positif)
+  template.forEach((action, i) => {
+    // youStart=true → index 0 = toi. youStart=false → index 0 = eux.
+    const isYou = (i % 2 === 0) === youStart;
+    const candidates = pool.filter(m => remaining.has(m.map));
+    if (candidates.length === 0) return;
+    if (action === 'ban') {
+      // Toi : ban leur meilleure map (gap le plus negatif pour toi).
+      // Eux : ban ta meilleure map (gap le plus positif).
       candidates.sort(isYou ? (a, b) => a.gap - b.gap : (a, b) => b.gap - a.gap);
-      const target = candidates[0];
-      if (!target) break;
-      sequence.push({ action: 'ban', team: isYou ? 'you' : 'opp', map: target.displayName, gap: target.gap });
-      remaining.delete(target.map);
-    }
-
-    // Pick phase (alternee toi/eux)
-    for (let i = 0; i < pickCount; i++) {
-      const isYou = i % 2 === 0;
-      const candidates = pool.filter(m => remaining.has(m.map));
-      // Toi : pick ta meilleure (gap le plus positif)
-      // Eux : pick leur meilleure (gap le plus negatif)
+    } else {
+      // Toi : pick ta meilleure (gap le plus positif).
+      // Eux : pick leur meilleure (gap le plus negatif).
       candidates.sort(isYou ? (a, b) => b.gap - a.gap : (a, b) => a.gap - b.gap);
-      const target = candidates[0];
-      if (!target) break;
-      sequence.push({ action: 'pick', team: isYou ? 'you' : 'opp', map: target.displayName, gap: target.gap });
-      remaining.delete(target.map);
     }
+    const target = candidates[0];
+    sequence.push({
+      action,
+      team: isYou ? 'you' : 'opp',
+      map: target.displayName,
+      gap: target.gap,
+    });
+    remaining.delete(target.map);
+  });
 
-    // Decider auto = la map qui reste (devrait etre 1 seule)
-    const deciderMaps = pool.filter(m => remaining.has(m.map));
-    if (deciderMaps.length === 1) {
-      sequence.push({ action: 'decider', team: 'auto', map: deciderMaps[0].displayName, gap: deciderMaps[0].gap });
-    }
-
-    // Maps qui seront jouees = picks + decider (les bans sont eliminees)
-    const mapsToPlay = sequence.filter(s => s.action !== 'ban').map(s => {
-      const m = pool.find(p => p.displayName === s.map);
-      return m ? { map: m.map, displayName: m.displayName } : null;
-    }).filter(Boolean);
-
-    return { sequence, mapsToPlay };
+  // Decider = la map qui reste
+  const deciderMaps = pool.filter(m => remaining.has(m.map));
+  if (deciderMaps.length === 1) {
+    sequence.push({
+      action: 'decider', team: 'auto',
+      map: deciderMaps[0].displayName, gap: deciderMaps[0].gap,
+    });
   }
 
-  // BO1 : 6 bans, 1 decider
-  const bo1 = buildSequence(6, 0);
-  // BO3 : 4 bans, 2 picks, 1 decider
-  const bo3 = buildSequence(4, 2);
-  // BO5 : 2 bans, 4 picks, 1 decider
-  const bo5 = buildSequence(2, 4);
+  // Maps jouees = picks + decider (les bans sont eliminees)
+  const mapsToPlay = sequence.filter(s => s.action !== 'ban').map(s => {
+    const m = pool.find(p => p.displayName === s.map);
+    return m ? { map: m.map, displayName: m.displayName } : null;
+  }).filter(Boolean);
+
+  return { sequence, mapsToPlay };
+}
+
+// Genere les sequences de veto BO1/BO3/BO5 + maps suggerees + win prob.
+// youStart : true si toi commences le veto, false si l'adversaire commence.
+function generateVetoFormats(h2hMaps, youStart = true) {
+  const reliable = h2hMaps.filter(h => h.confidence !== 'low');
+  const pool = (reliable.length >= 5 ? reliable : h2hMaps);
+  if (pool.length < 5) return null;
+
+  const bo1 = buildSequence(SEQUENCE_TEMPLATES.bo1, youStart, pool);
+  const bo3 = buildSequence(SEQUENCE_TEMPLATES.bo3, youStart, pool);
+  const bo5 = buildSequence(SEQUENCE_TEMPLATES.bo5, youStart, pool);
 
   return {
-    bo1: { sequence: bo1.sequence, mapsToPlay: bo1.mapsToPlay, winProbability: computeWinProbability(bo1.mapsToPlay, h2hMaps) },
-    bo3: { sequence: bo3.sequence, mapsToPlay: bo3.mapsToPlay, winProbability: computeWinProbability(bo3.mapsToPlay, h2hMaps) },
-    bo5: { sequence: bo5.sequence, mapsToPlay: bo5.mapsToPlay, winProbability: computeWinProbability(bo5.mapsToPlay, h2hMaps) },
+    starter: youStart ? 'you' : 'opp',
+    bo1: { ...bo1, winProbability: computeWinProbability(bo1.mapsToPlay, h2hMaps) },
+    bo3: { ...bo3, winProbability: computeWinProbability(bo3.mapsToPlay, h2hMaps) },
+    bo5: { ...bo5, winProbability: computeWinProbability(bo5.mapsToPlay, h2hMaps) },
   };
 }
 
@@ -577,8 +571,8 @@ module.exports = async function handler(req, res) {
   }
 
   // Cache lookup : cle base sur les inputs canonicalises
-  // v2 : invalide apres ajout confidence + topPlayers + formats + winProb
-  const cacheKey = 'h2h:v2:'
+  // v3 : invalide apres fix sequences interleaved + dual starter formats
+  const cacheKey = 'h2h:v3:'
     + (opponentInput.url || (opponentInput.nicks || []).map(n => n.toLowerCase().trim()).sort().join(','))
     + '|'
     + (yourTeamInput.url || (yourTeamInput.nicks || []).map(n => n.toLowerCase().trim()).sort().join(','));
@@ -609,17 +603,25 @@ module.exports = async function handler(req, res) {
 
     let payload;
     if (yourTeamResult) {
-      // Mode head-to-head : on calcule aussi les sequences BO1/BO3/BO5
-      // avec win probability cumulee pour chaque format.
+      // Mode head-to-head : on calcule les sequences BO1/BO3/BO5 pour
+      // les 2 cas de starter (toi commences vs eux commencent). Le client
+      // toggle entre les 2 sans re-call API.
       const reco = generateRecommendationsH2H(opponentResult.maps, yourTeamResult.maps);
-      const formats = generateVetoFormats(reco.h2h);
+      const formatsYouStart  = generateVetoFormats(reco.h2h, true);
+      const formatsOppStart  = generateVetoFormats(reco.h2h, false);
       payload = {
         mode: 'h2h',
         opponent: opponentResult,
         yourTeam: yourTeamResult,
         recommendations: { forceBan: reco.forceBan, forcePick: reco.forcePick },
         h2h: reco.h2h,
-        formats, // { bo1, bo3, bo5 } chacun avec sequence + mapsToPlay + winProbability
+        // Sequences pour les 2 starters : { youStart: { bo1, bo3, bo5 }, oppStart: ... }
+        formatsByStarter: {
+          you: formatsYouStart,
+          opp: formatsOppStart,
+        },
+        // Map pool pour le simulateur manuel cote frontend
+        activeMapsList: ACTIVE_MAPS.map(m => ({ map: m, displayName: MAP_DISPLAY[m] })),
         activeMaps: ACTIVE_MAPS.length,
         minMatchesForReco: MIN_MATCHES_FOR_RECO,
         lastUpdated: new Date().toISOString(),
