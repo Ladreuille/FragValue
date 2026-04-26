@@ -195,7 +195,7 @@ async function handleGet(req, res, supabase, user) {
 // Actions qui creent / modifient une equipe (require Team).
 // Les autres actions (respond, leave, remove_player, cancel_invite) restent
 // accessibles aux Free pour qu'un user Free puisse rejoindre une equipe Team.
-const TEAM_OWNER_ACTIONS = new Set(['create', 'update', 'invite', 'delete']);
+const TEAM_OWNER_ACTIONS = new Set(['create', 'update', 'invite', 'delete', 'link_faceit']);
 
 async function handlePost(req, res, supabase, user) {
   const body = req.body || {};
@@ -250,12 +250,93 @@ async function handlePost(req, res, supabase, user) {
     if (!roster_id || !fields) return res.status(400).json({ error: 'roster_id et fields requis' });
     const { data: roster } = await supabase.from('rosters').select('user_id').eq('id', roster_id).maybeSingle();
     if (!roster || roster.user_id !== user.id) return res.status(403).json({ error: 'Seul l\'owner peut modifier' });
-    const allowed = ['team_name','description','region','tag','visibility','looking_for_players','looking_for_roles','logo_url'];
+    const allowed = ['team_name','description','region','tag','visibility','looking_for_players','looking_for_roles','logo_url','faceit_team_id','faceit_team_url','esea_division','esea_season'];
     const clean = {};
     Object.keys(fields).forEach(k => { if (allowed.includes(k)) clean[k] = fields[k]; });
     const { error } = await tolerantUpdate(supabase, 'rosters', roster_id, clean);
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ ok: true });
+  }
+
+  // ── link_faceit : associe une fiche FACEIT team a un roster ──────────
+  // Body : { roster_id, faceit_team_url } OU { roster_id, faceit_team_id }
+  // Resout via FACEIT API : team_id, name, members, ESEA championship si
+  // detecte dans les matchs recents. Sauve en DB (tolerant aux colonnes
+  // manquantes : faceit_team_id, faceit_team_url, esea_division, esea_season).
+  if (action === 'link_faceit') {
+    const { roster_id } = body;
+    let faceitTeamId = body.faceit_team_id || null;
+    const faceitUrl = body.faceit_team_url || null;
+    if (!roster_id) return res.status(400).json({ error: 'roster_id requis' });
+
+    // Verifie ownership
+    const { data: roster } = await supabase.from('rosters').select('id, user_id, team_name').eq('id', roster_id).maybeSingle();
+    if (!roster || roster.user_id !== user.id) return res.status(403).json({ error: 'Seul l\'owner peut lier' });
+
+    // Parse URL si pas d'id direct
+    if (!faceitTeamId && faceitUrl) {
+      const m = String(faceitUrl).match(/faceit\.com\/[a-z]{2}\/teams\/([a-z0-9-]+)/i);
+      if (m) faceitTeamId = m[1];
+    }
+    if (!faceitTeamId) return res.status(400).json({ error: 'URL FACEIT team invalide. Format : faceit.com/<lang>/teams/<id>' });
+
+    const apiKey = process.env.FACEIT_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'FACEIT API non configuree' });
+
+    try {
+      const headers = { Authorization: `Bearer ${apiKey}` };
+      const BASE = 'https://open.faceit.com/data/v4';
+      // 1. Detail equipe
+      const tRes = await fetch(`${BASE}/teams/${faceitTeamId}`, { headers });
+      if (!tRes.ok) return res.status(404).json({ error: 'Equipe FACEIT introuvable. Verifie l\'URL.' });
+      const team = await tRes.json();
+
+      // 2. Detection ESEA via matchs recents (best-effort, swallow errors)
+      let eseaDivision = null;
+      let eseaSeason = null;
+      try {
+        const mRes = await fetch(`${BASE}/teams/${faceitTeamId}/matches?game=cs2&limit=20`, { headers });
+        if (mRes.ok) {
+          const md = await mRes.json();
+          const items = md.items || [];
+          // Chercher 'ESEA' dans les noms de competitions
+          for (const it of items) {
+            const compName = (it.competition_name || '').toString();
+            if (/ESEA/i.test(compName)) {
+              // ex: "ESEA Season 50 Open Division Europe" -> Open
+              const divM = compName.match(/(Open|Intermediate|Main|Advanced|Premier|Challenger)/i);
+              const seaM = compName.match(/Season\s*(\d+)/i);
+              if (divM) eseaDivision = divM[1];
+              if (seaM)  eseaSeason   = 'S' + seaM[1];
+              break;
+            }
+          }
+        }
+      } catch (_) {}
+
+      // 3. Sauve en DB (tolerant aux colonnes manquantes)
+      const { error: updErr } = await tolerantUpdate(supabase, 'rosters', roster_id, {
+        faceit_team_id: faceitTeamId,
+        faceit_team_url: faceitUrl || `https://www.faceit.com/en/teams/${faceitTeamId}`,
+        esea_division: eseaDivision,
+        esea_season: eseaSeason,
+      });
+      if (updErr) return res.status(500).json({ error: 'Sauvegarde echouee : ' + updErr.message });
+
+      return res.status(200).json({
+        ok: true,
+        team: {
+          id: faceitTeamId,
+          name: team.name || team.nickname || null,
+          avatar: team.avatar || null,
+          members: (team.members || []).map(m => m.nickname).filter(Boolean).slice(0, 10),
+        },
+        esea: { division: eseaDivision, season: eseaSeason },
+      });
+    } catch (e) {
+      console.error('[roster] link_faceit failed:', e.message);
+      return res.status(500).json({ error: 'Erreur lors du linking FACEIT' });
+    }
   }
 
   if (action === 'invite') {

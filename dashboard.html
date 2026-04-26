@@ -668,11 +668,42 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
           <option value="SEA">SE Asia</option>
         </select>
       </div>
+      <div class="modal-field">
+        <label>URL fiche FACEIT (optionnel, recommande)</label>
+        <input id="rosterFaceitUrl" type="url" placeholder="https://www.faceit.com/fr/teams/abc123-..." maxlength="200"/>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;line-height:1.5">Lie ta fiche FACEIT pour activer Prep Veto auto + detecter ta division ESEA si tu joues les ligues.</div>
+      </div>
       <div class="modal-err" id="rosterCreateErr"></div>
     </div>
     <div class="modal-footer">
       <button class="modal-btn-secondary" onclick="closeModal('modalCreateRoster')">Annuler</button>
       <button class="modal-btn-primary" onclick="submitCreateRoster()" id="rosterCreateBtn">Créer l'équipe</button>
+    </div>
+  </div>
+</div>
+
+<!-- Link FACEIT team modal (post-creation ou re-lier) -->
+<div class="modal" id="modalLinkFaceit">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Lier la fiche FACEIT</div>
+      <button class="modal-close" onclick="closeModal('modalLinkFaceit')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:14px">
+        Colle l'URL de ta fiche FACEIT team. FragValue resoudra le team_id, validera les membres, et detectera automatiquement ta division ESEA si tu joues les ligues.
+      </div>
+      <div class="modal-field">
+        <label>URL fiche FACEIT</label>
+        <input id="linkFaceitUrl" type="url" placeholder="https://www.faceit.com/fr/teams/abc123-..." maxlength="200"/>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px">Format : <code style="background:var(--bg);padding:1px 5px;border-radius:3px;color:var(--accent);font-size:9px">faceit.com/&lt;lang&gt;/teams/&lt;id&gt;</code></div>
+      </div>
+      <div class="modal-err" id="linkFaceitErr"></div>
+      <div id="linkFaceitOk" style="font-family:var(--mono);font-size:11px;color:var(--success);margin-top:8px;display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn-secondary" onclick="closeModal('modalLinkFaceit')">Annuler</button>
+      <button class="modal-btn-primary" onclick="submitLinkFaceit()" id="linkFaceitBtn">Lier la fiche</button>
     </div>
   </div>
 </div>
@@ -1607,6 +1638,7 @@ function renderRoster(data) {
     <div class="roster-actions">
       ${analyzeBtn}
       <button class="roster-btn" onclick="openInvitePlayerModal()">Inviter un joueur</button>
+      ${!roster.faceit_team_id ? '<button class="roster-btn" style="border-color:rgba(255,85,0,.4);color:#ff5500" onclick="openLinkFaceitModal()">Lier FACEIT</button>' : '<button class="roster-btn" onclick="openLinkFaceitModal()">Re-lier FACEIT</button>'}
       <button class="roster-btn" onclick="toggleLookingForPlayers()">${roster.looking_for_players ? 'Fermer le recrutement' : 'Ouvrir le recrutement'}</button>
       <button class="roster-btn" onclick="toggleVisibility()">${isPublic ? 'Rendre privée' : 'Rendre publique'}</button>
       ${shareUrl ? `<a class="roster-btn" href="${shareUrl}" target="_blank">Page publique</a>` : ''}
@@ -1664,6 +1696,8 @@ function renderRoster(data) {
           <div class="roster-meta">
             ${roster.region ? `<span class="roster-meta-item"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${roster.region}</span>` : ''}
             <span class="roster-meta-item">${titulaires.length + subs.length} membre${titulaires.length + subs.length > 1 ? 's' : ''}</span>
+            ${roster.faceit_team_id ? `<a href="${roster.faceit_team_url || ('https://www.faceit.com/en/teams/' + roster.faceit_team_id)}" target="_blank" rel="noopener" class="roster-meta-item" style="color:#ff5500;text-decoration:none"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>FACEIT lie</a>` : ''}
+            ${roster.esea_division ? `<span class="roster-meta-item" style="color:var(--gold);background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.25);padding:2px 8px;border-radius:3px;font-weight:700">ESEA ${roster.esea_season || ''} ${roster.esea_division}</span>` : ''}
             ${roster.looking_for_players ? '<span class="roster-meta-item" style="color:var(--accent)"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);margin-right:6px;vertical-align:middle"></span>Recrutement ouvert</span>' : ''}
           </div>
         </div>
@@ -1791,6 +1825,7 @@ async function submitCreateRoster() {
   const btn = document.getElementById('rosterCreateBtn');
   const errEl = document.getElementById('rosterCreateErr');
   const teamName = document.getElementById('rosterName').value.trim();
+  const faceitUrl = (document.getElementById('rosterFaceitUrl')?.value || '').trim();
   btn.disabled = true; errEl.textContent = '';
   const r = await callRosterAPI({
     action: 'create',
@@ -1801,6 +1836,22 @@ async function submitCreateRoster() {
   });
   btn.disabled = false;
   if (r.error) { errEl.textContent = r.error; return; }
+
+  // Si URL FACEIT fournie, on lie + detecte ESEA en best-effort
+  if (faceitUrl && r.roster && r.roster.id) {
+    const linkRes = await callRosterAPI({
+      action: 'link_faceit',
+      roster_id: r.roster.id,
+      faceit_team_url: faceitUrl,
+    });
+    if (linkRes.error) {
+      // Non bloquant : l'equipe est creee, le lien FACEIT sera ajoute plus tard
+      console.warn('[FragValue] FACEIT link skipped:', linkRes.error);
+    } else if (linkRes.esea && linkRes.esea.division) {
+      showRosterToast(`Équipe créée + FACEIT lié · ESEA ${linkRes.esea.season || ''} ${linkRes.esea.division}`.trim());
+    }
+  }
+
   closeModal('modalCreateRoster');
   showRosterToast(`Équipe "${teamName}" créée`);
 
@@ -1808,6 +1859,46 @@ async function submitCreateRoster() {
   await processPendingInvites(r.roster && r.roster.id);
 
   await loadRoster();
+}
+
+function openLinkFaceitModal() {
+  if (!_currentRoster) return;
+  const r = _currentRoster.roster;
+  document.getElementById('linkFaceitUrl').value = r.faceit_team_url || '';
+  document.getElementById('linkFaceitErr').textContent = '';
+  document.getElementById('linkFaceitOk').style.display = 'none';
+  openModal('modalLinkFaceit');
+}
+
+async function submitLinkFaceit() {
+  if (!_currentRoster) return;
+  const btn = document.getElementById('linkFaceitBtn');
+  const errEl = document.getElementById('linkFaceitErr');
+  const okEl = document.getElementById('linkFaceitOk');
+  const url = document.getElementById('linkFaceitUrl').value.trim();
+  errEl.textContent = '';
+  okEl.style.display = 'none';
+  if (!url) { errEl.textContent = 'Colle l\'URL FACEIT de l\'equipe.'; return; }
+  btn.disabled = true; btn.textContent = 'Resolution...';
+  try {
+    const r = await callRosterAPI({
+      action: 'link_faceit',
+      roster_id: _currentRoster.roster.id,
+      faceit_team_url: url,
+    });
+    if (r.error) { errEl.textContent = r.error; return; }
+    const eseaTxt = r.esea && r.esea.division
+      ? ` · ESEA ${r.esea.season || ''} ${r.esea.division}`
+      : ' · pas de ligue ESEA detectee';
+    okEl.innerHTML = `Equipe <strong>${r.team?.name || '-'}</strong> liee · ${(r.team?.members || []).length} membres detectes${eseaTxt}`;
+    okEl.style.display = 'block';
+    setTimeout(() => { closeModal('modalLinkFaceit'); loadRoster(); }, 1500);
+  } catch (e) {
+    errEl.textContent = 'Erreur reseau : ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Lier la fiche';
+  }
 }
 
 async function processPendingInvites(rosterId) {

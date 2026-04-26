@@ -373,3 +373,20 @@ ALTER TABLE user_feedback ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "User reads own feedback" ON user_feedback;
 CREATE POLICY "User reads own feedback" ON user_feedback FOR SELECT
   USING (auth.uid() = user_id);
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- ROSTERS · FACEIT team linking + ESEA division (avril 2026)
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Permet de lier un roster FragValue a une fiche FACEIT team officielle.
+-- Pre-remplit Prep Veto (page Elite) avec les 5 nicks de l'equipe + detecte
+-- la division ESEA en parsant les matchs FACEIT recents (best-effort via
+-- competition_name).
+-- ═══════════════════════════════════════════════════════════════════════════
+
+ALTER TABLE rosters ADD COLUMN IF NOT EXISTS faceit_team_id  TEXT;
+ALTER TABLE rosters ADD COLUMN IF NOT EXISTS faceit_team_url TEXT;
+ALTER TABLE rosters ADD COLUMN IF NOT EXISTS esea_division   TEXT;
+ALTER TABLE rosters ADD COLUMN IF NOT EXISTS esea_season     TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_rosters_faceit_team_id ON rosters (faceit_team_id) WHERE faceit_team_id IS NOT NULL;

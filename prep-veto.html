@@ -304,6 +304,41 @@ async function init() {
     return;
   }
   showForm();
+  // Auto-pre-fill "Ton equipe" depuis le roster FragValue de l'user (si lie FACEIT)
+  loadUserRosterIntoYourTeam(session);
+}
+
+// Charge le roster FragValue de l'user et pre-remplit le champ "Ton equipe"
+// avec son URL FACEIT si elle est liee. Affiche la division ESEA si detectee.
+async function loadUserRosterIntoYourTeam(session) {
+  try {
+    const { data: roster } = await sb.from('rosters')
+      .select('id, team_name, tag, faceit_team_id, faceit_team_url, esea_division, esea_season')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    if (!roster) return; // pas de roster cree
+    const inputEl = document.getElementById('yourInput');
+    if (!inputEl) return;
+    if (roster.faceit_team_url || roster.faceit_team_id) {
+      inputEl.value = roster.faceit_team_url || ('https://www.faceit.com/en/teams/' + roster.faceit_team_id);
+      // Affiche un hint sous le champ avec le nom + ESEA si dispo
+      const hintEl = inputEl.parentElement.querySelector('.input-hint');
+      if (hintEl) {
+        const eseaTxt = roster.esea_division
+          ? ` · <span style="color:var(--gold)">ESEA ${roster.esea_season || ''} ${roster.esea_division}</span>`
+          : '';
+        hintEl.innerHTML = `Auto-rempli depuis ton roster <strong>${roster.team_name}</strong>${roster.tag ? ' [' + roster.tag + ']' : ''}${eseaTxt} · <a href="dashboard.html#roster" style="color:var(--accent)">modifier dans dashboard</a>`;
+      }
+    } else {
+      // Roster existe mais pas de FACEIT lie : invite a lier
+      const hintEl = document.getElementById('yourInput').parentElement.querySelector('.input-hint');
+      if (hintEl) {
+        hintEl.innerHTML = `Ton roster <strong>${roster.team_name}</strong> n'a pas de fiche FACEIT liee. <a href="dashboard.html#roster" style="color:var(--accent)">Lier maintenant →</a>`;
+      }
+    }
+  } catch (e) {
+    console.warn('[prep-veto] auto-load roster failed:', e.message);
+  }
 }
 
 function showGate(msg) {
