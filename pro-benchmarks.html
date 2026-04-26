@@ -168,18 +168,49 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
           <div class="compare-card-title" id="userNick">-</div>
           <div class="compare-card-sub" id="userMeta">Niveau - · ELO -</div>
         </div>
-        <div style="text-align:right">
+        <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <div style="font-family:var(--display);font-size:14px;color:var(--text3)" id="updatedLbl">-</div>
+          <button id="shareBtn" style="background:var(--card);color:var(--accent);border:1px solid var(--accent);font-family:var(--mono);font-size:10px;padding:5px 12px;border-radius:6px;cursor:pointer;letter-spacing:.04em;font-weight:700">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:4px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Partager mon gap
+          </button>
         </div>
       </div>
       <div class="compare-grid" id="compareGrid">
         <!-- 4 KPIs : HLTV Rating, KAST, ADR, K/D -->
       </div>
+
+      <!-- Virtual ranking + insight cards (only visible when comparison live) -->
+      <div id="virtualRankBox" style="margin-top:14px;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:4px">Si tu etais dans le classement</div>
+          <div style="font-family:var(--display);font-size:16px;color:var(--text)" id="virtualRank">-</div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);text-align:right;max-width:280px;font-family:var(--mono);line-height:1.5" id="virtualRankInsight">-</div>
+      </div>
     </div>
+  </div>
+
+  <!-- INSIGHTS CARDS : closest gap / biggest gap / suggested focus -->
+  <div id="insightsWrap" style="display:none;margin-top:18px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="insightsGrid"></div>
   </div>
 
   <!-- TOP 20 LIVE LIST -->
   <div class="sec-label" style="margin-top:32px">Top 20 live · 90 derniers jours</div>
+
+  <!-- Role filter tabs -->
+  <div class="filter-tabs" id="roleFilters" style="margin-bottom:6px">
+    <button class="filter-tab active" data-role="">Tous roles</button>
+    <button class="filter-tab" data-role="awp">AWP</button>
+    <button class="filter-tab" data-role="entry">Entry</button>
+    <button class="filter-tab" data-role="igl">IGL</button>
+    <button class="filter-tab" data-role="support">Support</button>
+    <button class="filter-tab" data-role="lurker">Lurker</button>
+    <button class="filter-tab" data-role="rifler">Rifler</button>
+  </div>
+
+  <!-- Map filter tabs -->
   <div class="filter-tabs" id="mapFilters">
     <button class="filter-tab active" data-map="overall">Overall</button>
     <button class="filter-tab" data-map="mirage">Mirage</button>
@@ -190,6 +221,13 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     <button class="filter-tab" data-map="vertigo">Vertigo</button>
     <button class="filter-tab" data-map="ancient">Ancient</button>
     <button class="filter-tab" data-map="train">Train</button>
+  </div>
+
+  <!-- Side filter (only shown when a specific map is selected) -->
+  <div class="filter-tabs" id="sideFilters" style="display:none;margin-top:-8px">
+    <button class="filter-tab active" data-side="">Les deux sides</button>
+    <button class="filter-tab" data-side="ct">CT only</button>
+    <button class="filter-tab" data-side="t">T only</button>
   </div>
   <div class="top20-list" id="top20List">
     <div class="top20-row head">
@@ -246,15 +284,20 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <script src="/nav.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────
-// Pro Benchmarks Live : top 20 + user comparison
+// Pro Benchmarks Live v2 : top 20 + user comparison + role/map/side filters
+//                        + virtual rank + insights + share
 // ─────────────────────────────────────────────────────────────────────────
 const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
 const sb = supabase.createClient(SB_URL, SB_ANON);
 
-let benchData = null;     // { top20, proAvg, source, lastUpdated }
-let userStats = null;     // { fvRating, kast, adr, kd, nickname, level, elo }
+const isEN = document.documentElement.lang === 'en' || window.location.pathname.startsWith('/en/');
+
+let benchData = null;
+let userStats = null;
 let currentMap = 'overall';
+let currentRole = '';
+let currentSide = '';
 
 // Format helpers
 function fmt(v, decimals = 1) {
@@ -271,7 +314,7 @@ function deltaCls(v, higherIsBetter = true) {
   return ((v > 0) === higherIsBetter) ? 'up' : 'down';
 }
 
-// ─── Render top 20 list ──────────────────────────────────────────────────
+// ─── Render top 20 list (overall or role-filtered) ───────────────────────
 function renderTop20(top20) {
   const body = document.getElementById('top20Body');
   if (!top20 || !top20.length) {
@@ -280,7 +323,7 @@ function renderTop20(top20) {
   }
   body.innerHTML = top20.map((p, i) => {
     const rankCls = i < 3 ? ' podium' : '';
-    const teamHtml = p.team ? '<span class="top20-team">' + p.team + '</span>' : '';
+    const teamHtml = p.team ? '<span class="top20-team">' + p.team + (p.role ? ' · ' + p.role.toUpperCase() : '') + '</span>' : '';
     return '<div class="top20-row">'
       + '<div class="top20-rank' + rankCls + '">' + (i + 1) + '</div>'
       + '<div class="top20-name">' + (p.nickname || '-') + teamHtml + '</div>'
@@ -293,7 +336,43 @@ function renderTop20(top20) {
   }).join('');
 }
 
-// ─── Render user comparison ──────────────────────────────────────────────
+// ─── Render top players for a specific map (CT + T or filtered side) ─────
+function renderMapTop(d, map) {
+  const body = document.getElementById('top20Body');
+  const ct = d.ct || [];
+  const t = d.t || [];
+
+  if (!ct.length && !t.length) {
+    body.innerHTML = '<div class="top20-row"><div class="top20-rank">-</div><div class="top20-name" style="color:var(--text3)">Pas de donnees pour cette map</div><div></div><div class="hide-mobile"></div><div class="hide-mobile"></div><div></div><div></div></div>';
+    return;
+  }
+
+  let html = '';
+  if (currentSide === '' || currentSide === 'ct') {
+    html += '<div class="top20-row" style="background:rgba(91,155,213,.08);font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase"><div></div><div style="color:#5b9bd5;font-weight:700">CT Side · Top ' + ct.length + '</div><div></div><div class="hide-mobile"></div><div class="hide-mobile"></div><div></div><div></div></div>';
+    html += ct.map((p, i) => mapPlayerRow(p, i, 'CT')).join('');
+  }
+  if (currentSide === '' || currentSide === 't') {
+    html += '<div class="top20-row" style="background:rgba(212,168,67,.08);font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase"><div></div><div style="color:var(--gold);font-weight:700">T Side · Top ' + t.length + '</div><div></div><div class="hide-mobile"></div><div class="hide-mobile"></div><div></div><div></div></div>';
+    html += t.map((p, i) => mapPlayerRow(p, i, 'T')).join('');
+  }
+  body.innerHTML = html;
+}
+
+function mapPlayerRow(p, i, side) {
+  const rankCls = i < 3 ? ' podium' : '';
+  return '<div class="top20-row">'
+    + '<div class="top20-rank' + rankCls + '">' + (p.rank || (i + 1)) + '</div>'
+    + '<div class="top20-name">' + (p.nickname || '-') + (p.team ? '<span class="top20-team">' + p.team + '</span>' : '') + '</div>'
+    + '<div class="top20-stat rating">' + fmt(p.hltv_rating, 2) + '</div>'
+    + '<div class="top20-stat hide-mobile">' + (p.kast_pct != null ? fmt(p.kast_pct, 0) + '%' : '-') + '</div>'
+    + '<div class="top20-stat hide-mobile">' + (p.adr != null ? fmt(p.adr, 0) : '-') + '</div>'
+    + '<div class="top20-stat">' + (p.hs_pct != null ? fmt(p.hs_pct, 0) + '%' : '-') + '</div>'
+    + '<div class="top20-stat maps">' + side + '</div>'
+  + '</div>';
+}
+
+// ─── Render user comparison + virtual rank + insights ────────────────────
 function renderUserCompare(user, proAvg) {
   document.getElementById('userCompareGuest').style.display = 'none';
   document.getElementById('userCompareNoFaceit').style.display = 'none';
@@ -304,10 +383,10 @@ function renderUserCompare(user, proAvg) {
   document.getElementById('updatedLbl').textContent = '20 derniers matchs';
 
   const cells = [
-    { lbl: 'HLTV / FV Rating', user: user.fvRating, pro: proAvg.hltv_rating, decimals: 2, higher: true },
-    { lbl: 'KAST',             user: user.kast,     pro: proAvg.kast_pct,    decimals: 0, higher: true, suffix: '%' },
-    { lbl: 'ADR',              user: user.adr,      pro: proAvg.adr,         decimals: 0, higher: true },
-    { lbl: 'K/D',              user: user.kd,       pro: proAvg.kd,          decimals: 2, higher: true },
+    { key: 'fvRating', lbl: 'HLTV / FV Rating', user: user.fvRating, pro: proAvg.hltv_rating, decimals: 2, higher: true },
+    { key: 'kast',     lbl: 'KAST',             user: user.kast,     pro: proAvg.kast_pct,    decimals: 0, higher: true, suffix: '%' },
+    { key: 'adr',      lbl: 'ADR',              user: user.adr,      pro: proAvg.adr,         decimals: 0, higher: true },
+    { key: 'kd',       lbl: 'K/D',              user: user.kd,       pro: proAvg.kd,          decimals: 2, higher: true },
   ];
 
   document.getElementById('compareGrid').innerHTML = cells.map(c => {
@@ -320,31 +399,199 @@ function renderUserCompare(user, proAvg) {
       + '<div class="gap ' + deltaCls(gap, c.higher) + '">' + gapStr + '</div>'
     + '</div>';
   }).join('');
+
+  // Virtual rank : si l'user etait dans le top 20, ou serait-il sur HLTV rating ?
+  renderVirtualRank(user, benchData ? benchData.top20 : []);
+
+  // Insights : closest gap, biggest gap, suggested focus
+  renderInsights(cells);
 }
 
-// ─── Fetch pro benchmarks (public) ───────────────────────────────────────
-async function loadBenchmarks() {
+function renderVirtualRank(user, top20) {
+  if (!top20 || !top20.length) return;
+  const userRating = user.fvRating || 0;
+  // Position virtuelle dans le classement
+  let virtualPos = 1;
+  for (const p of top20) {
+    if (p.hltv_rating > userRating) virtualPos++;
+    else break;
+  }
+
+  const rankEl = document.getElementById('virtualRank');
+  const insightEl = document.getElementById('virtualRankInsight');
+
+  if (virtualPos === 1) {
+    rankEl.innerHTML = '<span style="color:var(--accent)">#1 mondial</span>';
+    insightEl.textContent = isEN
+      ? 'You\'re above ZywOo. Either ranks have stale data, or you\'re a beast (or your sample is tiny).'
+      : 'Tu es au-dessus de ZywOo. Soit les rankings sont stale, soit tu es un monstre (ou ton sample est petit).';
+  } else if (virtualPos <= 5) {
+    rankEl.innerHTML = '<span style="color:var(--accent)">Top ' + virtualPos + ' virtuel</span>';
+    insightEl.textContent = isEN
+      ? 'Insane level. You\'d be on the world stage if your sample held up over 90 days of S-tier matches.'
+      : 'Niveau de fou. Tu serais sur la scene mondiale si ton sample tient sur 90 jours de matchs S-tier.';
+  } else if (virtualPos <= 20) {
+    rankEl.innerHTML = '<span style="color:var(--accent)">Top ' + virtualPos + ' virtuel</span>';
+    insightEl.textContent = isEN
+      ? 'You\'d be in HLTV top 20. Solo queue context vs S-tier LANs are very different - keep grinding.'
+      : 'Tu serais dans le top 20 HLTV. Le contexte solo queue vs LAN S-tier est tres different - continue.';
+  } else if (virtualPos <= 50) {
+    rankEl.innerHTML = '<span style="color:var(--text)">~Top ' + virtualPos + ' (estime)</span>';
+    insightEl.textContent = isEN
+      ? 'Strong solo queue level. The gap to top 20 is mostly about consistency (KAST) and impact rounds.'
+      : 'Bon niveau solo queue. Le gap vers le top 20 est surtout consistance (KAST) et impact rounds.';
+  } else if (virtualPos <= 100) {
+    rankEl.innerHTML = '<span style="color:var(--text)">~Top ' + virtualPos + ' (estime)</span>';
+    insightEl.textContent = isEN
+      ? 'You\'re close to ranked-pro level. Focus on lowering avoidable deaths to climb.'
+      : 'Tu es proche du niveau pro-classe. Focus sur reduire les morts evitables pour grimper.';
+  } else {
+    rankEl.innerHTML = '<span style="color:var(--text2)">~Top ' + virtualPos + '+ (estime)</span>';
+    insightEl.textContent = isEN
+      ? 'Pro level is far - but the path is mapped: KAST > 75%, ADR > 85, FV Rating > 1.20.'
+      : 'Le niveau pro est loin - mais le chemin est trace : KAST > 75%, ADR > 85, FV Rating > 1.20.';
+  }
+}
+
+function renderInsights(cells) {
+  // Compute deltas for each KPI
+  const ranked = cells.map(c => ({
+    key: c.key,
+    lbl: c.lbl,
+    gap: (c.user || 0) - (c.pro || 0),
+    gapPct: c.pro ? ((c.user - c.pro) / c.pro) * 100 : 0,
+  }));
+
+  // Closest gap : the KPI where user is closest to pro (could be positive or negative, smallest |delta|)
+  const closest = [...ranked].filter(r => r.gap < 0).sort((a, b) => Math.abs(a.gapPct) - Math.abs(b.gapPct))[0];
+  // Biggest gap : worst gap
+  const biggest = [...ranked].filter(r => r.gap < 0).sort((a, b) => Math.abs(b.gapPct) - Math.abs(a.gapPct))[0];
+  // Strength : best KPI (largest positive delta or smallest negative)
+  const strength = [...ranked].sort((a, b) => b.gapPct - a.gapPct)[0];
+
+  const insights = [];
+  if (closest && closest.gap < 0) {
+    insights.push({
+      type: 'closest',
+      title: isEN ? 'Closest to pro' : 'Plus proche du pro',
+      text: isEN
+        ? 'Your <strong>' + closest.lbl + '</strong> is only ' + fmtDelta(closest.gapPct, 0) + '% behind. You\'re tickling pro level on this one.'
+        : 'Ton <strong>' + closest.lbl + '</strong> n\'est qu\'a ' + fmtDelta(closest.gapPct, 0) + '% du pro. Tu chatouilles le niveau pro la-dessus.',
+      color: 'var(--success)',
+    });
+  }
+  if (biggest && biggest.gap < 0 && biggest.key !== closest?.key) {
+    const focus = biggest.key === 'kast' ? (isEN ? 'work positioning + utility to stay alive in more rounds' : 'travaille positionnement + utility pour survivre plus de rounds')
+              : biggest.key === 'adr' ? (isEN ? 'damage check every duel + grenade spam common positions' : 'damage check chaque duel + spam grenades sur positions communes')
+              : biggest.key === 'kd' ? (isEN ? 'lower deaths : avoid solo peeks, prioritize trade kills' : 'baisse les morts : evite les solo peeks, priorise trades')
+              : (isEN ? 'lift overall round impact : KAST + multi-kills' : 'monte ton impact round global : KAST + multi-kills');
+    insights.push({
+      type: 'biggest',
+      title: isEN ? 'Biggest gap' : 'Plus gros ecart',
+      text: isEN
+        ? 'Your <strong>' + biggest.lbl + '</strong> is ' + fmtDelta(biggest.gapPct, 0) + '% behind. Focus : ' + focus + '.'
+        : 'Ton <strong>' + biggest.lbl + '</strong> est a ' + fmtDelta(biggest.gapPct, 0) + '% du pro. Focus : ' + focus + '.',
+      color: 'var(--danger)',
+    });
+  }
+  if (strength) {
+    const txt = strength.gap >= 0
+      ? (isEN ? 'Your <strong>' + strength.lbl + '</strong> is at or above pro level. Keep this consistent.' : 'Ton <strong>' + strength.lbl + '</strong> est au niveau pro ou au-dessus. Maintiens-le.')
+      : (isEN ? 'Your relative strength is <strong>' + strength.lbl + '</strong>. Build everything else around it.' : 'Ta force relative est <strong>' + strength.lbl + '</strong>. Construis le reste autour.');
+    insights.push({
+      type: 'strength',
+      title: isEN ? 'Your strength' : 'Ta force',
+      text: txt,
+      color: 'var(--accent)',
+    });
+  }
+
+  if (!insights.length) {
+    document.getElementById('insightsWrap').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('insightsGrid').innerHTML = insights.map(i =>
+    '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ' + i.color + ';border-radius:8px;padding:14px 16px">'
+      + '<div style="font-size:9px;color:' + i.color + ';text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:6px">' + i.title + '</div>'
+      + '<div style="font-family:var(--mono);font-size:11px;color:var(--text);line-height:1.5">' + i.text + '</div>'
+    + '</div>'
+  ).join('');
+  document.getElementById('insightsWrap').style.display = 'block';
+}
+
+// ─── Share button : copies a text "card" of the user's gap ───────────────
+function setupShareBtn() {
+  const btn = document.getElementById('shareBtn');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    if (!userStats || !benchData) return;
+    const u = userStats;
+    const pro = benchData.proAvg;
+    const text = (isEN
+      ? 'My CS2 stats vs HLTV top 20 (FragValue):\n'
+      : 'Mes stats CS2 vs top 20 HLTV (FragValue):\n')
+      + '\n• FV Rating: ' + fmt(u.fvRating, 2) + ' (pro avg ' + fmt(pro.hltv_rating, 2) + ', ' + fmtDelta(u.fvRating - pro.hltv_rating, 2) + ')'
+      + '\n• KAST: ' + fmt(u.kast, 0) + '% (pro ' + fmt(pro.kast_pct, 0) + '%, ' + fmtDelta(u.kast - pro.kast_pct, 0) + 'pts)'
+      + '\n• ADR: ' + fmt(u.adr, 0) + ' (pro ' + fmt(pro.adr, 0) + ', ' + fmtDelta(u.adr - pro.adr, 0) + ')'
+      + '\n• K/D: ' + fmt(u.kd, 2) + ' (pro ' + fmt(pro.kd, 2) + ', ' + fmtDelta(u.kd - pro.kd, 2) + ')'
+      + '\n\n' + (isEN ? 'See yours: ' : 'Voir le tien: ') + window.location.href.split('?')[0];
+
+    try {
+      await navigator.clipboard.writeText(text);
+      const orig = btn.innerHTML;
+      btn.innerHTML = (isEN ? '✓ Copied' : '✓ Copie') + ' !';
+      btn.style.background = 'var(--accent)';
+      btn.style.color = '#000';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; btn.style.color = ''; }, 2000);
+    } catch (e) {
+      // Fallback : open share dialog
+      if (navigator.share) {
+        navigator.share({ text }).catch(() => {});
+      } else {
+        prompt(isEN ? 'Copy this:' : 'Copie ceci :', text);
+      }
+    }
+  });
+}
+
+// ─── Fetch pro benchmarks (overall or with role filter) ──────────────────
+async function loadBenchmarks(role) {
+  const body = document.getElementById('top20Body');
+  body.innerHTML = '<div class="top20-row"><div class="top20-rank">-</div><div class="top20-name"><div class="skel" style="width:140px"></div></div><div class="top20-stat"><div class="skel" style="width:36px"></div></div><div class="top20-stat hide-mobile"><div class="skel" style="width:30px"></div></div><div class="top20-stat hide-mobile"><div class="skel" style="width:30px"></div></div><div class="top20-stat"><div class="skel" style="width:30px"></div></div><div class="top20-stat"><div class="skel" style="width:24px"></div></div></div>';
+
   try {
-    const res = await fetch('/api/pro-benchmarks?aggregate=overall');
+    const url = '/api/pro-benchmarks?aggregate=overall' + (role ? '&role=' + encodeURIComponent(role) : '');
+    const res = await fetch(url);
     if (!res.ok) throw new Error('status ' + res.status);
     const d = await res.json();
     benchData = d;
 
-    // Render top 20
     renderTop20(d.top20);
 
-    // Update footer with sample size + last update
     const dt = d.lastUpdated ? new Date(d.lastUpdated).toLocaleDateString() : '-';
+    const sourceLbl = d.source === 'db' ? 'live FragValue DB' : 'seed 2026';
     document.getElementById('benchFooter').textContent =
-      'Source : ' + (d.source === 'db' ? 'live FragValue DB' : 'seed 2026') +
-      ' · ' + d.sampleSize + ' joueurs · cache 1h · maj ' + dt;
+      'Source : ' + sourceLbl + ' · ' + d.sampleSize + ' joueurs · cache 1h · maj ' + dt;
 
-    // If user already loaded, render compare
     if (userStats && d.proAvg) renderUserCompare(userStats, d.proAvg);
   } catch (e) {
     console.warn('[pro-benchmarks] failed to load:', e.message);
-    document.getElementById('top20Body').innerHTML =
+    body.innerHTML =
       '<div class="top20-row"><div class="top20-rank">-</div><div class="top20-name" style="color:var(--text3)">Erreur de chargement. Reessaye dans un instant.</div><div></div><div class="hide-mobile"></div><div class="hide-mobile"></div><div></div><div></div></div>';
+  }
+}
+
+// ─── Fetch map-specific data ─────────────────────────────────────────────
+async function loadMap(map, side) {
+  try {
+    const url = '/api/pro-benchmarks?aggregate=map&map=' + map + (side ? '&side=' + side : '');
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('status ' + res.status);
+    const d = await res.json();
+    renderMapTop(d, map);
+  } catch (e) {
+    console.warn('[pro-benchmarks] map failed:', e.message);
   }
 }
 
@@ -352,24 +599,19 @@ async function loadBenchmarks() {
 async function loadUserStats() {
   try {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) {
-      // Guest : keep guest banner visible
-      return;
-    }
-    // Get profile to check FACEIT linkage
+    if (!session) return;
+
     const { data: profile } = await sb.from('profiles')
       .select('faceit_nickname, faceit_level, faceit_elo')
       .eq('id', session.user.id)
       .single();
 
     if (!profile || !profile.faceit_nickname) {
-      // Logged in but FACEIT not linked
       document.getElementById('userCompareGuest').style.display = 'none';
       document.getElementById('userCompareNoFaceit').style.display = 'block';
       return;
     }
 
-    // Fetch scout data for this user (their own stats)
     const scoutRes = await fetch('/api/scout?nickname=' + encodeURIComponent(profile.faceit_nickname), {
       headers: { 'Authorization': 'Bearer ' + session.access_token },
     });
@@ -388,62 +630,53 @@ async function loadUserStats() {
       kd: parseFloat(recent.avgKd) || 0,
     };
 
-    // If bench data already loaded, render compare
     if (benchData && benchData.proAvg) renderUserCompare(userStats, benchData.proAvg);
   } catch (e) {
     console.warn('[pro-benchmarks] user stats failed:', e.message);
   }
 }
 
-// ─── Map filter handler ──────────────────────────────────────────────────
-async function selectMap(map) {
+// ─── Filter handlers ─────────────────────────────────────────────────────
+function selectMap(map) {
   currentMap = map;
-  document.querySelectorAll('.filter-tab').forEach(b => b.classList.toggle('active', b.dataset.map === map));
+  document.querySelectorAll('#mapFilters .filter-tab').forEach(b => b.classList.toggle('active', b.dataset.map === map));
+  document.getElementById('sideFilters').style.display = (map === 'overall') ? 'none' : 'flex';
 
   if (map === 'overall') {
-    if (benchData) renderTop20(benchData.top20);
-    return;
-  }
-
-  // Fetch map-specific data
-  try {
-    const res = await fetch('/api/pro-benchmarks?aggregate=map&map=' + map);
-    if (!res.ok) throw new Error('status ' + res.status);
-    const d = await res.json();
-
-    // For maps, we display the top performer per side as a pseudo-list
-    const body = document.getElementById('top20Body');
-    if (!d.ct && !d.t) {
-      body.innerHTML = '<div class="top20-row"><div class="top20-rank">-</div><div class="top20-name" style="color:var(--text3)">Pas de donnees pour cette map</div><div></div><div class="hide-mobile"></div><div class="hide-mobile"></div><div></div><div></div></div>';
-      return;
-    }
-    const sides = [];
-    if (d.ct) sides.push({ side: 'CT', ...d.ct });
-    if (d.t) sides.push({ side: 'T', ...d.t });
-    body.innerHTML = sides.map((s, i) => {
-      return '<div class="top20-row">'
-        + '<div class="top20-rank podium">' + s.side + '</div>'
-        + '<div class="top20-name">' + (s.player || '-') + '<span class="top20-team">Top ' + s.side + ' ' + map.toUpperCase() + '</span></div>'
-        + '<div class="top20-stat rating">' + fmt(s.hltv_rating, 2) + '</div>'
-        + '<div class="top20-stat hide-mobile">' + (s.kast_pct != null ? fmt(s.kast_pct, 0) + '%' : '-') + '</div>'
-        + '<div class="top20-stat hide-mobile">' + (s.adr != null ? fmt(s.adr, 0) : '-') + '</div>'
-        + '<div class="top20-stat">-</div>'
-        + '<div class="top20-stat maps">-</div>'
-      + '</div>';
-    }).join('');
-  } catch (e) {
-    console.warn('[pro-benchmarks] map failed:', e.message);
+    loadBenchmarks(currentRole);
+  } else {
+    loadMap(map, currentSide);
   }
 }
 
+function selectRole(role) {
+  currentRole = role;
+  document.querySelectorAll('#roleFilters .filter-tab').forEach(b => b.classList.toggle('active', (b.dataset.role || '') === role));
+
+  // Reset map to overall when changing role (role only applies to overall)
+  if (currentMap !== 'overall') {
+    currentMap = 'overall';
+    document.querySelectorAll('#mapFilters .filter-tab').forEach(b => b.classList.toggle('active', b.dataset.map === 'overall'));
+    document.getElementById('sideFilters').style.display = 'none';
+  }
+  loadBenchmarks(role);
+}
+
+function selectSide(side) {
+  currentSide = side;
+  document.querySelectorAll('#sideFilters .filter-tab').forEach(b => b.classList.toggle('active', (b.dataset.side || '') === side));
+  if (currentMap !== 'overall') loadMap(currentMap, side);
+}
+
 // Bind filter clicks
-document.querySelectorAll('.filter-tab').forEach(b => {
-  b.addEventListener('click', () => selectMap(b.dataset.map));
-});
+document.querySelectorAll('#mapFilters .filter-tab').forEach(b => b.addEventListener('click', () => selectMap(b.dataset.map)));
+document.querySelectorAll('#roleFilters .filter-tab').forEach(b => b.addEventListener('click', () => selectRole(b.dataset.role || '')));
+document.querySelectorAll('#sideFilters .filter-tab').forEach(b => b.addEventListener('click', () => selectSide(b.dataset.side || '')));
 
 // Boot
-loadBenchmarks();
+loadBenchmarks('');
 loadUserStats();
+setupShareBtn();
 </script>
 </body>
 </html>
