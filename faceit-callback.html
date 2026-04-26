@@ -251,11 +251,35 @@ function showSuccess(data) {
     </div>
     <p class="sub" style="margin-top:12px">Redirection...</p>
   `;
+
+  // Tentative postMessage si on est dans un popup (desktop flow).
+  let postedOk = false;
   if (window.opener && !window.opener.closed) {
-    window.opener.postMessage({ type: 'FACEIT_AUTH_SUCCESS' }, window.location.origin);
-    setTimeout(() => window.close(), 300);
+    try {
+      window.opener.postMessage({ type: 'FACEIT_AUTH_SUCCESS' }, window.location.origin);
+      postedOk = true;
+    } catch (e) {
+      console.warn('postMessage failed:', e.message);
+    }
+  }
+
+  // Tentative window.close() si popup, MAIS toujours avec un fallback
+  // redirect direct au cas ou close() echoue (cas iOS / iPad / mobile
+  // ou window.close() ne marche pas pour les onglets non ouverts via JS).
+  if (postedOk) {
+    setTimeout(() => {
+      try { window.close(); } catch(_) {}
+      // Si la page est encore visible apres 600ms, on est probablement
+      // dans un onglet (pas un popup) -> redirect en full page.
+      setTimeout(() => {
+        if (!document.hidden) {
+          window.location.href = '/account.html';
+        }
+      }, 600);
+    }, 300);
   } else {
-    setTimeout(() => { window.location.href = '/account.html'; }, 1500);
+    // Pas d'opener accessible : full-page redirect direct.
+    setTimeout(() => { window.location.href = '/account.html'; }, 1200);
   }
 }
 
