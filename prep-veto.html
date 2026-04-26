@@ -259,7 +259,7 @@ const isEN = document.documentElement.lang === 'en' || window.location.pathname.
 
 let currentResults = null;
 
-// ─── Boot : check auth + plan ─────────────────────────────────────────────
+// ─── Boot : check auth + plan via check-subscription (inclut admin bypass) ─
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
@@ -268,9 +268,26 @@ async function init() {
       : 'Connecte-toi avec un compte Elite pour utiliser Prep Veto. Les plans Free et Pro n\'ont pas acces a l\'analyse adverse.');
     return;
   }
-  // Check plan
-  const { data: sub } = await sb.from('subscriptions').select('plan, status').eq('user_id', session.user.id).single();
-  const plan = (sub && sub.status === 'active') ? sub.plan : 'free';
+  // Plan check via /api/check-subscription : source de verite unique qui
+  // gere admin bypass (qdreuillet@gmail.com) + pro_grants (parrainages,
+  // promos) + Stripe fallback. Plus fiable que lire la table subscriptions
+  // directement (qui rate les admins/grants).
+  let plan = 'free';
+  try {
+    const r = await fetch('/api/check-subscription', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+    });
+    if (r.ok) {
+      const d = await r.json();
+      plan = d.plan || 'free';
+    }
+  } catch (e) {
+    console.warn('[prep-veto] check-subscription failed:', e.message);
+  }
   const isElite = plan === 'elite' || plan === 'team';
   if (!isElite) {
     showGate(isEN

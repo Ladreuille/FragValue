@@ -37,6 +37,8 @@
 //
 // ENV REQUIRED : FACEIT_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY
 
+const { requireElite } = require('./_lib/subscription');
+
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 
 const ACTIVE_MAPS = ['de_mirage', 'de_inferno', 'de_dust2', 'de_nuke', 'de_anubis', 'de_vertigo', 'de_ancient', 'de_overpass'];
@@ -57,26 +59,6 @@ function getCache() {
   const g = globalThis;
   if (!g.__fvPrepVetoCache) g.__fvPrepVetoCache = { entries: new Map() };
   return g.__fvPrepVetoCache;
-}
-
-async function resolveUserAndPlan(authHeader) {
-  if (!authHeader) return { user: null, plan: 'anon' };
-  try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user } } = await sb.auth.getUser(token);
-    if (!user) return { user: null, plan: 'anon' };
-    const { data: sub } = await sb.from('subscriptions').select('plan, status').eq('user_id', user.id).single();
-    let plan = 'free';
-    if (sub && sub.status === 'active') {
-      plan = (sub.plan === 'elite' || sub.plan === 'team') ? 'elite' : sub.plan === 'pro' ? 'pro' : 'free';
-    }
-    return { user, plan };
-  } catch (e) {
-    console.warn('[prep-veto] auth resolve failed:', e.message);
-    return { user: null, plan: 'anon' };
-  }
 }
 
 // Fetch un joueur : profil (pour playerId) + stats des 20 derniers matchs.
@@ -203,17 +185,13 @@ module.exports = async function handler(req, res) {
   const apiKey = process.env.FACEIT_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'FACEIT API non configuree' });
 
-  // ── Auth + plan check ──
-  const { user, plan } = await resolveUserAndPlan(req.headers.authorization);
-  if (!user) return res.status(401).json({ error: 'Auth requise' });
-  if (plan !== 'elite') {
-    return res.status(403).json({
-      error: 'Plan Elite requis pour Prep Veto',
-      code: 'elite_required',
-      currentPlan: plan,
-      upgradeUrl: '/pricing.html',
-    });
-  }
+  // ── Auth + plan check via helper centralise ──
+  // requireElite() inclut l'admin bypass (qdreuillet@gmail.com) + pro_grants
+  // (parrainages, promo) + Stripe fallback. Si l'user n'est pas Elite,
+  // requireElite envoie deja 401/403 et retourne null.
+  const gate = await requireElite(req, res);
+  if (!gate) return;
+  const { user } = gate;
 
   // ── Validation input ──
   let body = req.body || {};
