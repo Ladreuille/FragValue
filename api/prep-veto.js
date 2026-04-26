@@ -1,41 +1,34 @@
 // api/prep-veto.js
-// Prep Veto Elite : agrege les stats par map des 5 joueurs adverses
-// pour preparer le veto BO1/BO3/BO5.
+// Prep Veto Elite : analyse les maps de l'equipe adverse + ton equipe
+// pour preparer le veto BO1/BO3/BO5. Accepte des URLs FACEIT ou HLTV
+// pour resolver les rosters automatiquement.
 //
 // POST /api/prep-veto
-// Body: { opponent: ['nick1', 'nick2', 'nick3', 'nick4', 'nick5'] }
+// Body :
+//   - { opponent: ['nick1', ..., 'nick5'] }       (legacy, opponent only)
+//   - { opponentUrl, yourTeamUrl }                (URLs FACEIT / HLTV)
+//   - { opponent: [...], yourTeam: [...] }        (mix nicks)
+//   - { opponentUrl, yourTeam: [...] }            (mix URL + nicks)
 // Auth: Bearer token (Elite plan required)
 //
-// Response:
-// {
-//   team: { nicknames: [...], totalMatches: 100, validPlayers: 5 },
-//   maps: [
-//     {
-//       map: 'de_mirage',
-//       displayName: 'Mirage',
-//       matches: 25,        // nb de matchs joues sur cette map (cumule 5 joueurs)
-//       wins: 16,
-//       winRate: 64,        // %
-//       ctWinRate: 60,
-//       tWinRate: 70,
-//       avgKd: 1.05,
-//       avgAdr: 78,
-//       avgKast: 71,
-//     },
-//     ...
-//   ],
-//   recommendations: {
-//     forceBan: [{ map, reason }, ...],   // leurs meilleures maps a ban
-//     forcePick: [{ map, reason }, ...],  // leurs maps faibles a picker
-//   }
-// }
+// URL formats supportes :
+//   - https://www.faceit.com/<lang>/teams/<team_id>      (FACEIT premade team)
+//   - https://www.faceit.com/<lang>/players/<nickname>   (1 player FACEIT)
+//   - https://www.hltv.org/team/<id>/<slug>              (HLTV team page)
+//   - https://www.hltv.org/matches/<id>/<teamA-vs-teamB> (HLTV match page → 2 teams)
 //
-// Strategie : appelle FACEIT API en parallele pour les 5 joueurs (history
-// + per-match stats), agrege par map, calcule winrate cumule + side splits.
-// Cache 6h en memoire (les rosters bougent vite mais pas les stats des
-// joueurs sur les 20 derniers matchs).
+// Strategie HLTV : pas d'API officielle. On utilise PLAYER_METADATA local
+// (60+ pros verifies) pour matcher le slug HLTV au team name -> liste de
+// nicks connus. Pour les equipes pas dans nos metadata, retourne erreur
+// avec suggestion de paste les nicks manuellement.
 //
-// ENV REQUIRED : FACEIT_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY
+// Response (mode opponent only, retro-compat) :
+// { team, maps, recommendations, lastUpdated }
+//
+// Response (mode head-to-head si yourTeam fournie) :
+// { opponent: { team, maps }, yourTeam: { team, maps }, recommendations, h2h }
+//
+// ENV : FACEIT_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY
 
 const { requireElite } = require('./_lib/subscription');
 
@@ -54,6 +47,49 @@ const MAP_DISPLAY = {
 };
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6h
+const FACEIT_BASE = 'https://open.faceit.com/data/v4';
+
+// ── HLTV team slug -> liste de nicknames FACEIT ────────────────────────────
+// Index inverse base sur PLAYER_METADATA (api/pro-benchmarks.js). Mis a jour
+// avril 2026. Le slug HLTV est extrait de l'URL (ex: 'natus-vincere',
+// 'team-vitality', 'falcons').
+//
+// Pour les equipes pas dans cet index (tier 3, equipes amateurs), l'user
+// devra paste les nicks manuellement comme fallback.
+const HLTV_TEAM_ROSTERS = {
+  'team-vitality':    ['ZywOo', 'apEX', 'ropz', 'flameZ', 'mezii'],
+  'vitality':         ['ZywOo', 'apEX', 'ropz', 'flameZ', 'mezii'],
+  'team-spirit':      ['donk', 'sh1ro', 'magixx', 'zont1x', 'tn1r'],
+  'spirit':           ['donk', 'sh1ro', 'magixx', 'zont1x', 'tn1r'],
+  'team-falcons':     ['m0NESY', 'NiKo', 'karrigan', 'TeSeS', 'kyousuke'],
+  'falcons':          ['m0NESY', 'NiKo', 'karrigan', 'TeSeS', 'kyousuke'],
+  'faze-clan':        ['frozen', 'Twistzz', 'broky', 'jcobbb', 'rain'], // rain may be 100T now
+  'faze':             ['frozen', 'Twistzz', 'broky', 'jcobbb'],
+  'mouz':             ['Spinx', 'xertioN', 'torzsi', 'jL', 'xelex'],
+  'natus-vincere':    ['aleksib', 'iM', 'b1t', 'w0nderful', 'jL'],
+  'navi':             ['aleksib', 'iM', 'b1t', 'w0nderful'],
+  'furia':            ['molodoy', 'KSCERATO', 'yuurih', 'YEKINDAR', 'FalleN'],
+  'furia-esports':    ['molodoy', 'KSCERATO', 'yuurih', 'YEKINDAR', 'FalleN'],
+  'g2-esports':       ['huNter-', 'NertZ', 'SunPayus', 'HeavyGod', 'matys'],
+  'g2':               ['huNter-', 'NertZ', 'SunPayus', 'HeavyGod', 'matys'],
+  'team-liquid':      ['siuhy', 'NAF', 'EliGE', 'ultimate', 'malbsmd'],
+  'liquid':           ['siuhy', 'NAF', 'EliGE', 'ultimate', 'malbsmd'],
+  'aurora-gaming':    ['XANTARES', 'woxic', 'maj3r', 'Soulfly', 'wicadia'],
+  'aurora':           ['XANTARES', 'woxic', 'maj3r', 'Soulfly', 'wicadia'],
+  'the-mongolz':      ['blitz', '910', 'mzinho', 'Senzu', 'Techno4K'],
+  'mongolz':          ['blitz', '910', 'mzinho', 'Senzu', 'Techno4K'],
+  'eternal-fire':     ['MisteM', 'Rigon', 'demqq', 'Regali', 'Jottaaa'],
+  '3dmax':            ['lucky', 'maka', 'Misutaaa', 'Ex3rcice', 'Graviti'],
+  'astralis':         ['HooXi', 'jabbi', 'phzy', 'staehr', 'Ryu'],
+  'big':              ['BlameF', 'tabseN', 'JDC', 'faveN', 'gr1ks'],
+  'ence':             ['F1KU', 'krasnal'],
+  'nip':              ['Snappi', 'stavn', 'sjuush'],
+  'ninjas-in-pyjamas':['Snappi', 'stavn', 'sjuush'],
+  '100-thieves':      ['rain', 'device'],
+  '100t':             ['rain', 'device'],
+  'flyquest':         ['jks'],
+  'heroic':           ['chr1zn', 'Susp', 'xfl0ud', 'NiloVK', 'AlkareN'],
+};
 
 function getCache() {
   const g = globalThis;
@@ -61,39 +97,97 @@ function getCache() {
   return g.__fvPrepVetoCache;
 }
 
-// Fetch un joueur : profil (pour playerId) + stats des 20 derniers matchs.
-// Retourne null si player introuvable, sinon { nickname, playerId, matches: [...] }.
+// ── URL parsing ─────────────────────────────────────────────────────────────
+// Extrait le type + identifiant depuis une URL FACEIT ou HLTV.
+function parseTeamUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  const u = url.trim();
+  // FACEIT team page : /teams/<team_id>
+  const ftm = u.match(/faceit\.com\/[a-z]{2}\/teams\/([a-z0-9-]+)/i);
+  if (ftm) return { source: 'faceit_team', id: ftm[1] };
+  // FACEIT player page : /players/<nickname>
+  const fpm = u.match(/faceit\.com\/[a-z]{2}\/players\/([^/?#]+)/i);
+  if (fpm) return { source: 'faceit_player', nickname: decodeURIComponent(fpm[1]) };
+  // HLTV team page : /team/<id>/<slug>
+  const htm = u.match(/hltv\.org\/team\/(\d+)\/([a-z0-9-]+)/i);
+  if (htm) return { source: 'hltv_team', id: htm[1], slug: htm[2].toLowerCase() };
+  // HLTV match page : /matches/<id>/<teamA>-vs-<teamB>-...
+  const hmm = u.match(/hltv\.org\/matches\/(\d+)\/([a-z0-9-]+)/i);
+  if (hmm) return { source: 'hltv_match', id: hmm[1], slug: hmm[2].toLowerCase() };
+  return null;
+}
+
+// Resout les nicks d'une equipe a partir d'une URL parsee.
+// Retourne { nicks: [...], teamName, source } ou null si echec.
+async function resolveTeamMembers(parsed, apiKey) {
+  if (!parsed) return null;
+
+  if (parsed.source === 'faceit_team') {
+    try {
+      const headers = { Authorization: `Bearer ${apiKey}` };
+      const r = await fetch(`${FACEIT_BASE}/teams/${parsed.id}`, { headers });
+      if (!r.ok) return null;
+      const data = await r.json();
+      const nicks = (data.members || []).map(m => m.nickname).filter(Boolean);
+      if (nicks.length === 0) return null;
+      return { nicks: nicks.slice(0, 5), teamName: data.name || parsed.id, source: 'faceit_team' };
+    } catch (e) {
+      console.warn('[prep-veto] FACEIT team fetch failed:', e.message);
+      return null;
+    }
+  }
+
+  if (parsed.source === 'faceit_player') {
+    return { nicks: [parsed.nickname], teamName: parsed.nickname, source: 'faceit_player' };
+  }
+
+  if (parsed.source === 'hltv_team') {
+    const nicks = HLTV_TEAM_ROSTERS[parsed.slug];
+    if (!nicks) return null;
+    return { nicks, teamName: parsed.slug.replace(/-/g, ' '), source: 'hltv_team' };
+  }
+
+  if (parsed.source === 'hltv_match') {
+    // Les matchs HLTV ont 2 teams dans le slug : 'teamA-vs-teamB-event'.
+    // On extrait juste les 2 noms et on retourne la 1re equipe trouvee.
+    // Pour l'analyse des 2 equipes, l'user devra utiliser yourTeamUrl + opponentUrl.
+    const m = parsed.slug.match(/^([a-z0-9-]+?)-vs-([a-z0-9-]+?)(?:-|$)/);
+    if (!m) return null;
+    const teamASlug = m[1];
+    const nicks = HLTV_TEAM_ROSTERS[teamASlug];
+    if (!nicks) return null;
+    return { nicks, teamName: teamASlug.replace(/-/g, ' '), source: 'hltv_match', secondTeam: m[2] };
+  }
+
+  return null;
+}
+
+// Fetch stats des 20 derniers matchs FACEIT pour 1 nickname.
 async function fetchPlayerMatchStats(nickname, apiKey) {
   const headers = { Authorization: `Bearer ${apiKey}` };
-  const BASE = 'https://open.faceit.com/data/v4';
   try {
-    const playerRes = await fetch(`${BASE}/players?nickname=${encodeURIComponent(nickname)}`, { headers });
+    const playerRes = await fetch(`${FACEIT_BASE}/players?nickname=${encodeURIComponent(nickname)}`, { headers });
     if (!playerRes.ok) return null;
     const player = await playerRes.json();
     const playerId = player.player_id;
     if (!playerId) return null;
 
-    const statsRes = await fetch(`${BASE}/players/${playerId}/games/cs2/stats?limit=20`, { headers });
+    const statsRes = await fetch(`${FACEIT_BASE}/players/${playerId}/games/cs2/stats?limit=20`, { headers });
     if (!statsRes.ok) return null;
     const data = await statsRes.json();
     const items = data.items || [];
 
-    // Extrait uniquement les champs utiles pour l'agregation
     const matches = items.map(it => {
       const s = it.stats || {};
       return {
-        map: (s['Map'] || '').toLowerCase(),       // 'de_mirage'
-        result: parseInt(s['Result']) || 0,         // 1 = win, 0 = loss
+        map: (s['Map'] || '').toLowerCase(),
+        result: parseInt(s['Result']) || 0,
         rounds: parseInt(s['Rounds']) || 0,
         kd: parseFloat(s['K/D Ratio']) || 0,
         adr: parseFloat(s['ADR']) || 0,
         kast: parseFloat(s['KAST %']) || parseFloat(s['KAST']) || 0,
-        // Side rounds : essaye plusieurs cles (FACEIT a varie le naming)
         ctRounds: parseInt(s['Final Score Counter-Terrorist'] || s['CT Rounds'] || 0),
         tRounds:  parseInt(s['Final Score Terrorist'] || s['T Rounds'] || 0),
-        // Win contribution side : approximation basee sur Result
-        // (on ne sait pas precisement combien de rounds gagnes par side
-        // sans payload plus detaille, donc on utilise win/loss + ratio)
       };
     }).filter(m => m.map);
 
@@ -104,9 +198,7 @@ async function fetchPlayerMatchStats(nickname, apiKey) {
   }
 }
 
-// Agrege les matchs des 5 joueurs en stats team-level par map.
-// Strategy : un match d'un joueur = 1 datapoint pour cette map de l'equipe.
-// (Si 2 joueurs jouent ensemble, ca compte 2x mais la moyenne est correcte.)
+// Agrege les matchs des N joueurs en stats team-level par map.
 function aggregateByMap(playersData) {
   const allMatches = playersData.flatMap(p => p.matches);
   const byMap = {};
@@ -123,13 +215,8 @@ function aggregateByMap(playersData) {
     b.kastSum += m.kast;
     b.ctRoundsSum += m.ctRounds;
     b.tRoundsSum += m.tRounds;
-    // Approx side win contribution : on ne peut pas savoir exactement,
-    // donc on suppose que les rounds gagnes sont distribues
-    // proportionnellement entre les 2 sides selon ctRounds/tRounds.
-    // Si match gagne (result=1), on assume ~16 rounds gagnes total.
     const totalRounds = m.ctRounds + m.tRounds;
     if (totalRounds > 0 && m.result === 1) {
-      // Win share par side (approximatif, mieux que rien)
       b.ctWinSum += (m.ctRounds / totalRounds);
       b.tWinSum  += (m.tRounds  / totalRounds);
     }
@@ -145,31 +232,105 @@ function aggregateByMap(playersData) {
     avgKd:   b.matches > 0 ? +(b.kdSum / b.matches).toFixed(2)   : 0,
     avgAdr:  b.matches > 0 ? Math.round(b.adrSum / b.matches)    : 0,
     avgKast: b.matches > 0 ? Math.round(b.kastSum / b.matches)   : 0,
-  })).sort((a, b) => b.matches - a.matches); // tri par maps les plus jouees
+  })).sort((a, b) => b.matches - a.matches);
 }
 
-// Genere les recommandations veto basees sur les stats agregees.
-// Logique :
-//   - forceBan = leurs 2 meilleures maps (winrate + matches >= 5)
-//   - forcePick = leurs 2 maps faibles (winrate < 50% ou peu jouees)
-function generateRecommendations(maps) {
-  const played = maps.filter(m => m.matches >= 3); // exclure les maps quasi non jouees
+// Recommandations basees sur opponent stats SEULES.
+function generateRecommendationsOppOnly(opponentMaps) {
+  const played = opponentMaps.filter(m => m.matches >= 3);
   const sortedByWin = [...played].sort((a, b) => b.winRate - a.winRate);
-  const top2 = sortedByWin.slice(0, 2);
-  const bottom2 = sortedByWin.slice(-2).reverse();
   return {
-    forceBan: top2.map(m => ({
-      map: m.displayName,
-      winRate: m.winRate,
-      matches: m.matches,
+    forceBan: sortedByWin.slice(0, 2).map(m => ({
+      map: m.displayName, winRate: m.winRate, matches: m.matches,
       reason: `Leur meilleure map (${m.winRate}% sur ${m.matches} matchs).`,
     })),
-    forcePick: bottom2.map(m => ({
-      map: m.displayName,
-      winRate: m.winRate,
-      matches: m.matches,
+    forcePick: sortedByWin.slice(-2).reverse().map(m => ({
+      map: m.displayName, winRate: m.winRate, matches: m.matches,
       reason: `Map faible pour eux (${m.winRate}% sur ${m.matches} matchs).`,
     })),
+  };
+}
+
+// Recommandations head-to-head : croise opponent + ton equipe.
+// Logique :
+//   - forceBan = leurs maps fortes ET tes maps faibles (gap negatif eleve)
+//   - forcePick = tes maps fortes ET leurs maps faibles (gap positif eleve)
+function generateRecommendationsH2H(opponentMaps, yourMaps) {
+  const oppByMap = Object.fromEntries(opponentMaps.map(m => [m.map, m]));
+  const yourByMap = Object.fromEntries(yourMaps.map(m => [m.map, m]));
+  const all = [...new Set([...Object.keys(oppByMap), ...Object.keys(yourByMap)])];
+  const h2h = all.map(map => {
+    const opp = oppByMap[map];
+    const you = yourByMap[map];
+    if (!opp || !you || opp.matches < 3 || you.matches < 3) return null;
+    return {
+      map, displayName: MAP_DISPLAY[map] || map,
+      yourWinRate: you.winRate,
+      oppWinRate: opp.winRate,
+      gap: you.winRate - opp.winRate, // positif = avantage toi
+      yourMatches: you.matches,
+      oppMatches: opp.matches,
+    };
+  }).filter(Boolean);
+
+  // Force ban = gap negatif eleve (eux > toi)
+  const sortedByGap = [...h2h].sort((a, b) => a.gap - b.gap);
+  const forceBan = sortedByGap.slice(0, 2).map(h => ({
+    map: h.displayName, winRate: h.oppWinRate, matches: h.oppMatches,
+    yourWinRate: h.yourWinRate, gap: h.gap,
+    reason: `Eux ${h.oppWinRate}% vs toi ${h.yourWinRate}% (gap ${h.gap > 0 ? '+' : ''}${h.gap}pts).`,
+  }));
+  // Force pick = gap positif eleve (toi > eux)
+  const forcePick = sortedByGap.slice(-2).reverse().map(h => ({
+    map: h.displayName, winRate: h.yourWinRate, matches: h.yourMatches,
+    oppWinRate: h.oppWinRate, gap: h.gap,
+    reason: `Toi ${h.yourWinRate}% vs eux ${h.oppWinRate}% (gap +${h.gap}pts).`,
+  }));
+  return { forceBan, forcePick, h2h: sortedByGap };
+}
+
+// Aggregate complet : URL/nicks -> resolve roster -> fetch stats -> aggregate.
+async function processTeam(input, apiKey) {
+  let nicks = [];
+  let teamName = null;
+  let sourceLabel = null;
+
+  if (input.url) {
+    const parsed = parseTeamUrl(input.url);
+    if (!parsed) return { error: 'URL invalide. Formats supportes : faceit.com/<lang>/teams/<id>, hltv.org/team/<id>/<slug>' };
+    const resolved = await resolveTeamMembers(parsed, apiKey);
+    if (!resolved) return { error: `Impossible de resoudre l'equipe depuis ${input.url}. Verifie l'URL ou paste les nicks manuellement.` };
+    nicks = resolved.nicks;
+    teamName = resolved.teamName;
+    sourceLabel = resolved.source;
+  } else if (Array.isArray(input.nicks) && input.nicks.length > 0) {
+    nicks = input.nicks.filter(n => typeof n === 'string' && n.trim()).slice(0, 5);
+    sourceLabel = 'manual_nicks';
+  } else {
+    return { error: 'Fournis une URL FACEIT/HLTV ou une liste de pseudos FACEIT.' };
+  }
+
+  if (nicks.length === 0) return { error: 'Aucun pseudo a analyser.' };
+
+  const playerData = await Promise.all(nicks.map(n => fetchPlayerMatchStats(n.trim(), apiKey)));
+  const validPlayers = playerData.filter(Boolean);
+  if (validPlayers.length === 0) {
+    return { error: 'Aucun joueur trouve sur FACEIT.', tried: nicks };
+  }
+
+  const totalMatches = validPlayers.reduce((s, p) => s + p.matches.length, 0);
+  const maps = aggregateByMap(validPlayers);
+
+  return {
+    team: {
+      teamName,
+      sourceLabel,
+      nicknames: validPlayers.map(p => p.nickname),
+      validPlayers: validPlayers.length,
+      totalMatches,
+      invalidNames: nicks.filter(n => !validPlayers.find(p => p.nickname.toLowerCase() === n.toLowerCase())),
+    },
+    maps,
   };
 }
 
@@ -185,29 +346,35 @@ module.exports = async function handler(req, res) {
   const apiKey = process.env.FACEIT_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'FACEIT API non configuree' });
 
-  // ── Auth + plan check via helper centralise ──
-  // requireElite() inclut l'admin bypass (qdreuillet@gmail.com) + pro_grants
-  // (parrainages, promo) + Stripe fallback. Si l'user n'est pas Elite,
-  // requireElite envoie deja 401/403 et retourne null.
+  // Auth + plan check (admin bypass + grants gere par requireElite)
   const gate = await requireElite(req, res);
   if (!gate) return;
-  const { user } = gate;
 
-  // ── Validation input ──
+  // Parse body
   let body = req.body || {};
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch { body = {}; }
   }
-  const opponent = Array.isArray(body.opponent) ? body.opponent.filter(n => typeof n === 'string' && n.trim()) : [];
-  if (opponent.length < 1) {
-    return res.status(400).json({ error: 'Liste opponent vide. Fournis au moins 1 nickname FACEIT.' });
-  }
-  if (opponent.length > 5) {
-    return res.status(400).json({ error: 'Maximum 5 nicknames par equipe adverse.' });
+
+  // Normalise les inputs : les 2 equipes peuvent etre URL ou nicks
+  const opponentInput = {
+    url: body.opponentUrl || null,
+    nicks: Array.isArray(body.opponent) ? body.opponent : null,
+  };
+  const yourTeamInput = {
+    url: body.yourTeamUrl || null,
+    nicks: Array.isArray(body.yourTeam) ? body.yourTeam : null,
+  };
+
+  if (!opponentInput.url && !opponentInput.nicks) {
+    return res.status(400).json({ error: 'Equipe adverse manquante (opponentUrl ou opponent[]).' });
   }
 
-  // ── Cache lookup ──
-  const cacheKey = 'opp:v1:' + opponent.map(n => n.toLowerCase().trim()).sort().join(',');
+  // Cache lookup : cle base sur les inputs canonicalises
+  const cacheKey = 'h2h:v1:'
+    + (opponentInput.url || (opponentInput.nicks || []).map(n => n.toLowerCase().trim()).sort().join(','))
+    + '|'
+    + (yourTeamInput.url || (yourTeamInput.nicks || []).map(n => n.toLowerCase().trim()).sort().join(','));
   const cache = getCache();
   const cached = cache.entries.get(cacheKey);
   if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) {
@@ -215,45 +382,48 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ...cached.data, cached: true });
   }
 
-  // ── Fetch stats des joueurs en parallele ──
   try {
-    const playerData = await Promise.all(opponent.map(n => fetchPlayerMatchStats(n.trim(), apiKey)));
-    const validPlayers = playerData.filter(Boolean);
-    if (validPlayers.length === 0) {
-      return res.status(404).json({ error: 'Aucun joueur trouve sur FACEIT.', tried: opponent });
+    // Process opponent (toujours)
+    const opponentResult = await processTeam(opponentInput, apiKey);
+    if (opponentResult.error) {
+      return res.status(400).json({ error: opponentResult.error, tried: opponentResult.tried });
     }
 
-    const totalMatches = validPlayers.reduce((s, p) => s + p.matches.length, 0);
-    if (totalMatches < 10) {
-      return res.status(200).json({
-        team: {
-          nicknames: validPlayers.map(p => p.nickname),
-          totalMatches,
-          validPlayers: validPlayers.length,
-        },
-        maps: [],
-        recommendations: { forceBan: [], forcePick: [] },
-        warning: 'Donnees insuffisantes : moins de 10 matchs cumules trouves. Joueurs inactifs ou trop nouveaux.',
-      });
+    // Process yourTeam (optionnel)
+    let yourTeamResult = null;
+    const hasYourTeam = !!(yourTeamInput.url || (yourTeamInput.nicks && yourTeamInput.nicks.length));
+    if (hasYourTeam) {
+      yourTeamResult = await processTeam(yourTeamInput, apiKey);
+      if (yourTeamResult.error) {
+        // Erreur sur ton equipe : on continue avec opponent only + warning
+        yourTeamResult = null;
+      }
     }
 
-    const maps = aggregateByMap(validPlayers);
-    const recommendations = generateRecommendations(maps);
-
-    const payload = {
-      team: {
-        nicknames: validPlayers.map(p => p.nickname),
-        totalMatches,
-        validPlayers: validPlayers.length,
-        invalidNames: opponent.filter(n => !validPlayers.find(p => p.nickname.toLowerCase() === n.toLowerCase())),
-      },
-      maps,
-      recommendations,
-      lastUpdated: new Date().toISOString(),
-    };
+    let payload;
+    if (yourTeamResult) {
+      // Mode head-to-head
+      const reco = generateRecommendationsH2H(opponentResult.maps, yourTeamResult.maps);
+      payload = {
+        mode: 'h2h',
+        opponent: opponentResult,
+        yourTeam: yourTeamResult,
+        recommendations: { forceBan: reco.forceBan, forcePick: reco.forcePick },
+        h2h: reco.h2h,
+        lastUpdated: new Date().toISOString(),
+      };
+    } else {
+      // Mode opponent-only (legacy compat)
+      payload = {
+        mode: 'opponent_only',
+        team: opponentResult.team,
+        maps: opponentResult.maps,
+        recommendations: generateRecommendationsOppOnly(opponentResult.maps),
+        lastUpdated: new Date().toISOString(),
+      };
+    }
 
     cache.entries.set(cacheKey, { data: payload, ts: Date.now() });
-    // GC : limit cache to 200 entries
     if (cache.entries.size > 200) {
       const oldest = [...cache.entries.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
       if (oldest) cache.entries.delete(oldest[0]);
@@ -262,7 +432,7 @@ module.exports = async function handler(req, res) {
     res.setHeader('Cache-Control', 'private, max-age=0, must-revalidate');
     return res.status(200).json(payload);
   } catch (e) {
-    console.error('[prep-veto] aggregation failed:', e.message);
+    console.error('[prep-veto] processing failed:', e.message);
     return res.status(500).json({ error: 'Erreur agregation stats' });
   }
 };

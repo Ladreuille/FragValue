@@ -22,24 +22,24 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 
   <meta charset="UTF-8"/>
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
-  <meta name="description" content="FragValue Prep Veto Elite : analyse les maps les plus jouees et meilleures maps de l'equipe adverse pour preparer ton veto BO1/BO3/BO5. Suggestions ban/pick basees sur la data FACEIT.">
-  <meta name="keywords" content="CS2, prep veto, ban pick, scout adverse, FACEIT, map pool, Mirage, Inferno, Overpass, coach Elite">
+  <meta name="description" content="FragValue Prep Veto Elite : analyse les maps adverses depuis URL FACEIT/HLTV. Comparison head-to-head ton equipe vs adverse, recommandations ban/pick data-driven.">
+  <meta name="keywords" content="CS2, prep veto, ban pick, scout adverse, FACEIT, HLTV, map pool, Mirage, Inferno, Overpass, coach Elite">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
   <link rel="canonical" href="https://fragvalue.com/en/prep-veto.html">
 <link rel="alternate" hreflang="fr" href="https://fragvalue.com/prep-veto.html">
 <link rel="alternate" hreflang="en" href="https://fragvalue.com/en/prep-veto.html">
 <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/prep-veto.html">
   <meta property="og:title" content="FragValue · Prep Veto Elite">
-  <meta property="og:description" content="Analysis les maps adverses et prepare ton veto en data-driven.">
+  <meta property="og:description" content="Analysis maps adverses + head-to-head data-driven.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://fragvalue.com/en/prep-veto.html">
   <meta property="og:image" content="https://fragvalue.com/og/prep-veto.png">
   <meta property="og:locale" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="FragValue · Prep Veto Elite">
-<meta name="twitter:description" content="Analysis maps adverses + suggestions veto data-driven.">
+<meta name="twitter:description" content="Analysis adverse + head-to-head data-driven.">
 <meta name="twitter:image" content="https://fragvalue.com/og/prep-veto.png">
-  <title>FragValue · Prep Veto Elite (analyse adverse)</title>
+  <title>FragValue · Prep Veto Elite (URLs FACEIT/HLTV)</title>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -66,14 +66,20 @@ h1 span{color:var(--accent)}
 
 .sec-label{font-family:var(--display);font-size:12px;letter-spacing:.16em;color:var(--text3);text-transform:uppercase;margin-top:34px;margin-bottom:14px;font-weight:700}
 
-/* ─── Form input opponent ─── */
+/* ─── Form input ─── */
 .input-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:24px}
-.input-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
-@media(max-width:840px){.input-grid{grid-template-columns:repeat(2,1fr)}}
-.input-field{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:11px 14px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color .15s;letter-spacing:.02em;width:100%}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:720px){.input-row{grid-template-columns:1fr}}
+.input-block{}
+.input-label{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.input-label .badge{padding:2px 8px;border-radius:3px;font-size:8px;background:rgba(184,255,87,.1);color:var(--accent);font-weight:700}
+.input-label .badge.opp{background:rgba(255,68,68,.1);color:var(--danger)}
+.input-field{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:11px 14px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color .15s;letter-spacing:.02em}
 .input-field:focus{border-color:var(--accent)}
 .input-field::placeholder{color:var(--text3)}
 .input-field.invalid{border-color:rgba(255,68,68,.5);background:rgba(255,68,68,.04)}
+.input-hint{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:6px;line-height:1.5}
+.input-hint code{background:var(--bg);padding:1px 5px;border-radius:3px;color:var(--accent);font-size:9px}
 
 .btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;border:none;padding:12px 22px;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.04em;transition:all .15s}
 .btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
@@ -93,14 +99,16 @@ h1 span{color:var(--accent)}
 .lock-icon{width:48px;height:48px;background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--gold)}
 
 /* ─── Team summary header ─── */
-.team-summary{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px 22px;flex-wrap:wrap;gap:16px}
-.team-summary-info{flex:1}
+.teams-summary{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px}
+@media(max-width:720px){.teams-summary{grid-template-columns:1fr}}
+.team-summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px 20px}
+.team-summary.you{border-color:rgba(184,255,87,.25);background:linear-gradient(180deg,rgba(184,255,87,.03),var(--surface))}
+.team-summary.opp{border-color:rgba(255,68,68,.2);background:linear-gradient(180deg,rgba(255,68,68,.03),var(--surface))}
+.team-summary-tag{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.team-summary.you .team-summary-tag{color:var(--accent)}
+.team-summary.opp .team-summary-tag{color:var(--danger)}
 .team-summary-title{font-family:var(--display);font-size:18px;letter-spacing:.02em;line-height:1.2;margin-bottom:4px}
 .team-summary-meta{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.04em}
-.team-summary-stats{display:flex;gap:14px;align-items:center}
-.summary-stat{text-align:center}
-.summary-stat-val{font-family:var(--display);font-size:22px;color:var(--accent);line-height:1}
-.summary-stat-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-top:3px}
 
 /* ─── Recommendations ─── */
 .reco-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -116,26 +124,34 @@ h1 span{color:var(--accent)}
 .reco-item-name{font-family:var(--display);font-size:16px;letter-spacing:.02em}
 .reco-item-stats{font-family:var(--mono);font-size:11px;color:var(--text3);text-align:right;line-height:1.4}
 .reco-item-pct{font-weight:700;color:var(--text)}
+.reco-item-gap{font-family:var(--mono);font-size:10px;color:var(--accent);font-weight:700}
+.reco-item-gap.neg{color:var(--danger)}
 
-/* ─── Map breakdown grid ─── */
+/* ─── Map H2H grid ─── */
 .maps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
 .map-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px;position:relative}
-.map-card.high{border-color:rgba(255,68,68,.25)}
-.map-card.low{border-color:rgba(184,255,87,.25)}
 .map-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .map-card-name{font-family:var(--display);font-size:18px;letter-spacing:.02em;line-height:1}
-.map-card-matches{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em}
-.map-card-winrate{font-family:var(--display);font-size:32px;line-height:1;margin-bottom:4px}
-.map-card-winrate.high{color:var(--danger)}
-.map-card-winrate.mid{color:var(--gold)}
-.map-card-winrate.low{color:var(--accent)}
-.map-card-winrate-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
-.map-card-sides{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-family:var(--mono);font-size:10px;color:var(--text2);padding-top:10px;border-top:1px solid var(--border)}
-.map-card-side{display:flex;justify-content:space-between;gap:6px}
-.map-card-side-lbl{color:var(--text3)}
-.map-card-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;font-family:var(--mono);font-size:10px;text-align:center}
-.map-card-kpi-val{font-family:var(--display);font-size:14px;color:var(--text);line-height:1}
+.map-card-gap{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px}
+.map-card-gap.up{background:rgba(184,255,87,.1);color:var(--accent)}
+.map-card-gap.down{background:rgba(255,68,68,.1);color:var(--danger)}
+.map-card-gap.eq{background:rgba(245,200,66,.1);color:var(--gold)}
+.map-card-h2h{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.map-card-side-h{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.map-card-side-val{font-family:var(--display);font-size:24px;line-height:1}
+.map-card-side-val.you{color:var(--accent)}
+.map-card-side-val.opp{color:var(--danger)}
+.map-card-matches{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px}
+.map-card-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-family:var(--mono);font-size:10px;text-align:center;padding-top:10px;border-top:1px solid var(--border)}
+.map-card-kpi-val{font-family:var(--display);font-size:13px;color:var(--text2);line-height:1}
 .map-card-kpi-lbl{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+/* Mode opponent only : version simplifiee */
+.map-card.opp-only .map-card-h2h{grid-template-columns:1fr;text-align:center}
+.map-card-winrate-big{font-family:var(--display);font-size:34px;line-height:1;color:var(--text)}
+.map-card-winrate-big.high{color:var(--danger)}
+.map-card-winrate-big.mid{color:var(--gold)}
+.map-card-winrate-big.low{color:var(--accent)}
 
 .export-row{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
 .btn-secondary{display:inline-flex;align-items:center;gap:8px;background:var(--card);color:var(--text);border:1px solid var(--border2);padding:10px 18px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.04em;transition:all .15s;text-decoration:none}
@@ -152,10 +168,10 @@ h1 span{color:var(--accent)}
 
 <main>
   <div class="hero-tag">● Elite · Outil coach</div>
-  <h1>Prep Veto · <span>opponent maps</span> analysis</h1>
-  <p class="lead">Enter the 5 FACEIT nicknames of the opposing team. FragValue aggregates their last 20 matches across the 8 active maps, shows you most-played maps, win rates and CT/T splits, and recommends data-driven bans/picks for your next match.</p>
+  <h1>Prep Veto · <span>URLs FACEIT / HLTV</span></h1>
+  <p class="lead">Colle l'URL de l'equipe adverse (FACEIT team page or HLTV team page) + optionnellement de ton equipe. FragValue resout les rosters automatiquement, agrege les Last 20 matches FACEIT par player, et te recommande les bans/picks data-driven en mode head-to-head.</p>
 
-  <!-- ═════ ELITE GATE / ERROR / FORM ═════ -->
+  <!-- ═════ ELITE GATE ═════ -->
   <div id="gateWrap" style="display:none">
     <div class="lock-card">
       <div class="lock-icon">
@@ -167,21 +183,35 @@ h1 span{color:var(--accent)}
     </div>
   </div>
 
+  <!-- ═════ FORM ═════ -->
   <div id="formWrap" style="display:none">
     <div class="input-card">
-      <div class="sec-label" style="margin-top:0">Opposing team · 5 FACEIT nicknames</div>
-      <div class="input-grid" id="oppInputs">
-        <input type="text" class="input-field" placeholder="Nick 1" data-idx="0" autocomplete="off">
-        <input type="text" class="input-field" placeholder="Nick 2" data-idx="1" autocomplete="off">
-        <input type="text" class="input-field" placeholder="Nick 3" data-idx="2" autocomplete="off">
-        <input type="text" class="input-field" placeholder="Nick 4" data-idx="3" autocomplete="off">
-        <input type="text" class="input-field" placeholder="Nick 5" data-idx="4" autocomplete="off">
+      <div class="input-row">
+        <div class="input-block">
+          <div class="input-label">
+            <span>Opposing team</span>
+            <span class="badge opp">obligatoire</span>
+          </div>
+          <input type="text" class="input-field" id="oppInput" placeholder="https://www.faceit.com/fr/teams/abc123..." autocomplete="off">
+          <div class="input-hint">URL FACEIT team / HLTV team / nicknames separes par virgule</div>
+        </div>
+        <div class="input-block">
+          <div class="input-label">
+            <span>Ton equipe</span>
+            <span class="badge">optionnel</span>
+          </div>
+          <input type="text" class="input-field" id="yourInput" placeholder="URL FACEIT or nicknames (mode head-to-head)" autocomplete="off">
+          <div class="input-hint">Active la comparaison gap par map (ban tes faiblesses, pick tes strengths)</div>
+        </div>
       </div>
       <button class="btn-primary" id="analyzeBtn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Analyze team
+        Analyze
       </button>
       <div id="formMsg" style="font-family:var(--mono);font-size:11px;color:var(--danger);margin-top:10px;display:none"></div>
+      <div class="input-hint" style="margin-top:14px">
+        Formats supportes : <code>faceit.com/fr/teams/&lt;id&gt;</code> · <code>hltv.org/team/&lt;id&gt;/&lt;slug&gt;</code> · <code>nick1, nick2, nick3</code>
+      </div>
     </div>
   </div>
 
@@ -189,46 +219,36 @@ h1 span{color:var(--accent)}
   <div id="loadingWrap" style="display:none">
     <div class="loading-state">
       <div class="spinner"></div>
-      <div style="margin-top:14px">Aggregating stats from 5 players (last 20 matches each)...</div>
+      <div style="margin-top:14px">Resolution des rosters + agregation Last 20 matches / player...</div>
     </div>
   </div>
 
   <!-- ═════ RESULTS ═════ -->
   <div id="resultsWrap" style="display:none">
-    <!-- Team summary -->
-    <div class="team-summary">
-      <div class="team-summary-info">
-        <div class="team-summary-title" id="resTeamTitle">Opposing team</div>
-        <div class="team-summary-meta" id="resTeamMeta">5 players · 100 matches analyses</div>
-      </div>
-      <div class="team-summary-stats">
-        <div class="summary-stat"><div class="summary-stat-val" id="sumPlayers">5</div><div class="summary-stat-lbl">Players</div></div>
-        <div class="summary-stat"><div class="summary-stat-val" id="sumMatches">100</div><div class="summary-stat-lbl">Matches</div></div>
-        <div class="summary-stat"><div class="summary-stat-val" id="sumMaps">8</div><div class="summary-stat-lbl">Maps</div></div>
-      </div>
-    </div>
+    <!-- Teams summary -->
+    <div class="teams-summary" id="teamsSummary"></div>
 
     <!-- Recommendations -->
-    <div class="sec-label">Veto recommendations · data-driven</div>
+    <div class="sec-label" id="recoLabel">Veto recommendations · data-driven</div>
     <div class="reco-grid">
       <div class="reco-card ban">
         <div class="reco-card-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          Force ban · their best maps
+          <span id="recoBanTitle">Force ban · their best maps</span>
         </div>
         <div id="recoBan"></div>
       </div>
       <div class="reco-card pick">
         <div class="reco-card-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Force pick · their weak maps
+          <span id="recoPickTitle">Force pick · their weak maps</span>
         </div>
         <div id="recoPick"></div>
       </div>
     </div>
 
     <!-- Map breakdown -->
-    <div class="sec-label">Stats per map · sorted by play frequency</div>
+    <div class="sec-label" id="mapsLabel">Stats by map</div>
     <div class="maps-grid" id="mapsGrid"></div>
 
     <div class="export-row">
@@ -239,8 +259,8 @@ h1 span{color:var(--accent)}
       <button class="btn-secondary" onclick="resetForm()">New analysis</button>
     </div>
 
-    <div class="legend">
-      <strong>Methodology:</strong> stats aggregated across the last 20 FACEIT matches per player (max 100 datapoints / team). CT/T side splits computed by rounds-won / rounds-played approximation. Recommendations based on aggregated win rate: ban their top 2 maps (high winrate + sufficient play frequency), pick their 2 weak maps (winrate <50%). Data refreshed every 6h.
+    <div class="legend" id="legendText">
+      <strong>Methodology:</strong> rosters resolus via FACEIT API (URLs team) or METADATA HLTV (60+ pros verifies avril 2026). Stats agregees sur les Last 20 matches FACEIT de chaque player. Mode head-to-head : gap = ton winrate - leur winrate par map. Force ban = gap negatif eleve (ils dominent). Force pick = gap positif eleve (tu domines). Mode opponent-only : recommendations basees sur leurs winrates seuls. Cache 6h.
     </div>
   </div>
 
@@ -259,40 +279,28 @@ const isEN = document.documentElement.lang === 'en' || window.location.pathname.
 
 let currentResults = null;
 
-// ─── Boot : check auth + plan via check-subscription (inclut admin bypass) ─
+// ─── Boot : check auth + plan via check-subscription (admin bypass) ──────
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
     showGate(isEN
-      ? 'Sign in with an Elite account to use Prep Veto. Free / Pro plans don\'t have access to opponent analysis.'
-      : 'Sign in avec un compte Elite pour utiliser Prep Veto. Les plans Free et Pro n\'ont not acces a l\'analyse adverse.');
+      ? 'Sign in with an Elite account to use Prep Veto.'
+      : 'Sign in avec un compte Elite pour utiliser Prep Veto.');
     return;
   }
-  // Plan check via /api/check-subscription : source de verite unique qui
-  // gere admin bypass (qdreuillet@gmail.com) + pro_grants (referrals,
-  // promos) + Stripe fallback. Plus fiable que lire la table subscriptions
-  // directement (qui rate les admins/grants).
   let plan = 'free';
   try {
     const r = await fetch('/api/check-subscription', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + session.access_token,
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
     });
-    if (r.ok) {
-      const d = await r.json();
-      plan = d.plan || 'free';
-    }
-  } catch (e) {
-    console.warn('[prep-veto] check-subscription failed:', e.message);
-  }
+    if (r.ok) { const d = await r.json(); plan = d.plan || 'free'; }
+  } catch (e) {}
   const isElite = plan === 'elite' || plan === 'team';
   if (!isElite) {
     showGate(isEN
-      ? 'Your current plan is ' + (plan || 'free') + '. Prep Veto requires Elite (29€/month) for opponent map analysis.'
-      : 'Ton plan actuel est ' + (plan || 'free') + '. Prep Veto necessite le plan Elite (29€/month) pour analyser les maps adverses.');
+      ? 'Your plan : ' + plan + '. Prep Veto requires Elite (29€/mo).'
+      : 'Ton plan : ' + plan + '. Prep Veto necessite Elite (29€/month).');
     return;
   }
   showForm();
@@ -332,21 +340,44 @@ function showError(msg) {
   document.getElementById('errorMsg').innerHTML = '<strong>Error :</strong> ' + msg;
 }
 
-// ─── Analyze opponent ─────────────────────────────────────────────────────
-async function analyze() {
-  const inputs = document.querySelectorAll('#oppInputs .input-field');
-  const nicks = [...inputs].map(i => i.value.trim()).filter(Boolean);
-  inputs.forEach(i => i.classList.remove('invalid'));
+// Detecte si une string est une URL or une liste de nicks separes par virgule.
+function parseInputValue(value) {
+  const v = (value || '').trim();
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v)) return { url: v };
+  // Sinon liste de nicks separes par virgule (or semicolons)
+  const nicks = v.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+  if (nicks.length === 0) return null;
+  return { nicks };
+}
 
-  if (nicks.length < 1) {
+async function analyze() {
+  const oppRaw = document.getElementById('oppInput').value;
+  const yourRaw = document.getElementById('yourInput').value;
+  const oppParsed = parseInputValue(oppRaw);
+  const yourParsed = parseInputValue(yourRaw);
+
+  document.getElementById('oppInput').classList.remove('invalid');
+  document.getElementById('yourInput').classList.remove('invalid');
+
+  if (!oppParsed) {
     document.getElementById('formMsg').textContent = isEN
-      ? 'Enter at least 1 FACEIT nickname.'
-      : 'Saisis au moins 1 pseudo FACEIT.';
+      ? 'Enter the opponent team URL or nicknames.'
+      : 'Saisis l\'URL or les pseudos de l\'equipe adverse.';
     document.getElementById('formMsg').style.display = 'block';
-    inputs.forEach(i => { if (!i.value.trim()) i.classList.add('invalid'); });
+    document.getElementById('oppInput').classList.add('invalid');
     return;
   }
   document.getElementById('formMsg').style.display = 'none';
+
+  // Build body
+  const body = {};
+  if (oppParsed.url)   body.opponentUrl = oppParsed.url;
+  if (oppParsed.nicks) body.opponent    = oppParsed.nicks;
+  if (yourParsed) {
+    if (yourParsed.url)   body.yourTeamUrl = yourParsed.url;
+    if (yourParsed.nicks) body.yourTeam    = yourParsed.nicks;
+  }
 
   showLoading();
 
@@ -354,19 +385,14 @@ async function analyze() {
     const { data: { session } } = await sb.auth.getSession();
     const r = await fetch('/api/prep-veto', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + session.access_token,
-      },
-      body: JSON.stringify({ opponent: nicks }),
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify(body),
     });
 
     if (r.status === 401) { showGate('Auth requise'); return; }
     if (r.status === 403) {
       const d = await r.json();
-      showGate(isEN
-        ? 'Elite plan required. Your current plan : ' + (d.currentPlan || 'free') + '.'
-        : 'Elite Plan requis. Ton plan actuel : ' + (d.currentPlan || 'free') + '.');
+      showGate(isEN ? 'Elite plan required (current: ' + (d.plan || 'free') + ').' : 'Elite Plan requis (actuel : ' + (d.plan || 'free') + ').');
       return;
     }
     if (!r.ok) {
@@ -378,109 +404,169 @@ async function analyze() {
     currentResults = data;
     renderResults(data);
   } catch (e) {
-    console.error('[prep-veto] analyze failed:', e.message);
     showError(isEN ? 'Network error: ' + e.message : 'Error reseau : ' + e.message);
   }
+}
+
+function teamSummaryHtml(team, side) {
+  if (!team) return '';
+  const tag = side === 'you' ? (isEN ? 'YOUR TEAM' : 'TON EQUIPE') : (isEN ? 'OPPONENT' : 'ADVERSE');
+  const cls = side === 'you' ? 'you' : 'opp';
+  const name = team.teamName || (team.nicknames || []).slice(0, 3).join(' · ') || '-';
+  const meta = (team.validPlayers || 0) + (isEN ? ' players · ' : ' players · ')
+             + (team.totalMatches || 0) + (isEN ? ' matches' : ' matches');
+  const sourceMap = { faceit_team: 'FACEIT team', hltv_team: 'HLTV', hltv_match: 'HLTV match', manual_nicks: 'manual', faceit_player: 'FACEIT' };
+  const src = sourceMap[team.sourceLabel] || '';
+  return '<div class="team-summary ' + cls + '">'
+    + '<div class="team-summary-tag">' + tag + (src ? ' · ' + src : '') + '</div>'
+    + '<div class="team-summary-title">' + name + '</div>'
+    + '<div class="team-summary-meta">' + meta + (team.invalidNames && team.invalidNames.length ? (isEN ? ' · skipped: ' : ' · ignores : ') + team.invalidNames.join(', ') : '') + '</div>'
+    + '</div>';
 }
 
 function renderResults(data) {
   showResults();
 
-  const team = data.team || {};
-  document.getElementById('resTeamTitle').textContent = (team.nicknames || []).join(' · ') || 'Opposing team';
-  document.getElementById('resTeamMeta').textContent =
-    (team.validPlayers || 0) + (isEN ? ' players · ' : ' players · ')
-    + (team.totalMatches || 0) + (isEN ? ' matches analyzed' : ' matches analyses')
-    + (team.invalidNames && team.invalidNames.length ? (isEN ? ' · skipped: ' : ' · ignores : ') + team.invalidNames.join(', ') : '');
-  document.getElementById('sumPlayers').textContent  = team.validPlayers || 0;
-  document.getElementById('sumMatches').textContent  = team.totalMatches || 0;
-  document.getElementById('sumMaps').textContent     = (data.maps || []).length;
+  const isH2H = data.mode === 'h2h';
 
-  // Recommendations
-  const reco = data.recommendations || { forceBan: [], forcePick: [] };
-  document.getElementById('recoBan').innerHTML = reco.forceBan.length
-    ? reco.forceBan.map(r =>
-        '<div class="reco-item">'
-          + '<div><div class="reco-item-name">' + r.map + '</div></div>'
-          + '<div class="reco-item-stats"><div class="reco-item-pct">' + r.winRate + '% WR</div><div>' + r.matches + (isEN ? ' matches' : ' matches') + '</div></div>'
-        + '</div>'
-      ).join('')
-    : '<div class="reco-item-stats" style="text-align:left;color:var(--text3)">' + (isEN ? 'Not enough data' : 'Not enough data') + '</div>';
-  document.getElementById('recoPick').innerHTML = reco.forcePick.length
-    ? reco.forcePick.map(r =>
-        '<div class="reco-item">'
-          + '<div><div class="reco-item-name">' + r.map + '</div></div>'
-          + '<div class="reco-item-stats"><div class="reco-item-pct">' + r.winRate + '% WR</div><div>' + r.matches + (isEN ? ' matches' : ' matches') + '</div></div>'
-        + '</div>'
-      ).join('')
-    : '<div class="reco-item-stats" style="text-align:left;color:var(--text3)">' + (isEN ? 'Not enough data' : 'Not enough data') + '</div>';
-
-  // Map breakdown
-  const maps = data.maps || [];
-  if (maps.length === 0) {
-    document.getElementById('mapsGrid').innerHTML =
-      '<div class="error-card" style="grid-column:1/-1">' + (data.warning || (isEN ? 'No data' : 'Not donnees')) + '</div>';
-    return;
+  // ── Teams summary ──
+  let teamsHtml = '';
+  if (isH2H) {
+    teamsHtml = teamSummaryHtml(data.yourTeam.team, 'you') + teamSummaryHtml(data.opponent.team, 'opp');
+  } else {
+    teamsHtml = teamSummaryHtml(data.team, 'opp');
   }
-  document.getElementById('mapsGrid').innerHTML = maps.map(m => {
-    const wrCls = m.winRate >= 60 ? 'high' : m.winRate >= 45 ? 'mid' : 'low';
-    const cardCls = m.winRate >= 60 ? 'high' : m.winRate < 45 ? 'low' : '';
-    return '<div class="map-card ' + cardCls + '">'
-      + '<div class="map-card-head">'
-        + '<div class="map-card-name">' + (m.displayName || m.map) + '</div>'
-        + '<div class="map-card-matches">' + m.matches + (isEN ? ' matches' : ' matches') + '</div>'
-      + '</div>'
-      + '<div class="map-card-winrate ' + wrCls + '">' + m.winRate + '%</div>'
-      + '<div class="map-card-winrate-lbl">' + (isEN ? 'Win rate' : 'Win rate') + '</div>'
-      + '<div class="map-card-kpis">'
-        + '<div><div class="map-card-kpi-val">' + m.avgKd + '</div><div class="map-card-kpi-lbl">K/D</div></div>'
-        + '<div><div class="map-card-kpi-val">' + m.avgAdr + '</div><div class="map-card-kpi-lbl">ADR</div></div>'
-        + '<div><div class="map-card-kpi-val">' + m.avgKast + '%</div><div class="map-card-kpi-lbl">KAST</div></div>'
-      + '</div>'
-      + '<div class="map-card-sides">'
-        + '<div class="map-card-side"><span class="map-card-side-lbl">CT</span><span>' + (m.ctWinRate != null ? m.ctWinRate + '%' : '-') + '</span></div>'
-        + '<div class="map-card-side"><span class="map-card-side-lbl">T</span><span>' + (m.tWinRate != null ? m.tWinRate + '%' : '-') + '</span></div>'
+  document.getElementById('teamsSummary').innerHTML = teamsHtml;
+  document.getElementById('teamsSummary').style.gridTemplateColumns = isH2H ? '1fr 1fr' : '1fr';
+
+  // ── Recommendations ──
+  const reco = data.recommendations || { forceBan: [], forcePick: [] };
+  document.getElementById('recoBanTitle').textContent = isH2H
+    ? (isEN ? 'Force ban · gap negatif (eux > toi)' : 'Force ban · gap negatif (eux > toi)')
+    : (isEN ? 'Force ban · their best maps' : 'Force ban · their best maps');
+  document.getElementById('recoPickTitle').textContent = isH2H
+    ? (isEN ? 'Force pick · gap positif (toi > eux)' : 'Force pick · gap positif (toi > eux)')
+    : (isEN ? 'Force pick · their weak maps' : 'Force pick · their weak maps');
+
+  function recoItemH2H(r) {
+    return '<div class="reco-item">'
+      + '<div><div class="reco-item-name">' + r.map + '</div></div>'
+      + '<div class="reco-item-stats">'
+        + '<div class="reco-item-pct">' + r.winRate + '% ' + (isEN ? 'WR' : 'WR') + '</div>'
+        + (r.gap != null
+            ? '<div class="reco-item-gap ' + (r.gap < 0 ? 'neg' : '') + '">' + (r.gap > 0 ? '+' : '') + r.gap + 'pts gap</div>'
+            : '<div>' + r.matches + (isEN ? ' matches' : ' matches') + '</div>')
       + '</div>'
     + '</div>';
-  }).join('');
+  }
+  document.getElementById('recoBan').innerHTML = reco.forceBan.length
+    ? reco.forceBan.map(recoItemH2H).join('')
+    : '<div class="reco-item-stats" style="text-align:left;color:var(--text3)">' + (isEN ? 'Not enough data' : 'Not enough data') + '</div>';
+  document.getElementById('recoPick').innerHTML = reco.forcePick.length
+    ? reco.forcePick.map(recoItemH2H).join('')
+    : '<div class="reco-item-stats" style="text-align:left;color:var(--text3)">' + (isEN ? 'Not enough data' : 'Not enough data') + '</div>';
+
+  // ── Maps grid : H2H or opponent-only ──
+  const mapsGrid = document.getElementById('mapsGrid');
+  if (isH2H) {
+    document.getElementById('mapsLabel').textContent = isEN ? 'Per-map H2H breakdown · sorted by gap' : 'Comparaison par map · trie par gap';
+    const h2hMaps = data.h2h || [];
+    if (h2hMaps.length === 0) {
+      mapsGrid.innerHTML = '<div class="error-card" style="grid-column:1/-1">' + (isEN ? 'Not enough common maps with sufficient data.' : 'Pas assez de maps communes avec data suffisante.') + '</div>';
+    } else {
+      mapsGrid.innerHTML = h2hMaps.map(h => {
+        const gapCls = h.gap > 5 ? 'up' : h.gap < -5 ? 'down' : 'eq';
+        const gapTxt = (h.gap > 0 ? '+' : '') + h.gap + 'pts';
+        return '<div class="map-card">'
+          + '<div class="map-card-head">'
+            + '<div class="map-card-name">' + h.displayName + '</div>'
+            + '<div class="map-card-gap ' + gapCls + '">' + gapTxt + '</div>'
+          + '</div>'
+          + '<div class="map-card-h2h">'
+            + '<div><div class="map-card-side-h">' + (isEN ? 'You' : 'You') + '</div><div class="map-card-side-val you">' + h.yourWinRate + '%</div><div class="map-card-matches">' + h.yourMatches + (isEN ? ' matches' : ' matches') + '</div></div>'
+            + '<div><div class="map-card-side-h">' + (isEN ? 'Them' : 'Them') + '</div><div class="map-card-side-val opp">' + h.oppWinRate + '%</div><div class="map-card-matches">' + h.oppMatches + (isEN ? ' matches' : ' matches') + '</div></div>'
+          + '</div>'
+        + '</div>';
+      }).join('');
+    }
+  } else {
+    document.getElementById('mapsLabel').textContent = isEN ? 'Their stats per map · sorted by frequency' : 'Leurs stats par map · trie par frequence';
+    const maps = data.maps || [];
+    if (maps.length === 0) {
+      mapsGrid.innerHTML = '<div class="error-card" style="grid-column:1/-1">' + (data.warning || (isEN ? 'No data' : 'Not donnees')) + '</div>';
+    } else {
+      mapsGrid.innerHTML = maps.map(m => {
+        const wrCls = m.winRate >= 60 ? 'high' : m.winRate >= 45 ? 'mid' : 'low';
+        return '<div class="map-card opp-only">'
+          + '<div class="map-card-head">'
+            + '<div class="map-card-name">' + (m.displayName || m.map) + '</div>'
+            + '<div class="map-card-matches">' + m.matches + (isEN ? ' matches' : ' matches') + '</div>'
+          + '</div>'
+          + '<div class="map-card-h2h">'
+            + '<div><div class="map-card-side-h">' + (isEN ? 'Win rate' : 'Win rate') + '</div><div class="map-card-winrate-big ' + wrCls + '">' + m.winRate + '%</div></div>'
+          + '</div>'
+          + '<div class="map-card-kpis">'
+            + '<div><div class="map-card-kpi-val">' + m.avgKd + '</div><div class="map-card-kpi-lbl">K/D</div></div>'
+            + '<div><div class="map-card-kpi-val">' + m.avgAdr + '</div><div class="map-card-kpi-lbl">ADR</div></div>'
+            + '<div><div class="map-card-kpi-val">' + m.avgKast + '%</div><div class="map-card-kpi-lbl">KAST</div></div>'
+          + '</div>'
+        + '</div>';
+      }).join('');
+    }
+  }
 }
 
 function copyAnalysis() {
   if (!currentResults) return;
-  const team = currentResults.team || {};
-  const maps = currentResults.maps || [];
-  const reco = currentResults.recommendations || {};
   const lines = [];
-  lines.push('FragValue Prep Veto · ' + (team.nicknames || []).join(' · '));
-  lines.push((team.validPlayers || 0) + ' players · ' + (team.totalMatches || 0) + ' matches');
-  lines.push('');
-  lines.push('Force ban (leurs meilleures maps) :');
-  (reco.forceBan || []).forEach(r => lines.push('  - ' + r.map + ' · ' + r.winRate + '% WR · ' + r.matches + ' matches'));
-  lines.push('');
-  lines.push('Force pick (leurs maps faibles) :');
-  (reco.forcePick || []).forEach(r => lines.push('  - ' + r.map + ' · ' + r.winRate + '% WR · ' + r.matches + ' matches'));
-  lines.push('');
-  lines.push('Stats by map :');
-  maps.forEach(m => {
-    lines.push('  - ' + (m.displayName || m.map).padEnd(10) + ' : ' + m.winRate + '% WR · ' + m.matches + ' matches · K/D ' + m.avgKd + ' · ADR ' + m.avgAdr);
-  });
+  const isH2H = currentResults.mode === 'h2h';
+  if (isH2H) {
+    lines.push('FragValue Prep Veto · H2H');
+    lines.push('You : ' + (currentResults.yourTeam.team.teamName || (currentResults.yourTeam.team.nicknames || []).join(' · ')));
+    lines.push('Them : ' + (currentResults.opponent.team.teamName || (currentResults.opponent.team.nicknames || []).join(' · ')));
+    lines.push('');
+    lines.push('Force ban (eux > toi) :');
+    (currentResults.recommendations.forceBan || []).forEach(r => lines.push('  - ' + r.map + ' · gap ' + (r.gap > 0 ? '+' : '') + r.gap + 'pts'));
+    lines.push('');
+    lines.push('Force pick (toi > eux) :');
+    (currentResults.recommendations.forcePick || []).forEach(r => lines.push('  - ' + r.map + ' · gap +' + r.gap + 'pts'));
+    lines.push('');
+    lines.push('H2H par map :');
+    (currentResults.h2h || []).forEach(h => {
+      lines.push('  - ' + h.displayName.padEnd(10) + ' : ' + h.yourWinRate + '% (you) vs ' + h.oppWinRate + '% (eux) · gap ' + (h.gap > 0 ? '+' : '') + h.gap + 'pts');
+    });
+  } else {
+    lines.push('FragValue Prep Veto · ' + (currentResults.team.teamName || (currentResults.team.nicknames || []).join(' · ')));
+    lines.push((currentResults.team.validPlayers || 0) + ' players · ' + (currentResults.team.totalMatches || 0) + ' matches');
+    lines.push('');
+    lines.push('Force ban (leurs meilleures) :');
+    (currentResults.recommendations.forceBan || []).forEach(r => lines.push('  - ' + r.map + ' · ' + r.winRate + '% WR'));
+    lines.push('');
+    lines.push('Force pick (leurs faibles) :');
+    (currentResults.recommendations.forcePick || []).forEach(r => lines.push('  - ' + r.map + ' · ' + r.winRate + '% WR'));
+    lines.push('');
+    lines.push('Stats by map :');
+    (currentResults.maps || []).forEach(m => {
+      lines.push('  - ' + (m.displayName || m.map).padEnd(10) + ' : ' + m.winRate + '% WR · ' + m.matches + ' matches · K/D ' + m.avgKd);
+    });
+  }
   lines.push('');
   lines.push('https://fragvalue.com/prep-veto.html');
   navigator.clipboard.writeText(lines.join('\n')).then(() => {
-    alert(isEN ? 'Analysis copied to clipboard' : 'Analysis copiee dans le presse-papiers');
+    alert(isEN ? 'Analysis copied' : 'Analysis copiee');
   }).catch(() => {});
 }
 
 function resetForm() {
   currentResults = null;
-  document.querySelectorAll('#oppInputs .input-field').forEach(i => i.value = '');
+  document.getElementById('oppInput').value = '';
+  document.getElementById('yourInput').value = '';
   showForm();
 }
 
 document.getElementById('analyzeBtn').addEventListener('click', analyze);
-document.querySelectorAll('#oppInputs .input-field').forEach(i => {
-  i.addEventListener('keydown', e => { if (e.key === 'Enter') analyze(); });
-});
+document.getElementById('oppInput').addEventListener('keydown', e => { if (e.key === 'Enter') analyze(); });
+document.getElementById('yourInput').addEventListener('keydown', e => { if (e.key === 'Enter') analyze(); });
 
 init();
 </script>
