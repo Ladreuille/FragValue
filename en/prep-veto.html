@@ -198,10 +198,10 @@ h1 span{color:var(--accent)}
         <div class="input-block">
           <div class="input-label">
             <span>Ton equipe</span>
-            <span class="badge">optionnel</span>
+            <span class="badge">auto-rempli</span>
           </div>
-          <input type="text" class="input-field" id="yourInput" placeholder="URL FACEIT or nicknames (mode head-to-head)" autocomplete="off">
-          <div class="input-hint">Active la comparaison gap par map (ban tes faiblesses, pick tes strengths)</div>
+          <input type="text" class="input-field" id="yourInput" placeholder="Auto-rempli depuis ton roster FragValue" autocomplete="off">
+          <div class="input-hint">Pre-rempli depuis ta fiche FACEIT liee · activable depuis dashboard.html</div>
         </div>
       </div>
       <button class="btn-primary" id="analyzeBtn">
@@ -308,33 +308,52 @@ async function init() {
   loadUserRosterIntoYourTeam(session);
 }
 
-// Charge le roster FragValue de l'user et pre-remplit le champ "Ton equipe"
-// avec son URL FACEIT si elle est liee. Affiche la division ESEA si detectee.
+// Charge le roster FragValue de l'user. Prep Veto exige qu'un roster
+// existe ET soit lie a une fiche FACEIT. Sinon : gate avec CTA pour
+// creer/lier dans le dashboard.
 async function loadUserRosterIntoYourTeam(session) {
   try {
     const { data: roster } = await sb.from('rosters')
       .select('id, team_name, tag, faceit_team_id, faceit_team_url, esea_division, esea_season')
       .eq('user_id', session.user.id)
       .maybeSingle();
-    if (!roster) return; // not de roster cree
+
+    if (!roster) {
+      // Not roster du tout : gate avec CTA creation
+      showGate(isEN
+        ? 'Prep Veto requires a FragValue team linked to a FACEIT team page. Create your team first in the dashboard.'
+        : 'Prep Veto necessite une equipe FragValue liee a une fiche FACEIT. Cree ton equipe d\'abord dans le dashboard.');
+      const gateCard = document.querySelector('#gateWrap .lock-card');
+      if (gateCard) {
+        const cta = gateCard.querySelector('.btn-primary');
+        if (cta) { cta.textContent = isEN ? 'Create my team →' : 'Create my team →'; cta.href = '/dashboard.html#roster'; }
+      }
+      return;
+    }
+
+    if (!roster.faceit_team_url && !roster.faceit_team_id) {
+      // Roster existe mais not de FACEIT lie : gate strict avec CTA pour lier
+      showGate(isEN
+        ? `Your roster "${roster.team_name}" has no FACEIT team page linked. Link it from the dashboard to use Prep Veto.`
+        : `Ton roster "${roster.team_name}" n'a not de fiche FACEIT liee. Lie-la depuis le dashboard pour utiliser Prep Veto.`);
+      const gateCard = document.querySelector('#gateWrap .lock-card');
+      if (gateCard) {
+        const cta = gateCard.querySelector('.btn-primary');
+        if (cta) { cta.textContent = isEN ? 'Link FACEIT in dashboard →' : 'Link FACEIT dans dashboard →'; cta.href = '/dashboard.html#roster'; }
+      }
+      return;
+    }
+
+    // OK : pre-remplit le champ + hint
     const inputEl = document.getElementById('yourInput');
     if (!inputEl) return;
-    if (roster.faceit_team_url || roster.faceit_team_id) {
-      inputEl.value = roster.faceit_team_url || ('https://www.faceit.com/en/teams/' + roster.faceit_team_id);
-      // Affiche un hint sous le champ avec le nom + ESEA si dispo
-      const hintEl = inputEl.parentElement.querySelector('.input-hint');
-      if (hintEl) {
-        const eseaTxt = roster.esea_division
-          ? ` · <span style="color:var(--gold)">ESEA ${roster.esea_season || ''} ${roster.esea_division}</span>`
-          : '';
-        hintEl.innerHTML = `Auto-rempli depuis ton roster <strong>${roster.team_name}</strong>${roster.tag ? ' [' + roster.tag + ']' : ''}${eseaTxt} · <a href="dashboard.html#roster" style="color:var(--accent)">modifier dans dashboard</a>`;
-      }
-    } else {
-      // Roster existe mais not de FACEIT lie : invite a lier
-      const hintEl = document.getElementById('yourInput').parentElement.querySelector('.input-hint');
-      if (hintEl) {
-        hintEl.innerHTML = `Ton roster <strong>${roster.team_name}</strong> n'a not de fiche FACEIT liee. <a href="dashboard.html#roster" style="color:var(--accent)">Link maintenant →</a>`;
-      }
+    inputEl.value = roster.faceit_team_url || ('https://www.faceit.com/en/teams/' + roster.faceit_team_id);
+    const hintEl = inputEl.parentElement.querySelector('.input-hint');
+    if (hintEl) {
+      const eseaTxt = roster.esea_division
+        ? ` · <span style="color:var(--gold)">ESEA ${roster.esea_season || ''} ${roster.esea_division}</span>`
+        : '';
+      hintEl.innerHTML = `Auto-rempli depuis ton roster <strong>${roster.team_name}</strong>${roster.tag ? ' [' + roster.tag + ']' : ''}${eseaTxt} · <a href="dashboard.html#roster" style="color:var(--accent)">modifier</a>`;
     }
   } catch (e) {
     console.warn('[prep-veto] auto-load roster failed:', e.message);
