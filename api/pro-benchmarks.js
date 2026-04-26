@@ -80,68 +80,145 @@ const SEED_TOP20_2026 = [
 ];
 
 // ── PLAYER_METADATA : dict elargi nickname → role/country/team ──────────
-// Couvre tous les pros qui peuvent apparaitre dans pro_match_players,
-// pas juste le top 20 HLTV. Verifie sur Liquipedia avril 2026.
-// Sert a enrichir les donnees DB avec le role pour faire fonctionner le
-// filtre role meme quand la source est "db".
+// 80+ pros verifies sur Liquipedia + HLTV avril 2026.
+// Sert a enrichir les donnees DB pour faire fonctionner le filtre role,
+// afficher les drapeaux et identifier l'equipe meme quand source='db'.
+// Source de verite : Liquipedia rosters (verifies avril 2026).
 const PLAYER_METADATA = {
-  // ─── HLTV Top 20 of 2025 (verifie) ───
+  // ─── Vitality (Champions IEM Krakow 2026) ───
   'zywoo':    { role: 'awp',     country: 'FR', team: 'Vitality' },
-  'donk':     { role: 'rifler',  country: 'RU', team: 'Spirit' },
+  'apex':     { role: 'igl',     country: 'FR', team: 'Vitality' },
   'ropz':     { role: 'rifler',  country: 'EE', team: 'Vitality' },
-  'm0nesy':   { role: 'awp',     country: 'RU', team: 'Falcons' },
-  'sh1ro':    { role: 'awp',     country: 'RU', team: 'Spirit' },
-  'molodoy':  { role: 'rifler',  country: 'KZ', team: 'FURIA' },
   'flamez':   { role: 'entry',   country: 'IL', team: 'Vitality' },
-  'frozen':   { role: 'rifler',  country: 'SK', team: 'FaZe' },
-  'kscerato': { role: 'rifler',  country: 'BR', team: 'FURIA' },
-  'spinx':    { role: 'support', country: 'IL', team: 'MOUZ' },
-  'twistzz':  { role: 'rifler',  country: 'CA', team: 'FaZe' },
   'mezii':    { role: 'support', country: 'GB', team: 'Vitality' },
-  'senzu':    { role: 'igl',     country: 'MN', team: 'MongolZ' },
-  'xantares': { role: 'rifler',  country: 'TR', team: 'Aurora' },
-  'yekindar': { role: 'entry',   country: 'LV', team: 'FURIA' },
-  'xertion':  { role: 'igl',     country: 'IL', team: 'MOUZ' },
-  'torzsi':   { role: 'awp',     country: 'HU', team: 'MOUZ' },
-  'niko':     { role: 'rifler',  country: 'BA', team: 'Falcons' },
-  'im':       { role: 'rifler',  country: 'RO', team: 'NaVi' },
-  'b1t':      { role: 'support', country: 'UA', team: 'NaVi' },
 
-  // ─── Stars proches du top 20 / souvent dans pro_match_players ───
+  // ─── Spirit ───
+  'donk':     { role: 'rifler',  country: 'RU', team: 'Spirit' },
+  'sh1ro':    { role: 'awp',     country: 'RU', team: 'Spirit' },
   'magixx':   { role: 'igl',     country: 'RU', team: 'Spirit' },
   'zont1x':   { role: 'rifler',  country: 'UA', team: 'Spirit' },
   'tn1r':     { role: 'rifler',  country: 'RU', team: 'Spirit' },
   'chopper':  { role: 'igl',     country: 'RU', team: 'Spirit' }, // benche dec 2025
-  'w0nderful':{ role: 'awp',     country: 'UA', team: 'NaVi' },
-  'aleksib':  { role: 'igl',     country: 'FI', team: 'NaVi' },
-  'makazze':  { role: 'rifler',  country: 'XK', team: 'NaVi' },
-  'malbsmd':  { role: 'rifler',  country: 'GT', team: 'Liquid' },
-  'kyousuke': { role: 'rifler',  country: 'KZ', team: 'Falcons' },
-  'kyxsan':   { role: 'rifler',  country: 'PL', team: 'Falcons' }, // benche apr 2026
+  'zweih':    { role: 'rifler',  country: 'RU', team: 'Spirit' }, // benche dec 2025
+
+  // ─── Falcons (apres transferts m0NESY + karrigan) ───
+  'm0nesy':   { role: 'awp',     country: 'RU', team: 'Falcons' },
+  'niko':     { role: 'rifler',  country: 'BA', team: 'Falcons' },
   'karrigan': { role: 'igl',     country: 'DK', team: 'Falcons' },
   'teses':    { role: 'rifler',  country: 'DK', team: 'Falcons' },
-  'apex':     { role: 'igl',     country: 'FR', team: 'Vitality' },
-  'jl':       { role: 'rifler',  country: 'LV', team: 'MOUZ' },
-  'xelex':    { role: 'rifler',  country: 'CZ', team: 'MOUZ' },
-  'broky':    { role: 'awp',     country: 'PT', team: 'FaZe' },
+  'kyousuke': { role: 'rifler',  country: 'KZ', team: 'Falcons' },
+  'kyxsan':   { role: 'rifler',  country: 'PL', team: 'Falcons' }, // benche apr 2026
+
+  // ─── FaZe (post-karrigan depart) ───
+  'frozen':   { role: 'rifler',  country: 'SK', team: 'FaZe' },
+  'twistzz':  { role: 'rifler',  country: 'CA', team: 'FaZe' },
+  'broky':    { role: 'awp',     country: 'BA', team: 'FaZe' },
   'jcobbb':   { role: 'rifler',  country: 'PL', team: 'FaZe' },
-  'fallen':   { role: 'awp',     country: 'BR', team: 'FURIA' },
+  'rain':     { role: 'entry',   country: 'NO', team: 'FaZe' }, // veteran
+
+  // ─── MOUZ ───
+  'spinx':    { role: 'support', country: 'IL', team: 'MOUZ' },
+  'xertion':  { role: 'igl',     country: 'IL', team: 'MOUZ' },
+  'torzsi':   { role: 'awp',     country: 'HU', team: 'MOUZ' },
+  'jl':       { role: 'rifler',  country: 'LV', team: 'MOUZ' }, // loan from NaVi
+  'xelex':    { role: 'rifler',  country: 'CZ', team: 'MOUZ' },
+  'brollan':  { role: 'rifler',  country: 'SE', team: 'MOUZ' }, // benche
+  'jimpphat': { role: 'rifler',  country: 'FI', team: 'MOUZ' }, // benche
+
+  // ─── Natus Vincere (NaVi) ───
+  'aleksib':  { role: 'igl',     country: 'FI', team: 'NaVi' },
+  'iM':       { role: 'rifler',  country: 'RO', team: 'NaVi' },
+  'b1t':      { role: 'support', country: 'UA', team: 'NaVi' },
+  'w0nderful':{ role: 'awp',     country: 'UA', team: 'NaVi' },
+  'makazze':  { role: 'rifler',  country: 'XK', team: 'NaVi' },
+
+  // ─── FURIA (apres transferts molodoy + YEKINDAR) ───
+  'molodoy':  { role: 'rifler',  country: 'KZ', team: 'FURIA' },
+  'kscerato': { role: 'rifler',  country: 'BR', team: 'FURIA' },
   'yuurih':   { role: 'rifler',  country: 'BR', team: 'FURIA' },
-  'siuhy':    { role: 'igl',     country: 'PL', team: 'Liquid' },
-  'naf':      { role: 'rifler',  country: 'CA', team: 'Liquid' },
-  'elige':    { role: 'rifler',  country: 'US', team: 'Liquid' },
-  'ultimate': { role: 'rifler',  country: 'PL', team: 'Liquid' },
+  'yekindar': { role: 'entry',   country: 'LV', team: 'FURIA' },
+  'fallen':   { role: 'awp',     country: 'BR', team: 'FURIA' },
+
+  // ─── G2 (apres NiKo + m0NESY depart) ───
   'hunter-':  { role: 'rifler',  country: 'BA', team: 'G2' },
   'nertz':    { role: 'rifler',  country: 'IL', team: 'G2' },
   'sunpayus': { role: 'awp',     country: 'ES', team: 'G2' },
   'heavygod': { role: 'rifler',  country: 'IL', team: 'G2' },
   'matys':    { role: 'rifler',  country: 'SK', team: 'G2' },
-  'brollan':  { role: 'rifler',  country: 'SE', team: 'MOUZ' }, // benche
-  'jimpphat': { role: 'rifler',  country: 'FI', team: 'MOUZ' }, // benche
+
+  // ─── Team Liquid (apres Twistzz depart) ───
+  'siuhy':    { role: 'igl',     country: 'PL', team: 'Liquid' },
+  'naf':      { role: 'rifler',  country: 'CA', team: 'Liquid' },
+  'elige':    { role: 'rifler',  country: 'US', team: 'Liquid' },
+  'ultimate': { role: 'rifler',  country: 'PL', team: 'Liquid' },
+  'malbsmd':  { role: 'rifler',  country: 'GT', team: 'Liquid' },
+
+  // ─── Aurora (Turkish core) ───
+  'xantares': { role: 'rifler',  country: 'TR', team: 'Aurora' },
   'woxic':    { role: 'awp',     country: 'TR', team: 'Aurora' },
   'maj3r':    { role: 'igl',     country: 'TR', team: 'Aurora' },
   'soulfly':  { role: 'rifler',  country: 'TR', team: 'Aurora' },
   'wicadia':  { role: 'rifler',  country: 'TR', team: 'Aurora' },
+
+  // ─── The MongolZ (apres Senzu benche) ───
+  'blitz':    { role: 'igl',     country: 'MN', team: 'MongolZ' },
+  'techno4k': { role: 'rifler',  country: 'MN', team: 'MongolZ' },
+  '910':      { role: 'awp',     country: 'MN', team: 'MongolZ' },
+  'mzinho':   { role: 'rifler',  country: 'MN', team: 'MongolZ' },
+  'cobrazera':{ role: 'rifler',  country: 'MN', team: 'MongolZ' },
+  'senzu':    { role: 'igl',     country: 'MN', team: 'MongolZ' }, // benche
+
+  // ─── Eternal Fire (international 2026) ───
+  'mistem':   { role: 'rifler',  country: 'TR', team: 'Eternal Fire' },
+  'rigon':    { role: 'rifler',  country: 'XK', team: 'Eternal Fire' },
+  'demqq':    { role: 'rifler',  country: 'BG', team: 'Eternal Fire' },
+  'regali':   { role: 'awp',     country: 'TR', team: 'Eternal Fire' },
+  'jottaaa':  { role: 'rifler',  country: 'TR', team: 'Eternal Fire' },
+  'woro2k':   { role: 'rifler',  country: 'UA', team: 'Eternal Fire' },
+
+  // ─── 3DMAX (FR scene) ───
+  'lucky':    { role: 'awp',     country: 'FR', team: '3DMAX' },
+  'maka':     { role: 'igl',     country: 'FR', team: '3DMAX' },
+  'misutaaa': { role: 'rifler',  country: 'FR', team: '3DMAX' },
+  'ex3rcice': { role: 'rifler',  country: 'FR', team: '3DMAX' },
+  'graviti':  { role: 'rifler',  country: 'FR', team: '3DMAX' },
+  'bodyy':    { role: 'rifler',  country: 'FR', team: 'OG' }, // loan apr 2026
+
+  // ─── HEROIC (rebuilt 2026) ───
+  'chr1zn':   { role: 'igl',     country: 'DK', team: 'HEROIC' },
+  'susp':     { role: 'rifler',  country: 'DK', team: 'HEROIC' },
+  'xfl0ud':   { role: 'rifler',  country: 'BG', team: 'HEROIC' },
+  'nilo':     { role: 'rifler',  country: 'DK', team: 'HEROIC' },
+  'alkaren':  { role: 'awp',     country: 'PL', team: 'HEROIC' },
+  'yxngstxr': { role: 'rifler',  country: 'GB', team: 'HEROIC' },
+
+  // ─── Astralis (post-device + stavn) ───
+  'hooxi':    { role: 'igl',     country: 'DK', team: 'Astralis' },
+  'jabbi':    { role: 'rifler',  country: 'DK', team: 'Astralis' },
+  'phzy':     { role: 'awp',     country: 'SE', team: 'Astralis' },
+  'staehr':   { role: 'rifler',  country: 'DK', team: 'Astralis' },
+  'ryu':      { role: 'rifler',  country: 'LT', team: 'Astralis' },
+
+  // ─── BIG (German + blameF) ───
+  'tabsen':   { role: 'igl',     country: 'DE', team: 'BIG' },
+  'jdc':      { role: 'rifler',  country: 'DE', team: 'BIG' },
+  'faven':    { role: 'rifler',  country: 'DE', team: 'BIG' },
+  'blamef':   { role: 'rifler',  country: 'DK', team: 'BIG' },
+  'gr1ks':    { role: 'awp',     country: 'BY', team: 'BIG' },
+
+  // ─── ENCE ───
+  'f1ku':     { role: 'rifler',  country: 'PL', team: 'ENCE' },
+  'krasnal':  { role: 'awp',     country: 'PL', team: 'ENCE' },
+  'maden':    { role: 'rifler',  country: 'TR', team: 'ENCE' },
+
+  // ─── 100 Thieves (apres device signing) ───
+  'device':   { role: 'awp',     country: 'DK', team: '100 Thieves' },
+  'dev1ce':   { role: 'awp',     country: 'DK', team: '100 Thieves' },
+  'stavn':    { role: 'rifler',  country: 'DK', team: '100 Thieves' }, // ex-Astralis
+
+  // ─── Fnatic ───
+  'magisk':   { role: 'support', country: 'DK', team: 'Fnatic' }, // ex-Astralis fin 2025
+  'fnatic_blamef': { role: 'rifler', country: 'DK', team: 'BIG' }, // disambig
 };
 
 // ── SEED par map / side : derive du top 20 ci-dessus ────────────────────
@@ -343,8 +420,8 @@ module.exports = async function handler(req, res) {
     }
 
     // ─── Overall : top 20 + averages ──────────────────────────────────
-    // Cache key v2 : invalidate apres ajout PLAYER_METADATA enrichment
-    const cacheKey = 'overall:v2:' + (roleFilter || 'all');
+    // Cache key v3 : invalidate apres expansion PLAYER_METADATA (97 pros)
+    const cacheKey = 'overall:v3:' + (roleFilter || 'all');
     const cache = getCache();
     if (cache.data && cache.data._key === cacheKey && (Date.now() - cache.ts) < CACHE_TTL_MS) {
       res.setHeader('Cache-Control', 'public, s-maxage=900, stale-while-revalidate=3600');
@@ -369,11 +446,22 @@ module.exports = async function handler(req, res) {
 
     // ── Enrichissement role + country + team via PLAYER_METADATA ──────
     // pro_match_players ne contient pas de champ role/country/team. On
-    // croise par nickname avec PLAYER_METADATA (50+ pros connus) pour
-    // enrichir. Lookup case-insensitive.
+    // croise par nickname avec PLAYER_METADATA (97 pros connus) pour
+    // enrichir. Lookup case-insensitive avec normalisation des chars
+    // speciaux courants (-, _, espaces, accents).
+    function normalizeNick(nick) {
+      return (nick || '').toLowerCase()
+        .replace(/[-_\s]/g, '')
+        .normalize('NFD').replace(/[̀-ͯ]/g, ''); // strip diacritics
+    }
+    // Pre-build normalized lookup index (one-time cost)
+    const META_INDEX = {};
+    for (const k in PLAYER_METADATA) {
+      META_INDEX[normalizeNick(k)] = PLAYER_METADATA[k];
+    }
     top20 = top20.map(p => {
-      const key = (p.nickname || '').toLowerCase();
-      const meta = PLAYER_METADATA[key];
+      const key = normalizeNick(p.nickname);
+      const meta = META_INDEX[key];
       if (meta) {
         return {
           ...p,

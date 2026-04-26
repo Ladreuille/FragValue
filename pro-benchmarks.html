@@ -66,6 +66,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     .top20-rank{color:var(--text3);font-weight:900;font-family:var(--display);font-size:14px}
     .top20-rank.podium{color:var(--accent)}
     .top20-flag{width:20px;height:14px;border-radius:2px;display:block;background:var(--card);object-fit:cover}
+    .top20-flag-fallback{display:inline-block;width:20px;height:14px;background:var(--card);color:var(--text3);font-family:var(--mono);font-size:8px;font-weight:700;text-align:center;line-height:14px;border-radius:2px;letter-spacing:0;border:1px solid var(--border)}
     .top20-name{font-family:var(--display);font-size:14px;color:var(--text);letter-spacing:.02em;display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden}
     .top20-name a{color:inherit;text-decoration:none;transition:color .12s}
     .top20-name a:hover{color:var(--accent)}
@@ -366,11 +367,17 @@ function deltaCls(v, higherIsBetter = true) {
   if (Math.abs(v) < 0.01) return '';
   return ((v > 0) === higherIsBetter) ? 'up' : 'down';
 }
-// Country flag via flagcdn.com (16x12)
+// Country flag via flagcdn.com (20x15) avec fallback gracieux
+// flagcdn supporte ISO 3166-1 alpha-2. Codes speciaux Kosovo (xk) supporte.
+// onerror : si l'image fail, on remplace par un badge texte avec le code pays.
 function flagImg(country) {
-  if (!country) return '';
+  if (!country) {
+    return '<span class="top20-flag-fallback" title="Pays inconnu">?</span>';
+  }
   const code = country.toLowerCase();
-  return '<img class="top20-flag" src="https://flagcdn.com/20x15/' + code + '.png" alt="' + country + '" loading="lazy"/>';
+  // onerror handler : remplace l'<img> casse par un span avec le code pays
+  const fallback = '<span class=\\"top20-flag-fallback\\" title=\\"' + country + '\\">' + country + '</span>';
+  return '<img class="top20-flag" src="https://flagcdn.com/20x15/' + code + '.png" alt="' + country + '" loading="lazy" onerror="this.outerHTML=\'' + fallback + '\'"/>';
 }
 // HLTV profile via search URL (HLTV redirects to player profile if exact match)
 function hltvUrl(nickname) {
