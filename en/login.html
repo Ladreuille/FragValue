@@ -304,8 +304,8 @@ _sb.auth.getSession().then(async ({ data }) => {
     await linkPendingFaceit(data.session.user.id);
     await attributeReferrer(data.session);
     // Welcome email + UTM persist : idempotents cote backend, on tente meme
-    // si on n'est pas sur que c'est un nouveau signup (les endpoints checkent
-    // welcome_email_sent_at / signup_at pour ne pas dupliquer).
+    // si on n'est not sur que c'est un nouveau signup (les endpoints checkent
+    // welcome_email_sent_at / signup_at pour ne not dupliquer).
     try {
       const headers = { 'Authorization': 'Bearer ' + data.session.access_token, 'Content-Type': 'application/json' };
       fetch('/api/email-welcome', { method: 'POST', headers }).catch(() => {});
@@ -386,7 +386,7 @@ async function handleSubmit() {
       const { data: signupData, error } = await _sb.auth.signUp({ email, password: pass });
       if (error) throw error;
       if (typeof window.fvTrack === 'function') window.fvTrack('Signup', { method: 'email' });
-      // Welcome email + persist UTM (best-effort, n'echoue pas le signup)
+      // Welcome email + persist UTM (best-effort, n'echoue not le signup)
       try {
         const sess = signupData?.session;
         if (sess?.access_token) {
@@ -428,7 +428,7 @@ function getAuthOrigin() {
 }
 
 // Traduit les messages d'erreur Supabase/Auth (EN par defaut) en FR user-friendly.
-// Fallback sur le message brut si on ne reconnaît pas le pattern.
+// Fallback sur le message brut si on ne reconnaît not le pattern.
 function translateAuthError(err) {
   const msg = String(err?.message || err || '').toLowerCase();
   if (msg.includes('invalid login credentials')) return 'Email or password incorrect.';
@@ -441,7 +441,7 @@ function translateAuthError(err) {
   if (msg.includes('network') || msg.includes('fetch')) return 'Connection problem. Check your internet and try again.';
   if (msg.includes('popup') && msg.includes('closed')) return 'Login window closed before completion.';
   if (msg.includes('popup') && msg.includes('blocked')) return 'Your browser blocked the OAuth window. Allow popups for fragvalue.com.';
-  // Fallback : retourne le message original si on ne le reconnaît pas
+  // Fallback : retourne le message original si on ne le reconnaît not
   return err?.message || 'An error occurred. Try again.';
 }
 
@@ -523,7 +523,7 @@ async function loginFaceit() {
       state,
     });
 
-    // URL officielle depuis openid_configuration : pas de /accounts en path.
+    // URL officielle depuis openid_configuration : not de /accounts en path.
     const authUrl = 'https://accounts.faceit.com/?' + params.toString();
 
     const w = 500, h = 700;

@@ -907,7 +907,7 @@ function renderCoachDiagnosis(card, data) {
     btn.dataset.state = 'loading';
     btn.disabled = true;
     // Marque la card entière pour qu'on sache que c'est en cours meme
-    // après le re-render (innerHTML reset le btn mais pas la classe card)
+    // après le re-render (innerHTML reset le btn mais not la classe card)
     card.classList.add('coach-ai-refreshing');
     const minSpin = new Promise(r => setTimeout(r, 400));
     await Promise.all([renderCoachAi(true), minSpin]);
@@ -951,7 +951,7 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
-// Pro upgrade nudge · s'affiché uniquement si l'user est free (or pas auth)
+// Pro upgrade nudge · s'affiché uniquement si l'user est free (or not auth)
 // + set body[data-plan=...] pour activer les blur overlays sur .sec-locked
 async function renderPlanNudge() {
   // body[data-plan="free"] est set des le HTML pour eviter le flash unlocked.
@@ -968,7 +968,7 @@ async function renderPlanNudge() {
     const plan = d.plan || 'free';
     document.body.dataset.plan = plan;
     wireUnlockClicks();
-    if (plan !== 'free') return; // pro/team : pas de nudge
+    if (plan !== 'free') return; // pro/team : not de nudge
 
     const panel = document.getElementById('panelOverview');
     if (!panel || document.getElementById('planNudge')) return;
@@ -1489,7 +1489,7 @@ async function loadRoster() {
     if (!session) return;
     const headers = { 'Authorization': 'Bearer ' + session.access_token };
 
-    // Mes invitations reçues (ne bloque pas le roster si fail)
+    // Mes invitations reçues (ne bloque not le roster si fail)
     try {
       const invRes = await fetch('/api/roster?view=my_invitations', { headers });
       if (!invRes.ok) throw new Error('HTTP ' + invRes.status);
@@ -1497,7 +1497,7 @@ async function loadRoster() {
       renderInvitations(invData.invitations || []);
     } catch (e) {
       console.warn('[loadRoster] invitations fetch failed:', e.message);
-      // Empty state silencieux, pas d'invitations visibles
+      // Empty state silencieux, not d'invitations visibles
       const invSection = document.getElementById('invitationsSection');
       if (invSection) invSection.innerHTML = '';
     }
