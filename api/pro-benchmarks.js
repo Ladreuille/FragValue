@@ -343,10 +343,6 @@ function getSeedByMap(map, side) {
       ct: ['molodoy', 'sh1ro', 'donk', 'flameZ', 'NiKo'],
       t:  ['m0NESY', 'donk', 'ropz', 'flameZ', 'KSCERATO'],
     },
-    vertigo: {
-      ct: ['NiKo', 'sh1ro', 'b1t', 'iM', 'KSCERATO'],
-      t:  ['donk', 'ZywOo', 'YEKINDAR', 'flameZ', 'frozen'],
-    },
     ancient: {
       ct: ['ZywOo', 'KSCERATO', 'sh1ro', 'b1t', 'frozen'],
       t:  ['ropz', 'donk', 'm0NESY', 'iM', 'NiKo'],
@@ -590,7 +586,7 @@ module.exports = async function handler(req, res) {
       top20: filtered,
       pool: matchingPool, // 60 pros pour matching pro twin
       proAvg: computeProAvg(filtered.length ? filtered : SEED_TOP20_2026.slice(0, 5)),
-      maps: ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'overpass'],
+      maps: ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'ancient', 'overpass'],
       roles: ['awp', 'entry', 'igl', 'support', 'rifler'],
       notice: source === 'seed'
         ? 'Top 20 based on HLTV Top 20 Players of 2025 (published Jan 2026). Team/role assignments verified for April 2026.'
@@ -612,7 +608,7 @@ module.exports = async function handler(req, res) {
       sampleSize: SEED_TOP20_2026.length,
       top20: SEED_TOP20_2026,
       proAvg: computeProAvg(SEED_TOP20_2026),
-      maps: ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'overpass'],
+      maps: ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'ancient', 'overpass'],
       roles: ['awp', 'entry', 'igl', 'support', 'rifler'],
       error: 'using seed data',
     });

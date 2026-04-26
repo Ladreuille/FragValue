@@ -34,14 +34,14 @@ const { requireElite } = require('./_lib/subscription');
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 
-const ACTIVE_MAPS = ['de_mirage', 'de_inferno', 'de_dust2', 'de_nuke', 'de_anubis', 'de_vertigo', 'de_ancient', 'de_overpass'];
+// Active Duty CS2 avril 2026 (7 maps, post-Vertigo retire)
+const ACTIVE_MAPS = ['de_mirage', 'de_inferno', 'de_dust2', 'de_nuke', 'de_anubis', 'de_ancient', 'de_overpass'];
 const MAP_DISPLAY = {
   de_mirage:   'Mirage',
   de_inferno:  'Inferno',
   de_dust2:    'Dust2',
   de_nuke:     'Nuke',
   de_anubis:   'Anubis',
-  de_vertigo:  'Vertigo',
   de_ancient:  'Ancient',
   de_overpass: 'Overpass',
 };
@@ -186,8 +186,12 @@ async function fetchPlayerMatchStats(nickname, apiKey) {
         kd: parseFloat(s['K/D Ratio']) || 0,
         adr: parseFloat(s['ADR']) || 0,
         kast: parseFloat(s['KAST %']) || parseFloat(s['KAST']) || 0,
+        kills: parseInt(s['Kills']) || 0,
         ctRounds: parseInt(s['Final Score Counter-Terrorist'] || s['CT Rounds'] || 0),
         tRounds:  parseInt(s['Final Score Terrorist'] || s['T Rounds'] || 0),
+        // Tag avec le nickname pour pouvoir attribuer les matchs aux joueurs
+        // dans aggregateByMap (necessaire pour calculer les top players par map)
+        nickname: player.nickname,
       };
     }).filter(m => m.map);
 
@@ -198,14 +202,32 @@ async function fetchPlayerMatchStats(nickname, apiKey) {
   }
 }
 
+// Confidence d'une map basee sur le sample size :
+//   high   = >= 10 matchs joues cumules par l'equipe (statistiquement solide)
+//   medium = 5-9 matchs (indicatif)
+//   low    = 1-4 matchs (anecdotique, exclu des recommandations)
+function confidenceLevel(matches) {
+  if (matches >= 10) return 'high';
+  if (matches >= 5)  return 'medium';
+  return 'low';
+}
+
 // Agrege les matchs des N joueurs en stats team-level par map.
+// Tracking par-player necessaire pour calculer les top fragger / awper par map.
 function aggregateByMap(playersData) {
   const allMatches = playersData.flatMap(p => p.matches);
   const byMap = {};
+
   for (const m of allMatches) {
     if (!ACTIVE_MAPS.includes(m.map)) continue;
     if (!byMap[m.map]) {
-      byMap[m.map] = { matches: 0, wins: 0, kdSum: 0, adrSum: 0, kastSum: 0, ctRoundsSum: 0, tRoundsSum: 0, ctWinSum: 0, tWinSum: 0 };
+      byMap[m.map] = {
+        matches: 0, wins: 0,
+        kdSum: 0, adrSum: 0, kastSum: 0,
+        ctRoundsSum: 0, tRoundsSum: 0, ctWinSum: 0, tWinSum: 0,
+        // Tracking par player pour identifier les top performers
+        playerStats: {}, // nickname -> { matches, kdSum, adrSum, killsSum }
+      };
     }
     const b = byMap[m.map];
     b.matches += 1;
@@ -220,41 +242,88 @@ function aggregateByMap(playersData) {
       b.ctWinSum += (m.ctRounds / totalRounds);
       b.tWinSum  += (m.tRounds  / totalRounds);
     }
+    // Player tracking
+    if (m.nickname) {
+      if (!b.playerStats[m.nickname]) {
+        b.playerStats[m.nickname] = { nickname: m.nickname, matches: 0, kdSum: 0, adrSum: 0, killsSum: 0 };
+      }
+      const ps = b.playerStats[m.nickname];
+      ps.matches += 1;
+      ps.kdSum += m.kd;
+      ps.adrSum += m.adr;
+      ps.killsSum += m.kills;
+    }
   }
-  return Object.entries(byMap).map(([map, b]) => ({
-    map,
-    displayName: MAP_DISPLAY[map] || map,
-    matches: b.matches,
-    wins: b.wins,
-    winRate: b.matches > 0 ? Math.round((b.wins / b.matches) * 100) : 0,
-    ctWinRate: b.ctRoundsSum > 0 ? Math.round((b.ctWinSum / b.matches) * 100) : null,
-    tWinRate:  b.tRoundsSum > 0  ? Math.round((b.tWinSum  / b.matches) * 100) : null,
-    avgKd:   b.matches > 0 ? +(b.kdSum / b.matches).toFixed(2)   : 0,
-    avgAdr:  b.matches > 0 ? Math.round(b.adrSum / b.matches)    : 0,
-    avgKast: b.matches > 0 ? Math.round(b.kastSum / b.matches)   : 0,
-  })).sort((a, b) => b.matches - a.matches);
+
+  return Object.entries(byMap).map(([map, b]) => {
+    // Top 2 players par avgKd (avec >= 2 matchs minimum sur la map)
+    const players = Object.values(b.playerStats)
+      .filter(p => p.matches >= 2)
+      .map(p => ({
+        nickname: p.nickname,
+        matches: p.matches,
+        avgKd: +(p.kdSum / p.matches).toFixed(2),
+        avgAdr: Math.round(p.adrSum / p.matches),
+        avgKills: +(p.killsSum / p.matches).toFixed(1),
+      }))
+      .sort((a, b) => b.avgKd - a.avgKd)
+      .slice(0, 2);
+
+    return {
+      map,
+      displayName: MAP_DISPLAY[map] || map,
+      matches: b.matches,
+      wins: b.wins,
+      winRate: b.matches > 0 ? Math.round((b.wins / b.matches) * 100) : 0,
+      ctWinRate: b.matches > 0 ? Math.round((b.ctWinSum / b.matches) * 100) : null,
+      tWinRate:  b.matches > 0 ? Math.round((b.tWinSum  / b.matches) * 100) : null,
+      avgKd:   b.matches > 0 ? +(b.kdSum / b.matches).toFixed(2)   : 0,
+      avgAdr:  b.matches > 0 ? Math.round(b.adrSum / b.matches)    : 0,
+      avgKast: b.matches > 0 ? Math.round(b.kastSum / b.matches)   : 0,
+      confidence: confidenceLevel(b.matches),
+      topPlayers: players,
+    };
+  }).sort((a, b) => b.matches - a.matches);
 }
+
+// Garantit qu'on retourne TOUTES les maps actives, meme avec 0 datapoints
+// (les maps absentes apparaissent comme "no_data" dans le frontend).
+function fillMissingMaps(maps) {
+  const present = new Set(maps.map(m => m.map));
+  const missing = ACTIVE_MAPS.filter(m => !present.has(m)).map(m => ({
+    map: m, displayName: MAP_DISPLAY[m] || m,
+    matches: 0, wins: 0, winRate: 0,
+    ctWinRate: null, tWinRate: null,
+    avgKd: 0, avgAdr: 0, avgKast: 0,
+    confidence: 'none', topPlayers: [],
+  }));
+  return [...maps, ...missing];
+}
+
+// Seuil minimal de matchs pour qu'une map entre dans les recommandations.
+// 5 = compromis entre exhaustivite (toutes les maps actives) et fiabilite
+// statistique (sous 5 matchs, le winrate est tres bruite).
+const MIN_MATCHES_FOR_RECO = 5;
 
 // Recommandations basees sur opponent stats SEULES.
 function generateRecommendationsOppOnly(opponentMaps) {
-  const played = opponentMaps.filter(m => m.matches >= 3);
+  const played = opponentMaps.filter(m => m.matches >= MIN_MATCHES_FOR_RECO);
   const sortedByWin = [...played].sort((a, b) => b.winRate - a.winRate);
   return {
     forceBan: sortedByWin.slice(0, 2).map(m => ({
       map: m.displayName, winRate: m.winRate, matches: m.matches,
+      confidence: m.confidence,
       reason: `Leur meilleure map (${m.winRate}% sur ${m.matches} matchs).`,
     })),
     forcePick: sortedByWin.slice(-2).reverse().map(m => ({
       map: m.displayName, winRate: m.winRate, matches: m.matches,
+      confidence: m.confidence,
       reason: `Map faible pour eux (${m.winRate}% sur ${m.matches} matchs).`,
     })),
   };
 }
 
 // Recommandations head-to-head : croise opponent + ton equipe.
-// Logique :
-//   - forceBan = leurs maps fortes ET tes maps faibles (gap negatif eleve)
-//   - forcePick = tes maps fortes ET leurs maps faibles (gap positif eleve)
 function generateRecommendationsH2H(opponentMaps, yourMaps) {
   const oppByMap = Object.fromEntries(opponentMaps.map(m => [m.map, m]));
   const yourByMap = Object.fromEntries(yourMaps.map(m => [m.map, m]));
@@ -262,31 +331,166 @@ function generateRecommendationsH2H(opponentMaps, yourMaps) {
   const h2h = all.map(map => {
     const opp = oppByMap[map];
     const you = yourByMap[map];
-    if (!opp || !you || opp.matches < 3 || you.matches < 3) return null;
+    if (!opp || !you) return null;
+    // Calcul confidence H2H = min des 2 confidences
+    let confidence = 'high';
+    if (you.matches < MIN_MATCHES_FOR_RECO || opp.matches < MIN_MATCHES_FOR_RECO) confidence = 'low';
+    else if (you.matches < 10 || opp.matches < 10) confidence = 'medium';
     return {
       map, displayName: MAP_DISPLAY[map] || map,
       yourWinRate: you.winRate,
       oppWinRate: opp.winRate,
-      gap: you.winRate - opp.winRate, // positif = avantage toi
+      gap: you.winRate - opp.winRate,
       yourMatches: you.matches,
       oppMatches: opp.matches,
+      yourCtWinRate: you.ctWinRate, yourTWinRate: you.tWinRate,
+      oppCtWinRate: opp.ctWinRate, oppTWinRate: opp.tWinRate,
+      yourTopPlayers: you.topPlayers,
+      oppTopPlayers: opp.topPlayers,
+      confidence,
     };
   }).filter(Boolean);
 
-  // Force ban = gap negatif eleve (eux > toi)
-  const sortedByGap = [...h2h].sort((a, b) => a.gap - b.gap);
+  // Filtre confidence pour les recos uniquement (la grille montre tout)
+  const reliable = h2h.filter(h => h.confidence !== 'low');
+  const sortedByGap = [...reliable].sort((a, b) => a.gap - b.gap);
+
   const forceBan = sortedByGap.slice(0, 2).map(h => ({
     map: h.displayName, winRate: h.oppWinRate, matches: h.oppMatches,
-    yourWinRate: h.yourWinRate, gap: h.gap,
-    reason: `Eux ${h.oppWinRate}% vs toi ${h.yourWinRate}% (gap ${h.gap > 0 ? '+' : ''}${h.gap}pts).`,
+    yourWinRate: h.yourWinRate, gap: h.gap, confidence: h.confidence,
+    reason: `Eux ${h.oppWinRate}% vs toi ${h.yourWinRate}% (gap ${h.gap > 0 ? '+' : ''}${h.gap}pts sur ${h.oppMatches} matchs).`,
   }));
-  // Force pick = gap positif eleve (toi > eux)
   const forcePick = sortedByGap.slice(-2).reverse().map(h => ({
     map: h.displayName, winRate: h.yourWinRate, matches: h.yourMatches,
-    oppWinRate: h.oppWinRate, gap: h.gap,
-    reason: `Toi ${h.yourWinRate}% vs eux ${h.oppWinRate}% (gap +${h.gap}pts).`,
+    oppWinRate: h.oppWinRate, gap: h.gap, confidence: h.confidence,
+    reason: `Toi ${h.yourWinRate}% vs eux ${h.oppWinRate}% (gap +${h.gap}pts sur ${h.yourMatches} matchs).`,
   }));
-  return { forceBan, forcePick, h2h: sortedByGap };
+
+  // h2h tri pour le frontend : tous les maps (pas de filtre confidence)
+  // mais avec le flag pour dimmer les low-confidence cards.
+  const allSortedByGap = [...h2h].sort((a, b) => a.gap - b.gap);
+  return { forceBan, forcePick, h2h: allSortedByGap };
+}
+
+// Calcul win probability cumulative pour un BO sur N maps choisies.
+// Formule simplifiee : pour chaque map, P(win map) = yourWinRate / 100.
+// P(win BO3) = P(win >= 2 maps sur 3) via somme binomiale.
+// Hypothese : maps independantes (pas de momentum effect).
+function computeWinProbability(mapsToPlay, h2hMaps) {
+  const winRates = mapsToPlay.map(m => {
+    const h = h2hMaps.find(x => x.map === m.map);
+    return h ? h.yourWinRate / 100 : 0.5;
+  });
+  if (winRates.length === 0) return null;
+  // Pour BO1 : P(win) = winRate de la map jouee
+  if (winRates.length === 1) return Math.round(winRates[0] * 100);
+  // Pour BO3 : P(win 2 ou 3 sur 3) - cas distincts
+  if (winRates.length === 3) {
+    const [p1, p2, p3] = winRates;
+    const win3 = p1 * p2 * p3;
+    const win2 = (p1 * p2 * (1 - p3)) + (p1 * (1 - p2) * p3) + ((1 - p1) * p2 * p3);
+    return Math.round((win3 + win2) * 100);
+  }
+  // Pour BO5 : P(win 3, 4 ou 5 sur 5)
+  if (winRates.length === 5) {
+    // Approximation via Monte Carlo simple : proba moyenne (suffisant pour preview)
+    const avgP = winRates.reduce((s, v) => s + v, 0) / winRates.length;
+    // P(win >= 3 sur 5) avec proba moyenne avgP
+    let total = 0;
+    for (let k = 3; k <= 5; k++) {
+      // C(5, k) * p^k * (1-p)^(5-k)
+      const binom = [1,5,10,10,5,1][k];
+      total += binom * Math.pow(avgP, k) * Math.pow(1 - avgP, 5 - k);
+    }
+    return Math.round(total * 100);
+  }
+  // Fallback : moyenne simple
+  const avg = winRates.reduce((s, v) => s + v, 0) / winRates.length;
+  return Math.round(avg * 100);
+}
+
+// Genere les sequences de veto BO1/BO3/BO5 + maps suggerees + win prob.
+// Pool actif : 7 maps (post-Vertigo retire avril 2026).
+//   BO1 : 6 bans alternes -> 1 decider auto
+//   BO3 : 4 bans + 2 picks alternes -> 1 decider auto
+//   BO5 : 2 bans + 4 picks alternes -> 1 decider auto
+//
+// Ordre standard ESEA/FACEIT (toi commences) :
+//   BO1 : ban-ban-ban-ban-ban-ban  (toi-eux-toi-eux-toi-eux) -> decider
+//   BO3 : ban-ban-pick-pick-ban-ban (toi-eux-toi-eux-toi-eux) -> decider
+//   BO5 : ban-ban-pick-pick-pick-pick (toi-eux-toi-eux-toi-eux) -> decider
+function generateVetoFormats(h2hMaps) {
+  const reliable = h2hMaps.filter(h => h.confidence !== 'low');
+  if (reliable.length < 5) {
+    // Pas assez de data fiable pour generer des sequences solides.
+    // Fallback sur tous les h2h sans filtre confidence.
+  }
+  const pool = (reliable.length >= 5 ? reliable : h2hMaps);
+  if (pool.length < 5) return null; // Impossible de simuler un veto
+
+  // Tri pour decisions :
+  //   - sortedByGapAsc : pire pour toi en haut (a ban)
+  //   - sortedByGapDesc : meilleur pour toi en haut (a pick)
+  const byGapAsc  = [...pool].sort((a, b) => a.gap - b.gap);
+  const byGapDesc = [...pool].sort((a, b) => b.gap - a.gap);
+
+  function buildSequence(banCount, pickCount) {
+    const remaining = new Set(pool.map(m => m.map));
+    const sequence = [];
+
+    // Ban phase (alternee toi/eux)
+    for (let i = 0; i < banCount; i++) {
+      const isYou = i % 2 === 0;
+      const candidates = pool.filter(m => remaining.has(m.map));
+      // Toi : ban leur meilleure map (gap le plus negatif pour toi)
+      // Eux : ban ta meilleure map (gap le plus positif)
+      candidates.sort(isYou ? (a, b) => a.gap - b.gap : (a, b) => b.gap - a.gap);
+      const target = candidates[0];
+      if (!target) break;
+      sequence.push({ action: 'ban', team: isYou ? 'you' : 'opp', map: target.displayName, gap: target.gap });
+      remaining.delete(target.map);
+    }
+
+    // Pick phase (alternee toi/eux)
+    for (let i = 0; i < pickCount; i++) {
+      const isYou = i % 2 === 0;
+      const candidates = pool.filter(m => remaining.has(m.map));
+      // Toi : pick ta meilleure (gap le plus positif)
+      // Eux : pick leur meilleure (gap le plus negatif)
+      candidates.sort(isYou ? (a, b) => b.gap - a.gap : (a, b) => a.gap - b.gap);
+      const target = candidates[0];
+      if (!target) break;
+      sequence.push({ action: 'pick', team: isYou ? 'you' : 'opp', map: target.displayName, gap: target.gap });
+      remaining.delete(target.map);
+    }
+
+    // Decider auto = la map qui reste (devrait etre 1 seule)
+    const deciderMaps = pool.filter(m => remaining.has(m.map));
+    if (deciderMaps.length === 1) {
+      sequence.push({ action: 'decider', team: 'auto', map: deciderMaps[0].displayName, gap: deciderMaps[0].gap });
+    }
+
+    // Maps qui seront jouees = picks + decider (les bans sont eliminees)
+    const mapsToPlay = sequence.filter(s => s.action !== 'ban').map(s => {
+      const m = pool.find(p => p.displayName === s.map);
+      return m ? { map: m.map, displayName: m.displayName } : null;
+    }).filter(Boolean);
+
+    return { sequence, mapsToPlay };
+  }
+
+  // BO1 : 6 bans, 1 decider
+  const bo1 = buildSequence(6, 0);
+  // BO3 : 4 bans, 2 picks, 1 decider
+  const bo3 = buildSequence(4, 2);
+  // BO5 : 2 bans, 4 picks, 1 decider
+  const bo5 = buildSequence(2, 4);
+
+  return {
+    bo1: { sequence: bo1.sequence, mapsToPlay: bo1.mapsToPlay, winProbability: computeWinProbability(bo1.mapsToPlay, h2hMaps) },
+    bo3: { sequence: bo3.sequence, mapsToPlay: bo3.mapsToPlay, winProbability: computeWinProbability(bo3.mapsToPlay, h2hMaps) },
+    bo5: { sequence: bo5.sequence, mapsToPlay: bo5.mapsToPlay, winProbability: computeWinProbability(bo5.mapsToPlay, h2hMaps) },
+  };
 }
 
 // Aggregate complet : URL/nicks -> resolve roster -> fetch stats -> aggregate.
@@ -319,7 +523,9 @@ async function processTeam(input, apiKey) {
   }
 
   const totalMatches = validPlayers.reduce((s, p) => s + p.matches.length, 0);
-  const maps = aggregateByMap(validPlayers);
+  // Aggregate puis remplit les maps absentes avec 'no_data' pour que le
+  // frontend les affiche en mode "pas joue" plutot que de les omettre.
+  const maps = fillMissingMaps(aggregateByMap(validPlayers));
 
   return {
     team: {
@@ -371,7 +577,8 @@ module.exports = async function handler(req, res) {
   }
 
   // Cache lookup : cle base sur les inputs canonicalises
-  const cacheKey = 'h2h:v1:'
+  // v2 : invalide apres ajout confidence + topPlayers + formats + winProb
+  const cacheKey = 'h2h:v2:'
     + (opponentInput.url || (opponentInput.nicks || []).map(n => n.toLowerCase().trim()).sort().join(','))
     + '|'
     + (yourTeamInput.url || (yourTeamInput.nicks || []).map(n => n.toLowerCase().trim()).sort().join(','));
@@ -402,23 +609,29 @@ module.exports = async function handler(req, res) {
 
     let payload;
     if (yourTeamResult) {
-      // Mode head-to-head
+      // Mode head-to-head : on calcule aussi les sequences BO1/BO3/BO5
+      // avec win probability cumulee pour chaque format.
       const reco = generateRecommendationsH2H(opponentResult.maps, yourTeamResult.maps);
+      const formats = generateVetoFormats(reco.h2h);
       payload = {
         mode: 'h2h',
         opponent: opponentResult,
         yourTeam: yourTeamResult,
         recommendations: { forceBan: reco.forceBan, forcePick: reco.forcePick },
         h2h: reco.h2h,
+        formats, // { bo1, bo3, bo5 } chacun avec sequence + mapsToPlay + winProbability
+        activeMaps: ACTIVE_MAPS.length,
+        minMatchesForReco: MIN_MATCHES_FOR_RECO,
         lastUpdated: new Date().toISOString(),
       };
     } else {
-      // Mode opponent-only (legacy compat)
       payload = {
         mode: 'opponent_only',
         team: opponentResult.team,
         maps: opponentResult.maps,
         recommendations: generateRecommendationsOppOnly(opponentResult.maps),
+        activeMaps: ACTIVE_MAPS.length,
+        minMatchesForReco: MIN_MATCHES_FOR_RECO,
         lastUpdated: new Date().toISOString(),
       };
     }
