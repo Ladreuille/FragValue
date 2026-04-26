@@ -56,6 +56,8 @@ const PAGES = [
   'share.html',
   'extension-auth.html',
   'faceit-callback.html',
+  // Page guide d'utilisation
+  'how-it-works.html',
 ];
 
 // Charge le dictionnaire (objet plat { "fr": "en" })

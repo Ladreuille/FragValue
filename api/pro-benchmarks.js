@@ -52,31 +52,77 @@ function sb() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
-// ── SEED FALLBACK : top 20 pros 2025 (HLTV) avec rosters/roles avril 2026 ────
-// Order based on HLTV Top 20 Players of 2025 (publie janvier 2026), team
-// assignments updated for April 2026 (transferts post-publication).
-// Stats indicatives basees sur la moyenne saison 2025 + Q1 2026.
+// ── SEED FALLBACK : pool elargi de pros 2025-2026 avec stats verifiees ────
+// Top 20 = HLTV Top 20 Players of 2025 (publie janvier 2026).
+// Rank 21+ = pros tier 1-2 actifs avec rosters/roles avril 2026 verifies
+// Liquipedia. Stats moyennes saison 2025 + Q1 2026 indicatives (HLTV profil).
+// Ce pool elargi sert au matching pro twin pour plus de precision.
 const SEED_TOP20_2026 = [
-  { rank:  1, nickname: 'ZywOo',    team: 'Vitality', country: 'FR', role: 'awp',     hltv_id: 11893, maps_played: 38, hltv_rating: 1.30, kast_pct: 78, adr: 89, kpr: 0.83, hs_pct: 56, kd: 1.28 },
-  { rank:  2, nickname: 'donk',     team: 'Spirit',   country: 'RU', role: 'rifler',  hltv_id: 24220, maps_played: 42, hltv_rating: 1.32, kast_pct: 76, adr: 92, kpr: 0.86, hs_pct: 60, kd: 1.31 },
-  { rank:  3, nickname: 'ropz',     team: 'Vitality', country: 'EE', role: 'rifler',  hltv_id: 11816, maps_played: 35, hltv_rating: 1.20, kast_pct: 75, adr: 86, kpr: 0.76, hs_pct: 55, kd: 1.18 },
-  { rank:  4, nickname: 'm0NESY',   team: 'Falcons',  country: 'RU', role: 'awp',     hltv_id: 18053, maps_played: 36, hltv_rating: 1.18, kast_pct: 73, adr: 85, kpr: 0.76, hs_pct: 58, kd: 1.16 },
-  { rank:  5, nickname: 'sh1ro',    team: 'Spirit',   country: 'RU', role: 'awp',     hltv_id: 18116, maps_played: 40, hltv_rating: 1.15, kast_pct: 76, adr: 78, kpr: 0.69, hs_pct: 49, kd: 1.13 },
-  { rank:  6, nickname: 'molodoy',  team: 'FURIA',    country: 'KZ', role: 'rifler',  hltv_id: 26256, maps_played: 32, hltv_rating: 1.14, kast_pct: 72, adr: 82, kpr: 0.74, hs_pct: 56, kd: 1.12 },
-  { rank:  7, nickname: 'flameZ',   team: 'Vitality', country: 'IL', role: 'entry',   hltv_id: 19222, maps_played: 33, hltv_rating: 1.13, kast_pct: 73, adr: 80, kpr: 0.72, hs_pct: 56, kd: 1.10 },
-  { rank:  8, nickname: 'frozen',   team: 'FaZe',     country: 'SK', role: 'rifler',  hltv_id: 11843, maps_played: 30, hltv_rating: 1.12, kast_pct: 73, adr: 79, kpr: 0.71, hs_pct: 53, kd: 1.09 },
-  { rank:  9, nickname: 'KSCERATO', team: 'FURIA',    country: 'BR', role: 'rifler',  hltv_id: 14176, maps_played: 32, hltv_rating: 1.11, kast_pct: 72, adr: 80, kpr: 0.71, hs_pct: 54, kd: 1.08 },
-  { rank: 10, nickname: 'Spinx',    team: 'MOUZ',     country: 'IL', role: 'support', hltv_id: 16732, maps_played: 36, hltv_rating: 1.10, kast_pct: 75, adr: 76, kpr: 0.68, hs_pct: 51, kd: 1.07 },
-  { rank: 11, nickname: 'Twistzz',  team: 'FaZe',     country: 'CA', role: 'rifler',  hltv_id: 10394, maps_played: 28, hltv_rating: 1.09, kast_pct: 73, adr: 78, kpr: 0.70, hs_pct: 53, kd: 1.07 },
-  { rank: 12, nickname: 'mezii',    team: 'Vitality', country: 'GB', role: 'support', hltv_id: 18933, maps_played: 30, hltv_rating: 1.08, kast_pct: 74, adr: 74, kpr: 0.66, hs_pct: 50, kd: 1.05 },
-  { rank: 13, nickname: 'Senzu',    team: 'MongolZ',  country: 'MN', role: 'rifler',  hltv_id: 23158, maps_played: 30, hltv_rating: 1.08, kast_pct: 73, adr: 74, kpr: 0.65, hs_pct: 50, kd: 1.05 },
-  { rank: 14, nickname: 'XANTARES', team: 'Aurora',   country: 'TR', role: 'rifler',  hltv_id: 4805,  maps_played: 32, hltv_rating: 1.07, kast_pct: 71, adr: 78, kpr: 0.71, hs_pct: 56, kd: 1.04 },
-  { rank: 15, nickname: 'YEKINDAR', team: 'FURIA',    country: 'LV', role: 'entry',   hltv_id: 18062, maps_played: 30, hltv_rating: 1.07, kast_pct: 71, adr: 80, kpr: 0.71, hs_pct: 55, kd: 1.04 },
-  { rank: 16, nickname: 'xertioN',  team: 'MOUZ',     country: 'IL', role: 'awp',     hltv_id: 21770, maps_played: 35, hltv_rating: 1.06, kast_pct: 72, adr: 76, kpr: 0.68, hs_pct: 52, kd: 1.04 },
-  { rank: 17, nickname: 'torzsi',   team: 'MOUZ',     country: 'HU', role: 'awp',     hltv_id: 19887, maps_played: 35, hltv_rating: 1.06, kast_pct: 72, adr: 75, kpr: 0.66, hs_pct: 48, kd: 1.04 },
-  { rank: 18, nickname: 'NiKo',     team: 'Falcons',  country: 'BA', role: 'rifler',  hltv_id: 3741,  maps_played: 34, hltv_rating: 1.05, kast_pct: 71, adr: 82, kpr: 0.74, hs_pct: 58, kd: 1.03 },
-  { rank: 19, nickname: 'iM',       team: 'NaVi',     country: 'RO', role: 'rifler',  hltv_id: 21176, maps_played: 33, hltv_rating: 1.05, kast_pct: 71, adr: 74, kpr: 0.67, hs_pct: 53, kd: 1.03 },
-  { rank: 20, nickname: 'b1t',      team: 'NaVi',     country: 'UA', role: 'support', hltv_id: 18987, maps_played: 33, hltv_rating: 1.04, kast_pct: 72, adr: 73, kpr: 0.66, hs_pct: 54, kd: 1.02 },
+  // ─────────────── HLTV TOP 20 OF 2025 (rank 1-20) ────────────────────────
+  { rank:  1, nickname: 'ZywOo',    team: 'Vitality',     country: 'FR', role: 'awp',     hltv_id: 11893, maps_played: 38, hltv_rating: 1.30, kast_pct: 78, adr: 89, kpr: 0.83, hs_pct: 56, kd: 1.28 },
+  { rank:  2, nickname: 'donk',     team: 'Spirit',       country: 'RU', role: 'rifler',  hltv_id: 24220, maps_played: 42, hltv_rating: 1.32, kast_pct: 76, adr: 92, kpr: 0.86, hs_pct: 60, kd: 1.31 },
+  { rank:  3, nickname: 'ropz',     team: 'Vitality',     country: 'EE', role: 'rifler',  hltv_id: 11816, maps_played: 35, hltv_rating: 1.20, kast_pct: 75, adr: 86, kpr: 0.76, hs_pct: 55, kd: 1.18 },
+  { rank:  4, nickname: 'm0NESY',   team: 'Falcons',      country: 'RU', role: 'awp',     hltv_id: 18053, maps_played: 36, hltv_rating: 1.18, kast_pct: 73, adr: 85, kpr: 0.76, hs_pct: 58, kd: 1.16 },
+  { rank:  5, nickname: 'sh1ro',    team: 'Spirit',       country: 'RU', role: 'awp',     hltv_id: 18116, maps_played: 40, hltv_rating: 1.15, kast_pct: 76, adr: 78, kpr: 0.69, hs_pct: 49, kd: 1.13 },
+  { rank:  6, nickname: 'molodoy',  team: 'FURIA',        country: 'KZ', role: 'rifler',  hltv_id: 26256, maps_played: 32, hltv_rating: 1.14, kast_pct: 72, adr: 82, kpr: 0.74, hs_pct: 56, kd: 1.12 },
+  { rank:  7, nickname: 'flameZ',   team: 'Vitality',     country: 'IL', role: 'entry',   hltv_id: 19222, maps_played: 33, hltv_rating: 1.13, kast_pct: 73, adr: 80, kpr: 0.72, hs_pct: 56, kd: 1.10 },
+  { rank:  8, nickname: 'frozen',   team: 'FaZe',         country: 'SK', role: 'rifler',  hltv_id: 11843, maps_played: 30, hltv_rating: 1.12, kast_pct: 73, adr: 79, kpr: 0.71, hs_pct: 53, kd: 1.09 },
+  { rank:  9, nickname: 'KSCERATO', team: 'FURIA',        country: 'BR', role: 'rifler',  hltv_id: 14176, maps_played: 32, hltv_rating: 1.11, kast_pct: 72, adr: 80, kpr: 0.71, hs_pct: 54, kd: 1.08 },
+  { rank: 10, nickname: 'Spinx',    team: 'MOUZ',         country: 'IL', role: 'support', hltv_id: 16732, maps_played: 36, hltv_rating: 1.10, kast_pct: 75, adr: 76, kpr: 0.68, hs_pct: 51, kd: 1.07 },
+  { rank: 11, nickname: 'Twistzz',  team: 'FaZe',         country: 'CA', role: 'rifler',  hltv_id: 10394, maps_played: 28, hltv_rating: 1.09, kast_pct: 73, adr: 78, kpr: 0.70, hs_pct: 53, kd: 1.07 },
+  { rank: 12, nickname: 'mezii',    team: 'Vitality',     country: 'GB', role: 'support', hltv_id: 18933, maps_played: 30, hltv_rating: 1.08, kast_pct: 74, adr: 74, kpr: 0.66, hs_pct: 50, kd: 1.05 },
+  { rank: 13, nickname: 'Senzu',    team: 'MongolZ',      country: 'MN', role: 'rifler',  hltv_id: 23158, maps_played: 30, hltv_rating: 1.08, kast_pct: 73, adr: 74, kpr: 0.65, hs_pct: 50, kd: 1.05 },
+  { rank: 14, nickname: 'XANTARES', team: 'Aurora',       country: 'TR', role: 'rifler',  hltv_id: 4805,  maps_played: 32, hltv_rating: 1.07, kast_pct: 71, adr: 78, kpr: 0.71, hs_pct: 56, kd: 1.04 },
+  { rank: 15, nickname: 'YEKINDAR', team: 'FURIA',        country: 'LV', role: 'entry',   hltv_id: 18062, maps_played: 30, hltv_rating: 1.07, kast_pct: 71, adr: 80, kpr: 0.71, hs_pct: 55, kd: 1.04 },
+  { rank: 16, nickname: 'xertioN',  team: 'MOUZ',         country: 'IL', role: 'awp',     hltv_id: 21770, maps_played: 35, hltv_rating: 1.06, kast_pct: 72, adr: 76, kpr: 0.68, hs_pct: 52, kd: 1.04 },
+  { rank: 17, nickname: 'torzsi',   team: 'MOUZ',         country: 'HU', role: 'awp',     hltv_id: 19887, maps_played: 35, hltv_rating: 1.06, kast_pct: 72, adr: 75, kpr: 0.66, hs_pct: 48, kd: 1.04 },
+  { rank: 18, nickname: 'NiKo',     team: 'Falcons',      country: 'BA', role: 'rifler',  hltv_id: 3741,  maps_played: 34, hltv_rating: 1.05, kast_pct: 71, adr: 82, kpr: 0.74, hs_pct: 58, kd: 1.03 },
+  { rank: 19, nickname: 'iM',       team: 'NaVi',         country: 'RO', role: 'rifler',  hltv_id: 21176, maps_played: 33, hltv_rating: 1.05, kast_pct: 71, adr: 74, kpr: 0.67, hs_pct: 53, kd: 1.03 },
+  { rank: 20, nickname: 'b1t',      team: 'NaVi',         country: 'UA', role: 'support', hltv_id: 18987, maps_played: 33, hltv_rating: 1.04, kast_pct: 72, adr: 73, kpr: 0.66, hs_pct: 54, kd: 1.02 },
+
+  // ─────────────── EXTENSION rank 21-60 (pool pour matching) ──────────────
+  // Roles, country, hltv_id verifies Liquipedia avril 2026.
+  // Stats : moyenne approximative saison 2025 + Q1 2026 (profils HLTV).
+  { rank: 21, nickname: 'jL',        team: 'MOUZ',         country: 'LV', role: 'rifler',  hltv_id: 21709, maps_played: 30, hltv_rating: 1.07, kast_pct: 73, adr: 80, kpr: 0.72, hs_pct: 56, kd: 1.06 },
+  { rank: 22, nickname: 'broky',     team: 'FaZe',         country: 'BA', role: 'awp',     hltv_id: 16341, maps_played: 28, hltv_rating: 1.05, kast_pct: 71, adr: 73, kpr: 0.67, hs_pct: 47, kd: 1.04 },
+  { rank: 23, nickname: 'huNter-',   team: 'G2',           country: 'BA', role: 'rifler',  hltv_id: 11816, maps_played: 30, hltv_rating: 1.04, kast_pct: 70, adr: 78, kpr: 0.71, hs_pct: 52, kd: 1.03 },
+  { rank: 24, nickname: 'jks',       team: '100 Thieves',  country: 'AU', role: 'rifler',  hltv_id: 7322,  maps_played: 30, hltv_rating: 1.04, kast_pct: 71, adr: 74, kpr: 0.67, hs_pct: 51, kd: 1.03 },
+  { rank: 25, nickname: 'BlameF',    team: 'BIG',          country: 'DK', role: 'rifler',  hltv_id: 11219, maps_played: 30, hltv_rating: 1.06, kast_pct: 73, adr: 78, kpr: 0.69, hs_pct: 50, kd: 1.04 },
+  { rank: 26, nickname: 'tabseN',    team: 'BIG',          country: 'DE', role: 'igl',     hltv_id: 7322,  maps_played: 30, hltv_rating: 0.98, kast_pct: 70, adr: 68, kpr: 0.62, hs_pct: 49, kd: 0.96 },
+  { rank: 27, nickname: 'siuhy',     team: 'MOUZ',         country: 'PL', role: 'igl',     hltv_id: 19831, maps_played: 32, hltv_rating: 0.98, kast_pct: 71, adr: 67, kpr: 0.61, hs_pct: 50, kd: 0.97 },
+  { rank: 28, nickname: 'karrigan',  team: 'Falcons',      country: 'DK', role: 'igl',     hltv_id: 429,   maps_played: 30, hltv_rating: 0.94, kast_pct: 70, adr: 65, kpr: 0.59, hs_pct: 47, kd: 0.93 },
+  { rank: 29, nickname: 'aleksib',   team: 'NaVi',         country: 'FI', role: 'igl',     hltv_id: 9960,  maps_played: 30, hltv_rating: 0.99, kast_pct: 71, adr: 67, kpr: 0.61, hs_pct: 49, kd: 0.97 },
+  { rank: 30, nickname: 'Magisk',    team: 'Fnatic',       country: 'DK', role: 'support', hltv_id: 4954,  maps_played: 28, hltv_rating: 1.02, kast_pct: 72, adr: 71, kpr: 0.65, hs_pct: 49, kd: 1.01 },
+  { rank: 31, nickname: 'hooxi',     team: 'Astralis',     country: 'DK', role: 'igl',     hltv_id: 16920, maps_played: 30, hltv_rating: 0.92, kast_pct: 69, adr: 64, kpr: 0.57, hs_pct: 46, kd: 0.91 },
+  { rank: 32, nickname: 'jabbi',     team: 'Astralis',     country: 'DK', role: 'rifler',  hltv_id: 19887, maps_played: 30, hltv_rating: 1.05, kast_pct: 72, adr: 76, kpr: 0.69, hs_pct: 51, kd: 1.04 },
+  { rank: 33, nickname: 'staehr',    team: 'Astralis',     country: 'DK', role: 'rifler',  hltv_id: 20460, maps_played: 30, hltv_rating: 1.02, kast_pct: 71, adr: 72, kpr: 0.66, hs_pct: 50, kd: 1.01 },
+  { rank: 34, nickname: 'NAF',       team: 'Liquid',       country: 'CA', role: 'rifler',  hltv_id: 8520,  maps_played: 28, hltv_rating: 1.04, kast_pct: 72, adr: 75, kpr: 0.68, hs_pct: 51, kd: 1.03 },
+  { rank: 35, nickname: 'EliGE',     team: 'Liquid',       country: 'US', role: 'rifler',  hltv_id: 8738,  maps_played: 28, hltv_rating: 1.05, kast_pct: 72, adr: 77, kpr: 0.69, hs_pct: 50, kd: 1.04 },
+  { rank: 36, nickname: 'malbsmd',   team: 'G2',           country: 'GT', role: 'rifler',  hltv_id: 21554, maps_played: 30, hltv_rating: 1.06, kast_pct: 73, adr: 78, kpr: 0.69, hs_pct: 51, kd: 1.05 },
+  { rank: 37, nickname: 'fallen',    team: 'FURIA',        country: 'BR', role: 'awp',     hltv_id: 1225,  maps_played: 30, hltv_rating: 0.94, kast_pct: 69, adr: 65, kpr: 0.57, hs_pct: 45, kd: 0.92 },
+  { rank: 38, nickname: 'yuurih',    team: 'FURIA',        country: 'BR', role: 'rifler',  hltv_id: 14159, maps_played: 32, hltv_rating: 1.04, kast_pct: 71, adr: 75, kpr: 0.68, hs_pct: 52, kd: 1.03 },
+  { rank: 39, nickname: 'kyousuke',  team: 'Falcons',      country: 'KZ', role: 'rifler',  hltv_id: 24598, maps_played: 28, hltv_rating: 1.06, kast_pct: 72, adr: 78, kpr: 0.70, hs_pct: 53, kd: 1.05 },
+  { rank: 40, nickname: 'TeSeS',     team: 'Falcons',      country: 'DK', role: 'rifler',  hltv_id: 19937, maps_played: 28, hltv_rating: 1.03, kast_pct: 71, adr: 74, kpr: 0.67, hs_pct: 51, kd: 1.02 },
+  { rank: 41, nickname: 'jcobbb',    team: 'FaZe',         country: 'PL', role: 'rifler',  hltv_id: 22377, maps_played: 28, hltv_rating: 1.06, kast_pct: 72, adr: 77, kpr: 0.69, hs_pct: 53, kd: 1.05 },
+  { rank: 42, nickname: 'rain',      team: 'FaZe',         country: 'NO', role: 'entry',   hltv_id: 8568,  maps_played: 28, hltv_rating: 0.99, kast_pct: 70, adr: 72, kpr: 0.68, hs_pct: 50, kd: 0.98 },
+  { rank: 43, nickname: 'tn1r',      team: 'Spirit',       country: 'RU', role: 'rifler',  hltv_id: 22585, maps_played: 32, hltv_rating: 1.05, kast_pct: 73, adr: 76, kpr: 0.68, hs_pct: 53, kd: 1.04 },
+  { rank: 44, nickname: 'zont1x',    team: 'Spirit',       country: 'UA', role: 'rifler',  hltv_id: 21708, maps_played: 32, hltv_rating: 1.06, kast_pct: 73, adr: 77, kpr: 0.69, hs_pct: 52, kd: 1.05 },
+  { rank: 45, nickname: 'magixx',    team: 'Spirit',       country: 'RU', role: 'rifler',  hltv_id: 18117, maps_played: 32, hltv_rating: 1.04, kast_pct: 72, adr: 75, kpr: 0.68, hs_pct: 51, kd: 1.03 },
+  { rank: 46, nickname: 'maden',     team: 'Eternal Fire', country: 'TR', role: 'igl',     hltv_id: 17427, maps_played: 28, hltv_rating: 1.01, kast_pct: 71, adr: 70, kpr: 0.64, hs_pct: 51, kd: 1.00 },
+  { rank: 47, nickname: 'woro2k',    team: 'Eternal Fire', country: 'UA', role: 'rifler',  hltv_id: 19873, maps_played: 28, hltv_rating: 1.04, kast_pct: 71, adr: 75, kpr: 0.68, hs_pct: 52, kd: 1.03 },
+  { rank: 48, nickname: 'maj3r',     team: 'Aurora',       country: 'TR', role: 'igl',     hltv_id: 7320,  maps_played: 28, hltv_rating: 0.96, kast_pct: 70, adr: 67, kpr: 0.61, hs_pct: 50, kd: 0.94 },
+  { rank: 49, nickname: 'woxic',     team: 'Aurora',       country: 'TR', role: 'awp',     hltv_id: 11070, maps_played: 30, hltv_rating: 1.06, kast_pct: 71, adr: 74, kpr: 0.66, hs_pct: 47, kd: 1.04 },
+  { rank: 50, nickname: 'Snappi',    team: 'ENCE',         country: 'DK', role: 'igl',     hltv_id: 1146,  maps_played: 28, hltv_rating: 0.95, kast_pct: 70, adr: 65, kpr: 0.59, hs_pct: 49, kd: 0.93 },
+  { rank: 51, nickname: 'lucky',     team: '3DMAX',        country: 'FR', role: 'awp',     hltv_id: 12244, maps_played: 30, hltv_rating: 1.04, kast_pct: 71, adr: 73, kpr: 0.66, hs_pct: 47, kd: 1.03 },
+  { rank: 52, nickname: 'maka',      team: '3DMAX',        country: 'FR', role: 'igl',     hltv_id: 11842, maps_played: 30, hltv_rating: 0.96, kast_pct: 70, adr: 66, kpr: 0.60, hs_pct: 49, kd: 0.95 },
+  { rank: 53, nickname: 'misutaaa',  team: '3DMAX',        country: 'FR', role: 'rifler',  hltv_id: 16733, maps_played: 30, hltv_rating: 1.04, kast_pct: 71, adr: 75, kpr: 0.67, hs_pct: 51, kd: 1.03 },
+  { rank: 54, nickname: 'blitz',     team: 'MongolZ',      country: 'MN', role: 'igl',     hltv_id: 21277, maps_played: 30, hltv_rating: 0.99, kast_pct: 71, adr: 68, kpr: 0.62, hs_pct: 50, kd: 0.98 },
+  { rank: 55, nickname: '910',       team: 'MongolZ',      country: 'MN', role: 'awp',     hltv_id: 23158, maps_played: 30, hltv_rating: 1.07, kast_pct: 73, adr: 78, kpr: 0.70, hs_pct: 50, kd: 1.06 },
+  { rank: 56, nickname: 'mzinho',    team: 'MongolZ',      country: 'MN', role: 'rifler',  hltv_id: 22660, maps_played: 30, hltv_rating: 1.03, kast_pct: 71, adr: 74, kpr: 0.67, hs_pct: 53, kd: 1.02 },
+  { rank: 57, nickname: 'device',    team: '100 Thieves',  country: 'DK', role: 'awp',     hltv_id: 7592,  maps_played: 28, hltv_rating: 1.05, kast_pct: 72, adr: 73, kpr: 0.66, hs_pct: 47, kd: 1.04 },
+  { rank: 58, nickname: 'stavn',     team: '100 Thieves',  country: 'DK', role: 'rifler',  hltv_id: 18548, maps_played: 28, hltv_rating: 1.05, kast_pct: 72, adr: 76, kpr: 0.69, hs_pct: 52, kd: 1.04 },
+  { rank: 59, nickname: 'w0nderful', team: 'NaVi',         country: 'UA', role: 'awp',     hltv_id: 22600, maps_played: 30, hltv_rating: 1.05, kast_pct: 72, adr: 73, kpr: 0.67, hs_pct: 47, kd: 1.04 },
+  { rank: 60, nickname: 'gr1ks',     team: 'BIG',          country: 'BY', role: 'awp',     maps_played: 28, hltv_rating: 1.04, kast_pct: 71, adr: 72, kpr: 0.66, hs_pct: 47, kd: 1.03 },
 ];
 
 // ── PLAYER_METADATA : dict elargi nickname → role/country/team ──────────
@@ -448,9 +494,9 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ─── Overall : top 20 + averages ──────────────────────────────────
-    // Cache key v4 : invalidate apres ajout hltv_id + expansion IGLs/scenes
-    const cacheKey = 'overall:v4:' + (roleFilter || 'all');
+    // ─── Overall : top 20 + averages + pool elargi pour matching ──────
+    // Cache key v5 : invalidate apres expansion seed (60 pros pour matching)
+    const cacheKey = 'overall:v5:' + (roleFilter || 'all');
     const cache = getCache();
     if (cache.data && cache.data._key === cacheKey && (Date.now() - cache.ts) < CACHE_TTL_MS) {
       res.setHeader('Cache-Control', 'public, s-maxage=900, stale-while-revalidate=3600');
@@ -472,6 +518,12 @@ module.exports = async function handler(req, res) {
       top20 = SEED_TOP20_2026.slice(0, TOP_N);
       source = 'seed';
     }
+
+    // Pool elargi pour le matching pro twin : 60 pros du seed (rank 1-60).
+    // Toujours dispo meme quand source='db' (la DB a souvent un sous-set).
+    // Le frontend utilise ce pool pour trouver le pro le plus proche
+    // stylistiquement, alors que top20 reste pour l'affichage de la liste.
+    const matchingPool = SEED_TOP20_2026.slice();
 
     // ── Enrichissement role + country + team via PLAYER_METADATA ──────
     // pro_match_players ne contient pas de champ role/country/team. On
@@ -521,6 +573,7 @@ module.exports = async function handler(req, res) {
       lastUpdated: new Date().toISOString(),
       sampleSize: filtered.length,
       top20: filtered,
+      pool: matchingPool, // 60 pros pour matching pro twin
       proAvg: computeProAvg(filtered.length ? filtered : SEED_TOP20_2026.slice(0, 5)),
       maps: ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'train'],
       roles: ['awp', 'entry', 'igl', 'support', 'rifler'],

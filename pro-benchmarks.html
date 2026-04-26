@@ -236,7 +236,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   </div>
 
   <!-- ═════ USER COMPARISON ═════ -->
-  <div class="sec-label" style="margin-top:28px">Ton profil vs moyenne top 20</div>
+  <div class="sec-label" id="userCompareSectionLabel" style="margin-top:28px">Ton profil vs ton pro twin (1 joueur, le plus proche stylistiquement)</div>
   <div id="userCompareWrap">
     <!-- Etat 1 : guest -->
     <div id="userCompareGuest" class="connect-faceit">
@@ -258,7 +258,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
           <div class="compare-card-sub" id="userMeta">Niveau - · ELO -</div>
         </div>
         <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-          <div style="font-family:var(--display);font-size:12px;color:var(--text3)" id="updatedLbl">20 derniers matchs</div>
+          <div id="twinBadge"></div>
           <button id="shareBtn" style="background:var(--card);color:var(--accent);border:1px solid var(--accent);font-family:var(--mono);font-size:10px;padding:5px 12px;border-radius:6px;cursor:pointer;letter-spacing:.04em;font-weight:700">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:4px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             Partager mon gap
@@ -283,9 +283,9 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="insightsGrid"></div>
   </div>
 
-  <!-- ═════ PRO TWIN : ton style de jeu ressemble a quel pro ═════ -->
+  <!-- ═════ PRO TWIN NARRATIVE : contexte sur le profil match ═════ -->
   <div id="proTwinWrap" style="display:none">
-    <div class="sec-label" style="margin-top:32px">Ton pro twin · stylistiquement le plus proche</div>
+    <div class="sec-label" style="margin-top:32px">Pourquoi ce pro twin · narrative & profil HLTV</div>
     <div class="protwin-card" id="proTwinCard"></div>
   </div>
 
@@ -510,27 +510,62 @@ function mapRow(p, i) {
   + '</div>';
 }
 
-// ─── Render user comparison + virtual rank + insights ────────────────────
+// ─── Render user comparison vs pro twin (1 joueur, le plus proche) ───────
+// Le pro twin est trouve via distance euclidienne sur 4 KPIs normalises
+// dans le pool elargi (60 pros). C'est plus precis qu'une moyenne top 20
+// car compare l'user a UN profil concret avec stats reelles.
 function renderUserCompare(user, proAvg) {
   document.getElementById('userCompareGuest').style.display = 'none';
   document.getElementById('userCompareNoFaceit').style.display = 'none';
   document.getElementById('userCompareLive').style.display = 'block';
 
+  // Trouver le pro twin (le plus proche stylistiquement) dans le pool elargi
+  const twin = findProTwin(user) || benchData.top20[0];
+  if (!twin) return;
+
+  // Met a jour le header section avec le nom du twin
+  const sectionLabel = document.getElementById('userCompareSectionLabel');
+  if (sectionLabel) {
+    sectionLabel.textContent = isEN
+      ? 'Your profile vs ' + (twin.nickname || '-') + ' (your pro twin)'
+      : 'Ton profil vs ' + (twin.nickname || '-') + ' (ton pro twin)';
+  }
+
   document.getElementById('userNick').textContent = user.nickname || '-';
   document.getElementById('userMeta').textContent = 'Niveau ' + (user.level || '-') + ' · ' + (user.elo || '-') + ' ELO';
 
-  // Compute bar widths : pro is at position X, user gets bar fill
-  // Scale : 0 to 1.5 for HLTV rating, 0 to 100 for KAST/HS, 0 to 110 for ADR, 0 to 1.5 for K/D
+  // Render le badge twin a droite du header
+  const twinBadge = document.getElementById('twinBadge');
+  if (twinBadge) {
+    const flag = twin.country
+      ? '<img src="https://flagcdn.com/40x30/' + twin.country.toLowerCase() + '.png" alt="" style="width:24px;height:18px;vertical-align:middle;border-radius:2px" onerror="this.style.display=\'none\'"/>'
+      : '';
+    const proRoleLbl = twin.role ? twin.role.toUpperCase() : '';
+    const proTeam = twin.team || '';
+    const meta = [proTeam, proRoleLbl].filter(Boolean).join(' · ');
+    twinBadge.innerHTML =
+      '<a href="' + hltvUrl(twin) + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.25);border-radius:8px;padding:6px 12px;text-decoration:none;color:var(--text)">'
+        + flag
+        + '<div style="display:flex;flex-direction:column;align-items:flex-start;gap:1px">'
+          + '<span style="font-family:var(--display);font-size:14px;letter-spacing:.02em">' + twin.nickname + '</span>'
+          + (meta ? '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.04em">' + meta + '</span>' : '')
+        + '</div>'
+      + '</a>';
+  }
+
+  // Cells : user vs twin (pas pro avg)
   const cells = [
-    { key: 'fvRating', lbl: 'FV / HLTV Rating', user: user.fvRating, pro: proAvg.hltv_rating, decimals: 2, max: 1.5, higher: true,
+    { key: 'fvRating', lbl: 'FV / HLTV Rating', user: user.fvRating, pro: twin.hltv_rating, decimals: 2, max: 1.5, higher: true,
       tooltip: 'FV Rating (toi) vs HLTV Rating 2.1 (pro). Echelles equivalentes mais formules differentes (voir Methodologie).' },
-    { key: 'kast',     lbl: 'KAST',             user: user.kast,     pro: proAvg.kast_pct,    decimals: 0, max: 100, higher: true, suffix: '%',
+    { key: 'kast',     lbl: 'KAST',             user: user.kast,     pro: twin.kast_pct,      decimals: 0, max: 100, higher: true, suffix: '%',
       tooltip: 'Kill/Assist/Survived/Traded : % de rounds ou tu contribues directement (vrai indicateur d\'impact).' },
-    { key: 'adr',      lbl: 'ADR',              user: user.adr,      pro: proAvg.adr,         decimals: 0, max: 110, higher: true,
+    { key: 'adr',      lbl: 'ADR',              user: user.adr,      pro: twin.adr,           decimals: 0, max: 110, higher: true,
       tooltip: 'Average Damage per Round : degats moyens infliges par round joue.' },
-    { key: 'kd',       lbl: 'K/D',              user: user.kd,       pro: proAvg.kd,          decimals: 2, max: 1.5, higher: true,
+    { key: 'kd',       lbl: 'K/D',              user: user.kd,       pro: twin.kd,            decimals: 2, max: 1.5, higher: true,
       tooltip: 'Kills/Deaths ratio. Bon indicateur sec mais ne mesure pas l\'impact rond par round.' },
   ];
+
+  const proLbl = twin.nickname || (isEN ? 'Pro twin' : 'Pro twin');
 
   document.getElementById('compareGrid').innerHTML = cells.map(c => {
     const gap = (c.user || 0) - (c.pro || 0);
@@ -544,23 +579,61 @@ function renderUserCompare(user, proAvg) {
         + '<div class="compare-bar-user" style="width:' + userPct + '%"></div>'
         + '<div class="compare-bar-pro-mark" style="left:' + proPct + '%"></div>'
       + '</div>'
-      + '<div class="row"><span class="who">Pro avg</span><span class="val pro">' + fmt(c.pro, c.decimals) + (c.suffix || '') + '</span></div>'
+      + '<div class="row"><span class="who">' + proLbl + '</span><span class="val pro">' + fmt(c.pro, c.decimals) + (c.suffix || '') + '</span></div>'
       + '<div class="gap ' + deltaCls(gap, c.higher) + '">' + gapStr + '</div>'
     + '</div>';
   }).join('');
+
+  // Stocke le twin pour les autres sections (training, veto, etc.)
+  user._twin = twin;
 
   // Virtual rank with honest heuristic
   renderVirtualRank(user);
   // Insights
   renderInsights(cells);
-  // Pro twin (closest pro stylistically) -> personnalise
-  renderProTwin(user);
+  // Pro twin narrative + HLTV link (pas de duplication des stats)
+  renderProTwinNarrative(user, twin);
   // Training program (based on biggest gap) -> personnalise
   renderTrainingProgram(user, cells);
   // Veto recommendations (based on map gaps) -> personnalise
   renderVetoRecommendations(user);
   // Map breakdown raw data
   renderMapBreakdown(user);
+}
+
+// Helper : trouve le pro le plus proche stylistiquement dans le pool elargi.
+// Utilise d'abord benchData.pool (60 pros), fallback sur benchData.top20.
+function findProTwin(user) {
+  const pool = (benchData && benchData.pool && benchData.pool.length)
+    ? benchData.pool
+    : (benchData && benchData.top20) || [];
+  if (!pool.length) return null;
+
+  function norm(v, max) { return Math.max(0, Math.min(1, (v || 0) / max)); }
+  const u = {
+    rating: norm(user.fvRating, 1.5),
+    kast:   norm(user.kast, 100),
+    adr:    norm(user.adr, 110),
+    kd:     norm(user.kd, 1.5),
+  };
+
+  let best = null, bestDist = Infinity;
+  for (const p of pool) {
+    const pn = {
+      rating: norm(p.hltv_rating, 1.5),
+      kast:   norm(p.kast_pct, 100),
+      adr:    norm(p.adr, 110),
+      kd:     norm(p.kd, 1.5),
+    };
+    const d = Math.sqrt(
+      Math.pow(u.rating - pn.rating, 2) +
+      Math.pow(u.kast - pn.kast, 2) +
+      Math.pow(u.adr - pn.adr, 2) +
+      Math.pow(u.kd - pn.kd, 2)
+    );
+    if (d < bestDist) { bestDist = d; best = p; }
+  }
+  return best;
 }
 
 // ─── Render des 3 sections value-add en mode preview/guest ───────────────
@@ -575,81 +648,34 @@ function renderValueAddPreview() {
   renderVetoPreview();
 }
 
-// ─── Pro twin : trouve le pro le plus proche stylistiquement ─────────────
-// Algorithme : distance euclidienne normalisee sur les 4 KPIs (FV/HLTV
-// Rating, KAST, ADR, K/D). Echelles normalisees pour eviter qu'un seul
-// KPI domine. Le pro avec la distance min est ton "twin".
-function renderProTwin(user) {
-  if (!benchData || !benchData.top20 || !benchData.top20.length) return;
+// ─── Pro twin narrative (mode personnalise, post comparison cells) ───────
+// Affiche le narrative role-aware + le lien HLTV. Les stats deltas sont
+// deja dans le compareGrid au-dessus, donc on garde juste le contexte.
+function renderProTwinNarrative(user, twin) {
+  if (!twin) return;
 
-  // Normalisation : chaque KPI sur [0, 1] selon ses bornes typiques.
-  function norm(v, max) { return Math.max(0, Math.min(1, (v || 0) / max)); }
-
-  const u = {
-    rating: norm(user.fvRating, 1.5),
-    kast:   norm(user.kast, 100),
-    adr:    norm(user.adr, 110),
-    kd:     norm(user.kd, 1.5),
-  };
-
-  let bestPro = null;
-  let bestDist = Infinity;
-  for (const p of benchData.top20) {
-    const pn = {
-      rating: norm(p.hltv_rating, 1.5),
-      kast:   norm(p.kast_pct, 100),
-      adr:    norm(p.adr, 110),
-      kd:     norm(p.kd, 1.5),
-    };
-    const d = Math.sqrt(
-      Math.pow(u.rating - pn.rating, 2) +
-      Math.pow(u.kast - pn.kast, 2) +
-      Math.pow(u.adr - pn.adr, 2) +
-      Math.pow(u.kd - pn.kd, 2)
-    );
-    if (d < bestDist) { bestDist = d; bestPro = p; }
-  }
-
-  if (!bestPro) return;
-
-  // Narrative en fonction du role du pro
   const roleNarrative = {
-    'awp':     isEN ? 'Like ' + bestPro.nickname + ', you build value through positioning and timing peeks. The AWP role amplifies what you do well : patience and high-impact frags.' : 'Comme ' + bestPro.nickname + ', tu construis ta valeur via le positionnement et le timing des peeks. Le role AWP amplifie ce que tu fais bien : patience et frags a fort impact.',
-    'rifler':  isEN ? 'Like ' + bestPro.nickname + ', you generate consistent damage and contest crucial duels. Your gameplay relies on aim mechanics and cool-headed decision making.' : 'Comme ' + bestPro.nickname + ', tu genres du damage constant et tu contestes les duels cruciaux. Ton jeu repose sur la mecanique d\'aim et un decisionnel froid.',
-    'entry':   isEN ? 'Like ' + bestPro.nickname + ', you take the first contacts and create space for your team. Your stats reflect a high-risk, high-reward profile typical of entry fraggers.' : 'Comme ' + bestPro.nickname + ', tu prends les premiers contacts et tu crees de l\'espace pour ton equipe. Tes stats refletent un profil entry fragger high-risk high-reward.',
-    'igl':     isEN ? 'Like ' + bestPro.nickname + ', you read the game more than you frag. Lower ADR but stable KAST suggests a strategic profile : you survive rounds and call rotations.' : 'Comme ' + bestPro.nickname + ', tu lis le jeu plus que tu fragges. ADR plus bas mais KAST stable suggere un profil strategique : tu survives aux rounds et tu appelles les rotations.',
-    'support': isEN ? 'Like ' + bestPro.nickname + ', you enable your team rather than carry the scoreboard. High KAST + flash assists + utility damage = the glue of any roster.' : 'Comme ' + bestPro.nickname + ', tu fais briller ton equipe plus que tu portes le scoreboard. KAST haut + flash assists + util damage = la colle de n\'importe quel roster.',
+    'awp':     isEN ? 'Like ' + twin.nickname + ', you build value through positioning and timing peeks. The AWP role amplifies what you do well : patience and high-impact frags.' : 'Comme ' + twin.nickname + ', tu construis ta valeur via le positionnement et le timing des peeks. Le role AWP amplifie ce que tu fais bien : patience et frags a fort impact.',
+    'rifler':  isEN ? 'Like ' + twin.nickname + ', you generate consistent damage and contest crucial duels. Your gameplay relies on aim mechanics and cool-headed decision making.' : 'Comme ' + twin.nickname + ', tu genres du damage constant et tu contestes les duels cruciaux. Ton jeu repose sur la mecanique d\'aim et un decisionnel froid.',
+    'entry':   isEN ? 'Like ' + twin.nickname + ', you take the first contacts and create space for your team. Your stats reflect a high-risk, high-reward profile typical of entry fraggers.' : 'Comme ' + twin.nickname + ', tu prends les premiers contacts et tu crees de l\'espace pour ton equipe. Tes stats refletent un profil entry fragger high-risk high-reward.',
+    'igl':     isEN ? 'Like ' + twin.nickname + ', you read the game more than you frag. Lower ADR but stable KAST suggests a strategic profile : you survive rounds and call rotations.' : 'Comme ' + twin.nickname + ', tu lis le jeu plus que tu fragges. ADR plus bas mais KAST stable suggere un profil strategique : tu survives aux rounds et tu appelles les rotations.',
+    'support': isEN ? 'Like ' + twin.nickname + ', you enable your team rather than carry the scoreboard. High KAST + flash assists + utility damage = the glue of any roster.' : 'Comme ' + twin.nickname + ', tu fais briller ton equipe plus que tu portes le scoreboard. KAST haut + flash assists + util damage = la colle de n\'importe quel roster.',
   };
+  const narrative = roleNarrative[twin.role] || (isEN ? 'You play similarly to ' + twin.nickname + '.' : 'Tu joues de maniere similaire a ' + twin.nickname + '.');
 
-  const narrative = roleNarrative[bestPro.role] || (isEN ? 'You play similarly to ' + bestPro.nickname + '.' : 'Tu joues de maniere similaire a ' + bestPro.nickname + '.');
-
-  // Compute deltas vs the twin
-  const dRating = (user.fvRating || 0) - (bestPro.hltv_rating || 0);
-  const dKast = (user.kast || 0) - (bestPro.kast_pct || 0);
-  const dAdr = (user.adr || 0) - (bestPro.adr || 0);
-  const dKd = (user.kd || 0) - (bestPro.kd || 0);
-
-  const flag = bestPro.country
-    ? '<img src="https://flagcdn.com/120x90/' + bestPro.country.toLowerCase() + '.png" alt="" onerror="this.parentElement.style.display=\'none\'"/>'
+  const flag = twin.country
+    ? '<img src="https://flagcdn.com/120x90/' + twin.country.toLowerCase() + '.png" alt="" onerror="this.parentElement.style.display=\'none\'"/>'
     : '';
-
-  const proRoleLbl = bestPro.role ? bestPro.role.toUpperCase() : '';
-  const proTeam = bestPro.team || '';
+  const proRoleLbl = twin.role ? twin.role.toUpperCase() : '';
+  const proTeam = twin.team || '';
 
   document.getElementById('proTwinCard').innerHTML =
     '<div class="protwin-flag">' + flag + '</div>'
     + '<div>'
-      + '<div class="protwin-name">' + bestPro.nickname + '</div>'
+      + '<div class="protwin-name">' + twin.nickname + '</div>'
       + '<div class="protwin-meta">' + [proTeam, proRoleLbl].filter(Boolean).join(' · ') + '</div>'
-      + '<div class="protwin-narrative">' + narrative + ' <a href="' + hltvUrl(bestPro) + '" target="_blank" rel="noopener">' + (isEN ? 'View HLTV profile →' : 'Voir profil HLTV →') + '</a></div>'
-      + '<div class="protwin-stats">'
-        + '<div class="protwin-stat"><div class="l">FV Rating</div><div class="v">' + fmt(bestPro.hltv_rating, 2) + '</div><div class="d ' + deltaCls(dRating, true) + '">' + fmtDelta(dRating, 2) + '</div></div>'
-        + '<div class="protwin-stat"><div class="l">KAST</div><div class="v">' + fmt(bestPro.kast_pct, 0) + '%</div><div class="d ' + deltaCls(dKast, true) + '">' + fmtDelta(dKast, 0) + 'pts</div></div>'
-        + '<div class="protwin-stat"><div class="l">ADR</div><div class="v">' + fmt(bestPro.adr, 0) + '</div><div class="d ' + deltaCls(dAdr, true) + '">' + fmtDelta(dAdr, 0) + '</div></div>'
-        + '<div class="protwin-stat"><div class="l">K/D</div><div class="v">' + fmt(bestPro.kd, 2) + '</div><div class="d ' + deltaCls(dKd, true) + '">' + fmtDelta(dKd, 2) + '</div></div>'
-      + '</div>'
+      + '<div class="protwin-narrative">' + narrative + ' <a href="' + hltvUrl(twin) + '" target="_blank" rel="noopener">' + (isEN ? 'View HLTV profile →' : 'Voir profil HLTV →') + '</a></div>'
     + '</div>';
-
   document.getElementById('proTwinWrap').style.display = 'block';
 }
 
@@ -1039,12 +1065,18 @@ function setupShareBtn() {
   btn.addEventListener('click', async () => {
     if (!userStats || !benchData) return;
     const u = userStats;
-    const pro = benchData.proAvg;
-    const text = (isEN ? 'My CS2 stats vs HLTV top 20 (FragValue):\n' : 'Mes stats CS2 vs top 20 HLTV (FragValue):\n')
-      + '\n• FV Rating: ' + fmt(u.fvRating, 2) + ' (pro avg ' + fmt(pro.hltv_rating, 2) + ', ' + fmtDelta(u.fvRating - pro.hltv_rating, 2) + ')'
-      + '\n• KAST: ' + fmt(u.kast, 0) + '% (pro ' + fmt(pro.kast_pct, 0) + '%, ' + fmtDelta(u.kast - pro.kast_pct, 0) + 'pts)'
-      + '\n• ADR: ' + fmt(u.adr, 0) + ' (pro ' + fmt(pro.adr, 0) + ', ' + fmtDelta(u.adr - pro.adr, 0) + ')'
-      + '\n• K/D: ' + fmt(u.kd, 2) + ' (pro ' + fmt(pro.kd, 2) + ', ' + fmtDelta(u.kd - pro.kd, 2) + ')'
+    // Le partage utilise le pro twin (1 joueur, le plus proche) au lieu du pro avg
+    const pro = u._twin || benchData.proAvg || {};
+    const proLbl = u._twin ? u._twin.nickname : 'pro avg';
+    const proRating = pro.hltv_rating != null ? pro.hltv_rating : pro.hltv_rating;
+    const proKast = pro.kast_pct != null ? pro.kast_pct : pro.kast_pct;
+    const proAdr = pro.adr;
+    const proKd = pro.kd;
+    const text = (isEN ? 'My CS2 stats vs my pro twin ' + proLbl + ' (FragValue):\n' : 'Mes stats CS2 vs mon pro twin ' + proLbl + ' (FragValue):\n')
+      + '\n• FV Rating: ' + fmt(u.fvRating, 2) + ' (' + proLbl + ' ' + fmt(proRating, 2) + ', ' + fmtDelta(u.fvRating - proRating, 2) + ')'
+      + '\n• KAST: ' + fmt(u.kast, 0) + '% (' + proLbl + ' ' + fmt(proKast, 0) + '%, ' + fmtDelta(u.kast - proKast, 0) + 'pts)'
+      + '\n• ADR: ' + fmt(u.adr, 0) + ' (' + proLbl + ' ' + fmt(proAdr, 0) + ', ' + fmtDelta(u.adr - proAdr, 0) + ')'
+      + '\n• K/D: ' + fmt(u.kd, 2) + ' (' + proLbl + ' ' + fmt(proKd, 2) + ', ' + fmtDelta(u.kd - proKd, 2) + ')'
       + '\n\n' + (isEN ? 'See yours: ' : 'Voir le tien : ') + window.location.href.split('?')[0];
     try {
       await navigator.clipboard.writeText(text);
