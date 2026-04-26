@@ -73,6 +73,59 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     .bench-delta.pos{color:var(--success)}
     .bench-delta.neg{color:var(--danger)}
     @media(max-width:720px){.bench-row{grid-template-columns:120px 1fr 60px;gap:8px;padding:10px 14px;font-size:11px} .bench-row .hide-mobile{display:none}}
+
+    /* Live top 20 list */
+    .top20-list{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-top:8px}
+    .top20-row{display:grid;grid-template-columns:32px 1fr 80px 80px 80px 80px 60px;gap:12px;padding:10px 16px;align-items:center;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:12px}
+    .top20-row.head{background:var(--card);color:var(--text3);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+    .top20-row:last-child{border-bottom:none}
+    .top20-row:hover:not(.head){background:rgba(184,255,87,.04)}
+    .top20-rank{color:var(--text3);font-weight:900;font-family:var(--display);font-size:14px}
+    .top20-rank.podium{color:var(--accent)}
+    .top20-name{font-family:var(--display);font-size:14px;color:var(--text);letter-spacing:.02em}
+    .top20-team{color:var(--text3);font-size:10px;font-weight:400;margin-left:6px}
+    .top20-stat{text-align:right;font-weight:700}
+    .top20-stat.rating{color:var(--gold);font-size:13px}
+    .top20-stat.maps{color:var(--text3);font-weight:400}
+    @media(max-width:720px){.top20-row{grid-template-columns:24px 1fr 60px 60px 50px;gap:8px;padding:8px 10px;font-size:11px} .top20-row .hide-mobile{display:none}}
+
+    /* Filter tabs */
+    .filter-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 16px}
+    .filter-tab{background:var(--card);color:var(--text2);border:1px solid var(--border);padding:6px 14px;border-radius:40px;font-family:var(--mono);font-size:11px;cursor:pointer;letter-spacing:.04em;transition:all .15s}
+    .filter-tab:hover{border-color:var(--accent);color:var(--accent)}
+    .filter-tab.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+
+    /* User comparison card */
+    .compare-card{background:linear-gradient(135deg,rgba(184,255,87,.06),rgba(184,255,87,.01));border:1px solid rgba(184,255,87,.35);border-radius:12px;padding:20px 22px;margin-top:12px}
+    .compare-card-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+    .compare-card-title{font-family:var(--display);font-size:18px;color:var(--text);letter-spacing:.02em}
+    .compare-card-sub{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.04em}
+    .compare-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .compare-cell{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+    .compare-cell .lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:6px}
+    .compare-cell .row{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-bottom:4px;font-family:var(--mono);font-size:12px}
+    .compare-cell .row .who{color:var(--text3);font-size:10px}
+    .compare-cell .row .val.user{color:var(--accent);font-weight:700}
+    .compare-cell .row .val.pro{color:var(--gold);font-weight:700}
+    .compare-cell .gap{font-family:var(--mono);font-size:11px;font-weight:700;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+    .compare-cell .gap.up{color:var(--success)}
+    .compare-cell .gap.down{color:var(--danger)}
+    @media(max-width:720px){.compare-grid{grid-template-columns:repeat(2,1fr)}}
+
+    /* Connect FACEIT CTA (when logged in but FACEIT not linked) */
+    .connect-faceit{background:var(--card);border:1px dashed var(--border2);border-radius:10px;padding:18px 22px;margin-top:12px;text-align:center}
+    .connect-faceit .t{font-family:var(--display);font-size:15px;color:var(--text);margin-bottom:6px}
+    .connect-faceit .s{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.5}
+    .connect-faceit a{display:inline-block;background:var(--accent);color:#000;padding:8px 18px;border-radius:6px;text-decoration:none;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em}
+
+    /* Loading skeleton */
+    .skel{background:linear-gradient(90deg,var(--card) 0%,rgba(255,255,255,.04) 50%,var(--card) 100%);background-size:200% 100%;animation:skel 1.4s linear infinite;border-radius:4px;height:14px;display:inline-block}
+    @keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    /* Live tag */
+    .live-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);color:var(--accent);padding:4px 10px;border-radius:40px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-left:10px;vertical-align:middle}
+    .live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 1.6s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
   </style>
 </head>
 <body>
@@ -81,9 +134,9 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 
 <div class="page">
   <div class="hero">
-    <div class="hero-tag gold">● Elite · Réservé aux coachs et équipes</div>
-    <h1 class="hero-title">Ton jeu vs<br>le <span>top 20 HLTV</span></h1>
-    <p class="hero-sub">Compare tes stats CS2 au top 20 HLTV, métrique par métrique. Écart chiffré sur HLTV Rating, KAST, ADR, opening duels, util damage, clutches. Voir à combien tu es du niveau pro, et quelles stats travailler en priorité.</p>
+    <div class="hero-tag" style="background:rgba(184,255,87,.1);color:var(--accent);border-color:rgba(184,255,87,.3)">● Live · Top 20 HLTV mis a jour quotidiennement</div>
+    <h1 class="hero-title">Ton jeu vs<br>le <span>top 20 HLTV</span><span class="live-tag"><span class="live-dot"></span>LIVE</span></h1>
+    <p class="hero-sub">Compare tes stats CS2 au top 20 HLTV, metrique par metrique. Ecart chiffre sur HLTV Rating, KAST, ADR, K/D, opening duels. Vois a combien tu es du niveau pro et quelles stats travailler en priorite.</p>
   </div>
 
   <div class="stats-row">
@@ -93,101 +146,68 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     <div class="stat-card"><div class="stat-val">7</div><div class="stat-label">Maps par side</div></div>
   </div>
 
-  <div class="roadmap">
-    <div class="roadmap-title">Ou on en est</div>
-    <div class="roadmap-sub">Status des benchmarks pros</div>
-    <div class="roadmap-steps">
-      <div class="roadmap-step done"><div class="roadmap-step-label">Phase 1</div><div class="roadmap-step-text">Ingestion stats HLTV top 20</div></div>
-      <div class="roadmap-step done"><div class="roadmap-step-label">Phase 2</div><div class="roadmap-step-text">Normalisation par role</div></div>
-      <div class="roadmap-step current"><div class="roadmap-step-label">Phase 3</div><div class="roadmap-step-text">Comparaison live ton profil vs top 20</div></div>
-      <div class="roadmap-step"><div class="roadmap-step-label">Phase 4</div><div class="roadmap-step-text">Drill prescriptif par gap identifie</div></div>
+  <!-- USER COMPARISON CARD : visible uniquement si user logge + FACEIT lie -->
+  <div class="sec-label">Ton profil vs moyenne top 20</div>
+  <div id="userCompareWrap">
+    <!-- Etat 1 : user pas connecte -->
+    <div id="userCompareGuest" class="connect-faceit">
+      <div class="t">Connecte-toi pour voir ton ecart vs le top 20</div>
+      <div class="s">Lie ton compte FACEIT pour comparer ton FV Rating, KAST, ADR et K/D au benchmark pro live. Stats calculees sur tes 20 derniers matchs.</div>
+      <a href="login.html">Me connecter</a>
+    </div>
+    <!-- Etat 2 : user connecte mais FACEIT pas lie -->
+    <div id="userCompareNoFaceit" class="connect-faceit" style="display:none">
+      <div class="t">Lie ton compte FACEIT</div>
+      <div class="s">On a besoin de tes stats FACEIT pour calculer l'ecart vs le top 20. Configure-le depuis ton espace.</div>
+      <a href="account.html#settings">Lier mon FACEIT</a>
+    </div>
+    <!-- Etat 3 : comparison live -->
+    <div id="userCompareLive" class="compare-card" style="display:none">
+      <div class="compare-card-head">
+        <div>
+          <div class="compare-card-title" id="userNick">-</div>
+          <div class="compare-card-sub" id="userMeta">Niveau - · ELO -</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--display);font-size:14px;color:var(--text3)" id="updatedLbl">-</div>
+        </div>
+      </div>
+      <div class="compare-grid" id="compareGrid">
+        <!-- 4 KPIs : HLTV Rating, KAST, ADR, K/D -->
+      </div>
     </div>
   </div>
 
-  <div class="sec-label">Apercu : ton profil vs moyenne top 20</div>
-  <div class="bench-wrap">
-    <div class="bench-table">
-      <div class="bench-row head">
-        <div>Métrique</div>
-        <div class="hide-mobile">Distribution</div>
-        <div class="bench-val">Toi</div>
-        <div class="bench-val hide-mobile">Pro avg</div>
-        <div class="bench-delta">Écart</div>
-      </div>
-      <div class="bench-row">
-        <div class="bench-stat">HLTV Rating 2.1</div>
-        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:58%"></div><div class="bench-bar-mark" style="left:82%"></div></div>
-        <div class="bench-val user">1.08</div>
-        <div class="bench-val pro hide-mobile">1.28</div>
-        <div class="bench-delta neg">-0.20</div>
-      </div>
-      <div class="bench-row">
-        <div class="bench-stat">KAST %</div>
-        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:68%"></div><div class="bench-bar-mark" style="left:79%"></div></div>
-        <div class="bench-val user">68%</div>
-        <div class="bench-val pro hide-mobile">79%</div>
-        <div class="bench-delta neg">-11pts</div>
-      </div>
-      <div class="bench-row">
-        <div class="bench-stat">ADR</div>
-        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:74%"></div><div class="bench-bar-mark" style="left:88%"></div></div>
-        <div class="bench-val user">81.2</div>
-        <div class="bench-val pro hide-mobile">96.4</div>
-        <div class="bench-delta neg">-15.2</div>
-      </div>
-      <div class="bench-row">
-        <div class="bench-stat">K/D ratio</div>
-        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:80%"></div><div class="bench-bar-mark" style="left:83%"></div></div>
-        <div class="bench-val user">1.19</div>
-        <div class="bench-val pro hide-mobile">1.24</div>
-        <div class="bench-delta neg">-0.05</div>
-      </div>
-      <div class="bench-row">
-        <div class="bench-stat">Opening WR %</div>
-        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:57%"></div><div class="bench-bar-mark" style="left:55%"></div></div>
-        <div class="bench-val user">57%</div>
-        <div class="bench-val pro hide-mobile">55%</div>
-        <div class="bench-delta pos">+2pts</div>
-      </div>
-      <div class="bench-row">
-        <div class="bench-stat">Util damage / round</div>
-        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:40%"></div><div class="bench-bar-mark" style="left:68%"></div></div>
-        <div class="bench-val user">6.1</div>
-        <div class="bench-val pro hide-mobile">10.4</div>
-        <div class="bench-delta neg">-4.3</div>
-      </div>
-      <div class="bench-row">
-        <div class="bench-stat">Multi-kill rounds %</div>
-        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:71%"></div><div class="bench-bar-mark" style="left:77%"></div></div>
-        <div class="bench-val user">28%</div>
-        <div class="bench-val pro hide-mobile">31%</div>
-        <div class="bench-delta neg">-3pts</div>
-      </div>
-      <div class="bench-row">
-        <div class="bench-stat">Clutch 1vX win</div>
-        <div class="bench-bar hide-mobile"><div class="bench-bar-user" style="width:49%"></div><div class="bench-bar-mark" style="left:61%"></div></div>
-        <div class="bench-val user">32%</div>
-        <div class="bench-val pro hide-mobile">42%</div>
-        <div class="bench-delta neg">-10pts</div>
-      </div>
-    </div>
-    <div class="teaser-overlay"></div>
-    <div class="teaser-badge">● Benchmarks Elite · En préparation</div>
+  <!-- TOP 20 LIVE LIST -->
+  <div class="sec-label" style="margin-top:32px">Top 20 live · 90 derniers jours</div>
+  <div class="filter-tabs" id="mapFilters">
+    <button class="filter-tab active" data-map="overall">Overall</button>
+    <button class="filter-tab" data-map="mirage">Mirage</button>
+    <button class="filter-tab" data-map="inferno">Inferno</button>
+    <button class="filter-tab" data-map="dust2">Dust2</button>
+    <button class="filter-tab" data-map="nuke">Nuke</button>
+    <button class="filter-tab" data-map="anubis">Anubis</button>
+    <button class="filter-tab" data-map="vertigo">Vertigo</button>
+    <button class="filter-tab" data-map="ancient">Ancient</button>
+    <button class="filter-tab" data-map="train">Train</button>
   </div>
-
-  <div class="cta-card">
-    <h2 class="cta-title">Prends la mesure du gap</h2>
-    <p class="cta-sub">Les Pro Benchmarks arrivent dans le plan Elite. Compare-toi semaine après semaine, par map et par side, aux meilleurs joueurs actuels (ZywOo, donk, m0NESY, ropz, NiKo). Active ton profil Scout pour être prévenu du lancement.</p>
-    <a href="account.html#settings" class="cta-btn" data-teaser-cta="pro-benchmarks">
-      Activer les notifications
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-    </a>
-    <div class="cta-waitlist">
-      <span class="cta-waitlist-dot"></span>
-      <strong data-teaser-counter="pro-benchmarks">-</strong>
-      <span>joueurs ont activé leur intérêt</span>
+  <div class="top20-list" id="top20List">
+    <div class="top20-row head">
+      <div>#</div>
+      <div>Joueur</div>
+      <div class="top20-stat">HLTV</div>
+      <div class="top20-stat hide-mobile">KAST</div>
+      <div class="top20-stat hide-mobile">ADR</div>
+      <div class="top20-stat">K/D</div>
+      <div class="top20-stat maps">Maps</div>
+    </div>
+    <div id="top20Body">
+      <div class="top20-row"><div class="top20-rank">-</div><div class="top20-name"><div class="skel" style="width:140px"></div></div><div class="top20-stat"><div class="skel" style="width:36px"></div></div><div class="top20-stat hide-mobile"><div class="skel" style="width:30px"></div></div><div class="top20-stat hide-mobile"><div class="skel" style="width:30px"></div></div><div class="top20-stat"><div class="skel" style="width:30px"></div></div><div class="top20-stat"><div class="skel" style="width:24px"></div></div></div>
+      <div class="top20-row"><div class="top20-rank">-</div><div class="top20-name"><div class="skel" style="width:120px"></div></div><div class="top20-stat"><div class="skel" style="width:36px"></div></div><div class="top20-stat hide-mobile"><div class="skel" style="width:30px"></div></div><div class="top20-stat hide-mobile"><div class="skel" style="width:30px"></div></div><div class="top20-stat"><div class="skel" style="width:30px"></div></div><div class="top20-stat"><div class="skel" style="width:24px"></div></div></div>
+      <div class="top20-row"><div class="top20-rank">-</div><div class="top20-name"><div class="skel" style="width:160px"></div></div><div class="top20-stat"><div class="skel" style="width:36px"></div></div><div class="top20-stat hide-mobile"><div class="skel" style="width:30px"></div></div><div class="top20-stat hide-mobile"><div class="skel" style="width:30px"></div></div><div class="top20-stat"><div class="skel" style="width:30px"></div></div><div class="top20-stat"><div class="skel" style="width:24px"></div></div></div>
     </div>
   </div>
+  <div style="margin-top:10px;font-size:10px;color:var(--text3);text-align:center;letter-spacing:.04em" id="benchFooter">Donnees agregees sur les matchs S-tier des 90 derniers jours · cache 1h</div>
 
   <div class="sec-label">Ce qui t'attend</div>
   <div class="features">
@@ -222,8 +242,208 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/nav.js"></script>
-<script src="/teaser.js"></script>
-<script>FVTeaser.initCTA("pro-benchmarks", { base: 46, perDay: 0.5 });</script>
+<script>
+// ─────────────────────────────────────────────────────────────────────────
+// Pro Benchmarks Live : top 20 + user comparison
+// ─────────────────────────────────────────────────────────────────────────
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+
+let benchData = null;     // { top20, proAvg, source, lastUpdated }
+let userStats = null;     // { fvRating, kast, adr, kd, nickname, level, elo }
+let currentMap = 'overall';
+
+// Format helpers
+function fmt(v, decimals = 1) {
+  if (v == null || isNaN(v)) return '-';
+  return Number(v).toFixed(decimals);
+}
+function fmtDelta(v, decimals = 1) {
+  if (v == null || isNaN(v)) return '-';
+  if (Math.abs(v) < (decimals === 0 ? 0.5 : 0.01)) return '=';
+  return (v > 0 ? '+' : '') + Number(v).toFixed(decimals);
+}
+function deltaCls(v, higherIsBetter = true) {
+  if (Math.abs(v) < 0.01) return '';
+  return ((v > 0) === higherIsBetter) ? 'up' : 'down';
+}
+
+// ─── Render top 20 list ──────────────────────────────────────────────────
+function renderTop20(top20) {
+  const body = document.getElementById('top20Body');
+  if (!top20 || !top20.length) {
+    body.innerHTML = '<div class="top20-row"><div class="top20-rank">-</div><div class="top20-name" style="color:var(--text3)">Aucune donnee disponible</div><div></div><div class="hide-mobile"></div><div class="hide-mobile"></div><div></div><div></div></div>';
+    return;
+  }
+  body.innerHTML = top20.map((p, i) => {
+    const rankCls = i < 3 ? ' podium' : '';
+    const teamHtml = p.team ? '<span class="top20-team">' + p.team + '</span>' : '';
+    return '<div class="top20-row">'
+      + '<div class="top20-rank' + rankCls + '">' + (i + 1) + '</div>'
+      + '<div class="top20-name">' + (p.nickname || '-') + teamHtml + '</div>'
+      + '<div class="top20-stat rating">' + fmt(p.hltv_rating, 2) + '</div>'
+      + '<div class="top20-stat hide-mobile">' + (p.kast_pct != null ? fmt(p.kast_pct, 0) + '%' : '-') + '</div>'
+      + '<div class="top20-stat hide-mobile">' + (p.adr != null ? fmt(p.adr, 0) : '-') + '</div>'
+      + '<div class="top20-stat">' + fmt(p.kd, 2) + '</div>'
+      + '<div class="top20-stat maps">' + (p.maps_played || '-') + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+// ─── Render user comparison ──────────────────────────────────────────────
+function renderUserCompare(user, proAvg) {
+  document.getElementById('userCompareGuest').style.display = 'none';
+  document.getElementById('userCompareNoFaceit').style.display = 'none';
+  document.getElementById('userCompareLive').style.display = 'block';
+
+  document.getElementById('userNick').textContent = user.nickname || '-';
+  document.getElementById('userMeta').textContent = 'Niveau ' + (user.level || '-') + ' · ' + (user.elo || '-') + ' ELO';
+  document.getElementById('updatedLbl').textContent = '20 derniers matchs';
+
+  const cells = [
+    { lbl: 'HLTV / FV Rating', user: user.fvRating, pro: proAvg.hltv_rating, decimals: 2, higher: true },
+    { lbl: 'KAST',             user: user.kast,     pro: proAvg.kast_pct,    decimals: 0, higher: true, suffix: '%' },
+    { lbl: 'ADR',              user: user.adr,      pro: proAvg.adr,         decimals: 0, higher: true },
+    { lbl: 'K/D',              user: user.kd,       pro: proAvg.kd,          decimals: 2, higher: true },
+  ];
+
+  document.getElementById('compareGrid').innerHTML = cells.map(c => {
+    const gap = (c.user || 0) - (c.pro || 0);
+    const gapStr = fmtDelta(gap, c.decimals) + (c.suffix === '%' ? 'pts' : '');
+    return '<div class="compare-cell">'
+      + '<div class="lbl">' + c.lbl + '</div>'
+      + '<div class="row"><span class="who">Toi</span><span class="val user">' + fmt(c.user, c.decimals) + (c.suffix || '') + '</span></div>'
+      + '<div class="row"><span class="who">Pro avg</span><span class="val pro">' + fmt(c.pro, c.decimals) + (c.suffix || '') + '</span></div>'
+      + '<div class="gap ' + deltaCls(gap, c.higher) + '">' + gapStr + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+// ─── Fetch pro benchmarks (public) ───────────────────────────────────────
+async function loadBenchmarks() {
+  try {
+    const res = await fetch('/api/pro-benchmarks?aggregate=overall');
+    if (!res.ok) throw new Error('status ' + res.status);
+    const d = await res.json();
+    benchData = d;
+
+    // Render top 20
+    renderTop20(d.top20);
+
+    // Update footer with sample size + last update
+    const dt = d.lastUpdated ? new Date(d.lastUpdated).toLocaleDateString() : '-';
+    document.getElementById('benchFooter').textContent =
+      'Source : ' + (d.source === 'db' ? 'live FragValue DB' : 'seed 2026') +
+      ' · ' + d.sampleSize + ' joueurs · cache 1h · maj ' + dt;
+
+    // If user already loaded, render compare
+    if (userStats && d.proAvg) renderUserCompare(userStats, d.proAvg);
+  } catch (e) {
+    console.warn('[pro-benchmarks] failed to load:', e.message);
+    document.getElementById('top20Body').innerHTML =
+      '<div class="top20-row"><div class="top20-rank">-</div><div class="top20-name" style="color:var(--text3)">Erreur de chargement. Reessaye dans un instant.</div><div></div><div class="hide-mobile"></div><div class="hide-mobile"></div><div></div><div></div></div>';
+  }
+}
+
+// ─── Fetch user stats (auth required) ────────────────────────────────────
+async function loadUserStats() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      // Guest : keep guest banner visible
+      return;
+    }
+    // Get profile to check FACEIT linkage
+    const { data: profile } = await sb.from('profiles')
+      .select('faceit_nickname, faceit_level, faceit_elo')
+      .eq('id', session.user.id)
+      .single();
+
+    if (!profile || !profile.faceit_nickname) {
+      // Logged in but FACEIT not linked
+      document.getElementById('userCompareGuest').style.display = 'none';
+      document.getElementById('userCompareNoFaceit').style.display = 'block';
+      return;
+    }
+
+    // Fetch scout data for this user (their own stats)
+    const scoutRes = await fetch('/api/scout?nickname=' + encodeURIComponent(profile.faceit_nickname), {
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (!scoutRes.ok) return;
+    const scoutData = await scoutRes.json();
+    const recent = scoutData.recent || {};
+    const fvScore = scoutData.fvScore || {};
+
+    userStats = {
+      nickname: profile.faceit_nickname,
+      level: profile.faceit_level,
+      elo: profile.faceit_elo || (scoutData.cs2 && scoutData.cs2.elo),
+      fvRating: parseFloat(recent.avgFvr) || (parseFloat(fvScore.total) / 100 + 0.5) || 0,
+      kast: parseFloat(recent.avgKast) || 0,
+      adr: parseFloat(recent.avgAdr) || 0,
+      kd: parseFloat(recent.avgKd) || 0,
+    };
+
+    // If bench data already loaded, render compare
+    if (benchData && benchData.proAvg) renderUserCompare(userStats, benchData.proAvg);
+  } catch (e) {
+    console.warn('[pro-benchmarks] user stats failed:', e.message);
+  }
+}
+
+// ─── Map filter handler ──────────────────────────────────────────────────
+async function selectMap(map) {
+  currentMap = map;
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.toggle('active', b.dataset.map === map));
+
+  if (map === 'overall') {
+    if (benchData) renderTop20(benchData.top20);
+    return;
+  }
+
+  // Fetch map-specific data
+  try {
+    const res = await fetch('/api/pro-benchmarks?aggregate=map&map=' + map);
+    if (!res.ok) throw new Error('status ' + res.status);
+    const d = await res.json();
+
+    // For maps, we display the top performer per side as a pseudo-list
+    const body = document.getElementById('top20Body');
+    if (!d.ct && !d.t) {
+      body.innerHTML = '<div class="top20-row"><div class="top20-rank">-</div><div class="top20-name" style="color:var(--text3)">Pas de donnees pour cette map</div><div></div><div class="hide-mobile"></div><div class="hide-mobile"></div><div></div><div></div></div>';
+      return;
+    }
+    const sides = [];
+    if (d.ct) sides.push({ side: 'CT', ...d.ct });
+    if (d.t) sides.push({ side: 'T', ...d.t });
+    body.innerHTML = sides.map((s, i) => {
+      return '<div class="top20-row">'
+        + '<div class="top20-rank podium">' + s.side + '</div>'
+        + '<div class="top20-name">' + (s.player || '-') + '<span class="top20-team">Top ' + s.side + ' ' + map.toUpperCase() + '</span></div>'
+        + '<div class="top20-stat rating">' + fmt(s.hltv_rating, 2) + '</div>'
+        + '<div class="top20-stat hide-mobile">' + (s.kast_pct != null ? fmt(s.kast_pct, 0) + '%' : '-') + '</div>'
+        + '<div class="top20-stat hide-mobile">' + (s.adr != null ? fmt(s.adr, 0) : '-') + '</div>'
+        + '<div class="top20-stat">-</div>'
+        + '<div class="top20-stat maps">-</div>'
+      + '</div>';
+    }).join('');
+  } catch (e) {
+    console.warn('[pro-benchmarks] map failed:', e.message);
+  }
+}
+
+// Bind filter clicks
+document.querySelectorAll('.filter-tab').forEach(b => {
+  b.addEventListener('click', () => selectMap(b.dataset.map));
+});
+
+// Boot
+loadBenchmarks();
+loadUserStats();
+</script>
 </body>
 </html>
