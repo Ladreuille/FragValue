@@ -351,9 +351,11 @@ function getSeedByMap(map, side) {
       ct: ['ZywOo', 'KSCERATO', 'sh1ro', 'b1t', 'frozen'],
       t:  ['ropz', 'donk', 'm0NESY', 'iM', 'NiKo'],
     },
-    train: {
-      ct: ['m0NESY', 'sh1ro', 'NiKo', 'Spinx', 'b1t'],
-      t:  ['donk', 'ZywOo', 'ropz', 'flameZ', 'YEKINDAR'],
+    overpass: {
+      // CT-favored historiquement : AWP anchor + lurkers patient
+      ct: ['sh1ro', 'm0NESY', 'ZywOo', 'b1t', 'KSCERATO'],
+      // T side : ouvertures aggressives + lurk B
+      t:  ['donk', 'ropz', 'XANTARES', 'NiKo', 'YEKINDAR'],
     },
   };
 
@@ -507,9 +509,9 @@ module.exports = async function handler(req, res) {
     }
 
     // ─── Overall : top 20 + averages + pool elargi pour matching ──────
-    // Cache key v6 : invalidate apres ultrareview roles (molodoy AWP,
-    // xertioN IGL, BlameF IGL, fallen rifler, etc.) + transferts equipes.
-    const cacheKey = 'overall:v6:' + (roleFilter || 'all');
+    // Cache key v7 : invalidate apres remplacement Train -> Overpass dans
+    // le map pool (mise a jour Active Duty CS2 avril 2026).
+    const cacheKey = 'overall:v7:' + (roleFilter || 'all');
     const cache = getCache();
     if (cache.data && cache.data._key === cacheKey && (Date.now() - cache.ts) < CACHE_TTL_MS) {
       res.setHeader('Cache-Control', 'public, s-maxage=900, stale-while-revalidate=3600');
@@ -588,7 +590,7 @@ module.exports = async function handler(req, res) {
       top20: filtered,
       pool: matchingPool, // 60 pros pour matching pro twin
       proAvg: computeProAvg(filtered.length ? filtered : SEED_TOP20_2026.slice(0, 5)),
-      maps: ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'train'],
+      maps: ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'overpass'],
       roles: ['awp', 'entry', 'igl', 'support', 'rifler'],
       notice: source === 'seed'
         ? 'Top 20 based on HLTV Top 20 Players of 2025 (published Jan 2026). Team/role assignments verified for April 2026.'
@@ -610,7 +612,7 @@ module.exports = async function handler(req, res) {
       sampleSize: SEED_TOP20_2026.length,
       top20: SEED_TOP20_2026,
       proAvg: computeProAvg(SEED_TOP20_2026),
-      maps: ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'train'],
+      maps: ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'overpass'],
       roles: ['awp', 'entry', 'igl', 'support', 'rifler'],
       error: 'using seed data',
     });

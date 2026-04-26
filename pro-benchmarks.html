@@ -793,7 +793,7 @@ function renderTrainingProgram(user, cells) {
 // ─── Veto recommendations : pick your closest maps, ban your worst ───────
 async function renderVetoRecommendations(user) {
   if (!user || !user.fvRating) return;
-  const maps = ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'train'];
+  const maps = ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'overpass'];
 
   // Fetch all map data in parallel
   const mapStats = await Promise.all(maps.map(async map => {
@@ -897,7 +897,7 @@ function renderTrainingPreview() {
 
 // Veto preview : montre le top performer par map (universel) avec rating
 async function renderVetoPreview() {
-  const maps = ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'train'];
+  const maps = ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'overpass'];
   const mapStats = await Promise.all(maps.map(async map => {
     try {
       const r = await fetch('/api/pro-benchmarks?aggregate=map&map=' + map);
@@ -1043,7 +1043,7 @@ async function renderMapBreakdown(user) {
   if (!user || !user.fvRating) { wrap.style.display = 'none'; return; }
 
   // For each map, fetch the top performer to extract reference rating
-  const maps = ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'train'];
+  const maps = ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'overpass'];
 
   // Get user per-map stats (if available from scout)
   // For now we use overall user rating vs map-specific pro rating (indicative gap)
