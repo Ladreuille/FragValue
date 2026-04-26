@@ -79,6 +79,71 @@ const SEED_TOP20_2026 = [
   { rank: 20, nickname: 'b1t',      team: 'NaVi',     country: 'UA', role: 'support', maps_played: 33, hltv_rating: 1.04, kast_pct: 72, adr: 73, kpr: 0.66, hs_pct: 54, kd: 1.02 },
 ];
 
+// ── PLAYER_METADATA : dict elargi nickname → role/country/team ──────────
+// Couvre tous les pros qui peuvent apparaitre dans pro_match_players,
+// pas juste le top 20 HLTV. Verifie sur Liquipedia avril 2026.
+// Sert a enrichir les donnees DB avec le role pour faire fonctionner le
+// filtre role meme quand la source est "db".
+const PLAYER_METADATA = {
+  // ─── HLTV Top 20 of 2025 (verifie) ───
+  'zywoo':    { role: 'awp',     country: 'FR', team: 'Vitality' },
+  'donk':     { role: 'rifler',  country: 'RU', team: 'Spirit' },
+  'ropz':     { role: 'rifler',  country: 'EE', team: 'Vitality' },
+  'm0nesy':   { role: 'awp',     country: 'RU', team: 'Falcons' },
+  'sh1ro':    { role: 'awp',     country: 'RU', team: 'Spirit' },
+  'molodoy':  { role: 'rifler',  country: 'KZ', team: 'FURIA' },
+  'flamez':   { role: 'entry',   country: 'IL', team: 'Vitality' },
+  'frozen':   { role: 'rifler',  country: 'SK', team: 'FaZe' },
+  'kscerato': { role: 'rifler',  country: 'BR', team: 'FURIA' },
+  'spinx':    { role: 'support', country: 'IL', team: 'MOUZ' },
+  'twistzz':  { role: 'rifler',  country: 'CA', team: 'FaZe' },
+  'mezii':    { role: 'support', country: 'GB', team: 'Vitality' },
+  'senzu':    { role: 'igl',     country: 'MN', team: 'MongolZ' },
+  'xantares': { role: 'rifler',  country: 'TR', team: 'Aurora' },
+  'yekindar': { role: 'entry',   country: 'LV', team: 'FURIA' },
+  'xertion':  { role: 'igl',     country: 'IL', team: 'MOUZ' },
+  'torzsi':   { role: 'awp',     country: 'HU', team: 'MOUZ' },
+  'niko':     { role: 'rifler',  country: 'BA', team: 'Falcons' },
+  'im':       { role: 'rifler',  country: 'RO', team: 'NaVi' },
+  'b1t':      { role: 'support', country: 'UA', team: 'NaVi' },
+
+  // ─── Stars proches du top 20 / souvent dans pro_match_players ───
+  'magixx':   { role: 'igl',     country: 'RU', team: 'Spirit' },
+  'zont1x':   { role: 'rifler',  country: 'UA', team: 'Spirit' },
+  'tn1r':     { role: 'rifler',  country: 'RU', team: 'Spirit' },
+  'chopper':  { role: 'igl',     country: 'RU', team: 'Spirit' }, // benche dec 2025
+  'w0nderful':{ role: 'awp',     country: 'UA', team: 'NaVi' },
+  'aleksib':  { role: 'igl',     country: 'FI', team: 'NaVi' },
+  'makazze':  { role: 'rifler',  country: 'XK', team: 'NaVi' },
+  'malbsmd':  { role: 'rifler',  country: 'GT', team: 'Liquid' },
+  'kyousuke': { role: 'rifler',  country: 'KZ', team: 'Falcons' },
+  'kyxsan':   { role: 'rifler',  country: 'PL', team: 'Falcons' }, // benche apr 2026
+  'karrigan': { role: 'igl',     country: 'DK', team: 'Falcons' },
+  'teses':    { role: 'rifler',  country: 'DK', team: 'Falcons' },
+  'apex':     { role: 'igl',     country: 'FR', team: 'Vitality' },
+  'jl':       { role: 'rifler',  country: 'LV', team: 'MOUZ' },
+  'xelex':    { role: 'rifler',  country: 'CZ', team: 'MOUZ' },
+  'broky':    { role: 'awp',     country: 'PT', team: 'FaZe' },
+  'jcobbb':   { role: 'rifler',  country: 'PL', team: 'FaZe' },
+  'fallen':   { role: 'awp',     country: 'BR', team: 'FURIA' },
+  'yuurih':   { role: 'rifler',  country: 'BR', team: 'FURIA' },
+  'siuhy':    { role: 'igl',     country: 'PL', team: 'Liquid' },
+  'naf':      { role: 'rifler',  country: 'CA', team: 'Liquid' },
+  'elige':    { role: 'rifler',  country: 'US', team: 'Liquid' },
+  'ultimate': { role: 'rifler',  country: 'PL', team: 'Liquid' },
+  'hunter-':  { role: 'rifler',  country: 'BA', team: 'G2' },
+  'nertz':    { role: 'rifler',  country: 'IL', team: 'G2' },
+  'sunpayus': { role: 'awp',     country: 'ES', team: 'G2' },
+  'heavygod': { role: 'rifler',  country: 'IL', team: 'G2' },
+  'matys':    { role: 'rifler',  country: 'SK', team: 'G2' },
+  'brollan':  { role: 'rifler',  country: 'SE', team: 'MOUZ' }, // benche
+  'jimpphat': { role: 'rifler',  country: 'FI', team: 'MOUZ' }, // benche
+  'woxic':    { role: 'awp',     country: 'TR', team: 'Aurora' },
+  'maj3r':    { role: 'igl',     country: 'TR', team: 'Aurora' },
+  'soulfly':  { role: 'rifler',  country: 'TR', team: 'Aurora' },
+  'wicadia':  { role: 'rifler',  country: 'TR', team: 'Aurora' },
+};
+
 // ── SEED par map / side : derive du top 20 ci-dessus ────────────────────
 // Strategie : on selectionne pour chaque map les players reconnus comme
 // fort sur cette map (basé sur leurs equipes et historiques HLTV). Pas
@@ -278,7 +343,8 @@ module.exports = async function handler(req, res) {
     }
 
     // ─── Overall : top 20 + averages ──────────────────────────────────
-    const cacheKey = 'overall:' + (roleFilter || 'all');
+    // Cache key v2 : invalidate apres ajout PLAYER_METADATA enrichment
+    const cacheKey = 'overall:v2:' + (roleFilter || 'all');
     const cache = getCache();
     if (cache.data && cache.data._key === cacheKey && (Date.now() - cache.ts) < CACHE_TTL_MS) {
       res.setHeader('Cache-Control', 'public, s-maxage=900, stale-while-revalidate=3600');
@@ -301,9 +367,30 @@ module.exports = async function handler(req, res) {
       source = 'seed';
     }
 
-    // Apply role filter (only on seed since DB doesn't have role)
+    // ── Enrichissement role + country + team via PLAYER_METADATA ──────
+    // pro_match_players ne contient pas de champ role/country/team. On
+    // croise par nickname avec PLAYER_METADATA (50+ pros connus) pour
+    // enrichir. Lookup case-insensitive.
+    top20 = top20.map(p => {
+      const key = (p.nickname || '').toLowerCase();
+      const meta = PLAYER_METADATA[key];
+      if (meta) {
+        return {
+          ...p,
+          role: p.role || meta.role,
+          country: p.country || meta.country,
+          team: p.team || meta.team,
+        };
+      }
+      return p;
+    });
+
+    // ── Apply role filter (works on both seed AND db via PLAYER_METADATA) ──
+    // Quand le filter role est actif, on exclut les players sans role connu
+    // (joueurs DB pas presents dans PLAYER_METADATA). Resultat : seuls les
+    // pros bien identifies remontent dans le filtre role.
     let filtered = top20;
-    if (roleFilter && source === 'seed') {
+    if (roleFilter) {
       filtered = top20.filter(p => p.role === roleFilter);
       filtered = filtered.map((p, i) => ({ ...p, rank: i + 1 }));
     }
