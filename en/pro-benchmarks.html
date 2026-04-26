@@ -543,14 +543,26 @@ function renderUserCompare(user, proAvg) {
   renderVirtualRank(user);
   // Insights
   renderInsights(cells);
-  // Pro twin (closest pro stylistically)
+  // Pro twin (closest pro stylistically) -> personnalise
   renderProTwin(user);
-  // Training program (based on biggest gap)
+  // Training program (based on biggest gap) -> personnalise
   renderTrainingProgram(user, cells);
-  // Veto recommendations (based on map gaps)
+  // Veto recommendations (based on map gaps) -> personnalise
   renderVetoRecommendations(user);
   // Map breakdown raw data
   renderMapBreakdown(user);
+}
+
+// ─── Render des 3 sections value-add en mode preview/guest ───────────────
+// Appele apres loadBenchmarks pour les utilisateurs non-connectes : on
+// montre quand meme la valeur (pro twin universel + apercu programme +
+// difficulte par map) avec CTA "Sign in pour personnaliser".
+function renderValueAddPreview() {
+  if (!benchData || !benchData.top20 || !benchData.top20.length) return;
+  if (userStats && userStats.fvRating) return; // mode personnalise gere ailleurs
+  renderProTwinPreview();
+  renderTrainingPreview();
+  renderVetoPreview();
 }
 
 // ─── Pro twin : trouve le pro le plus proche stylistiquement ─────────────
@@ -773,6 +785,97 @@ async function renderVetoRecommendations(user) {
   document.getElementById('vetoWrap').style.display = 'block';
 }
 
+// ─── PREVIEW MODE : visible meme sans user connecte ──────────────────────
+// Pro twin preview : highlight le #1 pro (top du classement) + CTA personnalisation
+function renderProTwinPreview() {
+  const top1 = benchData.top20[0];
+  if (!top1) return;
+  const flag = top1.country
+    ? '<img src="https://flagcdn.com/120x90/' + top1.country.toLowerCase() + '.png" alt="" onerror="this.parentElement.style.display=\'none\'"/>'
+    : '';
+  const proRoleLbl = top1.role ? top1.role.toUpperCase() : '';
+  const proTeam = top1.team || '';
+  const ctaTxt = isEN
+    ? 'Connect your FACEIT to find <strong>your</strong> stylistic pro twin (matched on FV Rating, KAST, ADR, K/D).'
+    : 'Connect your FACEIT to find <strong>ton</strong> pro twin stylistique (matche sur FV Rating, KAST, ADR, K/D).';
+  document.getElementById('proTwinCard').innerHTML =
+    '<div class="protwin-flag">' + flag + '</div>'
+    + '<div>'
+      + '<div class="protwin-name">' + top1.nickname + '</div>'
+      + '<div class="protwin-meta">' + [proTeam, proRoleLbl, isEN ? '#1 HLTV 2025' : '#1 HLTV 2025'].filter(Boolean).join(' · ') + '</div>'
+      + '<div class="protwin-narrative">' + ctaTxt + ' <a href="login.html">' + (isEN ? 'Connect →' : 'Connect →') + '</a></div>'
+      + '<div class="protwin-stats">'
+        + '<div class="protwin-stat"><div class="l">FV Rating</div><div class="v">' + fmt(top1.hltv_rating, 2) + '</div><div class="d" style="color:var(--text3)">' + (isEN ? 'pro #1' : 'pro #1') + '</div></div>'
+        + '<div class="protwin-stat"><div class="l">KAST</div><div class="v">' + fmt(top1.kast_pct, 0) + '%</div><div class="d" style="color:var(--text3)">' + (isEN ? 'pro #1' : 'pro #1') + '</div></div>'
+        + '<div class="protwin-stat"><div class="l">ADR</div><div class="v">' + fmt(top1.adr, 0) + '</div><div class="d" style="color:var(--text3)">' + (isEN ? 'pro #1' : 'pro #1') + '</div></div>'
+        + '<div class="protwin-stat"><div class="l">K/D</div><div class="v">' + fmt(top1.kd, 2) + '</div><div class="d" style="color:var(--text3)">' + (isEN ? 'pro #1' : 'pro #1') + '</div></div>'
+      + '</div>'
+    + '</div>';
+  document.getElementById('proTwinWrap').style.display = 'block';
+}
+
+// Training preview : show the 4 program titles (apercu de ce qu'on debloque)
+function renderTrainingPreview() {
+  const previews = [
+    { key: 'fvRating', title: isEN ? 'Boost overall impact' : 'Booster l\'impact global', sub: isEN ? 'When FV Rating is your weakest link' : 'Quand FV Rating est le maillon faible', icon: 'M12 20V4M5 12l7-7 7 7' },
+    { key: 'kast',     title: isEN ? 'Boost KAST · positioning' : 'Booster KAST · positionnement', sub: isEN ? 'When you die alone in useless angles' : 'Quand tu meurs seul dans des angles inutiles', icon: 'M9 11H1l8-8 8 8h-8v8H9z' },
+    { key: 'adr',      title: isEN ? 'Boost ADR · damage check' : 'Booster ADR · damage check', sub: isEN ? 'When you frag enough but don\'t damage enough' : 'Quand tu fragges assez mais damage not assez', icon: 'M13 2 L3 14 H12 L11 22 L21 10 H12 Z' },
+    { key: 'kd',       title: isEN ? 'Boost K/D · stop avoidable deaths' : 'Booster K/D · stop morts evitables', sub: isEN ? 'When kills are OK but you die too much' : 'Quand les kills sont OK mais tu meurs trop', icon: 'M3 12h18M12 3v18' },
+  ];
+  const introTxt = isEN
+    ? 'Connect your FACEIT to unlock a <strong>personalized 7-day plan</strong> built on your weakest KPI. Each program includes drills, pro demos to study, and measurable targets.'
+    : 'Connecte ton FACEIT pour debloquer un <strong>plan 7 days personnalise</strong> base sur ton KPI le plus faible. Chaque programme inclut drills, demos pro a etudier et objectifs mesurables.';
+  document.getElementById('trainingCard').innerHTML =
+    '<div class="training-head">'
+      + '<div class="training-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v6m0 0l-3-3m3 3l3-3M3 12h18M12 22v-6m0 0l-3 3m3-3l3 3"/></svg></div>'
+      + '<div>'
+        + '<div class="training-title">' + (isEN ? '4 personalized programs · select via FACEIT' : '4 programmes personnalises · selection via FACEIT') + '</div>'
+        + '<div class="training-sub">' + (isEN ? 'Auto-routed based on your biggest gap when you connect' : 'Auto-route selon ton plus gros gap quand tu connectes') + '</div>'
+      + '</div>'
+    + '</div>'
+    + '<div style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px">' + introTxt + ' <a href="login.html" style="color:var(--accent);font-weight:700">' + (isEN ? 'Connect →' : 'Connect →') + '</a></div>'
+    + '<div class="training-grid">'
+      + previews.map(p => '<div class="training-day"><div class="lbl"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:4px"><path d="' + p.icon + '"/></svg>' + p.title + '</div><div class="text" style="color:var(--text3)">' + p.sub + '</div></div>').join('')
+    + '</div>';
+  document.getElementById('trainingWrap').style.display = 'block';
+}
+
+// Veto preview : montre le top performer par map (universel) avec rating
+async function renderVetoPreview() {
+  const maps = ['mirage', 'inferno', 'dust2', 'nuke', 'anubis', 'vertigo', 'ancient', 'train'];
+  const mapStats = await Promise.all(maps.map(async map => {
+    try {
+      const r = await fetch('/api/pro-benchmarks?aggregate=map&map=' + map);
+      if (!r.ok) return null;
+      const d = await r.json();
+      const top = (d.ct || []).concat(d.t || []).sort((a, b) => b.hltv_rating - a.hltv_rating)[0];
+      if (!top) return null;
+      return { map, proRef: top.hltv_rating, proPlayer: top.nickname };
+    } catch (e) { return null; }
+  }));
+  const valid = mapStats.filter(Boolean);
+  if (valid.length < 4) return;
+  // Sort par rating desc : la map or le pro ref est le plus haut = la map "la plus skillee" du moment
+  valid.sort((a, b) => b.proRef - a.proRef);
+  const intro = isEN
+    ? 'Connect your FACEIT to get <strong>personalized pick/ban suggestions</strong> based on your gap vs the top pro performer of each map. Below : the universal pro reference per map.'
+    : 'Connecte ton FACEIT pour avoir des <strong>suggestions pick/ban personnalisees</strong> basees sur ton ecart vs le top performer pro de chaque map. Ci-dessous : la reference pro universelle par map.';
+  document.getElementById('vetoCard').innerHTML =
+    '<div style="font-family:var(--mono);font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:12px">' + intro + ' <a href="login.html" style="color:var(--accent);font-weight:700">' + (isEN ? 'Connect →' : 'Connect →') + '</a></div>'
+    + '<div class="veto-grid">'
+      + '<div class="veto-col pick">'
+        + '<div class="veto-col-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' + (isEN ? 'Top performer maps' : 'Maps top performer') + '</div>'
+        + valid.slice(0, 4).map(p => '<div class="veto-map"><span class="name">' + p.map + '</span><span class="delta" style="color:var(--text3);font-size:10px">' + p.proPlayer + ' · ' + fmt(p.proRef, 2) + '</span></div>').join('')
+      + '</div>'
+      + '<div class="veto-col ban">'
+        + '<div class="veto-col-title" style="color:var(--text2)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + (isEN ? 'Lower-ceiling maps' : 'Maps moins meta') + '</div>'
+        + valid.slice(4).map(p => '<div class="veto-map"><span class="name">' + p.map + '</span><span class="delta" style="color:var(--text3);font-size:10px">' + p.proPlayer + ' · ' + fmt(p.proRef, 2) + '</span></div>').join('')
+      + '</div>'
+    + '</div>'
+    + '<div class="veto-info">' + (isEN ? 'Connect FACEIT to switch from "universal pro reference" to "your personalized picks/bans".' : 'Connecte FACEIT pour passer de "reference pro universelle" a "tes picks/bans personnalises".') + '</div>';
+  document.getElementById('vetoWrap').style.display = 'block';
+}
+
 // ─── Virtual rank : heuristique honnete combinant ELO + FV + KAST ────────
 function renderVirtualRank(user) {
   const rankEl = document.getElementById('virtualRank');
@@ -972,6 +1075,7 @@ async function loadBenchmarks(role) {
     document.getElementById('benchFooter').textContent =
       'Source : ' + sourceLbl + ' · ' + d.sampleSize + ' players · 1h cache · updated ' + dt;
     if (userStats && d.proAvg) renderUserCompare(userStats, d.proAvg);
+    else renderValueAddPreview();
   } catch (e) {
     console.warn('[pro-benchmarks] failed to load:', e.message);
     body.innerHTML = '<div class="top20-row"><div class="top20-rank">-</div><div></div><div class="top20-name" style="color:var(--text3)">Loading error. Try again in a moment.</div><div></div><div class="hide-mobile"></div><div class="hide-mobile"></div><div></div></div>';
