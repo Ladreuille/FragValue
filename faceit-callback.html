@@ -240,6 +240,9 @@ async function linkFaceitToProfile(userId, data) {
 }
 
 function showSuccess(data) {
+  // Render avec bouton "Continuer" TOUJOURS visible : guarantee que l'user
+  // peut sortir manuellement meme si le redirect auto ou le close echoue
+  // (Safari iOS, popup blockers, extensions privacy-focused, etc.).
   document.getElementById('card').innerHTML = `
     <div class="success-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -249,38 +252,46 @@ function showSuccess(data) {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2L3 7.5v9L12.5 22 22 16.5v-9L12.5 2zm0 2.3l7.5 4.3v8.6l-7.5 4.3-7.5-4.3V8.6l7.5-4.3z"/></svg>
       ${data.nickname}${data.level ? ' . Lvl ' + data.level : ''}${data.elo ? ' . ' + data.elo + ' ELO' : ''}
     </div>
-    <p class="sub" style="margin-top:12px">Redirection...</p>
+    <p class="sub" style="margin-top:12px" id="redirSub">Redirection automatique...</p>
+    <a href="/account.html" class="link-btn" id="continueBtn" style="margin-top:16px">Continuer →</a>
   `;
 
-  // Tentative postMessage si on est dans un popup (desktop flow).
-  let postedOk = false;
-  if (window.opener && !window.opener.closed) {
+  // ── Detection popup (desktop flow) ────────────────────────────────────
+  // window.name a ete set a 'faceit_auth' par window.open() dans loginFaceit.
+  // C'est le marker le plus fiable (window.opener peut etre null dans
+  // Safari pour des raisons de securite, meme dans un popup legitime).
+  const isPopup = (window.name === 'faceit_auth') || (window.opener && !window.opener.closed);
+
+  // Tentative postMessage vers parent (desktop popup flow).
+  if (isPopup && window.opener) {
     try {
       window.opener.postMessage({ type: 'FACEIT_AUTH_SUCCESS' }, window.location.origin);
-      postedOk = true;
     } catch (e) {
       console.warn('postMessage failed:', e.message);
     }
   }
 
-  // Tentative window.close() si popup, MAIS toujours avec un fallback
-  // redirect direct au cas ou close() echoue (cas iOS / iPad / mobile
-  // ou window.close() ne marche pas pour les onglets non ouverts via JS).
-  if (postedOk) {
-    setTimeout(() => {
-      try { window.close(); } catch(_) {}
-      // Si la page est encore visible apres 600ms, on est probablement
-      // dans un onglet (pas un popup) -> redirect en full page.
-      setTimeout(() => {
-        if (!document.hidden) {
-          window.location.href = '/account.html';
-        }
-      }, 600);
-    }, 300);
-  } else {
-    // Pas d'opener accessible : full-page redirect direct.
-    setTimeout(() => { window.location.href = '/account.html'; }, 1200);
-  }
+  // ── Strategie redirect : tres simple et robuste ──────────────────────
+  // 1. Si popup detecte : essaye window.close() apres 400ms. Si l'onglet
+  //    est toujours visible apres 800ms total, force le redirect dans
+  //    cette fenetre (cas Safari ou close() est bloque).
+  // 2. Si pas un popup (touch / full-redirect flow) : redirect direct
+  //    apres 700ms (laisse le temps de voir le succes).
+  // 3. Le bouton "Continuer" est de toute facon visible immediatement.
+  const REDIRECT_DELAY = isPopup ? 400 : 700;
+  const REDIRECT_FALLBACK = 1200;
+
+  setTimeout(() => {
+    if (isPopup) {
+      try { window.close(); } catch (_) {}
+    }
+  }, REDIRECT_DELAY);
+
+  setTimeout(() => {
+    if (!document.hidden) {
+      window.location.href = '/account.html';
+    }
+  }, REDIRECT_FALLBACK);
 }
 
 function updateStatus(msg) {

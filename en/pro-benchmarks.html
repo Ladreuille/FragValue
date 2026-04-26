@@ -1094,30 +1094,37 @@ async function loadMap(map) {
 }
 
 // ─── Fetch user stats (auth required) ────────────────────────────────────
+// Robuste : ne laisse JAMAIS le user connecte voir l'etat "Guest" qui dit
+// "Sign me in". Des qu'on detecte une session, on bascule au minimum sur
+// NoFaceit (si not de FACEIT) or NoStats (si FACEIT mais not de stats).
 async function loadUserStats() {
   try {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) return;
+    if (!session) return; // not connecte : Guest reste visible (correct)
 
-    const { data: profile } = await sb.from('profiles')
+    // Connecte : on cache definitivement Guest, on choisit le bon etat plus loin
+    document.getElementById('userCompareGuest').style.display = 'none';
+
+    const { data: profile, error: profileErr } = await sb.from('profiles')
       .select('faceit_nickname, faceit_level, faceit_elo')
       .eq('id', session.user.id)
       .single();
 
-    if (!profile || !profile.faceit_nickname) {
-      document.getElementById('userCompareGuest').style.display = 'none';
+    if (profileErr || !profile || !profile.faceit_nickname) {
+      // Connecte mais FACEIT not lie -> CTA "Link my FACEIT"
       document.getElementById('userCompareNoFaceit').style.display = 'block';
       return;
     }
 
-    const scoutRes = await fetch('/api/scout?nickname=' + encodeURIComponent(profile.faceit_nickname), {
-      headers: { 'Authorization': 'Bearer ' + session.access_token },
-    });
-    if (!scoutRes.ok) return;
-    const scoutData = await scoutRes.json();
-    const recent = scoutData.recent || {};
+    let scoutData = null;
+    try {
+      const scoutRes = await fetch('/api/scout?nickname=' + encodeURIComponent(profile.faceit_nickname), {
+        headers: { 'Authorization': 'Bearer ' + session.access_token },
+      });
+      if (scoutRes.ok) scoutData = await scoutRes.json();
+    } catch (_) {}
 
-    // Honest fallback : si not de stats recentes, montre l'etat "no stats" plutot qu'inventer
+    const recent = (scoutData && scoutData.recent) || {};
     const fvr = parseFloat(recent.avgFvr);
     const kast = parseFloat(recent.avgKast);
     const adr = parseFloat(recent.avgAdr);
@@ -1125,7 +1132,7 @@ async function loadUserStats() {
 
     const hasValidStats = !isNaN(fvr) && fvr > 0 && !isNaN(kast) && kast > 0;
     if (!hasValidStats) {
-      document.getElementById('userCompareGuest').style.display = 'none';
+      // FACEIT lie mais not (encore) de stats valides -> CTA "Analyze a demo"
       document.getElementById('userCompareNoStats').style.display = 'block';
       return;
     }
@@ -1133,7 +1140,7 @@ async function loadUserStats() {
     userStats = {
       nickname: profile.faceit_nickname,
       level: profile.faceit_level,
-      elo: profile.faceit_elo || (scoutData.cs2 && scoutData.cs2.elo),
+      elo: profile.faceit_elo || (scoutData && scoutData.cs2 && scoutData.cs2.elo),
       fvRating: fvr,
       kast: kast,
       adr: !isNaN(adr) ? adr : 0,
@@ -1145,6 +1152,21 @@ async function loadUserStats() {
     console.warn('[pro-benchmarks] user stats failed:', e.message);
   }
 }
+
+// Si l'auth state change apres le boot (login dans un autre onglet, or
+// session lazy-loaded), retrigger loadUserStats pour synchroniser l'UI.
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    loadUserStats();
+  } else if (event === 'SIGNED_OUT') {
+    // Reset UI visible
+    userStats = null;
+    document.getElementById('userCompareGuest').style.display = 'block';
+    document.getElementById('userCompareNoFaceit').style.display = 'none';
+    document.getElementById('userCompareNoStats').style.display = 'none';
+    document.getElementById('userCompareLive').style.display = 'none';
+  }
+});
 
 // ─── Filter handlers ─────────────────────────────────────────────────────
 function selectMap(map) {
