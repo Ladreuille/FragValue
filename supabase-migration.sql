@@ -390,3 +390,41 @@ ALTER TABLE rosters ADD COLUMN IF NOT EXISTS esea_division   TEXT;
 ALTER TABLE rosters ADD COLUMN IF NOT EXISTS esea_season     TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_rosters_faceit_team_id ON rosters (faceit_team_id) WHERE faceit_team_id IS NOT NULL;
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- FACEIT WEBHOOKS · log brut des events Downloads API + Match (avril 2026)
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Receveur : POST /api/webhooks/faceit (HMAC SHA-256 verifie cote endpoint).
+-- Events attendus : DEMO_READY (download programmatique des demos),
+-- MATCH_OBJECT_CREATED (matchmaking found pour Phase 4 pre-match prep),
+-- MATCH_FINISHED (notification post-match).
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS public.faceit_webhook_events (
+  id              BIGSERIAL PRIMARY KEY,
+  event_id        TEXT UNIQUE,
+  event_type      TEXT NOT NULL,
+  match_id        TEXT,
+  payload         JSONB NOT NULL,
+  signature_valid BOOLEAN,
+  processed_at    TIMESTAMPTZ,
+  error_message   TEXT,
+  retry_count     INT NOT NULL DEFAULT 0,
+  received_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_faceit_webhook_match_id
+  ON faceit_webhook_events (match_id) WHERE match_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_faceit_webhook_unprocessed
+  ON faceit_webhook_events (event_type, received_at) WHERE processed_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_faceit_webhook_event_type_recent
+  ON faceit_webhook_events (event_type, received_at DESC);
+
+ALTER TABLE faceit_webhook_events ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "deny all client reads" ON faceit_webhook_events;
+CREATE POLICY "deny all client reads" ON faceit_webhook_events FOR ALL USING (false);
+
+COMMENT ON TABLE faceit_webhook_events IS
+  'Server-only : log brut des webhooks FACEIT (DEMO_READY, MATCH_*). RLS deny-all clients.';
