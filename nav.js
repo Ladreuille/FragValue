@@ -299,7 +299,7 @@
         <span class="fv-bell-badge" id="navBellBadge" style="display:none">0</span>
       </button>
       <a href="${link('/login.html')}" class="fv-login" id="navLoginBtn">${T.connexion}</a>
-      <a href="/account.html#feedback" class="fv-cta" id="navAccountBtn" style="display:none">${T.monEspace}<span class="fv-account-dot" id="navFeedbackDot" title="${T.feedbackTooltip}"></span></a>
+      <a href="/account.html" class="fv-cta" id="navAccountBtn" style="display:none">${T.monEspace}<span class="fv-account-dot" id="navFeedbackDot" title="${T.feedbackTooltip}"></span></a>
     </div>
     <button class="fv-burger" type="button" aria-label="${T.ariaBurgerOpen}" aria-expanded="false" aria-controls="fvMobileDrawer">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
@@ -423,7 +423,7 @@
       <div class="fv-mobile-divider"></div>
       <a href="${link('/pricing.html')}" class="fv-mobile-link">${T.tarifs}</a>
       <a href="${link('/login.html')}" class="fv-mobile-link" id="navMobileLoginBtn">${T.connexion}</a>
-      <a href="/account.html#feedback" class="fv-mobile-cta" id="navMobileAccountBtn" style="display:none">${T.monEspace}</a>
+      <a href="/account.html" class="fv-mobile-cta" id="navMobileAccountBtn" style="display:none">${T.monEspace}</a>
     `;
 
     const backdrop = document.createElement('div');

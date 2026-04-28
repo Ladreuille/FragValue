@@ -1164,6 +1164,9 @@ async function coachLoadConversation() {
     _coachPlan = data.plan || 'free';
     _coachConversationId = data.conversation_id || null;
     _coachMessages = data.messages || [];
+    // Debug enrichi : aide a voir si le bypass admin a marche
+    console.info('[coach-chat] backend response: email=' + (data.email || '?') +
+      ' plan=' + _coachPlan + ' source=' + (data.source || '?'));
   } catch (e) {
     console.warn('[coach-chat] load conversation failed:', e.message);
     // Pas de fallback optimiste : on bloque sur Locked si on ne peut pas verifier

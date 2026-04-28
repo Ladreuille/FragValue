@@ -57,7 +57,9 @@ const MAX_MESSAGE_LEN = 500;
 const MAX_RESPONSE_TOKENS = 700;
 const ROLLING_WINDOW = 10; // nb messages d'historique inclus dans le prompt
 const SOFT_CAP_CONVERSATION = 50;
-const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
+// Liste admins (case-insensitive). Override via env FRAGVALUE_ADMIN_EMAILS.
+const ADMIN_EMAILS = (process.env.FRAGVALUE_ADMIN_EMAILS || 'qdreuillet@gmail.com')
+  .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 
 // Feature Elite-only : hard cap 200/jour (cf. ultrareview cost analysis :
 // avec cache 1h = ~$3.5/user/jour pour 50 q/jour, soutenable a Elite tarif).
@@ -711,7 +713,8 @@ module.exports = async function handler(req, res) {
 
   // ── GET : lecture de l'historique d'une conversation ──
   if (req.method === 'GET') {
-    const { plan, user } = await getUserPlan(req.headers.authorization);
+    const planResult = await getUserPlan(req.headers.authorization);
+    const { plan, user, source } = planResult;
     if (!user) return res.status(401).json({ error: 'Auth requise' });
 
     const demoId = req.query?.demo_id;
@@ -724,7 +727,11 @@ module.exports = async function handler(req, res) {
       .eq('demo_id', demoId)
       .maybeSingle();
     if (!conv) {
-      return res.status(200).json({ conversation_id: null, messages: [], history_count: 0, plan });
+      return res.status(200).json({
+        conversation_id: null, messages: [], history_count: 0,
+        plan, source: source || 'unknown',
+        email: user.email || null,
+      });
     }
     const { data: msgs } = await supabase.from('coach_messages')
       .select('id, role, content, refs, created_at')
@@ -735,6 +742,8 @@ module.exports = async function handler(req, res) {
       messages: msgs || [],
       history_count: conv.message_count,
       plan,
+      source: source || 'unknown',
+      email: user.email || null,
     });
   }
 
@@ -747,7 +756,7 @@ module.exports = async function handler(req, res) {
   const gate = await requireElite(req, res);
   if (!gate) return; // 401/403 deja envoye
   const { user, plan } = gate;
-  const isAdmin = user.email && ADMIN_EMAILS.includes(user.email);
+  const isAdmin = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim());
 
   // Body parsing
   let body = req.body || {};

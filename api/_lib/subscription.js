@@ -20,7 +20,14 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
+// Liste des emails admin (en lowercase pour match case-insensitive). Bypass
+// permanent vers plan='elite' utile pour : tests internes du killer feature
+// AI Coach, debug en prod sans devoir souscrire, demo a des prospects.
+// Override possible via env var FRAGVALUE_ADMIN_EMAILS (comma-separated).
+const ADMIN_EMAILS = (process.env.FRAGVALUE_ADMIN_EMAILS || 'qdreuillet@gmail.com')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean);
 
 let _sb = null;
 function sb() {
@@ -154,8 +161,8 @@ async function getUserPlan(authHeader, opts = {}) {
     return result;
   }
 
-  // Admin bypass : acces elite permanent
-  if (user.email && ADMIN_EMAILS.includes(user.email)) {
+  // Admin bypass : acces elite permanent (case-insensitive match sur l'email)
+  if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim())) {
     const result = { plan: 'elite', user, status: 'active', source: 'admin' };
     setCached(token, result);
     return result;
