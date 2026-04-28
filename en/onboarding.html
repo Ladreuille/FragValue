@@ -237,17 +237,38 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   let verifiedFaceitNick = null;
   let currentUser = null;
 
+  // Detection : l'user vient cliquer "Link FACEIT" depuis Mon Espace ?
+  // Param URL ?link=faceit -> on skip le step 1 (mode select) pour aller
+  // directement au step 2 (input pseudo FACEIT). Sinon comportement normal.
+  const wantsLinkFaceit = new URLSearchParams(window.location.search).get('link') === 'faceit';
+
   // Vérifier session
   sb.auth.getSession().then(({ data }) => {
     if (!data.session) { window.location.href = 'login.html'; return; }
     currentUser = data.session.user;
 
-    // Vérifier si déjà onboardé
+    // Vérifier si déjà onboardé COMPLETEMENT (mode + faceit lié).
+    // Si mode set mais not faceit_nickname, on autorise l'acces a
+    // l'onboarding pour pouvoir lier FACEIT (cas des signups email/Google
+    // or le mode est set par defaut a 'player' via column default).
     sb.from('profiles').select('mode,faceit_nickname').eq('id', currentUser.id).single()
       .then(({ data: profile }) => {
-        if (profile?.mode) {
-          // Déjà onboardé → rediriger
+        const fullyOnboarded = profile?.mode && profile?.faceit_nickname;
+        // Si tout est lie ET not de demande explicite de relier -> dashboard
+        if (fullyOnboarded && !wantsLinkFaceit) {
           window.location.href = 'dashboard.html';
+          return;
+        }
+        // Si mode deja set OU si on vient pour lier FACEIT -> skip step 1
+        if (profile?.mode || wantsLinkFaceit) {
+          selectedMode = profile?.mode || 'player';
+          document.getElementById('step1').style.display = 'none';
+          document.getElementById('step2').style.display = 'block';
+          document.getElementById('progressFill').style.width = '66%';
+          // Pre-fill l'input si on a deja un nickname (mode "modifier")
+          if (profile?.faceit_nickname) {
+            document.getElementById('faceitInput').value = profile.faceit_nickname;
+          }
         }
       });
   });
@@ -325,8 +346,17 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     document.getElementById('step3').style.display = 'block';
     document.getElementById('progressFill').style.width = '100%';
 
-    // Message personnalisé
-    if (selectedMode === 'player') {
+    // Message personnalise selon le contexte
+    if (wantsLinkFaceit) {
+      // L'user vient de Mon Espace pour lier/modifier son FACEIT
+      document.getElementById('step3Title').textContent = verifiedFaceitNick
+        ? `${verifiedFaceitNick} · FACEIT lie !`
+        : 'Profile mis a day';
+      document.getElementById('step3Sub').textContent = 'Back vers ton espace dans un instant.';
+      // Bouton CTA personnalise via JS (le HTML reste 'Acceder a mon espace')
+      const cta = document.querySelector('#step3 .cta-btn');
+      if (cta) cta.firstChild.textContent = 'Back a mon espace ';
+    } else if (selectedMode === 'player') {
       document.getElementById('step3Title').textContent = verifiedFaceitNick
         ? `Welcome ${verifiedFaceitNick} !`
         : 'Welcome to FragValue!';
@@ -338,7 +368,12 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   }
 
   function finish() {
-    // Si player avec FACEIT lié → analyser directement
+    // Si l'user est venu pour lier/modifier FACEIT depuis Mon Espace -> retour la
+    if (wantsLinkFaceit) {
+      window.location.href = 'account.html#settings';
+      return;
+    }
+    // Onboarding initial : si player avec FACEIT lie -> analyser directement
     if (selectedMode === 'player' && verifiedFaceitNick) {
       window.location.href = `index.html?analyse=${encodeURIComponent(verifiedFaceitNick)}`;
     } else {
