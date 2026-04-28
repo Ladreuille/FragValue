@@ -141,6 +141,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .card{opacity:0;animation:fadeUp .4s .05s ease forwards}
 </style>
 <script src="/analytics.js" defer></script>
+<script src="/faceit-oauth.js" defer></script>
 </head>
 <body>
 
@@ -473,102 +474,13 @@ function showMsg(txt, type) {
 }
 function hideMsg() { document.getElementById('msgBox').style.display = 'none'; }
 
-// FACEIT OAuth Authorization Code Flow + PKCE (S256) via popup.
-// PKCE est OBLIGATOIRE pour le client OAuth FragValue : FACEIT repond
-// {"errors":[{"message":"pkce_required"}]} si code_challenge est absent.
-async function loginFaceit() {
-  try {
-    let clientId = '141a2533-b3b9-45e7-8c98-8cb683871f74';
-    try {
-      const res = await fetch('/api/faceit-config');
-      const cfg = await res.json();
-      if (cfg.clientId || cfg.client_id) clientId = cfg.clientId || cfg.client_id;
-    } catch (_) {}
-
-    const redirectUri = window.location.origin + '/faceit-callback.html';
-
-    // ── PKCE : code_verifier + code_challenge (SHA-256) ─────────────────
-    const verifierBytes = new Uint8Array(32);
-    crypto.getRandomValues(verifierBytes);
-    const codeVerifier = btoa(String.fromCharCode(...verifierBytes))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
-    const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
-    // State aleatoire pour CSRF (complementaire a PKCE).
-    const stateBytes = new Uint8Array(16);
-    crypto.getRandomValues(stateBytes);
-    const state = btoa(String.fromCharCode(...stateBytes))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
-    // localStorage pour partage entre popup et parent (sessionStorage est
-    // isole par contexte de navigation).
-    localStorage.setItem('faceit_code_verifier', codeVerifier);
-    localStorage.setItem('faceit_code_verifier_ts', String(Date.now()));
-    localStorage.setItem('faceit_oauth_state', state);
-    localStorage.setItem('faceit_redirect_uri', redirectUri);
-    // Fallback sessionStorage pour redirection same-tab
-    sessionStorage.setItem('faceit_code_verifier', codeVerifier);
-    sessionStorage.setItem('faceit_oauth_state', state);
-
-    const params = new URLSearchParams({
-      response_type: 'code',
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      scope: 'openid profile email',
-      code_challenge: codeChallenge,
-      code_challenge_method: 'S256',
-      state,
-    });
-
-    // URL officielle depuis openid_configuration : not de /accounts en path.
-    const authUrl = 'https://accounts.faceit.com/?' + params.toString();
-
-    // ── Mobile/iPad detection : skip popup, full-page redirect ────────
-    // iOS Safari bloque or convertit les popups en onglets, et window.close()
-    // + window.opener ne marchent not de maniere fiable. On evite tout le
-    // pattern popup-based sur tactile pour eviter les bloquages a la fin
-    // du flow OAuth.
-    const isTouch = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent)
-                 || (/Mac/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
-                 || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
-    if (isTouch) {
-      window.location.href = authUrl;
-      return;
-    }
-
-    const w = 500, h = 700;
-    const left = Math.round(screen.width / 2 - w / 2);
-    const top = Math.round(screen.height / 2 - h / 2);
-    const popup = window.open(authUrl, 'faceit_auth', 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
-
-    if (!popup) {
-      window.location.href = authUrl;
-      return;
-    }
-
-    const handler = async (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (!event.data || event.data.type !== 'FACEIT_AUTH_SUCCESS') return;
-      window.removeEventListener('message', handler);
-      clearInterval(checkClosed);
-      popup.close();
-      setTimeout(() => { window.location.href = '/account.html'; }, 200);
-    };
-    window.addEventListener('message', handler);
-
-    const checkClosed = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(checkClosed);
-        window.removeEventListener('message', handler);
-      }
-    }, 500);
-
-  } catch (err) {
-    console.error('FACEIT login error:', err);
+// FACEIT OAuth flow - factorise dans /faceit-oauth.js (window.fvLoginFaceit)
+// pour reutilisation depuis account.html (linking apres signup email/Google).
+function loginFaceit() {
+  if (typeof window.fvLoginFaceit === 'function') {
+    return window.fvLoginFaceit();
   }
+  console.error('[login] /faceit-oauth.js not loaded');
 }
 
 // Enter key
