@@ -626,14 +626,14 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     </div>
   </div>
 
-  <!-- 12. AI COACH CONVERSATIONAL : chat multi-turn sur ce match -->
+  <!-- 12. AI COACH CONVERSATIONAL : chat multi-turn sur ce match (Elite-only) -->
   <div class="sl" id="section-qa">Discute avec ton coach IA</div>
   <div class="card coach-chat-card" id="coachChat">
     <!-- Header -->
     <div class="coach-chat-head">
       <div class="coach-chat-title">
         <div class="coach-chat-title-h">Coach IA · sur ce match</div>
-        <span class="coach-chat-badge">Pro+</span>
+        <span class="coach-chat-badge">Elite</span>
       </div>
       <div class="coach-chat-actions">
         <span class="coach-chat-meta" id="coachChatMeta">-</span>
@@ -641,11 +641,12 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
       </div>
     </div>
 
-    <!-- Locked state (Free) -->
-    <div class="coach-chat-locked" id="coachLocked" style="display:none">
+    <!-- Locked state (Free / Pro / non logged in) - VISIBLE par defaut, masque
+         si l'utilisateur est Elite via initCoachChat -->
+    <div class="coach-chat-locked" id="coachLocked">
       <div class="coach-chat-locked-h">Coach IA conversationnel</div>
-      <p class="coach-chat-locked-sub">Pose autant de questions que tu veux sur ce match. Le Coach reference les rounds avec des liens cliquables qui ouvrent le replay 2D au bon moment, et compare ton style a ton pro twin. Reserve aux abonnes Pro et Elite.</p>
-      <a href="pricing.html" class="coach-chat-locked-cta">Passer a Pro →</a>
+      <p class="coach-chat-locked-sub">Pose autant de questions que tu veux sur ce match. Le Coach reference les rounds avec des liens cliquables qui ouvrent le replay 2D au moment exact, et raisonne avec un lexique CS2 100% scene pro (HLTV, Liquipedia). Reserve aux abonnes Elite.</p>
+      <a href="pricing.html" class="coach-chat-locked-cta">Passer a Elite →</a>
     </div>
 
     <!-- Empty state (pas encore de messages) -->
@@ -1083,43 +1084,50 @@ function getDemoId() {
 }
 
 async function initCoachChat(c, rounds) {
-  const you = getTargetPlayer(c);
+  try {
+    const you = getTargetPlayer(c);
 
-  // Build context client-side pour l'envoyer au 1er message
-  // (le backend peut le rebuild server-side, mais c'est un fallback rapide)
-  _coachContext = {
-    map: (mapName || '').replace('de_', '').toUpperCase(),
-    score: [c.team3Score, c.team2Score],
-    winner: c.winner === 3 ? 'CT' : c.winner === 2 ? 'T' : '-',
-    rounds: c.totalRounds,
-    targetPlayer: you ? {
-      name: you.name, fvr: you.fvr, kast: you.kast, adr: you.adr,
-      hsPct: you.hsPct, kd: you.diff, kills: you.kills, deaths: you.deaths,
-      fk: you.fk, fd: you.fd,
-    } : null,
-    matchStats: (c.stats || []).map(p => ({
-      name: p.name, team: p.team === 3 ? 'CT' : 'T',
-      fvr: p.fvr, kast: p.kast, adr: p.adr, hsPct: p.hsPct,
-      kills: p.kills, deaths: p.deaths,
-    })),
-  };
+    // Build context client-side pour l'envoyer au 1er message
+    // (le backend peut le rebuild server-side, mais c'est un fallback rapide)
+    _coachContext = {
+      map: (mapName || '').replace('de_', '').toUpperCase(),
+      score: [c?.team3Score || 0, c?.team2Score || 0],
+      winner: c?.winner === 3 ? 'CT' : c?.winner === 2 ? 'T' : '-',
+      rounds: c?.totalRounds || 0,
+      targetPlayer: you ? {
+        name: you.name, fvr: you.fvr, kast: you.kast, adr: you.adr,
+        hsPct: you.hsPct, kd: you.diff, kills: you.kills, deaths: you.deaths,
+        fk: you.fk, fd: you.fd,
+      } : null,
+      matchStats: (c?.stats || []).map(p => ({
+        name: p.name, team: p.team === 3 ? 'CT' : 'T',
+        fvr: p.fvr, kast: p.kast, adr: p.adr, hsPct: p.hsPct,
+        kills: p.kills, deaths: p.deaths,
+      })),
+    };
 
-  _coachDemoId = getDemoId();
+    _coachDemoId = getDemoId();
 
-  // Auth + plan check + load existing conversation
-  await coachLoadConversation();
+    // Auth + plan check + load existing conversation
+    await coachLoadConversation();
 
-  // Render selon plan
-  if (_coachPlan === 'free' || _coachPlan === 'anon') {
-    coachShowLocked();
-    return;
+    // Render selon plan : seul ELITE a acces (Free / Pro / anon = locked)
+    if (_coachPlan !== 'elite') {
+      coachShowLocked();
+      return;
+    }
+
+    // Elite : prepare suggestions + input
+    coachShowChat();
+    renderCoachSuggestions(you);
+    coachRenderMessages();
+    coachUpdateMeta();
+  } catch (err) {
+    // En cas d'erreur (network, fetch, etc.), on affiche au moins le state
+    // locked plutot que de laisser une card vide (UX better than crash silently).
+    console.warn('[coach-chat] initCoachChat failed:', err.message);
+    try { coachShowLocked(); } catch (_) { /* noop */ }
   }
-
-  // Pro/Elite : prepare suggestions + input
-  coachShowChat();
-  renderCoachSuggestions(you);
-  coachRenderMessages();
-  coachUpdateMeta();
 }
 
 async function coachLoadConversation() {
@@ -1127,8 +1135,10 @@ async function coachLoadConversation() {
     const { data: { session } } = await _sb.auth.getSession();
     if (!session) { _coachPlan = 'anon'; return; }
     if (!_coachDemoId) {
-      // Pas de demo_id -> on ne peut pas avoir de conversation persistante
-      _coachPlan = 'pro'; // fallback : on suppose Pro pour montrer l'UI
+      // Pas de demo_id -> on ne peut pas avoir de conversation persistante,
+      // on stay en 'free' pour afficher le state Locked plutot que d'envoyer
+      // un POST qui va echouer cote backend.
+      _coachPlan = 'free';
       return;
     }
     const r = await fetch('/api/coach-conversational?demo_id=' + encodeURIComponent(_coachDemoId), {
@@ -1141,7 +1151,9 @@ async function coachLoadConversation() {
     _coachMessages = data.messages || [];
   } catch (e) {
     console.warn('[coach-chat] load conversation failed:', e.message);
-    _coachPlan = 'pro'; // fallback optimiste pour pas bloquer l'UI
+    // Pas de fallback optimiste : on bloque sur Locked si on ne peut pas verifier
+    // le plan (eviter d'afficher un chat qui va 403 au 1er message envoye).
+    _coachPlan = 'free';
   }
 }
 
@@ -1334,11 +1346,12 @@ function coachOpenRound(roundNum, tick) {
 function coachUpdateMeta() {
   const meta = document.getElementById('coachChatMeta');
   if (!meta) return;
-  const limit = _coachPlan === 'elite' ? 200 : 60;
+  // Feature Elite-only : limite fixe 200/jour
+  const limit = 200;
   const count = _coachMessages.filter(m => m.role === 'user').length;
   meta.textContent = count + ' / ' + limit + ' aujourd\'hui';
   const limitInfo = document.getElementById('coachLimitInfo');
-  if (limitInfo) limitInfo.textContent = 'Plan ' + _coachPlan + ' · ' + limit + ' msg/jour';
+  if (limitInfo) limitInfo.textContent = 'Elite · ' + limit + ' msg/jour';
 }
 
 // Envoi message avec streaming SSE (premier token < 2s, cancel mid-gen).

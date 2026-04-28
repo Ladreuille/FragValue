@@ -25,9 +25,8 @@
 //     - messages         : [{ role, content, refs, created_at }, ...]
 //     - history_count    : N
 //
-// AUTH : require Pro/Elite. Free = redirect upgrade.
+// AUTH : require Elite. Free + Pro = redirect upgrade (feature exclusive Elite).
 // RATE LIMIT :
-//   - Pro    : 60 messages/jour (limite douce, cost control)
 //   - Elite  : 200 messages/jour
 //   - Admin  : illimite
 //   - Reset  : un user peut reset 1 conversation/heure
@@ -45,7 +44,7 @@
 //   - Refus poli si question hors-scope (matchmaking, hardware, etc.)
 
 const { createClient } = require('@supabase/supabase-js');
-const { requirePro, getUserPlan } = require('./_lib/subscription');
+const { requireElite, getUserPlan } = require('./_lib/subscription');
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 // Sonnet 4.5 par defaut : qualite >> Haiku pour coaching contextualise.
@@ -60,10 +59,9 @@ const ROLLING_WINDOW = 10; // nb messages d'historique inclus dans le prompt
 const SOFT_CAP_CONVERSATION = 50;
 const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
 
-// Hard caps tier-aware (cf. ultrareview cost analysis : 1000 users x 50 q/jour
-// avec cache 1h = ~$750/jour, soutenable). Soft warning UX cote frontend.
+// Feature Elite-only : hard cap 200/jour (cf. ultrareview cost analysis :
+// avec cache 1h = ~$3.5/user/jour pour 50 q/jour, soutenable a Elite tarif).
 const DAILY_LIMITS = {
-  pro:   100,
   elite: 200,
 };
 const HARD_LIMIT_ABSOLUTE = 250; // anti-abuse meme admin override possible
@@ -743,8 +741,10 @@ module.exports = async function handler(req, res) {
   // ── POST : nouveau message dans la conversation ──
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Plan check : require Pro ou Elite (Free n'a pas acces, c'est un Pro feature)
-  const gate = await requirePro(req, res);
+  // Plan check : require ELITE uniquement (Free + Pro n'ont pas acces).
+  // Cette feature est exclusive Elite : streaming temps reel, lexique CS2 pro,
+  // 200 messages/jour, replays cliquables. Differenciateur principal du plan.
+  const gate = await requireElite(req, res);
   if (!gate) return; // 401/403 deja envoye
   const { user, plan } = gate;
   const isAdmin = user.email && ADMIN_EMAILS.includes(user.email);
@@ -816,14 +816,14 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: `Message trop long (max ${MAX_MESSAGE_LEN} chars)` });
   }
 
-  // Rate limit (Pro 60/jour, Elite 200/jour, admin illimite)
+  // Rate limit Elite : 200 messages/jour (admin illimite, hard cap 250 anti-abuse)
   if (!isAdmin) {
-    const limit = DAILY_LIMITS[plan] || DAILY_LIMITS.pro;
+    const limit = DAILY_LIMITS.elite;
     const used = await countTodayUserMessages(supabase, user.id);
     if (used >= limit) {
       return res.status(429).json({
         error: 'Limite quotidienne atteinte',
-        message: `Tu as atteint ta limite de ${limit} messages par jour (plan ${plan}). ${plan === 'pro' ? 'Passe en Elite pour 200/jour.' : 'Reviens demain.'}`,
+        message: `Tu as atteint ta limite de ${limit} messages par jour. Reviens demain.`,
         used, limit, plan,
       });
     }
