@@ -351,6 +351,76 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .qa-response-meta{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:14px;padding-top:10px;border-top:1px solid var(--border);letter-spacing:.04em}
 @keyframes qa-fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
+/* ─── COACH CONVERSATIONAL · chat multi-turn ──────────────────────────── */
+.coach-chat-card{padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:720px}
+.coach-chat-head{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;background:linear-gradient(180deg,rgba(184,255,87,.04),rgba(184,255,87,0))}
+.coach-chat-title{display:flex;align-items:center;gap:10px}
+.coach-chat-title-h{font-family:var(--display);font-size:16px;letter-spacing:.02em;color:var(--text)}
+.coach-chat-badge{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;background:rgba(184,255,87,.1);color:var(--accent);padding:2px 8px;border-radius:3px;border:1px solid rgba(184,255,87,.25)}
+.coach-chat-actions{display:flex;gap:6px;align-items:center}
+.coach-chat-action{background:transparent;border:1px solid var(--border2);color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:.04em;padding:5px 10px;border-radius:4px;cursor:pointer;transition:all .15s}
+.coach-chat-action:hover{color:var(--text);border-color:var(--text2)}
+.coach-chat-action.danger:hover{color:var(--danger);border-color:var(--danger)}
+.coach-chat-meta{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.06em}
+
+.coach-chat-suggestions{padding:14px 22px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px}
+.coach-chat-suggestions-empty{padding:32px 22px;text-align:center}
+.coach-chat-suggestions-empty-h{font-family:var(--display);font-size:14px;letter-spacing:.02em;color:var(--text);margin-bottom:6px}
+.coach-chat-suggestions-empty-sub{font-family:var(--mono);font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:14px;max-width:400px;margin-left:auto;margin-right:auto}
+.coach-chip{background:var(--card);border:1px solid var(--border2);border-radius:40px;padding:7px 14px;font-family:var(--mono);font-size:11px;color:var(--text2);cursor:pointer;transition:all .15s;letter-spacing:.02em;text-align:left}
+.coach-chip:hover{border-color:var(--accent);color:var(--accent);background:rgba(184,255,87,.04)}
+
+.coach-chat-messages{flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:14px;min-height:200px;max-height:500px;scroll-behavior:smooth}
+.coach-msg{display:flex;flex-direction:column;gap:5px;max-width:88%;animation:coach-msg-in .25s ease}
+.coach-msg.user{align-self:flex-end;align-items:flex-end}
+.coach-msg.assistant{align-self:flex-start;align-items:flex-start}
+.coach-msg-role{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--text3)}
+.coach-msg.user .coach-msg-role{color:var(--text2)}
+.coach-msg.assistant .coach-msg-role{color:var(--accent)}
+.coach-msg-bubble{padding:11px 15px;border-radius:10px;font-size:13px;line-height:1.6;color:var(--text);max-width:100%}
+.coach-msg.user .coach-msg-bubble{background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.18);color:var(--text);border-bottom-right-radius:3px}
+.coach-msg.assistant .coach-msg-bubble{background:var(--card);border:1px solid var(--border2);border-left:2px solid var(--accent);border-bottom-left-radius:3px;white-space:pre-wrap}
+.coach-msg-time{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.04em}
+.coach-msg.thinking .coach-msg-bubble{display:inline-flex;gap:5px;padding:14px 16px}
+.coach-msg.thinking .coach-msg-bubble::after{content:'Le Coach reflechit';font-family:var(--mono);font-size:11px;color:var(--text2);animation:coach-dots 1.4s steps(4,end) infinite}
+@keyframes coach-dots{0%{opacity:.4}50%{opacity:1}100%{opacity:.4}}
+@keyframes coach-msg-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* References cliquables [R12] -> bouton vert qui ouvre le replay */
+.coach-ref-round{display:inline-flex;align-items:center;gap:3px;background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.3);border-radius:3px;padding:1px 7px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;cursor:pointer;text-decoration:none;transition:all .15s;margin:0 2px;vertical-align:middle}
+.coach-ref-round:hover{background:rgba(184,255,87,.18);transform:translateY(-1px);box-shadow:0 2px 6px rgba(184,255,87,.2)}
+.coach-ref-round svg{width:9px;height:9px}
+.coach-ref-pro{display:inline-flex;align-items:center;gap:3px;background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.3);border-radius:3px;padding:1px 7px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;cursor:pointer;text-decoration:none;transition:all .15s;margin:0 2px;vertical-align:middle}
+.coach-ref-pro:hover{background:rgba(245,200,66,.18)}
+
+.coach-chat-input-wrap{padding:14px 18px 16px;border-top:1px solid var(--border);background:var(--surface)}
+.coach-chat-input-row{display:flex;gap:8px;align-items:flex-end}
+.coach-chat-input{flex:1;background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none;resize:none;min-height:40px;max-height:120px;line-height:1.5;transition:border-color .15s}
+.coach-chat-input:focus{border-color:var(--accent)}
+.coach-chat-input::placeholder{color:var(--text3)}
+.coach-chat-send{background:var(--accent);color:#000;border:none;width:40px;height:40px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.coach-chat-send:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
+.coach-chat-send:disabled{opacity:.4;cursor:not-allowed}
+.coach-chat-input-meta{display:flex;justify-content:space-between;align-items:center;margin-top:7px;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.04em}
+.coach-chat-input-meta .over{color:var(--danger)}
+
+.coach-chat-error{margin:14px 22px;padding:10px 14px;background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.25);border-radius:6px;font-family:var(--mono);font-size:11px;color:var(--danger);line-height:1.5}
+.coach-chat-error a{color:var(--danger);font-weight:700}
+
+.coach-chat-locked{padding:38px 24px;text-align:center}
+.coach-chat-locked-h{font-family:var(--display);font-size:18px;letter-spacing:.02em;color:var(--text);margin-bottom:8px}
+.coach-chat-locked-sub{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:14px;max-width:380px;margin-left:auto;margin-right:auto}
+.coach-chat-locked-cta{display:inline-flex;background:var(--accent);color:#000;padding:9px 18px;border-radius:6px;text-decoration:none;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+
+@media(max-width:768px){
+  .coach-chat-head{padding:12px 14px}
+  .coach-chat-suggestions{padding:10px 14px}
+  .coach-chat-messages{padding:14px;max-height:380px}
+  .coach-chat-input-wrap{padding:10px 12px 12px}
+  .coach-msg{max-width:96%}
+  .coach-msg-bubble{font-size:12px;padding:10px 13px}
+}
+
 @media(max-width:768px){
   .qa-card{padding:18px 16px}
   .qa-input{font-size:12px}
@@ -534,22 +604,58 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     </div>
   </div>
 
-  <!-- 12. COACH Q&A : pose une question sur ce match a Claude IA -->
-  <div class="sl" id="section-qa">Ask your question</div>
-  <div class="card qa-card">
-    <div class="qa-intro">Une question sur ce match ? Le AI Coach te repond en se basant sur les stats et le deroulement que tu viens de voir. Limite de 10 questions par day.</div>
-    <div class="qa-suggestions" id="qaSuggestions"></div>
-    <form class="qa-form" id="qaForm" onsubmit="return submitQuestion(event)">
-      <textarea class="qa-input" id="qaInput" placeholder="Ex : Pourquoi j'ai perdu le round 14 ? What should I have done differently on CT?" maxlength="500" rows="2"></textarea>
-      <div class="qa-footer">
-        <div class="qa-counter"><span id="qaCharCount">0</span>/500</div>
-        <button type="submit" class="qa-submit" id="qaSubmitBtn">
-          <span class="qa-submit-txt">Ask the AI Coach</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button>
+  <!-- 12. AI COACH CONVERSATIONAL : chat multi-turn sur ce match -->
+  <div class="sl" id="section-qa">Discute avec ton coach IA</div>
+  <div class="card coach-chat-card" id="coachChat">
+    <!-- Header -->
+    <div class="coach-chat-head">
+      <div class="coach-chat-title">
+        <div class="coach-chat-title-h">AI Coach · sur ce match</div>
+        <span class="coach-chat-badge">Pro+</span>
       </div>
-    </form>
-    <div class="qa-response" id="qaResponse" style="display:none"></div>
+      <div class="coach-chat-actions">
+        <span class="coach-chat-meta" id="coachChatMeta">-</span>
+        <button class="coach-chat-action danger" id="coachResetBtn" type="button" onclick="coachReset()" style="display:none">Reset</button>
+      </div>
+    </div>
+
+    <!-- Locked state (Free) -->
+    <div class="coach-chat-locked" id="coachLocked" style="display:none">
+      <div class="coach-chat-locked-h">AI Coach conversationnel</div>
+      <p class="coach-chat-locked-sub">Pose autant de questions que tu veux sur ce match. Le Coach reference les rounds avec des liens cliquables qui ouvrent le replay 2D au bon moment, et compare ton style a ton pro twin. Reserve aux abonnes Pro et Elite.</p>
+      <a href="pricing.html" class="coach-chat-locked-cta">Upgrade to Pro →</a>
+    </div>
+
+    <!-- Empty state (not encore de messages) -->
+    <div class="coach-chat-suggestions-empty" id="coachEmpty" style="display:none">
+      <div class="coach-chat-suggestions-empty-h">Pose ta 1re question</div>
+      <p class="coach-chat-suggestions-empty-sub">Le AI Coach a tout le contexte du match. Il citera les rounds en [R12] que tu pourras cliquer pour ouvrir le replay 2D au bon moment. Quelques exemples pour demarrer :</p>
+    </div>
+
+    <!-- Suggestions clickables -->
+    <div class="coach-chat-suggestions" id="coachSuggestions" style="display:none"></div>
+
+    <!-- Messages list -->
+    <div class="coach-chat-messages" id="coachMessages" style="display:none"></div>
+
+    <!-- Error banner -->
+    <div class="coach-chat-error" id="coachError" style="display:none"></div>
+
+    <!-- Input bar -->
+    <div class="coach-chat-input-wrap" id="coachInputWrap" style="display:none">
+      <form id="coachForm" onsubmit="return coachSendMessage(event)">
+        <div class="coach-chat-input-row">
+          <textarea class="coach-chat-input" id="coachInput" placeholder="Pourquoi j'ai perdu round 12 ? Comment gerer le 1v3 round 18 ?" maxlength="500" rows="1" onkeydown="coachInputKeydown(event)" oninput="coachInputResize(event)"></textarea>
+          <button type="submit" class="coach-chat-send" id="coachSendBtn" aria-label="Send">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+        <div class="coach-chat-input-meta">
+          <span><span id="coachCharCount">0</span>/500 · <span id="coachLimitInfo">-</span></span>
+          <span style="opacity:.6">Entree pour envoyer · Shift+Entree pour saut de ligne</span>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -921,156 +1027,395 @@ async function init() {
   renderPerformance(kills, rounds, computed);
   renderMoments(kills, rounds, computed);
   renderCoachBilan(computed, kills, rounds);
-  initCoachQA(computed, rounds);
+  initCoachChat(computed, rounds);
 }
 
 // =====================================================================
-// COACH Q&A : pose une question sur ce match a Claude IA
+// AI COACH CONVERSATIONAL : chat multi-turn sur ce match
 // =====================================================================
-let _qaContext = null;
+// Flow :
+//   1. initCoachChat(computed, rounds) appele apres render analysis
+//   2. Build local _coachContext (stats, scoreboard) pour le 1er message
+//   3. Auth + plan check via /api/coach-conversational GET
+//   4. Render UI selon plan (locked / empty / messages)
+//   5. User envoie message -> POST -> append messages -> render
+//   6. Refs [R12] dans la reponse -> rendu en boutons cliquables qui
+//      ouvrent le replay 2D au bon round (Phase F)
+let _coachContext = null;
+let _coachConversationId = null;
+let _coachDemoId = null;
+let _coachPlan = 'free';
+let _coachMessages = []; // mirror local des messages
 
-function initCoachQA(c, rounds) {
-  // Stocke le contexte match pour construire le prompt au moment de la question
+function getDemoId() {
+  // Priorite : sessionStorage demoId set par /demo.html post-upload
+  // Fallback : URL param ?demo=xxx
+  try {
+    const stored = sessionStorage.getItem('demoId');
+    if (stored) return stored;
+  } catch {}
+  const params = new URLSearchParams(window.location.search);
+  return params.get('demo') || null;
+}
+
+async function initCoachChat(c, rounds) {
   const you = getTargetPlayer(c);
-  _qaContext = {
+
+  // Build context client-side pour l'envoyer au 1er message
+  // (le backend peut le rebuild server-side, mais c'est un fallback rapide)
+  _coachContext = {
     map: (mapName || '').replace('de_', '').toUpperCase(),
     score: [c.team3Score, c.team2Score],
     winner: c.winner === 3 ? 'CT' : c.winner === 2 ? 'T' : '-',
     rounds: c.totalRounds,
     targetPlayer: you ? {
-      name: you.name,
-      fvr: you.fvr,
-      kast: you.kast,
-      adr: you.adr,
-      hsPct: you.hsPct,
-      kd: you.diff,
-      kills: you.kills,
-      deaths: you.deaths,
-      fk: you.fk,
-      fd: you.fd,
+      name: you.name, fvr: you.fvr, kast: you.kast, adr: you.adr,
+      hsPct: you.hsPct, kd: you.diff, kills: you.kills, deaths: you.deaths,
+      fk: you.fk, fd: you.fd,
     } : null,
     matchStats: (c.stats || []).map(p => ({
-      name: p.name,
-      team: p.team === 3 ? 'CT' : 'T',
-      fvr: p.fvr,
-      kast: p.kast,
-      adr: p.adr,
-      hsPct: p.hsPct,
-      kills: p.kills,
-      deaths: p.deaths,
+      name: p.name, team: p.team === 3 ? 'CT' : 'T',
+      fvr: p.fvr, kast: p.kast, adr: p.adr, hsPct: p.hsPct,
+      kills: p.kills, deaths: p.deaths,
     })),
   };
 
-  // Suggestions de questions pre-remplies pour lever la friction de la page blanche
-  const you2 = _qaContext.targetPlayer;
-  const suggestions = [];
-  if (you2) {
-    suggestions.push("Pourquoi mon FV Rating est de " + you2.fvr.toFixed(2) + " sur ce match ?");
-    if (you2.fd > you2.fk) suggestions.push("Comment ameliorer mes duels d'ouverture ?");
-    if (you2.kast < 65) suggestions.push("Pourquoi mon KAST est bas ?");
-    suggestions.push("Sur quelle map je devrais m'entrainer d'apres ce match ?");
-    suggestions.push("Donne-moi 3 actions concretes pour progresser");
-  }
-  const sugContainer = document.getElementById('qaSuggestions');
-  if (sugContainer) {
-    sugContainer.innerHTML = suggestions.slice(0, 4).map(s =>
-      '<button type="button" class="qa-chip" onclick="fillQuestion(\'' + s.replace(/'/g, "\\'") + '\')">' + escHtml(s) + '</button>'
-    ).join('');
+  _coachDemoId = getDemoId();
+
+  // Auth + plan check + load existing conversation
+  await coachLoadConversation();
+
+  // Render selon plan
+  if (_coachPlan === 'free' || _coachPlan === 'anon') {
+    coachShowLocked();
+    return;
   }
 
-  // Counter caracteres en live
-  const input = document.getElementById('qaInput');
-  const counter = document.getElementById('qaCharCount');
-  if (input && counter) {
-    input.addEventListener('input', () => {
-      const len = input.value.length;
-      counter.textContent = len;
-      counter.parentElement.classList.toggle('over', len > 500);
+  // Pro/Elite : prepare suggestions + input
+  coachShowChat();
+  renderCoachSuggestions(you);
+  coachRenderMessages();
+  coachUpdateMeta();
+}
+
+async function coachLoadConversation() {
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) { _coachPlan = 'anon'; return; }
+    if (!_coachDemoId) {
+      // Not demo_id -> on ne peut not avoir de conversation persistante
+      _coachPlan = 'pro'; // fallback : on suppose Pro pour montrer l'UI
+      return;
+    }
+    const r = await fetch('/api/coach-conversational?demo_id=' + encodeURIComponent(_coachDemoId), {
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
     });
+    if (r.status === 401) { _coachPlan = 'anon'; return; }
+    const data = await r.json();
+    _coachPlan = data.plan || 'free';
+    _coachConversationId = data.conversation_id || null;
+    _coachMessages = data.messages || [];
+  } catch (e) {
+    console.warn('[coach-chat] load conversation failed:', e.message);
+    _coachPlan = 'pro'; // fallback optimiste pour not bloquer l'UI
   }
 }
 
-function fillQuestion(q) {
-  const input = document.getElementById('qaInput');
+function coachShowLocked() {
+  document.getElementById('coachLocked').style.display = 'block';
+  document.getElementById('coachEmpty').style.display = 'none';
+  document.getElementById('coachSuggestions').style.display = 'none';
+  document.getElementById('coachMessages').style.display = 'none';
+  document.getElementById('coachInputWrap').style.display = 'none';
+  document.getElementById('coachResetBtn').style.display = 'none';
+}
+
+function coachShowChat() {
+  document.getElementById('coachLocked').style.display = 'none';
+  document.getElementById('coachInputWrap').style.display = 'block';
+  document.getElementById('coachResetBtn').style.display = _coachMessages.length > 0 ? 'inline-block' : 'none';
+
+  // Suggestions visibles si not de messages, sinon liste de messages
+  const hasMsgs = _coachMessages.length > 0;
+  document.getElementById('coachEmpty').style.display = hasMsgs ? 'none' : 'block';
+  document.getElementById('coachSuggestions').style.display = hasMsgs ? 'none' : 'flex';
+  document.getElementById('coachMessages').style.display = hasMsgs ? 'flex' : 'none';
+}
+
+function renderCoachSuggestions(you) {
+  const container = document.getElementById('coachSuggestions');
+  if (!container) return;
+  const suggestions = [];
+  if (you) {
+    suggestions.push('Pourquoi mon FV Rating est de ' + (you.fvr || 0).toFixed(2) + ' sur ce match ?');
+    if (you.fd > you.fk) suggestions.push('Comment ameliorer mes duels d\'ouverture ?');
+    if (you.kast < 65) suggestions.push('Pourquoi mon KAST est si bas ?');
+    suggestions.push('Mes 3 plus grosses erreurs sur ce match ?');
+    suggestions.push('Donne-moi 3 actions concretes pour progresser');
+  } else {
+    suggestions.push('Quel est le bilan de ce match ?');
+    suggestions.push('Quelles sont les decisions clefs des perdants ?');
+  }
+  container.innerHTML = suggestions.slice(0, 5).map(s =>
+    '<button type="button" class="coach-chip" onclick="coachUseSuggestion(' +
+    JSON.stringify(s).replace(/"/g, '&quot;') + ')">' + escHtml(s) + '</button>'
+  ).join('');
+}
+
+function coachUseSuggestion(text) {
+  const input = document.getElementById('coachInput');
   if (!input) return;
-  input.value = q;
+  input.value = text;
   input.focus();
-  document.getElementById('qaCharCount').textContent = q.length;
+  document.getElementById('coachCharCount').textContent = text.length;
+  coachInputResize({ target: input });
 }
 
-async function submitQuestion(e) {
-  e.preventDefault();
-  const input = document.getElementById('qaInput');
-  const btn = document.getElementById('qaSubmitBtn');
-  const resp = document.getElementById('qaResponse');
-  const question = input.value.trim();
+// Rend la liste des messages avec parsing des refs [R12] cliquables
+function coachRenderMessages() {
+  const container = document.getElementById('coachMessages');
+  if (!container) return;
+  if (_coachMessages.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = _coachMessages.map(m => {
+    const roleLbl = m.role === 'user' ? 'You' : 'AI Coach';
+    const time = m.created_at ? new Date(m.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
+    const content = m.role === 'assistant' ? renderCoachResponse(m.content) : escHtml(m.content);
+    return '<div class="coach-msg ' + m.role + '">'
+      + '<div class="coach-msg-role">' + roleLbl + '</div>'
+      + '<div class="coach-msg-bubble">' + content + '</div>'
+      + (time ? '<div class="coach-msg-time">' + time + '</div>' : '')
+    + '</div>';
+  }).join('');
+  // Auto-scroll en bas
+  setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+}
 
-  if (!question) {
-    input.focus();
+// Parse les XML cite tags emis par Claude et les rend en HTML cliquable.
+// Format Anthropic-recommended (cf. ultrareview : Claude entraine sur XML).
+// Tout le reste du texte est echappe HTML pour XSS protection.
+//
+// Tags reconnus :
+//   <cite r="12">round 12</cite>           -> bouton round cliquable
+//   <cite r="12" t="34567">moment</cite>   -> round + tick precis
+//   <cite duel="r12-d3">le 1v3</cite>       -> duel (visuel = round)
+//   <cite pos="A-site">A-site</cite>        -> position map (badge)
+//   <cite pro="zywoo-r5">[▶]</cite>          -> clip pro (badge gold)
+//
+// Backward compat : [R12] format toujours supporte (au cas or).
+function renderCoachResponse(text) {
+  if (!text) return '';
+  const tokens = [];
+  // Match XML cite tags + legacy [R12] format
+  const regex = /<cite\s+([^>]+)>([^<]*)<\/cite>|\[R(\d+)(?:-R(\d+))?\]/g;
+  let lastIdx = 0;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > lastIdx) tokens.push({ type: 'text', value: text.slice(lastIdx, m.index) });
+    if (m[1]) {
+      // <cite ...>...</cite>
+      const attrs = parseCiteAttrs(m[1]);
+      const inner = m[2] || '';
+      tokens.push({ type: 'cite', attrs, inner });
+    } else if (m[3]) {
+      // Legacy [R12] / [R12-R15]
+      tokens.push({ type: 'cite', attrs: { r: m[3], end: m[4] || null }, inner: 'R' + m[3] + (m[4] ? '-R' + m[4] : '') });
+    }
+    lastIdx = m.index + m[0].length;
+  }
+  if (lastIdx < text.length) tokens.push({ type: 'text', value: text.slice(lastIdx) });
+
+  return tokens.map(t => {
+    if (t.type === 'text') return escHtml(t.value);
+    if (t.type === 'cite') return renderCiteToken(t.attrs, t.inner);
+    return '';
+  }).join('');
+}
+
+function parseCiteAttrs(attrsStr) {
+  const out = {};
+  const re = /(\w+)="([^"]*)"/g;
+  let m;
+  while ((m = re.exec(attrsStr)) !== null) out[m[1]] = m[2];
+  return out;
+}
+
+function renderCiteToken(attrs, inner) {
+  // Round single or range
+  if (attrs.r) {
+    const r = parseInt(attrs.r, 10);
+    if (isNaN(r)) return escHtml(inner);
+    const tick = attrs.t ? parseInt(attrs.t, 10) : null;
+    const lbl = inner && inner.length <= 18 ? inner : 'R' + r;
+    const tickAttr = (!isNaN(tick) && tick > 0) ? ('&tick=' + tick) : '';
+    return '<a class="coach-ref-round" onclick="coachOpenRound(' + r + ',' + (tick || 'null') + ');return false" href="#" title="Ouvrir round ' + r + ' dans le replay 2D">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
+      + escHtml(lbl) + '</a>';
+  }
+  // Pro reference (badge gold, not cliquable pour MVP)
+  if (attrs.pro) {
+    return '<span class="coach-ref-pro" title="Reference pro">' + escHtml(inner || attrs.pro) + '</span>';
+  }
+  // Duel or position : badge informatif (peut etre cliquable plus tard)
+  if (attrs.duel || attrs.pos) {
+    return '<span class="coach-ref-pro" title="' + escHtml(attrs.duel || attrs.pos) + '">' + escHtml(inner) + '</span>';
+  }
+  return escHtml(inner);
+}
+
+// Click sur [R12] -> ouvre le replay 2D au bon round.
+// On utilise une URL replay.html?demo=<demoId>&round=<n> ; replay.html
+// supporte le param round pour jump direct (Phase F).
+function coachOpenRound(roundNum, tick) {
+  if (!_coachDemoId) {
+    alert('Demo ID introuvable, impossible d\'ouvrir le replay.');
+    return;
+  }
+  let url = '/replay.html?demo=' + encodeURIComponent(_coachDemoId) + '&round=' + roundNum;
+  if (tick && !isNaN(tick) && tick > 0) url += '&tick=' + tick;
+  window.open(url, '_blank', 'noopener');
+}
+
+function coachUpdateMeta() {
+  const meta = document.getElementById('coachChatMeta');
+  if (!meta) return;
+  const limit = _coachPlan === 'elite' ? 200 : 60;
+  const count = _coachMessages.filter(m => m.role === 'user').length;
+  meta.textContent = count + ' / ' + limit + ' aujourd\'hui';
+  const limitInfo = document.getElementById('coachLimitInfo');
+  if (limitInfo) limitInfo.textContent = 'Plan ' + _coachPlan + ' · ' + limit + ' msg/day';
+}
+
+async function coachSendMessage(e) {
+  if (e) e.preventDefault();
+  const input = document.getElementById('coachInput');
+  const btn = document.getElementById('coachSendBtn');
+  const errEl = document.getElementById('coachError');
+  const message = (input.value || '').trim();
+  if (!message) { input.focus(); return false; }
+  if (message.length > 500) {
+    coachShowError('Message trop long (max 500 caracteres).');
     return false;
   }
-  if (question.length > 500) {
-    showQAResponse('La question est trop longue (500 caracteres max).', null, true);
-    return false;
-  }
 
-  // Check session auth
   const { data: { session } } = await _sb.auth.getSession();
   if (!session) {
-    showQAResponse('Sign in pour utiliser le AI Coach.', null, true);
+    coachShowError('Sign in pour utiliser le AI Coach.');
     return false;
   }
 
+  // UI : append user msg + thinking placeholder, hide suggestions
+  _coachMessages.push({ role: 'user', content: message, refs: {}, created_at: new Date().toISOString() });
+  _coachMessages.push({ role: 'thinking', content: '', refs: {}, created_at: new Date().toISOString() });
+  document.getElementById('coachEmpty').style.display = 'none';
+  document.getElementById('coachSuggestions').style.display = 'none';
+  document.getElementById('coachMessages').style.display = 'flex';
+  document.getElementById('coachResetBtn').style.display = 'inline-block';
+  coachRenderMessages();
+
+  input.value = '';
+  document.getElementById('coachCharCount').textContent = '0';
+  input.style.height = 'auto';
   btn.disabled = true;
-  btn.classList.add('loading');
-  const btnTxt = btn.querySelector('.qa-submit-txt');
-  const originalLabel = btnTxt.textContent;
-  btnTxt.textContent = 'Le Coach reflechit';
-  resp.style.display = 'none';
+  errEl.style.display = 'none';
 
   try {
-    const res = await fetch('/api/coach-qa', {
+    const r = await fetch('/api/coach-conversational', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + session.access_token,
-      },
-      body: JSON.stringify({ question, context: _qaContext }),
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({
+        demo_id: _coachDemoId,
+        message,
+        context: _coachContext, // backend rebuild si null, sinon passthrough
+      }),
     });
-    const data = await res.json();
+    const data = await r.json();
 
-    if (!res.ok) {
-      if (res.status === 403) {
-        showQAResponse(data.message || 'Feature Pro uniquement.', null, true);
-      } else if (res.status === 429) {
-        showQAResponse(data.message || 'Tu as atteint ta limite quotidienne.', null, true);
-      } else {
-        showQAResponse(data.message || data.error || 'Error lors de la requete.', null, true);
+    // Retire le thinking placeholder
+    _coachMessages = _coachMessages.filter(m => m.role !== 'thinking');
+
+    if (!r.ok) {
+      // Si rate limit or plan, on retire aussi le user msg pour not polluer l'historique local
+      if (r.status === 429 || r.status === 403) {
+        _coachMessages.pop();
       }
+      coachShowError(data.message || data.error || ('Error ' + r.status));
+      coachRenderMessages();
       return false;
     }
-    showQAResponse(data.answer, data.tokensUsed, false);
+
+    // Append la reponse assistant
+    _coachMessages.push({
+      role: 'assistant',
+      content: data.answer,
+      refs: data.refs || {},
+      created_at: new Date().toISOString(),
+    });
+    _coachConversationId = data.conversation_id;
+    coachRenderMessages();
+    coachUpdateMeta();
   } catch (err) {
-    showQAResponse('Error reseau : ' + (err.message || 'inconnue'), null, true);
+    _coachMessages = _coachMessages.filter(m => m.role !== 'thinking');
+    coachShowError('Error reseau : ' + (err.message || 'inconnue'));
+    coachRenderMessages();
   } finally {
     btn.disabled = false;
-    btn.classList.remove('loading');
-    btnTxt.textContent = originalLabel;
+    input.focus();
   }
   return false;
 }
 
-function showQAResponse(text, tokens, isError) {
-  const resp = document.getElementById('qaResponse');
-  resp.className = 'qa-response' + (isError ? ' error' : '');
-  const label = isError ? 'Error' : 'Reponse du AI Coach';
-  const icon = isError
-    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
-    : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>';
-  const meta = tokens ? '<div class="qa-response-meta">' + tokens + ' tokens · Claude Haiku 4.5</div>' : '';
-  resp.innerHTML = '<div class="qa-response-label">' + icon + label + '</div><div class="qa-response-text">' + escHtml(text) + '</div>' + meta;
-  resp.style.display = 'block';
-  resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+function coachShowError(msg) {
+  const el = document.getElementById('coachError');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 8000);
+}
+
+async function coachReset() {
+  if (!confirm('Reset cette conversation ? L\'historique sera supprime.')) return;
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) return;
+    await fetch('/api/coach-conversational', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ demo_id: _coachDemoId, reset: true }),
+    });
+    _coachMessages = [];
+    _coachConversationId = null;
+    coachShowChat();
+    coachUpdateMeta();
+    document.getElementById('coachEmpty').style.display = 'block';
+    document.getElementById('coachSuggestions').style.display = 'flex';
+    document.getElementById('coachMessages').style.display = 'none';
+    document.getElementById('coachResetBtn').style.display = 'none';
+  } catch (e) {
+    coachShowError('Reset failed: ' + e.message);
+  }
+}
+
+// Input handlers : auto-resize + Enter to send (Shift+Enter = newline)
+function coachInputKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    coachSendMessage(e);
+  }
+}
+function coachInputResize(e) {
+  const input = e.target || document.getElementById('coachInput');
+  if (!input) return;
+  input.style.height = 'auto';
+  input.style.height = Math.min(120, input.scrollHeight) + 'px';
+  const counter = document.getElementById('coachCharCount');
+  if (counter) {
+    const len = input.value.length;
+    counter.textContent = len;
+    counter.parentElement.classList.toggle('over', len > 500);
+  }
 }
 
 // =====================================================================
