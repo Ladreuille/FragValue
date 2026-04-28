@@ -382,9 +382,31 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .coach-msg.assistant .coach-msg-bubble{background:var(--card);border:1px solid var(--border2);border-left:2px solid var(--accent);border-bottom-left-radius:3px;white-space:pre-wrap}
 .coach-msg-time{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.04em}
 .coach-msg.thinking .coach-msg-bubble{display:inline-flex;gap:5px;padding:14px 16px}
-.coach-msg.thinking .coach-msg-bubble::after{content:'Le Coach reflechit';font-family:var(--mono);font-size:11px;color:var(--text2);animation:coach-dots 1.4s steps(4,end) infinite}
-@keyframes coach-dots{0%{opacity:.4}50%{opacity:1}100%{opacity:.4}}
+.coach-msg.thinking .coach-msg-bubble::after{content:'Le Coach reflechit';font-family:var(--mono);font-size:11px;color:var(--text2);animation:coach-pulse 1.4s steps(4,end) infinite}
+@keyframes coach-pulse{0%{opacity:.4}50%{opacity:1}100%{opacity:.4}}
 @keyframes coach-msg-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Curseur clignotant pendant streaming SSE */
+.coach-cursor{display:inline-block;width:6px;height:13px;background:var(--accent);margin-left:3px;vertical-align:text-bottom;animation:coach-blink 1s step-end infinite;border-radius:1px}
+@keyframes coach-blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+
+/* Skeleton avant le 1er token : "Le Coach analyse le match..." */
+.coach-skeleton{font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.02em;animation:coach-pulse 1.4s ease-in-out infinite}
+.coach-dots::after{content:'...';display:inline-block;width:18px;text-align:left;animation:coach-typing 1.2s steps(4,end) infinite}
+@keyframes coach-typing{0%{content:''}25%{content:'.'}50%{content:'..'}75%,100%{content:'...'}}
+
+/* Bouton stop pendant streaming */
+.coach-chat-send.streaming{background:var(--danger,#ff4444);color:#fff}
+.coach-chat-send.streaming:hover{filter:brightness(1.1)}
+.coach-chat-send svg{width:14px;height:14px}
+
+/* Actions sous les messages assistant : copier, regenerer */
+.coach-msg-actions{display:flex;gap:4px;margin-top:2px;opacity:0;transition:opacity .15s}
+.coach-msg.assistant:hover .coach-msg-actions{opacity:1}
+.coach-msg.assistant.streaming .coach-msg-actions{display:none}
+.coach-action-btn{background:transparent;border:1px solid var(--border2);color:var(--text3);font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:3px 7px;border-radius:3px;cursor:pointer;text-transform:uppercase;transition:all .12s}
+.coach-action-btn:hover{color:var(--text);border-color:var(--text2);background:var(--card)}
+.coach-action-btn.copied{color:var(--accent);border-color:var(--accent)}
 
 /* References cliquables [R12] -> bouton vert qui ouvre le replay */
 .coach-ref-round{display:inline-flex;align-items:center;gap:3px;background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.3);border-radius:3px;padding:1px 7px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;cursor:pointer;text-decoration:none;transition:all .15s;margin:0 2px;vertical-align:middle}
@@ -1046,6 +1068,8 @@ let _coachConversationId = null;
 let _coachDemoId = null;
 let _coachPlan = 'free';
 let _coachMessages = []; // mirror local des messages
+let _coachAbortCtrl = null; // AbortController du stream en cours
+let _coachStreaming = false;
 
 function getDemoId() {
   // Priorite : sessionStorage demoId set par /demo.html post-upload
@@ -1171,7 +1195,9 @@ function coachUseSuggestion(text) {
   coachInputResize({ target: input });
 }
 
-// Rend la liste des messages avec parsing des refs [R12] cliquables
+// Rend la liste des messages avec parsing des refs [R12] cliquables.
+// Si un message a `streaming: true`, on ajoute un curseur clignotant a la fin
+// pour signaler la generation en cours.
 function coachRenderMessages() {
   const container = document.getElementById('coachMessages');
   if (!container) return;
@@ -1179,14 +1205,41 @@ function coachRenderMessages() {
     container.innerHTML = '';
     return;
   }
-  container.innerHTML = _coachMessages.map(m => {
+  container.innerHTML = _coachMessages.map((m, idx) => {
+    if (m.role === 'thinking') {
+      return '<div class="coach-msg assistant thinking">'
+        + '<div class="coach-msg-role">Coach IA</div>'
+        + '<div class="coach-msg-bubble"></div>'
+      + '</div>';
+    }
     const roleLbl = m.role === 'user' ? 'Toi' : 'Coach IA';
     const time = m.created_at ? new Date(m.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
-    const content = m.role === 'assistant' ? renderCoachResponse(m.content) : escHtml(m.content);
-    return '<div class="coach-msg ' + m.role + '">'
+    let content;
+    let actions = '';
+    if (m.role === 'assistant') {
+      content = renderCoachResponse(m.content || '');
+      if (m.streaming) content += '<span class="coach-cursor"></span>';
+      // Cas streaming sans aucun token recu : skeleton "Le Coach reflechit..."
+      if (m.streaming && !m.content) {
+        content = '<span class="coach-skeleton">Le Coach analyse le match<span class="coach-dots"></span></span>';
+      }
+      // Boutons d'action sous le bubble assistant (copier / regenerer)
+      if (!m.streaming && m.content) {
+        const isLast = idx === _coachMessages.length - 1;
+        actions = '<div class="coach-msg-actions">'
+          + '<button class="coach-action-btn" type="button" onclick="coachCopyMsg(' + idx + ', this)">Copier</button>'
+          + (isLast ? '<button class="coach-action-btn" type="button" onclick="coachRegenMsg()">Regenerer</button>' : '')
+        + '</div>';
+      }
+    } else {
+      content = escHtml(m.content);
+    }
+    const cls = 'coach-msg ' + m.role + (m.streaming ? ' streaming' : '');
+    return '<div class="' + cls + '">'
       + '<div class="coach-msg-role">' + roleLbl + '</div>'
       + '<div class="coach-msg-bubble">' + content + '</div>'
       + (time ? '<div class="coach-msg-time">' + time + '</div>' : '')
+      + actions
     + '</div>';
   }).join('');
   // Auto-scroll en bas
@@ -1288,8 +1341,18 @@ function coachUpdateMeta() {
   if (limitInfo) limitInfo.textContent = 'Plan ' + _coachPlan + ' · ' + limit + ' msg/jour';
 }
 
+// Envoi message avec streaming SSE (premier token < 2s, cancel mid-gen).
+// Strategy :
+//   1. POST avec body.stream=true + Accept: text/event-stream
+//   2. Lit body via ReadableStream + decode chunks
+//   3. Parse SSE events (event: xxx \n data: {...} \n\n)
+//   4. Append text au bubble assistant en live
+//   5. Sur "done" event -> finalise refs/message_id/meta
+//   6. Cancel via AbortController (bouton Stop -> coachStop())
+//   7. Fallback automatique sur JSON si streaming impossible (Safari old, etc.)
 async function coachSendMessage(e) {
   if (e) e.preventDefault();
+  if (_coachStreaming) return false; // protection double-submit
   const input = document.getElementById('coachInput');
   const btn = document.getElementById('coachSendBtn');
   const errEl = document.getElementById('coachError');
@@ -1306,9 +1369,16 @@ async function coachSendMessage(e) {
     return false;
   }
 
-  // UI : append user msg + thinking placeholder, hide suggestions
-  _coachMessages.push({ role: 'user', content: message, refs: {}, created_at: new Date().toISOString() });
-  _coachMessages.push({ role: 'thinking', content: '', refs: {}, created_at: new Date().toISOString() });
+  // UI : append user msg + assistant streaming placeholder
+  _coachMessages.push({
+    role: 'user', content: message, refs: {},
+    created_at: new Date().toISOString(),
+  });
+  _coachMessages.push({
+    role: 'assistant', content: '', refs: {},
+    streaming: true,
+    created_at: new Date().toISOString(),
+  });
   document.getElementById('coachEmpty').style.display = 'none';
   document.getElementById('coachSuggestions').style.display = 'none';
   document.getElementById('coachMessages').style.display = 'flex';
@@ -1318,53 +1388,256 @@ async function coachSendMessage(e) {
   input.value = '';
   document.getElementById('coachCharCount').textContent = '0';
   input.style.height = 'auto';
-  btn.disabled = true;
   errEl.style.display = 'none';
+
+  // UI streaming state : transforme send btn en "Stop"
+  _coachStreaming = true;
+  _coachAbortCtrl = new AbortController();
+  coachSetStreamingUI(true);
+
+  let assistantIdx = _coachMessages.length - 1; // index du msg assistant qu'on remplit
+  let streamFailed = false;
+  let receivedAny = false;
 
   try {
     const r = await fetch('/api/coach-conversational', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
       body: JSON.stringify({
         demo_id: _coachDemoId,
         message,
-        context: _coachContext, // backend rebuild si null, sinon passthrough
+        context: _coachContext,
+        stream: true,
       }),
+      signal: _coachAbortCtrl.signal,
     });
-    const data = await r.json();
 
-    // Retire le thinking placeholder
-    _coachMessages = _coachMessages.filter(m => m.role !== 'thinking');
-
+    // Erreur HTTP avant stream (rate limit, soft cap, plan) -> JSON probable
     if (!r.ok) {
-      // Si rate limit ou plan, on retire aussi le user msg pour pas polluer l'historique local
+      let data = {};
+      try { data = await r.json(); } catch (_) { /* HTML err */ }
       if (r.status === 429 || r.status === 403) {
-        _coachMessages.pop();
+        // Retire user msg + assistant placeholder pour pas polluer l'historique
+        _coachMessages.splice(assistantIdx - 1, 2);
+      } else {
+        // Garde user msg, retire assistant placeholder
+        _coachMessages.splice(assistantIdx, 1);
       }
       coachShowError(data.message || data.error || ('Erreur ' + r.status));
       coachRenderMessages();
       return false;
     }
 
-    // Append la reponse assistant
-    _coachMessages.push({
-      role: 'assistant',
-      content: data.answer,
-      refs: data.refs || {},
-      created_at: new Date().toISOString(),
-    });
-    _coachConversationId = data.conversation_id;
+    // Si le serveur n'a pas streamé (Content-Type JSON), fallback
+    const ct = r.headers.get('Content-Type') || '';
+    if (!ct.includes('text/event-stream') || !r.body || !r.body.getReader) {
+      // Fallback JSON : le serveur a renvoye du JSON classique
+      const data = await r.json();
+      _coachMessages[assistantIdx] = {
+        role: 'assistant',
+        content: data.answer || '',
+        refs: data.refs || {},
+        message_id: data.message_id,
+        created_at: new Date().toISOString(),
+      };
+      _coachConversationId = data.conversation_id || _coachConversationId;
+      coachRenderMessages();
+      coachUpdateMeta();
+      return false;
+    }
+
+    // Streaming SSE
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let finalMeta = null;
+    let renderTimeout = null;
+
+    const scheduleRender = () => {
+      if (renderTimeout) return;
+      renderTimeout = setTimeout(() => {
+        renderTimeout = null;
+        coachRenderMessages();
+      }, 30); // ~33fps render rate
+    };
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      let idx;
+      while ((idx = buffer.indexOf('\n\n')) !== -1) {
+        const chunk = buffer.slice(0, idx);
+        buffer = buffer.slice(idx + 2);
+        const lines = chunk.split('\n');
+        let evt = null;
+        let dat = null;
+        for (const ln of lines) {
+          if (ln.startsWith('event: ')) evt = ln.slice(7).trim();
+          else if (ln.startsWith('data: ')) dat = ln.slice(6);
+        }
+        if (!evt || !dat) continue;
+        let parsed = null;
+        try { parsed = JSON.parse(dat); } catch (_) { continue; }
+
+        if (evt === 'conversation') {
+          _coachConversationId = parsed.conversation_id || _coachConversationId;
+        } else if (evt === 'delta' && parsed.text) {
+          receivedAny = true;
+          _coachMessages[assistantIdx].content += parsed.text;
+          scheduleRender();
+        } else if (evt === 'meta') {
+          // info modele/usage, on stocke pour debug
+          _coachMessages[assistantIdx].model = parsed.model;
+        } else if (evt === 'done') {
+          finalMeta = parsed;
+          _coachMessages[assistantIdx].refs = parsed.refs || {};
+          _coachMessages[assistantIdx].message_id = parsed.message_id;
+          _coachMessages[assistantIdx].streaming = false;
+        } else if (evt === 'error') {
+          streamFailed = true;
+          if (!receivedAny) {
+            _coachMessages.splice(assistantIdx, 1);
+          } else {
+            _coachMessages[assistantIdx].streaming = false;
+          }
+          coachShowError(parsed.error || 'Erreur Claude');
+        }
+      }
+    }
+
+    if (renderTimeout) { clearTimeout(renderTimeout); renderTimeout = null; }
+    _coachMessages[assistantIdx].streaming = false;
     coachRenderMessages();
     coachUpdateMeta();
   } catch (err) {
-    _coachMessages = _coachMessages.filter(m => m.role !== 'thinking');
-    coachShowError('Erreur reseau : ' + (err.message || 'inconnue'));
-    coachRenderMessages();
+    if (err.name === 'AbortError') {
+      // User a clique Stop : on garde ce qui a ete recu et on flag interrompu
+      if (_coachMessages[assistantIdx]) {
+        _coachMessages[assistantIdx].streaming = false;
+        if (!_coachMessages[assistantIdx].content) {
+          _coachMessages.splice(assistantIdx, 1);
+        } else {
+          _coachMessages[assistantIdx].content += '\n\n_(reponse interrompue)_';
+        }
+      }
+      coachRenderMessages();
+    } else {
+      // Erreur reseau : retire l'assistant placeholder
+      if (_coachMessages[assistantIdx] && !receivedAny) {
+        _coachMessages.splice(assistantIdx, 1);
+      } else if (_coachMessages[assistantIdx]) {
+        _coachMessages[assistantIdx].streaming = false;
+      }
+      coachShowError('Erreur reseau : ' + (err.message || 'inconnue'));
+      coachRenderMessages();
+    }
   } finally {
-    btn.disabled = false;
+    _coachStreaming = false;
+    _coachAbortCtrl = null;
+    coachSetStreamingUI(false);
     input.focus();
   }
   return false;
+}
+
+// Stop le stream en cours (cancel mid-generation)
+function coachStop() {
+  if (_coachAbortCtrl) {
+    try { _coachAbortCtrl.abort(); } catch (_) { /* noop */ }
+  }
+}
+
+// Copie le contenu d'un message assistant dans le presse-papier (sans tags XML).
+function coachCopyMsg(idx, btn) {
+  const m = _coachMessages[idx];
+  if (!m || !m.content) return;
+  // Strip XML cite tags pour avoir un texte propre
+  const plain = m.content
+    .replace(/<cite\s+[^>]+>([^<]*)<\/cite>/g, '$1')
+    .replace(/\[R(\d+)(?:-R(\d+))?\]/g, (_, a, b) => b ? 'rounds ' + a + '-' + b : 'round ' + a);
+  navigator.clipboard?.writeText(plain).then(() => {
+    if (btn) {
+      btn.textContent = 'Copie';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copier';
+        btn.classList.remove('copied');
+      }, 1600);
+    }
+  }).catch(() => {
+    coachShowError('Impossible de copier (autorise le presse-papier).');
+  });
+}
+
+// Regenere le dernier message assistant : retire localement, retire en DB
+// via action=regenerate, puis re-stream avec la meme question.
+async function coachRegenMsg() {
+  if (_coachStreaming) return;
+  if (_coachMessages.length < 2) return;
+  const lastMsg = _coachMessages[_coachMessages.length - 1];
+  if (lastMsg.role !== 'assistant') return;
+  const userMsg = _coachMessages[_coachMessages.length - 2];
+  if (!userMsg || userMsg.role !== 'user') return;
+
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) { coachShowError('Connecte-toi d\'abord.'); return; }
+    // 1. Demande au backend de virer le dernier assistant message
+    if (lastMsg.message_id) {
+      await fetch('/api/coach-conversational?action=delete_last_assistant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({
+          demo_id: _coachDemoId,
+          message_id: lastMsg.message_id,
+        }),
+      });
+    }
+    // 2. Retire l'assistant local + retire user (sera re-push par sendMessage)
+    _coachMessages.splice(_coachMessages.length - 2, 2);
+    // 3. Re-pre-rempli l'input avec la meme question et envoie
+    const input = document.getElementById('coachInput');
+    if (input) {
+      input.value = userMsg.content;
+      document.getElementById('coachCharCount').textContent = userMsg.content.length;
+    }
+    await coachSendMessage();
+  } catch (e) {
+    coachShowError('Regenerer a echoue : ' + e.message);
+  }
+}
+
+// Toggle UI streaming : send btn devient stop btn pendant streaming
+function coachSetStreamingUI(isStreaming) {
+  const btn = document.getElementById('coachSendBtn');
+  const input = document.getElementById('coachInput');
+  if (!btn) return;
+  if (isStreaming) {
+    btn.classList.add('streaming');
+    btn.setAttribute('aria-label', 'Arreter');
+    btn.title = 'Arreter la generation';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>';
+    btn.onclick = function (e) { e.preventDefault(); coachStop(); };
+    btn.type = 'button';
+    if (input) input.disabled = true;
+  } else {
+    btn.classList.remove('streaming');
+    btn.setAttribute('aria-label', 'Envoyer');
+    btn.title = '';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+    btn.onclick = null;
+    btn.type = 'submit';
+    if (input) input.disabled = false;
+  }
 }
 
 function coachShowError(msg) {

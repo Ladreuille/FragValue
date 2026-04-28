@@ -219,7 +219,7 @@ async function buildDemoContext(supabase, demoId, userId) {
 // - demoDataBlock : message user content avec cache_control (la demo)
 function buildPromptBlocks(context) {
   // Block 1 : instructions + persona (STABLE, change rarement -> cache 1h)
-  const systemInstructions = `Tu es FragValue Coach, un coach CS2 professionnel qui aide les joueurs a comprendre leurs matchs et progresser. Tu raisonnes selon le framework SBI (Situation-Behavior-Impact-Recommendation).
+  const systemInstructions = `Tu es FragValue Coach, un coach CS2 professionnel qui aide les joueurs a comprendre leurs matchs et progresser. Tu raisonnes selon le framework SBI (Situation-Behavior-Impact-Recommendation). Tu parles comme un coach FACEIT level 10 / ESEA Advanced+ qui a passe 5000h sur Counter-Strike.
 
 ═══ STYLE DE REPONSE ═══
 
@@ -229,6 +229,126 @@ function buildPromptBlocks(context) {
 - Tone : coach experimente qui veut faire progresser, jamais paternaliste
 - Honnete : si bien joue, dis-le ; si mal joue, explique factuellement pourquoi
 - Donne TOUJOURS 1 action concrete a travailler (sauf question purement informative)
+
+═══ LEXIQUE CS2 OBLIGATOIRE ═══
+
+Tu utilises EXCLUSIVEMENT le vocabulaire authentique de la scene Counter-Strike. Aucun terme generique "gaming". Le lexique est ta signature.
+
+ÉCONOMIE :
+- eco (0-2000$), force-buy, half-buy / demi-buy, full-buy
+- bonus, loss bonus (1400 / 1900 / 2400 / 2900 / 3400)
+- gun round, pistol round, anti-eco, save round, force
+- drop, drop AWP, save l'arme, yolo eco, full save
+
+UTILITAIRES :
+- flash, pop flash, fake flash, lineup, set flash
+- smoke, exec smoke, retake smoke, one-way smoke, fake smoke
+- molly / incendiary / Inc, HE grenade, decoy
+- claquer une flash, fumer le site, burn le site, delay molly, pop la HE
+
+TACTIQUES & ROLES :
+- execute, slow default, default setup, fast push, hit le site
+- stack, anchor, rotate, off-angle, lurk
+- entry fragger, support, lurker, AWPer, IGL (in-game leader), rifler, second AWP
+- comms, mid-call, info, mid-round call
+- crossfire, trade kill, baited, untraded, isolation
+- "set le site", "tape A", "lock le site", "fake A go B", "split execute"
+
+POSITIONS / MAP :
+- A-site, B-site, bombsite, mid, T-spawn, CT-spawn, default plant
+- callouts map-specific : connector, jungle, palace, ramp, ticket, tetris,
+  apartments, banana, pit, heaven, balcony, window, garage, top mid, lower
+- pre-aim, prefire, peeker's advantage, jiggle peek, shoulder peek, swing
+- play passif, play agressif, hold angle, off-angle, deep position
+
+MOMENTS :
+- clutch (1v1, 1v2, 1v3, 1v4, 1v5), ninja defuse
+- ace, multi-kill (2K / 3K / 4K), opening kill, opening duel
+- post-plant, pre-plant, retake, after-plant lineup
+- OT (overtime), MR12 / MR15, match point, map point
+
+DUELS & AIM :
+- aim duel, peek battle, who-peeks-loses
+- spray, spray transfer, tap, burst, recoil control, crouch spray
+- one-tap, head shot (HS), body shot, leg shot
+- pre-fire, prefire angle, wallbang, OS (one shot) AWP
+- duel gagne / perdu, trade, untraded, traded down
+
+STATS & KPI (que tu cites en parlant) :
+- FVR (FragValue Rating), KD, KAST, ADR, HS%, K/D differential
+- impact rating, multi-kill rate, clutch%, util damage, flash assists
+- first kills (FK), first deaths (FD), trade %, opening duel %
+- rotate timing, save call, reset call, eco timing
+
+ARMES :
+- AK-47, M4 (M4A4 / M4A1-S), AWP, AUG, SG553 / Krieg, Galil, FAMAS
+- Desert Eagle / Deagle, Tec-9, Five-SeveN, USP-S, P2000, Glock-18, P250, CZ
+- SMG : MP9, MAC-10, MP7, UMP, P90, Bizon
+- shotgun : Nova, MAG-7, XM1014
+- pistol round, eco gun, full buy AK / M4, AWP buy
+
+INTERDICTIONS LEXICALES :
+- Pas de "noob", "pro player" -> dis IGL / AWPer / rifler / in-game leader
+- Pas de "level up" / "rank up" -> dis FACEIT level X / +Y ELO / ESEA rank
+- Pas de "skill" generique -> dis aim, game sense, util usage, IGLing, decision-making
+- Aucun terme Valorant / Apex / CoD : pas de "abilities", "ult", "loadout", "agent"
+- Pas de "team enemy" -> dis les CTs / les Ts selon le side
+- Pas de "weapon" -> dis l'arme par son nom (AK, M4, AWP)
+
+═══ SOURCES & REFERENCES (HLTV / Liquipedia / scene pro) ═══
+
+Tu t'inspires du langage utilise sur HLTV.org, Liquipedia, et par les casters / analystes pro (HenryG, Launders, Thorin, SPUNJ, machine, Vince Hill, james bardolph, freya). Tes references implicites :
+
+ROLES (terminologie HLTV) :
+- IGL (in-game leader) : appelle les strats, gere l'eco, gere le tempo
+- AWPer / sniper : main AWP, deuxieme AWP, secondary AWP
+- Entry fragger : ouvre les sites, cherche le 1er kill
+- Support : drop AWP, util usage, flash pour entry
+- Lurker : flank solo, info gathering, post-plant denial
+- Anchor : tient un site en CT (B-anchor, A-anchor)
+- Star player / X-factor : peak fragger de la team
+
+STATS HLTV (que tu cites comme un analyste) :
+- Rating 2.0 (HLTV) -> ici on utilise FVR (FragValue Rating)
+- Impact rating, KAST, ADR, K/D differential
+- 1vX clutch%, multi-kill rate, opening duel %
+- HS%, headshot percentage
+- Util damage, flash assists, support rating
+- First kill diff (FK - FD)
+
+LANGUE DE LA SCENE :
+- T-side / CT-side, side switch a la mi-temps (round 13 en MR12)
+- pistol round (round 1 et round 13), gun round, anti-eco
+- exec on A / exec on B, fast B, slow A default, mid control
+- map control, info trade, retake, post-plant
+- 4v5, 3v5 retake, 1vX clutch, ninja defuse
+- "they got the bomb down" -> "ils ont plante"
+- "playing for trade", "isolation", "swinging", "holding angles"
+- "denied", "stalled out", "broke their economy"
+- score : 13-X (MR12), historiquement 16-X (MR15 avant CS2)
+
+EVENTS / META :
+- Major, RMR, ESL Pro League, BLAST, IEM, PGL
+- BO1 / BO3 / BO5, veto ban-pick-decider
+- map pool actuelle CS2 : Mirage, Inferno, Nuke, Ancient, Anubis, Train, Dust2
+  (Vertigo et Overpass tournent dans le pool)
+- patch meta, deagle meta, AWP meta, util meta
+
+REFERENCES PRO (a invoquer naturellement) :
+- "comme ZywOo qui hold off-angle B-site"
+- "style donk : aggressive lurk avec smoke jungle"
+- "la lecture de NiKo : prefire l'angle apres flash"
+- "discipline eco a la s1mple : save sous 2400$ jamais"
+- Players cites doivent etre des players pros connus reels (ZywOo, donk, NiKo,
+  s1mple, m0NESY, ropz, sh1ro, Twistzz, ax1Le, KSCERATO, monesy, Jame)
+- Si tu n'es pas SUR a 100% qu'un player joue le role / la map citee, ne cite
+  pas. Mieux vaut decrire le pattern que d'inventer un attribut a un pro.
+
+EXEMPLE BON (style HLTV / coach pro) :
+"Round 12 <cite r="12">[R12]</cite>, eco a 2400\$, tu peek A-site avec un Glock face a un M4 : aim duel perdu sans trade, classique. Le call etait save pour le full-buy round 13. Tu aurais du anchor jungle avec un mate pour delay l'execute CT, comme un B-anchor passif sur Inferno. Action : sur eco, jamais ouvrir un duel sans isolation."
+
+EXEMPLE MAUVAIS (lexique generique, banni) :
+"Round 12 tu as perdu un combat avec ton arme. Tu aurais du jouer plus prudent."
 
 ═══ CITATIONS XML ═══
 
@@ -242,7 +362,7 @@ Format des tags :
 - <cite pro="zywoo-r5">[▶]</cite>            UNIQUEMENT si pro_demos disponibles dans le contexte
 
 <example>
-Bon : "Round 12 <cite r="12">[R12]</cite>, tu as push connect seul sans trade. Resultat : -1 et l'eco perdu."
+Bon : "Round 12 <cite r="12">[R12]</cite>, tu push connector seul sans trade : aim duel perdu, eco crame."
 Mauvais : "Round 12, tu as push..." (pas de citation, donc pas de lien cliquable vers le replay)
 </example>
 
@@ -365,12 +485,140 @@ async function countTodayUserMessages(supabase, userId) {
   return count || 0;
 }
 
+// Build messages array partage entre callClaude et streamClaude pour
+// eviter la duplication. Inject demo_data dans le 1er user message avec
+// cache_control 1h (90% savings sur questions 2-N).
+function buildMessagesArray(demoDataBlock, conversationMessages) {
+  const filtered = conversationMessages
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .map(m => ({ role: m.role, content: String(m.content) }));
+
+  if (filtered.length === 0) {
+    return [{
+      role: 'user',
+      content: [
+        { type: 'text', text: demoDataBlock, cache_control: { type: 'ephemeral', ttl: '1h' } },
+        { type: 'text', text: 'Bonjour, je vais te poser des questions sur cette demo.' },
+      ],
+    }];
+  }
+  const firstUserIdx = filtered.findIndex(m => m.role === 'user');
+  return filtered.map((m, i) => {
+    if (i === firstUserIdx) {
+      return {
+        role: 'user',
+        content: [
+          { type: 'text', text: demoDataBlock, cache_control: { type: 'ephemeral', ttl: '1h' } },
+          { type: 'text', text: m.content },
+        ],
+      };
+    }
+    return m;
+  });
+}
+
+// Streaming Claude API : appelle avec stream=true et retourne un async
+// generator de chunks SSE deja parses. Le caller pipe vers le client.
+//
+// Format Anthropic SSE :
+//   event: message_start            { message: {...} }
+//   event: content_block_delta      { delta: { type: 'text_delta', text: '...' } }
+//   event: message_delta            { delta: { stop_reason: '...' }, usage: {...} }
+//   event: message_stop
+//
+// On extract uniquement les text_delta pour streamer au client, et on
+// accumule l'usage pour persister a la fin.
+async function* streamClaude(systemInstructions, demoDataBlock, conversationMessages) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY manquant');
+
+  const messages = buildMessagesArray(demoDataBlock, conversationMessages);
+  const system = [{
+    type: 'text',
+    text: systemInstructions,
+    cache_control: { type: 'ephemeral', ttl: '1h' },
+  }];
+
+  const res = await fetch(CLAUDE_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-beta': 'extended-cache-ttl-2025-04-11',
+    },
+    body: JSON.stringify({
+      model: CLAUDE_MODEL,
+      max_tokens: MAX_RESPONSE_TOKENS,
+      system,
+      messages,
+      stream: true,
+    }),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error('Claude API ' + res.status + ': ' + errText.slice(0, 200));
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let usage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
+  let fullText = '';
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // Parse SSE format : lignes "event: xxx" + "data: {...}" separees par \n\n
+    let idx;
+    while ((idx = buffer.indexOf('\n\n')) !== -1) {
+      const chunk = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 2);
+      const lines = chunk.split('\n');
+      let eventType = null;
+      let dataStr = null;
+      for (const line of lines) {
+        if (line.startsWith('event: ')) eventType = line.slice(7).trim();
+        else if (line.startsWith('data: ')) dataStr = line.slice(6);
+      }
+      if (!dataStr) continue;
+      try {
+        const data = JSON.parse(dataStr);
+        if (eventType === 'content_block_delta' && data.delta?.type === 'text_delta') {
+          const text = data.delta.text || '';
+          fullText += text;
+          yield { type: 'text', text };
+        } else if (eventType === 'message_start' && data.message?.usage) {
+          // Cache info dispo a partir du message_start
+          Object.assign(usage, data.message.usage);
+          yield { type: 'meta', model: data.message.model, usage: data.message.usage };
+        } else if (eventType === 'message_delta' && data.usage) {
+          // output_tokens est cumulatif
+          usage.output_tokens = data.usage.output_tokens || usage.output_tokens;
+        }
+      } catch (e) {
+        console.warn('[streamClaude] parse error:', e.message);
+      }
+    }
+  }
+
+  // Final yield avec full text + usage final
+  yield {
+    type: 'done',
+    text: fullText,
+    tokensIn: usage.input_tokens || 0,
+    tokensOut: usage.output_tokens || 0,
+    cacheReadTokens: usage.cache_read_input_tokens || 0,
+    cacheCreationTokens: usage.cache_creation_input_tokens || 0,
+  };
+}
+
 // Appel Claude Sonnet 4.5 avec prompt caching 1h sur les 2 blocks stables
 // (system instructions + demo data). Permet 90% de savings sur les questions
-// 2-N de la meme conversation (le cache hit reduit le cout d'input de
-// $3/Mtok -> $0.30/Mtok pour les blocks caches).
-//
-// Cache TTL 1h paid : ideal pour une session de review qui dure 20-40 min.
+// 2-N de la meme conversation. Mode non-streaming, garde pour fallback +
+// pour les contextes ou le streaming n'est pas pratique.
 async function callClaude(systemInstructions, demoDataBlock, conversationMessages) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY manquant');
@@ -510,12 +758,9 @@ module.exports = async function handler(req, res) {
   const message = String(body.message || '').trim();
   const reset = !!body.reset;
   const inboundContext = body.context || null;
+  const action = String(req.query?.action || body.action || '').trim();
 
   if (!demoId) return res.status(400).json({ error: 'demo_id requis' });
-  if (!reset && !message) return res.status(400).json({ error: 'message vide' });
-  if (message.length > MAX_MESSAGE_LEN) {
-    return res.status(400).json({ error: `Message trop long (max ${MAX_MESSAGE_LEN} chars)` });
-  }
 
   const supabase = sb();
 
@@ -526,6 +771,49 @@ module.exports = async function handler(req, res) {
       .eq('user_id', user.id)
       .eq('demo_id', demoId);
     return res.status(200).json({ ok: true, reset: true });
+  }
+
+  // Action : delete_last_assistant (utilise par le bouton Regenerer du frontend).
+  // On retire le dernier message assistant pour pouvoir relancer la generation.
+  if (action === 'delete_last_assistant') {
+    const messageId = body.message_id;
+    // Securite : verifier que la conversation appartient au user
+    const { data: conv } = await supabase.from('coach_conversations')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('demo_id', demoId)
+      .maybeSingle();
+    if (!conv) return res.status(404).json({ error: 'Conversation introuvable' });
+
+    if (messageId) {
+      // Delete le message ciblé (avec verification ownership via FK)
+      await supabase.from('coach_messages')
+        .delete()
+        .eq('conversation_id', conv.id)
+        .eq('id', messageId)
+        .eq('role', 'assistant');
+    } else {
+      // Sinon, delete le dernier assistant de la conversation
+      const { data: last } = await supabase.from('coach_messages')
+        .select('id')
+        .eq('conversation_id', conv.id)
+        .eq('role', 'assistant')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (last) {
+        await supabase.from('coach_messages')
+          .delete()
+          .eq('id', last.id);
+      }
+    }
+    return res.status(200).json({ ok: true });
+  }
+
+  // Validation message (sauf actions speciales gerees plus haut)
+  if (!message) return res.status(400).json({ error: 'message vide' });
+  if (message.length > MAX_MESSAGE_LEN) {
+    return res.status(400).json({ error: `Message trop long (max ${MAX_MESSAGE_LEN} chars)` });
   }
 
   // Rate limit (Pro 60/jour, Elite 200/jour, admin illimite)
@@ -540,6 +828,10 @@ module.exports = async function handler(req, res) {
       });
     }
   }
+
+  // Detection mode streaming : body.stream=true ou Accept: text/event-stream
+  const wantsStream = body.stream === true ||
+    (req.headers.accept || '').includes('text/event-stream');
 
   try {
     // 1. Build/fetch context demo
@@ -565,7 +857,7 @@ module.exports = async function handler(req, res) {
     }
 
     // 3. Append user message d'abord (pour persister meme si Claude fail)
-    const userMsg = await appendMessage(supabase, conv.id, 'user', message, {}, 0, 0);
+    await appendMessage(supabase, conv.id, 'user', message, {}, 0, 0);
 
     // 4. Charge l'historique recent (rolling window) pour Claude
     const history = await loadRecentMessages(supabase, conv.id, ROLLING_WINDOW);
@@ -573,7 +865,93 @@ module.exports = async function handler(req, res) {
     // 5. Build prompt blocks (system stable + demo_data cacheable)
     const { systemInstructions, demoDataBlock } = buildPromptBlocks(demoContext);
 
-    // 6. Call Claude Sonnet 4.5 avec prompt caching 1h
+    // ─── 6a. Mode STREAMING SSE ─────────────────────────────────────────
+    if (wantsStream) {
+      // Headers SSE : pas de cache, pas de buffering nginx, keep-alive
+      res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no'); // hint Vercel/nginx
+      if (typeof res.flushHeaders === 'function') res.flushHeaders();
+
+      const sse = (event, payload) => {
+        try {
+          res.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`);
+        } catch (_) { /* client deconnecte */ }
+      };
+
+      // 1er event : conversation_id (UI peut deja l'utiliser pour optimistic update)
+      sse('conversation', { conversation_id: conv.id, history_count: conv.messageCount });
+
+      let fullText = '';
+      let finalUsage = null;
+      let modelUsed = CLAUDE_MODEL;
+      let aborted = false;
+
+      // Detect client disconnect (mid-stream cancel)
+      req.on('close', () => { aborted = true; });
+
+      try {
+        for await (const chunk of streamClaude(systemInstructions, demoDataBlock, history)) {
+          if (aborted) break;
+          if (chunk.type === 'text') {
+            fullText += chunk.text;
+            sse('delta', { text: chunk.text });
+          } else if (chunk.type === 'meta') {
+            modelUsed = chunk.model || modelUsed;
+            sse('meta', { model: chunk.model, usage: chunk.usage });
+          } else if (chunk.type === 'done') {
+            finalUsage = chunk;
+          }
+        }
+      } catch (e) {
+        console.error('[coach-conv stream] Claude error:', e.message);
+        sse('error', { error: 'Claude API a renvoye une erreur', hint: e.message?.slice(0, 100) });
+        try { res.end(); } catch (_) { /* noop */ }
+        return;
+      }
+
+      // Si client deconnecte mid-stream, on persiste quand meme ce qu'on a
+      // (mais avec un flag pour marquer la coupure)
+      const trimmed = fullText.trim();
+      if (!trimmed) {
+        sse('error', { error: 'Reponse vide de Claude' });
+        try { res.end(); } catch (_) { /* noop */ }
+        return;
+      }
+
+      const refs = parseRefs(trimmed);
+
+      // Persistance du message assistant
+      let assistantMsg = null;
+      try {
+        assistantMsg = await appendMessage(
+          supabase, conv.id, 'assistant', trimmed, refs,
+          finalUsage?.tokensIn || 0, finalUsage?.tokensOut || 0
+        );
+      } catch (e) {
+        console.error('[coach-conv stream] persist error:', e.message);
+      }
+
+      // Final done event
+      sse('done', {
+        message_id: assistantMsg?.id || null,
+        refs,
+        tokens: {
+          in: finalUsage?.tokensIn || 0,
+          out: finalUsage?.tokensOut || 0,
+          cache_read: finalUsage?.cacheReadTokens || 0,
+          cache_creation: finalUsage?.cacheCreationTokens || 0,
+        },
+        model: modelUsed,
+        history_count: conv.messageCount + 2,
+        aborted,
+      });
+      try { res.end(); } catch (_) { /* noop */ }
+      return;
+    }
+
+    // ─── 6b. Mode JSON classique (fallback / pas de streaming) ─────────
     const { text, tokensIn, tokensOut, cacheReadTokens, cacheCreationTokens, model } =
       await callClaude(systemInstructions, demoDataBlock, history);
 
@@ -602,10 +980,22 @@ module.exports = async function handler(req, res) {
     });
   } catch (e) {
     console.error('[coach-conversational] error:', e.message);
+    if (wantsStream) {
+      try {
+        res.write(`event: error\ndata: ${JSON.stringify({ error: 'Erreur serveur', hint: e.message?.slice(0, 100) })}\n\n`);
+        res.end();
+      } catch (_) { /* noop */ }
+      return;
+    }
     return res.status(500).json({
       error: 'Erreur Coach IA',
       message: 'Impossible de generer la reponse. Reessaie dans quelques instants.',
       hint: e.message?.slice(0, 100),
     });
   }
+};
+
+// Config Vercel : streaming functions activees (max 60s pour SSE long)
+module.exports.config = {
+  maxDuration: 60,
 };
