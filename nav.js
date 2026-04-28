@@ -23,6 +23,7 @@
     apercu: 'Aperçu', mesMatchs: 'Mes matchs', nouvelleDemo: 'Nouvelle démo',
     scout: 'Scout', comparer: 'Comparer',
     roadmap: 'Roadmap', guideStats: 'Guide des stats', lineupLib: 'Lineup library', blog: 'Blog',
+    astuces: 'Astuces & tips', howItWorks: 'Comment ça marche', sitemap: 'Plan du site',
     proDemos: 'Pro demos (HLTV)', proBenchmarks: 'Pro benchmarks',
     teamDash: 'Team dashboard', prepVeto: 'Prep veto', antiStrat: 'Anti-strat',
     soonBadge: 'BIENTÔT',
@@ -44,6 +45,7 @@
     apercu: 'Overview', mesMatchs: 'My matches', nouvelleDemo: 'New demo',
     scout: 'Scout', comparer: 'Compare',
     roadmap: 'Roadmap', guideStats: 'Stats guide', lineupLib: 'Lineup library', blog: 'Blog',
+    astuces: 'Tips & tricks', howItWorks: 'How it works', sitemap: 'Sitemap',
     proDemos: 'Pro demos (HLTV)', proBenchmarks: 'Pro benchmarks',
     teamDash: 'Team dashboard', prepVeto: 'Veto prep', antiStrat: 'Anti-strat',
     soonBadge: 'SOON',
@@ -208,7 +210,8 @@
     const TRANSLATED = ['/index.html', '/pricing.html', '/demo.html', '/login.html',
       '/cgv.html', '/mentions-legales.html', '/privacy.html', '/lineup-library.html',
       '/pro-demos.html', '/pro-benchmarks.html', '/prep-veto.html', '/anti-strat.html',
-      '/levels.html', '/stats-guide.html', '/compare-outils.html'];
+      '/levels.html', '/stats-guide.html', '/compare-outils.html',
+      '/how-it-works.html', '/sitemap.html', '/astuces.html'];
     return TRANSLATED.includes(path) ? (enPrefix + path) : path;
   };
   const sections = [
@@ -229,6 +232,8 @@
       items: [
         { href: link('/levels.html'), label: T.roadmap },
         { href: link('/stats-guide.html'), label: T.guideStats },
+        { href: link('/astuces.html'), label: T.astuces },
+        { href: link('/how-it-works.html'), label: T.howItWorks },
         { href: link('/lineup-library.html'), label: T.lineupLib },
         { href: link('/blog.html'), label: T.blog },
       ],
