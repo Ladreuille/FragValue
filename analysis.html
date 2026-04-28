@@ -353,6 +353,11 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
 /* ─── COACH CONVERSATIONAL · chat multi-turn ──────────────────────────── */
 .coach-chat-card{padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:720px}
+/* HERO style : card mise en avant en haut de page (gros differenciateur) */
+.coach-chat-hero{border:1px solid rgba(184,255,87,.35);box-shadow:0 0 0 1px rgba(184,255,87,.08), 0 8px 32px -8px rgba(184,255,87,.18);position:relative}
+.coach-chat-hero::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(135deg,rgba(184,255,87,.04) 0%,transparent 40%);z-index:0}
+.coach-chat-hero > *{position:relative;z-index:1}
+.coach-chat-badge-killer{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;background:linear-gradient(90deg,rgba(184,255,87,.18),rgba(184,255,87,.08));color:var(--accent);padding:2px 8px;border-radius:3px;border:1px solid rgba(184,255,87,.4);margin-left:6px}
 .coach-chat-head{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;background:linear-gradient(180deg,rgba(184,255,87,.04),rgba(184,255,87,0))}
 .coach-chat-title{display:flex;align-items:center;gap:10px}
 .coach-chat-title-h{font-family:var(--display);font-size:16px;letter-spacing:.02em;color:var(--text)}
@@ -551,6 +556,65 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <div class="kpi-row" id="kpiRow"></div>
   </div>
 
+  <!-- 2bis. AI COACH CONVERSATIONAL : KILLER FEATURE (Elite-only)
+       Place en haut de page (juste apres l'overview) car c'est le plus gros
+       differenciateur du site. L'utilisateur a vu son score + KPI, c'est le
+       moment pour poser des questions au Coach IA. -->
+  <div class="sl" id="section-qa">Coach IA · pose tes questions sur ce match</div>
+  <div class="card coach-chat-card coach-chat-hero" id="coachChat">
+    <!-- Header -->
+    <div class="coach-chat-head">
+      <div class="coach-chat-title">
+        <div class="coach-chat-title-h">Coach IA · sur ce match</div>
+        <span class="coach-chat-badge">Elite</span>
+        <span class="coach-chat-badge-killer">Killer feature</span>
+      </div>
+      <div class="coach-chat-actions">
+        <span class="coach-chat-meta" id="coachChatMeta">-</span>
+        <button class="coach-chat-action danger" id="coachResetBtn" type="button" onclick="coachReset()" style="display:none">Reset</button>
+      </div>
+    </div>
+
+    <!-- Locked state (Free / Pro / non logged in) - VISIBLE par defaut, masque
+         si l'utilisateur est Elite via initCoachChat -->
+    <div class="coach-chat-locked" id="coachLocked">
+      <div class="coach-chat-locked-h">Discute avec ton Coach IA</div>
+      <p class="coach-chat-locked-sub">Pose autant de questions que tu veux sur ce match. Le Coach reference les rounds avec des liens cliquables qui ouvrent le replay 2D au moment exact, raisonne avec un lexique CS2 100% scene pro (HLTV, Liquipedia, casters), et te donne 1 action concrete a chaque reponse. 200 messages/jour.</p>
+      <a href="pricing.html" class="coach-chat-locked-cta">Passer a Elite →</a>
+    </div>
+
+    <!-- Empty state (pas encore de messages) -->
+    <div class="coach-chat-suggestions-empty" id="coachEmpty" style="display:none">
+      <div class="coach-chat-suggestions-empty-h">Pose ta 1re question</div>
+      <p class="coach-chat-suggestions-empty-sub">Le Coach IA a tout le contexte du match. Il citera les rounds en [R12] que tu pourras cliquer pour ouvrir le replay 2D au bon moment. Quelques exemples pour demarrer :</p>
+    </div>
+
+    <!-- Suggestions clickables -->
+    <div class="coach-chat-suggestions" id="coachSuggestions" style="display:none"></div>
+
+    <!-- Messages list -->
+    <div class="coach-chat-messages" id="coachMessages" style="display:none"></div>
+
+    <!-- Error banner -->
+    <div class="coach-chat-error" id="coachError" style="display:none"></div>
+
+    <!-- Input bar -->
+    <div class="coach-chat-input-wrap" id="coachInputWrap" style="display:none">
+      <form id="coachForm" onsubmit="return coachSendMessage(event)">
+        <div class="coach-chat-input-row">
+          <textarea class="coach-chat-input" id="coachInput" placeholder="Pourquoi j'ai perdu round 12 ? Comment gerer le 1v3 round 18 ?" maxlength="500" rows="1" onkeydown="coachInputKeydown(event)" oninput="coachInputResize(event)"></textarea>
+          <button type="submit" class="coach-chat-send" id="coachSendBtn" aria-label="Envoyer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+        <div class="coach-chat-input-meta">
+          <span><span id="coachCharCount">0</span>/500 · <span id="coachLimitInfo">-</span></span>
+          <span style="opacity:.6">Entree pour envoyer · Shift+Entree pour saut de ligne</span>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- 3. MOMENTUM (courbe de probabilite de victoire) -->
   <div class="sl" id="section-momentum">Momentum</div>
   <div class="card">
@@ -626,60 +690,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     </div>
   </div>
 
-  <!-- 12. AI COACH CONVERSATIONAL : chat multi-turn sur ce match (Elite-only) -->
-  <div class="sl" id="section-qa">Discute avec ton coach IA</div>
-  <div class="card coach-chat-card" id="coachChat">
-    <!-- Header -->
-    <div class="coach-chat-head">
-      <div class="coach-chat-title">
-        <div class="coach-chat-title-h">Coach IA · sur ce match</div>
-        <span class="coach-chat-badge">Elite</span>
-      </div>
-      <div class="coach-chat-actions">
-        <span class="coach-chat-meta" id="coachChatMeta">-</span>
-        <button class="coach-chat-action danger" id="coachResetBtn" type="button" onclick="coachReset()" style="display:none">Reset</button>
-      </div>
-    </div>
-
-    <!-- Locked state (Free / Pro / non logged in) - VISIBLE par defaut, masque
-         si l'utilisateur est Elite via initCoachChat -->
-    <div class="coach-chat-locked" id="coachLocked">
-      <div class="coach-chat-locked-h">Coach IA conversationnel</div>
-      <p class="coach-chat-locked-sub">Pose autant de questions que tu veux sur ce match. Le Coach reference les rounds avec des liens cliquables qui ouvrent le replay 2D au moment exact, et raisonne avec un lexique CS2 100% scene pro (HLTV, Liquipedia). Reserve aux abonnes Elite.</p>
-      <a href="pricing.html" class="coach-chat-locked-cta">Passer a Elite →</a>
-    </div>
-
-    <!-- Empty state (pas encore de messages) -->
-    <div class="coach-chat-suggestions-empty" id="coachEmpty" style="display:none">
-      <div class="coach-chat-suggestions-empty-h">Pose ta 1re question</div>
-      <p class="coach-chat-suggestions-empty-sub">Le Coach IA a tout le contexte du match. Il citera les rounds en [R12] que tu pourras cliquer pour ouvrir le replay 2D au bon moment. Quelques exemples pour demarrer :</p>
-    </div>
-
-    <!-- Suggestions clickables -->
-    <div class="coach-chat-suggestions" id="coachSuggestions" style="display:none"></div>
-
-    <!-- Messages list -->
-    <div class="coach-chat-messages" id="coachMessages" style="display:none"></div>
-
-    <!-- Error banner -->
-    <div class="coach-chat-error" id="coachError" style="display:none"></div>
-
-    <!-- Input bar -->
-    <div class="coach-chat-input-wrap" id="coachInputWrap" style="display:none">
-      <form id="coachForm" onsubmit="return coachSendMessage(event)">
-        <div class="coach-chat-input-row">
-          <textarea class="coach-chat-input" id="coachInput" placeholder="Pourquoi j'ai perdu round 12 ? Comment gerer le 1v3 round 18 ?" maxlength="500" rows="1" onkeydown="coachInputKeydown(event)" oninput="coachInputResize(event)"></textarea>
-          <button type="submit" class="coach-chat-send" id="coachSendBtn" aria-label="Envoyer">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          </button>
-        </div>
-        <div class="coach-chat-input-meta">
-          <span><span id="coachCharCount">0</span>/500 · <span id="coachLimitInfo">-</span></span>
-          <span style="opacity:.6">Entree pour envoyer · Shift+Entree pour saut de ligne</span>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- AI Coach Conversational deja affiche en HERO en haut de page -->
 </div>
 
 <script>
@@ -1110,6 +1121,10 @@ async function initCoachChat(c, rounds) {
 
     // Auth + plan check + load existing conversation
     await coachLoadConversation();
+
+    // Debug log : aide a diagnostiquer pourquoi le chat n'apparait pas.
+    // qdreuillet@gmail.com (admin) doit voir plan='elite' via bypass backend.
+    console.info('[coach-chat] plan=' + _coachPlan + ' demoId=' + _coachDemoId + ' messages=' + _coachMessages.length);
 
     // Render selon plan : seul ELITE a acces (Free / Pro / anon = locked)
     if (_coachPlan !== 'elite') {
