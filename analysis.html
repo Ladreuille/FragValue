@@ -1084,14 +1084,24 @@ let _coachAbortCtrl = null; // AbortController du stream en cours
 let _coachStreaming = false;
 
 function getDemoId() {
-  // Priorite : sessionStorage demoId set par /demo.html post-upload
-  // Fallback : URL param ?demo=xxx
+  // Priorite (essaye toutes les sources connues, dans l'ordre) :
+  //   1. sessionStorage 'lastDemoId' (set par demo.html post-upload, cf. ligne 1678)
+  //   2. sessionStorage 'demoId'     (legacy, par securite)
+  //   3. URL ?demo=xxx               (lien partage / replay)
+  //   4. window._demo.id             (set par d'autres scripts inline)
   try {
+    const last = sessionStorage.getItem('lastDemoId');
+    if (last) return last;
     const stored = sessionStorage.getItem('demoId');
     if (stored) return stored;
   } catch {}
   const params = new URLSearchParams(window.location.search);
-  return params.get('demo') || null;
+  const fromUrl = params.get('demo');
+  if (fromUrl) return fromUrl;
+  if (typeof window !== 'undefined' && window._demo && window._demo.id) {
+    return window._demo.id;
+  }
+  return null;
 }
 
 async function initCoachChat(c, rounds) {
