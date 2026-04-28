@@ -29,7 +29,7 @@ function wrap(title, contentHtml) {
         <tr><td style="padding:20px 32px;border-top:1px solid #1c1e1e;font-size:11px;color:#7a8080;line-height:1.6">
           FragValue &middot; Analyse CS2 IA pour joueurs FACEIT<br>
           <a href="${BASE_URL}" style="color:#b8ff57;text-decoration:none">fragvalue.com</a> &middot;
-          <a href="${BASE_URL}/account.html#settings" style="color:#b8ff57;text-decoration:none">Mes preferences</a> &middot;
+          <a href="${BASE_URL}/account.html#settings" style="color:#b8ff57;text-decoration:none">Mes préférences</a> &middot;
           <a href="mailto:contact@fragvalue.com" style="color:#b8ff57;text-decoration:none">Support</a>
         </td></tr>
       </table>
@@ -43,25 +43,25 @@ function wrap(title, contentHtml) {
 // Declenche apres confirmation email reussie. Pousse vers la 1re analyse.
 function welcome({ nickname }) {
   const name = nickname || 'joueur';
-  const subject = 'Bienvenue sur FragValue, ' + name + ' - prets pour ton 1er diagnostic ?';
+  const subject = 'Bienvenue sur FragValue, ' + name + ' · prêt pour ton 1er diagnostic ?';
   const html = wrap(subject, `
     <h1 style="font-family:${FONT_STACK};font-size:24px;line-height:1.2;color:#e8eaea;margin:0 0 16px;font-weight:800">Bienvenue ${name}.</h1>
-    <p style="font-size:14px;color:#a8b0b0;margin:0 0 18px">Ton compte FragValue est actif. Voici ce que tu peux faire des maintenant :</p>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 18px">Ton compte FragValue est actif. Voici ce que tu peux faire dès maintenant :</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px">
       <tr><td style="padding:14px 16px;background:#080909;border:1px solid #1c1e1e;border-radius:10px;border-left:3px solid #b8ff57">
         <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">1. ANALYSE TA 1RE DEMO</div>
-        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">Glisse ton fichier .dem FACEIT, recois ton FV Rating, heatmaps et plan d'action en moins de 2 minutes. <strong style="color:#e8eaea">3 analyses gratuites par mois</strong> sur le plan Free.</div>
+        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">Glisse ton fichier .dem FACEIT, reçois ton FV Rating, heatmaps et plan d'action en moins de 2 minutes. <strong style="color:#e8eaea">1 analyse gratuite par mois</strong> sur le plan Free.</div>
       </td></tr>
       <tr><td style="height:8px"></td></tr>
       <tr><td style="padding:14px 16px;background:#080909;border:1px solid #1c1e1e;border-radius:10px;border-left:3px solid #b8ff57">
         <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">2. CONNECTE TON FACEIT</div>
-        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">Pour debloquer le diagnostic IA personnalise et la roadmap 7 jours base sur tes 20 derniers matchs.</div>
+        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">Pour débloquer le diagnostic IA personnalisé et la roadmap 7 jours basée sur tes 20 derniers matchs.</div>
       </td></tr>
       <tr><td style="height:8px"></td></tr>
       <tr><td style="padding:14px 16px;background:#080909;border:1px solid #1c1e1e;border-radius:10px;border-left:3px solid #b8ff57">
         <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">3. PASSE PRO POUR LES OUTILS COMPLETS</div>
-        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">2D Replay frame par frame, KPIs avances, Coach IA illimite, Match Report tactique. <strong style="color:#e8eaea">7 jours d'essai gratuits</strong>, annulation en 1 clic.</div>
+        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">2D Replay frame par frame, KPIs avancés, Coach IA illimité, Match Report tactique. <strong style="color:#e8eaea">7 jours d'essai gratuits</strong>, annulation en 1 clic.</div>
       </td></tr>
     </table>
 
@@ -69,28 +69,28 @@ function welcome({ nickname }) {
       <a href="${BASE_URL}/demo.html?welcome=1" style="display:inline-block;background:#b8ff57;color:#000;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.04em;font-family:${FONT_STACK}">Analyser ma 1re demo &rsaquo;</a>
     </p>
 
-    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">Une question ? Reponds simplement a ce mail, c'est moi qui lis :)</p>
+    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">Une question ? Réponds simplement à ce mail, c'est moi qui lis :)</p>
   `);
   const text = `Bienvenue ${name},
 
 Ton compte FragValue est actif. Voici ce que tu peux faire :
 
 1. ANALYSE TA 1RE DEMO
-   Glisse ton fichier .dem FACEIT et recois ton FV Rating + heatmaps + plan d'action.
-   3 analyses gratuites par mois sur le plan Free.
+   Glisse ton fichier .dem FACEIT et reçois ton FV Rating + heatmaps + plan d'action.
+   1 analyse gratuite par mois sur le plan Free.
 
 2. CONNECTE TON FACEIT
-   Pour le diagnostic IA personnalise base sur tes 20 derniers matchs.
+   Pour le diagnostic IA personnalisé basé sur tes 20 derniers matchs.
 
 3. PASSE PRO (7 jours gratuits)
-   2D Replay complet, KPIs avances, Coach IA illimite, Match Report.
-   Des 9 EUR/mois, annulation en 1 clic.
+   2D Replay complet, KPIs avancés, Coach IA illimité, Match Report.
+   Dès 9€/mois, annulation en 1 clic.
 
 Lance ta 1re analyse : ${BASE_URL}/demo.html?welcome=1
 
-Une question ? Reponds a ce mail.
+Une question ? Réponds à ce mail.
 
-L'equipe FragValue
+L'équipe FragValue
 ${BASE_URL}`;
   return { subject, html, text };
 }
@@ -104,20 +104,20 @@ function checkoutSuccess({ nickname, plan, periodEndIso }) {
   const renewDate = periodEndIso
     ? new Date(periodEndIso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })
     : null;
-  const subject = `Bienvenue dans ${planLabel} - ton acces premium est actif`;
+  const subject = `Bienvenue dans ${planLabel} · ton accès premium est actif`;
   const html = wrap(subject, `
     <h1 style="font-family:${FONT_STACK};font-size:24px;line-height:1.2;color:#e8eaea;margin:0 0 16px;font-weight:800">Bienvenue dans <span style="color:#b8ff57">${planLabel}</span>, ${name}.</h1>
-    <p style="font-size:14px;color:#a8b0b0;margin:0 0 20px">Ton paiement est confirme et ton acces premium est actif des maintenant.</p>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 20px">Ton paiement est confirmé et ton accès premium est actif dès maintenant.</p>
 
     <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(184,255,87,.1),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.35);border-radius:10px;margin-bottom:20px">
-      <div style="font-size:11px;color:#b8ff57;font-weight:700;letter-spacing:.1em;margin-bottom:6px">DEBLOQUE MAINTENANT</div>
+      <div style="font-size:11px;color:#b8ff57;font-weight:700;letter-spacing:.1em;margin-bottom:6px">DÉBLOQUÉ MAINTENANT</div>
       <ul style="margin:0;padding:0 0 0 18px;font-size:13px;color:#e8eaea;line-height:1.8">
-        <li>Analyses de demos illimitees</li>
+        <li>Analyses de demos illimitées</li>
         <li>2D Replay frame par frame</li>
-        <li>KPIs avances : entry, trade, flash eff, util damage</li>
-        <li>Coach IA illimite avec roadmap 7 jours personnalisee</li>
+        <li>KPIs avancés : entry, trade, flash eff, util damage</li>
+        <li>Coach IA illimité avec roadmap 7 jours personnalisée</li>
         <li>Match Report round par round</li>
-        ${plan?.startsWith('elite') ? '<li><strong>Elite uniquement</strong> : team dashboard, anti-strat, pro benchmarks</li>' : ''}
+        ${plan?.startsWith('elite') ? '<li><strong>Elite uniquement</strong> : team dashboard, anti-strat, prep veto, pro benchmarks</li>' : ''}
       </ul>
     </div>
 
@@ -127,21 +127,21 @@ function checkoutSuccess({ nickname, plan, periodEndIso }) {
       <a href="${BASE_URL}/demo.html" style="display:inline-block;background:#b8ff57;color:#000;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.04em;font-family:${FONT_STACK}">Lancer une analyse Pro &rsaquo;</a>
     </p>
 
-    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">Besoin d'aide ? Reponds a ce mail, on te repond sous 24h.</p>
+    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">Besoin d'aide ? Réponds à ce mail, on te répond sous 24h.</p>
   `);
   const text = `Bienvenue dans ${planLabel}, ${name}.
 
-Ton paiement est confirme. Tu debloques :
+Ton paiement est confirmé. Tu débloques :
 
-- Analyses de demos illimitees
+- Analyses de demos illimitées
 - 2D Replay frame par frame
-- KPIs avances (entry, trade, flash eff, util dmg)
-- Coach IA illimite avec roadmap 7 jours
+- KPIs avancés (entry, trade, flash eff, util dmg)
+- Coach IA illimité avec roadmap 7 jours
 - Match Report round par round
-${plan?.startsWith('elite') ? '- Elite : team dashboard, anti-strat, pro benchmarks\n' : ''}
+${plan?.startsWith('elite') ? '- Elite : team dashboard, anti-strat, prep veto, pro benchmarks\n' : ''}
 ${renewDate ? `Renouvellement le ${renewDate}. Annulation en 1 clic depuis ton espace.\n\n` : ''}Lance ta prochaine analyse : ${BASE_URL}/demo.html
 
-L'equipe FragValue`;
+L'équipe FragValue`;
   return { subject, html, text };
 }
 
@@ -151,32 +151,32 @@ function trialExpiringJ3({ nickname, planLabel, trialEndIso }) {
   const endDate = trialEndIso
     ? new Date(trialEndIso).toLocaleDateString('fr-FR', { day:'numeric', month:'long' })
     : 'dans 3 jours';
-  const subject = `Plus que 3 jours d'essai ${planLabel} - prolonge ou annule en 1 clic`;
+  const subject = `Plus que 3 jours d'essai ${planLabel} · prolonge ou annule en 1 clic`;
   const html = wrap(subject, `
     <h1 style="font-family:${FONT_STACK};font-size:24px;line-height:1.2;color:#e8eaea;margin:0 0 16px;font-weight:800">${name}, ton essai ${planLabel} expire le <span style="color:#b8ff57">${endDate}</span>.</h1>
-    <p style="font-size:14px;color:#a8b0b0;margin:0 0 20px">Si tu veux continuer a utiliser les features premium (analyses illimitees, 2D Replay, Coach IA), aucune action n'est necessaire : ton abonnement se renouvelle automatiquement le ${endDate}.</p>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 20px">Si tu veux continuer à utiliser les features premium (analyses illimitées, 2D Replay, Coach IA), aucune action n'est nécessaire : ton abonnement se renouvelle automatiquement le ${endDate}.</p>
 
     <div style="padding:14px 16px;background:#080909;border:1px solid #1c1e1e;border-radius:8px;margin-bottom:18px">
       <div style="font-size:12px;color:#a8b0b0;line-height:1.65">
-        <strong style="color:#e8eaea">Tu hesites ?</strong> Tu peux <strong style="color:#b8ff57">annuler en 1 clic</strong> depuis ton espace avant le ${endDate}, sans aucun prelevement. Et tu gardes l'acces premium jusqu'a la fin de l'essai.
+        <strong style="color:#e8eaea">Tu hésites ?</strong> Tu peux <strong style="color:#b8ff57">annuler en 1 clic</strong> depuis ton espace avant le ${endDate}, sans aucun prélèvement. Et tu gardes l'accès premium jusqu'à la fin de l'essai.
       </div>
     </div>
 
     <p style="text-align:center;margin:18px 0">
-      <a href="${BASE_URL}/account.html" style="display:inline-block;background:#b8ff57;color:#000;padding:13px 26px;border-radius:8px;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:.04em;margin:0 4px;font-family:${FONT_STACK}">Gerer mon abonnement</a>
+      <a href="${BASE_URL}/account.html" style="display:inline-block;background:#b8ff57;color:#000;padding:13px 26px;border-radius:8px;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:.04em;margin:0 4px;font-family:${FONT_STACK}">Gérer mon abonnement</a>
     </p>
 
-    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">Astuce : passe au plan annuel pour 2 mois offerts (Pro 79EUR/an, Elite 290EUR/an).</p>
+    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">Astuce : passe au plan annuel pour 2 mois offerts (Pro 79€/an, Elite 290€/an).</p>
   `);
   const text = `${name}, ton essai ${planLabel} expire le ${endDate}.
 
-Si tu continues : aucune action necessaire, le renouvellement est automatique.
+Si tu continues : aucune action nécessaire, le renouvellement est automatique.
 
-Si tu veux annuler : 1 clic depuis ${BASE_URL}/account.html avant le ${endDate}, aucun prelevement, tu gardes l'acces jusqu'a la fin.
+Si tu veux annuler : 1 clic depuis ${BASE_URL}/account.html avant le ${endDate}, aucun prélèvement, tu gardes l'accès jusqu'à la fin.
 
-Astuce : passe au plan annuel pour 2 mois offerts (Pro 79 EUR/an, Elite 290 EUR/an).
+Astuce : passe au plan annuel pour 2 mois offerts (Pro 79€/an, Elite 290€/an).
 
-L'equipe FragValue`;
+L'équipe FragValue`;
   return { subject, html, text };
 }
 

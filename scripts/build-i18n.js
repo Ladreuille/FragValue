@@ -58,6 +58,9 @@ const PAGES = [
   'faceit-callback.html',
   // Page guide d'utilisation
   'how-it-works.html',
+  // Plan du site + Astuces (avril 2026)
+  'sitemap.html',
+  'astuces.html',
 ];
 
 // Charge le dictionnaire (objet plat { "fr": "en" })

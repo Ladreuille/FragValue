@@ -156,7 +156,7 @@ export function emailRosterInvite({ team_name, tag, inviter_nickname, proposed_r
       <p style="margin:20px 0 0;color:#7a8080;font-size:12px">Clique ci-dessous pour accepter ou décliner :</p>
       <a href="${accept_url}" style="${btnStyle}">Voir l'invitation →</a>
     `),
-    text: `${inviter_nickname} t'invite a rejoindre "${team_name}" sur FragValue. ${proposed_role ? 'Role propose : ' + proposed_role + '. ' : ''}${message ? 'Message : "' + message + '". ' : ''}Reponds sur : ${accept_url}`,
+    text: `${inviter_nickname} t'invite à rejoindre "${team_name}" sur FragValue. ${proposed_role ? 'Rôle proposé : ' + proposed_role + '. ' : ''}${message ? 'Message : "' + message + '". ' : ''}Réponds sur : ${accept_url}`,
   };
 }
 
@@ -205,15 +205,15 @@ export function emailInviteDeclined({ team_name, invitee_nickname, team_url }) {
       </p>
       <a href="${team_url}" style="${btnStyle}">Inviter un autre joueur →</a>
     `),
-    text: `${invitee_nickname} a decline ton invitation pour ${team_name}.`,
+    text: `${invitee_nickname} a décliné ton invitation pour ${team_name}.`,
   };
 }
 
 // ── Feedback : notif admin a chaque nouveau retour utilisateur ───────────
 const FEEDBACK_TYPE_LABELS = {
   positive: { label: 'Positif', color: '#b8ff57', emoji: '+' },
-  negative: { label: 'Negatif', color: '#ff4444', emoji: '-' },
-  idea:     { label: 'Idee',    color: '#f5c842', emoji: '!' },
+  negative: { label: 'Négatif', color: '#ff4444', emoji: '-' },
+  idea:     { label: 'Idée',    color: '#f5c842', emoji: '!' },
   bug:      { label: 'Bug',     color: '#ff8a3d', emoji: 'x' },
 };
 
@@ -233,9 +233,9 @@ export function emailFeedbackReceived({ feedbackId, ticketNumber, type, message,
       ${emailLine}
       ${pageLine}
       <div style="margin:16px 0;padding:14px 16px;background:#131414;border-left:2px solid ${meta.color};border-radius:0 6px 6px 0;font-size:13px;color:#e8eaea;white-space:pre-wrap">${escapeHtml(message)}</div>
-      <a href="https://fragvalue.com/admin/feedback.html#${feedbackId}" style="${btnStyle}">Repondre →</a>
+      <a href="https://fragvalue.com/admin/feedback.html#${feedbackId}" style="${btnStyle}">Répondre →</a>
     `),
-    text: `[${ticket} ${meta.label}] ${message}\n\nDe : ${user_email || 'anonyme'}${user_tier ? ' (' + user_tier + ')' : ''}\nPage : ${page_url || '-'}\n\nRepondre : https://fragvalue.com/admin/feedback.html#${feedbackId}`,
+    text: `[${ticket} ${meta.label}] ${message}\n\nDe : ${user_email || 'anonyme'}${user_tier ? ' (' + user_tier + ')' : ''}\nPage : ${page_url || '-'}\n\nRépondre : https://fragvalue.com/admin/feedback.html#${feedbackId}`,
   };
 }
 
@@ -244,21 +244,21 @@ export function emailFeedbackResponse({ feedbackType, ticketNumber, userMessage,
   const meta = FEEDBACK_TYPE_LABELS[feedbackType] || { label: feedbackType, color: '#7a8080' };
   const ticket = ticketNumber ? `FB-${String(ticketNumber).padStart(4, '0')}` : '';
   return {
-    subject: ticket ? `[${ticket}] Reponse a ton feedback FragValue` : `Reponse a ton feedback FragValue`,
+    subject: ticket ? `[${ticket}] Réponse à ton feedback FragValue` : `Réponse à ton feedback FragValue`,
     html: wrapEmail(`
       <h2 style="margin:0 0 12px;color:#e8eaea;font-size:20px;letter-spacing:-.3px">Merci pour ton retour</h2>
-      <p style="margin:0 0 16px;color:#a8b0b0;font-size:14px">On a pris le temps de regarder ton feedback et voici notre reponse :</p>
+      <p style="margin:0 0 16px;color:#a8b0b0;font-size:14px">On a pris le temps de regarder ton feedback et voici notre réponse :</p>
 
       <p style="margin:16px 0 6px;color:#7a8080;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Ton message</p>
       <div style="margin:0 0 16px;padding:12px 14px;background:#131414;border-left:2px solid ${meta.color};border-radius:0 6px 6px 0;font-size:13px;color:#a8b0b0;white-space:pre-wrap">${escapeHtml(userMessage)}</div>
 
-      <p style="margin:16px 0 6px;color:#7a8080;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Notre reponse</p>
+      <p style="margin:16px 0 6px;color:#7a8080;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Notre réponse</p>
       <div style="margin:0 0 16px;padding:12px 14px;background:#131414;border-left:2px solid #b8ff57;border-radius:0 6px 6px 0;font-size:13px;color:#e8eaea;white-space:pre-wrap">${escapeHtml(adminResponse)}</div>
 
-      <p style="margin:20px 0 0;color:#7a8080;font-size:12px">Tu peux nous renvoyer un feedback a tout moment depuis le bouton en bas a droite du site.</p>
+      <p style="margin:20px 0 0;color:#7a8080;font-size:12px">Tu peux nous renvoyer un feedback à tout moment depuis le bouton en bas à droite du site.</p>
       <a href="https://fragvalue.com" style="${btnStyle}">Retour sur FragValue →</a>
     `),
-    text: `Merci pour ton feedback. Tu nous as ecrit : "${userMessage}"\n\nNotre reponse : ${adminResponse}\n\nfragvalue.com`,
+    text: `Merci pour ton feedback. Tu nous as écrit : "${userMessage}"\n\nNotre réponse : ${adminResponse}\n\nfragvalue.com`,
   };
 }
 
