@@ -428,3 +428,24 @@ CREATE POLICY "deny all client reads" ON faceit_webhook_events FOR ALL USING (fa
 
 COMMENT ON TABLE faceit_webhook_events IS
   'Server-only : log brut des webhooks FACEIT (DEMO_READY, MATCH_*). RLS deny-all clients.';
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- LOCKDOWN SECURITY DEFINER FUNCTIONS (avril 2026)
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Supabase linter flag les SECURITY DEFINER functions executables par anon/
+-- authenticated (warnings 0028 et 0029). Pour FragValue, ces 3 fonctions
+-- sont appelees uniquement depuis les endpoints backend qui utilisent
+-- service_role (qui garde EXECUTE). On revoque pour anon/authenticated.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+REVOKE EXECUTE ON FUNCTION public.feature_interest_counts(slug text) FROM anon, authenticated, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.scout_waitlist_progress()           FROM anon, authenticated, PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user()                   FROM anon, authenticated, PUBLIC;
+
+COMMENT ON FUNCTION public.feature_interest_counts(slug text) IS
+  'Public via service_role only. Frontend appelle via /api/feature-waitlist.';
+COMMENT ON FUNCTION public.scout_waitlist_progress() IS
+  'Public via service_role only. Frontend appelle via /api/scout-waitlist-status.';
+COMMENT ON FUNCTION public.handle_new_user() IS
+  'Trigger function on auth.users INSERT. Pas exposee en RPC.';
