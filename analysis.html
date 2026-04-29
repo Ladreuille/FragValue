@@ -721,6 +721,10 @@ const MAP_CONFIG = {
 let demoData = null;
 let mapName = 'de_dust2';
 let currentPerfPlayer = null;
+// Pseudo FACEIT de l'utilisateur connecte (priorite max pour identifier
+// le target player de la demo, evite que getTargetPlayer fallback sur le MVP
+// ou un autre joueur si meta.targetPlayer est absent ou faux).
+let _userFaceitNickname = null;
 
 // =====================================================================
 // HELPERS
@@ -1040,6 +1044,10 @@ async function init() {
   demoData = JSON.parse(raw);
   if (demoData.positions) demoData.positions = expandPositions(demoData.positions);
   if (demoData.kills) demoData.kills = expandKills(demoData.kills);
+
+  // Charge le faceit_nickname du user connecte AVANT renderAll pour que
+  // getTargetPlayer() identifie le bon joueur (vs MVP par defaut).
+  await loadUserProfile();
   mapName = (demoData.meta?.map || 'de_dust2').toLowerCase().replace(/^.*\//, '').trim();
 
   // Detection des knife rounds
@@ -1930,16 +1938,55 @@ function renderProInsights(insights, cached, tokens) {
 // =====================================================================
 // 0. TON MATCH (personnel, target player first)
 // =====================================================================
-// Detecte le joueur cible (demo analysee pour LUI) via demoData.meta.targetPlayer.
-// Fallback sur le MVP si absent. Affiche ses stats vs moyenne du match.
+// Detecte le joueur cible (demo analysee pour LUI) avec priorisation :
+//   1. Pseudo FACEIT du compte connecte (case-insensitive) - le plus fiable car
+//      base sur le compte FACEIT lie. Resout le bug ou le FV Rating affichait
+//      celui d'un autre joueur quand demoData.meta.targetPlayer etait absent
+//      ou incorrect (ex: demo replay mode, FACEIT match d'une team-mate).
+//   2. demoData.meta.targetPlayer set lors de l'upload (legacy / fallback).
+//   3. MVP du match (plus haut FVR) si rien d'autre ne match.
 function getTargetPlayer(c) {
-  const targetName = demoData.meta?.targetPlayer;
+  if (!c || !c.stats || !c.stats.length) return null;
+
+  // Priorite 1 : match exact sur le faceit_nickname du user (case-insensitive)
+  if (_userFaceitNickname) {
+    const nick = String(_userFaceitNickname).toLowerCase().trim();
+    const found = c.stats.find(s => (s.name || '').toLowerCase().trim() === nick);
+    if (found) return found;
+  }
+
+  // Priorite 2 : demoData.meta.targetPlayer (set par /demo.html lors upload)
+  const targetName = demoData?.meta?.targetPlayer;
   if (targetName) {
     const found = c.stats.find(s => s.name === targetName);
     if (found) return found;
   }
-  // Fallback : MVP du match (plus haut FVR)
+
+  // Fallback : MVP du match (plus haut FVR) - on prevent l'affichage d'un
+  // joueur random si on n'a aucune source fiable.
   return [...c.stats].sort((a, b) => b.fvr - a.fvr)[0];
+}
+
+// Charge le faceit_nickname du user connecte depuis Supabase pour que
+// getTargetPlayer() puisse identifier le bon joueur dans le scoreboard.
+// Tolerant aux erreurs : si la fetch echoue, on continue sans (fallback
+// sur meta.targetPlayer ou MVP comme avant).
+async function loadUserProfile() {
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) return;
+    const { data: profile } = await _sb
+      .from('profiles')
+      .select('faceit_nickname')
+      .eq('id', session.user.id)
+      .maybeSingle();
+    _userFaceitNickname = profile?.faceit_nickname || null;
+    if (_userFaceitNickname) {
+      console.info('[analysis] target player priorise sur faceit_nickname:', _userFaceitNickname);
+    }
+  } catch (e) {
+    console.warn('[analysis] loadUserProfile failed:', e.message);
+  }
 }
 
 function fmtDelta(val, isHigherBetter) {
