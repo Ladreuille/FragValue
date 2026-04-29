@@ -34,8 +34,8 @@ const { requireElite } = require('./_lib/subscription');
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 
-// Active Duty CS2 avril 2026 (7 maps, post-Vertigo retire)
-const ACTIVE_MAPS = ['de_mirage', 'de_inferno', 'de_dust2', 'de_nuke', 'de_anubis', 'de_ancient', 'de_overpass'];
+// Active Duty CS2 fin avril 2026 (8 maps : retour de Cache, post-Vertigo retire)
+const ACTIVE_MAPS = ['de_mirage', 'de_inferno', 'de_dust2', 'de_nuke', 'de_anubis', 'de_ancient', 'de_overpass', 'de_cache'];
 const MAP_DISPLAY = {
   de_mirage:   'Mirage',
   de_inferno:  'Inferno',
@@ -44,6 +44,7 @@ const MAP_DISPLAY = {
   de_anubis:   'Anubis',
   de_ancient:  'Ancient',
   de_overpass: 'Overpass',
+  de_cache:    'Cache',
 };
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6h

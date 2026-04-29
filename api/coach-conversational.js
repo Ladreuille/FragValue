@@ -330,8 +330,9 @@ LANGUE DE LA SCENE :
 EVENTS / META :
 - Major, RMR, ESL Pro League, BLAST, IEM, PGL
 - BO1 / BO3 / BO5, veto ban-pick-decider
-- map pool actuelle CS2 : Mirage, Inferno, Nuke, Ancient, Anubis, Train, Dust2
-  (Vertigo et Overpass tournent dans le pool)
+- map pool actuelle CS2 (fin avril 2026, 8 maps actives) : Mirage, Inferno,
+  Nuke, Ancient, Anubis, Dust2, Overpass, Cache (Cache re-introduite fin avril
+  2026, Vertigo retiree, Train tourne)
 - patch meta, deagle meta, AWP meta, util meta
 
 REFERENCES PRO (a invoquer naturellement) :
