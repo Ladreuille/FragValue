@@ -41,7 +41,11 @@ const TRANSLATED_PAGES = new Set([
 // User-Agents de bots / crawlers connus. On les laisse passer en FR (canonique)
 // pour pas qu'ils indexent des redirects 307 vers /en/* (mauvais pour le SEO).
 // Pattern combine, case-insensitive, base sur les bots les plus frequents.
-const BOT_UA_PATTERN = /(bot|crawler|spider|crawling|chatgpt|gptbot|openai|anthropic|claude-web|perplexity|cohere|baiduspider|bingbot|googlebot|yandex|duckduckbot|slurp|semrush|ahrefs|mj12bot|facebookexternalhit|whatsapp|linkedinbot|twitterbot|discordbot|slackbot|telegrambot|applebot|petalbot|amazonbot|bytespider|imagesiftbot|datasectorbot|seekport|barkrowler|netestate|exabot|seekport|dotbot|seznambot|naver|mediapartners-google|adsbot|pingdom|uptimerobot|monitor|lighthouse|pagespeed|gtmetrix|webpagetest|headlesschrome|phantomjs|prerender|fetch|curl|wget|httpclient|axios)/i;
+//
+// Inclut aussi les bots internes Vercel (vercel-favicon, vercel-screenshot,
+// vercel-og-image) qui scannent /favicon.ico et OG images pour le dashboard.
+// Sans ce skip, Vercel suit le 307 et fetch /en/index.html au lieu du canonique.
+const BOT_UA_PATTERN = /(bot|crawler|spider|crawling|chatgpt|gptbot|openai|anthropic|claude-web|perplexity|cohere|baiduspider|bingbot|googlebot|yandex|duckduckbot|slurp|semrush|ahrefs|mj12bot|facebookexternalhit|whatsapp|linkedinbot|twitterbot|discordbot|slackbot|telegrambot|applebot|petalbot|amazonbot|bytespider|imagesiftbot|datasectorbot|seekport|barkrowler|netestate|exabot|seekport|dotbot|seznambot|naver|mediapartners-google|adsbot|pingdom|uptimerobot|monitor|lighthouse|pagespeed|gtmetrix|webpagetest|headlesschrome|phantomjs|prerender|fetch|curl|wget|httpclient|axios|vercel-|node-fetch|go-http-client|python-requests|java\/|okhttp|postmanruntime|insomnia)/i;
 
 export const config = {
   // Matcher : toutes les routes sauf /api, /admin, /_next, /icons, /maps, /og,
