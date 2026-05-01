@@ -16,6 +16,11 @@ async function buffer(readable) {
   return Buffer.concat(chunks);
 }
 
+// Format un montant Stripe (centimes) en string humain pour les logs.
+function fmtAmount(cents, currency) {
+  return ((cents || 0) / 100).toFixed(2) + ' ' + (currency || 'eur').toUpperCase();
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -154,6 +159,36 @@ export default async function handler(req, res) {
 
           console.log(`[Stripe] Payment failed for subscription: ${invoice.subscription}`);
         }
+        break;
+      }
+
+      // 1re facture payee a la fin du trial -> on passe trialing -> active.
+      // CRITICAL : sans ce handler, les abonnes restaient bloques en 'trialing'
+      // dans la DB meme apres avoir paye, et ne pouvaient pas voir les features
+      // active-only (gating sur status='active'). Cf. ticket trial 7j.
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object;
+        if (invoice.subscription) {
+          // Recupere la subscription pour avoir les dates de la nouvelle periode
+          const sub = await stripe.subscriptions.retrieve(invoice.subscription);
+          await sb.from('subscriptions').update({
+            status: sub.status, // 'active' apres 1er paiement reussi
+            current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
+            current_period_end:   new Date(sub.current_period_end * 1000).toISOString(),
+            updated_at: new Date().toISOString(),
+          }).eq('stripe_subscription_id', invoice.subscription);
+
+          console.log(`[Stripe] Payment succeeded for ${invoice.subscription}: ${fmtAmount(invoice.amount_paid, invoice.currency)} → status ${sub.status}`);
+        }
+        break;
+      }
+
+      // Facture finalisee (passe de draft -> open). Stripe finalise les invoices
+      // automatiquement 1h apres creation par defaut. Pour finaliser plus tot
+      // ou pour les invoices manuelles, ce handler permet de tracker l'etat.
+      case 'invoice.finalized': {
+        const invoice = event.data.object;
+        console.log(`[Stripe] Invoice finalized: ${invoice.id} · ${fmtAmount(invoice.amount_due, invoice.currency)} · sub=${invoice.subscription || 'none'}`);
         break;
       }
     }
