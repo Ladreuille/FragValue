@@ -566,7 +566,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <div class="coach-chat-head">
       <div class="coach-chat-title">
         <div class="coach-chat-title-h">Coach IA · sur ce match</div>
-        <span class="coach-chat-badge">Elite</span>
+        <span class="coach-chat-badge">Pro &amp; Elite</span>
         <span class="coach-chat-badge-killer">Killer feature</span>
       </div>
       <div class="coach-chat-actions">
@@ -575,12 +575,12 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
       </div>
     </div>
 
-    <!-- Locked state (Free / Pro / non logged in) - VISIBLE par defaut, masque
-         si l'utilisateur est Elite via initCoachChat -->
+    <!-- Locked state (Free / non logged in) - VISIBLE par defaut, masque
+         si l'utilisateur est Pro ou Elite via initCoachChat -->
     <div class="coach-chat-locked" id="coachLocked">
       <div class="coach-chat-locked-h">Discute avec ton Coach IA</div>
-      <p class="coach-chat-locked-sub">Pose autant de questions que tu veux sur ce match. Le Coach reference les rounds avec des liens cliquables qui ouvrent le replay 2D au moment exact, raisonne avec un lexique CS2 100% scene pro (HLTV, Liquipedia, casters), et te donne 1 action concrete a chaque reponse. 200 messages/jour.</p>
-      <a href="pricing.html" class="coach-chat-locked-cta">Passer a Elite →</a>
+      <p class="coach-chat-locked-sub">Pose tes questions sur ce match. Le Coach reference les rounds avec des liens cliquables qui ouvrent le replay 2D au moment exact, raisonne avec un lexique CS2 100% scene pro (HLTV, Liquipedia, casters), et te donne 1 action concrete a chaque reponse. <strong style="color:var(--accent)">Pro : 5 msg/jour &middot; Elite : 30 msg/jour</strong>.</p>
+      <a href="pricing.html" class="coach-chat-locked-cta">Choisir mon plan →</a>
     </div>
 
     <!-- Empty state (pas encore de messages) -->
@@ -1149,8 +1149,9 @@ async function initCoachChat(c, rounds) {
     // qdreuillet@gmail.com (admin) doit voir plan='elite' via bypass backend.
     console.info('[coach-chat] plan=' + _coachPlan + ' demoId=' + _coachDemoId + ' messages=' + _coachMessages.length);
 
-    // Render selon plan : seul ELITE a acces (Free / Pro / anon = locked)
-    if (_coachPlan !== 'elite') {
+    // Render selon plan : Pro et Elite ont acces (limites differentes).
+    // Free / anon -> locked avec CTA upgrade.
+    if (_coachPlan !== 'pro' && _coachPlan !== 'elite') {
       coachShowLocked();
       return;
     }
@@ -1387,12 +1388,19 @@ function coachOpenRound(roundNum, tick) {
 function coachUpdateMeta() {
   const meta = document.getElementById('coachChatMeta');
   if (!meta) return;
-  // Feature Elite-only : limite fixe 200/jour
-  const limit = 200;
+  // Limite selon le tier : Pro 5/jour, Elite 30/jour.
+  const limit = _coachPlan === 'elite' ? 30 : 5;
   const count = _coachMessages.filter(m => m.role === 'user').length;
   meta.textContent = count + ' / ' + limit + ' aujourd\'hui';
   const limitInfo = document.getElementById('coachLimitInfo');
-  if (limitInfo) limitInfo.textContent = 'Elite · ' + limit + ' msg/jour';
+  if (limitInfo) {
+    const planLbl = _coachPlan === 'elite' ? 'Elite' : 'Pro';
+    limitInfo.textContent = planLbl + ' · ' + limit + ' msg/jour';
+  }
+  // Si Pro a atteint la limite, on glisse un upsell discret dans le meta
+  if (_coachPlan === 'pro' && count >= limit) {
+    meta.innerHTML = count + ' / ' + limit + ' &middot; <a href="pricing.html" style="color:var(--accent);text-decoration:none">Passe Elite +30/jour</a>';
+  }
 }
 
 // Envoi message avec streaming SSE (premier token < 2s, cancel mid-gen).

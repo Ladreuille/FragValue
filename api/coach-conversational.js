@@ -25,10 +25,11 @@
 //     - messages         : [{ role, content, refs, created_at }, ...]
 //     - history_count    : N
 //
-// AUTH : require Elite. Free + Pro = redirect upgrade (feature exclusive Elite).
-// RATE LIMIT :
-//   - Elite  : 200 messages/jour
-//   - Admin  : illimite
+// AUTH : require Pro ou Elite. Free = redirect upgrade.
+// RATE LIMIT (revu 02/05/2026 pour cost control + freemium gradual) :
+//   - Pro    : 5 messages/jour    (preview de la feature, justifie l'upgrade Elite)
+//   - Elite  : 30 messages/jour   (1-2 analyses approfondies de demo par jour)
+//   - Admin  : illimite (qdreuillet@gmail.com via ADMIN_EMAILS)
 //   - Reset  : un user peut reset 1 conversation/heure
 // COST CONTROL :
 //   - Modele : Claude Haiku 4.5 par defaut (fast + cheap)
@@ -44,7 +45,7 @@
 //   - Refus poli si question hors-scope (matchmaking, hardware, etc.)
 
 const { createClient } = require('@supabase/supabase-js');
-const { requireElite, getUserPlan } = require('./_lib/subscription');
+const { requirePro, getUserPlan } = require('./_lib/subscription');
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 // Sonnet 4.5 par defaut : qualite >> Haiku pour coaching contextualise.
@@ -61,12 +62,17 @@ const SOFT_CAP_CONVERSATION = 50;
 const ADMIN_EMAILS = (process.env.FRAGVALUE_ADMIN_EMAILS || 'qdreuillet@gmail.com')
   .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 
-// Feature Elite-only : hard cap 200/jour (cf. ultrareview cost analysis :
-// avec cache 1h = ~$3.5/user/jour pour 50 q/jour, soutenable a Elite tarif).
+// Limites par tier (revu 02/05/2026 : pricing freemium gradue).
+// - Pro 5/jour    : preview de la feature, suffisant pour 1 question par demo
+//                   analysee. Atteint la limite = trigger upgrade Elite.
+// - Elite 30/jour : 1-2 deep-dives de demo par jour, ratio cout/value soutenable
+//                   a 19 EUR/mois (cf. cost analysis : ~$0.50 par conv long).
+// - Admin         : illimite (cf. ADMIN_EMAILS).
 const DAILY_LIMITS = {
-  elite: 200,
+  pro:   5,
+  elite: 30,
 };
-const HARD_LIMIT_ABSOLUTE = 250; // anti-abuse meme admin override possible
+const HARD_LIMIT_ABSOLUTE = 50; // anti-abuse meme admin override possible
 
 let _sb = null;
 function sb() {
@@ -751,10 +757,11 @@ module.exports = async function handler(req, res) {
   // ── POST : nouveau message dans la conversation ──
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Plan check : require ELITE uniquement (Free + Pro n'ont pas acces).
-  // Cette feature est exclusive Elite : streaming temps reel, lexique CS2 pro,
-  // 200 messages/jour, replays cliquables. Differenciateur principal du plan.
-  const gate = await requireElite(req, res);
+  // Plan check : require Pro OU Elite (Free = redirect upgrade).
+  // Pro a acces limite a 5 msg/jour (preview), Elite a 30 msg/jour.
+  // Streaming temps reel, lexique CS2 pro, replays cliquables : meme experience
+  // pour les deux tiers, seule la quantite varie.
+  const gate = await requirePro(req, res);
   if (!gate) return; // 401/403 deja envoye
   const { user, plan } = gate;
   const isAdmin = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim());
@@ -826,15 +833,19 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: `Message trop long (max ${MAX_MESSAGE_LEN} chars)` });
   }
 
-  // Rate limit Elite : 200 messages/jour (admin illimite, hard cap 250 anti-abuse)
+  // Rate limit par tier (Pro 5/jour, Elite 30/jour, admin illimite)
   if (!isAdmin) {
-    const limit = DAILY_LIMITS.elite;
+    const limit = DAILY_LIMITS[plan] || DAILY_LIMITS.pro;
     const used = await countTodayUserMessages(supabase, user.id);
     if (used >= limit) {
+      const upgradeMsg = plan === 'pro'
+        ? `Tu as utilise tes ${limit} messages du jour. Passe en Elite pour 30 msg/jour ou reviens demain.`
+        : `Tu as utilise tes ${limit} messages du jour. Reviens demain.`;
       return res.status(429).json({
         error: 'Limite quotidienne atteinte',
-        message: `Tu as atteint ta limite de ${limit} messages par jour. Reviens demain.`,
+        message: upgradeMsg,
         used, limit, plan,
+        upgrade_url: plan === 'pro' ? '/pricing.html' : null,
       });
     }
   }
