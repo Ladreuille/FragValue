@@ -3,6 +3,9 @@
 
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+// CoachCredits est en CommonJS (module.exports), donc default import + destructure
+import coachCreditsModule from './_lib/coach-credits.js';
+const { addCredits } = coachCreditsModule;
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -60,6 +63,27 @@ export default async function handler(req, res) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
+
+        // ─── A. Achat de credits Coach IA (one-shot, mode 'payment') ───
+        // Distinction via metadata.purchase_type == 'coach_credits' ou
+        // session.mode === 'payment'. Les credits sont ajoutes via addCredits.
+        if (session.mode === 'payment' && session.metadata?.purchase_type === 'coach_credits') {
+          const userId  = session.metadata.user_id;
+          const packKey = session.metadata.pack;
+          if (!userId || !packKey) {
+            console.warn('[Stripe] coach_credits checkout sans user_id ou pack:', session.id);
+            break;
+          }
+          const result = await addCredits(sb, userId, packKey, session.id);
+          if (!result.ok) {
+            console.error('[Stripe] addCredits failed:', result.error, 'session=' + session.id);
+          } else {
+            console.log(`[Stripe] +${session.metadata.credits || '?'} credits coach_ia for user ${userId} (balance=${result.balance_after})`);
+          }
+          break;
+        }
+
+        // ─── B. Subscription classique (mode 'subscription') ───
         const userId = session.metadata?.supabase_user_id;
         if (!userId) break;
 

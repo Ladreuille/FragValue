@@ -405,6 +405,28 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 .coach-chat-send.streaming:hover{filter:brightness(1.1)}
 .coach-chat-send svg{width:14px;height:14px}
 
+/* Modale d'achat de credits Coach IA (Phase 2) */
+.coach-credits-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.coach-credits-modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);cursor:pointer}
+.coach-credits-modal-card{position:relative;background:var(--surface,#0f1010);border:1px solid var(--border2,#2a2f3a);border-radius:12px;padding:28px 32px;max-width:480px;width:100%;box-shadow:0 20px 60px -10px rgba(184,255,87,.15)}
+.coach-credits-modal-close{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer;width:32px;height:32px;border-radius:50%;transition:all .15s;line-height:1;font-family:var(--mono)}
+.coach-credits-modal-close:hover{color:var(--text);background:var(--card)}
+.coach-credits-modal-h{font-family:var(--display);font-size:20px;letter-spacing:.02em;color:var(--text);margin-bottom:6px}
+.coach-credits-modal-sub{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:16px}
+.coach-credits-modal-balance{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:18px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:6px}
+.coach-credits-modal-balance strong{color:var(--accent);font-weight:700}
+.coach-credits-packs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.coach-credits-pack{background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:18px 12px;cursor:pointer;text-align:center;transition:all .18s;display:flex;flex-direction:column;gap:4px;color:inherit}
+.coach-credits-pack:hover{border-color:var(--accent);background:rgba(184,255,87,.04);transform:translateY(-1px)}
+.coach-credits-pack-credits{font-family:var(--display);font-size:22px;color:var(--accent);letter-spacing:.02em;line-height:1}
+.coach-credits-pack-price{font-family:var(--display);font-size:18px;color:var(--text);letter-spacing:.02em}
+.coach-credits-pack-unit{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.06em}
+.coach-credits-modal-foot{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.04em;text-align:center;opacity:.7}
+@media(max-width:480px){
+  .coach-credits-modal-card{padding:20px 18px}
+  .coach-credits-packs{grid-template-columns:1fr}
+}
+
 /* Actions sous les messages assistant : copier, regenerer */
 .coach-msg-actions{display:flex;gap:4px;margin-top:2px;opacity:0;transition:opacity .15s}
 .coach-msg.assistant:hover .coach-msg-actions{opacity:1}
@@ -1095,6 +1117,9 @@ let _coachPlan = 'free';
 let _coachMessages = []; // mirror local des messages
 let _coachAbortCtrl = null; // AbortController du stream en cours
 let _coachStreaming = false;
+// Phase 2 : credits Coach IA achetes via Stripe
+let _coachCreditsBalance = 0;
+let _coachCreditsExpired = false;
 
 function getDemoId() {
   // Priorite (essaye toutes les sources connues, dans l'ordre) :
@@ -1156,10 +1181,11 @@ async function initCoachChat(c, rounds) {
       return;
     }
 
-    // Elite : prepare suggestions + input
+    // Pro/Elite : prepare suggestions + input + load credits balance
     coachShowChat();
     renderCoachSuggestions(you);
     coachRenderMessages();
+    await coachLoadCredits(); // Phase 2 : solde de credits achetes
     coachUpdateMeta();
   } catch (err) {
     // En cas d'erreur (network, fetch, etc.), on affiche au moins le state
@@ -1388,18 +1414,126 @@ function coachOpenRound(roundNum, tick) {
 function coachUpdateMeta() {
   const meta = document.getElementById('coachChatMeta');
   if (!meta) return;
-  // Limite selon le tier : Pro 5/jour, Elite 30/jour.
   const limit = _coachPlan === 'elite' ? 30 : 5;
   const count = _coachMessages.filter(m => m.role === 'user').length;
-  meta.textContent = count + ' / ' + limit + ' aujourd\'hui';
   const limitInfo = document.getElementById('coachLimitInfo');
   if (limitInfo) {
     const planLbl = _coachPlan === 'elite' ? 'Elite' : 'Pro';
     limitInfo.textContent = planLbl + ' · ' + limit + ' msg/jour';
   }
-  // Si Pro a atteint la limite, on glisse un upsell discret dans le meta
-  if (_coachPlan === 'pro' && count >= limit) {
-    meta.innerHTML = count + ' / ' + limit + ' &middot; <a href="pricing.html" style="color:var(--accent);text-decoration:none">Passe Elite +30/jour</a>';
+  // Affichage adapte : si limite atteinte mais credits dispo, indique combien
+  // il reste. Si pas de credits, propose l'achat.
+  const hitLimit = count >= limit;
+  if (!hitLimit) {
+    meta.textContent = count + ' / ' + limit + ' aujourd\'hui';
+  } else if (_coachCreditsBalance > 0) {
+    meta.innerHTML = limit + ' / ' + limit + ' &middot; <span style="color:var(--accent)">' + _coachCreditsBalance + ' credits</span>';
+  } else {
+    meta.innerHTML = limit + ' / ' + limit + ' &middot; '
+      + '<a href="#" onclick="coachOpenCreditsModal();return false" style="color:var(--accent);text-decoration:none;cursor:pointer">'
+      + (_coachPlan === 'pro' ? 'Acheter credits ou passer Elite' : 'Acheter credits')
+      + '</a>';
+  }
+}
+
+// Charge le solde de credits Coach IA depuis l'API
+async function coachLoadCredits() {
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) return;
+    const r = await fetch('/api/coach-credits-status', {
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    _coachCreditsBalance = data.balance || 0;
+    _coachCreditsExpired = !!data.expired;
+    console.info('[coach-credits] balance=' + _coachCreditsBalance +
+      (data.expires_at ? ' expires=' + new Date(data.expires_at).toLocaleDateString() : ''));
+  } catch (e) {
+    console.warn('[coach-credits] load failed:', e.message);
+  }
+}
+
+// Ouvre la modale d'achat de credits (UI inline overlay)
+async function coachOpenCreditsModal() {
+  // Charge les packs disponibles depuis l'API
+  let packs = [
+    { key: 'pack_50',  credits: 50,  amount_eur: 4,  label: '50 credits Coach IA' },
+    { key: 'pack_200', credits: 200, amount_eur: 12, label: '200 credits Coach IA' },
+  ];
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (session) {
+      const r = await fetch('/api/coach-credits-status', {
+        headers: { 'Authorization': 'Bearer ' + session.access_token },
+      });
+      if (r.ok) {
+        const d = await r.json();
+        if (d.packs_available) packs = d.packs_available;
+      }
+    }
+  } catch {}
+
+  // Construit la modale
+  let modal = document.getElementById('coachCreditsModal');
+  if (modal) modal.remove();
+  modal = document.createElement('div');
+  modal.id = 'coachCreditsModal';
+  modal.className = 'coach-credits-modal';
+  modal.innerHTML = '<div class="coach-credits-modal-backdrop" onclick="coachCloseCreditsModal()"></div>'
+    + '<div class="coach-credits-modal-card">'
+    + '  <button class="coach-credits-modal-close" onclick="coachCloseCreditsModal()" aria-label="Fermer">×</button>'
+    + '  <div class="coach-credits-modal-h">Acheter des credits Coach IA</div>'
+    + '  <p class="coach-credits-modal-sub">1 credit = 1 message au-dela de ta limite quotidienne. Validite 90 jours.</p>'
+    + '  <div class="coach-credits-modal-balance">Solde actuel : <strong>' + _coachCreditsBalance + ' credits</strong></div>'
+    + '  <div class="coach-credits-packs">'
+    + packs.map(p =>
+        '<button type="button" class="coach-credits-pack" onclick="coachBuyPack(\'' + p.key + '\')">'
+        + '<div class="coach-credits-pack-credits">' + p.credits + ' credits</div>'
+        + '<div class="coach-credits-pack-price">' + p.amount_eur + ' EUR</div>'
+        + '<div class="coach-credits-pack-unit">' + (p.amount_eur / p.credits).toFixed(2) + ' EUR/msg</div>'
+        + '</button>'
+      ).join('')
+    + '  </div>'
+    + '  <div class="coach-credits-modal-foot">Paiement securise Stripe &middot; CB / Apple Pay / Google Pay</div>'
+    + '</div>';
+  document.body.appendChild(modal);
+}
+
+function coachCloseCreditsModal() {
+  const modal = document.getElementById('coachCreditsModal');
+  if (modal) modal.remove();
+}
+
+async function coachBuyPack(packKey) {
+  const btn = event?.target?.closest('button');
+  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) {
+      window.location.href = '/login.html';
+      return;
+    }
+    const r = await fetch('/api/coach-credits-purchase', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+      body: JSON.stringify({ pack: packKey }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.url) {
+      coachShowError(data.error || data.hint || 'Erreur creation Checkout');
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      return;
+    }
+    // Redirige vers Stripe Checkout
+    window.location.href = data.url;
+  } catch (e) {
+    coachShowError('Erreur achat : ' + e.message);
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
   }
 }
 
@@ -1485,6 +1619,13 @@ async function coachSendMessage(e) {
       if (r.status === 429 || r.status === 403) {
         // Retire user msg + assistant placeholder pour pas polluer l'historique
         _coachMessages.splice(assistantIdx - 1, 2);
+        // Si limite quotidienne atteinte ET pas de credits, ouvre la modale achat
+        if (r.status === 429 && data.buy_credits_url && (data.credits === 0 || data.credits === undefined)) {
+          coachShowError(data.message || 'Limite quotidienne atteinte');
+          setTimeout(() => coachOpenCreditsModal(), 800);
+          coachRenderMessages();
+          return false;
+        }
       } else {
         // Garde user msg, retire assistant placeholder
         _coachMessages.splice(assistantIdx, 1);
@@ -1561,6 +1702,10 @@ async function coachSendMessage(e) {
           _coachMessages[assistantIdx].refs = parsed.refs || {};
           _coachMessages[assistantIdx].message_id = parsed.message_id;
           _coachMessages[assistantIdx].streaming = false;
+          // Phase 2 : si un credit a ete consomme, refresh le solde local
+          if (parsed.credit_used && typeof parsed.credits_balance === 'number') {
+            _coachCreditsBalance = parsed.credits_balance;
+          }
         } else if (evt === 'error') {
           streamFailed = true;
           if (!receivedAny) {
