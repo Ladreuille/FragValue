@@ -87,6 +87,25 @@
       input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
       textarea, select{font-size:16px !important}
     }
+
+    /* Print styles (Option C perf review) : retire elements interactifs/animes
+       quand le user imprime ou exporte PDF (jsPDF n'utilise pas ces regles
+       mais le browser print preview oui). */
+    @media print{
+      nav.fv-nav, .fv-footer, .fv-skip-link, .pricing-trust-row, .fv-burger,
+      .nav-cta, footer, [data-teaser-cta], .cta-waitlist{display:none !important}
+      body::before{display:none !important}
+      body{background:#fff !important;color:#000 !important}
+      a{color:#000 !important;text-decoration:underline}
+    }
+
+    /* Image loading hint global (Option C perf P1) : prevent CLS sur images
+       sans dimensions explicites en imposant un container ratio par defaut.
+       N'affecte pas les images avec width/height explicites (specificity).
+       Pour les images dans innerHTML JS templates ou width/height manquaient,
+       on garantit un placeholder propre au lieu d'un layout shift. */
+    img:not([width]):not([height]){max-width:100%;height:auto;contain:layout}
+
     /* Touch targets 44x44px sur mobile (WCAG SC 2.5.5 + Apple HIG) :
        garantit que les boutons critiques sont assez grands pour le pouce. */
     @media (max-width:640px){

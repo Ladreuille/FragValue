@@ -1692,22 +1692,36 @@ function setMetric(el, name, sub, desc, formula) {
   `
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Option C perf (cf. ultrareview Performance audit) : Supabase CDN charge en defer
+     pour ne pas bloquer le rendu initial (gain ~150ms FCP sur connexions slow).
+     L'init createClient + le check session sont wraps dans DOMContentLoaded qui
+     fire APRES tous les defer scripts. _sb est expose sur window pour que les
+     handlers click (startCheckout) y accedent. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 <script>
 const _sbUrl  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const _sbAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
-const _sb = supabase.createClient(_sbUrl, _sbAnon);
-_sb.auth.getSession().then(({ data }) => {
-  if (data.session) {
-    document.getElementById('navLoginBtn').style.display  = 'none';
-    document.getElementById('navAccountBtn').style.display = '';
-    const mb = document.getElementById('navMatchesBtn');
-    if (mb) mb.style.display = '';
-  }
+// _sb defini apres DOMContentLoaded (Supabase defer charge a ce moment-la).
+// Expose sur window pour que les handlers click le retrouvent.
+window._sb = null;
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof supabase === 'undefined') return; // safety check
+  window._sb = supabase.createClient(_sbUrl, _sbAnon);
+  window._sb.auth.getSession().then(({ data }) => {
+    if (data.session) {
+      const lb = document.getElementById('navLoginBtn');   if (lb) lb.style.display = 'none';
+      const ab = document.getElementById('navAccountBtn'); if (ab) ab.style.display = '';
+      const mb = document.getElementById('navMatchesBtn'); if (mb) mb.style.display = '';
+    }
+  });
 });
 
 async function startCheckout(plan) {
-  const { data: { session } } = await _sb.auth.getSession();
+  // Defensive : si user clic le bouton avant que window._sb soit init, on attend
+  if (!window._sb) {
+    return new Promise(r => setTimeout(() => r(startCheckout(plan)), 100));
+  }
+  const { data: { session } } = await window._sb.auth.getSession();
   const headers = { 'Content-Type': 'application/json' };
   if (session?.access_token) headers['Authorization'] = 'Bearer ' + session.access_token;
 
