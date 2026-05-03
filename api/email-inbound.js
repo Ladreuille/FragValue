@@ -102,10 +102,9 @@ async function resolveUserTier(userId) {
       .eq('user_id', userId)
       .single();
     if (!data || !['active', 'trialing'].includes(data.status)) return 'free';
-    const p = String(data.plan || '').toLowerCase();
-    if (p.includes('elite') || p.includes('team')) return 'elite';
-    if (p.includes('pro')) return 'pro';
-    return 'free';
+    // Utilise normalizePlan centralise (cf. ultrareview SEC P1).
+    const { normalizePlan } = require('./_lib/subscription');
+    return normalizePlan(data.plan);
   } catch {
     return null;
   }

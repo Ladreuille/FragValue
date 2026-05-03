@@ -26,6 +26,38 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'Supabase non configure' });
   }
 
+  // AUTH (cf. ultrareview SEC P1) : avant cet endpoint etait public et faisait
+  // 5 appels FACEIT internes par requete -> roster_id enumerable + cout API.
+  // Maintenant : exiger Bearer JWT + rate-limit user 30/h pour anti-DoS.
+  const authHeader = req.headers.authorization || '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Authentification requise' });
+  }
+  try {
+    const { createClient: cc } = await import('@supabase/supabase-js');
+    const sbAuth = cc(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+    const { data: userData, error: uErr } = await sbAuth.auth.getUser(authHeader.slice(7).trim());
+    if (uErr || !userData?.user) {
+      return res.status(401).json({ error: 'Token invalide' });
+    }
+    if (!global.__rosterStatsRateLimit) global.__rosterStatsRateLimit = new Map();
+    const now = Date.now();
+    const key = userData.user.id;
+    const hits = (global.__rosterStatsRateLimit.get(key) || []).filter(t => now - t < 3600000);
+    if (hits.length >= 30) {
+      return res.status(429).json({ error: 'Trop de requetes (max 30/h)', retry_after: 3600 });
+    }
+    hits.push(now);
+    global.__rosterStatsRateLimit.set(key, hits);
+    if (global.__rosterStatsRateLimit.size > 1000) {
+      const oldest = [...global.__rosterStatsRateLimit.entries()].sort((a, b) => (a[1][0] || 0) - (b[1][0] || 0))[0];
+      if (oldest) global.__rosterStatsRateLimit.delete(oldest[0]);
+    }
+  } catch (e) {
+    console.error('[roster-stats] auth check failed:', e.message);
+    return res.status(500).json({ error: 'Erreur auth' });
+  }
+
   // Cache
   const cached = _cache.get(rosterId);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {

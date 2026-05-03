@@ -21,6 +21,18 @@ export default async function handler(req, res) {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: 'Non authentifie' });
 
+  // CONFIRMATION EXPLICITE (cf. ultrareview SEC P1) : action irreversible,
+  // exiger un body { confirm: 'DELETE' } pour eviter une suppression
+  // accidentelle (bouton mal clique, replay requete, bug front).
+  let body = req.body || {};
+  if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = {}; } }
+  if (body.confirm !== 'DELETE') {
+    return res.status(400).json({
+      error: 'Confirmation requise',
+      message: 'Pour supprimer ton compte, envoie body.confirm = "DELETE" (en majuscules).',
+    });
+  }
+
   try {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);

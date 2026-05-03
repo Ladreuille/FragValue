@@ -59,7 +59,7 @@ async function getAdminUser(authHeader) {
   if (!token) return null;
   const { data } = await sb().auth.getUser(token);
   const u = data?.user;
-  if (!u?.email || !ADMIN_EMAILS.includes(u.email)) return null;
+  if (!u?.email || !ADMIN_EMAILS.includes((u.email||"").toLowerCase().trim())) return null;
   return u;
 }
 

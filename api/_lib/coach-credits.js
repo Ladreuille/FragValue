@@ -119,11 +119,40 @@ async function consumeCredit(supabase, userId, messageId) {
 // Si la row n'existe pas, on l'insert. Sinon, on ajoute au solde.
 // Met a jour expires_at = now() + 90 jours (reset a chaque achat).
 //
-// Retourne { ok, balance_after }.
+// IDEMPOTENCE (cf. ultrareview SEC P0) : early-return si stripeSessionId
+// a deja ete processe. Stripe peut rejouer un webhook si on lui retourne
+// 5xx ou s'il timeout. Sans cet early-return, on creditait 2x l'user.
+// Combine avec UNIQUE INDEX sur coach_credits_log.stripe_session pour
+// defense-in-depth (l'INSERT echouera si by-pass de check).
+//
+// Retourne { ok, balance_after, idempotent? }.
 async function addCredits(supabase, userId, packKey, stripeSessionId) {
   const pack = PACKS[packKey];
   if (!pack) {
     return { ok: false, error: 'unknown_pack' };
+  }
+
+  // === IDEMPOTENCE CHECK : session deja processee ? ===
+  if (stripeSessionId) {
+    const { data: existing, error: selErr } = await supabase
+      .from('coach_credits_log')
+      .select('id, balance_after, created_at')
+      .eq('stripe_session', stripeSessionId)
+      .eq('type', 'purchase')
+      .maybeSingle();
+    if (selErr) {
+      console.warn('[coach-credits] idempotence check failed:', selErr.message);
+      // En cas d'erreur DB sur le check, on continue (UNIQUE INDEX protege en
+      // dernier recours, l'INSERT echouera s'il y a vraiment doublon).
+    } else if (existing) {
+      console.log(`[coach-credits] addCredits IDEMPOTENT skip : session ${stripeSessionId} deja processee (log id ${existing.id})`);
+      return {
+        ok: true,
+        idempotent: true,
+        balance_after: existing.balance_after,
+        already_processed_at: existing.created_at,
+      };
+    }
   }
 
   // Calcul nouvelle expiration : +90 jours a partir d'aujourd'hui
@@ -154,8 +183,9 @@ async function addCredits(supabase, userId, packKey, stripeSessionId) {
     return { ok: false, error: 'upsert_failed' };
   }
 
-  // Log la transaction
-  await supabase.from('coach_credits_log').insert({
+  // Log la transaction. UNIQUE INDEX sur stripe_session protege en cas de
+  // race (2 webhook handlers en parallele) - l'INSERT echouera proprement.
+  const { error: logErr } = await supabase.from('coach_credits_log').insert({
     user_id:       userId,
     type:          'purchase',
     delta:         pack.credits,
@@ -168,6 +198,16 @@ async function addCredits(supabase, userId, packKey, stripeSessionId) {
       expires_at:    newExpires.toISOString(),
     },
   });
+  if (logErr && /duplicate key|unique constraint/i.test(logErr.message)) {
+    console.warn(`[coach-credits] addCredits DUPLICATE detected (race), session=${stripeSessionId}`);
+    // Race detectee : un autre worker a credit dans le meme temps. On lit le
+    // solde courant (la 1ere insertion a bien fait son boulot).
+    const refreshed = await getCredits(supabase, userId);
+    return { ok: true, idempotent: true, balance_after: refreshed.balance };
+  } else if (logErr) {
+    console.error('[coach-credits] log insert failed:', logErr.message);
+    // L'upsert credit a deja eu lieu, c'est juste le log qui rate. Pas critique.
+  }
 
   return { ok: true, balance_after: newBalance, expires_at: newExpires.toISOString() };
 }

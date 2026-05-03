@@ -141,6 +141,17 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .card{opacity:0;animation:fadeUp .4s .05s ease forwards}
+
+/* Mobile (cf. ultrareview VIS P0) : avant aucun breakpoint -> overflow
+   horizontal garanti sur les ecrans < 640px. */
+@media (max-width:640px){
+  body{font-size:13px}
+  main,.wrap,.container{padding:16px !important;max-width:100% !important}
+  .card{padding:18px !important;border-radius:10px}
+  h1,h2{font-size:clamp(20px,5vw,26px) !important}
+  input,button{font-size:14px} /* anti-zoom iOS sur focus input < 16px */
+  button[type="submit"]{width:100%;padding:14px}
+}
 </style>
 <script src="/analytics.js" defer></script>
 <script src="/faceit-oauth.js" defer></script>

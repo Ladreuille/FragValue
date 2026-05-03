@@ -46,7 +46,7 @@ async function getUser(authHeader) {
 
 async function resolveUserPlan(user) {
   if (!user) return 'free';
-  if (user.email && ADMIN_EMAILS.includes(user.email)) return 'elite';
+  if (user.email && ADMIN_EMAILS.includes((user.email||"").toLowerCase().trim())) return 'elite';
   try {
     const s = sb();
     const { data: profile } = await s
@@ -278,7 +278,7 @@ module.exports = async function handler(req, res) {
   }
 
   // Rate limit 20/jour (sauf admin)
-  const isAdmin = user.email && ADMIN_EMAILS.includes(user.email);
+  const isAdmin = user.email && ADMIN_EMAILS.includes((user.email||"").toLowerCase().trim());
   if (!isAdmin) {
     const todayCount = await getTodayCount(user.id);
     if (todayCount >= DAILY_LIMIT) {

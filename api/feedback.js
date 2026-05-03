@@ -98,7 +98,9 @@ async function resolveUser(authHeader) {
 
 async function isAdmin(authHeader) {
   const user = await resolveUser(authHeader);
-  return !!(user?.email && ADMIN_EMAILS.includes(user.email));
+  // Lowercase + trim pour aligner sur la liste ADMIN_EMAILS (cf. ultrareview
+  // SEC P0 : Supabase peut retourner email avec casse mixte selon provider).
+  return !!(user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim()));
 }
 
 async function resolveUserTier(userId) {
@@ -110,10 +112,11 @@ async function resolveUserTier(userId) {
       .eq('user_id', userId)
       .single();
     if (!data || !['active', 'trialing'].includes(data.status)) return 'free';
-    const p = String(data.plan || '').toLowerCase();
-    if (p.includes('elite') || p.includes('team')) return 'elite';
-    if (p.includes('pro')) return 'pro';
-    return 'free';
+    // Utilise normalizePlan centralise (cf. ultrareview SEC P1 : avant la
+    // logique p.includes('elite') etait dupliquee ici et matchait des plans
+    // trompeurs comme 'freelite'). Maintenant : Set explicite.
+    const { normalizePlan } = require('./_lib/subscription');
+    return normalizePlan(data.plan);
   } catch {
     return null;
   }
