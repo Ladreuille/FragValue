@@ -19,7 +19,10 @@
 //   construction manuelle de la Response avec headers, et try/catch global
 //   pour ne JAMAIS crash le middleware (fail-open).
 
-// Pages dont la version EN existe (synchro avec scripts/build-i18n.js PAGES)
+// Pages dont la version EN existe (synchro avec scripts/build-i18n.js PAGES).
+// Cf. ultrareview SEO P1 : avant 15 pages -> 18 manquantes etaient pas
+// redirigees pour visiteurs EN -> bounce + signal qualite degrade.
+// Maintenant : 33 pages (toutes les PAGES de build-i18n.js).
 const TRANSLATED_PAGES = new Set([
   'index.html',
   'pricing.html',
@@ -36,6 +39,25 @@ const TRANSLATED_PAGES = new Set([
   'levels.html',
   'stats-guide.html',
   'compare-outils.html',
+  // Ajoutees (sync build-i18n) :
+  'account.html',
+  'dashboard.html',
+  'matches.html',
+  'scout.html',
+  'compare.html',
+  'team.html',
+  'blog.html',
+  'onboarding.html',
+  'replay.html',
+  'analysis.html',
+  'heatmap-results.html',
+  'pro-match.html',
+  'share.html',
+  'extension-auth.html',
+  'faceit-callback.html',
+  'how-it-works.html',
+  'sitemap.html',
+  'astuces.html',
 ]);
 
 // User-Agents de bots / crawlers connus. On les laisse passer en FR (canonique)

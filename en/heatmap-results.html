@@ -493,6 +493,45 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       .fv-hero-meta{grid-template-columns:repeat(4,auto);justify-content:center;padding:12px 0 0;border-left:none;border-top:1px solid var(--border)}
     }
 
+    /* AI COACH TRIGGER : visible juste sous fv-hero. Positionne pour creer
+       le pic emotionnel apres avoir vu son FV Rating -> action immediate. */
+    .coach-trigger{
+      display:flex;align-items:center;gap:18px;
+      background:linear-gradient(135deg,rgba(184,255,87,.08) 0%,rgba(184,255,87,.02) 50%,var(--surface) 100%);
+      border:1px solid rgba(184,255,87,.3);border-radius:14px;
+      padding:18px 22px;margin:18px 0 24px;flex-wrap:wrap
+    }
+    .coach-trigger-icon{
+      width:44px;height:44px;border-radius:12px;
+      background:rgba(184,255,87,.15);color:var(--accent);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0
+    }
+    .coach-trigger-body{flex:1;min-width:200px}
+    .coach-trigger-title{
+      font-family:var(--display);font-size:16px;letter-spacing:.02em;
+      color:var(--text);margin-bottom:4px
+    }
+    .coach-trigger-sub{
+      font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5
+    }
+    .coach-trigger-sub strong{color:var(--accent)}
+    .coach-trigger-cta{
+      display:inline-flex;align-items:center;gap:8px;
+      background:var(--accent);color:#000;
+      padding:11px 18px;border-radius:8px;
+      font-family:var(--mono);font-size:12px;font-weight:700;
+      letter-spacing:.04em;text-transform:uppercase;
+      text-decoration:none;cursor:pointer;
+      transition:all .15s cubic-bezier(.2,.8,.25,1);
+      flex-shrink:0
+    }
+    .coach-trigger-cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    @media (max-width:560px){
+      .coach-trigger{padding:16px;flex-direction:column;text-align:center;align-items:stretch}
+      .coach-trigger-icon{margin:0 auto}
+      .coach-trigger-cta{width:100%;justify-content:center}
+    }
+
     /* ── UNLOCK PRO : section affichee en bas des resultats quand l'user n'est
          not Pro/Elite. Teaser visuel + CTA direct vers /pricing.html pour
          pousser la conversion au moment du "aha moment" post-analyse. ── */
@@ -642,6 +681,23 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <div class="fv-hero-context" id="fvHeroContext">Analysis completee.</div>
     </div>
     <div class="fv-hero-meta" id="fvHeroMeta"></div>
+  </div>
+
+  <!-- AI COACH TRIGGER : visible des l'ouverture des resultats (cf. ultrareview
+       Onboarding P0). Avant le Coach etait juste mentionne en upsell Pro,
+       maintenant Free a 1 declenchement/mois inclus pour goûter. -->
+  <div id="coachIaTrigger" class="coach-trigger" style="display:none">
+    <div class="coach-trigger-icon" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
+    </div>
+    <div class="coach-trigger-body">
+      <div class="coach-trigger-title">AI Coach · diagnostic personnalise</div>
+      <div class="coach-trigger-sub" id="coachTriggerSub">Forces, faiblesses, 4 actions concretes basees sur your last 20 FACEIT matches.</div>
+    </div>
+    <a href="/dashboard.html#coach" class="coach-trigger-cta" id="coachTriggerCta">
+      <span id="coachTriggerLabel">Lancer le diagnostic</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
   </div>
 
   <!-- HIGHLIGHTS DU MATCH -->
@@ -1013,6 +1069,9 @@ window.addEventListener('load',()=>{
     // Affiche la section "Debloque avec Pro" uniquement pour les users Free
     // (les Pro/Elite voient deja tout, not besoin de les pousser au checkout).
     renderUnlockProSection();
+    // Affiche le trigger AI Coach juste sous le FV Hero (cf. ultrareview
+    // Onboarding P0 : declenche au pic emotionnel post-aha-moment).
+    renderCoachIaTrigger();
   }catch(e){console.error('heatmap-results init error:',e);}
 });
 
@@ -1121,6 +1180,51 @@ function getMapImgPath(){
   const rawMap=demoData.meta?.map||'de_dust2';
   const normMap=rawMap.toLowerCase().replace(/^.*\//,'').trim();
   const cfg=MAP_CONFIG[normMap]||MAP_CONFIG[rawMap];if(!cfg)return null;if(cfg.upper)return currentFloor==='upper'?cfg.upper.img:cfg.lower.img;return cfg.img||null;}
+
+// AI Coach trigger : affiche le CTA pour declencher le diagnostic IA selon
+// le plan de l'user. Free = 1 declenchement/mois, Pro/Elite = unlimited.
+// Lien direct vers dashboard.html#coach pour ouvrir le diagnostic.
+async function renderCoachIaTrigger() {
+  const el = document.getElementById('coachIaTrigger');
+  const sub = document.getElementById('coachTriggerSub');
+  const label = document.getElementById('coachTriggerLabel');
+  const cta = document.getElementById('coachTriggerCta');
+  if (!el) return;
+
+  // Resolve plan via /api/check-subscription (deja appele par renderUnlockProSection
+  // qui cache le resultat). On essaie de reutiliser, sinon on re-fetch.
+  let plan = 'free';
+  try {
+    const sb = window._supabaseClient || (typeof supabase !== 'undefined'
+      ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+      : null);
+    if (sb) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        const r = await fetch('/api/check-subscription', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        });
+        if (r.ok) {
+          const d = await r.json();
+          plan = (d.plan || 'free').toLowerCase();
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('[coach-trigger] plan fetch failed:', e.message);
+  }
+
+  // Adapte le wording selon le plan
+  if (plan === 'pro' || plan === 'elite' || plan === 'team') {
+    sub.innerHTML = 'Forces, faiblesses, 4 actions concretes basees sur your last 20 FACEIT matches. <strong>Diagnostic unlimited</strong> avec ton plan.';
+    label.textContent = 'Lancer mon diagnostic';
+  } else {
+    sub.innerHTML = 'Forces, faiblesses, 4 actions concretes basees sur your last 20 FACEIT matches. <strong>1 diagnostic gratuit / mois</strong> en Free.';
+    label.textContent = 'Lancer mon diagnostic gratuit';
+  }
+  el.style.display = 'flex';
+}
 function loadMapImageThenDraw(){
   const rawMapName=demoData.meta?.map||'de_dust2';
   const mapName=rawMapName.toLowerCase().replace(/^.*\//,'').trim();
@@ -1502,13 +1606,13 @@ function renderMatchStats() {
       </div>
       <div class="ms-cols ms-cols-header">
         <div class="ms-col ms-col-name">Player</div>
-        <div class="ms-col">K-D</div>
-        <div class="ms-col">KAST</div>
-        <div class="ms-col">ADR</div>
-        <div class="ms-col" title="Opening K-D (premier duel du round)">Op. K-D</div>
-        <div class="ms-col" title="% duels won (1v1 direct)">Duel%</div>
-        <div class="ms-col" title="Multi-kills (rounds avec 2+ kills)">MKs</div>
-        <div class="ms-col" style="color:var(--success)">FV Rating</div>
+        <div class="ms-col" title="Kills - Deaths : difference brute. >0 = positif, contribue au team play.">K-D</div>
+        <div class="ms-col" title="KAST : % de rounds avec un Kill, Assist, Survive or Trade. Mesure le team play. 70%+ = elite.">KAST</div>
+        <div class="ms-col" title="ADR (Average Damage per Round) : degats moyens par round. 80+ = bon, 100+ = top.">ADR</div>
+        <div class="ms-col" title="Opening Kill - Death : 1er duel de chaque round. Indique le risk-taking en entry.">Op. K-D</div>
+        <div class="ms-col" title="% de duels gagnes face a face (1v1 directs, hors trade kills).">Duel%</div>
+        <div class="ms-col" title="Multi-kills : rounds avec 2+ kills. Indique l'impact ponctuel (clutch potential).">MKs</div>
+        <div class="ms-col" style="color:var(--success)" title="FV Rating : note synthetique 0.0-2.0 calcule par FragValue. >1.0 = au-dessus moyenne. Combine kills, KAST, ADR, opening, multi-kills, clutch.">FV Rating</div>
       </div>
       ${rows}
     </div>`;
