@@ -299,23 +299,46 @@ function renderPaywall() {
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         </div>
         <div class="paywall-title">Scorecards débloqués en Pro</div>
-        <div class="paywall-sub">Ratings HLTV 2.1, ADR, KAST, opening duels, multi-kills et clutches pour chaque joueur sur chaque map du match. Accès illimité à tous les matchs S-tier.</div>
+        <div class="paywall-sub">Ratings HLTV 2.1, ADR, KAST, opening duels, multi-kills et clutches pour chaque joueur sur chaque map du match. Accès à tous les matchs S-tier sans limite.</div>
         <ul class="paywall-feats">
           <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Scorecards complets</li>
           <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>500+ matchs S-tier</li>
           <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>2D Replay (bientôt)</li>
           <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Annulation en 1 clic</li>
         </ul>
-        <a href="pricing.html" class="paywall-cta">
-          Passer en Pro
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-        </a>
+        <!-- BLOCKER P0.3 (cf. ultrareview Pro Demos UX) : avant on n'avait que
+             Stripe direct, qui filtrait 80% des visiteurs SEO non-prets a payer.
+             Maintenant dual CTA : intent achat (Pro) + intent test (notif gratuite). -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:8px">
+          <a href="pricing.html" class="paywall-cta">
+            Passer en Pro
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+          <button data-teaser-cta="pro-match" class="paywall-cta" style="background:transparent;color:var(--accent);border:1px solid rgba(184,255,87,.4);box-shadow:none">
+            M'envoyer 3 scorecards exemples
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 6 12 13 2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
+          </button>
+        </div>
+        <div style="margin-top:12px;font-size:10px;color:var(--text3);letter-spacing:.04em">
+          <span data-teaser-counter="pro-match">-</span> joueurs ont activé leur intérêt
+        </div>
       </div>
     </div>
   `;
 }
 
 loadMatch();
+</script>
+<script src="/teaser.js"></script>
+<script>
+// Bind teaser CTA apres que loadMatch() ait inject le HTML du paywall.
+// Petit delai pour que le DOM soit pret. Si l'user n'est pas Pro, le bouton
+// "M'envoyer 3 scorecards exemples" devient cliquable.
+setTimeout(() => {
+  if (window.FVTeaser && document.querySelector('[data-teaser-cta="pro-match"]')) {
+    FVTeaser.initCTA('pro-match', { base: 47, perDay: 0.6 });
+  }
+}, 600);
 </script>
 </body>
 </html>

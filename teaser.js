@@ -68,6 +68,16 @@
     return res.json();
   }
 
+  // Analytics helper : envoie un event si fvTrack est defini (loaded via analytics.js)
+  // Cf. ultrareview Pro Demos UX P0.4 : sans events, impossible de mesurer le funnel.
+  function track(eventName, props) {
+    try {
+      if (typeof window.fvTrack === 'function') {
+        window.fvTrack(eventName, props || {});
+      }
+    } catch (_) { /* never fail teaser flow on analytics issues */ }
+  }
+
   function initCTA(slug, opts){
     opts = opts || {};
     const btn = document.querySelector('[data-teaser-cta="' + slug + '"]');
@@ -85,6 +95,9 @@
       if (counter) counter.textContent = (Number(n) || 0).toLocaleString(T.locale);
     };
 
+    // Track teaser view (1 event par visite)
+    track('teaser_view', { feature: slug });
+
     // 1. Optimistic : si localStorage dit "deja inscrit", on affiche tout de suite
     const local = readLS();
     if (local[slug]) setSaved();
@@ -101,12 +114,10 @@
         }
       })
       .catch(() => {
-        // Offline / API down : fallback vers un seed pseudo-deterministe
-        if (counter) {
-          const base = opts.base || 40;
-          const per = opts.perDay || 1.2;
-          const days = Math.floor(Date.now() / 86400000);
-          renderCount(base + Math.floor(per * (days - 19600)));
+        // Offline / API down : on cache le compteur plutot que de mentir avec un seed
+        // (cf. ultrareview Pro Demos P2.3 : "show real or show nothing").
+        if (counter && counter.parentElement) {
+          counter.parentElement.style.visibility = 'hidden';
         }
       });
 
@@ -115,6 +126,7 @@
     btn.addEventListener('click', async (ev) => {
       if (btn.dataset.state === 'saved') return;
       ev.preventDefault();
+      track('teaser_cta_click', { feature: slug, state: btn.dataset.state || 'fresh' });
       const prev = btn.innerHTML;
       btn.dataset.state = 'loading';
       btn.innerHTML =
@@ -127,10 +139,12 @@
         const cur = readLS();
         cur[slug] = Date.now();
         writeLS(cur);
+        track('teaser_signup_success', { feature: slug, total: d.total });
       } catch (e) {
         btn.dataset.state = '';
         btn.innerHTML = prev;
         console.warn('feature-waitlist failed', e);
+        track('teaser_signup_error', { feature: slug, error: e.message });
         // Toast user : signale l'echec pour qu'il puisse retry ou comprendre
         showFeedbackToast(T.netError, 'error');
       }

@@ -49,6 +49,8 @@
     contact: 'Contact',
     planDuSite: 'Plan du site',
     madeIn: 'Made in France',
+    proDemos: 'Pro demos',
+    proBenchmarks: 'Pro benchmarks',
   };
   const T_EN = {
     monJeu: 'My game',
@@ -66,6 +68,8 @@
     confidentialite: 'Privacy',
     cookies: 'Cookies',
     contact: 'Contact',
+    proDemos: 'Pro demos',
+    proBenchmarks: 'Pro benchmarks',
     planDuSite: 'Sitemap',
     madeIn: 'Made in France',
   };
@@ -130,6 +134,8 @@
     <a href="${link('/scout.html')}">${T.scout}</a>
     <a href="${link('/compare.html')}">${T.comparer}</a>
     <a href="${link('/lineup-library.html')}">${T.lineups}</a>
+    <a href="${link('/pro-demos.html')}">${T.proDemos}</a>
+    <a href="${link('/pro-benchmarks.html')}">${T.proBenchmarks}</a>
     <a href="${link('/stats-guide.html')}">${T.guideStats}</a>
     <a href="${link('/astuces.html')}">${T.astuces}</a>
     <a href="${link('/how-it-works.html')}">${T.commentCaMarche}</a>
