@@ -96,6 +96,23 @@ export default async function handler(req, res) {
       },
     };
 
+    // GUEST CHECKOUT (cf. ultrareview CRO P0) : si pas d'auth header mais
+    // body.guest_email present, on cree une session Stripe avec customer_email
+    // pre-rempli. Le webhook checkout.session.completed creera le compte
+    // Supabase + magic link a la reception du paiement (cf. metadata.guest_signup).
+    const guestEmail = String(body.guest_email || '').toLowerCase().trim();
+    const isGuestCheckout = !req.headers.authorization && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(guestEmail);
+    if (isGuestCheckout) {
+      sessionParams.customer_email = guestEmail;
+      sessionParams.metadata.guest_signup = '1';
+      sessionParams.metadata.guest_email = guestEmail;
+      sessionParams.subscription_data.metadata.guest_signup = '1';
+      sessionParams.subscription_data.metadata.guest_email = guestEmail;
+      // success_url enrichi : le user atterrit sur une page qui explique
+      // comment activer son compte (le magic link est dans son email).
+      sessionParams.success_url = siteOrigin + '/account.html?checkout=success&guest=1';
+    }
+
     const authHeader = req.headers.authorization;
     if (authHeader && process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
       try {

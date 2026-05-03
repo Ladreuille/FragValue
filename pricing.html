@@ -1345,21 +1345,30 @@ async function startCheckout(plan, btn) {
 
   const { data: { session } } = await _sb.auth.getSession();
 
-  if (!session) {
-    window.location.href = 'login.html?redirect=/pricing.html';
-    return; // pas de reset : on quitte la page
-  }
+  // CHECKOUT GUEST (cf. ultrareview CRO P0) : avant on forcait login -> -30%
+  // drop-off. Maintenant on accepte le checkout sans compte : on demande
+  // juste l'email, Stripe Checkout collecte le paiement, et le webhook
+  // cree le compte Supabase + envoie un magic link "active ton compte".
+  let body = { plan };
+  let headers = { 'Content-Type': 'application/json' };
 
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer ' + session.access_token
-  };
+  if (session) {
+    headers['Authorization'] = 'Bearer ' + session.access_token;
+  } else {
+    // Pas de session : on demande l'email pour creer le compte post-paiement
+    setLoading(false);
+    const guestEmail = await promptGuestEmail();
+    if (!guestEmail) return; // user a annule
+    setLoading(true);
+    body.guest_email = guestEmail;
+    if (typeof window.fvTrack === 'function') window.fvTrack('Checkout Guest Mode', { plan });
+  }
 
   try {
     const res = await fetch('/api/stripe-checkout', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ plan })
+      body: JSON.stringify(body)
     });
     const data = await res.json();
     if (data.url) {
@@ -1382,6 +1391,62 @@ function showError(msg) {
   banner.textContent = msg;
   document.body.appendChild(banner);
   setTimeout(() => banner.remove(), 5000);
+}
+
+/* ── Modale email guest checkout (cf. ultrareview CRO P0)
+   Permet le checkout sans compte : l'user saisit son email, Stripe collecte
+   le paiement, le webhook cree le compte Supabase + envoie un magic link.
+   Resout les -30% drop-off du forced login avant Stripe. ── */
+function promptGuestEmail() {
+  return new Promise((resolve) => {
+    const existing = document.getElementById('guestEmailModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'guestEmailModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.78);backdrop-filter:blur(4px)';
+    modal.innerHTML = `
+      <div style="position:relative;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:32px 36px;max-width:460px;width:100%;box-shadow:0 30px 80px -10px rgba(184,255,87,.15)">
+        <button type="button" id="guestEmailClose" aria-label="Fermer" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer;width:32px;height:32px;border-radius:50%;line-height:1">×</button>
+        <div style="font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:8px">Paiement direct sans inscription</div>
+        <p style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:18px">
+          Saisis ton email, paie en sécurité avec Stripe, puis tu recevras un <strong style="color:var(--accent)">lien magique</strong> pour activer ton compte FragValue. Pas de mot de passe à créer maintenant.
+        </p>
+        <input type="email" id="guestEmailInput" placeholder="ton@email.com" autocomplete="email" required style="width:100%;background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:13px 16px;font-family:var(--mono);font-size:14px;color:var(--text);outline:none;transition:border-color .15s;margin-bottom:14px">
+        <div id="guestEmailError" style="display:none;font-family:var(--mono);font-size:11px;color:var(--danger);margin:-8px 0 12px"></div>
+        <button type="button" id="guestEmailSubmit" style="width:100%;background:var(--accent);color:#000;border:none;padding:14px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:filter .15s">
+          Continuer vers le paiement
+        </button>
+        <div style="margin-top:14px;font-family:var(--mono);font-size:10px;color:var(--text3);text-align:center;line-height:1.5">
+          Tu as déjà un compte ? <a href="login.html?redirect=/pricing.html" style="color:var(--accent);text-decoration:none">Connecte-toi</a>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const input = document.getElementById('guestEmailInput');
+    const errEl = document.getElementById('guestEmailError');
+    setTimeout(() => input.focus(), 50);
+
+    const cleanup = (val) => { try { modal.remove(); } catch(_){}; resolve(val); };
+    document.getElementById('guestEmailClose').onclick = () => cleanup(null);
+    modal.addEventListener('click', (e) => { if (e.target === modal) cleanup(null); });
+    document.addEventListener('keydown', function escHandler(e) {
+      if (e.key === 'Escape') { document.removeEventListener('keydown', escHandler); cleanup(null); }
+    });
+
+    const submit = () => {
+      const email = (input.value || '').trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        errEl.textContent = 'Email invalide. Verifie ton orthographe.';
+        errEl.style.display = 'block';
+        input.focus();
+        return;
+      }
+      cleanup(email);
+    };
+    document.getElementById('guestEmailSubmit').onclick = submit;
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+  });
 }
 
 /* ── FAQ accordion ── */

@@ -132,7 +132,76 @@ export default async function handler(req, res) {
         }
 
         // ─── B. Subscription classique (mode 'subscription') ───
-        const userId = session.metadata?.supabase_user_id;
+        // GUEST CHECKOUT (cf. ultrareview CRO P0) : si metadata.guest_signup,
+        // l'user a paye sans avoir de compte Supabase. On le cree maintenant
+        // (via auth.admin) + on envoie un magic link pour qu'il puisse se
+        // connecter et activer son compte.
+        let userId = session.metadata?.supabase_user_id;
+        if (!userId && session.metadata?.guest_signup === '1') {
+          const guestEmail = session.metadata.guest_email
+            || session.customer_details?.email
+            || session.customer_email;
+          if (!guestEmail) {
+            console.error('[Stripe] guest_signup checkout sans email :', session.id);
+            break;
+          }
+          try {
+            // Cherche d'abord si l'user existe deja (cas user qui s'est inscrit
+            // entre temps avec le meme email -> on lie au compte existant)
+            const { data: existingList } = await sb.auth.admin.listUsers({
+              page: 1, perPage: 1000,
+            });
+            const existing = existingList?.users?.find(
+              u => (u.email || '').toLowerCase() === guestEmail.toLowerCase()
+            );
+            if (existing) {
+              userId = existing.id;
+              console.log(`[Stripe] guest_signup : user existant trouve ${userId} pour ${guestEmail}`);
+            } else {
+              // Cree un user Supabase avec mot de passe random + email confirme.
+              // L'user recevra un magic link pour activer (cf. plus bas).
+              const randomPwd = require('crypto').randomBytes(32).toString('base64url');
+              const { data: newUser, error: createErr } = await sb.auth.admin.createUser({
+                email: guestEmail,
+                password: randomPwd,
+                email_confirm: true, // pas de double opt-in : email valide via Stripe paiement
+                user_metadata: { source: 'stripe_guest_checkout', stripe_session: session.id },
+              });
+              if (createErr || !newUser?.user) {
+                console.error('[Stripe] guest_signup createUser failed:', createErr?.message);
+                break;
+              }
+              userId = newUser.user.id;
+              console.log(`[Stripe] guest_signup : nouveau user ${userId} cree pour ${guestEmail}`);
+            }
+
+            // Envoie un magic link pour login sans password
+            const baseUrl = process.env.SITE_URL || 'https://fragvalue.com';
+            const { data: linkData } = await sb.auth.admin.generateLink({
+              type: 'magiclink',
+              email: guestEmail,
+              options: { redirectTo: `${baseUrl}/account.html?welcome=guest` },
+            });
+            const magicUrl = linkData?.properties?.action_link;
+            if (magicUrl) {
+              try {
+                const { sendEmail } = await import('./_lib/email.js');
+                await sendEmail({
+                  to: guestEmail,
+                  subject: 'Active ton compte FragValue (1 clic)',
+                  html: `<p>Ton paiement est confirme. Clique sur le lien ci-dessous pour acceder a ton compte FragValue (pas besoin de mot de passe) :</p><p><a href="${magicUrl}" style="display:inline-block;background:#b8ff57;color:#000;padding:14px 28px;border-radius:8px;font-weight:700;text-decoration:none">Activer mon compte</a></p><p>Le lien est valable 24h. Tu pourras definir un mot de passe dans ton espace si tu prefere.</p>`,
+                  text: `Ton paiement est confirme. Active ton compte FragValue ici (pas besoin de mot de passe) : ${magicUrl}\n\nLe lien est valable 24h.`,
+                });
+                console.log(`[Stripe] guest_signup magic link envoye a ${guestEmail}`);
+              } catch (mailErr) {
+                console.error('[Stripe] guest_signup magic link email failed:', mailErr.message);
+              }
+            }
+          } catch (e) {
+            console.error('[Stripe] guest_signup processing failed:', e.message);
+            break;
+          }
+        }
         if (!userId) break;
         if (!isValidUuid(userId)) {
           console.error('[Stripe] subscription user_id invalide (pas UUID):', userId, 'session=' + session.id);

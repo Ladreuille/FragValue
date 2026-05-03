@@ -759,6 +759,55 @@ section{padding:100px 80px;position:relative}
   content:'·';position:absolute;left:-18px;color:var(--text3);opacity:.7
 }
 
+/* ── ALL TOOLS SECTION : internal linking SEO + nav contextuelle ── */
+.all-tools-section{
+  border-top:1px solid var(--border);
+  padding:64px 32px 48px;max-width:1200px;margin:0 auto;text-align:center
+}
+.all-tools-h{
+  font-family:var(--display);font-size:clamp(24px,3vw,36px);
+  letter-spacing:.02em;line-height:1.1;
+  color:var(--text);margin-bottom:8px
+}
+.all-tools-sub{
+  font-size:14px;color:var(--text2);line-height:1.6;
+  max-width:540px;margin:0 auto 32px
+}
+.all-tools-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px;text-align:left
+}
+.all-tools-card{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:10px;padding:18px 16px;
+  text-decoration:none;color:inherit;
+  transition:all .15s cubic-bezier(.2,.8,.25,1);
+  display:flex;flex-direction:column;gap:6px
+}
+.all-tools-card:hover{
+  border-color:var(--accent);background:rgba(184,255,87,.04);
+  transform:translateY(-2px);box-shadow:0 8px 24px -8px rgba(184,255,87,.12)
+}
+.all-tools-card-name{
+  font-family:var(--display);font-size:15px;
+  letter-spacing:.02em;color:var(--text)
+}
+.all-tools-card-desc{
+  font-family:var(--mono);font-size:11px;
+  color:var(--text2);line-height:1.55
+}
+.all-tools-card-cta{
+  background:linear-gradient(135deg,rgba(184,255,87,.06) 0%,rgba(184,255,87,.01) 60%,var(--card) 100%);
+  border-color:rgba(184,255,87,.3)
+}
+@media (max-width:640px){
+  .all-tools-section{padding:48px 20px 32px}
+  .all-tools-grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:480px){
+  .all-tools-grid{grid-template-columns:1fr}
+}
+
 /* ── FOOTER ── */
 footer{
   border-top:1px solid var(--border);
@@ -1535,6 +1584,57 @@ footer{
     <span>Gratuit · Sans carte</span>
     <span>Connexion FACEIT ou upload .dem</span>
     <span>Résultats en 90 secondes</span>
+  </div>
+</section>
+
+<!-- TOUS LES OUTILS FRAGVALUE : section internal linking pour SEO + nav.
+     Cf. ultrareview SEO P1 : avant index.html avait seulement 8 hrefs vers
+     3 pages -> "internal linking famine". Cette section pousse 8 pages
+     money en HTML statique (crawlable) avec contexte. -->
+<section class="all-tools-section">
+  <h2 class="all-tools-h">Tous les outils FragValue</h2>
+  <p class="all-tools-sub">Tout ce qu'il te faut pour progresser à CS2 et FACEIT, en un seul endroit.</p>
+  <div class="all-tools-grid">
+    <a href="/demo.html" class="all-tools-card">
+      <div class="all-tools-card-name">Analyse de demo</div>
+      <div class="all-tools-card-desc">Upload ton .dem FACEIT et obtiens FV Rating, heatmaps, KPIs avancés en 90s.</div>
+    </a>
+    <a href="/scout.html" class="all-tools-card">
+      <div class="all-tools-card-name">Scout</div>
+      <div class="all-tools-card-desc">Stats publiques de n'importe quel pseudo FACEIT : ELO, KD, ADR, KAST sur 20 derniers matchs.</div>
+    </a>
+    <a href="/compare.html" class="all-tools-card">
+      <div class="all-tools-card-name">Comparer joueurs</div>
+      <div class="all-tools-card-desc">Compare 2 à 5 joueurs côte à côte. Idéal pour scrim, recrutement ou stack matching.</div>
+    </a>
+    <a href="/levels.html" class="all-tools-card">
+      <div class="all-tools-card-name">Progresser FACEIT</div>
+      <div class="all-tools-card-desc">Roadmap niveau par niveau de Lvl 1 à Lvl 10 : seuils ELO, stats cibles, axes de jeu.</div>
+    </a>
+    <a href="/lineup-library.html" class="all-tools-card">
+      <div class="all-tools-card-name">Lineup library</div>
+      <div class="all-tools-card-desc">1 800+ lineups smoke / molotov / flash sur 7 maps actives. Filtres par map / position.</div>
+    </a>
+    <a href="/prep-veto.html" class="all-tools-card">
+      <div class="all-tools-card-name">Prep veto BO3 / BO5</div>
+      <div class="all-tools-card-desc">Analyse adverse data-driven, séquence ban-pick officielle, win probability par map.</div>
+    </a>
+    <a href="/anti-strat.html" class="all-tools-card">
+      <div class="all-tools-card-name">Anti-strat</div>
+      <div class="all-tools-card-desc">Patterns d'execute / retake adverse détectés sur leurs derniers matchs. Counters proposés.</div>
+    </a>
+    <a href="/blog.html" class="all-tools-card">
+      <div class="all-tools-card-name">Blog & guides</div>
+      <div class="all-tools-card-desc">Tips CS2, comment passer Lvl 10, FV Rating expliqué, ADR/KAST décryptés.</div>
+    </a>
+    <a href="/compare-outils.html" class="all-tools-card">
+      <div class="all-tools-card-name">FragValue vs Leetify</div>
+      <div class="all-tools-card-desc">Comparatif détaillé des outils d'analyse CS2 : prix, features, Coach IA, FACEIT integration.</div>
+    </a>
+    <a href="/pricing.html" class="all-tools-card all-tools-card-cta">
+      <div class="all-tools-card-name" style="color:var(--accent)">Voir les tarifs →</div>
+      <div class="all-tools-card-desc">Free / Pro 9€/mois / Elite 29€/mois. Sans engagement, satisfait ou remboursé 14j.</div>
+    </a>
   </div>
 </section>
 
