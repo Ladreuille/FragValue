@@ -792,17 +792,28 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && notifPanel && notifPanel.classList.contains('open')) closeNotifPanel();
     });
-    // Poll 60s en tab visible
-    if (notifPollTimer) clearInterval(notifPollTimer);
-    notifPollTimer = setInterval(() => {
-      if (document.visibilityState === 'visible' && hasSession()) {
-        fetchNotifications();
-      }
-    }, 60000);
-    // Refresh immediat au retour de tab
+    // Poll 60s : pause le timer quand l'onglet passe en background (cf.
+    // ultrareview P1.6). Avant : le setInterval continuait a tourner meme si
+    // skip silencieux dans le callback -> burn batterie mobile inutilement.
+    // Maintenant : on demarre/arrete le timer selon visibilityState.
+    function startNotifPolling() {
+      if (notifPollTimer) clearInterval(notifPollTimer);
+      notifPollTimer = setInterval(() => {
+        if (hasSession()) fetchNotifications();
+      }, 60000);
+    }
+    function stopNotifPolling() {
+      if (notifPollTimer) { clearInterval(notifPollTimer); notifPollTimer = null; }
+    }
+    // Demarre uniquement si tab visible au load
+    if (document.visibilityState === 'visible') startNotifPolling();
+    // Toggle on visibility change : refresh au retour + start poll, stop sur hide
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && hasSession()) {
-        fetchNotifications();
+      if (document.visibilityState === 'visible') {
+        if (hasSession()) fetchNotifications();
+        startNotifPolling();
+      } else {
+        stopNotifPolling();
       }
     });
   }

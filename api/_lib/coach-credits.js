@@ -42,44 +42,77 @@ async function getCredits(supabase, userId) {
 }
 
 // Consomme 1 credit pour un message envoye au-dela du quota tier.
-// Atomique via RPC ou fallback : SELECT then UPDATE avec check balance > 0.
+// Atomique via optimistic lock (SELECT then UPDATE avec WHERE balance=N).
+//
+// FIX (cf. ultrareview P1.10) : ajout d'1 retry si l'optimistic lock echoue
+// (cas race condition : 2 messages simultanes du meme user). Sans retry, le
+// 2e message echouait avec "update_failed" alors que le solde post-1er-update
+// est encore > 0. Avec retry, on relit le solde frais et on retente.
+//
 // Log la transaction dans coach_credits_log.
 //
-// Retourne { ok: bool, balance_after, error? }.
+// Retourne { ok: bool, balance_after, error?, retried? }.
 async function consumeCredit(supabase, userId, messageId) {
-  // Lecture du solde + check expiration
-  const current = await getCredits(supabase, userId);
-  if (current.expired) {
-    return { ok: false, error: 'credits_expired', balance_after: 0 };
+  const MAX_ATTEMPTS = 3;
+  let attempt = 0;
+  let lastError = null;
+
+  while (attempt < MAX_ATTEMPTS) {
+    attempt++;
+    // Lecture du solde frais + check expiration (a chaque iteration)
+    const current = await getCredits(supabase, userId);
+    if (current.expired) {
+      return { ok: false, error: 'credits_expired', balance_after: 0 };
+    }
+    if (current.balance <= 0) {
+      return { ok: false, error: 'no_credits', balance_after: 0 };
+    }
+
+    const newBalance = current.balance - 1;
+
+    // Update atomique avec optimistic lock
+    const { data: updated, error: updErr } = await supabase
+      .from('coach_credits')
+      .update({ balance: newBalance })
+      .eq('user_id', userId)
+      .eq('balance', current.balance)
+      .select('balance');
+
+    if (updErr) {
+      console.error('[coach-credits] consumeCredit update error attempt', attempt, ':', updErr.message);
+      lastError = updErr.message;
+      // Retry sur erreur reseau/DB transient
+      if (attempt < MAX_ATTEMPTS) {
+        await new Promise(r => setTimeout(r, 50 * attempt)); // backoff 50/100/150ms
+        continue;
+      }
+      return { ok: false, error: 'update_failed', balance_after: current.balance };
+    }
+
+    // Optimistic lock perdu : 0 row updated -> retry avec balance fraiche
+    if (!updated || updated.length === 0) {
+      lastError = 'optimistic_lock_conflict';
+      if (attempt < MAX_ATTEMPTS) {
+        await new Promise(r => setTimeout(r, 30 * attempt));
+        continue;
+      }
+      return { ok: false, error: 'race_conflict_retries_exhausted', balance_after: current.balance };
+    }
+
+    // Succes : log la transaction
+    await supabase.from('coach_credits_log').insert({
+      user_id:       userId,
+      type:          'consumption',
+      delta:         -1,
+      balance_after: newBalance,
+      message_id:    messageId || null,
+      metadata:      { reason: 'over_quota_chat_message', attempts: attempt },
+    });
+
+    return { ok: true, balance_after: newBalance, retried: attempt > 1 };
   }
-  if (current.balance <= 0) {
-    return { ok: false, error: 'no_credits', balance_after: 0 };
-  }
 
-  const newBalance = current.balance - 1;
-
-  // Update atomique avec verification (eviter race condition)
-  const { error: updErr } = await supabase
-    .from('coach_credits')
-    .update({ balance: newBalance })
-    .eq('user_id', userId)
-    .eq('balance', current.balance); // optimistic lock
-  if (updErr) {
-    console.error('[coach-credits] consumeCredit update failed:', updErr.message);
-    return { ok: false, error: 'update_failed', balance_after: current.balance };
-  }
-
-  // Log la transaction
-  await supabase.from('coach_credits_log').insert({
-    user_id:       userId,
-    type:          'consumption',
-    delta:         -1,
-    balance_after: newBalance,
-    message_id:    messageId || null,
-    metadata:      { reason: 'over_quota_chat_message' },
-  });
-
-  return { ok: true, balance_after: newBalance };
+  return { ok: false, error: lastError || 'unknown', balance_after: 0 };
 }
 
 // Ajoute des credits suite a un achat Stripe reussi.

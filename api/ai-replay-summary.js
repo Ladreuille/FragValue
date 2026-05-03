@@ -28,7 +28,7 @@ const CLAUDE_MODEL = 'claude-haiku-4-5';
 const CLAUDE_ENDPOINT = 'https://api.anthropic.com/v1/messages';
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 const DAILY_LIMIT = 20;
-const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
+const { ADMIN_EMAILS } = require('./_lib/subscription');
 
 function sb() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);

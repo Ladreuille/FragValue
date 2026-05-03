@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { isAdminUser } = require('./_lib/subscription');
 
 // ── Supabase client ──────────────────────────────────────────────────────────
 function getSbClient() {
@@ -142,25 +143,29 @@ async function resolveUserFromAuth(authHeader) {
   } catch { return null; }
 }
 
+// Resolve plan via la table subscriptions (source of truth peuplee par
+// stripe-webhook). Avant : on utilisait stripe_customer_id qui restait peuple
+// apres cancel -> bypass Pro permanent (cf. ultrareview P1.3). Maintenant :
+// on lit directement le status de la subscription, et on respecte canceled.
 async function resolveUserPlan(user) {
   if (!user) return 'free';
-  // Admin bypass aligne avec /api/check-subscription
-  const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
-  if (user.email && ADMIN_EMAILS.includes(user.email)) return 'elite';
+  if (isAdminUser(user)) return 'elite';
   try {
     const sb = getSbClient();
     if (!sb) return 'free';
-    const { data: profile } = await sb
-      .from('profiles')
-      .select('stripe_customer_id')
-      .eq('id', user.id)
-      .single();
-    // Sans stripe_customer_id on reste en free sans appeler Stripe ici
-    // (la source de verite reste /api/check-subscription, on suit ce que la DB indique)
-    if (!profile?.stripe_customer_id) return 'free';
-    // Pas d'appel Stripe ici pour garder le handler rapide ; on considere
-    // qu'un user avec stripe_customer_id est au moins pro (downgrade rare).
-    return 'pro';
+    const { data: sub } = await sb
+      .from('subscriptions')
+      .select('plan, status')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    // Pas d'abo ou abo annule/incomplet -> free
+    if (!sub) return 'free';
+    if (sub.status !== 'active' && sub.status !== 'trialing') return 'free';
+    // Plan normalise : pro_monthly/pro_yearly -> pro, elite_* -> elite
+    const p = String(sub.plan || '').toLowerCase();
+    if (p === 'elite' || p === 'team' || p.startsWith('elite_') || p.startsWith('team_')) return 'elite';
+    if (p === 'pro' || p.startsWith('pro_')) return 'pro';
+    return 'free';
   } catch { return 'free'; }
 }
 

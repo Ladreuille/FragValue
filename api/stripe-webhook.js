@@ -24,6 +24,15 @@ function fmtAmount(cents, currency) {
   return ((cents || 0) / 100).toFixed(2) + ' ' + (currency || 'eur').toUpperCase();
 }
 
+// Valide qu'une string est un UUID v4 valide. Defense-in-depth contre une
+// metadata Stripe malformee ou injection (cf. ultrareview P1.9). Le webhook
+// signature check protege deja le contenu, mais on valide en plus tout user_id
+// avant de l'utiliser dans une query DB pour eviter SQL/NoSQL injection latente.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUuid(s) {
+  return typeof s === 'string' && UUID_RE.test(s);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -74,6 +83,11 @@ export default async function handler(req, res) {
             console.warn('[Stripe] coach_credits checkout sans user_id ou pack:', session.id);
             break;
           }
+          // Defense-in-depth : valide que user_id est un UUID avant query DB
+          if (!isValidUuid(userId)) {
+            console.error('[Stripe] coach_credits user_id invalide (pas UUID):', userId, 'session=' + session.id);
+            break;
+          }
           const result = await addCredits(sb, userId, packKey, session.id);
           if (!result.ok) {
             console.error('[Stripe] addCredits failed:', result.error, 'session=' + session.id);
@@ -120,6 +134,10 @@ export default async function handler(req, res) {
         // ─── B. Subscription classique (mode 'subscription') ───
         const userId = session.metadata?.supabase_user_id;
         if (!userId) break;
+        if (!isValidUuid(userId)) {
+          console.error('[Stripe] subscription user_id invalide (pas UUID):', userId, 'session=' + session.id);
+          break;
+        }
 
         const subscription = await stripe.subscriptions.retrieve(session.subscription);
         const planMeta = session.metadata.plan || 'pro_monthly';
@@ -178,6 +196,10 @@ export default async function handler(req, res) {
         const userId = existing?.user_id || sub.metadata?.supabase_user_id;
         if (!userId) {
           console.warn(`[Stripe] subscription.updated ${sub.id} : aucun user_id (DB ni metadata)`);
+          break;
+        }
+        if (!isValidUuid(userId)) {
+          console.error(`[Stripe] subscription.updated ${sub.id} : user_id invalide (pas UUID): ${userId}`);
           break;
         }
 

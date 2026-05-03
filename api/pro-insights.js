@@ -21,6 +21,7 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
+const { isAdminUser } = require('./_lib/subscription');
 
 const CLAUDE_MODEL = 'claude-haiku-4-5';
 const CLAUDE_ENDPOINT = 'https://api.anthropic.com/v1/messages';
@@ -43,8 +44,7 @@ async function getUser(authHeader) {
 
 async function resolveUserPlan(user) {
   if (!user) return 'free';
-  const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
-  if (user.email && ADMIN_EMAILS.includes(user.email)) return 'elite';
+  if (isAdminUser(user)) return 'elite';
   try {
     const s = sb();
     const { data: profile } = await s
@@ -313,8 +313,7 @@ export default async function handler(req, res) {
   }
 
   // Rate limit (non-admin)
-  const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
-  const isAdmin = user.email && ADMIN_EMAILS.includes(user.email);
+  const isAdmin = isAdminUser(user);
   if (!isAdmin) {
     const todayCount = await getTodayCount(user.id);
     if (todayCount >= DAILY_LIMIT) {

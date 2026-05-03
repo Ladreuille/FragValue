@@ -24,7 +24,7 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
-const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
+const { ADMIN_EMAILS } = require('./_lib/subscription');
 
 function sb() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);

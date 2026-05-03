@@ -10,7 +10,7 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
-const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
+const { ADMIN_EMAILS } = require('./_lib/subscription');
 const VALID_TYPES = new Set(['positive', 'negative', 'idea', 'bug']);
 const VALID_STATUSES = new Set(['new', 'read', 'responded', 'closed']);
 const MAX_TAGS = 8;
@@ -119,13 +119,20 @@ async function resolveUserTier(userId) {
   }
 }
 
-// Hash IP (premiers 32 chars suffisent, pas besoin de crypto-grade)
+// Hash IP avec SHA-256 + salt (cf. ultrareview P1.5).
+// Avant : DJB2 trivial a brute-forcer pour deanonymiser un IP donne (l'espace
+// IPv4 est petit et le hash etait inversible en quelques minutes).
+// Maintenant : SHA-256 + salt depuis env var IP_HASH_SALT (rotated trimestrielle
+// recommande). Sans salt configure, on degrade en SHA-256 sans salt (toujours
+// mieux que DJB2). Truncation a 16 hex chars = 64 bits, suffisant pour deduper
+// les IPs dans nos logs feedback sans permettre la reverse.
+const crypto = require('crypto');
 function hashIp(req) {
   const ip = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || '').split(',')[0].trim();
   if (!ip) return null;
-  let h = 0;
-  for (let i = 0; i < ip.length; i++) h = ((h << 5) - h + ip.charCodeAt(i)) | 0;
-  return 'ip_' + Math.abs(h).toString(36);
+  const salt = process.env.IP_HASH_SALT || 'fragvalue_default_salt_v1';
+  const hash = crypto.createHmac('sha256', salt).update(ip).digest('hex');
+  return 'ip_' + hash.slice(0, 16);
 }
 
 module.exports = async function handler(req, res) {

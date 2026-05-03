@@ -11,7 +11,7 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
-const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
+const { ADMIN_EMAILS } = require('./_lib/subscription');
 const ALLOWED_SLUGS = new Set([
   'lineup-library',
   'pro-demos',

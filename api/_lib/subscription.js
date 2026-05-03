@@ -64,17 +64,33 @@ function setCached(token, value) {
   }
 }
 
-// Mappe la valeur stockee en DB (qui peut etre 'pro_monthly', 'pro_yearly',
-// 'elite_monthly', 'elite_yearly', 'elite', legacy 'team_*') vers le tier
-// logique 'pro'|'elite'.
+// Mappe la valeur stockee en DB vers le tier logique 'pro'|'elite'|'free'.
+//
+// FIX (cf. ultrareview P1.4) : avant on faisait `p.includes('elite')` ce qui
+// matchait aussi `freelite`, `team_legacy_test`, `pro_test_elite`, etc. Risque
+// d'escalation accidentelle de privileges si quelqu'un crée un plan custom.
+// Maintenant : Set explicite + validation stricte des prefixes connus.
+
+const VALID_ELITE_PLANS = new Set([
+  'elite', 'team',
+  'elite_monthly', 'elite_yearly',
+  'team_monthly', 'team_yearly', // legacy
+]);
+const VALID_PRO_PLANS = new Set([
+  'pro',
+  'pro_monthly', 'pro_yearly',
+]);
+
 function normalizePlan(rawPlan, priceId) {
-  const p = String(rawPlan || '').toLowerCase();
-  if (p.includes('elite') || p.includes('team')) return 'elite';
-  if (p.includes('pro')) return 'pro';
-  // Fallback price ID (utilise quand on lit Stripe direct)
-  const pid = String(priceId || '').toLowerCase();
-  if (pid.includes('elite') || pid.includes('team')) return 'elite';
-  if (pid.includes('pro')) return 'pro';
+  const p = String(rawPlan || '').toLowerCase().trim();
+  if (VALID_ELITE_PLANS.has(p)) return 'elite';
+  if (VALID_PRO_PLANS.has(p)) return 'pro';
+
+  // Fallback price ID (utilise quand on lit Stripe direct sans subscription DB)
+  // Match strict sur prefixe + suffix pour eviter les false positives.
+  const pid = String(priceId || '').toLowerCase().trim();
+  if (/^price_.*_(elite|team)(_|$)/.test(pid)) return 'elite';
+  if (/^price_.*_pro(_|$)/.test(pid)) return 'pro';
   return 'free';
 }
 
@@ -258,4 +274,42 @@ async function requireElite(req, res) {
 // s'appelait 'team'). Garde pour ne pas casser les imports tiers.
 const requireTeam = requireElite;
 
-module.exports = { getUserPlan, requirePro, requireElite, requireTeam, normalizePlan };
+// Helper centralise admin (cf. ultrareview P0.5).
+// Avant : 12+ endpoints redefinissaient ADMIN_EMAILS = ['qdreuillet@gmail.com']
+// avec un check case-sensitive. Risque : oublier d'ajouter un nouvel admin
+// dans certains endpoints, comportement non-uniforme.
+//
+// Maintenant : reutiliser requireAdmin partout. Source unique de verite =
+// ADMIN_EMAILS deja defini ligne 23 (avec env var override + lower-case match).
+//
+// Usage :
+//   const admin = await requireAdmin(req, res);
+//   if (!admin) return; // 401/403 deja envoye
+//   // admin.user, admin.plan ('elite'), admin.source ('admin')
+async function requireAdmin(req, res) {
+  const result = await getUserPlan(req.headers.authorization);
+  if (!result.user) {
+    res.status(401).json({ error: 'Authentification requise' });
+    return null;
+  }
+  const email = (result.user.email || '').toLowerCase().trim();
+  if (!email || !ADMIN_EMAILS.includes(email)) {
+    res.status(403).json({ error: 'Acces administrateur requis' });
+    return null;
+  }
+  return result;
+}
+
+// Alternative non-bloquante : retourne true si l'user est admin, false sinon.
+// Pratique pour les endpoints qui ont une logique conditionnelle "si admin, X
+// sinon Y" sans rejet HTTP.
+function isAdminUser(user) {
+  if (!user || !user.email) return false;
+  return ADMIN_EMAILS.includes(user.email.toLowerCase().trim());
+}
+
+module.exports = {
+  getUserPlan, requirePro, requireElite, requireTeam,
+  requireAdmin, isAdminUser, normalizePlan,
+  ADMIN_EMAILS, // exporte pour les rares endpoints qui veulent inspecter la liste
+};

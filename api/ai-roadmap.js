@@ -47,10 +47,10 @@ async function getUser(authHeader) {
 
 // Determine le plan de l'utilisateur (free / pro / team) via Stripe.
 // Retourne aussi isAdmin pour l'admin bypass.
+const { isAdminUser } = require('./_lib/subscription');
 async function resolveUserPlan(user) {
   if (!user) return { plan: 'free', isAdmin: false };
-  const ADMIN_EMAILS = ['qdreuillet@gmail.com'];
-  if (user.email && ADMIN_EMAILS.includes(user.email)) {
+  if (isAdminUser(user)) {
     return { plan: 'elite', isAdmin: true };
   }
   try {
