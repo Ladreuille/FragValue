@@ -468,11 +468,21 @@ section{padding:80px 80px;position:relative;z-index:1}
 .pricing-period{font-size:11px;color:var(--text3);margin-bottom:28px;min-height:16px}
 .pricing-divider{border:none;border-top:1px solid var(--border);margin:24px 0}
 .pricing-features{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+/* AVANT : display:flex sur .pricing-feature creait des anonymous flex items
+   pour chaque text node / <strong> / <span>, ce qui forcait chaque mot a
+   wrapper sur sa propre ligne (visible feedback user iter 3). Maintenant :
+   block container avec SVG en absolute -> le contenu texte est un flow
+   normal qui wrap mot a mot, normalement, sans casser les groupes. */
 .pricing-feature{
-  display:flex;align-items:flex-start;gap:10px;
-  font-size:12px;color:var(--text2)
+  position:relative;
+  padding-left:24px; /* 14px SVG + 10px gap */
+  font-size:12px;color:var(--text2);
+  line-height:1.6
 }
-.pricing-check{flex-shrink:0;margin-top:2px}
+.pricing-check{
+  position:absolute;left:0;top:5px;
+  flex-shrink:0
+}
 .pricing-btn{
   display:block;width:100%;text-align:center;
   padding:14px;border-radius:var(--r);
@@ -780,7 +790,7 @@ footer{
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           <strong>3 scouts</strong> de player / day
         </div>
-        <div class="pricing-feature" style="position:relative;padding:8px 10px 8px 0;background:linear-gradient(90deg,rgba(184,255,87,.08) 0%,transparent 100%);border-radius:var(--r);margin:2px 0">
+        <div class="pricing-feature" style="position:relative;padding:8px 10px 8px 24px;background:linear-gradient(90deg,rgba(184,255,87,.08) 0%,transparent 100%);border-radius:var(--r);margin:2px 0">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           <strong>1 diagnostic IA</strong> / mois&nbsp;<span class="feat-new">NEW</span>
         </div>
@@ -843,7 +853,7 @@ footer{
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           <strong>All Free,</strong> without limits
         </div>
-        <div class="pricing-feature" style="position:relative;padding:10px 12px;background:linear-gradient(90deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);margin:4px 0">
+        <div class="pricing-feature" style="position:relative;padding:10px 12px 10px 36px;background:linear-gradient(90deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);margin:4px 0">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           <strong>Unlimited AI Diagnostic</strong> · refresh after every match + <strong>Chat AI Coach 5 msg/day</strong> + crédits à la demande&nbsp;<span class="feat-new">NEW</span>
         </div>
@@ -875,7 +885,7 @@ footer{
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           FV Score /100 with detailed breakdown
         </div>
-        <div class="pricing-feature" style="position:relative;padding:10px 12px;background:linear-gradient(90deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);margin:4px 0">
+        <div class="pricing-feature" style="position:relative;padding:10px 12px 10px 36px;background:linear-gradient(90deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);margin:4px 0">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           <strong>Pro demos viewer</strong> · regarde les matches HLTV en 2D&nbsp;<span class="feat-new">NEW</span>
         </div>
@@ -928,7 +938,7 @@ footer{
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           <strong>All Pro,</strong> plus team tools
         </div>
-        <div class="pricing-feature" style="position:relative;padding:10px 12px;background:linear-gradient(90deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);margin:4px 0">
+        <div class="pricing-feature" style="position:relative;padding:10px 12px 10px 36px;background:linear-gradient(90deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);margin:4px 0">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           <strong>AI Coach for the team</strong> + weekly email report&nbsp;<span class="feat-new">NEW</span>
         </div>
@@ -944,7 +954,7 @@ footer{
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           Veto prep (ban/pick maps)
         </div>
-        <div class="pricing-feature" style="position:relative;padding:10px 12px;background:linear-gradient(90deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);margin:4px 0">
+        <div class="pricing-feature" style="position:relative;padding:10px 12px 10px 36px;background:linear-gradient(90deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.25);border-radius:var(--r);margin:4px 0">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           <strong>Anti-strat tool</strong> · patterns opponent sur N matches&nbsp;<span class="feat-new">NEW</span>
         </div>
