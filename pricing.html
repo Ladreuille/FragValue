@@ -836,8 +836,8 @@ footer{
           Pro demos viewer
         </div>
       </div>
-      <a href="login.html?signup=1&plan=free" class="pricing-btn">Commencer gratuitement</a>
-      <div class="pricing-cta-sub">Aucune carte bancaire demandée</div>
+      <a href="login.html?signup=1&plan=free" class="pricing-btn">Démarrer mes 3 analyses gratuites</a>
+      <div class="pricing-cta-sub">Aucune CB · Aucun engagement · Bypass FACEIT inclus</div>
     </div>
 
     <!-- PRO : PROGRESSER -->
@@ -919,8 +919,8 @@ footer{
           Support prioritaire (&lt; 24h)
         </div>
       </div>
-      <button type="button" class="pricing-btn featured" id="proCta" onclick="startCheckout(isYearly ? 'pro_yearly' : 'pro_monthly', this)">S'abonner maintenant</button>
-      <div class="pricing-cta-sub" style="margin-top:10px">Acces immediat &middot; Annulation en 1 clic depuis ton espace</div>
+      <button type="button" class="pricing-btn featured" id="proCta" onclick="startCheckout(isYearly ? 'pro_yearly' : 'pro_monthly', this)" data-monthly="Passer Pro · 9€/mois" data-yearly="Passer Pro · 79€/an">Passer Pro · 9€/mois</button>
+      <div class="pricing-cta-sub" style="margin-top:10px">Acces immediat &middot; Annule a tout moment &middot; CB ou Apple Pay</div>
     </div>
 
     <!-- ELITE : DOMINER -->
@@ -980,8 +980,8 @@ footer{
           Support prioritaire (&lt; 4h)
         </div>
       </div>
-      <button type="button" class="pricing-btn elite" id="eliteCta" onclick="startCheckout(isYearly ? 'elite_yearly' : 'elite_monthly', this)">S'abonner maintenant</button>
-      <div class="pricing-cta-sub" style="margin-top:10px">Acces immediat &middot; Annulation en 1 clic depuis ton espace</div>
+      <button type="button" class="pricing-btn elite" id="eliteCta" onclick="startCheckout(isYearly ? 'elite_yearly' : 'elite_monthly', this)" data-monthly="Passer Elite · 29€/mois" data-yearly="Passer Elite · 290€/an">Passer Elite · 29€/mois</button>
+      <div class="pricing-cta-sub" style="margin-top:10px">Acces immediat &middot; Annule a tout moment &middot; CB ou Apple Pay</div>
     </div>
 
   </div>
@@ -1365,6 +1365,12 @@ function toggleBilling() {
     if (elitePrice) elitePrice.innerHTML = '29<span>\u20ac/mois</span>';
     if (elitePeriod) elitePeriod.innerHTML = 'ou <strong style="color:var(--accent)">290\u20ac/an</strong> (2 mois offerts) \u00b7 sans engagement';
   }
+
+  // Microcopy ultrareview : sync les CTA buttons avec le prix selon period
+  const proCta = document.getElementById('proCta');
+  const eliteCta = document.getElementById('eliteCta');
+  if (proCta) proCta.textContent = isYearly ? proCta.dataset.yearly : proCta.dataset.monthly;
+  if (eliteCta) eliteCta.textContent = isYearly ? eliteCta.dataset.yearly : eliteCta.dataset.monthly;
 }
 
 /* ── Checkout ──────────────────────────────────────────────────────────

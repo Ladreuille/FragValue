@@ -836,8 +836,8 @@ footer{
           Pro demos viewer
         </div>
       </div>
-      <a href="login.html?signup=1&plan=free" class="pricing-btn">Start for free</a>
-      <div class="pricing-cta-sub">No credit card required</div>
+      <a href="login.html?signup=1&plan=free" class="pricing-btn">Start my 3 free analyses</a>
+      <div class="pricing-cta-sub">No credit card · No commitment · FACEIT bypass included</div>
     </div>
 
     <!-- PRO : PROGRESSER -->
@@ -919,7 +919,7 @@ footer{
           Support prioritaire (&lt; 24h)
         </div>
       </div>
-      <button type="button" class="pricing-btn featured" id="proCta" onclick="startCheckout(isYearly ? 'pro_yearly' : 'pro_monthly', this)">Subscribe now</button>
+      <button type="button" class="pricing-btn featured" id="proCta" onclick="startCheckout(isYearly ? 'pro_yearly' : 'pro_monthly', this)" data-monthly="Go Pro · 9€/month" data-yearly="Go Pro · 79€/year">Go Pro · 9€/month</button>
       <div class="pricing-cta-sub" style="margin-top:10px">Instant access &middot; Cancel in 1 click depuis ton espace</div>
     </div>
 
@@ -980,7 +980,7 @@ footer{
           Support prioritaire (&lt; 4h)
         </div>
       </div>
-      <button type="button" class="pricing-btn elite" id="eliteCta" onclick="startCheckout(isYearly ? 'elite_yearly' : 'elite_monthly', this)">Subscribe now</button>
+      <button type="button" class="pricing-btn elite" id="eliteCta" onclick="startCheckout(isYearly ? 'elite_yearly' : 'elite_monthly', this)" data-monthly="Go Elite · 29€/month" data-yearly="Go Elite · 290€/year">Go Elite · 29€/month</button>
       <div class="pricing-cta-sub" style="margin-top:10px">Instant access &middot; Cancel in 1 click depuis ton espace</div>
     </div>
 
@@ -1365,6 +1365,12 @@ function toggleBilling() {
     if (elitePrice) elitePrice.innerHTML = '29<span>\u20ac/mois</span>';
     if (elitePeriod) elitePeriod.innerHTML = 'or <strong style="color:var(--accent)">290\u20ac/an</strong> (2 months free) \u00b7 sans engagement';
   }
+
+  // Microcopy ultrareview : sync CTA buttons with selected period
+  const proCta = document.getElementById('proCta');
+  const eliteCta = document.getElementById('eliteCta');
+  if (proCta) proCta.textContent = isYearly ? proCta.dataset.yearly : proCta.dataset.monthly;
+  if (eliteCta) eliteCta.textContent = isYearly ? eliteCta.dataset.yearly : eliteCta.dataset.monthly;
 }
 
 /* ── Checkout ──────────────────────────────────────────────────────────
