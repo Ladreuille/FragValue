@@ -178,5 +178,16 @@
     }
   }
 
+  // CNIL HIGH #5 (cf. ultrareview Trust/Legal) : la modification du choix
+  // cookies doit etre aussi simple que le retrait. On expose une fonction globale
+  // qui efface le consent et reaffiche le banner. Le footer.js l'appelle depuis
+  // le lien "Cookies" persistant.
+  window.fvOpenCookies = function () {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (_) {}
+    showBanner();
+  };
+
   init();
 })();

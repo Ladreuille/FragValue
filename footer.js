@@ -45,6 +45,7 @@
     cgv: 'CGV',
     mentionsLegales: 'Mentions legales',
     confidentialite: 'Confidentialite',
+    cookies: 'Cookies',
     contact: 'Contact',
     planDuSite: 'Plan du site',
     madeIn: 'Made in France',
@@ -63,6 +64,7 @@
     cgv: 'Terms',
     mentionsLegales: 'Legal',
     confidentialite: 'Privacy',
+    cookies: 'Cookies',
     contact: 'Contact',
     planDuSite: 'Sitemap',
     madeIn: 'Made in France',
@@ -136,6 +138,7 @@
     <a href="${link('/cgv.html')}">${T.cgv}</a>
     <a href="${link('/mentions-legales.html')}">${T.mentionsLegales}</a>
     <a href="${link('/privacy.html')}">${T.confidentialite}</a>
+    <a href="#" onclick="if(typeof window.fvOpenCookies==='function'){window.fvOpenCookies()}else{alert('Pour modifier tes preferences cookies, rafraichis la page.')};return false;">${T.cookies}</a>
     <a href="mailto:contact@fragvalue.com">${T.contact}</a>
   </div>
   <div class="fv-footer-socials">
