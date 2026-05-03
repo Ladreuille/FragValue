@@ -1388,6 +1388,15 @@ async function startCheckout(plan, btn) {
     }
   };
 
+  // BLOCKER LEGAL #4 (cf. ultrareview Trust/Legal) : avant tout checkout,
+  // afficher la modale de pre-confirmation avec récap conditions + checkbox
+  // de renonciation au droit de rétractation (Code conso art. L221-28-13°).
+  // Sans cette case cochee, le user a 14j pour se rétracter ET demander remboursement
+  // (jusqu'à 75K EUR d'amende DGCCRF si on n'informe pas correctement). Couvre
+  // aussi HIGH #8 (info pre-paiement avec recap).
+  const confirmed = await confirmSubscriptionTerms(plan);
+  if (!confirmed) return; // user a annulé
+
   setLoading(true);
   // Funnel : clic sur le CTA checkout (avant redirect Stripe)
   if (typeof window.fvTrack === 'function') window.fvTrack('Checkout Start', { plan: plan });
@@ -1440,6 +1449,102 @@ function showError(msg) {
   banner.textContent = msg;
   document.body.appendChild(banner);
   setTimeout(() => banner.remove(), 5000);
+}
+
+/* ── BLOCKER LEGAL #4 + HIGH #8 : Modale de pre-confirmation de souscription
+   Affiche le recap des conditions + case obligatoire de renonciation au droit de
+   retractation (Code conso art. L221-28-13°). Sans cette case cochee, le service
+   ne peut pas etre execute immediatement sous peine de remboursement obligatoire
+   pendant 14j (art. L242-13). Couvre aussi l'info pre-paiement obligatoire
+   (prix TTC final, frequence, modalites resiliation, art. L221-13). ─────────── */
+function confirmSubscriptionTerms(plan) {
+  return new Promise((resolve) => {
+    const PLAN_INFO = {
+      pro_monthly:   { label: 'FragValue Pro',   price: '9 € TTC',   freq: 'mensuel',   yearly: false },
+      pro_yearly:    { label: 'FragValue Pro',   price: '79 € TTC',  freq: 'annuel',    yearly: true  },
+      elite_monthly: { label: 'FragValue Elite', price: '29 € TTC',  freq: 'mensuel',   yearly: false },
+      elite_yearly:  { label: 'FragValue Elite', price: '290 € TTC', freq: 'annuel',    yearly: true  },
+    };
+    const info = PLAN_INFO[plan] || PLAN_INFO.pro_monthly;
+    const renewLine = info.yearly
+      ? `Reconduction tacite chaque année. Tu seras notifié par email entre 1 et 3 mois avant l'échéance (art. L215-1 Code conso).`
+      : `Reconduction tacite chaque mois. Annulable à tout moment depuis ton espace compte sans frais (art. L215-1).`;
+
+    const existing = document.getElementById('confirmTermsModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'confirmTermsModal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'confirmTermsTitle');
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.78);backdrop-filter:blur(4px)';
+    modal.innerHTML = `
+      <div style="position:relative;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:28px 32px;max-width:520px;width:100%;box-shadow:0 30px 80px -10px rgba(184,255,87,.15);max-height:90vh;overflow-y:auto">
+        <button type="button" id="confirmTermsClose" aria-label="Fermer" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer;width:32px;height:32px;border-radius:50%;line-height:1">×</button>
+        <h2 id="confirmTermsTitle" style="font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:8px;letter-spacing:.02em">Confirmation de souscription</h2>
+        <p style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:18px;line-height:1.5">Merci de relire les conditions ci-dessous avant de continuer vers Stripe.</p>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px;font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.7">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span>Offre</span><strong style="color:var(--text)">${info.label}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span>Prix</span><strong style="color:var(--accent)">${info.price} / ${info.freq}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span>Premier prélèvement</span><strong style="color:var(--text)">À la confirmation Stripe</strong>
+          </div>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text3)">${renewLine}</div>
+        </div>
+
+        <label style="display:flex;gap:10px;font-family:var(--mono);font-size:11.5px;color:var(--text2);line-height:1.6;cursor:pointer;margin-bottom:14px;padding:12px 14px;background:rgba(184,255,87,.04);border:1px solid rgba(184,255,87,.18);border-radius:8px">
+          <input type="checkbox" id="waiveCheckbox" required style="margin-top:3px;flex-shrink:0;accent-color:var(--accent);width:16px;height:16px;cursor:pointer">
+          <span>J'accepte les <a href="/cgv.html" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">CGV</a> et je demande l'exécution immédiate du service. <strong style="color:var(--text)">Je reconnais que ce choix entraîne la perte de mon droit de rétractation</strong> dès l'utilisation du service (art. L221-28-13° Code de la consommation).</span>
+        </label>
+
+        <div id="confirmTermsError" style="display:none;font-family:var(--mono);font-size:11px;color:var(--danger);margin:-6px 0 12px"></div>
+
+        <div style="display:flex;gap:10px;flex-direction:column">
+          <button type="button" id="confirmTermsSubmit" style="width:100%;background:var(--accent);color:#000;border:none;padding:14px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:filter .15s">
+            Confirmer et payer
+          </button>
+          <button type="button" id="confirmTermsCancel" style="width:100%;background:transparent;color:var(--text2);border:1px solid var(--border2);padding:11px;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:all .15s">
+            Annuler
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const checkbox = document.getElementById('waiveCheckbox');
+    const errEl = document.getElementById('confirmTermsError');
+    setTimeout(() => checkbox.focus(), 50);
+
+    const cleanup = (val) => { try { modal.remove(); } catch(_){}; resolve(val); };
+    document.getElementById('confirmTermsClose').onclick = () => cleanup(false);
+    document.getElementById('confirmTermsCancel').onclick = () => cleanup(false);
+    modal.addEventListener('click', (e) => { if (e.target === modal) cleanup(false); });
+    document.addEventListener('keydown', function escHandler(e) {
+      if (e.key === 'Escape') { document.removeEventListener('keydown', escHandler); cleanup(false); }
+    });
+
+    document.getElementById('confirmTermsSubmit').onclick = () => {
+      if (!checkbox.checked) {
+        errEl.textContent = 'Tu dois accepter les CGV et la renonciation au droit de rétractation pour continuer.';
+        errEl.style.display = 'block';
+        checkbox.focus();
+        return;
+      }
+      // Stocke en sessionStorage pour preuve (date + plan choisi). Le webhook
+      // peut ensuite logger en DB la trace de consentement.
+      try {
+        sessionStorage.setItem('fv_waiver_v1', JSON.stringify({
+          plan: plan, ts: new Date().toISOString(), ua: navigator.userAgent.slice(0, 200),
+        }));
+      } catch (_) {}
+      cleanup(true);
+    };
+  });
 }
 
 /* ── Modale email guest checkout (cf. ultrareview CRO P0)
