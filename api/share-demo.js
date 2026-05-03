@@ -36,6 +36,10 @@ export default async function handler(req, res) {
       return res.status(410).json({ error: 'Lien expire' });
     }
 
+    // Cache CDN 1h : la demo partagee est immuable une fois creee, peut etre cachee
+    // agressivement. Stale-while-revalidate 24h pour resilience. Impact : un share
+    // viral (Twitter/Discord) ne hit la DB Supabase qu'une fois par heure.
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400');
     return res.status(200).json({
       share_id: data.share_id,
       demo: data.demos,
