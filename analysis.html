@@ -535,12 +535,13 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   </div>
 
   <!-- Popover de partage : cree un lien public + copy + social share -->
-  <div class="share-popover" id="sharePopover" onclick="if(event.target===this)closeSharePopover()">
+  <div class="share-popover" id="sharePopover" role="dialog" aria-modal="true" aria-labelledby="sharePopoverTitle" aria-hidden="true" onclick="if(event.target===this)closeSharePopover()">
     <div class="share-popover-inner">
       <button class="share-popover-close" onclick="closeSharePopover()" aria-label="Fermer">&times;</button>
-      <div class="share-popover-title">Partager cette analyse</div>
+      <h2 class="share-popover-title" id="sharePopoverTitle">Partager cette analyse</h2>
       <div class="share-popover-sub">Un lien public unique vers ton analyse. Sans login requis pour les destinataires. Fonctionne sur Twitter, Discord, etc.</div>
       <div class="share-url-row">
+        <label for="sharePopoverUrl" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Lien public de l'analyse</label>
         <input type="text" class="share-url-input" id="sharePopoverUrl" readonly value="Generation du lien..."/>
         <button class="share-url-copy" id="sharePopoverCopyBtn" onclick="copyShareUrl()">Copier</button>
       </div>
@@ -554,7 +555,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
           Copier pour Discord
         </a>
       </div>
-      <div class="share-msg" id="sharePopoverMsg"></div>
+      <div class="share-msg" id="sharePopoverMsg" role="status" aria-live="polite"></div>
     </div>
   </div>
 
@@ -3251,6 +3252,11 @@ _sb.auth.getSession().then(({ data: { session } }) => {
 // copy + partage Twitter / Discord.
 // ══════════════════════════════════════════════════════════════════════
 let _shareUrlCache = null;
+// A11Y : sauvegarde du focus avant ouverture du popover pour le restaurer au close.
+let _sharePopoverLastFocus = null;
+function _sharePopoverKeyHandler(e) {
+  if (e.key === 'Escape') closeSharePopover();
+}
 
 async function openSharePopover() {
   const pop = document.getElementById('sharePopover');
@@ -3258,7 +3264,11 @@ async function openSharePopover() {
   const msg = document.getElementById('sharePopoverMsg');
   const twitterBtn = document.getElementById('shareTwitterBtn');
   msg.textContent = '';
+  _sharePopoverLastFocus = document.activeElement;
   pop.classList.add('open');
+  pop.setAttribute('aria-hidden', 'false');
+  document.addEventListener('keydown', _sharePopoverKeyHandler);
+  setTimeout(() => { const close = pop.querySelector('.share-popover-close'); if (close) close.focus(); }, 50);
 
   if (_shareUrlCache) {
     urlInput.value = _shareUrlCache;
@@ -3321,7 +3331,14 @@ function setupSocialLinks(url) {
 }
 
 function closeSharePopover() {
-  document.getElementById('sharePopover').classList.remove('open');
+  const pop = document.getElementById('sharePopover');
+  pop.classList.remove('open');
+  pop.setAttribute('aria-hidden', 'true');
+  document.removeEventListener('keydown', _sharePopoverKeyHandler);
+  if (_sharePopoverLastFocus && typeof _sharePopoverLastFocus.focus === 'function') {
+    _sharePopoverLastFocus.focus();
+  }
+  _sharePopoverLastFocus = null;
 }
 
 async function copyShareUrl() {

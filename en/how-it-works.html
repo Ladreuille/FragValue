@@ -441,6 +441,35 @@ main{max-width:880px;margin:0 auto;padding:48px 24px 96px;position:relative;z-in
   </section>
 </main>
 
+<script>
+// A11Y FAQ : transforme les .faq-card en boutons accessibles (cf. WCAG SC 4.1.2 + ARIA-22)
+(function initFaqA11y(){
+  document.querySelectorAll('.faq-card').forEach((card, i) => {
+    const q = card.querySelector('.faq-q');
+    const a = card.querySelector('.faq-a');
+    if (!q || !a) return;
+    const qId = q.id || `faq-q-${i}`;
+    const aId = a.id || `faq-a-${i}`;
+    q.id = qId; a.id = aId;
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-expanded', 'false');
+    card.setAttribute('aria-controls', aId);
+    a.setAttribute('role', 'region');
+    a.setAttribute('aria-labelledby', qId);
+    card.addEventListener('click', () => {
+      card.setAttribute('aria-expanded', card.classList.contains('open') ? 'true' : 'false');
+    });
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        card.classList.toggle('open');
+        card.setAttribute('aria-expanded', card.classList.contains('open') ? 'true' : 'false');
+      }
+    });
+  });
+})();
+</script>
 <script src="/nav.js"></script>
 <script src="/footer.js" defer></script>
 </body>

@@ -997,7 +997,8 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
       <div class="quota-bar-track"><div class="quota-bar-fill" id="quotaBarFill" style="width:0%"></div></div>
     </div>
 
-    <input type="file" id="fileInput" accept=".dem"/>
+    <label for="fileInput" class="visually-hidden" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Choisir un fichier .dem FACEIT (max 500 MB)</label>
+    <input type="file" id="fileInput" name="fileInput" accept=".dem" aria-label="Choisir un fichier .dem FACEIT (max 500 MB)"/>
     <div class="upload-zone" id="uploadZone">
       <div class="upload-icon">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
@@ -1035,10 +1036,10 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
       Lancer l'analyse
     </button>
 
-    <div id="progressSection">
+    <div id="progressSection" role="status" aria-live="polite" aria-atomic="false">
       <div class="progress-card">
         <div class="progress-hd">
-          <div class="progress-spin"></div>
+          <div class="progress-spin" aria-hidden="true"></div>
           <div>
             <div class="progress-title" id="progressTitle">Initialisation</div>
             <div class="progress-sub" id="progressSub">Préparation...</div>

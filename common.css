@@ -146,3 +146,34 @@ nav{
     scroll-behavior:auto !important;
   }
 }
+
+/* ═══ Focus visible global (cf. WCAG SC 2.4.7) ═══
+   Avant : aucun :focus visible -> users clavier-only ne savaient pas ou
+   ils etaient. Maintenant : outline accent vert 2px avec offset, visible
+   uniquement au keyboard nav (pas au click souris) grace a :focus-visible. */
+:focus-visible{
+  outline:2px solid var(--accent, #b8ff57);
+  outline-offset:2px;
+  border-radius:4px;
+  box-shadow:0 0 0 4px rgba(184,255,87,.15);
+}
+/* Anti-double-outline : retire l'outline sur :focus pas-:focus-visible */
+:focus:not(:focus-visible){outline:none}
+
+/* ═══ Skip-to-main-content link (cf. WCAG SC 2.4.1) ═══
+   Lien cache hors-ecran qui apparait au 1er Tab. Permet aux users clavier
+   de sauter la nav et arriver direct au contenu principal. Necessite que
+   chaque page ait un id="main" sur son element principal (main, section, ...). */
+.skip-link{
+  position:absolute;left:-9999px;top:0;
+  background:var(--accent, #b8ff57);color:#000;
+  padding:12px 20px;border-radius:0 0 8px 0;
+  font-family:var(--mono, 'Space Mono', monospace);font-size:13px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;
+  z-index:99999;text-decoration:none;
+  transition:none
+}
+.skip-link:focus{
+  left:0;top:0;
+  outline:2px solid #000;outline-offset:-4px
+}

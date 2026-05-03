@@ -287,20 +287,20 @@ h1 span{color:var(--accent)}
     <div class="input-card">
       <div class="input-row">
         <div class="input-block">
-          <div class="input-label">
+          <label class="input-label" for="oppInput">
             <span>Opposing team</span>
             <span class="badge opp">obligatoire</span>
-          </div>
-          <input type="text" class="input-field" id="oppInput" placeholder="https://www.faceit.com/fr/teams/abc123-..." autocomplete="off">
-          <div class="input-hint">URL FACEIT team / HLTV team / nicknames separes par virgule</div>
+          </label>
+          <input type="text" class="input-field" id="oppInput" name="oppInput" placeholder="https://www.faceit.com/fr/teams/abc123-..." autocomplete="off" aria-required="true" aria-describedby="oppInputHint">
+          <div class="input-hint" id="oppInputHint">URL FACEIT team / HLTV team / nicknames separes par virgule</div>
         </div>
         <div class="input-block">
-          <div class="input-label">
+          <label class="input-label" for="yourInput">
             <span>Ton equipe</span>
             <span class="badge">auto-rempli</span>
-          </div>
-          <input type="text" class="input-field" id="yourInput" placeholder="Auto-rempli depuis ton roster FragValue" autocomplete="off">
-          <div class="input-hint">Pre-rempli depuis ta fiche FACEIT liee · activable depuis dashboard.html</div>
+          </label>
+          <input type="text" class="input-field" id="yourInput" name="yourInput" placeholder="Auto-rempli depuis ton roster FragValue" autocomplete="off" aria-describedby="yourInputHint">
+          <div class="input-hint" id="yourInputHint">Pre-rempli depuis ta fiche FACEIT liee · activable depuis dashboard.html</div>
         </div>
       </div>
       <button class="btn-primary" id="analyzeBtn">
@@ -421,7 +421,7 @@ h1 span{color:var(--accent)}
   </div>
 
   <div id="errorWrap" style="display:none">
-    <div class="error-card" id="errorMsg"></div>
+    <div class="error-card" id="errorMsg" role="alert" aria-live="assertive" aria-atomic="true"></div>
   </div>
 </main>
 

@@ -1497,7 +1497,20 @@ function promptGuestEmail() {
   });
 }
 
-/* ── FAQ accordion ── */
+/* ── FAQ accordion ── A11Y wiring : aria-controls + aria-labelledby (cf. WCAG ARIA-22) */
+(function initFaqA11y(){
+  document.querySelectorAll('.faq-item').forEach((item, i) => {
+    const q = item.querySelector('.faq-q');
+    const a = item.querySelector('.faq-a');
+    if (!q || !a) return;
+    const qId = q.id || `faq-q-${i}`;
+    const aId = a.id || `faq-a-${i}`;
+    q.id = qId; a.id = aId;
+    q.setAttribute('aria-controls', aId);
+    a.setAttribute('role', 'region');
+    a.setAttribute('aria-labelledby', qId);
+  });
+})();
 function toggleFaq(el) {
   const item = el.parentElement;
   const answer = item.querySelector('.faq-a');

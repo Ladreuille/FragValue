@@ -513,7 +513,10 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   </aside>
 
   <!-- MAIN -->
-  <main class="main">
+  <main class="main" id="main">
+
+    <!-- H1 unique pour la page (visually-hidden) : un seul H1 par page (cf. WCAG) -->
+    <h1 style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Dashboard FragValue : tes stats CS2 et axes d'amelioration</h1>
 
     <!-- VUE D'ENSEMBLE -->
     <div class="tab-panel active" id="panelOverview">
@@ -578,7 +581,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     <!-- AMÉLIORATION -->
     <div class="tab-panel" id="panelImprove">
       <div class="tab-intro">
-        <h1 class="tab-title">Tes axes d'amélioration</h1>
+        <h2 class="tab-title">Tes axes d'amélioration</h2>
         <p class="tab-sub">Analyse personnalisée de tes forces et points bloquants, calculée sur tes 20 derniers matchs FACEIT. Actionnable round par round.</p>
       </div>
       <div id="improvementsPanel"><div class="empty-state"><div class="empty-title">Chargement de l'analyse...</div></div></div>
@@ -587,7 +590,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     <!-- MATCHS -->
     <div class="tab-panel" id="panelMatches">
       <div class="tab-intro">
-        <h1 class="tab-title">Historique des matchs</h1>
+        <h2 class="tab-title">Historique des matchs</h2>
         <p class="tab-sub">Tes 20 derniers matchs FACEIT avec tous les KPIs clés. Filtre par map ou résultat pour zoomer.</p>
       </div>
       <div id="matchesSummary"></div>
@@ -606,7 +609,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     <!-- WATCHLIST -->
     <div class="tab-panel" id="panelWatchlist">
       <div class="tab-intro">
-        <h1 class="tab-title">Joueurs suivis</h1>
+        <h2 class="tab-title">Joueurs suivis</h2>
         <p class="tab-sub">Garde un œil sur les joueurs qui t'intéressent : adversaires récurrents, potentiels coéquipiers, anciens duos.</p>
       </div>
       <div id="watchlistContent">
@@ -622,7 +625,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     <!-- ROSTER -->
     <div class="tab-panel" id="panelRoster">
       <div class="tab-intro">
-        <h1 class="tab-title">Mon équipe</h1>
+        <h2 class="tab-title">Mon équipe</h2>
         <p class="tab-sub">Ton roster pour suivre les stats collectives, inviter des coéquipiers et structurer ton équipe compétitive. Jusqu'à 7 joueurs (5 titulaires + 2 subs).</p>
       </div>
       <div id="rosterInvitations"></div>
@@ -640,11 +643,11 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 </div>
 
 <!-- Modals roster -->
-<div class="modal" id="modalCreateRoster">
+<div class="modal" id="modalCreateRoster" role="dialog" aria-modal="true" aria-labelledby="modalCreateRosterTitle" aria-hidden="true">
   <div class="modal-card">
     <div class="modal-header">
-      <div class="modal-title">Créer mon équipe</div>
-      <button class="modal-close" onclick="closeModal('modalCreateRoster')">&times;</button>
+      <h2 class="modal-title" id="modalCreateRosterTitle">Créer mon équipe</h2>
+      <button class="modal-close" onclick="closeModal('modalCreateRoster')" aria-label="Fermer">&times;</button>
     </div>
     <div class="modal-body">
       <div class="modal-field">
@@ -685,11 +688,11 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 </div>
 
 <!-- Link FACEIT team modal (post-creation ou re-lier) -->
-<div class="modal" id="modalLinkFaceit">
+<div class="modal" id="modalLinkFaceit" role="dialog" aria-modal="true" aria-labelledby="modalLinkFaceitTitle" aria-hidden="true">
   <div class="modal-card">
     <div class="modal-header">
-      <div class="modal-title">Lier la fiche FACEIT</div>
-      <button class="modal-close" onclick="closeModal('modalLinkFaceit')">&times;</button>
+      <h2 class="modal-title" id="modalLinkFaceitTitle">Lier la fiche FACEIT</h2>
+      <button class="modal-close" onclick="closeModal('modalLinkFaceit')" aria-label="Fermer">&times;</button>
     </div>
     <div class="modal-body">
       <div style="font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:14px">
@@ -710,11 +713,11 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   </div>
 </div>
 
-<div class="modal" id="modalInvitePlayer">
+<div class="modal" id="modalInvitePlayer" role="dialog" aria-modal="true" aria-labelledby="modalInvitePlayerTitle" aria-hidden="true">
   <div class="modal-card">
     <div class="modal-header">
-      <div class="modal-title">Inviter un joueur</div>
-      <button class="modal-close" onclick="closeModal('modalInvitePlayer')">&times;</button>
+      <h2 class="modal-title" id="modalInvitePlayerTitle">Inviter un joueur</h2>
+      <button class="modal-close" onclick="closeModal('modalInvitePlayer')" aria-label="Fermer">&times;</button>
     </div>
     <div class="modal-body">
       <div class="modal-field">
@@ -1793,8 +1796,54 @@ async function loadTeamStats(rosterId) {
 }
 
 // ══ Modals ═══════════════════════════════════════════════════════════════
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+// A11Y : aria-hidden toggle + focus trap basique (cf. WCAG SC 2.1.2 No keyboard trap inverse,
+// SC 4.1.2 Name, Role, Value). Sauvegarde l'element focus avant ouverture pour le restaurer
+// au close, focus le premier element interactif a l'ouverture, et capture Escape + Tab cyclique.
+let _modalLastFocus = null;
+let _modalActiveId  = null;
+function _modalFocusables(modal) {
+  return modal.querySelectorAll('input:not([disabled]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])');
+}
+function _modalKeyHandler(e) {
+  if (!_modalActiveId) return;
+  if (e.key === 'Escape') { closeModal(_modalActiveId); return; }
+  if (e.key !== 'Tab') return;
+  const modal = document.getElementById(_modalActiveId);
+  if (!modal) return;
+  const focusables = _modalFocusables(modal);
+  if (!focusables.length) return;
+  const first = focusables[0], last = focusables[focusables.length - 1];
+  if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+  else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+}
+function openModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  _modalLastFocus = document.activeElement;
+  _modalActiveId  = id;
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.addEventListener('keydown', _modalKeyHandler);
+  // Focus le 1er element interactif (skip le bouton close pour ne pas fermer avec Enter direct)
+  setTimeout(() => {
+    const focusables = _modalFocusables(modal);
+    const target = Array.from(focusables).find(f => !f.classList.contains('modal-close')) || focusables[0];
+    if (target) target.focus();
+  }, 50);
+}
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  document.removeEventListener('keydown', _modalKeyHandler);
+  _modalActiveId = null;
+  // Restore focus on the trigger element
+  if (_modalLastFocus && typeof _modalLastFocus.focus === 'function') {
+    _modalLastFocus.focus();
+  }
+  _modalLastFocus = null;
+}
 function openCreateRosterModal() {
   document.getElementById('rosterName').value = '';
   document.getElementById('rosterTag').value = '';
