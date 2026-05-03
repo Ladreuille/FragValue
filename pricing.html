@@ -1359,13 +1359,19 @@ footer{
   <div class="footer-copy">&copy; 2026 FragValue</div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Option C perf : Supabase deferred + init dans DOMContentLoaded.
+     Aucun handler n'utilise _sb avant un click user (toggleBilling/startCheckout
+     viennent apres DOM ready). -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 <script>
 /* ── Supabase init ── */
 const SUPABASE_URL = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
-const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-window._sb = _sb;
+window._sb = null;
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof supabase === 'undefined') return;
+  window._sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+});
 
 /* ── Billing toggle ── */
 let isYearly = false;
@@ -1441,7 +1447,10 @@ async function startCheckout(plan, btn) {
   // Funnel : clic sur le CTA checkout (avant redirect Stripe)
   if (typeof window.fvTrack === 'function') window.fvTrack('Checkout Start', { plan: plan });
 
-  const { data: { session } } = await _sb.auth.getSession();
+  // Defensive : si user click avant que window._sb soit init (DOMContentLoaded
+  // pas encore fire car defer scripts pas finis), on retry brievement.
+  if (!window._sb) await new Promise(r => setTimeout(r, 200));
+  const { data: { session } } = await window._sb.auth.getSession();
 
   // CHECKOUT GUEST (cf. ultrareview CRO P0) : avant on forcait login -> -30%
   // drop-off. Maintenant on accepte le checkout sans compte : on demande
