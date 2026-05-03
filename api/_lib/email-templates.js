@@ -61,7 +61,7 @@ function welcome({ nickname }) {
       <tr><td style="height:8px"></td></tr>
       <tr><td style="padding:14px 16px;background:#080909;border:1px solid #1c1e1e;border-radius:10px;border-left:3px solid #b8ff57">
         <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">3. PASSE PRO POUR LES OUTILS COMPLETS</div>
-        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">2D Replay frame par frame, KPIs avancés, Coach IA illimité, Match Report tactique. <strong style="color:#e8eaea">7 jours d'essai gratuits</strong>, annulation en 1 clic.</div>
+        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">2D Replay frame par frame, KPIs avancés, Coach IA illimité, Match Report tactique. <strong style="color:#e8eaea">Sans engagement</strong>, annulation en 1 clic.</div>
       </td></tr>
     </table>
 
@@ -82,7 +82,7 @@ Ton compte FragValue est actif. Voici ce que tu peux faire :
 2. CONNECTE TON FACEIT
    Pour le diagnostic IA personnalisé basé sur tes 20 derniers matchs.
 
-3. PASSE PRO (7 jours gratuits)
+3. PASSE PRO (sans engagement)
    2D Replay complet, KPIs avancés, Coach IA illimité, Match Report.
    Dès 9€/mois, annulation en 1 clic.
 

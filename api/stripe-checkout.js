@@ -77,11 +77,11 @@ export default async function handler(req, res) {
       // Metadata pour le webhook : sans supabase_user_id, le checkout.session.completed
       // ne peut pas associer la subscription au bon user en DB.
       metadata: { plan: normalizedPlan },
-      // 7 jours d'essai gratuit sur les plans Pro (claim marketing sur pricing.html).
-      // Pendant le trial, aucun prelevement. L'abonnement commence automatiquement
-      // apres 7 jours si l'utilisateur n'a pas annule (cancel en 1 clic depuis Stripe).
+      // Trial 7j retire (mai 2026) : le user paye immediatement pour qu'on
+      // valide le flow de paiement en LIVE. Si trial revient plus tard, ajouter :
+      //   trial_period_days: 7
+      // dans subscription_data.
       subscription_data: {
-        trial_period_days: 7,
         // Propage le plan sur la subscription pour les webhooks de renew/update
         // (subscription.updated ne contient pas la metadata de session).
         metadata: { plan: normalizedPlan },
