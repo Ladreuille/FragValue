@@ -73,14 +73,23 @@ module.exports = async function handler(req, res) {
       .in('id', userIds);
     (profiles || []).forEach(p => { usersById[p.id] = p; });
 
-    // auth.users emails via un seul listUsers (pagine si >1000 users au total)
+    // auth.users emails via listUsers PAGINE pour gerer >1000 users sans
+    // perte silencieuse (cf. ultrareview P2 : avant on cappait a 1000 et tout
+    // user au-dela n'avait pas son email enrichi). Loop max 50 pages = 50k
+    // users, largement suffisant et evite boucle infinie si bug.
     try {
-      const { data: listData } = await s.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      (listData?.users || []).forEach(u => {
-        if (wantedIds.has(u.id)) {
-          usersById[u.id] = { ...(usersById[u.id] || {}), email: u.email };
-        }
-      });
+      const PER_PAGE = 1000;
+      const MAX_PAGES = 50;
+      for (let page = 1; page <= MAX_PAGES; page++) {
+        const { data: listData } = await s.auth.admin.listUsers({ page, perPage: PER_PAGE });
+        const users = listData?.users || [];
+        users.forEach(u => {
+          if (wantedIds.has(u.id)) {
+            usersById[u.id] = { ...(usersById[u.id] || {}), email: u.email };
+          }
+        });
+        if (users.length < PER_PAGE) break; // derniere page
+      }
     } catch (e) { console.warn('admin listUsers failed', e.message); }
   }
 

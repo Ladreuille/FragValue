@@ -68,7 +68,7 @@ nav{
   display:inline-flex;align-items:center;gap:8px;
   background:transparent;color:var(--text2);
   padding:9px 18px;border-radius:var(--radius);
-  font-family:var(--mono);font-size:12px;font-weight:600;
+  font-family:var(--mono);font-size:12px;font-weight:700;
   text-decoration:none;letter-spacing:.04em;
   border:1px solid var(--border);cursor:pointer;transition:all .15s;
 }
@@ -84,3 +84,61 @@ nav{
 
 /* ── Page wrapper ───────────────────────────────────────────── */
 .page{max-width:1200px;margin:0 auto;padding:28px 32px 80px}
+
+/* ═══ DESIGN SYSTEM TOKENS (ultrareview visuel - unification cross-page) ═══ */
+:root{
+  /* Spacing tokens (4px base) */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+  --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
+
+  /* Container max-width unifie (avant : 1100/1160/1200/1280/980 disperses) */
+  --container:1200px;
+  --container-narrow:1100px;
+
+  /* Border-radius tokens (avant : 5/7/8/10/14/16px hardcoded) */
+  --radius-sm:4px; --radius-md:8px; --radius-lg:12px;
+
+  /* Transition tokens (avant : .12/.15/.18/.2/.25/.35/.4s heteroclites) */
+  --t-fast:.15s; --t-base:.2s; --t-slow:.35s;
+  --ease:cubic-bezier(.2,.8,.25,1);
+}
+
+/* ═══ .sec-label : DEFINITION UNIQUE (avant : 4 looks differents) ═══
+   Mono 10px w700 uppercase letter-spacing .16em — la plus courante des 4
+   variantes croisees. Toutes les pages doivent l'utiliser, pas redefinir. */
+.sec-label{
+  font-family:var(--mono);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--text3);
+  margin:24px 0 12px;
+}
+
+/* ═══ .btn-primary : DEFINITION UNIQUE (avant : 4 paddings differents) ═══
+   16x32 padding + 14px font + radius-md. Standardise pour toutes les CTA
+   primaires accent. Pour overrides, utiliser .btn-primary--sm ou --lg. */
+.btn-primary{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--accent);color:#000;
+  padding:14px 28px;border-radius:var(--radius-md);
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;
+  text-decoration:none;border:none;cursor:pointer;
+  transition:all var(--t-fast) var(--ease);
+}
+.btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none}
+.btn-primary--sm{padding:10px 18px;font-size:11px}
+.btn-primary--lg{padding:18px 36px;font-size:15px}
+
+/* ═══ Reduce-motion respect global (cf. WCAG SC 2.3.3) ═══ */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
