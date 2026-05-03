@@ -101,6 +101,7 @@ function checkoutSuccess({ nickname, plan, periodEndIso }) {
   const planLabel = plan === 'elite_yearly' || plan === 'elite_monthly' ? 'Elite'
                   : plan === 'pro_yearly' || plan === 'pro_monthly' ? 'Pro'
                   : 'Premium';
+  const isYearly = plan?.endsWith('_yearly');
   const renewDate = periodEndIso
     ? new Date(periodEndIso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })
     : null;
@@ -115,7 +116,7 @@ function checkoutSuccess({ nickname, plan, periodEndIso }) {
         <li>Analyses de demos illimitées</li>
         <li>2D Replay frame par frame</li>
         <li>KPIs avancés : entry, trade, flash eff, util damage</li>
-        <li>Diagnostic IA illimité avec roadmap 7 jours personnalisée + Chat Coach 5 msg/jour (Pro) ou 30/jour (Elite)</li>
+        <li>Diagnostic IA refresh par match avec roadmap 7 jours + Chat Coach 5 msg/jour (Pro) ou 30/jour (Elite)</li>
         <li>Match Report round par round</li>
         ${plan?.startsWith('elite') ? '<li><strong>Elite uniquement</strong> : team dashboard, anti-strat, prep veto, pro benchmarks</li>' : ''}
       </ul>
@@ -127,6 +128,17 @@ function checkoutSuccess({ nickname, plan, periodEndIso }) {
       <a href="${BASE_URL}/demo.html" style="display:inline-block;background:#b8ff57;color:#000;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.04em;font-family:${FONT_STACK}">Lancer une analyse Pro &rsaquo;</a>
     </p>
 
+    <!-- BLOCKER LEGAL P0 EMAIL (cf. ultrareview Trust/Legal + Email lifecycle) :
+         Mention obligatoire du droit de retractation (Code conso art. L221-13 +
+         L221-28-13). Sans cet email comme support durable, le user a 14j pour
+         exiger remboursement integral. Bloc visuellement dedie + CGV link. -->
+    <div style="margin-top:28px;padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid #1c1e1e;border-radius:8px;font-size:11px;color:#7a8080;line-height:1.6">
+      <strong style="color:#a8b0b0;display:block;margin-bottom:6px">Information legale</strong>
+      Conformément à l'art. L221-28-13° du Code de la consommation, en demandant l'exécution immédiate du service à la souscription, vous avez renoncé à votre droit de rétractation de 14 jours pour la partie déjà consommée. Vous gardez la possibilité d'annuler votre abonnement à tout moment depuis votre <a href="${BASE_URL}/account.html" style="color:#b8ff57;text-decoration:none">espace compte</a> sans frais ni justification (effet à la fin de la période payée).
+      ${isYearly ? `<br><br>Pour les abonnements annuels : conformément à l'art. L215-1 du Code de la consommation, nous vous notifierons par email entre 1 et 3 mois avant chaque échéance afin que vous puissiez choisir de ne pas reconduire.` : ''}
+      <br><br>CGV : <a href="${BASE_URL}/cgv.html" style="color:#b8ff57;text-decoration:none">${BASE_URL.replace('https://','')}/cgv.html</a>
+    </div>
+
     <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">Besoin d'aide ? Réponds à ce mail, on te répond sous 24h.</p>
   `);
   const text = `Bienvenue dans ${planLabel}, ${name}.
@@ -136,10 +148,14 @@ Ton paiement est confirmé. Tu débloques :
 - Analyses de demos illimitées
 - 2D Replay frame par frame
 - KPIs avancés (entry, trade, flash eff, util dmg)
-- Coach IA illimité avec roadmap 7 jours
+- Diagnostic IA refresh par match + Chat Coach 5 msg/jour (Pro) ou 30/jour (Elite)
 - Match Report round par round
 ${plan?.startsWith('elite') ? '- Elite : team dashboard, anti-strat, prep veto, pro benchmarks\n' : ''}
 ${renewDate ? `Renouvellement le ${renewDate}. Annulation en 1 clic depuis ton espace.\n\n` : ''}Lance ta prochaine analyse : ${BASE_URL}/demo.html
+
+INFORMATION LÉGALE :
+Art. L221-28-13° Code de la consommation : en demandant l'execution immédiate du service à la souscription, vous avez renoncé à votre droit de retractation de 14j pour la partie déjà consommée. Annulation possible à tout moment depuis ${BASE_URL}/account.html sans frais (effet fin de periode payee).
+${isYearly ? `Art. L215-1 : pour les abonnements annuels, vous serez notifié par email entre 1 et 3 mois avant chaque échéance.\n` : ''}CGV : ${BASE_URL}/cgv.html
 
 L'équipe FragValue`;
   return { subject, html, text };
@@ -241,4 +257,119 @@ L'equipe FragValue`;
   return { subject, html, text };
 }
 
-module.exports = { welcome, checkoutSuccess, trialExpiringJ3, coachCreditsPurchased };
+// === CANCELLATION CONFIRMATION + WIN-BACK PATH ===========================
+// Cf. ultrareview Email lifecycle P0 #3. Trigger : webhook customer.subscription.updated
+// quand cancel_at_period_end=true. Couvre 2 objectifs :
+// 1. Confirmation legale (preuve de la resiliation, art. L215-1)
+// 2. Win-back path : 1 question de friction unique + offre -50% pour eviter churn
+function cancellationConfirmation({ nickname, planLabel, periodEndIso }) {
+  const name = nickname || 'joueur';
+  const endDate = periodEndIso
+    ? new Date(periodEndIso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })
+    : 'la fin de la periode courante';
+  const subject = `Resiliation confirmee · ton acces ${planLabel} reste actif jusqu'au ${endDate}`;
+  const html = wrap(subject, `
+    <h1 style="font-family:${FONT_STACK};font-size:24px;line-height:1.2;color:#e8eaea;margin:0 0 16px;font-weight:800">Resiliation confirmee, ${name}.</h1>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 16px">Ton abonnement <strong style="color:#e8eaea">${planLabel}</strong> a ete resilie. Aucun frais supplementaire ne sera preleve.</p>
+
+    <div style="padding:16px 18px;background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.25);border-radius:8px;margin-bottom:24px">
+      <div style="font-size:11px;color:#b8ff57;font-weight:700;letter-spacing:.1em;margin-bottom:6px">CE QUI SE PASSE MAINTENANT</div>
+      <ul style="margin:0;padding:0 0 0 18px;font-size:13px;color:#e8eaea;line-height:1.8">
+        <li>Ton acces ${planLabel} reste <strong>actif jusqu'au ${endDate}</strong></li>
+        <li>Apres cette date, tu repasseras automatiquement en plan Free</li>
+        <li>Ton historique (analyses, FV Rating, Coach IA insights) reste accessible</li>
+        <li>Tu peux te reabonner a tout moment</li>
+      </ul>
+    </div>
+
+    <p style="font-size:14px;color:#e8eaea;margin:0 0 12px;font-weight:700">Une question rapide pour qu'on s'ameliore :</p>
+    <p style="font-size:13px;color:#a8b0b0;margin:0 0 16px">Qu'est-ce qui n'a pas marche ? Reponds simplement a ce mail avec un mot, on lit toutes les reponses.</p>
+
+    <!-- Win-back offer : -50% sur la prochaine periode pendant 14j -->
+    <div style="margin-top:24px;padding:18px 20px;background:linear-gradient(135deg,rgba(245,200,66,.08),rgba(245,200,66,.02));border:1px solid rgba(245,200,66,.3);border-radius:8px;text-align:center">
+      <div style="font-size:11px;color:#f5c842;font-weight:700;letter-spacing:.1em;margin-bottom:6px">SI TU CHANGES D'AVIS</div>
+      <p style="font-size:13px;color:#e8eaea;margin:0 0 12px;line-height:1.5">Reactive ton abonnement avec <strong style="color:#f5c842">-50% sur les 3 prochains mois</strong> avant le ${endDate}.</p>
+      <a href="${BASE_URL}/pricing.html?winback=1" style="display:inline-block;background:#f5c842;color:#000;padding:11px 22px;border-radius:6px;text-decoration:none;font-weight:700;font-size:12px;letter-spacing:.04em;font-family:${FONT_STACK}">Reactiver avec -50%</a>
+    </div>
+
+    <p style="font-size:11px;color:#7a8080;margin:24px 0 0;line-height:1.5">Conformement a l'art. L215-1 du Code de la consommation, votre resiliation prendra effet le ${endDate}. Aucune penalite applicable.</p>
+  `);
+  const text = `Resiliation confirmee, ${name}.
+
+Ton abonnement ${planLabel} a ete resilie. Aucun frais supplementaire.
+
+Ce qui se passe :
+- Acces ${planLabel} actif jusqu'au ${endDate}
+- Apres : tu repasseras en plan Free
+- Historique conserve (analyses, FV Rating, Coach IA)
+- Reabonnement possible a tout moment
+
+QU'EST-CE QUI N'A PAS MARCHE ?
+Reponds simplement a ce mail. On lit toutes les reponses.
+
+OFFRE DE RETOUR -50% (valable jusqu'au ${endDate}) :
+${BASE_URL}/pricing.html?winback=1
+
+Conformement a l'art. L215-1 Code de la consommation, ta resiliation prend
+effet le ${endDate}. Aucune penalite.
+
+L'equipe FragValue`;
+  return { subject, html, text };
+}
+
+// === YEARLY RENEWAL NOTICE (L215-1 OBLIGATOIRE) ==========================
+// Cf. ultrareview Email lifecycle P0 #1 + Trust/Legal HIGH #8. L'art. L215-1-1
+// du Code conso impose pour les abonnements annuels d'informer le user entre
+// 1 et 3 mois avant chaque renouvellement, via un cron quotidien.
+// Sanction : 15 000 EUR par contrat non-notifie. Ne JAMAIS skipper.
+function yearlyRenewalNotice({ nickname, planLabel, renewDate, daysLeft, amount }) {
+  const name = nickname || 'joueur';
+  const subject = daysLeft <= 7
+    ? `Plus que ${daysLeft}j pour annuler avant le renouvellement annuel`
+    : `[Action possible] Ton abonnement ${planLabel} se renouvelle le ${renewDate}`;
+  const urgency = daysLeft <= 7
+    ? `<strong style="color:#f5c842">Plus que ${daysLeft} jours</strong> pour decider`
+    : `Tu as encore <strong style="color:#a8b0b0">${daysLeft} jours</strong> pour decider`;
+  const html = wrap(subject, `
+    <h1 style="font-family:${FONT_STACK};font-size:22px;line-height:1.3;color:#e8eaea;margin:0 0 16px;font-weight:800">Renouvellement ${planLabel} le <span style="color:#b8ff57">${renewDate}</span></h1>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 16px">${urgency}. Conformement a la loi (art. L215-1 Code de la consommation), nous t'informons de la possibilite de ne pas reconduire ton abonnement.</p>
+
+    <div style="padding:16px 18px;background:rgba(255,255,255,.02);border:1px solid #1c1e1e;border-radius:8px;margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#a8b0b0;line-height:2">
+        <span>Plan</span><strong style="color:#e8eaea">${planLabel}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#a8b0b0;line-height:2">
+        <span>Montant qui sera preleve</span><strong style="color:#b8ff57">${amount}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#a8b0b0;line-height:2">
+        <span>Date du prelevement</span><strong style="color:#e8eaea">${renewDate}</strong>
+      </div>
+    </div>
+
+    <p style="font-size:13px;color:#e8eaea;margin:0 0 16px"><strong>2 options :</strong></p>
+    <p style="text-align:center;margin:16px 0">
+      <a href="${BASE_URL}/account.html" style="display:inline-block;background:#b8ff57;color:#000;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;letter-spacing:.04em;font-family:${FONT_STACK};margin-right:8px">Garder ${planLabel}</a>
+      <a href="${BASE_URL}/account.html#cancel" style="display:inline-block;background:transparent;color:#a8b0b0;padding:11px 22px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;letter-spacing:.04em;font-family:${FONT_STACK};border:1px solid #1c1e1e">Annuler en 1 clic</a>
+    </p>
+
+    <p style="font-size:11px;color:#7a8080;margin:24px 0 0;line-height:1.5">Si tu ne fais rien, ton abonnement sera reconduit pour 1 an le ${renewDate}. L'annulation reste possible a tout moment depuis ton espace, sans frais (effet fin de periode payee).</p>
+  `);
+  const text = `Renouvellement ${planLabel} le ${renewDate}
+
+${urgency.replace(/<[^>]+>/g, '')}.
+
+Conformement a la loi (art. L215-1 Code conso), nous t'informons que ton
+abonnement ${planLabel} sera reconduit pour 1 an le ${renewDate} pour ${amount}.
+
+2 options :
+1. Garder ${planLabel} : aucune action requise.
+2. Annuler en 1 clic depuis ton espace :
+   ${BASE_URL}/account.html#cancel
+
+L'annulation reste possible a tout moment, sans frais (effet fin de periode).
+
+L'equipe FragValue`;
+  return { subject, html, text };
+}
+
+module.exports = { welcome, checkoutSuccess, trialExpiringJ3, coachCreditsPurchased, cancellationConfirmation, yearlyRenewalNotice };

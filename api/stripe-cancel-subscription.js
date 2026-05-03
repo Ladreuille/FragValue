@@ -119,6 +119,25 @@ export default async function handler(req, res) {
       console.warn('[stripe-cancel] subscription_events log failed:', logErr?.message);
     }
 
+    // BLOCKER LEGAL P0 EMAIL (cf. ultrareview Email lifecycle) : envoie email
+    // de confirmation de resiliation + win-back path. Couvre 2 risques :
+    // 1. Preuve legale (art. L215-1) que le user a bien recu confirmation
+    // 2. Win-back -50% pour reduire churn (8-12% reactivation rate benchmark)
+    try {
+      const tpl = require('./_lib/email-templates.js');
+      const { sendEmail } = await import('./_lib/email.js');
+      const planLabel = profile.plan?.startsWith('elite') ? 'Elite' : 'Pro';
+      const t = tpl.cancellationConfirmation({
+        nickname: user.email?.split('@')[0] || 'joueur',
+        planLabel,
+        periodEndIso: sub?.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+      });
+      await sendEmail({ to: user.email, subject: t.subject, html: t.html, text: t.text });
+    } catch (emailErr) {
+      // Email best-effort : ne pas faire echouer la resiliation si l'email plante
+      console.warn('[stripe-cancel] cancellation email failed:', emailErr?.message);
+    }
+
     return res.status(200).json({
       ok: true,
       message: 'Abonnement resilie. Acces conserve jusqu\'a la fin de la periode courante.',
