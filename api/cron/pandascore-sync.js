@@ -168,10 +168,16 @@ async function importMatch(s, psMatchId) {
 }
 
 module.exports = async function handler(req, res) {
-  // Auth : Vercel Cron envoie Authorization: Bearer <CRON_SECRET>
+  // Auth FAIL-CLOSED : Vercel Cron envoie Authorization: Bearer <CRON_SECRET>.
+  // Si la var n'est pas definie, on REFUSE (anti grilling quota PandaScore par
+  // un attaquant externe qui hit l'endpoint en boucle). Cf. ultrareview P0.1.
   const expected = process.env.CRON_SECRET;
   const auth = req.headers.authorization || '';
-  if (expected && auth !== `Bearer ${expected}`) {
+  if (!expected) {
+    console.error('[cron pandascore-sync] CRON_SECRET non configure - refus 503');
+    return res.status(503).json({ error: 'Cron secret not configured' });
+  }
+  if (auth !== `Bearer ${expected}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

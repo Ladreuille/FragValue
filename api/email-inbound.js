@@ -35,9 +35,12 @@ async function buffer(readable) {
 // Signed payload : `${id}.${timestamp}.${body}` HMAC-SHA256 avec secret (base64 decode).
 function verifySignature(rawBody, headers) {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
+  // FAIL-CLOSED (cf. ultrareview P0.3) : si le secret n'est pas configure, on
+  // REJETTE. Avant : on acceptait tout, ce qui permettait a un attaquant de
+  // POST des feedbacks signes admin si la var manquait par erreur en prod.
   if (!secret) {
-    console.warn('[email-inbound] RESEND_WEBHOOK_SECRET manquant - signature non verifiee (DEV mode)');
-    return true;
+    console.error('[email-inbound] RESEND_WEBHOOK_SECRET manquant - REJET (fail-closed)');
+    return false;
   }
   const svixId = headers['svix-id'];
   const svixTs = headers['svix-timestamp'];

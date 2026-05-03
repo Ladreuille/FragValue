@@ -74,12 +74,26 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'DELETE') {
-      // Clear toutes les notifs lues (menage > 30 jours OU bouton user)
+      // Clear notifs : SECURISE (cf. ultrareview P0.6).
+      // Avant : DELETE sans param supprimait TOUTES les notifs du user (data loss
+      // accidentelle si bug front qui call sans confirmation).
+      // Maintenant : exiger explicitement un filtre OU confirm=1.
       const olderThan = req.query.older_than_days
         ? new Date(Date.now() - parseInt(req.query.older_than_days, 10) * 86400000).toISOString()
         : null;
+      const readOnly = req.query.read_only === '1';
+      const confirmAll = req.query.confirm === 'all';
+
+      // Garde-fou : refus du delete-all sans flag explicite
+      if (!olderThan && !readOnly && !confirmAll) {
+        return res.status(400).json({
+          error: 'Filtre requis',
+          hint: 'Specifie ?read_only=1, ?older_than_days=N ou ?confirm=all pour tout supprimer.',
+        });
+      }
+
       let q = supabase.from('notifications').delete().eq('user_id', user.id);
-      if (req.query.read_only === '1') q = q.eq('read', true);
+      if (readOnly) q = q.eq('read', true);
       if (olderThan) q = q.lt('created_at', olderThan);
       await q;
       return res.status(200).json({ ok: true });

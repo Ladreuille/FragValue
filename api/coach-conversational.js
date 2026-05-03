@@ -864,16 +864,27 @@ module.exports = async function handler(req, res) {
   }
 
   // Rate limit par tier + fallback credits (Pro 5/jour, Elite 30/jour, admin illimite).
-  // Si le quota tier est atteint, on tente de consommer 1 credit du pack achete.
-  // Si pas de credits -> 429 avec lien d'achat.
+  //
+  // FIX RACE CONDITION (P0 ultrareview 2026-05-03) :
+  // Avant : on lisait le quota, puis appelait Claude (5+ secondes), puis consommait
+  // un credit. Resultat : 5 requetes en parallele d'un user a 4/5 utilises passaient
+  // toutes le gate -> 5 reponses Claude facturees mais 1 seul credit decremente
+  // (race sur le compteur). Cout direct : ~$0.50 perdu par burst x N users.
+  //
+  // Maintenant : si quota atteint, on consomme le credit IMMEDIATEMENT (operation
+  // atomique avec optimistic lock dans coach-credits.js). Si la conso reussit, on
+  // procede a Claude. Si Claude fail apres, on perd 1 credit -- acceptable pour
+  // proteger contre l'abuse parallele. Le user peut reclamer un refund si bug.
   let usingCredit = false;
+  let creditsBalanceAfter = null;
   if (!isAdmin) {
     const limit = DAILY_LIMITS[plan] || DAILY_LIMITS.pro;
     const used = await countTodayUserMessages(supabase, user.id);
     if (used >= limit) {
-      // Quota tier atteint, on regarde les credits
-      const credits = await getCredits(supabase, user.id);
-      if (credits.balance <= 0) {
+      // Quota tier atteint, on tente de consommer 1 credit ATOMIQUEMENT
+      const consumed = await consumeCredit(supabase, user.id, null);
+      if (!consumed.ok) {
+        const credits = await getCredits(supabase, user.id);
         const upgradeMsg = plan === 'pro'
           ? `Tu as utilise tes ${limit} messages du jour. Achete un pack de credits ou passe Elite.`
           : `Tu as utilise tes ${limit} messages du jour. Achete un pack de credits ou reviens demain.`;
@@ -887,8 +898,10 @@ module.exports = async function handler(req, res) {
           buy_credits_url: '/pricing.html#credits',
         });
       }
-      // L'user a des credits, on flag qu'on va en consommer 1 a la fin
+      // Credit consomme, on procede. Si Claude fail apres, le credit est perdu
+      // (logge dans coach_credits_log type='consumption'). Refund manuel possible.
       usingCredit = true;
+      creditsBalanceAfter = consumed.balance_after;
     }
   }
 
@@ -996,12 +1009,17 @@ module.exports = async function handler(req, res) {
         console.error('[coach-conv stream] persist error:', e.message);
       }
 
-      // Si on est au-dela du quota tier, consomme 1 credit (apres succes Claude
-      // pour eviter de facturer une reponse en erreur).
-      let creditsBalanceAfter = null;
+      // creditsBalanceAfter est deja calcule en haut (consumeCredit AVANT Claude).
+      // On link juste le credit log au message_id maintenant qu'on l'a (best-effort).
       if (usingCredit && assistantMsg) {
-        const consumed = await consumeCredit(supabase, user.id, assistantMsg.id);
-        creditsBalanceAfter = consumed.balance_after;
+        try {
+          await supabase.from('coach_credits_log')
+            .update({ message_id: assistantMsg.id })
+            .eq('user_id', user.id)
+            .is('message_id', null)
+            .order('created_at', { ascending: false })
+            .limit(1);
+        } catch (_) { /* lien message_id best-effort, non bloquant */ }
       }
 
       // Final done event
@@ -1036,11 +1054,17 @@ module.exports = async function handler(req, res) {
       supabase, conv.id, 'assistant', text.trim(), refs, tokensIn, tokensOut
     );
 
-    // Consomme 1 credit si on est au-dela du quota tier
-    let creditsBalanceAfter = null;
-    if (usingCredit) {
-      const consumed = await consumeCredit(supabase, user.id, assistantMsg.id);
-      creditsBalanceAfter = consumed.balance_after;
+    // creditsBalanceAfter est deja calcule en haut (consumeCredit AVANT Claude
+    // pour fix race condition). On link juste le credit log au message_id.
+    if (usingCredit && assistantMsg) {
+      try {
+        await supabase.from('coach_credits_log')
+          .update({ message_id: assistantMsg.id })
+          .eq('user_id', user.id)
+          .is('message_id', null)
+          .order('created_at', { ascending: false })
+          .limit(1);
+      } catch (_) { /* lien message_id best-effort */ }
     }
 
     return res.status(200).json({

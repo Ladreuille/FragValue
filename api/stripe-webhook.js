@@ -77,8 +77,42 @@ export default async function handler(req, res) {
           const result = await addCredits(sb, userId, packKey, session.id);
           if (!result.ok) {
             console.error('[Stripe] addCredits failed:', result.error, 'session=' + session.id);
-          } else {
-            console.log(`[Stripe] +${session.metadata.credits || '?'} credits coach_ia for user ${userId} (balance=${result.balance_after})`);
+            break;
+          }
+          console.log(`[Stripe] +${session.metadata.credits || '?'} credits coach_ia for user ${userId} (balance=${result.balance_after})`);
+
+          // Email de confirmation post-achat (best-effort, n'echoue pas le webhook)
+          try {
+            const { data: profile } = await sb
+              .from('profiles')
+              .select('faceit_nickname')
+              .eq('id', userId)
+              .maybeSingle();
+            const { data: userData } = await sb.auth.admin.getUserById(userId);
+            const userEmail = userData?.user?.email;
+            if (userEmail) {
+              const tpl = (await import('./_lib/email-templates.js')).default
+                || require('./_lib/email-templates.js');
+              const { sendEmail } = await import('./_lib/email.js');
+              // Resolution du label + montant depuis metadata (set par coach-credits-purchase.js)
+              const creditsAdded = parseInt(session.metadata.credits, 10) || 0;
+              const packLabelMap = {
+                pack_50:  '50 credits Coach IA',
+                pack_200: '200 credits Coach IA',
+              };
+              const t = tpl.coachCreditsPurchased({
+                nickname:     profile?.faceit_nickname || userEmail.split('@')[0],
+                packLabel:    packLabelMap[packKey] || packKey,
+                creditsAdded,
+                balanceAfter: result.balance_after,
+                expiresAtIso: result.expires_at,
+                amountEur:    (session.amount_total || 0) / 100,
+              });
+              await sendEmail({ to: userEmail, subject: t.subject, html: t.html, text: t.text });
+              console.log(`[Stripe] coach_credits purchase email sent to ${userEmail}`);
+            }
+          } catch (mailErr) {
+            console.error('[Stripe] coach_credits email failed:', mailErr.message);
           }
           break;
         }

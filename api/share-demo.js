@@ -78,14 +78,19 @@ export default async function handler(req, res) {
       return res.status(200).json({ share_id: existing.share_id });
     }
 
-    // Creer le lien
+    // Creer le lien avec expiration 90 jours (cf. ultrareview P1.2 :
+    // avant on ne settait jamais expires_at, donc le check ligne 35 etait
+    // mort et les liens partages vivaient eternellement). 90j = duree raisonnable
+    // pour un share match : suffisant pour analyse + retro, force le menage.
     const shareId = crypto.randomBytes(8).toString('hex');
+    const expiresAt = new Date(Date.now() + 90 * 86400000).toISOString();
     const { error: insertError } = await supabase
       .from('shared_demos')
       .insert({
         share_id: shareId,
         demo_id: demo_id,
         user_id: user.id,
+        expires_at: expiresAt,
       });
 
     if (insertError) {

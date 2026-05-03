@@ -18,10 +18,15 @@
 // pour mettre a jour le seed dataset en cas de fenetre 90j vide cote DB.
 
 module.exports = async function handler(req, res) {
-  // Auth Vercel cron
+  // Auth Vercel cron FAIL-CLOSED (cf. ultrareview P0.1).
+  // Si CRON_SECRET non set, on refuse (anti DoS / grilling endpoint).
+  const expected = process.env.CRON_SECRET;
   const auth = req.headers.authorization || '';
-  const expected = 'Bearer ' + (process.env.CRON_SECRET || '');
-  if (process.env.CRON_SECRET && auth !== expected) {
+  if (!expected) {
+    console.error('[cron pro-benchmarks-refresh] CRON_SECRET non configure - refus 503');
+    return res.status(503).json({ error: 'Cron secret not configured' });
+  }
+  if (auth !== `Bearer ${expected}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

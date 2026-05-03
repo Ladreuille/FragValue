@@ -180,4 +180,65 @@ L'équipe FragValue`;
   return { subject, html, text };
 }
 
-module.exports = { welcome, checkoutSuccess, trialExpiringJ3 };
+// === COACH CREDITS PURCHASED ============================================
+// Envoye apres un achat reussi de pack de credits Coach IA via Stripe Checkout.
+// Confirme la transaction + indique le nouveau solde + date d'expiration.
+function coachCreditsPurchased({ nickname, packLabel, creditsAdded, balanceAfter, expiresAtIso, amountEur }) {
+  const name = nickname || 'joueur';
+  const expiresDate = expiresAtIso
+    ? new Date(expiresAtIso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })
+    : null;
+  const amountStr = (typeof amountEur === 'number')
+    ? `${amountEur.toFixed(2).replace('.', ',')} EUR`
+    : '';
+  const subject = `+${creditsAdded} credits Coach IA actives - merci ${name}`;
+
+  const html = wrap(subject, `
+    <h1 style="font-family:${FONT_STACK};font-size:24px;line-height:1.2;color:#e8eaea;margin:0 0 16px;font-weight:800">
+      <span style="color:#b8ff57">+${creditsAdded} credits</span> actives.
+    </h1>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 20px">Merci ${name}, ton paiement de ${amountStr} est confirme. Tes credits sont disponibles immediatement sur le Coach IA Conversational.</p>
+
+    <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(184,255,87,.1),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.35);border-radius:10px;margin-bottom:20px">
+      <div style="font-size:11px;color:#b8ff57;font-weight:700;letter-spacing:.1em;margin-bottom:8px">RECAPITULATIF</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;color:#e8eaea">
+        <tr><td style="padding:4px 0;color:#a8b0b0">Pack achete</td><td style="text-align:right;font-weight:700">${packLabel}</td></tr>
+        <tr><td style="padding:4px 0;color:#a8b0b0">Credits ajoutes</td><td style="text-align:right;font-weight:700;color:#b8ff57">+${creditsAdded}</td></tr>
+        <tr><td style="padding:4px 0;color:#a8b0b0">Nouveau solde</td><td style="text-align:right;font-weight:800">${balanceAfter} credits</td></tr>
+        ${expiresDate ? `<tr><td style="padding:4px 0;color:#a8b0b0">Validite jusqu'au</td><td style="text-align:right">${expiresDate}</td></tr>` : ''}
+      </table>
+    </div>
+
+    <p style="font-size:13px;color:#a8b0b0;margin:0 0 20px;line-height:1.6">
+      <strong style="color:#e8eaea">Comment ca marche ?</strong> 1 credit = 1 message au-dela de ta limite quotidienne (Pro 5/jour, Elite 30/jour). Les credits se debitent automatiquement quand tu depasses ton quota.
+    </p>
+
+    <p style="text-align:center;margin:24px 0 8px">
+      <a href="${BASE_URL}/demo.html" style="display:inline-block;background:#b8ff57;color:#000;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.04em;font-family:${FONT_STACK}">Lancer une analyse + chatter &rsaquo;</a>
+    </p>
+
+    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">
+      Ta facture est dans <a href="${BASE_URL}/account.html" style="color:#b8ff57;text-decoration:none">ton espace</a>. Question ? Reponds a ce mail.
+    </p>
+  `);
+
+  const text = `+${creditsAdded} credits Coach IA actives. Merci ${name}.
+
+Pack achete    : ${packLabel}
+Credits ajoutes : +${creditsAdded}
+Nouveau solde  : ${balanceAfter} credits
+${expiresDate ? `Validite       : jusqu'au ${expiresDate}` : ''}
+
+Montant : ${amountStr}
+
+1 credit = 1 message au-dela de ta limite quotidienne (Pro 5/jour, Elite 30/jour).
+
+Lance une analyse et chatte avec le Coach : ${BASE_URL}/demo.html
+Ta facture est dans ton espace : ${BASE_URL}/account.html
+
+L'equipe FragValue`;
+
+  return { subject, html, text };
+}
+
+module.exports = { welcome, checkoutSuccess, trialExpiringJ3, coachCreditsPurchased };
