@@ -1034,7 +1034,7 @@ async function loadSubscription() {
         <div class="sub-actions">
           ${plan === 'free' || isGrantTrial
             ? `<a href="pricing.html" class="sub-btn primary">${isGrantTrial ? 'Continuer en Pro' : 'Passer à Pro'}</a>`
-            : `<button class="sub-btn secondary" onclick="openStripePortal()">Gérer mon abonnement</button><a href="pricing.html" class="sub-btn secondary">Changer de plan</a>`}
+            : `<button class="sub-btn secondary" onclick="openStripePortal()">Gérer mon abonnement</button><a href="pricing.html" class="sub-btn secondary">Changer de plan</a><button class="sub-btn cancel" onclick="openCancelDialog()" style="background:transparent;border:1px solid rgba(255,68,68,.3);color:var(--danger)">Résilier mon abonnement</button>`}
         </div>
       </div>
       ${plan === 'free' ? `
@@ -1207,6 +1207,92 @@ async function openStripePortal() {
     if (d.url) window.location.href = d.url;
     else showBanner(d.error || 'Portail indisponible.', 'err');
   } catch(e) { showBanner('Erreur réseau. Réessaie.', 'err'); }
+}
+
+// ══ BLOCKER LEGAL #3 (cf. ultrareview Trust/Legal) : Résiliation 3 clics native
+// Loi du 16 août 2022 (en vigueur 1er juin 2023), art. L215-1-1 Code conso :
+// la resiliation doit etre possible en 3 etapes maximum sur le site, sans
+// redirection vers un tiers (Stripe Portal compte comme tiers). Sanction :
+// 15 000 EUR par contrat concerne. Flow : Click 1 (bouton "Resilier"), Click 2
+// (modale confirmation), Click 3 (confirmation finale).
+async function openCancelDialog() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+
+    // Recupere les infos d'abonnement pour afficher la date de fin
+    const { data: profile } = await sb.from('profiles').select('plan, current_period_end').eq('id', session.user.id).single();
+    const periodEnd = profile?.current_period_end
+      ? new Date(profile.current_period_end).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })
+      : 'la fin de la période en cours';
+    const planLabel = (profile?.plan || 'pro').toUpperCase();
+
+    // Click 2 : modale de confirmation
+    const existing = document.getElementById('cancelSubModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'cancelSubModal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'cancelSubTitle');
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.78);backdrop-filter:blur(4px)';
+    modal.innerHTML = `
+      <div style="position:relative;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:28px 32px;max-width:480px;width:100%">
+        <button type="button" id="cancelSubClose" aria-label="Fermer" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer">×</button>
+        <h2 id="cancelSubTitle" style="font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:10px;letter-spacing:.02em">Résilier ton abonnement ${planLabel} ?</h2>
+        <p style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px">
+          Tu peux annuler en 1 clic, sans frais. Ton accès reste actif jusqu'à <strong style="color:var(--text)">${periodEnd}</strong>, ensuite tu repasseras automatiquement en plan Free.
+        </p>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:18px;font-family:var(--mono);font-size:11.5px;color:var(--text2);line-height:1.7">
+          <strong style="color:var(--text)">Tes données restent intactes :</strong> historique de matchs, demos analysées, FV Rating, axes Coach IA. Tu pourras te réabonner à tout moment.
+        </div>
+        <div id="cancelSubError" style="display:none;font-family:var(--mono);font-size:11px;color:var(--danger);margin:-6px 0 12px"></div>
+        <div style="display:flex;gap:10px;flex-direction:column">
+          <button type="button" id="cancelSubConfirm" style="width:100%;background:var(--danger);color:#fff;border:none;padding:14px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">Oui, résilier mon abonnement</button>
+          <button type="button" id="cancelSubKeep" style="width:100%;background:transparent;color:var(--text2);border:1px solid var(--border2);padding:11px;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">Non, garder mon abonnement</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const cleanup = () => { try { modal.remove(); } catch(_){} };
+    document.getElementById('cancelSubClose').onclick = cleanup;
+    document.getElementById('cancelSubKeep').onclick = cleanup;
+    modal.addEventListener('click', (e) => { if (e.target === modal) cleanup(); });
+
+    document.getElementById('cancelSubConfirm').onclick = async () => {
+      const btn = document.getElementById('cancelSubConfirm');
+      const errEl = document.getElementById('cancelSubError');
+      btn.disabled = true;
+      btn.textContent = 'Résiliation en cours...';
+      try {
+        const res = await fetch('/api/stripe-cancel-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        });
+        const d = await res.json();
+        if (!res.ok || !d.ok) {
+          errEl.textContent = d.error || 'Résiliation impossible. Réessaie ou contacte le support.';
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Oui, résilier mon abonnement';
+          return;
+        }
+        // Click 3 : confirmation finale
+        cleanup();
+        showBanner(`✓ Résilié. Ton accès ${planLabel} reste actif jusqu'au ${periodEnd}.`, 'ok');
+        // Recharge la section abonnement pour refleter le nouveau statut
+        setTimeout(() => location.reload(), 1500);
+      } catch (e) {
+        errEl.textContent = 'Erreur réseau. Réessaie.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Oui, résilier mon abonnement';
+      }
+    };
+  } catch (e) {
+    showBanner('Erreur réseau. Réessaie.', 'err');
+  }
 }
 
 // ══ PARAMETRES ═════════════════════════════════════════════════════════════

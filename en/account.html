@@ -1034,7 +1034,7 @@ async function loadSubscription() {
         <div class="sub-actions">
           ${plan === 'free' || isGrantTrial
             ? `<a href="pricing.html" class="sub-btn primary">${isGrantTrial ? 'Continue with Pro' : 'Upgrade to Pro'}</a>`
-            : `<button class="sub-btn secondary" onclick="openStripePortal()">Manage my subscription</button><a href="pricing.html" class="sub-btn secondary">Change plan</a>`}
+            : `<button class="sub-btn secondary" onclick="openStripePortal()">Manage my subscription</button><a href="pricing.html" class="sub-btn secondary">Change plan</a><button class="sub-btn cancel" onclick="openCancelDialog()" style="background:transparent;border:1px solid rgba(255,68,68,.3);color:var(--danger)">Cancel my subscription</button>`}
         </div>
       </div>
       ${plan === 'free' ? `
@@ -1207,6 +1207,86 @@ async function openStripePortal() {
     if (d.url) window.location.href = d.url;
     else showBanner(d.error || 'Portal unavailable.', 'err');
   } catch(e) { showBanner('Network error. Try again.', 'err'); }
+}
+
+// BLOCKER LEGAL #3 (Trust/Legal audit) : Native 3-click cancellation
+// French law of Aug 16, 2022 (in force June 1, 2023), art. L215-1-1 Code conso.
+// Cancellation must be possible directly on site in 3 clicks max, no third-party
+// redirect (Stripe Portal counts as third party). Penalty: 15K EUR per contract.
+async function openCancelDialog() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+
+    const { data: profile } = await sb.from('profiles').select('plan, current_period_end').eq('id', session.user.id).single();
+    const periodEnd = profile?.current_period_end
+      ? new Date(profile.current_period_end).toLocaleDateString('en-US', { day:'2-digit', month:'long', year:'numeric' })
+      : 'the end of the current period';
+    const planLabel = (profile?.plan || 'pro').toUpperCase();
+
+    const existing = document.getElementById('cancelSubModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'cancelSubModal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'cancelSubTitle');
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.78);backdrop-filter:blur(4px)';
+    modal.innerHTML = `
+      <div style="position:relative;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:28px 32px;max-width:480px;width:100%">
+        <button type="button" id="cancelSubClose" aria-label="Close" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer">×</button>
+        <h2 id="cancelSubTitle" style="font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:10px;letter-spacing:.02em">Cancel your ${planLabel} subscription?</h2>
+        <p style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px">
+          You can cancel in 1 click, no fees. Your access stays active until <strong style="color:var(--text)">${periodEnd}</strong>, then you'll automatically switch to the Free plan.
+        </p>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:18px;font-family:var(--mono);font-size:11.5px;color:var(--text2);line-height:1.7">
+          <strong style="color:var(--text)">Your data is preserved:</strong> match history, analyzed demos, FV Rating, AI Coach insights. You can re-subscribe anytime.
+        </div>
+        <div id="cancelSubError" style="display:none;font-family:var(--mono);font-size:11px;color:var(--danger);margin:-6px 0 12px"></div>
+        <div style="display:flex;gap:10px;flex-direction:column">
+          <button type="button" id="cancelSubConfirm" style="width:100%;background:var(--danger);color:#fff;border:none;padding:14px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">Yes, cancel my subscription</button>
+          <button type="button" id="cancelSubKeep" style="width:100%;background:transparent;color:var(--text2);border:1px solid var(--border2);padding:11px;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">No, keep my subscription</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const cleanup = () => { try { modal.remove(); } catch(_){} };
+    document.getElementById('cancelSubClose').onclick = cleanup;
+    document.getElementById('cancelSubKeep').onclick = cleanup;
+    modal.addEventListener('click', (e) => { if (e.target === modal) cleanup(); });
+
+    document.getElementById('cancelSubConfirm').onclick = async () => {
+      const btn = document.getElementById('cancelSubConfirm');
+      const errEl = document.getElementById('cancelSubError');
+      btn.disabled = true;
+      btn.textContent = 'Cancelling...';
+      try {
+        const res = await fetch('/api/stripe-cancel-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        });
+        const d = await res.json();
+        if (!res.ok || !d.ok) {
+          errEl.textContent = d.error || 'Cancellation failed. Please retry or contact support.';
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Yes, cancel my subscription';
+          return;
+        }
+        cleanup();
+        showBanner(`✓ Cancelled. Your ${planLabel} access remains active until ${periodEnd}.`, 'ok');
+        setTimeout(() => location.reload(), 1500);
+      } catch (e) {
+        errEl.textContent = 'Network error. Try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Yes, cancel my subscription';
+      }
+    };
+  } catch (e) {
+    showBanner('Network error. Try again.', 'err');
+  }
 }
 
 // ══ PARAMETRES ═════════════════════════════════════════════════════════════
