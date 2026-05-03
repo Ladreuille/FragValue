@@ -47,7 +47,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   "@context": "https://schema.org",
   "@type": "Product",
   "name": "FragValue Pro",
-  "description": "Personalized AI Coach for CS2 FACEIT: unlimited analyses, 2D replay, heatmaps, advanced KPIs, PDF export, player comparison.",
+  "description": "Personalized AI coach for CS2 FACEIT : analyses unlimited, 2D replay, heatmaps, Advanced KPIs, export PDF, comparaison players.",
   "brand": { "@type": "Brand", "name": "FragValue" },
   "offers": [
     {
@@ -57,7 +57,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       "priceCurrency": "EUR",
       "url": "https://fragvalue.com/pricing.html",
       "availability": "https://schema.org/InStock",
-      "description": "3 analyses/month, AI Coach 1x/month, basic heatmaps"
+      "description": "3 analyses/mois, AI Coach 1x/mois, heatmaps basiques"
     },
     {
       "@type": "Offer",
@@ -230,7 +230,9 @@ nav{
 
 /* HERO */
 .pricing-hero{
-  padding:140px 80px 80px;text-align:center;
+  /* Compresse pour que les 3 cards soient visibles above-the-fold en 1080p
+     (cf. ultrareview pricing P0 : avant ~580px de hero forcait scroll). */
+  padding:100px 80px 40px;text-align:center;
   position:relative;overflow:hidden
 }
 .pricing-hero-glow{
@@ -241,14 +243,14 @@ nav{
 }
 .pricing-hero h1{
   font-family:var(--display);
-  font-size:clamp(40px,5.5vw,72px);
+  font-size:clamp(36px,4.5vw,60px);
   line-height:.95;letter-spacing:.01em;
-  margin-bottom:20px;
+  margin-bottom:14px;
   opacity:0;animation:up .4s ease forwards
 }
 .pricing-hero-sub{
-  font-size:15px;color:var(--text2);line-height:1.8;
-  max-width:520px;margin:0 auto 48px;
+  font-size:14px;color:var(--text2);line-height:1.7;
+  max-width:520px;margin:0 auto 28px;
   opacity:0;animation:up .4s .1s ease forwards
 }
 
@@ -700,6 +702,23 @@ footer{
     <span class="billing-label" id="labelYearly">Yearly</span>
     <span class="yearly-badge" id="yearlyBadge">2 months free</span>
   </div>
+  <!-- Trust badges above-the-fold (cf. ultrareview pricing P1) :
+       garantie 14j + sans engagement + paiement Stripe = leve les principales
+       objections avant meme que l'user voit les cards. -->
+  <div style="display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--text2)">
+    <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);padding:5px 11px;border-radius:40px;color:#f5c842;font-weight:700">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      Money back guarantee 14j
+    </span>
+    <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.25);padding:5px 11px;border-radius:40px;color:var(--accent);font-weight:700">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      Cancel in 1 click
+    </span>
+    <span style="display:inline-flex;align-items:center;gap:6px;color:var(--text3);padding:5px 11px">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Payment Stripe sécurisé
+    </span>
+  </div>
 </div>
 
 <!-- PRICING CARDS -->
@@ -747,8 +766,28 @@ footer{
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           Lineup library (read-only)
         </div>
+
+        <!-- Loss aversion : 4 features de Pro grisees pour montrer ce que
+             Free n'a PAS (cf. ultrareview pricing P0). Croix rouge + texte
+             grise = trigger psychologique "tu rates ces features". -->
+        <div class="pricing-feature" style="opacity:.45;text-decoration:line-through;color:var(--text3)">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Interactive 2D Replay
+        </div>
+        <div class="pricing-feature" style="opacity:.45;text-decoration:line-through;color:var(--text3)">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Chat AI Coach Conversationnel
+        </div>
+        <div class="pricing-feature" style="opacity:.45;text-decoration:line-through;color:var(--text3)">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Advanced KPIs (KAST, ADR, opening)
+        </div>
+        <div class="pricing-feature" style="opacity:.45;text-decoration:line-through;color:var(--text3)">
+          <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Pro demos viewer
+        </div>
       </div>
-      <a href="demo.html" class="pricing-btn">Start for free</a>
+      <a href="login.html?signup=1&plan=free" class="pricing-btn">Start for free</a>
       <div class="pricing-cta-sub">No credit card required</div>
     </div>
 
@@ -816,7 +855,7 @@ footer{
         </div>
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          PDF export of analyses
+          Export analyses as PDF
         </div>
         <div class="pricing-feature">
           <svg class="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -995,7 +1034,7 @@ footer{
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
       </tr>
       <tr>
-        <td>PDF export of analyses</td>
+        <td>Export analyses as PDF</td>
         <td><svg class="x-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
         <td><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></td>
@@ -1164,7 +1203,7 @@ footer{
         Le plan Free est vraiment gratuit ?
         <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="faq-a"><div class="faq-a-inner">Yes, Free is free forever with 3 demo analyses per month, 3 scouts per day, and core FACEIT stats. No credit card required. You can use FragValue without ever paying a cent if Free is enough for you.</div></div>
+      <div class="faq-a"><div class="faq-a-inner">Oui, Free est gratuit pour toujours avec 3 analyses de démos par mois, 3 scouts par day, et l'essentiel des stats FACEIT. No credit card required. You can utiliser FragValue sans jamais payer un centime si Free te suffit.</div></div>
     </div>
 
     <div class="faq-item">
@@ -1201,10 +1240,10 @@ footer{
 
     <div class="faq-item">
       <div class="faq-q" onclick="toggleFaq(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this);}" role="button" tabindex="0" aria-expanded="false">
-        Is the Elite plan available yet?
+        À qui s'adresse le plan Elite ?
         <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="faq-a"><div class="faq-a-inner">Elite is in private beta for esports coaches and teams. Team dashboard, round-by-round tactical analysis, veto prep, and pro benchmarking are in active development. If you're a coach or esports org, email contact@fragvalue.com to join the beta and get early backer pricing for life.</div></div>
+      <div class="faq-a"><div class="faq-a-inner">Elite est conçu pour les <strong>coachs, capitaines de team et structures esport</strong> qui veulent gérer un roster collectif. Tu obtiens tout Pro + Chat AI Coach 30 messages/day (vs 5 en Pro), dashboard d'équipe, anti-strat tool, préparation veto BO3/BO5 data-driven, et benchmarks vs teams pro HLTV. Si tu joues seul, Pro suffit largement. Pour les questions specifiques aux structures (facturation entreprise, multi-utilisateurs, formation coach), écris à contact@fragvalue.com.</div></div>
     </div>
 
   </div>
@@ -1267,9 +1306,10 @@ function toggleBilling() {
 
   if (isYearly) {
     proPrice.innerHTML = '79<span>\u20ac/an</span>';
-    proPeriod.textContent = 'soit 6,58\u20ac/mois \u00b7 2 months free';
+    // Anchoring : prix mensuel barre + economie en pourcentage explicite
+    proPeriod.innerHTML = '<s style="color:var(--text3)">9\u20ac/mois</s> soit <strong style="color:var(--accent)">6,58\u20ac/mois</strong> \u00b7 -27%';
     if (elitePrice) elitePrice.innerHTML = '290<span>\u20ac/an</span>';
-    if (elitePeriod) elitePeriod.textContent = 'soit 24,17\u20ac/mois \u00b7 17% d\'economie';
+    if (elitePeriod) elitePeriod.innerHTML = '<s style="color:var(--text3)">29\u20ac/mois</s> soit <strong style="color:var(--accent)">24,17\u20ac/mois</strong> \u00b7 -17%';
   } else {
     proPrice.innerHTML = '9<span>\u20ac/mois</span>';
     proPeriod.innerHTML = 'or <strong style="color:var(--accent)">79\u20ac/an</strong> (2 months free) \u00b7 sans engagement';

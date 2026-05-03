@@ -253,6 +253,21 @@ const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   } catch {}
 })();
 
+// Active le tab signup si ?signup=1 or ?mode=signup dans l'URL.
+// Permet aux CTAs "Start for free" / "Creer un compte" de pointer
+// directement vers le formulaire d'inscription au lieu du login.
+(function preselectSignupTab() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('signup') === '1' || params.get('mode') === 'signup') {
+      // Attendre que le DOM soit pret + switchTab dispo
+      document.addEventListener('DOMContentLoaded', () => {
+        if (typeof switchTab === 'function') switchTab('signup', null);
+      });
+    }
+  } catch {}
+})();
+
 async function attributeReferrer(session) {
   const code = localStorage.getItem('fv_pending_ref');
   if (!code || !session?.access_token) return;
