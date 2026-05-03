@@ -808,6 +808,18 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+
+/* Mobile UX P0 (cf. ultrareview Mobile UX 6.5/10) :
+   sur mobile, le drag-drop ne marche pas (touch != drag), on cache le texte
+   "Glisse-depose" et le raccourci Ctrl+U. Le bouton "Choisir un fichier"
+   reste full-width et bien visible. */
+@media (max-width:640px){
+  .upload-sub .us-sep{display:none}
+  .upload-shortcut{display:none}
+  .upload-btn{width:100%;padding:14px 24px;font-size:13px;min-height:44px}
+  .upload-zone{padding:18px 14px}
+  .upload-title{font-size:18px}
+}
 </style>
 <script src="/analytics.js" defer></script>
 </head>

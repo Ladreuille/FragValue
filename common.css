@@ -177,3 +177,40 @@ nav{
   left:0;top:0;
   outline:2px solid #000;outline-offset:-4px
 }
+
+/* ═══ iOS zoom prevention sur inputs (cf. ultrareview Mobile UX P0) ═══
+   Avant : iOS Safari zoome automatiquement quand un user tape dans un input
+   avec font-size < 16px. Ca casse l'UX, force un layout shift, et empeche
+   les users de revenir au layout normal sans triple-tap. La fix universelle :
+   font-size:16px+ sur tous les inputs/textarea/select EN MOBILE.
+   On le fait UNIQUEMENT en mobile pour pas casser le design desktop ou les
+   inputs ont volontairement 11-13px pour densite informationnelle. */
+@media (max-width:640px){
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select{
+    font-size:16px !important;
+  }
+}
+
+/* ═══ Touch targets 44x44px sur mobile (cf. WCAG SC 2.5.5 + Apple HIG) ═══
+   Avant : .fv-burger 24px, certains boutons 24-32px = trop petits pour mass-market
+   mobile (les users ratent les clicks, frustration). 44px est le minimum
+   recommande par Apple/WCAG. On force min-height/min-width sur les elements
+   interactifs critiques. */
+@media (max-width:640px){
+  .fv-burger,
+  .nav-cta,
+  .btn-outline,
+  .upload-btn,
+  button[type="submit"],
+  .submit-btn,
+  .modal-close,
+  .modal-btn-primary,
+  .modal-btn-secondary{
+    min-height:44px;
+  }
+  .fv-burger{
+    min-width:44px;
+  }
+}

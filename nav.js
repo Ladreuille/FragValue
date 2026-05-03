@@ -79,6 +79,20 @@
     .fv-skip-link{position:absolute;top:-40px;left:8px;z-index:10001;background:#b8ff57;color:#000;padding:8px 14px;border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-decoration:none;transition:top .15s;letter-spacing:.04em}
     .fv-skip-link:focus{top:8px;outline:2px solid #080909;outline-offset:2px}
 
+    /* iOS zoom prevention sur inputs (cf. ultrareview Mobile UX P0).
+       iOS Safari zoome auto quand input.font-size < 16px. La fix universelle :
+       16px min en mobile sur tous les inputs. Sans !important sur certains
+       composants qui forcent inline (champ password input par ex.). */
+    @media (max-width:640px){
+      input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+      textarea, select{font-size:16px !important}
+    }
+    /* Touch targets 44x44px sur mobile (WCAG SC 2.5.5 + Apple HIG) :
+       garantit que les boutons critiques sont assez grands pour le pouce. */
+    @media (max-width:640px){
+      nav.fv-nav .fv-burger{min-width:44px;min-height:44px}
+    }
+
     nav.fv-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:linear-gradient(180deg,rgba(12,14,10,.94) 0%,rgba(8,9,9,.92) 100%);backdrop-filter:blur(12px);border-bottom:1px solid rgba(184,255,87,.15);box-shadow:0 1px 0 rgba(184,255,87,.08),0 4px 24px rgba(0,0,0,.3)}
     nav.fv-nav .logo{font-family:'Anton',sans-serif;font-size:20px;letter-spacing:.04em;text-decoration:none;color:#e8eaea;transition:text-shadow .2s}
     nav.fv-nav .logo:hover{text-shadow:0 0 18px rgba(184,255,87,.4)}

@@ -142,6 +142,17 @@ h1 span{color:var(--accent)}
 .sequence-gap.up{color:var(--accent)}
 .sequence-gap.down{color:var(--danger)}
 
+/* Mobile UX P0 (cf. ultrareview Mobile UX 6.5/10) : a < 560px le grid
+   5 colonnes 32+60+70+1fr+auto deborde, on switch en stack vertical avec
+   les 2 colonnes principales (action+map) sur la meme ligne pour rester lisible. */
+@media (max-width:560px){
+  .sequence-item{grid-template-columns:28px auto 1fr auto;gap:8px;font-size:11px;padding:10px 0}
+  .sequence-team{grid-column:2 / -1;font-size:9px;color:var(--text3);margin-top:-4px}
+  .sequence-num{font-size:13px}
+  .sequence-action{font-size:8px;padding:2px 7px}
+  .sequence-map{font-size:13px}
+}
+
 /* ─── Dual sim (sequence auto + manuelle) ──────────────────────── */
 .dual-sim{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
 @media(max-width:980px){.dual-sim{grid-template-columns:1fr}}
