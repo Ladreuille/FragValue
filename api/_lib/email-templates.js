@@ -372,4 +372,145 @@ L'equipe FragValue`;
   return { subject, html, text };
 }
 
-module.exports = { welcome, checkoutSuccess, trialExpiringJ3, coachCreditsPurchased, cancellationConfirmation, yearlyRenewalNotice };
+// === DUNNING SERIE (invoice.payment_failed) ===============================
+// Cf. ultrareview Email lifecycle P0 #2. 4 emails progressifs J+0/+3/+5/+7
+// pour recuperer les paiements echoues. Recovery rate standard SaaS = 38-45%
+// du MRR a risque. Sur 100 EUR/mois perdus, recupere 40 EUR direct.
+//
+// Subject + outline adaptatifs selon le milestone :
+// - J+0 : urgent action ("1 minute pour mettre a jour")
+// - J+3 : reassurance acces actif + reminder
+// - J+5 : urgency last chance "48h"
+// - J+7 : final notice + downgrade Free imminent
+function paymentFailed({ nickname, planLabel, milestone, amount, periodEndIso, portalUrl }) {
+  const name = nickname || 'joueur';
+  const portal = portalUrl || `${BASE_URL}/account.html`;
+  const accessEnd = periodEndIso
+    ? new Date(periodEndIso).toLocaleDateString('fr-FR', { day:'numeric', month:'long' })
+    : 'la fin de la periode';
+
+  const variants = {
+    'j0': {
+      subject: `Probleme avec ton paiement · 1 minute pour mettre a jour ta carte`,
+      heroTitle: `Ton paiement n'est pas passe, ${name}.`,
+      heroSub: `Ta banque a refuse le prelevement de <strong style="color:#e8eaea">${amount}</strong> pour ton abonnement ${planLabel}. Pas de panique, c'est souvent une carte expiree ou un plafond temporaire.`,
+      tone: 'reassure',
+      ctaLabel: 'Mettre a jour ma carte (30s)',
+      footer: `Ton acces ${planLabel} reste actif. On retentera automatiquement dans 3 jours, ou des que tu mets a jour ta carte.`,
+    },
+    'j3': {
+      subject: `Ton acces ${planLabel} reste actif, mais ta carte a ete refusee`,
+      heroTitle: `Rappel : ton paiement est en attente, ${name}.`,
+      heroSub: `Le re-essai automatique de tout a l'heure a echoue. Ton abonnement ${planLabel} (${amount}) reste actif pour le moment, mais on a besoin que tu mettes a jour ta carte pour eviter une interruption.`,
+      tone: 'reminder',
+      ctaLabel: 'Resoudre en 30 secondes',
+      footer: `Si tu changes de carte, le prelevement reprendra automatiquement. On te recontactera une derniere fois avant de basculer en Free.`,
+    },
+    'j5': {
+      subject: `Derniere tentative dans 48h · ton diagnostic IA + heatmaps a sauver`,
+      heroTitle: `Plus que 48h avant la bascule en Free, ${name}.`,
+      heroSub: `On a tente 3 fois de prelever ${amount} sans succes. Si rien n'est fait dans 48h, ton acces ${planLabel} sera bascule en Free et tu perdras : Diagnostic IA refresh par match, Chat Coach IA quotidien, 2D Replay, KPIs avances.`,
+      tone: 'urgent',
+      ctaLabel: 'Resoudre maintenant (urgent)',
+      footer: `Ton historique (analyses, FV Rating, watchlist) sera conserve, mais tu ne pourras plus utiliser les features Pro. Tu pourras te reabonner plus tard.`,
+    },
+    'j7': {
+      subject: `Ton abonnement passe en Free aujourd'hui · ton historique reste`,
+      heroTitle: `Bascule en Free aujourd'hui, ${name}.`,
+      heroSub: `Apres 4 tentatives infructueuses sur ${amount}, ton abonnement ${planLabel} a ete suspendu. Tu repasses automatiquement en plan Free. <strong style="color:#b8ff57">Bonne nouvelle :</strong> ton historique complet (analyses, FV Rating, Coach IA insights) reste accessible.`,
+      tone: 'final',
+      ctaLabel: 'Reactiver mon abonnement',
+      footer: `Tu peux te reabonner a tout moment depuis pricing.html. Aucune penalite, aucun frais cache.`,
+    },
+  };
+
+  const v = variants[milestone] || variants['j0'];
+  const accentColor = v.tone === 'urgent' || v.tone === 'final' ? '#f5c842' : '#b8ff57';
+  const html = wrap(v.subject, `
+    <h1 style="font-family:${FONT_STACK};font-size:24px;line-height:1.2;color:#e8eaea;margin:0 0 16px;font-weight:800">${v.heroTitle}</h1>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 20px;line-height:1.6">${v.heroSub}</p>
+
+    <div style="padding:14px 18px;background:rgba(255,255,255,.02);border:1px solid #1c1e1e;border-radius:8px;margin-bottom:24px;font-size:12px;color:#a8b0b0;line-height:1.7">
+      <strong style="color:#e8eaea;display:block;margin-bottom:6px">Causes les plus frequentes :</strong>
+      • Carte expiree ou bientot expiree<br>
+      • Plafond mensuel atteint (banque)<br>
+      • Carte signalee par la banque (anti-fraude trop sensible)<br>
+      • Carte remplacee sans mise a jour
+    </div>
+
+    <p style="text-align:center;margin:24px 0 8px">
+      <a href="${portal}" style="display:inline-block;background:${accentColor};color:#000;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.04em;font-family:${FONT_STACK}">${v.ctaLabel}</a>
+    </p>
+
+    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.6">${v.footer}</p>
+    <p style="font-size:11px;color:#7a8080;margin:14px 0 0">Besoin d'aide ? Reponds a ce mail, on te repond sous 24h.</p>
+  `);
+  const text = `${v.heroTitle}
+
+${v.heroSub.replace(/<[^>]+>/g, '')}
+
+Causes frequentes : carte expiree, plafond banque, anti-fraude, carte remplacee.
+
+${v.ctaLabel} : ${portal}
+
+${v.footer}
+
+Besoin d'aide ? Reponds a ce mail.
+
+L'equipe FragValue`;
+  return { subject: v.subject, html, text };
+}
+
+// === DEMO ANALYSIS READY (push email avec preview) ========================
+// Cf. ultrareview Email lifecycle P0 #5. Trigger : analyses.status='completed'
+// + user offline depuis >2 min. Lift +25-40% reactivation post-upload.
+// La personne uploadait, fermait l'onglet, oubliait. L'email la fait revenir.
+function demoAnalysisReady({ nickname, demoId, map, fvRating, kast, adr, mainAxis }) {
+  const name = nickname || 'joueur';
+  const ratingNum = Number(fvRating) || 0;
+  const ratingStr = ratingNum.toFixed(2);
+  const ratingLabel = ratingNum >= 1.20 ? 'tu carry'
+                    : ratingNum >= 1.05 ? 'au-dessus de la moyenne'
+                    : ratingNum >= 0.95 ? 'dans la moyenne'
+                    : ratingNum >= 0.80 ? 'sous la moyenne'
+                    : 'difficile';
+  const ratingColor = ratingNum >= 1.05 ? '#b8ff57' : ratingNum >= 0.95 ? '#a8b0b0' : '#f5c842';
+  const mapClean = (map || 'cs2').replace('de_', '');
+  const subject = `[FV ${ratingStr}] Ton match ${mapClean} est decortique · ${ratingLabel}`;
+  const html = wrap(subject, `
+    <p style="font-size:11px;color:#7a8080;margin:0 0 6px;letter-spacing:.08em;text-transform:uppercase;font-weight:700">Analyse terminee</p>
+    <h1 style="font-family:${FONT_STACK};font-size:28px;line-height:1.1;color:#e8eaea;margin:0 0 16px;font-weight:800">Ton FV Rating : <span style="color:${ratingColor}">${ratingStr}</span></h1>
+
+    <div style="padding:18px 20px;background:rgba(255,255,255,.02);border:1px solid #1c1e1e;border-radius:10px;margin-bottom:18px">
+      <div style="font-size:11px;color:#7a8080;margin-bottom:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700">Match · ${mapClean}</div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:#a8b0b0;line-height:1.5">
+        <div><div style="color:#e8eaea;font-weight:800;font-size:18px">${ratingStr}</div><div style="font-size:10px;color:#7a8080">FV Rating</div></div>
+        ${kast ? `<div><div style="color:#e8eaea;font-weight:800;font-size:18px">${kast}%</div><div style="font-size:10px;color:#7a8080">KAST</div></div>` : ''}
+        ${adr ? `<div><div style="color:#e8eaea;font-weight:800;font-size:18px">${adr}</div><div style="font-size:10px;color:#7a8080">ADR</div></div>` : ''}
+      </div>
+    </div>
+
+    ${mainAxis ? `<div style="padding:16px 18px;background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.25);border-radius:10px;margin-bottom:24px">
+      <div style="font-size:11px;color:#b8ff57;font-weight:700;letter-spacing:.1em;margin-bottom:6px">PRINCIPAL AXE COACH IA</div>
+      <p style="font-size:13px;color:#e8eaea;margin:0;line-height:1.6">${mainAxis}</p>
+    </div>` : ''}
+
+    <p style="text-align:center;margin:24px 0 8px">
+      <a href="${BASE_URL}/heatmap-results.html?id=${demoId}" style="display:inline-block;background:#b8ff57;color:#000;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.04em;font-family:${FONT_STACK}">Voir mon diagnostic complet &rsaquo;</a>
+    </p>
+
+    <p style="font-size:12px;color:#a8b0b0;margin:18px 0 0;line-height:1.6">Heatmaps, replay 2D, breakdown par round, et les 3 actions concretes pour la semaine sont dispo dans ton espace.</p>
+  `);
+  const text = `Analyse terminee, ${name}.
+
+Ton FV Rating sur ${mapClean} : ${ratingStr} (${ratingLabel})
+${kast ? `KAST : ${kast}%\n` : ''}${adr ? `ADR : ${adr}\n` : ''}
+${mainAxis ? `\nPRINCIPAL AXE COACH IA :\n${mainAxis}\n` : ''}
+Voir le diagnostic complet (heatmaps, replay 2D, plan d'action) :
+${BASE_URL}/heatmap-results.html?id=${demoId}
+
+L'equipe FragValue`;
+  return { subject, html, text };
+}
+
+module.exports = { welcome, checkoutSuccess, trialExpiringJ3, coachCreditsPurchased, cancellationConfirmation, yearlyRenewalNotice, paymentFailed, demoAnalysisReady };

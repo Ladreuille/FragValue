@@ -309,7 +309,46 @@ export default async function handler(req, res) {
           await sb.from('subscriptions').update({
             status: 'past_due',
             updated_at: new Date().toISOString(),
+            payment_failed_at: new Date().toISOString(),  // pour le cron dunning J+3/+5/+7
           }).eq('stripe_subscription_id', invoice.subscription);
+
+          // P0 EMAIL CASH RECOVERY (cf. ultrareview Email lifecycle) :
+          // J+0 dunning email immediat. Recovery rate SaaS standard 38-45% du MRR.
+          try {
+            // Recupere user + plan pour personnaliser l'email
+            const { data: subRow } = await sb
+              .from('subscriptions')
+              .select('user_id, plan, current_period_end')
+              .eq('stripe_subscription_id', invoice.subscription)
+              .maybeSingle();
+            if (subRow?.user_id) {
+              const { data: userData } = await sb.auth.admin.getUserById(subRow.user_id);
+              const email = userData?.user?.email;
+              if (email) {
+                const tpl = require('./_lib/email-templates.js');
+                const { sendEmail } = await import('./_lib/email.js');
+                const planLabel = subRow.plan?.startsWith('elite') ? 'Elite' : 'Pro';
+                const amount = fmtAmount(invoice.amount_due, invoice.currency);
+                const t = tpl.paymentFailed({
+                  nickname: email.split('@')[0],
+                  planLabel,
+                  milestone: 'j0',
+                  amount,
+                  periodEndIso: subRow.current_period_end,
+                  portalUrl: `${process.env.PUBLIC_URL || 'https://fragvalue.com'}/account.html`,
+                });
+                await sendEmail({ to: email, subject: t.subject, html: t.html, text: t.text });
+                // Idempotence : flag dans dunning_sent_at (concat "j0,j3,j5,j7")
+                await sb.from('subscriptions')
+                  .update({ dunning_sent_at: 'j0' })
+                  .eq('stripe_subscription_id', invoice.subscription)
+                  .catch(() => {});
+                console.log(`[Stripe] Dunning J+0 sent to ${email} for ${invoice.subscription}`);
+              }
+            }
+          } catch (dunningErr) {
+            console.warn('[Stripe] Dunning J+0 email failed:', dunningErr?.message);
+          }
 
           console.log(`[Stripe] Payment failed for subscription: ${invoice.subscription}`);
         }

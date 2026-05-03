@@ -96,6 +96,70 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Insert failed' });
     }
 
+    // P0 EMAIL CRITICAL (cf. ultrareview Email lifecycle) : envoie aussi un
+    // email push avec preview FV Rating + axe principal Coach IA. Lift attendu
+    // +25-40% reactivation post-upload (la personne ferme l'onglet et oublie
+    // sans cet email - c'est le pattern Riffstation/Zwift sur les analyses async).
+    //
+    // Best-effort : si email plante, on ne fail pas la notification in-app.
+    // Idempotence cote front : sessionStorage flag, donc 1 seul appel par demoId.
+    try {
+      // Recupere les infos demo + Coach IA pour enrichir l'email
+      let kast = null, adr = null, mainAxis = null;
+      if (demoId) {
+        try {
+          const { data: demoRow } = await sb
+            .from('demos')
+            .select('kast, adr')
+            .eq('id', demoId)
+            .maybeSingle();
+          if (demoRow) {
+            kast = demoRow.kast != null ? Math.round(demoRow.kast) : null;
+            adr = demoRow.adr != null ? Math.round(demoRow.adr) : null;
+          }
+          // Tente de recuperer le 1er axe Coach IA s'il existe deja en DB
+          const { data: roadmap } = await sb
+            .from('coach_roadmaps')
+            .select('weak_points')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (roadmap?.weak_points && Array.isArray(roadmap.weak_points) && roadmap.weak_points[0]) {
+            const wp = roadmap.weak_points[0];
+            mainAxis = wp.title || wp.text || (typeof wp === 'string' ? wp : null);
+            if (mainAxis) mainAxis = String(mainAxis).slice(0, 200);
+          }
+        } catch (_) {}
+      }
+
+      // Recupere le profile FACEIT nickname si dispo + l'email du user
+      const { data: profile } = await sb
+        .from('profiles')
+        .select('faceit_nickname')
+        .eq('id', user.id)
+        .maybeSingle();
+      const email = user.email;
+
+      if (email && demoId) {
+        const tpl = require('./_lib/email-templates.js');
+        const { sendEmail } = await import('./_lib/email.js');
+        const t = tpl.demoAnalysisReady({
+          nickname: profile?.faceit_nickname || email.split('@')[0],
+          demoId,
+          map: rawMap,
+          fvRating: fvRating ? parseFloat(fvRating) : null,
+          kast,
+          adr,
+          mainAxis,
+        });
+        await sendEmail({ to: email, subject: t.subject, html: t.html, text: t.text });
+        console.log(`[notify-demo-analyzed] email sent to ${email} for demo ${demoId}`);
+      }
+    } catch (emailErr) {
+      console.warn('[notify-demo-analyzed] email failed (non-blocking):', emailErr?.message);
+    }
+
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('[notify-demo-analyzed] error:', err);
