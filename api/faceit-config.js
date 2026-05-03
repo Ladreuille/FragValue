@@ -8,6 +8,9 @@ export default function handler(req, res) {
   if (ALLOWED_ORIGIN_RE.test(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  // Cache CDN 1h : FACEIT_CLIENT_ID est une valeur publique constante, peut etre cachee
+  // agressivement. Stale-while-revalidate 24h pour les cas ou Vercel rebuild.
+  res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const clientId = process.env.FACEIT_CLIENT_ID;

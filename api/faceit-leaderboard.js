@@ -52,6 +52,10 @@ module.exports = async function handler(req, res) {
   if (ALLOWED_ORIGIN_RE.test(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  // Cache CDN 5min + SWR 1h : leaderboard FACEIT change tres lentement, le serveur
+  // cache deja en DB 1h -> on peut servir depuis le CDN sans re-hit cette fonction
+  // sur chaque pageload (impact perf : -100ms TTFB sur les visiteurs en cache).
+  res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=3600');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const region = (req.query.region || DEFAULT_REGION).toUpperCase();
