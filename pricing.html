@@ -265,7 +265,10 @@ section{padding:80px 80px;position:relative;z-index:1}
   padding:36px 32px;position:relative;
   transition:transform .35s cubic-bezier(.2,.8,.25,1), border-color .25s, box-shadow .35s, background .35s;
   background:var(--card);
-  overflow:hidden;
+  /* overflow:visible pour que le badge "LE PLUS POPULAIRE" (top:-12px) ne
+     soit pas clip. Les effets internes (aura + particules) sont eux confines
+     via clip-path sur leur propre element, voir plus bas. */
+  overflow:visible;
   isolation:isolate;
   will-change:transform
 }
@@ -280,7 +283,10 @@ section{padding:80px 80px;position:relative;z-index:1}
 /* ─── Aura : halo radial qui apparait au hover (commun aux 3 plans, couleur differenciee) ─── */
 .pricing-card-aura{
   position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
-  opacity:0;transition:opacity .4s ease;z-index:1
+  opacity:0;transition:opacity .4s ease;z-index:1;
+  /* clip-path confine l'aura dans la silhouette arrondie de la card (sans
+     forcer overflow:hidden sur la card qui bloquerait le badge externe) */
+  clip-path:inset(0 round var(--r2))
 }
 .pricing-card:hover .pricing-card-aura{opacity:1}
 
@@ -341,7 +347,9 @@ section{padding:80px 80px;position:relative;z-index:1}
 /* Particules flottantes (Elite uniquement) : 6 dots dorés qui s'élèvent au hover */
 .pricing-card-particles{
   position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden;
-  opacity:0;transition:opacity .35s ease
+  opacity:0;transition:opacity .35s ease;
+  border-radius:inherit;
+  clip-path:inset(0 round var(--r2))
 }
 .pricing-card[data-plan="elite"]:hover .pricing-card-particles{opacity:1}
 .pricing-card-particles span{
@@ -370,8 +378,10 @@ section{padding:80px 80px;position:relative;z-index:1}
 }
 .pricing-badge{
   position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  z-index:5;
   background:var(--accent);color:#000;
   font-size:10px;font-weight:700;padding:4px 14px;
+  white-space:nowrap;
   border-radius:40px;letter-spacing:.1em;white-space:nowrap
 }
 .pricing-name{

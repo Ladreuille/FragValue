@@ -155,10 +155,14 @@ export default async function handler(req, res) {
           status: sub.status,
           current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
           current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+          // Propage le flag : TRUE si user a clique "Annuler" dans Stripe Portal
+          // mais que la subscription reste active jusqu'a current_period_end.
+          // Permet a l'UI de montrer "Annulation programmee pour le X".
+          cancel_at_period_end: !!sub.cancel_at_period_end,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
 
-        console.log(`[Stripe] Subscription updated: ${sub.id} -> ${sub.status}`);
+        console.log(`[Stripe] Subscription updated: ${sub.id} -> ${sub.status}${sub.cancel_at_period_end ? ' (cancel scheduled)' : ''}`);
         break;
       }
 
@@ -166,6 +170,7 @@ export default async function handler(req, res) {
         const sub = event.data.object;
         await sb.from('subscriptions').update({
           status: 'canceled',
+          cancel_at_period_end: false, // deja effective, plus de "scheduled"
           updated_at: new Date().toISOString(),
         }).eq('stripe_subscription_id', sub.id);
 

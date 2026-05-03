@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
     const { data: sub } = await sb
       .from('subscriptions')
-      .select('current_period_end, status')
+      .select('current_period_end, status, cancel_at_period_end')
       .eq('user_id', result.user.id)
       .maybeSingle();
 
@@ -55,7 +55,10 @@ module.exports = async function handler(req, res) {
       plan: result.plan,
       status: result.status,
       current_period_end: periodEnd,
-      cancel_at_period_end: false, // TODO : ajouter ce flag au webhook + DB schema si besoin UI
+      // Propage depuis la DB (peuplee par le webhook 'customer.subscription.updated').
+      // TRUE = user a clique "Annuler" mais peut utiliser jusqu'a current_period_end.
+      // L'UI account.html peut afficher "Annulation programmee pour le X".
+      cancel_at_period_end: !!sub?.cancel_at_period_end,
       _source: result.source,
       grant: result.grant || null, // { reason, expires_at } si le plan vient d'un grant
     });
