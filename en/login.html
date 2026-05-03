@@ -203,8 +203,8 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <!-- EMAIL FORM -->
     <div id="loginForm">
       <div class="field">
-        <label class="field-label" for="emailInput">Email address</label>
-        <input type="email" class="field-input" id="emailInput" placeholder="your@email.com" autocomplete="email" required/>
+        <label class="field-label" for="emailInput">Email to get your analyses</label>
+        <input type="email" class="field-input" id="emailInput" placeholder="nico@example.com" autocomplete="email" required/>
       </div>
       <div class="field" id="passwordField">
         <label class="field-label" for="passwordInput">Password</label>
@@ -428,7 +428,7 @@ async function handleSubmit() {
           }
         }
       } catch (_) {}
-      showMsg('Account created. Check your inbox to confirm.', 'success');
+      showMsg('GG. Your FragValue account is live. Check your inbox (and spam folder) to confirm in 1 click, then we\'ll crack open your first demo.', 'success');
     } else {
       const { data: signinData, error } = await _sb.auth.signInWithPassword({ email, password: pass });
       if (error) throw error;
@@ -483,7 +483,7 @@ async function sendMagicLink(e) {
   try {
     const { error } = await _sb.auth.signInWithOtp({ email, options: { emailRedirectTo: getAuthOrigin() + '/account.html' } });
     if (error) throw error;
-    showMsg('Link sent. Check your inbox.', 'success');
+    showMsg('Magic link sent. Check your inbox (and spam folder) to click in 1 click.', 'success');
   } catch(e) { showMsg(translateAuthError(e), 'error'); }
 }
 

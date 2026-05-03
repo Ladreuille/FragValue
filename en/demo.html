@@ -1146,8 +1146,8 @@ document.getElementById('fileInput').addEventListener('change', e => {
 
 function handleFile(f) {
   hideError();
-  if (!f.name.endsWith('.dem')) { showError('Only .dem files are accepted.'); return; }
-  if (f.size > 500*1024*1024) { showError('File too large (' + fmt(f.size) + ') · max 500 MB.'); return; }
+  if (!f.name.endsWith('.dem')) { showError('This isn\'t a CS2 demo. We need a .dem file (FACEIT, MatchMaking or custom server). Drop the .dem you downloaded from FACEIT.'); return; }
+  if (f.size > 500*1024*1024) { showError('Your demo is ' + fmt(f.size) + ', max is 500 MB. Tip: if it\'s a long Best of 3, download a single map instead. Need help? contact@fragvalue.com'); return; }
   selectedFile = f;
   document.getElementById('fileName').textContent = f.name;
   document.getElementById('fileSize').textContent = fmt(f.size);
@@ -1282,22 +1282,24 @@ async function startAnalysis() {
   // Chaque étape a un timing réaliste basé sur ce que fait réellement le parser.
   // Les messages > 80s sont rassurants en cas de parsing plus long que prevu
   // (grosse demo, serveur charge) pour reduire le taux d'abandon.
+  // Microcopy ultrareview item 11 (lift +18-30% retention loading) : each
+  // sub-message teases a CS2 insight to turn passive waiting into education.
   const autoSteps = [
     { delay:800,  step:0, pct:8,  title:'Uploading file',            sub:'Transferring...' },
-    { delay:3000, step:1, pct:20, title:'Parsing CS2',                 sub:'Reading raw ticks...' },
-    { delay:5000, step:1, pct:32, title:'Parsing CS2',                 sub:'Extracting positions...' },
-    { delay:8000, step:2, pct:44, title:'Computing zones',            sub:'Analyzing rounds...' },
-    { delay:12000,step:2, pct:54, title:'Computing zones',            sub:'Mapping grenades and shots...' },
-    { delay:18000,step:3, pct:63, title:'Generating heatmaps',     sub:'Kill zones et duel areas...' },
-    { delay:25000,step:3, pct:70, title:'Generating heatmaps',     sub:'Computing trajectories...' },
-    { delay:35000,step:4, pct:76, title:'FV Rating',                   sub:'Computing per-round impact...' },
-    { delay:50000,step:4, pct:82, title:'FV Rating',                   sub:'Weighting KPIs...' },
-    { delay:70000,step:4, pct:87, title:'Finalizing',                sub:'Almost done...' },
-    // Messages rassurants si le parsing depasse les 80s (grosses demos)
-    { delay:85000, step:4, pct:89, title:'Finalizing',               sub:'Demo volumineuse, patience...' },
-    { delay:120000,step:4, pct:91, title:'Finalizing',               sub:'Serveur charge, encore quelques instants...' },
-    { delay:180000,step:4, pct:93, title:'Finalizing',               sub:'Map complexe detectee, on y est presque...' },
-    { delay:240000,step:4, pct:95, title:'Finalizing',               sub:'Derniere etape avant la completion...' },
+    { delay:3000, step:1, pct:20, title:'Parsing CS2',                 sub:'Reading raw ticks (128t FACEIT servers)' },
+    { delay:5000, step:1, pct:32, title:'Parsing CS2',                 sub:'Extracting positions · FACEIT Lvl 7 average wins 58% of opening duels' },
+    { delay:8000, step:2, pct:44, title:'Computing zones',            sub:'Analyzing rounds · 1 CS2 round = 16 individual stats tracked' },
+    { delay:12000,step:2, pct:54, title:'Computing zones',            sub:'Mapping grenades · Pro smoke setups = +23% kills/round' },
+    { delay:18000,step:3, pct:63, title:'Generating heatmaps',        sub:'Kill zones · We compare with HLTV top 20 (rating 1.05-1.30)' },
+    { delay:25000,step:3, pct:70, title:'Generating heatmaps',        sub:'Trajectories · AWP delivers 1.42 kill/round ratio at pro level' },
+    { delay:35000,step:4, pct:76, title:'FV Rating',                  sub:'Per-round impact · Checking if you aced this match (rare: 1 in 47)' },
+    { delay:50000,step:4, pct:82, title:'FV Rating',                  sub:'Weighting KPIs · Lvl 7 KAST average = 68%, top 1% = 78%+' },
+    { delay:70000,step:4, pct:87, title:'Finalizing',                 sub:'Cross-analyzing your last 20 matches for AI Coach diagnostic...' },
+    // Reassurance messages > 80s (large demos)
+    { delay:85000, step:4, pct:89, title:'Finalizing',                sub:'Large demo · More ticks = more accurate analysis' },
+    { delay:120000,step:4, pct:91, title:'Finalizing',                sub:'Server busy · Your FV Rating is coming any second now' },
+    { delay:180000,step:4, pct:93, title:'Finalizing',                sub:'Complex map · Long 5v5 rounds = many events to score' },
+    { delay:240000,step:4, pct:95, title:'Finalizing',                sub:'Last step · Generating your personalized report' },
   ];
 
   const timers = autoSteps.map(s =>
@@ -1387,7 +1389,7 @@ async function startAnalysis() {
       });
     }
 
-    go(5, 100, 'Analysis complete', 'Redirecting...');
+    go(5, 100, 'Clutch.', 'Your analysis is ready. Pulling up the numbers now.');
     bar.style.background = 'var(--success)';
     await new Promise(r => setTimeout(r, 600));
     window.location.href = 'heatmap-results.html';

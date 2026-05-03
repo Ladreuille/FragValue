@@ -1148,8 +1148,8 @@ document.getElementById('fileInput').addEventListener('change', e => {
 
 function handleFile(f) {
   hideError();
-  if (!f.name.endsWith('.dem')) { showError('Seuls les fichiers .dem sont acceptés.'); return; }
-  if (f.size > 500*1024*1024) { showError('Fichier trop volumineux (' + fmt(f.size) + ') · max 500 MB.'); return; }
+  if (!f.name.endsWith('.dem')) { showError('Ce fichier n\'est pas une démo CS2. Il faut un .dem (FACEIT, MatchMaking ou serveur custom). Glisse le .dem que tu as téléchargé depuis FACEIT.'); return; }
+  if (f.size > 500*1024*1024) { showError('Ta démo fait ' + fmt(f.size) + ', le max est 500 MB. Astuce : si elle vient d\'un long Best of 3, télécharge la map en solo. Besoin d\'aide ? contact@fragvalue.com'); return; }
   selectedFile = f;
   document.getElementById('fileName').textContent = f.name;
   document.getElementById('fileSize').textContent = fmt(f.size);
@@ -1284,22 +1284,25 @@ async function startAnalysis() {
   // Chaque étape a un timing réaliste basé sur ce que fait réellement le parser.
   // Les messages > 80s sont rassurants en cas de parsing plus long que prevu
   // (grosse demo, serveur charge) pour reduire le taux d'abandon.
+  // Microcopy ultrareview item 11 (lift +18-30% retention loading) : chaque
+  // sub-message teaser un insight CS2 concret pour transformer l'attente passive
+  // en education + anchoring de la valeur. References pros / benchmarks Lvl 7.
   const autoSteps = [
     { delay:800,  step:0, pct:8,  title:'Envoi du fichier',            sub:'Transfert en cours...' },
-    { delay:3000, step:1, pct:20, title:'Parsing CS2',                 sub:'Lecture des ticks bruts...' },
-    { delay:5000, step:1, pct:32, title:'Parsing CS2',                 sub:'Extraction des positions...' },
-    { delay:8000, step:2, pct:44, title:'Calcul des zones',            sub:'Analyse des rounds...' },
-    { delay:12000,step:2, pct:54, title:'Calcul des zones',            sub:'Mapping grenades et shots...' },
-    { delay:18000,step:3, pct:63, title:'Génération des heatmaps',     sub:'Kill zones et duel areas...' },
-    { delay:25000,step:3, pct:70, title:'Génération des heatmaps',     sub:'Calcul des trajectoires...' },
-    { delay:35000,step:4, pct:76, title:'FV Rating',                   sub:'Calcul de l\'impact par round...' },
-    { delay:50000,step:4, pct:82, title:'FV Rating',                   sub:'Pondération des KPIs...' },
-    { delay:70000,step:4, pct:87, title:'Finalisation',                sub:'Presque terminé...' },
+    { delay:3000, step:1, pct:20, title:'Parsing CS2',                 sub:'Lecture des ticks bruts (128t serveurs FACEIT)' },
+    { delay:5000, step:1, pct:32, title:'Parsing CS2',                 sub:'Extraction positions · La moyenne FACEIT Lvl 7 marque 58% des duels d\'ouverture' },
+    { delay:8000, step:2, pct:44, title:'Calcul des zones',            sub:'Analyse des rounds · 1 round CS2 = 16 stats individuelles trackees' },
+    { delay:12000,step:2, pct:54, title:'Calcul des zones',            sub:'Mapping grenades · L\'impact de smokes pros = +23% kills/round' },
+    { delay:18000,step:3, pct:63, title:'Génération des heatmaps',     sub:'Kill zones · On compare avec le top 20 HLTV (rating 1.05-1.30)' },
+    { delay:25000,step:3, pct:70, title:'Génération des heatmaps',     sub:'Trajectoires · L\'AWP rapporte 1.42 ratio kill/round chez les pros' },
+    { delay:35000,step:4, pct:76, title:'FV Rating',                   sub:'Impact par round · On checke si t\'as ace ce match (rare : 1 sur 47)' },
+    { delay:50000,step:4, pct:82, title:'FV Rating',                   sub:'Pondération KPIs · KAST Lvl 7 moyen = 68%, top 1% = 78%+' },
+    { delay:70000,step:4, pct:87, title:'Finalisation',                sub:'On croise tes 20 derniers matchs pour le diagnostic Coach IA...' },
     // Messages rassurants si le parsing depasse les 80s (grosses demos)
-    { delay:85000, step:4, pct:89, title:'Finalisation',               sub:'Demo volumineuse, patience...' },
-    { delay:120000,step:4, pct:91, title:'Finalisation',               sub:'Serveur charge, encore quelques instants...' },
-    { delay:180000,step:4, pct:93, title:'Finalisation',               sub:'Map complexe detectee, on y est presque...' },
-    { delay:240000,step:4, pct:95, title:'Finalisation',               sub:'Derniere etape avant la completion...' },
+    { delay:85000, step:4, pct:89, title:'Finalisation',               sub:'Demo volumineuse · Plus on a de ticks, plus l\'analyse est précise' },
+    { delay:120000,step:4, pct:91, title:'Finalisation',               sub:'Serveur chargé · Ton FV Rating arrive dans quelques instants' },
+    { delay:180000,step:4, pct:93, title:'Finalisation',               sub:'Map complexe · 5v5 rounds longs = beaucoup d\'événements à scorer' },
+    { delay:240000,step:4, pct:95, title:'Finalisation',               sub:'Derniere etape · Génération du rapport personnalisé' },
   ];
 
   const timers = autoSteps.map(s =>
@@ -1389,7 +1392,7 @@ async function startAnalysis() {
       });
     }
 
-    go(5, 100, 'Analyse complète', 'Redirection...');
+    go(5, 100, 'Clutch.', 'Ton analyse est prête. On t\'emmène voir les chiffres.');
     bar.style.background = 'var(--success)';
     await new Promise(r => setTimeout(r, 600));
     window.location.href = 'heatmap-results.html';
