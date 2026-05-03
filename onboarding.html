@@ -373,11 +373,20 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       window.location.href = 'account.html#settings';
       return;
     }
-    // Onboarding initial : si player avec FACEIT lie -> analyser directement
-    if (selectedMode === 'player' && verifiedFaceitNick) {
-      window.location.href = `index.html?analyse=${encodeURIComponent(verifiedFaceitNick)}`;
+    // Onboarding initial : redirige TOUJOURS vers demo.html pour pousser
+    // l'activation (1ere analyse uploadee). Avant : player+FACEIT -> index
+    // (landing publique = pas la page d'upload), player sans FACEIT ->
+    // dashboard (pas d'incitation a uploader). Maintenant : tout le monde
+    // arrive sur demo.html avec le param `welcome=1` qui declenche le
+    // welcome banner contextuel. Cf. ultrareview Onboarding P0.
+    if (selectedMode === 'player') {
+      const qs = verifiedFaceitNick
+        ? `?welcome=1&faceit=${encodeURIComponent(verifiedFaceitNick)}`
+        : '?welcome=1';
+      window.location.href = 'demo.html' + qs;
     } else {
-      window.location.href = 'dashboard.html';
+      // Mode scout : pas d'upload de demo, on l'envoie sur scout.html
+      window.location.href = 'scout.html?welcome=1';
     }
   }
 </script>

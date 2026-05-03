@@ -74,6 +74,14 @@ export default async function handler(req, res) {
       success_url: siteOrigin + '/account.html?checkout=success',
       cancel_url: siteOrigin + '/pricing.html',
       allow_promotion_codes: true,
+      // Locale FR : Stripe Checkout en francais (sinon defaut detection navigateur,
+      // mauvais pour les visiteurs FR sur navigateurs EN). cf. ultrareview CRO P0.
+      locale: 'fr',
+      // payment_method_types : laisser Stripe auto-detecter pour activer
+      // automatiquement Apple Pay, Google Pay, Link, SEPA, etc. selon dispo
+      // dans le Dashboard Stripe (Settings > Payments > Payment methods).
+      // Ne PAS hardcoder ['card'] sinon on bloque Apple/Google Pay = -20%
+      // conversion mobile.
       // Metadata pour le webhook : sans supabase_user_id, le checkout.session.completed
       // ne peut pas associer la subscription au bon user en DB.
       metadata: { plan: normalizedPlan },

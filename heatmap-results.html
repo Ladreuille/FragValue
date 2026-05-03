@@ -689,7 +689,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
             <path d="M12 2L3 6v6c0 5 4 9 9 10 5-1 9-5 9-10V6l-9-4z"/><path d="M9 12l2 2 4-4"/>
           </svg>
         </div>
-        <div class="up-card-title">Coach IA illimite</div>
+        <div class="up-card-title">Coach IA · 5 msg/jour</div>
         <div class="up-card-desc">Diagnostic personnalise avec 3 forces chiffrees, 3 faiblesses avec delta et plan d'action 7 jours.</div>
       </div>
       <div class="up-card">
@@ -996,6 +996,16 @@ window.addEventListener('load',()=>{
     assignPlayerColors();
     const target=demoData.meta?.targetPlayer;
     if(target) activePlayers.add(target);
+    // Tracking activation event (cf. ultrareview Onboarding P0 : 'Demo
+    // Viewed' = user a effectivement consulte les resultats de l'analyse,
+    // pas juste uploaded le fichier).
+    if (typeof window.fvTrack === 'function') {
+      window.fvTrack('Demo Viewed', {
+        map: (demoData.meta?.map || '?').toLowerCase().replace('de_', ''),
+        targetPlayer: target || null,
+        rounds: demoData.rounds?.length || 0,
+      });
+    }
     renderFvHeroCard(); renderMeta(); renderMatchStats(); renderPlayerList();
     loadMapImageThenDraw(); initRoundsBar();
     // Mettre à jour le FV Rating dans Supabase

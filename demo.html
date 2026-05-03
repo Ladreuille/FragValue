@@ -1363,6 +1363,18 @@ async function startAnalysis() {
     }
     await saveDemoAnalysis(data.data);
 
+    // Tracking activation event (cf. ultrareview Onboarding P0 : avant on
+    // n'avait aucun event sur le funnel signup -> 1ere demo). Ce 'Demo
+    // Analyzed' est l'evenement cle pour mesurer le activation rate.
+    if (typeof window.fvTrack === 'function') {
+      window.fvTrack('Demo Analyzed', {
+        map: (data.data?.meta?.map || '?').toLowerCase().replace('de_', ''),
+        durationSec: Math.round((data.data?.meta?.duration || 0)),
+        rounds: data.data?.rounds?.length || 0,
+        fvRating: data.data?.meta?.fvRating || null,
+      });
+    }
+
     go(5, 100, 'Analyse complète', 'Redirection...');
     bar.style.background = 'var(--success)';
     await new Promise(r => setTimeout(r, 600));

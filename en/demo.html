@@ -26,9 +26,9 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
   <meta name="theme-color" content="#0A0C10">
 <link rel="canonical" href="https://fragvalue.com/en/demo.html">
-<link rel="alternate" hreflang="fr" href="https://fragvalue.com/demo.html">
-<link rel="alternate" hreflang="en" href="https://fragvalue.com/en/demo.html">
-<link rel="alternate" hreflang="x-default" href="https://fragvalue.com/demo.html">
+  <link rel="alternate" hreflang="fr" href="https://fragvalue.com/demo.html">
+  <link rel="alternate" hreflang="en" href="https://fragvalue.com/en/demo.html">
+  <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/demo.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://fragvalue.com/en/demo.html">
 <meta property="og:title" content="Analyze a demo CS2 · FragValue">
@@ -1362,6 +1362,18 @@ async function startAnalysis() {
       }
     }
     await saveDemoAnalysis(data.data);
+
+    // Tracking activation event (cf. ultrareview Onboarding P0 : avant on
+    // n'avait aucun event sur le funnel signup -> 1ere demo). Ce 'Demo
+    // Analyzed' est l'evenement cle pour mesurer le activation rate.
+    if (typeof window.fvTrack === 'function') {
+      window.fvTrack('Demo Analyzed', {
+        map: (data.data?.meta?.map || '?').toLowerCase().replace('de_', ''),
+        durationSec: Math.round((data.data?.meta?.duration || 0)),
+        rounds: data.data?.rounds?.length || 0,
+        fvRating: data.data?.meta?.fvRating || null,
+      });
+    }
 
     go(5, 100, 'Analysis complete', 'Redirecting...');
     bar.style.background = 'var(--success)';

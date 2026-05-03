@@ -61,7 +61,7 @@ function welcome({ nickname }) {
       <tr><td style="height:8px"></td></tr>
       <tr><td style="padding:14px 16px;background:#080909;border:1px solid #1c1e1e;border-radius:10px;border-left:3px solid #b8ff57">
         <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">3. PASSE PRO POUR LES OUTILS COMPLETS</div>
-        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">2D Replay frame par frame, KPIs avancés, Coach IA illimité, Match Report tactique. <strong style="color:#e8eaea">Sans engagement</strong>, annulation en 1 clic.</div>
+        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">2D Replay frame par frame, KPIs avancés, Diagnostic IA illimité + Chat Coach IA 5 msg/jour, Match Report tactique. <strong style="color:#e8eaea">Sans engagement</strong>, annulation en 1 clic.</div>
       </td></tr>
     </table>
 
@@ -83,7 +83,7 @@ Ton compte FragValue est actif. Voici ce que tu peux faire :
    Pour le diagnostic IA personnalisé basé sur tes 20 derniers matchs.
 
 3. PASSE PRO (sans engagement)
-   2D Replay complet, KPIs avancés, Coach IA illimité, Match Report.
+   2D Replay complet, KPIs avancés, Diagnostic IA illimité + Chat Coach 5/jour, Match Report.
    Dès 9€/mois, annulation en 1 clic.
 
 Lance ta 1re analyse : ${BASE_URL}/demo.html?welcome=1
@@ -115,7 +115,7 @@ function checkoutSuccess({ nickname, plan, periodEndIso }) {
         <li>Analyses de demos illimitées</li>
         <li>2D Replay frame par frame</li>
         <li>KPIs avancés : entry, trade, flash eff, util damage</li>
-        <li>Coach IA illimité avec roadmap 7 jours personnalisée</li>
+        <li>Diagnostic IA illimité avec roadmap 7 jours personnalisée + Chat Coach 5 msg/jour (Pro) ou 30/jour (Elite)</li>
         <li>Match Report round par round</li>
         ${plan?.startsWith('elite') ? '<li><strong>Elite uniquement</strong> : team dashboard, anti-strat, prep veto, pro benchmarks</li>' : ''}
       </ul>

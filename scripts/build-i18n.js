@@ -162,22 +162,38 @@ function addI18nHeaders(html, pageName) {
   out = out.replace(/<html\s+lang=["']fr["']/i, '<html lang="en"');
 
   // 2. Canonical : /page.html → https://fragvalue.com/en/page.html
+  // BUG FIX (cf. ultrareview SEO P0) : ancien regex `[^"']+` exigeait >=1 char
+  // apres le slash, donc le canonical racine `https://fragvalue.com/` (index)
+  // n'etait JAMAIS reecrit -> Google fusionnait /en/ avec / et n'indexait pas
+  // la home anglaise. Maintenant `[^"']*` accepte chaine vide et on traite le
+  // cas index special en pointant vers /en/.
   out = out.replace(
-    /<link\s+rel=["']canonical["']\s+href=["']https:\/\/fragvalue\.com\/([^"']+)["']/i,
-    `<link rel="canonical" href="https://fragvalue.com/en/$1"`
+    /<link\s+rel=["']canonical["']\s+href=["']https:\/\/fragvalue\.com\/([^"']*)["']/i,
+    (match, path) => {
+      // Cas root ("") -> /en/ (home EN). Cas page.html -> /en/page.html.
+      const enPath = path === '' ? 'en/' : `en/${path}`;
+      return `<link rel="canonical" href="https://fragvalue.com/${enPath}"`;
+    }
   );
 
   // 3. Inject hreflang juste apres la canonical (si pas deja la)
-  if (!/hreflang=["']en["']/i.test(out)) {
-    const hreflangBlock = `
-  <link rel="alternate" hreflang="fr" href="https://fragvalue.com/${pageName}">
-  <link rel="alternate" hreflang="en" href="https://fragvalue.com/en/${pageName}">
-  <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/${pageName}">`;
-    out = out.replace(
-      /(<link\s+rel=["']canonical["'][^>]*>)/i,
-      `$1${hreflangBlock}`
-    );
-  }
+  // FIX duplicate hreflang : on cleanup d'abord les hreflang existants pour
+  // eviter les blocs dupliques (cf. ultrareview SEO P1).
+  out = out.replace(
+    /\s*<link\s+rel=["']alternate["']\s+hreflang=["'][^"']+["'][^>]*>/gi,
+    ''
+  );
+  // Index page : pageName = 'index.html' mais on veut hreflang vers '/' (root)
+  const fr_url = pageName === 'index.html' ? 'https://fragvalue.com/' : `https://fragvalue.com/${pageName}`;
+  const en_url = pageName === 'index.html' ? 'https://fragvalue.com/en/' : `https://fragvalue.com/en/${pageName}`;
+  const hreflangBlock = `
+  <link rel="alternate" hreflang="fr" href="${fr_url}">
+  <link rel="alternate" hreflang="en" href="${en_url}">
+  <link rel="alternate" hreflang="x-default" href="${fr_url}">`;
+  out = out.replace(
+    /(<link\s+rel=["']canonical["'][^>]*>)/i,
+    `$1${hreflangBlock}`
+  );
 
   // 4. og:locale fr_FR → en_US
   if (/<meta\s+property=["']og:locale["']/i.test(out)) {
