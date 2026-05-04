@@ -624,6 +624,31 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
 }
 .welcome-toast-close:hover{color:var(--text)}
 
+/* UPLOAD MODE TABS (upload .dem vs URL FACEIT) */
+.upload-mode-tab{
+  flex:1;background:var(--card);border:1px solid var(--border);
+  color:var(--text2);font-family:var(--mono);font-size:11px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+  padding:10px 14px;border-radius:var(--radius);transition:all .15s;
+  display:inline-flex;align-items:center;justify-content:center
+}
+.upload-mode-tab:hover{border-color:var(--border2);color:var(--text)}
+.upload-mode-tab.active{
+  background:rgba(184,255,87,.06);border-color:rgba(184,255,87,.3);
+  color:var(--accent)
+}
+.upload-mode-tab.active svg{color:var(--accent)}
+@media(max-width:640px){
+  .upload-mode-tab{font-size:10px;padding:9px 10px;min-height:44px}
+}
+
+/* URL ZONE (mode 2) - micro-tweaks pour finaliser le visuel */
+.url-zone:focus-within{border-color:rgba(184,255,87,.5);background:rgba(184,255,87,.02)}
+#faceitUrlInput:focus{border-color:var(--accent)}
+#faceitUrlInput::placeholder{color:var(--text3);font-size:11.5px}
+#faceitUrlMsg.error{color:var(--danger)}
+#faceitUrlMsg.success{color:var(--success)}
+
 /* UPLOAD ZONE */
 #fileInput{display:none}
 .upload-zone{
@@ -1012,6 +1037,21 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
 
     <label for="fileInput" class="visually-hidden" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Choisir un fichier .dem FACEIT (max 500 MB)</label>
     <input type="file" id="fileInput" name="fileInput" accept=".dem" aria-label="Choisir un fichier .dem FACEIT (max 500 MB)"/>
+
+    <!-- Tabs : 2 modes pour soumettre un match - upload .dem OU URL FACEIT -->
+    <div class="upload-mode-tabs" role="tablist" aria-label="Mode de soumission de demo" style="display:flex;gap:6px;margin-bottom:14px">
+      <button type="button" id="tabUpload" role="tab" aria-selected="true" class="upload-mode-tab active" onclick="switchUploadMode('upload')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload .dem
+      </button>
+      <button type="button" id="tabUrl" role="tab" aria-selected="false" class="upload-mode-tab" onclick="switchUploadMode('url')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        URL match FACEIT
+        <span style="font-size:9px;background:var(--accent);color:#000;padding:1px 6px;border-radius:8px;margin-left:6px;font-weight:700;letter-spacing:.04em">NEW</span>
+      </button>
+    </div>
+
+    <!-- Mode 1 : Upload .dem (zone existante) -->
     <div class="upload-zone" id="uploadZone">
       <div class="upload-icon">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
@@ -1026,6 +1066,27 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
         Choisir un fichier
       </button>
       <span class="upload-shortcut">Raccourci <kbd id="kbdShortcut">Ctrl U</kbd> pour ouvrir le selecteur</span>
+    </div>
+
+    <!-- Mode 2 : URL FACEIT (auto-fetch via Downloads API serveur) -->
+    <div class="url-zone" id="urlZone" style="display:none;border:1px dashed var(--border2);border-radius:var(--radius2);padding:24px 22px;background:var(--bg);animation:fadeUp .4s ease forwards">
+      <div class="upload-icon" style="background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.15)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+      </div>
+      <div class="upload-title" style="margin-bottom:8px">Colle l'URL de ton match FACEIT</div>
+      <div class="upload-sub" style="margin-bottom:14px">On recupere la demo automatiquement &middot; <strong>Pas de download manuel</strong></div>
+      <input type="url" id="faceitUrlInput" autocomplete="off" placeholder="https://www.faceit.com/fr/cs2/room/1-xxxxxxx-..." style="width:100%;background:var(--card);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color .15s;margin-bottom:12px" aria-label="URL match FACEIT">
+      <button type="button" class="upload-btn" id="faceitUrlSubmit" onclick="submitFaceitUrl()" style="margin-top:0">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:6px"><polyline points="20 6 9 17 4 12"/></svg>
+        Analyser ce match
+      </button>
+      <div id="faceitUrlMsg" role="status" aria-live="polite" style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;display:none"></div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:14px;line-height:1.6">
+        Le match doit etre <strong>termine</strong> et avoir moins de 4 semaines (les demos FACEIT sont purgees apres ~30j).
+      </div>
     </div>
 
     <div class="file-bar" id="fileSelected">
@@ -1169,6 +1230,119 @@ function removeFile() {
 
 function fmt(b) {
   return b >= 1024*1024 ? (b/1024/1024).toFixed(1)+' MB' : (b/1024).toFixed(0)+' KB';
+}
+
+// === Switch entre les 2 modes : upload .dem (defaut) vs URL FACEIT ====
+function switchUploadMode(mode) {
+  const tabUpload = document.getElementById('tabUpload');
+  const tabUrl    = document.getElementById('tabUrl');
+  const zoneFile  = document.getElementById('uploadZone');
+  const zoneUrl   = document.getElementById('urlZone');
+  const fileBar   = document.getElementById('fileSelected');
+  if (mode === 'url') {
+    tabUpload.classList.remove('active'); tabUpload.setAttribute('aria-selected', 'false');
+    tabUrl.classList.add('active');       tabUrl.setAttribute('aria-selected', 'true');
+    zoneFile.style.display = 'none';
+    zoneUrl.style.display  = 'block';
+    if (fileBar) fileBar.style.display = 'none';
+    setTimeout(() => { document.getElementById('faceitUrlInput')?.focus(); }, 50);
+    if (typeof window.fvTrack === 'function') window.fvTrack('Upload Mode Switch', { mode: 'url' });
+  } else {
+    tabUrl.classList.remove('active');    tabUrl.setAttribute('aria-selected', 'false');
+    tabUpload.classList.add('active');    tabUpload.setAttribute('aria-selected', 'true');
+    zoneFile.style.display = '';
+    zoneUrl.style.display  = 'none';
+    if (fileBar && selectedFile) fileBar.style.display = '';
+    if (typeof window.fvTrack === 'function') window.fvTrack('Upload Mode Switch', { mode: 'upload' });
+  }
+}
+
+// === Soumet une URL match FACEIT au backend (Downloads API) ============
+async function submitFaceitUrl() {
+  const input  = document.getElementById('faceitUrlInput');
+  const btn    = document.getElementById('faceitUrlSubmit');
+  const msg    = document.getElementById('faceitUrlMsg');
+  const value  = (input.value || '').trim();
+  msg.style.display = 'none';
+  msg.classList.remove('error', 'success');
+
+  if (!value) {
+    msg.textContent = 'Colle l\'URL de ton match FACEIT (ou directement le match_id 1-xxx-...).';
+    msg.classList.add('error'); msg.style.display = 'block';
+    input.focus();
+    return;
+  }
+
+  // Validation client basique : URL FACEIT OU match_id format 1-uuid
+  const isMatchUrl = /faceit\.com\/[a-z]{2}\/cs2?\/room\/1-[a-f0-9-]{30,}/i.test(value);
+  const isMatchId  = /^1-[a-f0-9-]{30,}$/i.test(value);
+  if (!isMatchUrl && !isMatchId) {
+    msg.textContent = 'Format invalide. Exemples acceptes : https://www.faceit.com/fr/cs2/room/1-xxxxxx... ou 1-xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';
+    msg.classList.add('error'); msg.style.display = 'block';
+    input.focus();
+    return;
+  }
+
+  // Auth check
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) {
+    msg.textContent = 'Connecte-toi pour utiliser cette feature. Redirection en cours...';
+    msg.classList.add('error'); msg.style.display = 'block';
+    setTimeout(() => { window.location.href = 'login.html?redirect=/demo.html'; }, 1500);
+    return;
+  }
+
+  btn.disabled = true;
+  const originalLabel = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner-inline" aria-hidden="true" style="display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-right:6px"></span>Traitement...';
+  msg.textContent = 'On contacte FACEIT pour recuperer ta demo... (5-15s)';
+  msg.classList.add('success'); msg.style.display = 'block';
+
+  if (typeof window.fvTrack === 'function') window.fvTrack('FACEIT URL Submit', { input_type: isMatchUrl ? 'url' : 'id' });
+
+  try {
+    const res = await fetch('/api/parse-from-faceit-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+      },
+      body: JSON.stringify({ faceitInput: value }),
+    });
+    const d = await res.json();
+
+    if (!res.ok) {
+      // Mapping codes d'erreur backend -> messages user-friendly
+      const errMap = {
+        no_scope: 'Service temporairement indisponible. Contacte le support.',
+        demo_not_found: 'Demo introuvable. Les demos FACEIT sont dispos ~2-4 semaines apres le match.',
+        unauthorized: 'Probleme d\'authentification cote FACEIT. Reessaie dans quelques minutes.',
+        no_demos: 'Pas de demo disponible pour ce match (encore en cours ?).',
+        quota_exceeded: 'Tu as atteint ton quota d\'analyses. Passe Pro pour des analyses sans limite.',
+      };
+      msg.textContent = errMap[d.code] || d.error || 'Erreur inconnue. Reessaie.';
+      msg.classList.remove('success'); msg.classList.add('error');
+      btn.disabled = false; btn.innerHTML = originalLabel;
+      if (typeof window.fvTrack === 'function') window.fvTrack('FACEIT URL Error', { code: d.code, status: res.status });
+      return;
+    }
+
+    // Succes : redirige vers la page de resultats apres parsing.
+    msg.textContent = 'Demo recuperee. Redirection vers ton analyse...';
+    msg.classList.remove('error'); msg.classList.add('success');
+    if (typeof window.fvTrack === 'function') window.fvTrack('FACEIT URL Success', { match_id: d.matchId });
+
+    // Le parser Railway tourne en async (~30-90s). On redirige vers
+    // heatmap-results qui affichera "parsing in progress" + poll status.
+    setTimeout(() => {
+      window.location.href = '/heatmap-results.html?match=' + encodeURIComponent(d.matchId);
+    }, 1200);
+  } catch (err) {
+    console.error('[faceit-url-submit] network error:', err);
+    msg.textContent = 'Erreur reseau. Verifie ta connexion et reessaie.';
+    msg.classList.remove('success'); msg.classList.add('error');
+    btn.disabled = false; btn.innerHTML = originalLabel;
+  }
 }
 
 async function checkPlanGating() {
