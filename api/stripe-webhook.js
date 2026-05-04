@@ -222,6 +222,31 @@ export default async function handler(req, res) {
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
 
+        // Update profile.plan = 'pro' ou 'elite' selon planMeta (source de
+        // verite single pour les pages frontend qui lisent profiles.plan).
+        const profilePlanCheckout = planMeta.startsWith('elite') || planMeta.startsWith('team') ? 'elite' : 'pro';
+        await sb.from('profiles')
+          .update({ plan: profilePlanCheckout, updated_at: new Date().toISOString() })
+          .eq('id', userId);
+
+        // DISCORD SYNC : si user a deja lie son Discord avant le 1er paiement,
+        // assign auto le role Pro/Elite. Sinon le sync se fera au moment du
+        // /api/discord-link-callback. Best-effort, ne fail pas le webhook.
+        try {
+          const { data: link } = await sb
+            .from('discord_links')
+            .select('discord_id')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (link?.discord_id) {
+            const { syncUserPlan } = await import('./_lib/discord.js');
+            await syncUserPlan(link.discord_id, profilePlanCheckout);
+            console.log(`[Stripe] Discord role assigned for new subscriber ${userId} -> ${profilePlanCheckout}`);
+          }
+        } catch (discordErr) {
+          console.warn('[Stripe] Discord role assign on checkout failed (non-blocking):', discordErr?.message);
+        }
+
         console.log(`[Stripe] Subscription created for user ${userId}: ${subscription.id}`);
 
         // Email de confirmation paiement (best-effort, n'echoue pas le webhook)
@@ -272,11 +297,12 @@ export default async function handler(req, res) {
           break;
         }
 
+        const planMeta2 = sub.metadata?.plan || 'pro_monthly';
         await sb.from('subscriptions').upsert({
           user_id: userId,
           stripe_subscription_id: sub.id,
           stripe_customer_id: sub.customer,
-          plan: sub.metadata?.plan || 'pro_monthly',
+          plan: planMeta2,
           status: sub.status,
           current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
           current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
@@ -287,17 +313,73 @@ export default async function handler(req, res) {
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
 
+        // Update profiles.plan pour qu'il reste source de verite single
+        // (utilise par les pages /pricing.html, /account.html, etc.).
+        const profilePlan = sub.status === 'active' || sub.status === 'trialing'
+          ? (planMeta2.startsWith('elite') || planMeta2.startsWith('team') ? 'elite' : 'pro')
+          : 'free';
+        await sb.from('profiles')
+          .update({ plan: profilePlan, updated_at: new Date().toISOString() })
+          .eq('id', userId);
+
+        // DISCORD SYNC : si user a lie son Discord, on sync le role auto.
+        // Best-effort : ne fail pas le webhook si Discord plante.
+        try {
+          const { data: link } = await sb
+            .from('discord_links')
+            .select('discord_id')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (link?.discord_id) {
+            const { syncUserPlan } = await import('./_lib/discord.js');
+            await syncUserPlan(link.discord_id, profilePlan);
+            console.log(`[Stripe] Discord role synced for user ${userId} (plan ${profilePlan})`);
+          }
+        } catch (discordErr) {
+          console.warn('[Stripe] Discord role sync failed (non-blocking):', discordErr?.message);
+        }
+
         console.log(`[Stripe] Subscription updated: ${sub.id} -> ${sub.status}${sub.cancel_at_period_end ? ' (cancel scheduled)' : ''}`);
         break;
       }
 
       case 'customer.subscription.deleted': {
         const sub = event.data.object;
+        const { data: existingDel } = await sb.from('subscriptions')
+          .select('user_id')
+          .eq('stripe_subscription_id', sub.id)
+          .single();
+        const userIdDel = existingDel?.user_id;
+
         await sb.from('subscriptions').update({
           status: 'canceled',
           cancel_at_period_end: false, // deja effective, plus de "scheduled"
           updated_at: new Date().toISOString(),
         }).eq('stripe_subscription_id', sub.id);
+
+        // Downgrade profile.plan -> free
+        if (userIdDel) {
+          await sb.from('profiles')
+            .update({ plan: 'free', updated_at: new Date().toISOString() })
+            .eq('id', userIdDel);
+
+          // DISCORD SYNC : retire les roles Pro/Elite, applique Free.
+          // Best-effort.
+          try {
+            const { data: link } = await sb
+              .from('discord_links')
+              .select('discord_id')
+              .eq('user_id', userIdDel)
+              .maybeSingle();
+            if (link?.discord_id) {
+              const { syncUserPlan } = await import('./_lib/discord.js');
+              await syncUserPlan(link.discord_id, 'free');
+              console.log(`[Stripe] Discord role downgraded to Free for user ${userIdDel}`);
+            }
+          } catch (discordErr) {
+            console.warn('[Stripe] Discord role downgrade failed (non-blocking):', discordErr?.message);
+          }
+        }
 
         console.log(`[Stripe] Subscription canceled: ${sub.id}`);
         break;
