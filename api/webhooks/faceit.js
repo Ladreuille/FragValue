@@ -17,15 +17,16 @@
 //      un worker separe qui pull les events non-processed
 //
 // Securite :
-//   - bodyParser: false pour avoir le raw body (HMAC verifie le raw)
-//   - 401 si signature invalide
+//   - bodyParser: false pour avoir le raw body (utile en mode HMAC fallback)
+//   - 401 si auth invalide (header static OU signature HMAC selon mode FACEIT)
 //   - 405 si pas POST
 //   - Aucune lecture client de la table (RLS deny-all)
 
 import { createClient } from '@supabase/supabase-js';
 import { validateFaceitWebhook } from '../_lib/faceit-webhook-validator.js';
 
-// Vercel ne parse pas le body : on a besoin du raw pour HMAC verification.
+// Vercel ne parse pas le body : on a besoin du raw pour le fallback HMAC.
+// Le mode static-header (defaut FACEIT) n'a pas besoin du raw body.
 export const config = { api: { bodyParser: false } };
 
 async function readRawBody(readable) {
@@ -53,6 +54,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: true,
       ready: !!process.env.FACEIT_WEBHOOK_SECRET,
+      auth_header: (process.env.FACEIT_WEBHOOK_AUTH_HEADER || 'X-FACEIT-Token').toLowerCase(),
       hint: process.env.FACEIT_WEBHOOK_SECRET ? null : 'FACEIT_WEBHOOK_SECRET not set',
     });
   }

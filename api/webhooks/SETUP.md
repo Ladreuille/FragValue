@@ -1,8 +1,7 @@
 # FACEIT Webhooks · Setup checklist
 
 Ce fichier documente comment activer le webhook FACEIT cote FragValue
-une fois que les credentials Downloads API arrivent (mail de suivi
-post-approbation, avril 2026).
+maintenant que les credentials Downloads API sont disponibles (mai 2026).
 
 ## URL publique du webhook
 
@@ -11,7 +10,7 @@ POST https://fragvalue.com/api/webhooks/faceit
 ```
 
 Le endpoint :
-- Valide la signature HMAC-SHA256 (fail-closed si secret absent)
+- Valide l'auth (mode static-header par defaut, fallback HMAC-SHA256 si applicable)
 - Idempotent par `event_id` (FACEIT peut retry sans creer de doublons)
 - Repond 200 OK rapidement (FACEIT retry sur 5xx)
 - Health check via `GET /api/webhooks/faceit` -> `{ ok: true, ready: bool }`
@@ -19,75 +18,95 @@ Le endpoint :
 ## Variables d'environnement Vercel
 
 A ajouter dans Vercel > Settings > Environment Variables (Production +
-Preview) une fois les credentials recus :
+Preview) :
 
-| Var                          | Description                                                   |
-|------------------------------|---------------------------------------------------------------|
-| `FACEIT_WEBHOOK_SECRET`      | Secret partage avec FACEIT pour signer les webhooks (HMAC).   |
-| `FACEIT_DOWNLOADS_CLIENT_ID` | Client ID pour la Downloads API (a venir).                    |
-| `FACEIT_DOWNLOADS_SECRET`    | Secret pour la Downloads API (a venir).                       |
+| Var                          | Description                                                              |
+|------------------------------|--------------------------------------------------------------------------|
+| `FACEIT_API_KEY`             | Server-side API Key (Data API + Downloads API). Source de verite.        |
+| `FACEIT_WEBHOOK_SECRET`      | Valeur du header static que FACEIT enverra a chaque webhook (mode auth defaut FACEIT). Generer avec `openssl rand -hex 32`. |
+| `FACEIT_WEBHOOK_AUTH_HEADER` | (Optionnel, default `X-FACEIT-Token`) Nom du header d'auth. Doit matcher exactement ce qui est configure dans App Studio. |
 
-`FACEIT_API_KEY` (existant, Data API publique) reste utilise par
-`api/scout.js`, `api/prep-veto.js`, etc.
+`FACEIT_CLIENT_ID` + `FACEIT_CLIENT_SECRET` (existant) restent utilises
+par le OAuth login user (`api/faceit-auth.js`) — sans rapport avec la
+Downloads API.
 
-## Configuration cote FACEIT
+## Configuration cote FACEIT App Studio
 
-Quand le panel webhook est dispo (cf. https://docs.faceit.com/docs/webhooks/) :
-
-1. **Webhook URL** : `https://fragvalue.com/api/webhooks/faceit`
-2. **Events a souscrire** :
-   - `DEMO_READY`              : critique pour le flow auto-analyse
-   - `MATCH_OBJECT_CREATED`    : pour Phase 4 (pre-match prep, optionnel)
-   - `MATCH_FINISHED`          : pour notifications post-match
-3. **Signature header** : auto-detecte par le validator
-   (X-FACEIT-Signature, X-Hub-Signature-256, X-Signature-256, X-Signature)
-4. **Algorithme** : HMAC-SHA256 (par defaut, ajuster si FACEIT impose autre)
+1. Aller sur https://developers.faceit.com/ -> ton app FragValue -> onglet **WEBHOOKS**
+2. **+ Add Webhook**
+3. **REST endpoint URL** : `https://fragvalue.com/api/webhooks/faceit`
+4. **Subscription Type** : `User` (events des users connectes)
+5. **Events** :
+   - `match_demo_ready`        : critique pour le flow auto-analyse
+   - `match_status_finished`   : pour notifications post-match (optionnel)
+6. **Authentication** :
+   - Type : `Header Name + Header Value`
+   - Header Name : `X-FACEIT-Token` (idem `FACEIT_WEBHOOK_AUTH_HEADER`)
+   - Header Value : valeur generee avec `openssl rand -hex 32` (mettre dans `FACEIT_WEBHOOK_SECRET`)
+7. **Save**
 
 ## Test rapide post-config
 
 1. Healthcheck :
    ```
    curl https://fragvalue.com/api/webhooks/faceit
-   -> { "ok": true, "ready": true }
+   -> { "ok": true, "ready": true, "auth_header": "x-faceit-token" }
    ```
 
-2. Test webhook signe (en local avec le secret pour debug) :
+2. Test webhook static-header (simule ce que FACEIT envoie) :
    ```bash
-   BODY='{"event":"DEMO_READY","event_id":"test-123","match_id":"1-abc"}'
+   curl -X POST https://fragvalue.com/api/webhooks/faceit \
+        -H "Content-Type: application/json" \
+        -H "X-FACEIT-Token: $FACEIT_WEBHOOK_SECRET" \
+        -d '{"event":"match_demo_ready","event_id":"test-123","payload":{"match_id":"1-abc"}}'
+   -> { "ok": true, "eventType": "match_demo_ready", "eventId": "test-123" }
+   ```
+
+3. Test fallback HMAC (si FACEIT change de mode auth a l'avenir) :
+   ```bash
+   BODY='{"event":"match_demo_ready","event_id":"test-456","payload":{"match_id":"1-def"}}'
    SIG=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "$FACEIT_WEBHOOK_SECRET" | sed 's/^.* //')
    curl -X POST https://fragvalue.com/api/webhooks/faceit \
         -H "Content-Type: application/json" \
         -H "X-FACEIT-Signature: sha256=$SIG" \
         -d "$BODY"
-   -> { "ok": true, "eventType": "DEMO_READY", "eventId": "test-123" }
    ```
 
-3. Verifier le log dans Supabase :
+4. Verifier le log dans Supabase :
    ```sql
    SELECT event_type, match_id, signature_valid, received_at
    FROM faceit_webhook_events
    ORDER BY received_at DESC LIMIT 5;
    ```
 
-## Phase suivante (Phase 2 : URL-based demo analysis)
+## Format demos : `.dem.zst` (zstandard) — pas `.gz`
 
-Une fois les credentials Downloads API recus :
-- Creer `api/_lib/faceit-downloads.js` : client API avec auth
-- Creer `api/parse-from-faceit-url.js` : endpoint qui prend une URL
-  match -> appelle Downloads API -> download .dem.gz -> parse
-- Ajouter le formulaire URL sur `demo.html`
-- Worker async qui consomme `faceit_webhook_events` non-processed pour
-  les events DEMO_READY (auto-analyse pour les users avec roster lie)
+⚠️ La doc FACEIT (https://docs.faceit.com/getting-started/Guides/download-api/)
+mentionne `.dem.gz` mais en pratique en mai 2026, FACEIT delivre les demos
+au format `.dem.zst` (zstandard, ~80-85% compression). Implications :
 
-## Schema DB (deja applique avril 2026)
+- Decompression Node : besoin du package `simple-zstd` ou `@bokuweb/zstd-wasm`
+- Decompression CLI : `brew install zstd && zstd -d demo.dem.zst -o demo.dem`
+- Decompression Python (parser Railway) : `pip install zstandard`
+
+## Phase 2 : URL-based demo analysis (en cours)
+
+Avec les credentials Downloads API actifs :
+- ✅ `api/_lib/faceit-downloads.js` : client API + cache + decompression
+- ✅ `api/parse-from-faceit-url.js` : endpoint user-facing
+- ✅ Form URL match sur `demo.html`
+- ✅ Worker async `api/cron/faceit-process-events.js` qui consomme les events
+  `match_demo_ready` non-processed (auto-analyse pour les users avec roster lie)
+
+## Schema DB (applique avril 2026)
 
 Migration : `faceit_webhook_events`
 - `id`              BIGSERIAL PK
 - `event_id`        TEXT UNIQUE          (idempotency)
-- `event_type`      TEXT NOT NULL        (DEMO_READY | MATCH_* | other)
+- `event_type`      TEXT NOT NULL        (match_demo_ready | match_status_* | other)
 - `match_id`        TEXT                 (extrait du payload)
 - `payload`         JSONB NOT NULL       (raw, pour debug + reprocessing)
-- `signature_valid` BOOLEAN              (resultat HMAC verify)
+- `signature_valid` BOOLEAN              (resultat auth verify)
 - `processed_at`    TIMESTAMPTZ          (NULL = pas encore traite)
 - `error_message`   TEXT                 (si processing fail)
 - `retry_count`     INT DEFAULT 0
@@ -95,3 +114,25 @@ Migration : `faceit_webhook_events`
 - `created_at`      TIMESTAMPTZ
 
 RLS : deny-all clients. Lecture/ecriture via service_role uniquement.
+
+## Troubleshooting
+
+### `403 err_f0 "no valid scope provided"` sur `/download/v2/demos/download`
+
+Le scope `downloads_api` n'est pas active sur ta `FACEIT_API_KEY`. Cas
+typique : tu as regenere la key apres l'octroi initial du scope. Solution :
+demander a Adam Harb (ad.harb@ext.efg.gg) de re-appliquer le scope a la
+nouvelle key.
+
+### `401 unauthorized` sur les webhooks entrants
+
+Soit `FACEIT_WEBHOOK_SECRET` n'est pas configure (fail-closed), soit le
+header envoye par FACEIT ne matche pas `FACEIT_WEBHOOK_AUTH_HEADER`. Verifier
+dans App Studio que le nom du header configure cote FACEIT est identique a
+la valeur de `FACEIT_WEBHOOK_AUTH_HEADER` cote Vercel.
+
+### Demo introuvable / `404` sur `resource_url`
+
+Les demos FACEIT sont disponibles ~2-4 semaines apres le match. Apres ce
+delai elles sont purgees. Le webhook `match_demo_ready` permet d'eviter ce
+probleme (declencher l'analyse des que la demo est dispo).
