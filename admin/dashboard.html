@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<!-- Google tag (gtag.js) -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', { 'ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied','analytics_storage':'denied','functionality_storage':'granted','security_storage':'granted','wait_for_update':500,'region':['EEA','CH','GB'] });
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,follow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin · Dashboard · FragValue</title>
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;
+  --border:#1c1e1e;--border2:#252727;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+  --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;--blue:#5865F2;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  --r:6px;--r2:12px
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;padding:24px 16px}
+.wrap{max-width:1180px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+h1{font-family:var(--display);font-size:30px;letter-spacing:.02em}
+.refresh-info{font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--card);color:var(--text2);padding:8px 14px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--border2);cursor:pointer;transition:all .15s;text-decoration:none}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08);color:#000}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px;position:relative;overflow:hidden}
+.kpi-label{font-size:9.5px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+.kpi-value{font-family:var(--display);font-size:36px;color:var(--text);line-height:1;letter-spacing:.02em}
+.kpi-sub{font-size:10px;color:var(--text2);margin-top:6px;line-height:1.5}
+.kpi.accent .kpi-value{color:var(--accent)}
+.kpi.gold .kpi-value{color:var(--gold)}
+.kpi.blue .kpi-value{color:var(--blue)}
+.kpi.danger .kpi-value{color:var(--danger)}
+
+.section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px 22px;margin-bottom:18px}
+.section-title{font-family:var(--display);font-size:18px;color:var(--text);margin-bottom:12px;letter-spacing:.02em;display:flex;align-items:center;justify-content:space-between}
+.section-title-meta{font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;font-weight:400}
+
+.row-grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+
+.bar{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:11.5px;color:var(--text2);border-bottom:1px solid var(--border)}
+.bar:last-child{border-bottom:none}
+.bar .label{flex:1;color:var(--text)}
+.bar .v{font-family:var(--display);color:var(--text);font-size:14px}
+.bar .pct{font-size:9.5px;color:var(--text3)}
+
+.list-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:9px 0;font-size:11px;color:var(--text2);border-bottom:1px solid var(--border);align-items:start}
+.list-row:last-child{border-bottom:none}
+.list-row .meta{font-size:9.5px;color:var(--text3);letter-spacing:.04em}
+.list-row .v{color:var(--text);font-weight:700}
+
+.empty{font-size:11px;color:var(--text3);font-style:italic;padding:8px 0}
+.err{color:var(--danger);background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.3);padding:14px 18px;border-radius:var(--r);font-size:12px}
+.spinner{display:inline-block;width:11px;height:11px;border:2px solid rgba(184,255,87,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:640px){
+  body{padding:16px 10px}
+  h1{font-size:22px}
+  .kpi-value{font-size:28px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Dashboard FragValue</h1>
+      <div class="refresh-info" id="refreshInfo">Chargement...</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="loadDashboard()">Refresh</button>
+      <a href="/admin/broadcast.html" class="btn">Broadcast</a>
+      <a href="/admin/feedback.html" class="btn">Feedback</a>
+      <a href="/admin/waitlist.html" class="btn">Waitlist</a>
+    </div>
+  </header>
+
+  <div id="errMsg" class="err" style="display:none"></div>
+
+  <!-- KPIs principaux -->
+  <div class="kpi-grid">
+    <div class="kpi accent">
+      <div class="kpi-label">MRR</div>
+      <div class="kpi-value" id="kMrr">--</div>
+      <div class="kpi-sub" id="kMrrSub">EUR / mois</div>
+    </div>
+    <div class="kpi gold">
+      <div class="kpi-label">ARR</div>
+      <div class="kpi-value" id="kArr">--</div>
+      <div class="kpi-sub">EUR / an estime</div>
+    </div>
+    <div class="kpi accent">
+      <div class="kpi-label">Active subs</div>
+      <div class="kpi-value" id="kActive">--</div>
+      <div class="kpi-sub" id="kActiveSub">Pro + Elite + trialing</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Total users</div>
+      <div class="kpi-value" id="kUsers">--</div>
+      <div class="kpi-sub" id="kUsersNew">--</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Conversion</div>
+      <div class="kpi-value" id="kConv">--</div>
+      <div class="kpi-sub">Free -&gt; Paid</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">Discord linked</div>
+      <div class="kpi-value" id="kDiscord">--</div>
+      <div class="kpi-sub" id="kDiscordRate">--</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Demos analyzed</div>
+      <div class="kpi-value" id="kDemos">--</div>
+      <div class="kpi-sub" id="kDemosSub">--</div>
+    </div>
+    <div class="kpi danger">
+      <div class="kpi-label">Errors 24h</div>
+      <div class="kpi-value" id="kErrors">--</div>
+      <div class="kpi-sub">Server logs</div>
+    </div>
+  </div>
+
+  <!-- Sections detaillees -->
+  <div class="row-grid">
+    <div class="section">
+      <div class="section-title">Users <span class="section-title-meta" id="usersMeta"></span></div>
+      <div id="userTiers"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Subscriptions</div>
+      <div id="subsBreakdown"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Product engagement</div>
+      <div id="productStats"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Email lifecycle</div>
+      <div id="emailStats"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Recent broadcasts</div>
+    <div id="broadcasts"></div>
+  </div>
+
+  <div class="row-grid">
+    <div class="section">
+      <div class="section-title">Recent feedback</div>
+      <div id="feedback"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Feature interests <span class="section-title-meta">votes</span></div>
+      <div id="featureInterests"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+
+function fmt(n) { return (n == null) ? '--' : new Intl.NumberFormat('fr-FR').format(n); }
+function fmtEur(n) { return (n == null) ? '--' : new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n) + ' €'; }
+function fmtPct(n) { return (n == null) ? '--' : (n.toFixed(1) + ' %'); }
+function fmtDate(iso) {
+  if (!iso) return '--';
+  try { const d = new Date(iso); return d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }); }
+  catch (_) { return iso; }
+}
+function showErr(msg) {
+  const el = document.getElementById('errMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function renderBar(label, value, max, total) {
+  const pct = total > 0 ? Math.round(value * 100 / total) : 0;
+  return '<div class="bar"><span class="label">' + label + '</span>'
+       + '<span class="pct">' + pct + '%</span>'
+       + '<span class="v">' + fmt(value) + '</span></div>';
+}
+
+function renderListRow(label, meta, value) {
+  return '<div class="list-row"><div><div class="v">' + label + '</div>'
+       + (meta ? '<div class="meta">' + meta + '</div>' : '')
+       + '</div><div class="v">' + value + '</div></div>';
+}
+
+async function loadDashboard() {
+  document.getElementById('refreshInfo').innerHTML = '<span class="spinner"></span> Chargement...';
+  document.getElementById('errMsg').style.display = 'none';
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      showErr('Non connecte. Logge-toi avec un compte admin sur fragvalue.com puis reviens.');
+      document.getElementById('refreshInfo').textContent = 'Auth requise';
+      return;
+    }
+
+    const res = await fetch('/api/admin-dashboard', {
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    const d = await res.json();
+
+    if (!res.ok) {
+      showErr((d.error || 'Erreur inconnue') + ' (status ' + res.status + ')');
+      document.getElementById('refreshInfo').textContent = 'Erreur';
+      return;
+    }
+
+    // ════ KPIs principaux ════
+    document.getElementById('kMrr').textContent = fmtEur(d.revenue.mrr_eur);
+    document.getElementById('kMrrSub').textContent = 'EUR / mois · ' + d.revenue.active_subs + ' subs';
+    document.getElementById('kArr').textContent = fmtEur(d.revenue.arr_eur);
+    document.getElementById('kActive').textContent = fmt(d.revenue.active_subs);
+    document.getElementById('kActiveSub').textContent = d.revenue.cancel_scheduled + ' annulation(s) programmee(s)';
+    document.getElementById('kUsers').textContent = fmt(d.users.total);
+    document.getElementById('kUsersNew').textContent = '+' + d.users.new_24h + ' /24h · +' + d.users.new_7d + ' /7j · +' + d.users.new_30d + ' /30j';
+    document.getElementById('kConv').textContent = fmtPct(d.revenue.conversion_rate);
+    document.getElementById('kDiscord').textContent = fmt(d.discord.linked_count);
+    document.getElementById('kDiscordRate').textContent = fmtPct(d.discord.link_rate) + ' des users';
+    document.getElementById('kDemos').textContent = fmt(d.product.demos_total);
+    document.getElementById('kDemosSub').textContent = '+' + d.product.demos_today + ' aujourd hui · ' + d.product.demos_per_user + ' /user';
+    document.getElementById('kErrors').textContent = fmt(d.health.errors_24h);
+
+    // ════ User tiers ════
+    const total = d.users.total;
+    document.getElementById('usersMeta').textContent = total + ' total · ' + d.users.marketing_opt_out + ' opt-out marketing';
+    document.getElementById('userTiers').innerHTML =
+        renderBar('Free', d.users.by_tier.free, total, total)
+      + renderBar('Pro',  d.users.by_tier.pro,  total, total)
+      + renderBar('Elite', d.users.by_tier.elite, total, total);
+
+    // ════ Subscriptions breakdown ════
+    const subStatuses = d.revenue.subs_by_status || {};
+    const subsHtml = Object.keys(subStatuses).sort().map(st =>
+      renderBar(st, subStatuses[st], 0, Object.values(subStatuses).reduce((a,b)=>a+b, 0))
+    ).join('');
+    document.getElementById('subsBreakdown').innerHTML = subsHtml || '<div class="empty">Aucune subscription en DB.</div>';
+
+    // ════ Product stats ════
+    document.getElementById('productStats').innerHTML =
+        renderListRow('Demos analyzed', 'aujourd hui / 7j / 30j', d.product.demos_today + ' / ' + d.product.demos_7d + ' / ' + d.product.demos_30d)
+      + renderListRow('Matches indexed', '', fmt(d.product.matches_total))
+      + renderListRow('Coach IA messages', 'aujourd hui / 7j', d.product.coach_messages_today + ' / ' + d.product.coach_messages_7d)
+      + renderListRow('Demos / user', 'engagement avg', d.product.demos_per_user);
+
+    // ════ Email stats ════
+    document.getElementById('emailStats').innerHTML =
+        renderListRow('Marketing opt-out', 'profiles total', d.users.marketing_opt_out)
+      + renderListRow('Unsubscribed 30d', 'via lien email', d.email.unsubscribed_30d)
+      + renderListRow('Recent broadcasts', 'sur 5 max', d.email.recent_broadcasts.length);
+
+    // ════ Recent broadcasts ════
+    const bc = d.email.recent_broadcasts;
+    if (bc.length === 0) {
+      document.getElementById('broadcasts').innerHTML = '<div class="empty">Aucun broadcast envoye pour l instant.</div>';
+    } else {
+      document.getElementById('broadcasts').innerHTML = bc.map(b =>
+        '<div class="list-row"><div>'
+        + '<div class="v">' + b.subject + '</div>'
+        + '<div class="meta">' + b.audience + ' · ' + b.triggered_by + ' · ' + fmtDate(b.triggered_at) + '</div>'
+        + '</div><div class="v" style="text-align:right">'
+        + b.sent + ' / ' + b.recipients
+        + (b.failed > 0 ? ' <span style="color:var(--danger)">(' + b.failed + ' fail)</span>' : '')
+        + (b.completed_at ? '<div class="meta">' + fmtDate(b.completed_at) + '</div>' : '<div class="meta" style="color:var(--gold)">en cours</div>')
+        + '</div></div>'
+      ).join('');
+    }
+
+    // ════ Recent feedback ════
+    const fb = d.feedback.recent;
+    if (fb.length === 0) {
+      document.getElementById('feedback').innerHTML = '<div class="empty">Aucun feedback recu.</div>';
+    } else {
+      document.getElementById('feedback').innerHTML = fb.map(f =>
+        '<div class="list-row"><div>'
+        + '<div class="v">' + (f.rating != null ? '★'.repeat(f.rating) + '☆'.repeat(Math.max(0,5-(f.rating||0))) : 'pas de rating') + '</div>'
+        + '<div class="meta" style="white-space:pre-wrap">' + (f.message || '(vide)') + '</div>'
+        + '</div><div class="meta">' + fmtDate(f.created_at) + '</div></div>'
+      ).join('');
+    }
+
+    // ════ Feature interests ════
+    const fi = d.feedback.feature_interests || [];
+    if (fi.length === 0) {
+      document.getElementById('featureInterests').innerHTML = '<div class="empty">Aucun vote feature pour l instant.</div>';
+    } else {
+      document.getElementById('featureInterests').innerHTML = fi.slice(0, 8).map(f =>
+        renderListRow(f.feature_key, '', fmt(f.count))
+      ).join('');
+    }
+
+    document.getElementById('refreshInfo').textContent = 'Mis a jour : ' + fmtDate(d.generated_at);
+  } catch (err) {
+    showErr('Erreur reseau : ' + (err.message || err));
+    document.getElementById('refreshInfo').textContent = 'Erreur';
+  }
+}
+
+loadDashboard();
+// Auto-refresh toutes les 60s
+setInterval(loadDashboard, 60000);
+</script>
+</body>
+</html>
