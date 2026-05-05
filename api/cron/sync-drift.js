@@ -175,9 +175,33 @@ module.exports = async function handler(req, res) {
 
     const took_ms = Date.now() - startedAt;
     console.log(`[sync-drift] subs_scanned=${subs.length} profile_tier_fixed=${drifts.profile_tier_fixed} profiles_demoted_no_sub=${drifts.profiles_demoted_no_sub} discord_role_fixed=${drifts.discord_role_fixed} failed=${drifts.failed} took_ms=${took_ms}`);
+
+    // Alerte ops si on a corrige des drifts : signal d'un bug a investiguer
+    // upstream (webhook Stripe rate, race condition, etc.)
+    if (totalFixed > 0) {
+      try {
+        const { sendAlert } = require('../_lib/alert.js');
+        await sendAlert({
+          severity: 'warning',
+          title: `Sync drift fix : ${totalFixed} profile(s) corrige(s)`,
+          source: 'cron/sync-drift',
+          details: { ...drifts, subs_scanned: subs.length, hint: 'Verifie les webhook Stripe recents pour identifier la cause' },
+        });
+      } catch (_) { /* best-effort */ }
+    }
+
     return res.status(200).json({ ok: true, subs_scanned: subs.length, ...drifts, took_ms });
   } catch (err) {
     console.error('[sync-drift] fatal:', err);
+    try {
+      const { sendAlert } = require('../_lib/alert.js');
+      await sendAlert({
+        severity: 'critical',
+        title: 'sync-drift cron crash',
+        source: 'cron/sync-drift',
+        details: { error: err?.message, stack: (err?.stack || '').slice(0, 600) },
+      });
+    } catch (_) { /* best-effort */ }
     return res.status(500).json({ error: err.message, ...drifts });
   }
 };

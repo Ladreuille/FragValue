@@ -143,6 +143,15 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, ...stats, took_ms });
   } catch (err) {
     console.error('[free-day3-followup] fatal:', err);
+    try {
+      const { sendAlert } = require('../_lib/alert.js');
+      await sendAlert({
+        severity: 'critical',
+        title: 'free-day3-followup cron crash',
+        source: 'cron/free-day3-followup',
+        details: { error: err?.message, stack: (err?.stack || '').slice(0, 600), stats },
+      });
+    } catch (_) { /* best-effort */ }
     return res.status(500).json({ error: err.message, ...stats });
   }
 };

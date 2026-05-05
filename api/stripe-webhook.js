@@ -568,6 +568,23 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error('Webhook processing error:', err);
+    // Alerte ops critique : un crash de webhook Stripe = potentiel revenue
+    // perdu (paiement reussi mais abonnement pas active dans la DB), Stripe
+    // va retry 3x mais on veut etre au courant immediatement.
+    try {
+      const { sendAlert } = require('./_lib/alert.js');
+      await sendAlert({
+        severity: 'critical',
+        title: 'Stripe webhook crash',
+        source: 'stripe-webhook',
+        details: {
+          error: err?.message,
+          stack: (err?.stack || '').slice(0, 600),
+          event_type: event?.type,
+          event_id: event?.id,
+        },
+      });
+    } catch (_) { /* best-effort */ }
     return res.status(500).json({ error: 'Erreur traitement webhook' });
   }
 
