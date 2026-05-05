@@ -610,6 +610,16 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         </div>
       </div>
 
+      <!-- Garantie commerciale 14j (self-service refund). Visible uniquement
+           si le user a un paiement < 14j non encore rembourse. -->
+      <div class="settings-card" id="refundCard" style="display:none">
+        <div class="settings-row">
+          <div class="settings-label">Garantie 14 jours</div>
+          <div class="settings-value" id="refundEligibilityText">Verification...</div>
+          <button class="settings-btn" id="refundBtn" onclick="openRefundDialog()" style="display:none">Demander un remboursement</button>
+        </div>
+      </div>
+
       <div class="sec-label danger-label">Zone dangereuse</div>
       <div class="settings-card danger-card">
         <div class="settings-row">
@@ -1483,11 +1493,127 @@ async function openCancelDialog() {
   }
 }
 
+// ══ REFUND SELF-SERVICE 14J ═════════════════════════════════════════════════
+// Garantie commerciale FragValue : on rembourse integralement si demande dans
+// les 14j suivant le dernier paiement. Apres signature de la renonciation
+// (modal pricing.html, art. L221-28-13), le legal n'oblige plus mais on
+// honore quand meme la promesse marketing "satisfait ou rembourse".
+async function loadRefundEligibility() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const res = await fetch('/api/refund-request', {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    const d = await res.json();
+    const card = document.getElementById('refundCard');
+    const text = document.getElementById('refundEligibilityText');
+    const btn = document.getElementById('refundBtn');
+    if (!card || !text || !btn) return;
+
+    if (d.eligible) {
+      const eur = (d.amount_cents / 100).toFixed(2);
+      const cur = (d.currency || 'eur').toUpperCase();
+      text.textContent = 'Eligible. Dernier paiement ' + eur + ' ' + cur + '. Reste ' + d.days_left + ' jour' + (d.days_left > 1 ? 's' : '') + ' pour demander remboursement.';
+      btn.style.display = '';
+      btn.dataset.amount = eur;
+      btn.dataset.currency = cur;
+      card.style.display = '';
+    } else {
+      // Cache la card si pas eligible (evite UI noise pour les users free).
+      card.style.display = 'none';
+    }
+  } catch (_) {
+    // Silent : l'absence de la section refund n'est pas critique pour la page.
+  }
+}
+
+async function openRefundDialog() {
+  if (typeof window.fvTrack === 'function') window.fvTrack('refund_request_intent', { source: 'account_page' });
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+
+    const btn = document.getElementById('refundBtn');
+    const eur = btn?.dataset?.amount || '';
+    const cur = btn?.dataset?.currency || 'EUR';
+
+    const existing = document.getElementById('refundModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'refundModal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'refundTitle');
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.78);backdrop-filter:blur(4px)';
+    modal.innerHTML = `
+      <div style="position:relative;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:28px 32px;max-width:480px;width:100%">
+        <button type="button" id="refundClose" aria-label="Fermer" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer">×</button>
+        <h2 id="refundTitle" style="font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:10px;letter-spacing:.02em">Remboursement integral ${eur} ${cur}</h2>
+        <p style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px">
+          On te rembourse <strong style="color:var(--accent)">${eur} ${cur}</strong> (dernier paiement). Ton acces Pro/Elite sera coupe immediatement et tu repasseras en plan Free. Le credit apparait sur ta CB sous 5 a 10 jours ouvres.
+        </p>
+        <label for="refundReasonInput" style="display:block;font-family:var(--mono);font-size:11px;color:var(--text2);margin:0 0 6px">Pourquoi ? (optionnel, aide a ameliorer FragValue)</label>
+        <textarea id="refundReasonInput" maxlength="500" rows="3" placeholder="Ex : pas le temps de m'en servir, je trouve l'outil trop cher..." style="width:100%;background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--text);resize:vertical;margin-bottom:14px;outline:none"></textarea>
+        <div id="refundError" style="display:none;font-family:var(--mono);font-size:11px;color:var(--danger);margin:-6px 0 12px"></div>
+        <div style="display:flex;gap:10px;flex-direction:column">
+          <button type="button" id="refundConfirm" style="width:100%;background:var(--danger);color:#fff;border:none;padding:14px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">Confirmer le remboursement</button>
+          <button type="button" id="refundCancel" style="width:100%;background:transparent;color:var(--text2);border:1px solid var(--border2);padding:11px;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">Garder mon abonnement</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const cleanup = () => { try { modal.remove(); } catch(_){} };
+    document.getElementById('refundClose').onclick = cleanup;
+    document.getElementById('refundCancel').onclick = cleanup;
+    modal.addEventListener('click', (e) => { if (e.target === modal) cleanup(); });
+
+    document.getElementById('refundConfirm').onclick = async () => {
+      const cBtn = document.getElementById('refundConfirm');
+      const errEl = document.getElementById('refundError');
+      const reason = (document.getElementById('refundReasonInput').value || '').trim();
+      cBtn.disabled = true;
+      cBtn.textContent = 'Traitement...';
+      try {
+        const res = await fetch('/api/refund-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ reason }),
+        });
+        const d = await res.json();
+        if (!res.ok || !d.ok) {
+          errEl.textContent = d.message || d.error || 'Remboursement impossible. Contacte le support.';
+          errEl.style.display = 'block';
+          cBtn.disabled = false;
+          cBtn.textContent = 'Confirmer le remboursement';
+          return;
+        }
+        cleanup();
+        showBanner('Remboursement confirme. Tu recois la confirmation par email.', 'ok');
+        if (typeof window.fvTrack === 'function') window.fvTrack('refund_processed', { amount_cents: d.amount_cents });
+        setTimeout(() => location.reload(), 2000);
+      } catch (e) {
+        errEl.textContent = 'Erreur reseau. Reessaie.';
+        errEl.style.display = 'block';
+        cBtn.disabled = false;
+        cBtn.textContent = 'Confirmer le remboursement';
+      }
+    };
+  } catch (_) {
+    showBanner('Erreur reseau. Reessaie.', 'err');
+  }
+}
+
 // ══ PARAMETRES ═════════════════════════════════════════════════════════════
 let _settingsLoaded = false;
 async function loadSettings() {
   if (_settingsLoaded) return;
   _settingsLoaded = true;
+  // Charge l'eligibilite refund 14j en arriere-plan (best-effort, ne bloque
+  // pas le rendu de la page).
+  loadRefundEligibility();
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return;

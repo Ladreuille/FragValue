@@ -579,4 +579,40 @@ FragValue
   return { subject, html, text };
 }
 
-module.exports = { welcome, checkoutSuccess, trialExpiringJ3, coachCreditsPurchased, cancellationConfirmation, yearlyRenewalNotice, paymentFailed, demoAnalysisReady, day3FollowupFree };
+// === REFUND PROCESSED (self-service 14j) ================================
+// Envoye apres un refund self-service reussi via /api/refund-request.
+// Confirme le montant rembourse + l'arret immediat de l'acces Pro/Elite.
+function refundProcessed({ email, amount_eur, currency, refund_id }) {
+  const subject = 'Remboursement FragValue confirme · ' + amount_eur + ' ' + currency;
+  const html = wrap(subject, `
+    <h1 style="font-family:${FONT_STACK};font-size:22px;line-height:1.2;color:#e8eaea;margin:0 0 16px;font-weight:800">Remboursement confirme.</h1>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 18px">Ton remboursement de <strong style="color:#b8ff57">${amount_eur} ${currency}</strong> a ete declenche cote Stripe. Le credit apparaitra sur ton moyen de paiement sous 5 a 10 jours ouvres selon ta banque.</p>
+
+    <div style="background:#131414;border:1px solid #1c1e1e;border-radius:10px;padding:14px 18px;margin:18px 0;font-size:13px;color:#a8b0b0;line-height:1.7">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Montant</span><strong style="color:#e8eaea">${amount_eur} ${currency}</strong></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Reference Stripe</span><span style="color:#7a8080;font-family:monospace;font-size:11px">${refund_id}</span></div>
+      <div style="display:flex;justify-content:space-between"><span>Statut acces premium</span><strong style="color:#ff4444">Annule immediatement</strong></div>
+    </div>
+
+    <p style="font-size:13px;color:#a8b0b0;margin:0 0 12px;line-height:1.7">Ton compte FragValue est repasse en plan Free. Tu gardes l'acces a ton historique d'analyses, mais les fonctionnalites Pro (Coach IA, 2D replay, KPIs avances) sont desactivees.</p>
+
+    <p style="font-size:13px;color:#a8b0b0;margin:0 0 18px;line-height:1.7">Si ce remboursement est une erreur ou si tu souhaites te reabonner, contacte-nous a <a href="mailto:contact@fragvalue.com" style="color:#b8ff57;text-decoration:none">contact@fragvalue.com</a>.</p>
+
+    <p style="font-size:12px;color:#7a8080;margin:24px 0 0;line-height:1.6;border-top:1px solid #1c1e1e;padding-top:16px">Conformement a notre garantie commerciale 14j. Cf. <a href="${BASE_URL}/cgv.html" style="color:#7a8080;text-decoration:underline">CGV art. 9</a>.</p>
+  `);
+  const text = `Remboursement FragValue confirme.
+
+Montant rembourse : ${amount_eur} ${currency}
+Reference Stripe  : ${refund_id}
+
+Le credit apparaitra sur ton moyen de paiement sous 5 a 10 jours ouvres.
+
+Ton acces Pro/Elite a ete annule immediatement. Tu repasses en plan Free et tu gardes l'acces a ton historique.
+
+Une question ? Reponds a ce mail ou ecris a contact@fragvalue.com.
+
+Conformement a notre garantie commerciale 14j. CGV : ${BASE_URL}/cgv.html`;
+  return { subject, html, text };
+}
+
+module.exports = { welcome, checkoutSuccess, trialExpiringJ3, coachCreditsPurchased, cancellationConfirmation, yearlyRenewalNotice, paymentFailed, demoAnalysisReady, day3FollowupFree, refundProcessed };
