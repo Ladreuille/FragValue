@@ -125,6 +125,14 @@ module.exports = async function handler(req, res) {
       after = members[members.length - 1].user?.id || after;
     }
 
+    // Log stats summary pour visibilite dans Vercel Logs (les response bodies
+    // ne s'affichent pas, seuls les console.log/error sont visibles).
+    console.log(
+      `[cron/discord-assign-early] listed=${stats.listed} alreadyHasEarly=${stats.alreadyHasEarly} ` +
+      `assigned=${stats.assigned} failed=${stats.failed} pages=${stats.pages} ` +
+      `took_ms=${Date.now() - startedAt}` +
+      (stats.errors.length ? ` errors=${JSON.stringify(stats.errors)}` : '')
+    );
     return res.status(200).json({ ok: true, ...stats, took_ms: Date.now() - startedAt });
   } catch (err) {
     console.error('[cron/discord-assign-early] error:', err);
