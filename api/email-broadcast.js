@@ -407,25 +407,31 @@ export default async function handler(req, res) {
       // Rate limit safety : 200ms entre chaque (= 5/sec)
       await new Promise(r => setTimeout(r, 200));
 
-      // Update log toutes les 50 envois (progress)
+      // Update log toutes les 50 envois (progress).
+      // Note : le query builder Supabase est thenable mais n'expose pas
+      // .catch() directement, donc on wrap en try/catch.
       if ((sent + failed) % 50 === 0) {
-        await supabase.from('email_broadcast_log')
-          .update({ sent_count: sent, failed_count: failed })
-          .eq('id', logRow.id)
-          .catch(() => {});
+        try {
+          await supabase.from('email_broadcast_log')
+            .update({ sent_count: sent, failed_count: failed })
+            .eq('id', logRow.id);
+        } catch (_) { /* progress log non-critique */ }
       }
     }
 
     // Final log update
-    await supabase.from('email_broadcast_log')
-      .update({
-        sent_count: sent,
-        failed_count: failed,
-        completed_at: new Date().toISOString(),
-        failed_samples: failedSamples,
-      })
-      .eq('id', logRow.id)
-      .catch(() => {});
+    try {
+      await supabase.from('email_broadcast_log')
+        .update({
+          sent_count: sent,
+          failed_count: failed,
+          completed_at: new Date().toISOString(),
+          failed_samples: failedSamples,
+        })
+        .eq('id', logRow.id);
+    } catch (logErr) {
+      console.warn('[email-broadcast] final log update failed:', logErr?.message);
+    }
 
     const tookMs = Date.now() - startTime;
     console.log(`[email-broadcast] ${broadcastSlug}: sent ${sent} / ${recipients.length} (${failed} failed) in ${tookMs}ms`);
