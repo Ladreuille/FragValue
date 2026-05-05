@@ -11,11 +11,18 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function wrapHtml(subject, innerHtml, baseUrl, unsubUrl) {
-  // En prod, unsubUrl est un lien signe HMAC genere via api/_lib/email-unsub.js.
-  // En preview, on utilise la page generique sans token = elle affiche un statut
-  // "lien sans parametre" mais permet de visualiser le lien dans le footer.
+function withUtm(url, campaign) {
+  if (!url || typeof url !== 'string') return url;
+  if (!url.includes('fragvalue.com')) return url;
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}utm_source=email&utm_medium=broadcast&utm_campaign=${encodeURIComponent(campaign || 'broadcast')}`;
+}
+
+function wrapHtml(subject, innerHtml, baseUrl, unsubUrl, campaign) {
   const unsub = unsubUrl || `${baseUrl}/unsubscribed.html`;
+  const homeUtm = withUtm(baseUrl, campaign);
+  const cgvUtm  = withUtm(`${baseUrl}/cgv.html`, campaign);
+  const privUtm = withUtm(`${baseUrl}/privacy.html`, campaign);
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -28,12 +35,12 @@ function wrapHtml(subject, innerHtml, baseUrl, unsubUrl) {
   <tr><td align="center" style="padding:32px 16px">
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#0f1010;border:1px solid #1c1e1e;border-radius:12px;overflow:hidden">
       <tr><td style="padding:24px 28px;border-bottom:1px solid #1c1e1e">
-        <a href="${baseUrl}" style="text-decoration:none;color:#e8eaea;font-family:Anton,sans-serif;font-size:22px;letter-spacing:.04em">Frag<span style="color:#b8ff57">Value</span></a>
+        <a href="${homeUtm}" style="text-decoration:none;color:#e8eaea;font-family:Anton,sans-serif;font-size:22px;letter-spacing:.04em">Frag<span style="color:#b8ff57">Value</span></a>
       </td></tr>
       <tr><td style="padding:32px 28px;color:#e8eaea">${innerHtml}</td></tr>
       <tr><td style="padding:18px 28px;border-top:1px solid #1c1e1e;background:rgba(255,255,255,.02)">
         <p style="margin:0;font-size:11px;color:#7a8080;line-height:1.6">FragValue · 969 rue de la Forêt de Disse, 01170 Gex, France · SIREN 104 054 788<br>
-        <a href="${baseUrl}" style="color:#7a8080">${baseUrl}</a> &middot; <a href="${baseUrl}/cgv.html" style="color:#7a8080">CGV</a> &middot; <a href="${baseUrl}/privacy.html" style="color:#7a8080">Privacy</a> &middot; <a href="${unsub}" style="color:#7a8080">Se désinscrire</a></p>
+        <a href="${homeUtm}" style="color:#7a8080">${baseUrl}</a> &middot; <a href="${cgvUtm}" style="color:#7a8080">CGV</a> &middot; <a href="${privUtm}" style="color:#7a8080">Privacy</a> &middot; <a href="${unsub}" style="color:#7a8080">Se désinscrire</a></p>
       </td></tr>
     </table>
   </td></tr>
@@ -70,8 +77,8 @@ function buildDiscordLaunch(data, recipientEmail) {
 
     <p style="font-size:12px;color:#7a8080;margin:18px 0 0;line-height:1.6">À tout de suite,<br><strong style="color:#a8b0b0">FragValue</strong></p>
 
-    <p style="font-size:11px;color:#7a8080;margin:14px 0 0;line-height:1.6">PS : si tu es Pro ou Elite, tu auras automatiquement accès aux channels privés (Elite Lounge, Team Coaching, Pre-match Prep), avec sync des rôles auto via /account.html sur fragvalue.com.</p>
-  `, baseUrl);
+    <p style="font-size:11px;color:#7a8080;margin:14px 0 0;line-height:1.6">PS : si tu es Pro ou Elite, tu auras automatiquement accès aux channels privés (Elite Lounge, Team Coaching, Pre-match Prep), avec sync des rôles auto via <a href="${withUtm(baseUrl + '/account.html', 'discord_launch')}" style="color:#b8ff57;text-decoration:underline">/account.html</a> sur fragvalue.com.</p>
+  `, baseUrl, undefined, 'discord_launch');
   return { subject, html };
 }
 

@@ -1,6 +1,26 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+<script defer src="/analytics.js"></script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0A0C10">
@@ -165,11 +185,13 @@
         okCard.style.display = 'block';
         resubCard.style.display = 'block';
         if (token) resubBtn.href = '/api/unsubscribe?token=' + encodeURIComponent(token) + '&action=resubscribe';
+        if (typeof window.fvTrack === 'function') window.fvTrack('email_unsubscribed', { source: 'email_link' });
       } else if (status === 'resubscribed') {
         badge.className = 'badge resub';
         badge.textContent = 'Réinscription confirmée';
         title.textContent = 'Bon retour';
         lead.textContent = 'Tu recevras à nouveau les emails marketing FragValue (annonces, events, deals exclusifs). Tu pourras te désinscrire à tout moment via le lien en bas de chaque email.';
+        if (typeof window.fvTrack === 'function') window.fvTrack('email_resubscribed', { source: 'unsubscribed_page' });
       } else if (status === 'invalid') {
         badge.className = 'badge invalid';
         badge.textContent = 'Lien invalide';

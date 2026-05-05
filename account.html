@@ -1211,6 +1211,7 @@ function closeCreditsModal() {
 
 async function buyCreditsPack(packKey, btn) {
   if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+  if (typeof window.fvTrack === 'function') window.fvTrack('begin_checkout', { item_category: 'coach_credits', item_id: packKey });
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { window.location.href = 'login.html'; return; }
@@ -1275,6 +1276,7 @@ async function linkDiscord() {
   const original = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-inline" style="display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-right:6px"></span>Redirection...';
+  if (typeof window.fvTrack === 'function') window.fvTrack('discord_link_clicked', { source: 'account_page' });
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { window.location.href = 'login.html'; return; }
@@ -1379,6 +1381,7 @@ if (typeof window !== 'undefined') {
 }
 
 async function openStripePortal() {
+  if (typeof window.fvTrack === 'function') window.fvTrack('stripe_portal_clicked', { source: 'account_page' });
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { window.location.href = 'login.html'; return; }
@@ -1399,6 +1402,7 @@ async function openStripePortal() {
 // 15 000 EUR par contrat concerne. Flow : Click 1 (bouton "Resilier"), Click 2
 // (modale confirmation), Click 3 (confirmation finale).
 async function openCancelDialog() {
+  if (typeof window.fvTrack === 'function') window.fvTrack('subscription_cancel_intent', { source: 'account_page' });
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { window.location.href = 'login.html'; return; }

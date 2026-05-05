@@ -105,6 +105,32 @@ export default async function handler(req, res) {
           }
           console.log(`[Stripe] +${session.metadata.credits || '?'} credits coach_ia for user ${userId} (balance=${result.balance_after})`);
 
+          // GA4 Measurement Protocol : track le purchase server-side (autoritative).
+          try {
+            const { trackServer } = require('./_lib/ga4-mp.js');
+            await trackServer({
+              userId,
+              clientId: `stripe.${session.customer || session.id}`,
+              events: [{
+                name: 'purchase',
+                params: {
+                  transaction_id: session.id,
+                  value: (session.amount_total || 0) / 100,
+                  currency: (session.currency || 'eur').toUpperCase(),
+                  items: [{
+                    item_id: packKey,
+                    item_name: `Coach IA Credits ${packKey}`,
+                    item_category: 'coach_credits',
+                    quantity: parseInt(session.metadata.credits, 10) || 1,
+                    price: (session.amount_total || 0) / 100,
+                  }],
+                },
+              }],
+            });
+          } catch (mpErr) {
+            console.warn('[Stripe] GA4 MP credits purchase failed (non-blocking):', mpErr?.message);
+          }
+
           // Email de confirmation post-achat (best-effort, n'echoue pas le webhook)
           try {
             const { data: profile } = await sb
@@ -260,6 +286,48 @@ export default async function handler(req, res) {
 
         console.log(`[Stripe] Subscription created for user ${userId}: ${subscription.id}`);
 
+        // GA4 Measurement Protocol : track le purchase + subscription_started.
+        // Le purchase est autoritative cote serveur (vs gtag client qui peut etre
+        // bloque par ad blocker / refus consent). Source of truth = Stripe webhook.
+        try {
+          const { trackServer } = require('./_lib/ga4-mp.js');
+          const amountEur = (subscription.items?.data?.[0]?.price?.unit_amount || 0) / 100;
+          const interval = subscription.items?.data?.[0]?.price?.recurring?.interval || 'month';
+          await trackServer({
+            userId,
+            clientId: `stripe.${session.customer || subscription.id}`,
+            events: [
+              {
+                name: 'purchase',
+                params: {
+                  transaction_id: session.id,
+                  value: amountEur,
+                  currency: (subscription.currency || 'eur').toUpperCase(),
+                  items: [{
+                    item_id: planMeta,
+                    item_name: `FragValue ${profilePlanCheckout} (${interval})`,
+                    item_category: 'subscription',
+                    item_variant: interval,
+                    price: amountEur,
+                    quantity: 1,
+                  }],
+                },
+              },
+              {
+                name: 'subscription_started',
+                params: {
+                  plan: profilePlanCheckout,
+                  interval,
+                  value: amountEur,
+                  currency: (subscription.currency || 'eur').toUpperCase(),
+                },
+              },
+            ],
+          });
+        } catch (mpErr) {
+          console.warn('[Stripe] GA4 MP subscription purchase failed (non-blocking):', mpErr?.message);
+        }
+
         // Email de confirmation paiement (best-effort, n'echoue pas le webhook)
         try {
           const { data: profile } = await sb
@@ -393,6 +461,26 @@ export default async function handler(req, res) {
         }
 
         console.log(`[Stripe] Subscription canceled: ${sub.id}`);
+
+        // GA4 MP : track la resiliation pour analyse churn
+        if (userIdDel) {
+          try {
+            const { trackServer } = require('./_lib/ga4-mp.js');
+            await trackServer({
+              userId: userIdDel,
+              clientId: `stripe.${sub.customer || sub.id}`,
+              events: [{
+                name: 'subscription_canceled',
+                params: {
+                  subscription_id: sub.id,
+                  cancel_reason: sub.cancellation_details?.reason || 'unknown',
+                },
+              }],
+            });
+          } catch (mpErr) {
+            console.warn('[Stripe] GA4 MP cancel failed (non-blocking):', mpErr?.message);
+          }
+        }
         break;
       }
 

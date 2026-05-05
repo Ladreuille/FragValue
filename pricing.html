@@ -1444,8 +1444,23 @@ async function startCheckout(plan, btn) {
   if (!confirmed) return; // user a annulé
 
   setLoading(true);
-  // Funnel : clic sur le CTA checkout (avant redirect Stripe)
-  if (typeof window.fvTrack === 'function') window.fvTrack('Checkout Start', { plan: plan });
+  // Funnel : clic sur le CTA checkout (avant redirect Stripe).
+  // Event au format GA4 Ecommerce standard (begin_checkout) pour activer
+  // les rapports Monetization > Ecommerce purchases avec funnel cart -> purchase.
+  if (typeof window.fvTrack === 'function') {
+    const planTier = plan.startsWith('elite') ? 'elite' : 'pro';
+    const planInterval = plan.includes('yearly') || plan.includes('annual') ? 'year' : 'month';
+    window.fvTrack('begin_checkout', {
+      currency: 'EUR',
+      items: [{
+        item_id: plan,
+        item_name: 'FragValue ' + planTier + ' (' + planInterval + ')',
+        item_category: 'subscription',
+        item_variant: planInterval,
+        quantity: 1,
+      }],
+    });
+  }
 
   // Defensive : si user click avant que window._sb soit init (DOMContentLoaded
   // pas encore fire car defer scripts pas finis), on retry brievement.

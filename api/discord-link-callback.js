@@ -164,7 +164,23 @@ export default async function handler(req, res) {
       }
     }
 
-    // 11. Redirect vers le front avec status linked
+    // 11. GA4 MP : track le link Discord (autoritative car le user n'est plus
+    // sur fragvalue.com a ce moment, redirect vers Discord puis revient).
+    try {
+      const { trackServer } = require('./_lib/ga4-mp.js');
+      await trackServer({
+        userId,
+        clientId: `discord.${discordId}`,
+        events: [{
+          name: 'discord_linked',
+          params: { plan, discord_username: discordUsername || 'unknown' },
+        }],
+      });
+    } catch (mpErr) {
+      console.warn('[discord-link-callback] GA4 MP failed (non-blocking):', mpErr?.message);
+    }
+
+    // 12. Redirect vers le front avec status linked
     return redirectFront(returnUrl, {
       discord: 'linked',
       username: discordUsername || '',
