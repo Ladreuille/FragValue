@@ -57,6 +57,15 @@ module.exports = async function handler(req, res) {
     });
   } catch (e) {
     console.error('[cron pro-benchmarks-refresh] error:', e.message);
+    try {
+      const { sendAlert } = require('../_lib/alert.js');
+      await sendAlert({
+        severity: 'error',
+        title: 'Cron pro-benchmarks-refresh crashed',
+        details: { error: e.message, stack: e.stack?.slice(0, 600) },
+        source: 'cron/pro-benchmarks-refresh',
+      });
+    } catch (_) {}
     return res.status(500).json({ error: 'Refresh failed', detail: e.message });
   }
 };

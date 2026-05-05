@@ -136,6 +136,15 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, ...stats, took_ms: Date.now() - startedAt });
   } catch (err) {
     console.error('[cron/discord-assign-early] error:', err);
+    try {
+      const { sendAlert } = require('../_lib/alert.js');
+      await sendAlert({
+        severity: 'error',
+        title: 'Cron discord-assign-early crashed',
+        details: { error: err.message, stack: err.stack?.slice(0, 600), stats },
+        source: 'cron/discord-assign-early',
+      });
+    } catch (_) {}
     return res.status(500).json({ error: err.message, ...stats });
   }
 };

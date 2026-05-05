@@ -576,7 +576,8 @@ async function* streamClaude(systemInstructions, demoDataBlock, conversationMess
     cache_control: { type: 'ephemeral', ttl: '1h' },
   }];
 
-  const res = await fetch(CLAUDE_ENDPOINT, {
+  const { fetchWithTimeout } = require('./_lib/fetch-with-timeout.js');
+  const res = await fetchWithTimeout(CLAUDE_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -591,7 +592,7 @@ async function* streamClaude(systemInstructions, demoDataBlock, conversationMess
       messages,
       stream: true,
     }),
-  });
+  }, 50000);
   if (!res.ok) {
     const errText = await res.text();
     throw new Error('Claude API ' + res.status + ': ' + errText.slice(0, 200));
@@ -703,7 +704,8 @@ async function callClaude(systemInstructions, demoDataBlock, conversationMessage
     },
   ];
 
-  const res = await fetch(CLAUDE_ENDPOINT, {
+  const { fetchWithTimeout } = require('./_lib/fetch-with-timeout.js');
+  const res = await fetchWithTimeout(CLAUDE_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -718,7 +720,7 @@ async function callClaude(systemInstructions, demoDataBlock, conversationMessage
       system,
       messages,
     }),
-  });
+  }, 50000);
   if (!res.ok) {
     const errText = await res.text();
     throw new Error('Claude API ' + res.status + ': ' + errText.slice(0, 200));

@@ -132,6 +132,15 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, ...results });
   } catch (err) {
     console.error('[yearly-renewal-notice] cron error:', err);
+    try {
+      const { sendAlert } = require('../_lib/alert.js');
+      await sendAlert({
+        severity: 'critical',
+        title: 'Cron yearly-renewal-notice crashed (legal L215-1 risk)',
+        details: { error: err.message, stack: err.stack?.slice(0, 600) },
+        source: 'cron/yearly-renewal-notice',
+      });
+    } catch (_) {}
     return res.status(500).json({ error: err.message });
   }
 };

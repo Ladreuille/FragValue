@@ -252,7 +252,8 @@ module.exports = async function handler(req, res) {
 
   try {
     // 1. Profil joueur
-    const playerRes = await fetch(`${BASE}/players?nickname=${encodeURIComponent(nickname)}`, { headers });
+    const { fetchWithTimeout } = require('./_lib/fetch-with-timeout.js');
+    const playerRes = await fetchWithTimeout(`${BASE}/players?nickname=${encodeURIComponent(nickname)}`, { headers }, 20000);
     if (!playerRes.ok) {
       if (playerRes.status === 404) return res.status(404).json({ error: `Joueur "${nickname}" introuvable sur FACEIT.` });
       return res.status(playerRes.status).json({ error: `Erreur FACEIT API: ${playerRes.status}` });

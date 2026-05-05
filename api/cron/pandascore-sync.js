@@ -36,12 +36,13 @@ async function psGet(path, params = {}) {
 
   const qs = new URLSearchParams(params).toString();
   const url = `${PS_BASE}${path}${qs ? '?' + qs : ''}`;
-  const res = await fetch(url, {
+  const { fetchWithTimeout } = require('../_lib/fetch-with-timeout.js');
+  const res = await fetchWithTimeout(url, {
     headers: {
       'Authorization': `Bearer ${process.env.PANDASCORE_API_TOKEN}`,
       'Accept': 'application/json',
     },
-  });
+  }, 20000);
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`PandaScore ${path} : ${res.status} ${body.slice(0, 100)}`);
@@ -231,6 +232,15 @@ module.exports = async function handler(req, res) {
     });
   } catch (err) {
     console.error('[cron] fatal :', err.message);
+    try {
+      const { sendAlert } = require('../_lib/alert.js');
+      await sendAlert({
+        severity: 'error',
+        title: 'Cron pandascore-sync crashed',
+        details: { error: err.message, stack: err.stack?.slice(0, 600) },
+        source: 'cron/pandascore-sync',
+      });
+    } catch (_) {}
     return res.status(500).json({ error: 'Erreur serveur', message: err.message });
   }
 };

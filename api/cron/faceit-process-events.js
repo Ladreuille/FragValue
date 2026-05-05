@@ -161,14 +161,15 @@ module.exports = async function handler(req, res) {
         if (upsertErr) throw new Error(`DB upsert failed: ${upsertErr.message}`);
 
         // Fire parser Railway.
-        const parserRes = await fetch(`${PARSER_URL}/process-match`, {
+        const { fetchWithTimeout } = require('../_lib/fetch-with-timeout.js');
+        const parserRes = await fetchWithTimeout(`${PARSER_URL}/process-match`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${PARSER_SECRET}`,
           },
           body: JSON.stringify({ matchId, demoUrl: signedUrl }),
-        });
+        }, 30000);
         if (!parserRes.ok) {
           const txt = await parserRes.text().catch(() => '');
           console.warn(`[faceit-process-events] parser non-200 for ${matchId}: ${parserRes.status} ${txt.slice(0, 200)}`);
@@ -209,6 +210,15 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, ...stats, took_ms: Date.now() - startedAt });
   } catch (err) {
     console.error('[faceit-process-events] cron error:', err);
+    try {
+      const { sendAlert } = require('../_lib/alert.js');
+      await sendAlert({
+        severity: 'critical',
+        title: 'Cron faceit-process-events crashed',
+        details: { error: err.message, stack: err.stack?.slice(0, 600), stats },
+        source: 'cron/faceit-process-events',
+      });
+    } catch (_) {}
     return res.status(500).json({ error: err.message, ...stats });
   }
 };

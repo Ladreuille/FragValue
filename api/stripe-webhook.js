@@ -78,6 +78,31 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Signature invalide' });
   }
 
+  // Idempotency : INSERT en premier dans stripe_webhook_events. Si l'event_id
+  // existe deja (duplicate key violation 23505), on a deja traite ce webhook
+  // (Stripe peut retry sur 5xx ou timeout). On renvoie 200 sans rejouer la
+  // logique business (eviter double email, double credit, etc.).
+  try {
+    const { error: idemErr } = await sb
+      .from('stripe_webhook_events')
+      .insert({
+        event_id: event.id,
+        event_type: event.type,
+        api_version: event.api_version || null,
+        livemode: event.livemode || false,
+      });
+    if (idemErr) {
+      if (idemErr.code === '23505') {
+        console.log(`[Stripe] Skipped duplicate webhook ${event.id} (${event.type})`);
+        return res.status(200).json({ received: true, duplicate: true });
+      }
+      // Autre erreur DB : on log et on continue, mieux vaut traiter que perdre.
+      console.warn(`[Stripe] idempotency insert failed for ${event.id}: ${idemErr.message}`);
+    }
+  } catch (e) {
+    console.warn('[Stripe] idempotency check threw:', e?.message);
+  }
+
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -565,7 +590,77 @@ export default async function handler(req, res) {
         console.log(`[Stripe] Invoice finalized: ${invoice.id} · ${fmtAmount(invoice.amount_due, invoice.currency)} · sub=${invoice.subscription || 'none'}`);
         break;
       }
+
+      // Refund automatique ou manuel via dashboard Stripe. On log + alerte ops
+      // pour declencher le suivi business : annuler la sub si pas deja fait,
+      // recrediter ou debit les coach credits achetes, notifier le user.
+      // La logique business est volontairement manuelle pour l'instant (rare).
+      case 'charge.refunded': {
+        const charge = event.data.object;
+        const amount = fmtAmount(charge.amount_refunded, charge.currency);
+        console.log(`[Stripe] Charge refunded: ${charge.id} · ${amount} · customer=${charge.customer || 'none'}`);
+        try {
+          const { sendAlert } = require('./_lib/alert.js');
+          await sendAlert({
+            severity: 'warning',
+            title: 'Stripe charge refunded',
+            source: 'stripe-webhook',
+            details: {
+              charge_id: charge.id,
+              amount: amount,
+              customer: charge.customer,
+              reason: charge.refunds?.data?.[0]?.reason || 'unknown',
+              receipt_url: charge.receipt_url,
+            },
+          });
+        } catch (_) {}
+        break;
+      }
+
+      // Trial expire dans 3 jours (notification automatique Stripe). Le cron
+      // trial-expiring.js gere deja l'email J-3 par milestone DB, mais cet
+      // event Stripe sert de safety-net si le cron a echoue.
+      case 'customer.subscription.trial_will_end': {
+        const sub = event.data.object;
+        const endIso = tsToIso(sub.trial_end);
+        console.log(`[Stripe] Trial ending soon for sub=${sub.id} (user=${sub.metadata?.user_id || 'none'}) at ${endIso}`);
+        break;
+      }
+
+      // 3DS / SCA : Stripe a tente de prelever mais la banque demande une
+      // verification active du user (typiquement pour les renouvellements
+      // au-dela de la limite de 30 EUR Art. 13 PSD2). Si on rate ca, le user
+      // ne sera pas preleve et finira en past_due sans en etre informe.
+      // Stripe envoie aussi un email Hosted Invoice Page au user, mais on
+      // veut etre alerte en interne pour suivre.
+      case 'invoice.payment_action_required': {
+        const invoice = event.data.object;
+        console.log(`[Stripe] Payment action required: invoice=${invoice.id} · ${fmtAmount(invoice.amount_due, invoice.currency)} · customer=${invoice.customer}`);
+        try {
+          const { sendAlert } = require('./_lib/alert.js');
+          await sendAlert({
+            severity: 'warning',
+            title: 'Stripe SCA / 3DS required',
+            source: 'stripe-webhook',
+            details: {
+              invoice_id: invoice.id,
+              amount: fmtAmount(invoice.amount_due, invoice.currency),
+              customer: invoice.customer,
+              hosted_invoice_url: invoice.hosted_invoice_url,
+              user_id: invoice.metadata?.user_id || invoice.subscription_details?.metadata?.user_id || null,
+            },
+          });
+        } catch (_) {}
+        break;
+      }
     }
+
+    // Marque l'event comme traite avec succes pour debug ulterieur.
+    sb.from('stripe_webhook_events')
+      .update({ processed_at: new Date().toISOString() })
+      .eq('event_id', event.id)
+      .then(() => {})
+      .catch(() => {});
   } catch (err) {
     console.error('Webhook processing error:', err);
     // Alerte ops critique : un crash de webhook Stripe = potentiel revenue

@@ -104,6 +104,15 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, candidates: subs.length, sent, failed, errors: errors.slice(0, 5) });
   } catch (err) {
     console.error('[trial-expiring] cron error:', err);
+    try {
+      const { sendAlert } = require('../_lib/alert.js');
+      await sendAlert({
+        severity: 'critical',
+        title: 'Cron trial-expiring crashed',
+        details: { error: err.message, stack: err.stack?.slice(0, 600) },
+        source: 'cron/trial-expiring',
+      });
+    } catch (_) {}
     return res.status(500).json({ error: err.message });
   }
 };

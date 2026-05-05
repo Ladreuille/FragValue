@@ -129,6 +129,15 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, ...results });
   } catch (err) {
     console.error('[dunning-retry] cron error:', err);
+    try {
+      const { sendAlert } = require('../_lib/alert.js');
+      await sendAlert({
+        severity: 'critical',
+        title: 'Cron dunning-retry crashed',
+        details: { error: err.message, stack: err.stack?.slice(0, 600) },
+        source: 'cron/dunning-retry',
+      });
+    } catch (_) {}
     return res.status(500).json({ error: err.message });
   }
 };

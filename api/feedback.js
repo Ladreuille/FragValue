@@ -162,6 +162,31 @@ module.exports = async function handler(req, res) {
   }
 };
 
+// Rate limit en memoire pour le POST public : 5 feedbacks par IP par heure.
+// Eviter le spam de tickets anonymes en bulk. Cleanup auto pour ne pas leaker.
+const _feedbackRateLimit = new Map(); // ipHash -> [timestamps]
+const FEEDBACK_RL_MAX = 5;
+const FEEDBACK_RL_WINDOW_MS = 60 * 60 * 1000;
+
+function checkFeedbackRateLimit(ipHash) {
+  if (!ipHash) return { ok: true };
+  const now = Date.now();
+  const cutoff = now - FEEDBACK_RL_WINDOW_MS;
+  const arr = (_feedbackRateLimit.get(ipHash) || []).filter(t => t > cutoff);
+  if (arr.length >= FEEDBACK_RL_MAX) {
+    return { ok: false, retryAfter: Math.ceil((arr[0] + FEEDBACK_RL_WINDOW_MS - now) / 1000) };
+  }
+  arr.push(now);
+  _feedbackRateLimit.set(ipHash, arr);
+  // Cleanup occasionnel : si la map grossit, on purge les entries vieilles.
+  if (_feedbackRateLimit.size > 5000) {
+    for (const [k, v] of _feedbackRateLimit) {
+      if (v.every(t => t <= cutoff)) _feedbackRateLimit.delete(k);
+    }
+  }
+  return { ok: true };
+}
+
 // ── POST : create feedback (public, auth optional) ───────────────────────
 async function handleCreate(req, res) {
   const body = req.body || {};
@@ -181,6 +206,16 @@ async function handleCreate(req, res) {
   const user = await resolveUser(req.headers.authorization);
   const userTier = user ? await resolveUserTier(user.id) : null;
   const ipHash = hashIp(req);
+
+  // Rate limit anti-spam (uniquement pour les anonymes : un user logge passe
+  // outre car son user_id est traceable).
+  if (!user) {
+    const rl = checkFeedbackRateLimit(ipHash);
+    if (!rl.ok) {
+      res.setHeader('Retry-After', String(rl.retryAfter || 3600));
+      return res.status(429).json({ error: 'Trop de feedbacks. Reessaie plus tard.', retry_after: rl.retryAfter });
+    }
+  }
 
   // Validation email anon (optionnel mais on check le format si fourni)
   let anonEmail = null;
