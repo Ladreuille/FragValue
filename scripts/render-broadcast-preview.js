@@ -44,7 +44,7 @@ function wrapHtml(subject, innerHtml, baseUrl, unsubUrl) {
 
 function buildDiscordLaunch(data, recipientEmail) {
   const baseUrl = 'https://fragvalue.com';
-  const subject = data?.subject || `On vient de lancer le Discord FragValue · viens taper la discu`;
+  const subject = data?.subject || `On vient de lancer le Discord FragValue, viens taper la discu`;
   const ctaUrl = data?.discordInvite || 'https://discord.gg/fragvalue';
   const html = wrapHtml(subject, `
     <h1 style="font-family:Anton,sans-serif;font-size:28px;line-height:1.15;color:#e8eaea;margin:0 0 18px;font-weight:800">On vient de lancer notre <span style="color:#b8ff57">Discord community</span></h1>
@@ -62,7 +62,7 @@ function buildDiscordLaunch(data, recipientEmail) {
       </ul>
     </div>
 
-    <p style="font-size:13px;color:#a8b0b0;margin:0 0 18px;line-height:1.7">Le serveur est petit pour l'instant. Si tu rejoins maintenant, un rôle <strong style="color:#f5c842">Early</strong> permanent s'affiche sur ton profil Discord · visible uniquement par les premiers arrivés.</p>
+    <p style="font-size:13px;color:#a8b0b0;margin:0 0 18px;line-height:1.7">Le serveur est petit pour l'instant. Si tu rejoins maintenant, un rôle <strong style="color:#f5c842">Early</strong> permanent s'affiche sur ton profil Discord, visible uniquement par les premiers arrivés.</p>
 
     <p style="text-align:center;margin:28px 0">
       <a href="${ctaUrl}" style="display:inline-block;background:#5865F2;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.04em;font-family:'Space Mono',monospace">Rejoindre le Discord &rsaquo;</a>
@@ -70,7 +70,7 @@ function buildDiscordLaunch(data, recipientEmail) {
 
     <p style="font-size:12px;color:#7a8080;margin:18px 0 0;line-height:1.6">À tout de suite,<br><strong style="color:#a8b0b0">FragValue</strong></p>
 
-    <p style="font-size:11px;color:#7a8080;margin:14px 0 0;line-height:1.6">PS : si tu es Pro ou Elite, tu auras automatiquement accès aux channels privés (Elite Lounge, Team Coaching, Pre-match Prep) · sync des rôles auto via /account.html sur fragvalue.com.</p>
+    <p style="font-size:11px;color:#7a8080;margin:14px 0 0;line-height:1.6">PS : si tu es Pro ou Elite, tu auras automatiquement accès aux channels privés (Elite Lounge, Team Coaching, Pre-match Prep), avec sync des rôles auto via /account.html sur fragvalue.com.</p>
   `, baseUrl);
   return { subject, html };
 }
