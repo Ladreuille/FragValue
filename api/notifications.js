@@ -27,6 +27,11 @@ export default async function handler(req, res) {
     if (authError || !user) return res.status(401).json({ error: 'Token invalide' });
 
     if (req.method === 'GET') {
+      // Cache browser-only 30s : dedup les calls multiples par page (header,
+      // dropdown, badge etc fetch en parallele = meme cache key cote browser).
+      // private = pas de CDN cache (data user-specific).
+      // 30s = nouvelle notif apparait au max 30s plus tard, acceptable UX.
+      res.setHeader('Cache-Control', 'private, max-age=30');
       const limit = Math.min(100, parseInt(req.query.limit, 10) || 30);
       const unreadOnly = req.query.unread_only === '1';
       let q = supabase
