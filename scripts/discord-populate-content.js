@@ -21,8 +21,14 @@ const DISCORD_API = 'https://discord.com/api/v10';
 
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const GUILD_ID  = process.env.DISCORD_GUILD_ID;
+const CLIENT_ID = process.env.DISCORD_CLIENT_ID; // requis pour idempotence : check si le bot a deja poste
 if (!BOT_TOKEN) { console.error('Missing DISCORD_BOT_TOKEN'); process.exit(1); }
 if (!GUILD_ID)  { console.error('Missing DISCORD_GUILD_ID'); process.exit(1); }
+if (!CLIENT_ID) {
+  console.warn('⚠️  DISCORD_CLIENT_ID not set : idempotence check disabled. ');
+  console.warn('   Re-running without CLIENT_ID will create duplicates.');
+  console.warn('   Set DISCORD_CLIENT_ID to enable safe re-runs.\n');
+}
 
 const DRY_RUN = process.env.DRY_RUN === '1';
 const VERBOSE = process.env.VERBOSE === '1';
@@ -923,6 +929,21 @@ async function getPinnedMessages(channelId) {
   return await api(`/channels/${channelId}/pins`);
 }
 
+// Check si le bot a deja poste un message dans ce channel (idempotence robuste).
+// Plus fiable que le check pinned (qui rate si le pin avait foire au 1er run).
+// Retourne true si on trouve au moins 1 message du bot dans les 50 derniers.
+async function hasBotMessage(channelId) {
+  if (!CLIENT_ID) return false; // pas de check possible sans CLIENT_ID
+  try {
+    const messages = await api(`/channels/${channelId}/messages?limit=50`);
+    if (!messages) return false;
+    return messages.some(m => m.author?.id === CLIENT_ID);
+  } catch (err) {
+    console.warn(`  ⚠️  hasBotMessage check failed for channel: ${err.message}`);
+    return false; // fail-open : on tente le post (mieux qu'un skip silencieux)
+  }
+}
+
 async function postMessage(channelId, content) {
   if (DRY_RUN) {
     console.log(`    [DRY] Would post to ${channelId}: ${content.split('\n')[0].slice(0, 60)}...`);
@@ -975,13 +996,22 @@ async function main() {
       continue;
     }
 
-    // Idempotence : si le channel a deja des messages pinnes du bot, on skip
-    // (sauf si FORCE=1).
-    if (!FORCE) {
+    // Idempotence robuste : skip si le bot a DEJA poste au moins 1 message
+    // dans ce channel (peu importe son pin status). Fix le bug du 1er run
+    // ou le pin echouait silencieusement et le 2e run creait des doublons.
+    if (!FORCE && CLIENT_ID) {
+      const alreadyPosted = await hasBotMessage(ch.id);
+      if (alreadyPosted) {
+        if (VERBOSE) console.log(`✓ #${entry.channel}: skip (bot already posted here)`);
+        stats.skippedAlreadyPinned++;
+        continue;
+      }
+    } else if (!FORCE) {
+      // Fallback ancien check pinned si CLIENT_ID absent (legacy)
       try {
         const pins = await getPinnedMessages(ch.id);
         if (pins && pins.length > 0) {
-          if (VERBOSE) console.log(`📌 #${entry.channel}: skip (already has ${pins.length} pinned message${pins.length > 1 ? 's' : ''})`);
+          if (VERBOSE) console.log(`📌 #${entry.channel}: skip (already has pins, but check incomplete sans CLIENT_ID)`);
           stats.skippedAlreadyPinned++;
           continue;
         }
