@@ -1246,14 +1246,14 @@ function switchUploadMode(mode) {
     zoneUrl.style.display  = 'block';
     if (fileBar) fileBar.style.display = 'none';
     setTimeout(() => { document.getElementById('faceitUrlInput')?.focus(); }, 50);
-    if (typeof window.fvTrack === 'function') window.fvTrack('Upload Mode Switch', { mode: 'url' });
+    if (typeof window.fvTrack === 'function') window.fvTrack('upload_mode_switch', { mode: 'url' });
   } else {
     tabUrl.classList.remove('active');    tabUrl.setAttribute('aria-selected', 'false');
     tabUpload.classList.add('active');    tabUpload.setAttribute('aria-selected', 'true');
     zoneFile.style.display = '';
     zoneUrl.style.display  = 'none';
     if (fileBar && selectedFile) fileBar.style.display = '';
-    if (typeof window.fvTrack === 'function') window.fvTrack('Upload Mode Switch', { mode: 'upload' });
+    if (typeof window.fvTrack === 'function') window.fvTrack('upload_mode_switch', { mode: 'upload' });
   }
 }
 
@@ -1298,7 +1298,7 @@ async function submitFaceitUrl() {
   msg.textContent = 'On contacte FACEIT pour recuperer ta demo... (5-15s)';
   msg.classList.add('success'); msg.style.display = 'block';
 
-  if (typeof window.fvTrack === 'function') window.fvTrack('FACEIT URL Submit', { input_type: isMatchUrl ? 'url' : 'id' });
+  if (typeof window.fvTrack === 'function') window.fvTrack('faceit_url_submit', { input_type: isMatchUrl ? 'url' : 'id' });
 
   try {
     const res = await fetch('/api/parse-from-faceit-url', {
@@ -1323,14 +1323,14 @@ async function submitFaceitUrl() {
       msg.textContent = errMap[d.code] || d.error || 'Erreur inconnue. Reessaie.';
       msg.classList.remove('success'); msg.classList.add('error');
       btn.disabled = false; btn.innerHTML = originalLabel;
-      if (typeof window.fvTrack === 'function') window.fvTrack('FACEIT URL Error', { code: d.code, status: res.status });
+      if (typeof window.fvTrack === 'function') window.fvTrack('faceit_url_error', { code: d.code, status: res.status });
       return;
     }
 
     // Succes : redirige vers la page de resultats apres parsing.
     msg.textContent = 'Demo recuperee. Redirection vers ton analyse...';
     msg.classList.remove('error'); msg.classList.add('success');
-    if (typeof window.fvTrack === 'function') window.fvTrack('FACEIT URL Success', { match_id: d.matchId });
+    if (typeof window.fvTrack === 'function') window.fvTrack('faceit_url_success', { match_id: d.matchId });
 
     // Le parser Railway tourne en async (~30-90s). On redirige vers
     // heatmap-results qui affichera "parsing in progress" + poll status.
@@ -1409,12 +1409,12 @@ async function startAnalysis() {
   // Plan gating
   const allowed = await checkPlanGating();
   if (!allowed) {
-    if (typeof window.fvTrack === 'function') window.fvTrack('Quota Hit', { plan: 'free' });
+    if (typeof window.fvTrack === 'function') window.fvTrack('quota_hit', { plan: 'free' });
     return;
   }
   // Funnel : upload demo demarre (le user a passe le quota check, va consommer 1 analyse)
   if (typeof window.fvTrack === 'function') {
-    window.fvTrack('Demo Upload Start', { sizeMB: Math.round(selectedFile.size / 1024 / 1024) });
+    window.fvTrack('demo_upload_start', { sizeMB: Math.round(selectedFile.size / 1024 / 1024) });
   }
 
   // Pre-check parser availability (evite d'uploader 500 MB si Railway est down)
@@ -1558,7 +1558,7 @@ async function startAnalysis() {
     // n'avait aucun event sur le funnel signup -> 1ere demo). Ce 'Demo
     // Analyzed' est l'evenement cle pour mesurer le activation rate.
     if (typeof window.fvTrack === 'function') {
-      window.fvTrack('Demo Analyzed', {
+      window.fvTrack('demo_analyzed', {
         map: (data.data?.meta?.map || '?').toLowerCase().replace('de_', ''),
         durationSec: Math.round((data.data?.meta?.duration || 0)),
         rounds: data.data?.rounds?.length || 0,

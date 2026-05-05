@@ -415,7 +415,7 @@ async function handleSubmit() {
       if (pass !== confirm) { showMsg('Passwords do not match.', 'error'); btn.disabled=false; return; }
       const { data: signupData, error } = await _sb.auth.signUp({ email, password: pass });
       if (error) throw error;
-      if (typeof window.fvTrack === 'function') window.fvTrack('Signup', { method: 'email' });
+      if (typeof window.fvTrack === 'function') window.fvTrack('sign_up', { method: 'email' });
       // Welcome email + persist UTM (best-effort, n'echoue not le signup)
       try {
         const sess = signupData?.session;
@@ -432,7 +432,7 @@ async function handleSubmit() {
     } else {
       const { data: signinData, error } = await _sb.auth.signInWithPassword({ email, password: pass });
       if (error) throw error;
-      if (typeof window.fvTrack === 'function') window.fvTrack('Login', { method: 'email' });
+      if (typeof window.fvTrack === 'function') window.fvTrack('login', { method: 'email' });
       const uid = signinData?.user?.id || signinData?.session?.user?.id;
       window.location.href = uid ? await getPostLoginDestination(uid) : 'account.html';
     }

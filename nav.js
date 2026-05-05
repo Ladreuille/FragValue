@@ -403,7 +403,7 @@
 
       // Track GA4 si dispo
       if (typeof window.fvTrack === 'function') {
-        window.fvTrack('Lang Switch', { from: isEN ? 'en' : 'fr', to: target });
+        window.fvTrack('lang_switch', { from: isEN ? 'en' : 'fr', to: target });
       }
       window.location.href = url;
     });

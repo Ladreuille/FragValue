@@ -664,7 +664,7 @@ async function init() {
     // un CTA direct vers l'analyse demo. Pousse l'activation apres conversion.
     showCheckoutSuccessBanner();
     // Funnel : conversion reussie (capture client-side, complete celle du webhook serveur)
-    if (typeof window.fvTrack === 'function') window.fvTrack('Checkout Success');
+    if (typeof window.fvTrack === 'function') window.fvTrack('checkout_success');
     // Force re-fetch : le webhook Stripe peut prendre 2-5s pour peupler la DB
     // après le redirect. On retry une fois après 3s pour catch l'update.
     setTimeout(() => { _subLoaded = false; loadSubscription(); }, 3000);

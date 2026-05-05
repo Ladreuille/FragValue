@@ -80,7 +80,7 @@
   };
 
   // === Public tracking helper =============================================
-  // Utilise depuis n'importe quelle page : window.fvTrack('Signup', { method: 'email' })
+  // Utilise depuis n'importe quelle page : window.fvTrack('sign_up', { method: 'email' })
   // Si le user n'a pas accepte, gtag fonctionne en mode signal-only (cookieless)
   // qui envoie des pings agreges sans tracker l'individu - conforme RGPD.
   window.fvTrack = function (eventName, props) {
