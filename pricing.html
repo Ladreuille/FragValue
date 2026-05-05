@@ -1434,19 +1434,10 @@ async function startCheckout(plan, btn) {
     }
   };
 
-  // BLOCKER LEGAL #4 (cf. ultrareview Trust/Legal) : avant tout checkout,
-  // afficher la modale de pre-confirmation avec récap conditions + checkbox
-  // de renonciation au droit de rétractation (Code conso art. L221-28-13°).
-  // Sans cette case cochee, le user a 14j pour se rétracter ET demander remboursement
-  // (jusqu'à 75K EUR d'amende DGCCRF si on n'informe pas correctement). Couvre
-  // aussi HIGH #8 (info pre-paiement avec recap).
-  const confirmed = await confirmSubscriptionTerms(plan);
-  if (!confirmed) return; // user a annulé
-
-  setLoading(true);
-  // Funnel : clic sur le CTA checkout (avant redirect Stripe).
-  // Event au format GA4 Ecommerce standard (begin_checkout) pour activer
-  // les rapports Monetization > Ecommerce purchases avec funnel cart -> purchase.
+  // Funnel : clic sur le CTA subscribe = intent. On track AVANT la modale
+  // pour capturer le funnel meme si le user annule a la pre-confirmation
+  // (mesure le drop-off legal modal -> stripe checkout).
+  // Format GA4 Ecommerce standard pour activer les rapports Monetization.
   if (typeof window.fvTrack === 'function') {
     const planTier = plan.startsWith('elite') ? 'elite' : 'pro';
     const planInterval = plan.includes('yearly') || plan.includes('annual') ? 'year' : 'month';
@@ -1461,6 +1452,21 @@ async function startCheckout(plan, btn) {
       }],
     });
   }
+
+  // BLOCKER LEGAL #4 (cf. ultrareview Trust/Legal) : avant tout checkout,
+  // afficher la modale de pre-confirmation avec récap conditions + checkbox
+  // de renonciation au droit de rétractation (Code conso art. L221-28-13°).
+  // Sans cette case cochee, le user a 14j pour se rétracter ET demander remboursement
+  // (jusqu'à 75K EUR d'amende DGCCRF si on n'informe pas correctement). Couvre
+  // aussi HIGH #8 (info pre-paiement avec recap).
+  const confirmed = await confirmSubscriptionTerms(plan);
+  if (!confirmed) {
+    // Track le drop-off legal pour mesurer l'impact de la modale sur conversion
+    if (typeof window.fvTrack === 'function') window.fvTrack('checkout_legal_canceled', { plan });
+    return;
+  }
+
+  setLoading(true);
 
   // Defensive : si user click avant que window._sb soit init (DOMContentLoaded
   // pas encore fire car defer scripts pas finis), on retry brievement.
