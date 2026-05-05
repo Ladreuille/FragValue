@@ -117,13 +117,13 @@ function publicResponse(content) {
 async function handleHelp() {
   return ephemeralResponse(
     `# 🤖 Commandes FragValue Bot\n\n` +
-    `**\`/fvrating\`** — Affiche ton FV Rating moyen (lie ton compte FragValue d'abord)\n` +
-    `**\`/myplan\`** — Affiche ton plan actuel (Free/Pro/Elite)\n` +
-    `**\`/upload\`** — Link direct vers fragvalue.com/demo.html pour analyser une demo\n` +
-    `**\`/demo-review\`** — Le prochain schedule de demo review collective (dimanche 19h CET)\n` +
-    `**\`/help\`** — Cette liste\n\n` +
+    `**\`/fvrating\`** · Affiche ton FV Rating moyen (lie ton compte FragValue d'abord)\n` +
+    `**\`/myplan\`** · Affiche ton plan actuel (Free/Pro/Elite)\n` +
+    `**\`/upload\`** · Link direct vers fragvalue.com/demo.html pour analyser une demo\n` +
+    `**\`/demo-review\`** · Le prochain schedule de demo review collective (dimanche 19h CET)\n` +
+    `**\`/help\`** · Cette liste\n\n` +
     `## 🎯 Pas encore inscrit ?\n` +
-    `https://fragvalue.com — diagnostic Coach IA gratuit, 3 analyses / mois.\n\n` +
+    `https://fragvalue.com · diagnostic Coach IA gratuit, 3 analyses / mois.\n\n` +
     `## 💎 Pour les abonnes Pro / Elite\n` +
     `Lie ton compte sur https://fragvalue.com/account.html -> ton role Discord est sync auto en 5-10 sec.`,
   );
@@ -273,7 +273,7 @@ async function handleFvRating(interaction) {
 
   return ephemeralResponse(
     `# 📊 Ton FV Rating\n\n` +
-    `**Moyen sur ${ratings.length} matchs** : **${avg}** — ${tier}\n` +
+    `**Moyen sur ${ratings.length} matchs** : **${avg}** · ${tier}\n` +
     `**Dernier match** : ${last}\n` +
     `**Best** : ${max} | **Worst** : ${min}\n\n` +
     `Voir tous tes matchs en detail : https://fragvalue.com/dashboard.html`,

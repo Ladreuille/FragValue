@@ -184,7 +184,7 @@ Chaque **dimanche 19h CET**, on décortique ensemble une demo pro dans #demo-rev
     messages: [
       {
         pin: true,
-        content: `# 🔥 Highlights — partage tes meilleurs moments
+        content: `# 🔥 Highlights · partage tes meilleurs moments
 
 Ace, clutch 1v3+, frag stylé, retake impossible : balance ici.
 
@@ -213,7 +213,7 @@ Tous les vendredis, on sélectionne le **best clip** de la semaine. Le gagnant r
     messages: [
       {
         pin: true,
-        content: `# 🤝 Team finding — trouve tes coéquipiers
+        content: `# 🤝 Team finding · trouve tes coéquipiers
 
 Tu cherches des partenaires fixes pour FACEIT / ESEA / 5v5 ?
 
@@ -237,7 +237,7 @@ Tu cherches des partenaires fixes pour FACEIT / ESEA / 5v5 ?
 ## ⚠️ Important
 - 1 post / 7 jours maximum (sinon spam)
 - Mets à jour ton post au lieu d'en faire un nouveau
-- Pas de scout commercial / boost / smurf — ban direct`,
+- Pas de scout commercial / boost / smurf · ban direct`,
       },
     ],
   },
@@ -297,7 +297,7 @@ Ton idée pour améliorer FragValue ? Drop-la ici, on vote, on shippe.
 🎯 Idée :         (titre court, 1 ligne)
 📝 Contexte :     (pourquoi tu en as besoin, ton pain point actuel)
 ✅ Solution :     (ce que tu imagines comme feature)
-🎮 Plan :         (Free / Pro / Elite — pour comprendre l'audience)
+🎮 Plan :         (Free / Pro / Elite · pour comprendre l'audience)
 \`\`\`
 
 ## 🗳️ Voting
@@ -423,12 +423,12 @@ Ton Diagnostic IA t'a sorti un truc intéressant ? Balance ici, on apprend tous 
 \`\`\`
 
 ## 💡 Exemples de bons posts
-**Exemple 1 — Opening duels**
+**Exemple 1 · Opening duels**
 > « Coach IA m'a dit : "Tu perds 60% de tes opening duels en CT-side Mirage. Joue passif les 2 premiers rounds, observe les setups T avant de peek." »
 >
 > Après 1 semaine : opening WR CT Mirage est passé de 38% à 51%. Game changer.
 
-**Exemple 2 — KAST**
+**Exemple 2 · KAST**
 > « Insight : "Tu as 4-5 rounds fantômes par match (0 kill / 0 assist / mort tôt). Réduis ton agressivité en T-side anti-eco." »
 >
 > À faire : check sur prochains matchs.
@@ -446,7 +446,7 @@ Ton Diagnostic IA t'a sorti un truc intéressant ? Balance ici, on apprend tous 
     messages: [
       {
         pin: true,
-        content: `# 🗺️ Map strats — lineups, smokes, tactiques
+        content: `# 🗺️ Map strats · lineups, smokes, tactiques
 
 L'endroit pour partager les setups qui gagnent des rounds.
 
@@ -481,7 +481,7 @@ Lis d'abord le **Stats guide FragValue** : https://fragvalue.com/stats-guide.htm
     messages: [
       {
         pin: true,
-        content: `# 🎯 Progression — objectifs hebdo & accountability
+        content: `# 🎯 Progression · objectifs hebdo & accountability
 
 Pose tes objectifs publiquement, viens les valider ou non.
 
@@ -521,7 +521,7 @@ Top 3 progress de la semaine selon le Coach IA → mention dans #announcements +
     messages: [
       {
         pin: true,
-        content: `# 📺 Demo reviews — collective Sunday 19h CET
+        content: `# 📺 Demo reviews · collective Sunday 19h CET
 
 Chaque dimanche, on décortique ensemble une demo pro (Major, BLAST, ESL Pro League).
 
@@ -597,16 +597,16 @@ Tag #match-of-the-day avec le lien HLTV.`,
     messages: [
       {
         pin: true,
-        content: `# 🌍 Events — Major, BLAST, ESL Pro League, IEM
+        content: `# 🌍 Events · Major, BLAST, ESL Pro League, IEM
 
 Calendrier des tournois pros et discussions par event.
 
 ## 📅 Tournois majeurs 2026 (à jour)
-- **PGL Cluj-Napoca Major** — Février 2026 ✅ terminé
-- **BLAST Spring Final** — Avril 2026 ✅ terminé
-- **IEM Cologne** — Août 2026 (à confirmer)
-- **ESL Pro League S22** — Sept-Oct 2026
-- **PGL Bucarest Major** — Décembre 2026
+- **PGL Cluj-Napoca Major** · Février 2026 ✅ terminé
+- **BLAST Spring Final** · Avril 2026 ✅ terminé
+- **IEM Cologne** · Août 2026 (à confirmer)
+- **ESL Pro League S22** · Sept-Oct 2026
+- **PGL Bucarest Major** · Décembre 2026
 
 ## 📋 Format thread par event
 Pour chaque tournoi majeur, on crée un **thread dédié** avec :
@@ -708,7 +708,7 @@ Ce qui se dit ici reste ici. Pas de screenshots / leaks vers les channels public
     messages: [
       {
         pin: true,
-        content: `# 📋 Team coaching — Elite only
+        content: `# 📋 Team coaching · Elite only
 
 Sessions de coaching collectif pour les membres Elite.
 
@@ -718,7 +718,7 @@ Sessions de coaching collectif pour les membres Elite.
 Durée : ~1h. Coach invité (ESEA / ECL / AS coach pro francophone).
 
 ## 🎯 Format de la session
-1. **10 min** : tour de table — chaque participant partage son **pain point #1** de la semaine
+1. **10 min** : tour de table · chaque participant partage son **pain point #1** de la semaine
 2. **30 min** : focus sur 2-3 sujets récurrents (mid-round calls, anti-eco, post-plant)
 3. **15 min** : Q&A directe avec le coach
 4. **5 min** : objectifs hebdo à poster dans #progression
@@ -743,7 +743,7 @@ DM @Founder. On cherche des coachs ESEA Open / Main / Advanced pour les futures 
     messages: [
       {
         pin: true,
-        content: `# ⚔️ Pre-match prep — Elite only
+        content: `# ⚔️ Pre-match prep · Elite only
 
 Prépare tes matchs sérieux (FACEIT lvl 10+, ESEA league, tournois) avec la commu.
 
@@ -778,7 +778,7 @@ Toutes les analyses passent par **fragvalue.com/prep-veto.html** (Elite-only). S
     messages: [
       {
         pin: true,
-        content: `# ⭐ Pro-private — Pro & Elite
+        content: `# ⭐ Pro-private · Pro & Elite
 
 Channel réservé aux abonnés Pro et Elite.
 
@@ -833,7 +833,7 @@ Log automatique des actions de modération (warn / mute / kick / ban) + events s
     messages: [
       {
         pin: true,
-        content: `# 🚨 Reports — signaler un comportement
+        content: `# 🚨 Reports · signaler un comportement
 
 Tu vois quelque chose qui viole les règles ? Signale-le ici, on traite.
 

@@ -145,6 +145,22 @@ async function syncUserPlan(discordUserId, plan) {
   return { assigned: targetRoleId, removed: removedFrom };
 }
 
+// Liste les membres du guild avec pagination.
+// GET /guilds/{guild.id}/members?limit=1000&after=<lastUserId>
+// Retourne array de { user: {id, username, ...}, roles: [...], joined_at, ... }.
+// Le bot doit avoir l'intent privilegie GUILD_MEMBERS active dans le Dev Portal.
+async function listGuildMembers({ limit = 1000, after = '0' } = {}) {
+  const url = `${DISCORD_API}/guilds/${getGuildId()}/members?limit=${limit}&after=${after}`;
+  const res = await fetch(url, {
+    headers: { 'Authorization': `Bot ${getBotToken()}` },
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new DiscordApiError(`listGuildMembers failed: ${res.status}`, { status: res.status, body });
+  }
+  return res.json();
+}
+
 // Echange le code OAuth contre un access_token Discord.
 // Doc : https://discord.com/developers/docs/topics/oauth2#authorization-code-grant
 async function exchangeOAuthCode(code, redirectUri) {
@@ -172,7 +188,7 @@ async function exchangeOAuthCode(code, redirectUri) {
   return res.json(); // { access_token, token_type, expires_in, refresh_token, scope }
 }
 
-// GET /users/@me — recupere les infos du user (id, username, global_name, avatar).
+// GET /users/@me · recupere les infos du user (id, username, global_name, avatar).
 // Doit etre appele avec le user access_token (pas le bot token).
 async function getMe(userAccessToken) {
   const res = await fetch(`${DISCORD_API}/users/@me`, {
@@ -193,6 +209,7 @@ module.exports = {
   syncUserPlan,
   planToRoleId,
   getAllManagedRoleIds,
+  listGuildMembers,
   exchangeOAuthCode,
   getMe,
 };

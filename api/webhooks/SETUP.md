@@ -27,7 +27,7 @@ Preview) :
 | `FACEIT_WEBHOOK_AUTH_HEADER` | (Optionnel, default `X-FACEIT-Token`) Nom du header d'auth. Doit matcher exactement ce qui est configure dans App Studio. |
 
 `FACEIT_CLIENT_ID` + `FACEIT_CLIENT_SECRET` (existant) restent utilises
-par le OAuth login user (`api/faceit-auth.js`) — sans rapport avec la
+par le OAuth login user (`api/faceit-auth.js`) · sans rapport avec la
 Downloads API.
 
 ## Configuration cote FACEIT App Studio
@@ -79,7 +79,7 @@ Downloads API.
    ORDER BY received_at DESC LIMIT 5;
    ```
 
-## Format demos : `.dem.zst` (zstandard) — pas `.gz`
+## Format demos : `.dem.zst` (zstandard) · pas `.gz`
 
 ⚠️ La doc FACEIT (https://docs.faceit.com/getting-started/Guides/download-api/)
 mentionne `.dem.gz` mais en pratique en mai 2026, FACEIT delivre les demos

@@ -1,4 +1,4 @@
-# 🐦 Post X / Twitter — 2026-05-02
+# 🐦 Post X / Twitter · 2026-05-02
 
 Annonce conjointe : retour de **Cache** (8e map active CS2) + lancement du
 **Coach IA Conversational** sur FragValue.
@@ -7,7 +7,7 @@ Compte : @fragvaluegg
 
 ---
 
-## 🎯 Variante PRINCIPALE (recommandée — dense, build-in-public, premium)
+## 🎯 Variante PRINCIPALE (recommandée · dense, build-in-public, premium)
 
 ```
 Cache de retour dans le pool actif CS2.
@@ -65,14 +65,14 @@ fragvalue.com
 
 ## 🧵 Thread (pour engagement long-form)
 
-**Tweet 1 / 4 — l'accroche**
+**Tweet 1 / 4 · l'accroche**
 ```
 Petit récap de ce qu'on a poussé chez FragValue cette semaine 👇
 
 (spoiler : Cache + un truc qui change la façon de progresser à CS2)
 ```
 
-**Tweet 2 / 4 — Cache**
+**Tweet 2 / 4 · Cache**
 ```
 1/ Cache est de retour dans le pool actif CS2.
 
@@ -85,7 +85,7 @@ On l'a intégrée la nuit même de l'annonce :
 [image radar Cache]
 ```
 
-**Tweet 3 / 4 — Coach IA Conversational**
+**Tweet 3 / 4 · Coach IA Conversational**
 ```
 2/ Coach IA Conversational.
 
@@ -101,7 +101,7 @@ Réponses contextuelles + replay au bon tick.
 [GIF du chat]
 ```
 
-**Tweet 4 / 4 — CTA**
+**Tweet 4 / 4 · CTA**
 ```
 3/ Pricing :
 • Free : découverte

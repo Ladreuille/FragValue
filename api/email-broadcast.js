@@ -30,6 +30,7 @@
 //     deplacer vers un cron / Railway worker.
 
 import { createClient } from '@supabase/supabase-js';
+import { makeUnsubUrl } from './_lib/email-unsub.js';
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 
@@ -45,55 +46,60 @@ function getAdminEmails() {
 
 // Definit les templates dispos. Chaque template prend des templateData et
 // retourne { subject, html, text }.
-function buildTemplate(key, data, recipientEmail) {
+// `unsubUrl` est optionnel : si fourni, il remplace le lien Unsubscribe par
+// defaut dans le footer (=> URL signee par user pour conformite RGPD).
+function buildTemplate(key, data, recipientEmail, unsubUrl) {
   const baseUrl = process.env.PUBLIC_URL || 'https://fragvalue.com';
   const firstName = data?.firstName || (recipientEmail ? recipientEmail.split('@')[0] : 'joueur');
 
   if (key === 'discord_launch') {
-    const subject = data?.subject || `🎮 On vient de lancer le Discord FragValue · viens taper la discu`;
+    const subject = data?.subject || `On vient de lancer le Discord FragValue · viens taper la discu`;
     const ctaUrl = data?.discordInvite || 'https://discord.gg/fragvalue';
     const html = wrapHtml(subject, `
-      <h1 style="font-family:Anton,sans-serif;font-size:28px;line-height:1.1;color:#e8eaea;margin:0 0 16px;font-weight:800">Salut ${escapeHtml(firstName)},</h1>
-      <p style="font-size:14px;color:#a8b0b0;margin:0 0 16px;line-height:1.6">Quentin de FragValue. On vient de lancer notre <strong style="color:#b8ff57">Discord community</strong> 🎮</p>
+      <h1 style="font-family:Anton,sans-serif;font-size:28px;line-height:1.15;color:#e8eaea;margin:0 0 18px;font-weight:800">On vient de lancer notre <span style="color:#b8ff57">Discord community</span></h1>
+
+      <p style="font-size:14px;color:#a8b0b0;margin:0 0 20px;line-height:1.6">Un endroit où la communauté FragValue échange autour du jeu, des stats, et de la progression sur FACEIT.</p>
 
       <div style="padding:18px 20px;background:rgba(184,255,87,.04);border:1px solid rgba(184,255,87,.2);border-radius:10px;margin-bottom:20px">
-        <div style="font-size:11px;color:#b8ff57;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">C'est ou</div>
+        <div style="font-size:11px;color:#b8ff57;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">Au programme</div>
         <ul style="margin:0;padding-left:20px;font-size:13px;color:#a8b0b0;line-height:1.8">
-          <li>Tu compares ton <strong style="color:#e8eaea">FV Rating</strong> avec d'autres joueurs FACEIT</li>
-          <li>Tu balances tes insights Coach IA et tu en recup des autres</li>
-          <li>Tu trouves des coequipiers FACEIT a ton niveau</li>
-          <li>On decortique ensemble une demo pro chaque dimanche 19h CET</li>
+          <li>Comparer ton <strong style="color:#e8eaea">FV Rating</strong> avec les autres joueurs FACEIT</li>
+          <li>Partager tes insights Coach IA et profiter de ceux des autres</li>
+          <li>Trouver des coéquipiers FACEIT à ton niveau pour grind ensemble</li>
+          <li>Demo reviews collectives de matchs pro tous les dimanches 19h CET</li>
+          <li>Channels dédiés par map et par stratégie pour échanger des setups</li>
         </ul>
       </div>
 
-      <p style="font-size:13px;color:#a8b0b0;margin:0 0 18px;line-height:1.7">Le serveur est petit pour l'instant. Si tu rejoins maintenant, tu fais partie des early. Tu auras un role <strong style="color:#f5c842">Founder</strong> sur ton profil Discord.</p>
+      <p style="font-size:13px;color:#a8b0b0;margin:0 0 18px;line-height:1.7">Le serveur est petit pour l'instant. Si tu rejoins maintenant, un rôle <strong style="color:#f5c842">Early</strong> permanent s'affiche sur ton profil Discord · visible uniquement par les premiers arrivés.</p>
 
       <p style="text-align:center;margin:28px 0">
         <a href="${ctaUrl}" style="display:inline-block;background:#5865F2;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.04em;font-family:'Space Mono',monospace">Rejoindre le Discord &rsaquo;</a>
       </p>
 
-      <p style="font-size:12px;color:#7a8080;margin:18px 0 0;line-height:1.6">A tout de suite,<br><strong style="color:#a8b0b0">Quentin (Founder FragValue)</strong></p>
+      <p style="font-size:12px;color:#7a8080;margin:18px 0 0;line-height:1.6">À tout de suite,<br><strong style="color:#a8b0b0">FragValue</strong></p>
 
-      <p style="font-size:11px;color:#7a8080;margin:14px 0 0;line-height:1.6">PS : si t'es Pro/Elite, tu auras automatiquement acces aux channels prives (Elite Lounge, Team Coaching, Pre-match Prep) - sync les roles auto via /account.html sur fragvalue.com.</p>
-    `, baseUrl);
-    const text = `Salut ${firstName},
+      <p style="font-size:11px;color:#7a8080;margin:14px 0 0;line-height:1.6">PS : si tu es Pro ou Elite, tu auras automatiquement accès aux channels privés (Elite Lounge, Team Coaching, Pre-match Prep) · sync des rôles auto via /account.html sur fragvalue.com.</p>
+    `, baseUrl, unsubUrl);
+    const text = `On vient de lancer notre Discord community.
 
-Quentin de FragValue. On vient de lancer notre Discord community 🎮
+Un endroit où la communauté FragValue échange autour du jeu, des stats, et de la progression sur FACEIT.
 
-C'est ou :
-- Compare ton FV Rating avec d'autres joueurs FACEIT
-- Balance tes insights Coach IA
-- Trouve des coequipiers FACEIT a ton niveau
-- Demo review pro collective chaque dimanche 19h CET
+Au programme :
+- Comparer ton FV Rating avec les autres joueurs FACEIT
+- Partager tes insights Coach IA et profiter de ceux des autres
+- Trouver des coéquipiers FACEIT à ton niveau pour grind ensemble
+- Demo reviews collectives de matchs pro tous les dimanches 19h CET
+- Channels dédiés par map et par stratégie pour échanger des setups
 
-Si tu rejoins maintenant, tu fais partie des early. Role Founder a la cle.
+Le serveur est petit pour l'instant. Si tu rejoins maintenant, un rôle Early permanent s'affiche sur ton profil Discord · visible uniquement par les premiers arrivés.
 
 Rejoins-nous : ${ctaUrl}
 
-A tout de suite,
-Quentin (Founder FragValue)
+À tout de suite,
+FragValue
 
-PS : Pro/Elite -> roles auto sync sur Discord depuis ${baseUrl}/account.html
+PS : Pro/Elite → rôles auto sync sur Discord depuis ${baseUrl}/account.html
 `;
     return { subject, html, text };
   }
@@ -103,7 +109,7 @@ PS : Pro/Elite -> roles auto sync sur Discord depuis ${baseUrl}/account.html
   const html = wrapHtml(subject, `
     <h1 style="font-family:Anton,sans-serif;font-size:24px;color:#e8eaea;margin:0 0 16px">${escapeHtml(subject)}</h1>
     <p style="font-size:14px;color:#a8b0b0;line-height:1.6">${escapeHtml(data?.body || '(corps vide)')}</p>
-  `, baseUrl);
+  `, baseUrl, unsubUrl);
   const text = `${subject}\n\n${data?.body || ''}\n\nFragValue · ${baseUrl}`;
   return { subject, html, text };
 }
@@ -112,7 +118,11 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function wrapHtml(subject, innerHtml, baseUrl) {
+function wrapHtml(subject, innerHtml, baseUrl, unsubUrl) {
+  // unsubUrl = lien personnalise (signe par user via api/_lib/email-unsub.js).
+  // Fallback (page generique) si non fourni - cas des previews ou template
+  // generique sans destinataire identifie.
+  const unsub = unsubUrl || `${baseUrl}/unsubscribed.html`;
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -129,8 +139,8 @@ function wrapHtml(subject, innerHtml, baseUrl) {
       </td></tr>
       <tr><td style="padding:32px 28px;color:#e8eaea">${innerHtml}</td></tr>
       <tr><td style="padding:18px 28px;border-top:1px solid #1c1e1e;background:rgba(255,255,255,.02)">
-        <p style="margin:0;font-size:11px;color:#7a8080;line-height:1.6">FragValue · 969 rue de la Foret de Disse, 01170 Gex, France · SIREN 104 054 788<br>
-        <a href="${baseUrl}" style="color:#7a8080">${baseUrl}</a> &middot; <a href="${baseUrl}/cgv.html" style="color:#7a8080">CGV</a> &middot; <a href="${baseUrl}/privacy.html" style="color:#7a8080">Privacy</a> &middot; <a href="${baseUrl}/account.html#unsubscribe" style="color:#7a8080">Unsubscribe</a></p>
+        <p style="margin:0;font-size:11px;color:#7a8080;line-height:1.6">FragValue · 969 rue de la Forêt de Disse, 01170 Gex, France · SIREN 104 054 788<br>
+        <a href="${baseUrl}" style="color:#7a8080">${baseUrl}</a> &middot; <a href="${baseUrl}/cgv.html" style="color:#7a8080">CGV</a> &middot; <a href="${baseUrl}/privacy.html" style="color:#7a8080">Privacy</a> &middot; <a href="${unsub}" style="color:#7a8080">Se désinscrire</a></p>
       </td></tr>
     </table>
   </td></tr>
@@ -143,7 +153,9 @@ function wrapHtml(subject, innerHtml, baseUrl) {
 // Note schema : la table profiles a `subscription_tier` (pas `plan`) et
 // `created_at` (pas `updated_at`). On adapte les filtres en consequence.
 async function fetchRecipients(supabase, audience, limit) {
-  let query = supabase.from('profiles').select('id, subscription_tier, faceit_nickname, created_at, signup_at');
+  let query = supabase.from('profiles')
+    .select('id, subscription_tier, faceit_nickname, created_at, signup_at')
+    .eq('marketing_opt_out', false); // RGPD : exclude les desinscrits
   switch (audience) {
     case 'free':
       query = query.eq('subscription_tier', 'free');
@@ -229,7 +241,7 @@ export default async function handler(req, res) {
     const adminEmails = getAdminEmails();
     if (!adminEmails.includes((user.email || '').toLowerCase())) {
       console.warn(`[email-broadcast] non-admin user ${user.email} tried to broadcast`);
-      return res.status(403).json({ error: 'Forbidden — admin only' });
+      return res.status(403).json({ error: 'Forbidden · admin only' });
     }
 
     const body = req.body || {};
@@ -309,10 +321,24 @@ export default async function handler(req, res) {
     const failedSamples = [];
     const startTime = Date.now();
 
+    const baseUrl = process.env.PUBLIC_URL || 'https://fragvalue.com';
     for (const r of recipients) {
       try {
-        const t = buildTemplate(templateKey, { ...templateData, firstName: r.firstName }, r.email);
-        const result = await sendEmail({ to: r.email, subject: t.subject, html: t.html, text: t.text });
+        // Lien unsubscribe personnalise par user (signe HMAC) : conformite RGPD/CAN-SPAM
+        const unsubUrl = makeUnsubUrl(r.user_id, baseUrl);
+        const t = buildTemplate(templateKey, { ...templateData, firstName: r.firstName }, r.email, unsubUrl);
+        const result = await sendEmail({
+          to: r.email,
+          subject: t.subject,
+          html: t.html,
+          text: t.text,
+          headers: {
+            // RFC 2369 : permet aux clients mail (Gmail, Apple Mail) d'afficher
+            // un bouton Unsubscribe natif dans l'UI = meilleur deliverability.
+            'List-Unsubscribe': `<${unsubUrl}>`,
+            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+          },
+        });
         if (result?.error) throw new Error(result.error);
         sent++;
       } catch (err) {

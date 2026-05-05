@@ -1,4 +1,4 @@
-# FragValue — Kit d'outreach growth
+# FragValue · Kit d'outreach growth
 
 Document interne. Ne pas déployer en public.
 
@@ -15,7 +15,7 @@ Objectif des 30 prochains jours : **50 à 150 signups** via outreach direct.
 
 ---
 
-## Partie 1 — Streamers FR CS2 (30 cibles)
+## Partie 1 · Streamers FR CS2 (30 cibles)
 
 ### Comment qualifier un streamer
 
@@ -59,30 +59,30 @@ Crée un Google Sheet avec ces colonnes :
 - **Tier 2 (15 cibles)** : 1k-10k followers. Sweet spot. Plus réceptifs, meilleure conversion par contact.
 - **Tier 3 (10 cibles)** : 100-1000 followers. Nano-influenceurs. Taux de réponse élevé, engagement de qualité.
 
-### Exemples de profils qui collent (à vérifier manuellement — scène évolue vite)
+### Exemples de profils qui collent (à vérifier manuellement · scène évolue vite)
 
 **Créateurs de contenu CS2 FR** à screener :
-- **Sixen** — content CS2, historique ESIC/esport FR
-- **Rivenzi** — multi-jeux dont CS2 quand il y a des Majors
-- **Skyyart** — variety mais audience FR massive
-- **Domingo** — variety streamer, joue CS2 occasionnellement
-- **Les analystes Lestream** — streams analyse de Majors
+- **Sixen** · content CS2, historique ESIC/esport FR
+- **Rivenzi** · multi-jeux dont CS2 quand il y a des Majors
+- **Skyyart** · variety mais audience FR massive
+- **Domingo** · variety streamer, joue CS2 occasionnellement
+- **Les analystes Lestream** · streams analyse de Majors
 - **Coachs FR indépendants** : cherche "coach CS2 FR" sur Twitter
 
 **Attention** : certains ne veulent pas de sponsoring, d'autres sont déjà sous contrat. Le DM doit être court, personnalisé, sans lien clickbait.
 
 ---
 
-## Partie 2 — Templates DM
+## Partie 2 · Templates DM
 
 Règle absolue : **pas de copier-coller brut**. Adapte le template au profil du destinataire. Mentionne un de ses streams/vidéos récents pour montrer que tu l'as vraiment regardé.
 
-### Template A — Tier 1 streamer (gros influenceur)
+### Template A · Tier 1 streamer (gros influenceur)
 
 ```
 Salut [prénom],
 
-J'ai maté ton stream du [jour] où tu [chose précise qu'il a faite — exemple : review de ton match Mirage, ou coaching d'un viewer]. Propre analyse, vraiment.
+J'ai maté ton stream du [jour] où tu [chose précise qu'il a faite · exemple : review de ton match Mirage, ou coaching d'un viewer]. Propre analyse, vraiment.
 
 Je suis Quentin, je bosse sur FragValue (fragvalue.com), un outil d'analyse CS2 qui automatise ce que tu fais à la main : dashboard FACEIT avec FV Rating (proche HLTV 2.1 mais adapté solo queue), analyse de demo en 2 min avec diagnostic IA, et benchmarks vs level FACEIT.
 
@@ -95,7 +95,7 @@ Si c'est pas dans tes sujets, pas de souci, je ne relance pas.
 Quentin
 ```
 
-### Template B — Tier 2 streamer (mid)
+### Template B · Tier 2 streamer (mid)
 
 ```
 Hey [prénom],
@@ -111,7 +111,7 @@ Pas de script, juste ton retour. Ça m'aide à prioriser le roadmap.
 Quentin
 ```
 
-### Template C — Coach / nano-influenceur
+### Template C · Coach / nano-influenceur
 
 ```
 Salut [prénom],
@@ -136,7 +136,7 @@ Quentin
 
 ---
 
-## Partie 3 — Discord
+## Partie 3 · Discord
 
 ### Règles d'engagement
 
@@ -149,18 +149,18 @@ Quentin
 
 ### 10 serveurs Discord à cibler
 
-**Catégorie 1 — CS2 généralistes FR**
+**Catégorie 1 · CS2 généralistes FR**
 1. **CS2 France / FR** (cherche "CS2 French" sur Disboard.org)
 2. **FACEIT France** (non-officiel, communautaire)
 3. **Discord de ton ancien club CS** si tu es passé par un club esport
 4. **FFJV CS2** (fédération française du jeu vidéo, si active)
 
-**Catégorie 2 — Coaching et progression**
+**Catégorie 2 · Coaching et progression**
 5. **Discords de coachs CS2** : cherche sur Twitter les coachs et demande l'invitation
 6. **Aim Lab / Kovaak's communautés FR** : audience progress-minded
 7. **Discords d'équipes amateurs** (ESEA FR, Challengermode EU, ChampsEdge FR)
 
-**Catégorie 3 — Rôles spécifiques**
+**Catégorie 3 · Rôles spécifiques**
 8. **IGL / Leaders** : certains Discord niche pour caller et analyse tactique
 9. **AWPers FR** : petite communauté, engagement élevé
 10. **Analyste / Démo review** : cherche "demo review CS2 fr"
@@ -191,19 +191,19 @@ Retours bienvenus, c'est développé en solo donc chaque feedback change la road
 
 ---
 
-## Partie 4 — Reddit
+## Partie 4 · Reddit
 
 ### Les subs à viser
 
 **FR / dominantes** :
-- **r/CS2_FR** — communauté CS2 francophone. Audience ciblée. Vérifie leurs règles self-promo.
-- **r/jeuxvideo** — large mais très bruyant. Ne poste que si ton angle est vraiment original.
+- **r/CS2_FR** · communauté CS2 francophone. Audience ciblée. Vérifie leurs règles self-promo.
+- **r/jeuxvideo** · large mais très bruyant. Ne poste que si ton angle est vraiment original.
 
 **EN / internationales** (pour plus tard quand i18n EN est live) :
-- **r/cs2** — énorme (> 500k). Règles self-promo très strictes : tu dois d'abord avoir du karma et être actif.
-- **r/GlobalOffensive** — legacy CSGO sub. Encore actif pour les débats meta.
-- **r/counterstrike** — plus petit, plus chill.
-- **r/faceit** — parfait, mais sub petite.
+- **r/cs2** · énorme (> 500k). Règles self-promo très strictes : tu dois d'abord avoir du karma et être actif.
+- **r/GlobalOffensive** · legacy CSGO sub. Encore actif pour les débats meta.
+- **r/counterstrike** · plus petit, plus chill.
+- **r/faceit** · parfait, mais sub petite.
 
 ### Règles absolues
 
@@ -215,7 +215,7 @@ Retours bienvenus, c'est développé en solo donc chaque feedback change la road
 
 ### Template post Reddit (r/CS2_FR)
 
-**Titre** : `[Guide] J'ai testé la méthode data-driven pour progresser au CS2 — ce que j'ai appris en 30 jours`
+**Titre** : `[Guide] J'ai testé la méthode data-driven pour progresser au CS2 · ce que j'ai appris en 30 jours`
 
 **Body** :
 ```
@@ -247,7 +247,7 @@ Question pour vous : quelle méthode vous avez pour progresser sans juste farmer
 
 ---
 
-## Partie 5 — Process hebdomadaire
+## Partie 5 · Process hebdomadaire
 
 ### Planning type (4-6h/semaine)
 
@@ -264,8 +264,8 @@ Question pour vous : quelle méthode vous avez pour progresser sans juste farmer
 ### KPIs à suivre (hebdo)
 
 1. **DM envoyés** (volume brut)
-2. **Taux de réponse** (#répondants / #envoyés) — cible 20-30%
-3. **Taux de conversion** (#qui installent / #répondants) — cible 30-50%
+2. **Taux de réponse** (#répondants / #envoyés) · cible 20-30%
+3. **Taux de conversion** (#qui installent / #répondants) · cible 30-50%
 4. **Signups via lien de parrainage** (ton dashboard admin)
 5. **Parrainages par streamer actif** (certains sont de l'or, d'autres non)
 
@@ -275,7 +275,7 @@ Si un streamer Tier 2 amène **15+ signups en 2 semaines** via son lien, passe-l
 
 ---
 
-## Partie 6 — Tracking (Google Sheet template)
+## Partie 6 · Tracking (Google Sheet template)
 
 Crée un sheet avec 3 onglets :
 
@@ -300,7 +300,7 @@ Crée un sheet avec 3 onglets :
 
 ---
 
-## Partie 7 — UTM parameters
+## Partie 7 · UTM parameters
 
 Pour tracker l'origine des signups, utilise des UTM sur les liens de parrainage.
 
@@ -323,7 +323,7 @@ https://fragvalue.com/login.html?ref=S97ADMNH&utm_source=reddit&utm_medium=post&
 
 ---
 
-## Partie 8 — Red flags à éviter
+## Partie 8 · Red flags à éviter
 
 ❌ **Ne fais pas ça** :
 

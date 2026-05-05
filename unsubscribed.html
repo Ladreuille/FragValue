@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0A0C10">
+  <meta name="robots" content="noindex,follow">
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/fragvalue_icon.svg">
+  <title>Désinscription · FragValue</title>
+  <meta name="description" content="Confirmation de désinscription des emails marketing FragValue.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080909; --surface:#0f1010; --card:#131414;
+      --border:#1c1e1e; --border2:#252727;
+      --accent:#b8ff57; --accent2:#7ddd1a;
+      --warn:#f5c842;
+      --text:#e8eaea; --text2:#7a8080; --text3:#8a9090;
+      --mono:'Space Mono',monospace; --display:'Anton',sans-serif;
+    }
+    body{
+      background:var(--bg);color:var(--text);
+      font-family:var(--mono);min-height:100vh;
+      display:flex;flex-direction:column;
+      -webkit-font-smoothing:antialiased
+    }
+    body::before{
+      content:'';position:fixed;inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events:none;z-index:0;opacity:.4
+    }
+    .topbar{
+      padding:20px 32px;border-bottom:1px solid var(--border);
+      position:relative;z-index:2
+    }
+    .brand{
+      font-family:var(--display);font-size:22px;letter-spacing:.04em;
+      color:var(--text);text-decoration:none
+    }
+    .brand .accent{color:var(--accent)}
+    main{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      max-width:560px;margin:0 auto;padding:60px 28px;text-align:center;position:relative;z-index:1
+    }
+    .badge{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 14px;border-radius:999px;
+      font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;
+      margin-bottom:24px
+    }
+    .badge.ok{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.3)}
+    .badge.resub{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.3)}
+    .badge.invalid{background:rgba(245,200,66,.1);color:var(--warn);border:1px solid rgba(245,200,66,.3)}
+    .badge.error{background:rgba(255,87,87,.1);color:#ff5757;border:1px solid rgba(255,87,87,.3)}
+    h1{
+      font-family:var(--display);font-size:clamp(28px,5vw,42px);
+      letter-spacing:.02em;line-height:1.1;
+      color:var(--text);margin-bottom:18px
+    }
+    p.lead{
+      font-size:14px;color:var(--text2);line-height:1.7;
+      max-width:480px;margin-bottom:32px
+    }
+    .card{
+      width:100%;background:var(--card);
+      border:1px solid var(--border2);border-radius:12px;
+      padding:22px 24px;margin-bottom:24px;text-align:left
+    }
+    .card h2{
+      font-family:var(--display);font-size:16px;letter-spacing:.04em;
+      color:var(--text);margin-bottom:10px
+    }
+    .card p{font-size:13px;color:var(--text3);line-height:1.7;margin-bottom:8px}
+    .card p:last-child{margin-bottom:0}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:8px}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:6px;
+      padding:12px 22px;border-radius:8px;
+      font-family:var(--mono);font-size:12px;font-weight:700;
+      letter-spacing:.04em;text-transform:uppercase;
+      text-decoration:none;cursor:pointer;border:none;
+      transition:all .15s cubic-bezier(.2,.8,.25,1)
+    }
+    .btn.primary{background:var(--accent);color:#000}
+    .btn.primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    .btn.ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+    .btn.ghost:hover{color:var(--text);border-color:var(--text2)}
+    footer{
+      padding:24px 32px;border-top:1px solid var(--border);
+      text-align:center;position:relative;z-index:2
+    }
+    footer p{font-size:11px;color:var(--text3);line-height:1.6}
+    footer a{color:var(--text3);text-decoration:none}
+    footer a:hover{color:var(--text2)}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="brand">Frag<span class="accent">Value</span></a>
+  </header>
+
+  <main>
+    <div id="badge" class="badge ok">Statut</div>
+    <h1 id="title">Désinscription</h1>
+    <p class="lead" id="lead">Chargement de ton statut.</p>
+
+    <div class="card" id="resubCard" style="display:none">
+      <h2>Tu changes d'avis ?</h2>
+      <p>Tu peux te réinscrire à tout moment pour recevoir les annonces FragValue (nouvelles features, events community, deals exclusifs).</p>
+      <div class="actions">
+        <a id="resubBtn" href="#" class="btn primary">Me réinscrire</a>
+        <a href="/" class="btn ghost">Retour à la home</a>
+      </div>
+    </div>
+
+    <div class="card" id="errorCard" style="display:none">
+      <h2>Action impossible</h2>
+      <p id="errorReason">Le lien est invalide ou a été altéré.</p>
+      <p>Si le problème persiste, contacte <a href="mailto:contact@fragvalue.com" style="color:var(--accent)">contact@fragvalue.com</a> et on traite ton opt-out manuellement.</p>
+      <div class="actions">
+        <a href="/" class="btn ghost">Retour à la home</a>
+      </div>
+    </div>
+
+    <div class="card" id="okCard" style="display:none">
+      <h2>Ton compte FragValue reste actif</h2>
+      <p>Tu ne reçois plus d'emails marketing, mais tu continues à recevoir les emails essentiels (factures Stripe, alertes de sécurité, infos critiques sur ton abonnement).</p>
+      <p>Tu peux supprimer ton compte complet depuis <a href="/account.html" style="color:var(--accent)">/account.html</a> si tu souhaites tout couper.</p>
+      <div class="actions">
+        <a href="/" class="btn ghost">Retour à la home</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>FragValue · 969 rue de la Forêt de Disse, 01170 Gex, France · SIREN 104 054 788<br>
+      <a href="/">fragvalue.com</a> · <a href="/cgv.html">CGV</a> · <a href="/privacy.html">Privacy</a></p>
+  </footer>
+
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get('status') || 'unknown';
+      const reason = params.get('reason') || '';
+      const token = params.get('token') || '';
+
+      const badge = document.getElementById('badge');
+      const title = document.getElementById('title');
+      const lead = document.getElementById('lead');
+      const okCard = document.getElementById('okCard');
+      const resubCard = document.getElementById('resubCard');
+      const errorCard = document.getElementById('errorCard');
+      const errorReason = document.getElementById('errorReason');
+      const resubBtn = document.getElementById('resubBtn');
+
+      if (status === 'ok') {
+        badge.className = 'badge ok';
+        badge.textContent = 'Désinscription confirmée';
+        title.textContent = 'C\'est fait';
+        lead.textContent = 'Tu ne recevras plus d\'emails marketing de la part de FragValue. Cette désinscription est effective immédiatement.';
+        okCard.style.display = 'block';
+        resubCard.style.display = 'block';
+        if (token) resubBtn.href = '/api/unsubscribe?token=' + encodeURIComponent(token) + '&action=resubscribe';
+      } else if (status === 'resubscribed') {
+        badge.className = 'badge resub';
+        badge.textContent = 'Réinscription confirmée';
+        title.textContent = 'Bon retour';
+        lead.textContent = 'Tu recevras à nouveau les emails marketing FragValue (annonces, events, deals exclusifs). Tu pourras te désinscrire à tout moment via le lien en bas de chaque email.';
+      } else if (status === 'invalid') {
+        badge.className = 'badge invalid';
+        badge.textContent = 'Lien invalide';
+        title.textContent = 'Ce lien ne fonctionne pas';
+        lead.textContent = 'Le lien que tu as utilisé est invalide, expiré ou a été modifié. Tu peux te désinscrire manuellement en répondant à n\'importe quel email FragValue avec « STOP ».';
+        errorCard.style.display = 'block';
+        const reasonMap = {
+          missing_token: 'Aucun token dans l\'URL.',
+          token_format_invalid: 'Format de token incorrect.',
+          'signature mismatch': 'Signature du token invalide.',
+          'token base64url decode failed': 'Token corrompu.',
+          user_not_found: 'Aucun compte trouvé pour ce token.',
+        };
+        errorReason.textContent = reasonMap[reason] || 'Le lien est invalide ou a été altéré.';
+      } else if (status === 'error') {
+        badge.className = 'badge error';
+        badge.textContent = 'Erreur serveur';
+        title.textContent = 'Une erreur s\'est produite';
+        lead.textContent = 'Impossible de traiter ta demande pour l\'instant. Réessaie dans quelques minutes ou contacte le support.';
+        errorCard.style.display = 'block';
+        errorReason.textContent = 'Erreur serveur (code : ' + (reason || 'unknown') + ').';
+      } else {
+        badge.className = 'badge invalid';
+        badge.textContent = 'Statut inconnu';
+        title.textContent = 'Page de désinscription';
+        lead.textContent = 'Tu accèdes à cette page sans paramètre. Pour te désinscrire, utilise le lien dans le bas d\'un email FragValue.';
+      }
+    })();
+  </script>
+</body>
+</html>

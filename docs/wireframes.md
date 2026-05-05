@@ -1,4 +1,4 @@
-# Wireframes — Nouvelles pages
+# Wireframes · Nouvelles pages
 
 Layouts textuels (ASCII) des 5 nouvelles pages principales. Chaque section indique la densité, les interactions clés et les gates de plan.
 
@@ -11,7 +11,7 @@ Légende :
 
 ---
 
-## 1. `match-report.html` — Bilan round-by-round [PRO]
+## 1. `match-report.html` · Bilan round-by-round [PRO]
 
 Accessible depuis `heatmap-results.html` via bouton "Rapport Coach" et depuis `matches.html` via icône dédiée.
 
@@ -63,7 +63,7 @@ Accessible depuis `heatmap-results.html` via bouton "Rapport Coach" et depuis `m
 
 ---
 
-## 2. `pro-demos.html` — Pro demos viewer [PRO]
+## 2. `pro-demos.html` · Pro demos viewer [PRO]
 
 Page de browsing des matchs HLTV pros, ouvre dans `replay.html`.
 
@@ -105,7 +105,7 @@ Page de browsing des matchs HLTV pros, ouvre dans `replay.html`.
 
 ---
 
-## 3. `lineup-library.html` — Bibliothèque de lineups pros
+## 3. `lineup-library.html` · Bibliothèque de lineups pros
 
 Lecture en Free, filtrage + favoris en Pro, partage équipe en Elite.
 
@@ -156,7 +156,7 @@ Lecture en Free, filtrage + favoris en Pro, partage équipe en Elite.
 
 ---
 
-## 4. `team.html` — Team dashboard [ELITE]
+## 4. `team.html` · Team dashboard [ELITE]
 
 Espace équipe : stats agrégées, gestion membres, liens vers team features.
 
@@ -210,7 +210,7 @@ Espace équipe : stats agrégées, gestion membres, liens vers team features.
 
 ---
 
-## 5. `anti-strat.html` — Anti-strat tool [ELITE]
+## 5. `anti-strat.html` · Anti-strat tool [ELITE]
 
 Prep d'un match en analysant les tendances d'un opponent.
 
@@ -233,9 +233,9 @@ Prep d'un match en analysant les tendances d'un opponent.
 │  │  Side preference : T (60% des matchs)                          │ │
 │  │                                                                │ │
 │  │  EXECUTES T PRÉFÉRÉS (Dust2) :                                 │ │
-│  │  ● A long rush + CT smoke (4/5 matchs) — WR 75%                │ │
-│  │  ● B tunnels slow + mol down (3/5 matchs) — WR 50%             │ │
-│  │  ● Mid control → A short (2/5 matchs) — WR 50%                 │ │
+│  │  ● A long rush + CT smoke (4/5 matchs) · WR 75%                │ │
+│  │  ● B tunnels slow + mol down (3/5 matchs) · WR 50%             │ │
+│  │  ● Mid control → A short (2/5 matchs) · WR 50%                 │ │
 │  │                                                                │ │
 │  │  OUVERTURES T :                                                │ │
 │  │  ● Prend toujours mid en premier (confidence 90%)              │ │
@@ -275,7 +275,7 @@ Prep d'un match en analysant les tendances d'un opponent.
 
 ## 6. Pages existantes à retoucher
 
-### `index.html` — Refaire le hero
+### `index.html` · Refaire le hero
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │  FragValue   MON JEU▾  PROGRESSER▾  PROS▾  ÉQUIPE▾          👤 Cxn│
@@ -300,7 +300,7 @@ Prep d'un match en analysant les tendances d'un opponent.
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-### `pricing.html` — Matrice à jour
+### `pricing.html` · Matrice à jour
 Voir `architecture.md` section 3.
 
 ---

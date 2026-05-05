@@ -33,7 +33,7 @@ function resolveReplyTo(reply_to) {
 //                   (undefined = default contact@ ; null = aucun reply-to)
 //   in_reply_to   : Message-ID du mail parent (string avec < >)
 //   references    : chaine espace-separee de Message-ID (pour Gmail threading)
-export async function sendEmail({ to, subject, html, text, from, reply_to, in_reply_to, references }) {
+export async function sendEmail({ to, subject, html, text, from, reply_to, in_reply_to, references, headers: extraHeaders }) {
   if (!process.env.RESEND_API_KEY) {
     console.warn('[email] RESEND_API_KEY manquant - email ignore :', subject, '->', to);
     return { skipped: true };
@@ -44,7 +44,9 @@ export async function sendEmail({ to, subject, html, text, from, reply_to, in_re
   }
   // Headers de threading RFC 5322 : Gmail / Outlook les utilisent pour
   // regrouper les reponses dans le meme thread.
-  const headers = {};
+  // extraHeaders permet d'injecter List-Unsubscribe (RFC 2369) ou autres
+  // headers custom pour la deliverability / conformite.
+  const headers = { ...(extraHeaders || {}) };
   if (in_reply_to) headers['In-Reply-To'] = in_reply_to;
   if (references)  headers['References']  = references;
   try {

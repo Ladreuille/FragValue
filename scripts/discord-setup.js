@@ -231,7 +231,7 @@ async function main() {
   }
 
   console.log(`\n✅ Done. Created ${createdCategories} categories + ${createdChannels} channels. Skipped ${skippedCategories} categories + ${skippedChannels} channels (already existed).\n`);
-  if (DRY_RUN) console.log('(DRY RUN — no changes applied. Re-run without DRY_RUN=1 to apply.)\n');
+  if (DRY_RUN) console.log('(DRY RUN · no changes applied. Re-run without DRY_RUN=1 to apply.)\n');
 }
 
 main().catch(err => {

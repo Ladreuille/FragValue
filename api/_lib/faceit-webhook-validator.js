@@ -1,5 +1,5 @@
 // api/_lib/faceit-webhook-validator.js
-// Validation des webhooks FACEIT — supporte 2 modes d'auth :
+// Validation des webhooks FACEIT · supporte 2 modes d'auth :
 //
 // 1. STATIC HEADER (recommande, conforme doc FACEIT actuelle)
 //    FACEIT laisse le user choisir un header name + valeur statique a
@@ -34,7 +34,7 @@ const SIGNATURE_HEADERS = [
 ];
 
 // Header attendu pour le mode STATIC (configurable via env var).
-// Default 'x-faceit-token' — l'user definit le meme nom dans App Studio.
+// Default 'x-faceit-token' · l'user definit le meme nom dans App Studio.
 function getStaticHeaderName() {
   const v = process.env.FACEIT_WEBHOOK_AUTH_HEADER || 'X-FACEIT-Token';
   return String(v).toLowerCase();

@@ -1,4 +1,4 @@
-# FragValue — Architecture produit
+# FragValue · Architecture produit
 
 Source of truth pour la structure du site, les tiers d'abonnement et la roadmap. À consulter avant d'ajouter une page, un feature ou un gate d'abonnement.
 
@@ -18,8 +18,8 @@ FragValue est une plateforme d'analyse de démos CS2 pour joueurs FACEIT, équip
 - DNS : fragvalue.com
 
 **Repos** :
-- `Ladreuille/FragValue` (frontend) — `/Users/quentin/Documents/Fragvalue/GitHub/GitHub/FragValue`
-- Parser (non git-tracked localement) — `/Users/quentin/Documents/Fragvalue/GitHub/fragvalue-demo-parser`
+- `Ladreuille/FragValue` (frontend) · `/Users/quentin/Documents/Fragvalue/GitHub/GitHub/FragValue`
+- Parser (non git-tracked localement) · `/Users/quentin/Documents/Fragvalue/GitHub/fragvalue-demo-parser`
 
 ---
 
@@ -60,8 +60,8 @@ Tier gating post-launch :
 - Elite : filtres recruteurs avancés (rôle / région / niveau / free agent), metadata complete, pages profil privées
 
 Endpoints :
-- `GET /api/scout-rankings?type=global&limit=50` — leaderboard paginé
-- `GET /api/scout-waitlist-status` — compteur + progress threshold
+- `GET /api/scout-rankings?type=global&limit=50` · leaderboard paginé
+- `GET /api/scout-waitlist-status` · compteur + progress threshold
 
 Tables Supabase :
 - `player_rankings` (snapshot actuel par type)
@@ -185,7 +185,7 @@ Outils tactiques pour équipes compétitives et coaches.
 
 ## 5. Roadmap de build
 
-### Q2 (2 mois) — Consolider Pro
+### Q2 (2 mois) · Consolider Pro
 
 - [ ] **KPIs Tier 1** dans `heatmap-results.html` : entry success rate, trade rate, flash assists, util damage, HS contextuel
 - [ ] **Match Report page** (`match-report.html`) : bilan round-by-round avec pivots
@@ -195,7 +195,7 @@ Outils tactiques pour équipes compétitives et coaches.
 - [ ] **Navbar 4 sections** : déployée sur toutes les pages
 - [ ] **pricing.html** : matrice mise à jour (done via artefact ici)
 
-### Q3 (2 mois) — Lancer Elite
+### Q3 (2 mois) · Lancer Elite
 
 - [ ] **Scraper HLTV automatique** (cron quotidien)
 - [ ] **Clustering setups** (Python worker dédié pour K-means/DBSCAN)
@@ -204,7 +204,7 @@ Outils tactiques pour équipes compétitives et coaches.
 - [ ] **Prep veto** (`prep-veto.html`)
 - [ ] **Ouverture du tier Elite** (retirer "BIENTÔT" sur pricing.html)
 
-### Q4 (2 mois) — Scaler l'intelligence
+### Q4 (2 mois) · Scaler l'intelligence
 
 - [ ] **Coach IA narratif LLM** : Claude API avec prompts structurés
 - [ ] **Anti-strat tool** (`anti-strat.html`) : pattern detection sur 5-10 derniers matchs opponent
@@ -332,14 +332,14 @@ if (plan !== 'elite') {
 }
 ```
 
-**Jamais** de gate uniquement CSS (`display:none`) — l'utilisateur peut inspecter le DOM et bypass.
+**Jamais** de gate uniquement CSS (`display:none`) · l'utilisateur peut inspecter le DOM et bypass.
 
 ---
 
 ## 9. Fichiers à consulter
 
-- `pricing.html` — source de vérité sur ce qui est vendu et à quel prix
-- `docs/wireframes.md` — wireframes ASCII des nouvelles pages
-- `common.js` — logique partagée (auth, plan gating, renderNav)
-- `common.css` — styles partagés
-- `supabase-migration.sql` — schema DB actuel
+- `pricing.html` · source de vérité sur ce qui est vendu et à quel prix
+- `docs/wireframes.md` · wireframes ASCII des nouvelles pages
+- `common.js` · logique partagée (auth, plan gating, renderNav)
+- `common.css` · styles partagés
+- `supabase-migration.sql` · schema DB actuel

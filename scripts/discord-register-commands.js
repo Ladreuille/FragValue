@@ -76,7 +76,7 @@ async function main() {
   const registered = await res.json();
   console.log(`✅ Registered ${registered.length} commands :`);
   for (const cmd of registered) {
-    console.log(`  /${cmd.name.padEnd(15)} — ${cmd.description}`);
+    console.log(`  /${cmd.name.padEnd(15)} · ${cmd.description}`);
   }
   console.log(`\n${GUILD_ID
     ? '⚡ Guild commands : disponibles immediatement dans le serveur.'

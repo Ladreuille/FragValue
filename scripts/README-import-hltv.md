@@ -1,4 +1,4 @@
-# Import HLTV en CLI — FragValue
+# Import HLTV en CLI · FragValue
 
 Outil pour ingérer des matchs pro depuis HLTV en une commande.
 
@@ -14,7 +14,7 @@ Outil pour ingérer des matchs pro depuis HLTV en une commande.
 
 **Conclusion** : le script récupère ~80% du match (toutes les méta visibles dans la liste). Pour les **scorecards détaillés** (K/D/A/ADR/KAST/Rating par joueur), il faut compléter via l'admin UI (~5 min/map).
 
-Si tu as besoin d'auto-fetch 100% des scorecards (pour scaler sans saisie manuelle), passe à **ScrapingBee Premium** ($49/mo) — wire en 10 min, je peux le faire quand tu veux.
+Si tu as besoin d'auto-fetch 100% des scorecards (pour scaler sans saisie manuelle), passe à **ScrapingBee Premium** ($49/mo) · wire en 10 min, je peux le faire quand tu veux.
 
 ## Setup (une seule fois)
 

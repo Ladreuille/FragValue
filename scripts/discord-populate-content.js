@@ -180,9 +180,9 @@ async function main() {
 
   console.log(`\n✅ Done. Posted ${stats.posted} messages, pinned ${stats.pinned}.`);
   if (stats.skippedAlreadyPinned > 0) console.log(`   Skipped ${stats.skippedAlreadyPinned} channels (already populated).`);
-  if (stats.channelNotFound > 0) console.log(`   ⚠️  ${stats.channelNotFound} channels not found — run scripts/discord-setup.js first?`);
+  if (stats.channelNotFound > 0) console.log(`   ⚠️  ${stats.channelNotFound} channels not found · run scripts/discord-setup.js first?`);
   console.log('');
-  if (DRY_RUN) console.log('(DRY RUN — no changes applied. Re-run without DRY_RUN=1 to apply.)\n');
+  if (DRY_RUN) console.log('(DRY RUN · no changes applied. Re-run without DRY_RUN=1 to apply.)\n');
 }
 
 main().catch(err => {

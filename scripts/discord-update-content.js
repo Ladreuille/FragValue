@@ -152,11 +152,11 @@ async function main() {
   }
 
   console.log(`\n✅ Done. Updated ${stats.updated}, skipped ${stats.skippedNoChange} (no change).`);
-  if (stats.skippedNoBotMessage > 0) console.log(`   ⚠️  ${stats.skippedNoBotMessage} channels without bot message — run discord-populate-content.js`);
+  if (stats.skippedNoBotMessage > 0) console.log(`   ⚠️  ${stats.skippedNoBotMessage} channels without bot message · run discord-populate-content.js`);
   if (stats.channelNotFound > 0) console.log(`   ⚠️  ${stats.channelNotFound} channels not found`);
   if (stats.failed > 0) console.log(`   ❌ ${stats.failed} failures`);
   console.log('');
-  if (DRY_RUN) console.log('(DRY RUN — no changes applied. Re-run without DRY_RUN=1 to apply.)\n');
+  if (DRY_RUN) console.log('(DRY RUN · no changes applied. Re-run without DRY_RUN=1 to apply.)\n');
 }
 
 main().catch(err => {

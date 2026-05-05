@@ -49,7 +49,7 @@ const { createClient } = require('@supabase/supabase-js');
 const HLTV = require('hltv').default;
 
 // Playwright helper chargé a la demande (evite d'instancier Chromium
-// si on n'en a pas besoin — ex. mode manuel d'IDs qui passent via le
+// si on n'en a pas besoin · ex. mode manuel d'IDs qui passent via le
 // package hltv sans bloquer).
 let _pw = null;
 function pw() {

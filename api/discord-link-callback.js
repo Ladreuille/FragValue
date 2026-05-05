@@ -22,6 +22,7 @@ import {
   getMe,
   addUserToGuild,
   syncUserPlan,
+  assignRole,
   DiscordApiError,
 } from './_lib/discord.js';
 
@@ -148,6 +149,19 @@ export default async function handler(req, res) {
       console.log(`[discord-link-callback] synced ${userId} -> Discord ${discordId} (plan ${plan}):`, sync);
     } catch (err) {
       console.warn('[discord-link-callback] syncUserPlan failed (non-blocking):', err.message);
+    }
+
+    // 10b. Si on a un role @Early configure (DISCORD_ROLE_ID_EARLY), on l'assigne
+    // a tous les nouveaux liens jusqu'a ce que la var soit retiree (= permet
+    // de couper la fenetre "early" quand le serveur grossit). Best-effort.
+    const roleEarly = process.env.DISCORD_ROLE_ID_EARLY;
+    if (roleEarly) {
+      try {
+        await assignRole(discordId, roleEarly);
+        console.log(`[discord-link-callback] assigned @Early to ${discordId}`);
+      } catch (err) {
+        console.warn('[discord-link-callback] assignRole @Early failed (non-blocking):', err.message);
+      }
     }
 
     // 11. Redirect vers le front avec status linked

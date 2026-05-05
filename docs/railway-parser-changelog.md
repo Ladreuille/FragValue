@@ -1,10 +1,10 @@
-# Railway Parser — Changelog technique
+# Railway Parser · Changelog technique
 
 Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/fragvalue-demo-parser/`)
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
-## 2026-04-17 — Durees grenades exactes + timers client en secondes reelles
+## 2026-04-17 · Durees grenades exactes + timers client en secondes reelles
 
 Les demos FACEIT tournent a **128 tick/s** (confirme par headers des demos).
 Les durees parser etaient deja en 128 tick mais le client divisait par 64
@@ -12,10 +12,10 @@ Les durees parser etaient deja en 128 tick mais le client divisait par 64
 
 ### Parser (durees corrigees pour CS2 2025)
 
-- Smoke : 2304 ticks (18.0s) — inchange, deja correct
+- Smoke : 2304 ticks (18.0s) · inchange, deja correct
 - Flash : 192 → **64 ticks** (1.5s → 0.5s, duree visuelle carte uniquement)
-- HE    : 64 ticks (0.5s pulse visuel) — inchange
-- Molo  : 896 ticks (7.0s) — inchange, deja correct
+- HE    : 64 ticks (0.5s pulse visuel) · inchange
+- Molo  : 896 ticks (7.0s) · inchange, deja correct
 - Decoy : 1920 → **2304 ticks** (15s → 18s carte ; le son dure ~45s mais on
   garde le visuel court pour la lisibilite)
 
@@ -25,7 +25,7 @@ Les durees parser etaient deja en 128 tick mais le client divisait par 64
 - Bombe C4 timer : `40 * 64` → `40 * 128` (40s reels) + `/64` → `/128`
 - Buffer post-event : `+192` → `+384` (3s reels apres defuse/explode)
 
-## 2026-04-17 — Hotfix parser crash (inventory_as_string + bomb isolation)
+## 2026-04-17 · Hotfix parser crash (inventory_as_string + bomb isolation)
 
 La demo parsait correctement les 20 rounds mais crashait apres "Rounds: 20" :
 le champ `inventory` dans parseTicks n'est pas supporte par toutes les
@@ -43,7 +43,7 @@ versions de demoparser2, et le champ `site` dans bomb_planted non plus.
 Sans ce fix, le parser redemarrait en boucle apres "Rounds: 20" → le client
 recevait "Failed to fetch" (pas de reponse HTTP → pas de CORS headers).
 
-## 2026-04-17 — Bomb events + inventaire grenades par joueur
+## 2026-04-17 · Bomb events + inventaire grenades par joueur
 
 ### Bomb events
 
@@ -66,7 +66,7 @@ On compte par joueur et par tick :
 Cote client : `frame.players[name].smk/fl/heg/mol/dec/c4` disponibles a chaque
 tick interpole, utilises par le HUD pour afficher les icones grenades.
 
-## 2026-04-17 — Fallback round_end pour rounds non detectes
+## 2026-04-17 · Fallback round_end pour rounds non detectes
 
 `round_freeze_end` peut rater le dernier round si le demo se termine juste
 apres le round decisif (pas de buy phase suivante). Resultat : MR12 qui finit
@@ -84,7 +84,7 @@ Ajout de `parseEvent(demoPath, 'round_end', ...)` comme fallback pour :
    apres `round_announce_win` si ce dernier est vide. Le champ est frequemment
    renseigne dans les demos FACEIT meme quand `round_announce_win` ne fire pas.
 
-## 2026-04-17 — HE detonTick precis (recale sur event)
+## 2026-04-17 · HE detonTick precis (recale sur event)
 
 Le dernier point de `parseGrenades` continue parfois d'etre tracke 2-4 ticks
 apres l'explosion reelle d'une HE (le projectile a un "ghost state"). Le client
@@ -104,7 +104,7 @@ Pas de changement pour smokes/molotov/decoy : leurs events ont des timings
 differents (smoke_started != smoke_expired, inferno_startburn est le debut de
 flamme pas le lancer), donc le lastPoint du path reste la meilleure source.
 
-## 2026-04-17 — Fix trajectoires grenades (rebonds)
+## 2026-04-17 · Fix trajectoires grenades (rebonds)
 
 Ajout de l'extraction des trajectoires complètes via `parseGrenades` du SDK
 `@laihoe/demoparser2`, avec matching robuste aux grenades existantes.
@@ -128,8 +128,8 @@ Ajout de l'extraction des trajectoires complètes via `parseGrenades` du SDK
    - Tri des points par tick croissant
 
 3. **Refonte du mapping grenade → trajectoire/détonation** :
-   - **Tier A — match par nom exact** : `t.thrower === g.thrower`, fenêtre tick ≤ 512
-   - **Tier B — fallback spatial** : mismatch nom autorisé si distance < 200px + tickDelta ≤ 128
+   - **Tier A · match par nom exact** : `t.thrower === g.thrower`, fenêtre tick ≤ 512
+   - **Tier B · fallback spatial** : mismatch nom autorisé si distance < 200px + tickDelta ≤ 128
    - Scoring pénalise le mismatch nom pour préférer les matches Tier A quand possible
    - Fenêtre temporelle tolérante : `first.tick ≤ g.tick + 3500` (smokes durent ~2300 ticks)
 

@@ -136,7 +136,7 @@ async function main() {
   if (KEEP_LAST) console.log(`   Kept ${totalKept} latest messages (1 per channel).`);
   if (totalErrors > 0) console.log(`   ⚠️  ${totalErrors} errors.`);
   console.log('');
-  if (DRY_RUN) console.log('(DRY RUN — no changes applied. Re-run without DRY_RUN=1 to apply.)\n');
+  if (DRY_RUN) console.log('(DRY RUN · no changes applied. Re-run without DRY_RUN=1 to apply.)\n');
 }
 
 main().catch(err => {
