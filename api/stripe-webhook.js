@@ -33,6 +33,16 @@ function isValidUuid(s) {
   return typeof s === 'string' && UUID_RE.test(s);
 }
 
+// Stripe peut renvoyer null/undefined pour current_period_* sur certains states
+// transitoires (incomplete_expired, trialing pre-paiement, sub cancelled-then-reactivated).
+// Eviter RangeError "Invalid time value" en retournant null au lieu de crash.
+function tsToIso(unixSec) {
+  if (unixSec == null || typeof unixSec !== 'number' || !Number.isFinite(unixSec)) return null;
+  const ms = unixSec * 1000;
+  const d = new Date(ms);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -217,8 +227,8 @@ export default async function handler(req, res) {
           stripe_customer_id: session.customer,
           plan: planMeta,
           status: subscription.status,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          current_period_start: tsToIso(subscription.current_period_start),
+          current_period_end: tsToIso(subscription.current_period_end),
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
 
@@ -267,7 +277,7 @@ export default async function handler(req, res) {
             const t = tpl.checkoutSuccess({
               nickname: profile?.faceit_nickname || userEmail.split('@')[0],
               plan: planMeta,
-              periodEndIso: new Date(subscription.current_period_end * 1000).toISOString(),
+              periodEndIso: tsToIso(subscription.current_period_end),
             });
             await sendEmail({ to: userEmail, subject: t.subject, html: t.html, text: t.text });
             console.log(`[Stripe] Checkout success email sent to ${userEmail}`);
@@ -305,8 +315,8 @@ export default async function handler(req, res) {
           stripe_customer_id: sub.customer,
           plan: planMeta2,
           status: sub.status,
-          current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+          current_period_start: tsToIso(sub.current_period_start),
+          current_period_end: tsToIso(sub.current_period_end),
           // Propage le flag : TRUE si user a clique "Annuler" dans Stripe Portal
           // mais que la subscription reste active jusqu'a current_period_end.
           // Permet a l'UI de montrer "Annulation programmee pour le X".
@@ -449,8 +459,8 @@ export default async function handler(req, res) {
           const sub = await stripe.subscriptions.retrieve(invoice.subscription);
           await sb.from('subscriptions').update({
             status: sub.status, // 'active' apres 1er paiement reussi
-            current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
-            current_period_end:   new Date(sub.current_period_end * 1000).toISOString(),
+            current_period_start: tsToIso(sub.current_period_start),
+            current_period_end:   tsToIso(sub.current_period_end),
             updated_at: new Date().toISOString(),
           }).eq('stripe_subscription_id', invoice.subscription);
 
