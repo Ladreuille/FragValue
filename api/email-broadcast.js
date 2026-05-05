@@ -295,11 +295,13 @@ export default async function handler(req, res) {
     }
 
     // Slug d'identification du broadcast (utilise pour idempotence + log).
-    // Pour singleEmail, on suffixe l'email pour eviter les collisions cross-test.
+    // Pour singleEmail, on suffixe l'email + timestamp ms pour rendre le slug
+    // unique a chaque tentative (tu dois pouvoir relancer le test 10x dans la
+    // journee sans collision sur la contrainte UNIQUE de email_broadcast_log).
     const dayKey = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
     const subjectSlug = subject.slice(0, 60).replace(/[^a-zA-Z0-9]/g, '_');
     const broadcastSlug = singleEmail
-      ? `${templateKey}_${dayKey}_${subjectSlug}_${singleEmail.replace(/[^a-zA-Z0-9]/g, '_')}`
+      ? `${templateKey}_${dayKey}_${subjectSlug}_${singleEmail.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`
       : `${templateKey}_${dayKey}_${subjectSlug}`;
 
     // Anti-double-broadcast (1 broadcast unique par subject + templateKey + day).
