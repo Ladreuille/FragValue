@@ -2,7 +2,7 @@
 //
 // Assigne le role @Early aux membres du guild Discord FragValue qui ne l'ont
 // pas encore. Couvre le cas des users qui rejoignent via le lien d'invitation
-// direct (discord.gg/fragvalue) sans passer par le flow OAuth FragValue.
+// direct (discord.gg/Z4PsRKVsN) sans passer par le flow OAuth FragValue.
 //
 // Pourquoi un cron et pas un event listener :
 //   - Discord ne supporte pas de webhook HTTP pour GUILD_MEMBER_ADD

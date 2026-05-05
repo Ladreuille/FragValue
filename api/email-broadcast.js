@@ -64,7 +64,7 @@ function buildTemplate(key, data, recipientEmail, unsubUrl) {
 
   if (key === 'discord_launch') {
     const subject = data?.subject || `On vient de lancer le Discord FragValue, viens taper la discu`;
-    const ctaUrl = data?.discordInvite || 'https://discord.gg/fragvalue';
+    const ctaUrl = data?.discordInvite || 'https://discord.gg/Z4PsRKVsN';
     const html = wrapHtml(subject, `
       <h1 style="font-family:Anton,sans-serif;font-size:28px;line-height:1.15;color:#e8eaea;margin:0 0 18px;font-weight:800">On vient de lancer notre <span style="color:#b8ff57">Discord community</span></h1>
 
