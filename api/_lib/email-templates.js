@@ -513,4 +513,70 @@ L'equipe FragValue`;
   return { subject, html, text };
 }
 
-module.exports = { welcome, checkoutSuccess, trialExpiringJ3, coachCreditsPurchased, cancellationConfirmation, yearlyRenewalNotice, paymentFailed, demoAnalysisReady };
+// Day 3 follow-up pour Free users actifs (ils ont analyse au moins 1 demo)
+// qui n'ont pas upgrade. Levier conversion principal : ils ont vu la valeur
+// du Diagnostic IA, mais sont limites a 3 analyses/mois.
+//
+// Send conditions (cf. cron/free-day3-followup.js) :
+//   - subscription_tier = 'free'
+//   - created_at = NOW() - 3 jours
+//   - au moins 1 demo dans demos table
+//   - marketing_opt_out = false
+//
+// Cible : ~30% des signups ouvrent ce mail, ~5-10% upgrade selon benchmarks
+// SaaS lifecycle marketing.
+function day3FollowupFree({ nickname, demosCount, fvRating }) {
+  const subject = `${nickname}, 3 jours sur FragValue · ce qui change avec Pro`;
+  const fvLine = fvRating
+    ? `Ton FV Rating moyen sur tes ${demosCount} analyse(s) : <strong style="color:#b8ff57">${fvRating}</strong>.`
+    : `Tu as deja lance ${demosCount} analyse(s) de demo.`;
+  const html = wrap(subject, `
+    <h1 style="font-family:Anton,sans-serif;font-size:26px;line-height:1.15;color:#e8eaea;margin:0 0 18px;font-weight:800">3 jours plus tard, ${String(nickname || 'joueur').replace(/[<>"&]/g, '')},</h1>
+
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 18px;line-height:1.6">${fvLine} Pas mal pour un demarrage. Voici ce que tu vas pouvoir faire de plus en passant Pro.</p>
+
+    <div style="padding:18px 20px;background:rgba(184,255,87,.04);border:1px solid rgba(184,255,87,.2);border-radius:10px;margin-bottom:20px">
+      <div style="font-size:11px;color:#b8ff57;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">Ce qui change avec Pro</div>
+      <ul style="margin:0;padding-left:20px;font-size:13px;color:#a8b0b0;line-height:1.8">
+        <li><strong style="color:#e8eaea">Analyses illimitees</strong> · plus de cap a 3/mois, tu refresh apres chaque match FACEIT</li>
+        <li><strong style="color:#e8eaea">Coach IA chat 5 messages/jour</strong> · tu poses des questions ciblees sur tes patterns</li>
+        <li><strong style="color:#e8eaea">2D Replay interactif</strong> · re-joue tes rounds clutch frame par frame</li>
+        <li><strong style="color:#e8eaea">KPIs avances</strong> · KAST, opening duels WR, multi-kills, trade rate</li>
+        <li><strong style="color:#e8eaea">Heatmaps tactiques</strong> · ou tu meurs / tu kill, par map et par side</li>
+      </ul>
+    </div>
+
+    <p style="font-size:13px;color:#a8b0b0;margin:0 0 16px;line-height:1.7">9 EUR/mois, sans engagement, annulable en 1 clic. Si tu n'es pas satisfait dans les 14 premiers jours, on rembourse integralement (Code consommation art. L221-28-13).</p>
+
+    <p style="text-align:center;margin:28px 0">
+      <a href="${BASE_URL}/pricing.html?utm_source=email&utm_medium=lifecycle&utm_campaign=day3_followup" style="display:inline-block;background:#b8ff57;color:#000;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.04em;font-family:'Space Mono',monospace">Voir les plans</a>
+    </p>
+
+    <p style="font-size:12px;color:#7a8080;margin:18px 0 0;line-height:1.6">Tu prefere rester en Free ? Aucun probleme. Tu peux acheter des packs de credits Coach IA a la demande sur <a href="${BASE_URL}/account.html?utm_source=email&utm_medium=lifecycle&utm_campaign=day3_followup" style="color:#b8ff57;text-decoration:underline">/account.html</a> sans abonnement.</p>
+
+    <p style="font-size:12px;color:#7a8080;margin:14px 0 0;line-height:1.6">Bonne progression,<br><strong style="color:#a8b0b0">FragValue</strong></p>
+  `);
+  const text = `3 jours plus tard, ${nickname}.
+
+${fvRating ? `Ton FV Rating moyen sur tes ${demosCount} analyse(s) : ${fvRating}` : `Tu as deja lance ${demosCount} analyse(s) de demo`}. Pas mal pour un demarrage.
+
+Ce qui change avec Pro :
+- Analyses illimitees (plus de cap a 3/mois, refresh apres chaque match FACEIT)
+- Coach IA chat 5 messages/jour pour des questions ciblees
+- 2D Replay interactif
+- KPIs avances (KAST, opening duels WR, multi-kills)
+- Heatmaps tactiques
+
+9 EUR/mois, sans engagement, annulable en 1 clic. Satisfait ou rembourse 14 jours.
+
+Voir les plans : ${BASE_URL}/pricing.html?utm_source=email&utm_medium=lifecycle&utm_campaign=day3_followup
+
+Tu prefere rester en Free ? Aucun probleme. Packs credits Coach IA a la demande sur ${BASE_URL}/account.html.
+
+Bonne progression,
+FragValue
+`;
+  return { subject, html, text };
+}
+
+module.exports = { welcome, checkoutSuccess, trialExpiringJ3, coachCreditsPurchased, cancellationConfirmation, yearlyRenewalNotice, paymentFailed, demoAnalysisReady, day3FollowupFree };
