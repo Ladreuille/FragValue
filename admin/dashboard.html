@@ -88,6 +88,7 @@ h1{font-family:var(--display);font-size:30px;letter-spacing:.02em}
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" onclick="loadDashboard()">Refresh</button>
+      <button class="btn" onclick="testOpsAlert()" title="Envoie une alerte test sur le webhook Discord ops">Test alerte ops</button>
       <a href="/admin/broadcast.html" class="btn">Broadcast</a>
       <a href="/admin/feedback.html" class="btn">Feedback</a>
       <a href="/admin/waitlist.html" class="btn">Waitlist</a>
@@ -323,6 +324,32 @@ async function loadDashboard() {
   } catch (err) {
     showErr('Erreur reseau : ' + (err.message || err));
     document.getElementById('refreshInfo').textContent = 'Erreur';
+  }
+}
+
+async function testOpsAlert() {
+  showErr('');
+  document.getElementById('errMsg').style.display = 'none';
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { showErr('Non connecte. Logge-toi avec un compte admin.'); return; }
+    const res = await fetch('/api/admin-test-alert', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    const d = await res.json();
+    if (!res.ok) { showErr('Erreur : ' + (d.error || res.status)); return; }
+    if (!d.configured) {
+      alert('DISCORD_WEBHOOK_ALERTS pas configure sur Vercel.\n\nVa sur Vercel > Settings > Environment Variables et ajoute DISCORD_WEBHOOK_ALERTS avec l URL du webhook Discord.');
+      return;
+    }
+    if (d.sent) {
+      alert('Alerte test envoyee. Verifie ton channel Discord ops, tu dois voir un message "Test alert depuis admin dashboard".');
+    } else {
+      alert('Webhook configure mais l envoi a foire : ' + JSON.stringify(d.result || {}));
+    }
+  } catch (err) {
+    showErr('Erreur reseau : ' + (err.message || err));
   }
 }
 
