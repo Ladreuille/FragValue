@@ -45,59 +45,105 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Product",
-  "name": "FragValue Pro",
-  "description": "Coach IA personnalisé pour CS2 FACEIT : analyses de démos sans limite, Diagnostic IA refresh à chaque match, Chat Coach IA 5 msg/jour (Pro) ou 30 msg/jour (Elite), 2D replay, heatmaps, KPIs avancés, export PDF, comparaison joueurs.",
-  "brand": { "@type": "Brand", "name": "FragValue" },
-  "offers": [
+  "@graph": [
     {
-      "@type": "Offer",
-      "name": "Free",
-      "price": "0",
-      "priceCurrency": "EUR",
-      "url": "https://fragvalue.com/pricing.html",
-      "availability": "https://schema.org/InStock",
-      "description": "3 analyses/mois, Coach IA 1x/mois, heatmaps basiques"
+      "@id": "https://fragvalue.com/#shipping-digital",
+      "@type": "OfferShippingDetails",
+      "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "EUR" },
+      "shippingDestination": [
+        { "@type": "DefinedRegion", "geoTargetName": "FR" },
+        { "@type": "DefinedRegion", "geoTargetName": "BE" },
+        { "@type": "DefinedRegion", "geoTargetName": "CH" },
+        { "@type": "DefinedRegion", "geoTargetName": "LU" },
+        { "@type": "DefinedRegion", "geoTargetName": "CA" }
+      ],
+      "deliveryTime": {
+        "@type": "ShippingDeliveryTime",
+        "handlingTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 0, "unitCode": "DAY" },
+        "transitTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 0, "unitCode": "DAY" }
+      }
     },
     {
-      "@type": "Offer",
-      "name": "Pro mensuel",
-      "price": "9.00",
-      "priceCurrency": "EUR",
-      "url": "https://fragvalue.com/pricing.html",
-      "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-12-31",
-      "description": "Analyses de démos sans limite, Diagnostic IA refresh par match, Chat Coach IA 5 messages/jour (crédits suppl. dispo), 2D replay, KPIs avancés. Sans engagement, annulation en 1 clic, droit de rétractation 14j."
+      "@id": "https://fragvalue.com/#return-14d",
+      "@type": "MerchantReturnPolicy",
+      "applicableCountry": ["FR", "BE", "CH", "LU", "CA"],
+      "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+      "merchantReturnDays": 14,
+      "returnMethod": "https://schema.org/ReturnByMail",
+      "returnFees": "https://schema.org/FreeReturn",
+      "returnPolicyCountry": "FR"
     },
     {
-      "@type": "Offer",
-      "name": "Pro annuel",
-      "price": "79.00",
-      "priceCurrency": "EUR",
-      "url": "https://fragvalue.com/pricing.html",
-      "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-12-31",
-      "description": "Équivaut à 2 mois offerts. Sans engagement, annulation en 1 clic."
-    },
-    {
-      "@type": "Offer",
-      "name": "Elite mensuel",
-      "price": "29.00",
-      "priceCurrency": "EUR",
-      "url": "https://fragvalue.com/pricing.html",
-      "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-12-31",
-      "description": "Tout Pro + Chat Coach IA 30 messages/jour + team tools (anti-strat, prep veto, pro benchmarks)."
-    },
-    {
-      "@type": "Offer",
-      "name": "Elite annuel",
-      "price": "290.00",
-      "priceCurrency": "EUR",
-      "url": "https://fragvalue.com/pricing.html",
-      "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-12-31",
-      "description": "Equivaut a 2 mois offerts. Tout Pro + 30 msg/jour Coach IA + team tools."
+      "@type": "Product",
+      "name": "FragValue Pro",
+      "description": "Coach IA personnalisé pour CS2 FACEIT : analyses de démos sans limite, Diagnostic IA refresh à chaque match, Chat Coach IA 5 msg/jour (Pro) ou 30 msg/jour (Elite), 2D replay, heatmaps, KPIs avancés, export PDF, comparaison joueurs.",
+      "image": [
+        "https://fragvalue.com/og/home.png",
+        "https://fragvalue.com/og/analysis.png",
+        "https://fragvalue.com/og/heatmap.png"
+      ],
+      "brand": { "@type": "Brand", "name": "FragValue" },
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free",
+          "price": "0",
+          "priceCurrency": "EUR",
+          "url": "https://fragvalue.com/pricing.html",
+          "availability": "https://schema.org/InStock",
+          "description": "3 analyses/mois, Coach IA 1x/mois, heatmaps basiques",
+          "shippingDetails": { "@id": "https://fragvalue.com/#shipping-digital" },
+          "hasMerchantReturnPolicy": { "@id": "https://fragvalue.com/#return-14d" }
+        },
+        {
+          "@type": "Offer",
+          "name": "Pro mensuel",
+          "price": "9.00",
+          "priceCurrency": "EUR",
+          "url": "https://fragvalue.com/pricing.html",
+          "availability": "https://schema.org/InStock",
+          "priceValidUntil": "2026-12-31",
+          "description": "Analyses de démos sans limite, Diagnostic IA refresh par match, Chat Coach IA 5 messages/jour (crédits suppl. dispo), 2D replay, KPIs avancés. Sans engagement, annulation en 1 clic, droit de rétractation 14j.",
+          "shippingDetails": { "@id": "https://fragvalue.com/#shipping-digital" },
+          "hasMerchantReturnPolicy": { "@id": "https://fragvalue.com/#return-14d" }
+        },
+        {
+          "@type": "Offer",
+          "name": "Pro annuel",
+          "price": "79.00",
+          "priceCurrency": "EUR",
+          "url": "https://fragvalue.com/pricing.html",
+          "availability": "https://schema.org/InStock",
+          "priceValidUntil": "2026-12-31",
+          "description": "Équivaut à 2 mois offerts. Sans engagement, annulation en 1 clic.",
+          "shippingDetails": { "@id": "https://fragvalue.com/#shipping-digital" },
+          "hasMerchantReturnPolicy": { "@id": "https://fragvalue.com/#return-14d" }
+        },
+        {
+          "@type": "Offer",
+          "name": "Elite mensuel",
+          "price": "29.00",
+          "priceCurrency": "EUR",
+          "url": "https://fragvalue.com/pricing.html",
+          "availability": "https://schema.org/InStock",
+          "priceValidUntil": "2026-12-31",
+          "description": "Tout Pro + Chat Coach IA 30 messages/jour + team tools (anti-strat, prep veto, pro benchmarks).",
+          "shippingDetails": { "@id": "https://fragvalue.com/#shipping-digital" },
+          "hasMerchantReturnPolicy": { "@id": "https://fragvalue.com/#return-14d" }
+        },
+        {
+          "@type": "Offer",
+          "name": "Elite annuel",
+          "price": "290.00",
+          "priceCurrency": "EUR",
+          "url": "https://fragvalue.com/pricing.html",
+          "availability": "https://schema.org/InStock",
+          "priceValidUntil": "2026-12-31",
+          "description": "Équivaut à 2 mois offerts. Tout Pro + 30 msg/jour Coach IA + team tools.",
+          "shippingDetails": { "@id": "https://fragvalue.com/#shipping-digital" },
+          "hasMerchantReturnPolicy": { "@id": "https://fragvalue.com/#return-14d" }
+        }
+      ]
     }
   ]
 }

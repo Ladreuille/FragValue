@@ -45,59 +45,107 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Product",
-  "name": "FragValue Pro",
-  "description": "Personalized AI coach for CS2 FACEIT : unlimited demo uploads, AI Diagnostic refresh per match, AI Coach Chat 5 msg/day (Pro) or 30 msg/day (Elite), 2D replay, heatmaps, advanced KPIs, PDF export, multi-player comparison.",
-  "brand": { "@type": "Brand", "name": "FragValue" },
-  "offers": [
+  "@graph": [
     {
-      "@type": "Offer",
-      "name": "Free",
-      "price": "0",
-      "priceCurrency": "EUR",
-      "url": "https://fragvalue.com/pricing.html",
-      "availability": "https://schema.org/InStock",
-      "description": "3 analyses/month, AI Coach 1x/month, basic heatmaps"
+      "@id": "https://fragvalue.com/en/#shipping-digital",
+      "@type": "OfferShippingDetails",
+      "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "EUR" },
+      "shippingDestination": [
+        { "@type": "DefinedRegion", "geoTargetName": "FR" },
+        { "@type": "DefinedRegion", "geoTargetName": "BE" },
+        { "@type": "DefinedRegion", "geoTargetName": "CH" },
+        { "@type": "DefinedRegion", "geoTargetName": "LU" },
+        { "@type": "DefinedRegion", "geoTargetName": "CA" },
+        { "@type": "DefinedRegion", "geoTargetName": "GB" },
+        { "@type": "DefinedRegion", "geoTargetName": "US" }
+      ],
+      "deliveryTime": {
+        "@type": "ShippingDeliveryTime",
+        "handlingTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 0, "unitCode": "DAY" },
+        "transitTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 0, "unitCode": "DAY" }
+      }
     },
     {
-      "@type": "Offer",
-      "name": "Pro Monthly",
-      "price": "9.00",
-      "priceCurrency": "EUR",
-      "url": "https://fragvalue.com/pricing.html",
-      "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-12-31",
-      "description": "Unlimited analyses, Unlimited AI Diagnostic, Chat AI Coach 5 messages/day, 2D replay, Advanced KPIs. No commitment, cancel in 1 click."
+      "@id": "https://fragvalue.com/en/#return-14d",
+      "@type": "MerchantReturnPolicy",
+      "applicableCountry": ["FR", "BE", "CH", "LU", "CA", "GB", "US"],
+      "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+      "merchantReturnDays": 14,
+      "returnMethod": "https://schema.org/ReturnByMail",
+      "returnFees": "https://schema.org/FreeReturn",
+      "returnPolicyCountry": "FR"
     },
     {
-      "@type": "Offer",
-      "name": "Pro Yearly",
-      "price": "79.00",
-      "priceCurrency": "EUR",
-      "url": "https://fragvalue.com/pricing.html",
-      "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-12-31",
-      "description": "Équivaut à 2 months free. No commitment, cancel in 1 click."
-    },
-    {
-      "@type": "Offer",
-      "name": "Elite mensuel",
-      "price": "29.00",
-      "priceCurrency": "EUR",
-      "url": "https://fragvalue.com/pricing.html",
-      "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-12-31",
-      "description": "Tout Pro + Chat AI Coach 30 messages/day + team tools (anti-strat, prep veto, pro benchmarks)."
-    },
-    {
-      "@type": "Offer",
-      "name": "Elite annuel",
-      "price": "290.00",
-      "priceCurrency": "EUR",
-      "url": "https://fragvalue.com/pricing.html",
-      "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-12-31",
-      "description": "Equivaut a 2 months free. Tout Pro + 30 msg/day AI Coach + team tools."
+      "@type": "Product",
+      "name": "FragValue Pro",
+      "description": "Personalized AI coach for CS2 FACEIT : unlimited demo uploads, AI Diagnostic refresh per match, AI Coach Chat 5 msg/day (Pro) or 30 msg/day (Elite), 2D replay, heatmaps, advanced KPIs, PDF export, multi-player comparison.",
+      "image": [
+        "https://fragvalue.com/og/home.png",
+        "https://fragvalue.com/og/analysis.png",
+        "https://fragvalue.com/og/heatmap.png"
+      ],
+      "brand": { "@type": "Brand", "name": "FragValue" },
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free",
+          "price": "0",
+          "priceCurrency": "EUR",
+          "url": "https://fragvalue.com/en/pricing.html",
+          "availability": "https://schema.org/InStock",
+          "description": "3 analyses/month, AI Coach 1x/month, basic heatmaps",
+          "shippingDetails": { "@id": "https://fragvalue.com/en/#shipping-digital" },
+          "hasMerchantReturnPolicy": { "@id": "https://fragvalue.com/en/#return-14d" }
+        },
+        {
+          "@type": "Offer",
+          "name": "Pro Monthly",
+          "price": "9.00",
+          "priceCurrency": "EUR",
+          "url": "https://fragvalue.com/en/pricing.html",
+          "availability": "https://schema.org/InStock",
+          "priceValidUntil": "2026-12-31",
+          "description": "Unlimited analyses, Unlimited AI Diagnostic, Chat AI Coach 5 messages/day, 2D replay, Advanced KPIs. No commitment, cancel in 1 click.",
+          "shippingDetails": { "@id": "https://fragvalue.com/en/#shipping-digital" },
+          "hasMerchantReturnPolicy": { "@id": "https://fragvalue.com/en/#return-14d" }
+        },
+        {
+          "@type": "Offer",
+          "name": "Pro Yearly",
+          "price": "79.00",
+          "priceCurrency": "EUR",
+          "url": "https://fragvalue.com/en/pricing.html",
+          "availability": "https://schema.org/InStock",
+          "priceValidUntil": "2026-12-31",
+          "description": "Equivalent to 2 months free. No commitment, cancel in 1 click.",
+          "shippingDetails": { "@id": "https://fragvalue.com/en/#shipping-digital" },
+          "hasMerchantReturnPolicy": { "@id": "https://fragvalue.com/en/#return-14d" }
+        },
+        {
+          "@type": "Offer",
+          "name": "Elite Monthly",
+          "price": "29.00",
+          "priceCurrency": "EUR",
+          "url": "https://fragvalue.com/en/pricing.html",
+          "availability": "https://schema.org/InStock",
+          "priceValidUntil": "2026-12-31",
+          "description": "Everything in Pro + AI Coach Chat 30 messages/day + team tools (anti-strat, prep veto, pro benchmarks).",
+          "shippingDetails": { "@id": "https://fragvalue.com/en/#shipping-digital" },
+          "hasMerchantReturnPolicy": { "@id": "https://fragvalue.com/en/#return-14d" }
+        },
+        {
+          "@type": "Offer",
+          "name": "Elite Yearly",
+          "price": "290.00",
+          "priceCurrency": "EUR",
+          "url": "https://fragvalue.com/en/pricing.html",
+          "availability": "https://schema.org/InStock",
+          "priceValidUntil": "2026-12-31",
+          "description": "Equivalent to 2 months free. Everything in Pro + 30 msg/day AI Coach + team tools.",
+          "shippingDetails": { "@id": "https://fragvalue.com/en/#shipping-digital" },
+          "hasMerchantReturnPolicy": { "@id": "https://fragvalue.com/en/#return-14d" }
+        }
+      ]
     }
   ]
 }
@@ -120,15 +168,15 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     },
     {
       "@type": "Question",
-      "name": "Comment fonctionne le AI Coach FragValue ?",
+      "name": "How does the FragValue AI Coach work?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "FragValue offers 2 distinct AI Coach features: (1) the AI Diagnostic which analyzes your last 20 FACEIT matches and generates a personalized diagnostic (strengths, weaknesses, actions, weekly goal, priority map) - refresh after each match in Pro/Elite, no refresh limit. (2) the AI Coach Chat (conversational): you ask questions about your analyzed demos and it answers with clickable links to key rounds - capped at 5 messages/day in Pro, 30/day in Elite, supplementary credit packs available (50 for 4 EUR or 200 for 12 EUR). Powered by Claude by Anthropic."
+        "text": "FragValue offers 2 distinct AI Coach features: (1) the AI Diagnostic which analyzes your last 20 FACEIT matches and generates a personalized diagnostic (strengths, weaknesses, actions, weekly goal, priority map), refreshed after each match in Pro/Elite with no refresh limit. (2) the AI Coach Chat (conversational): you ask questions about your analyzed demos and it answers with clickable links to key rounds, capped at 5 messages/day in Pro, 30/day in Elite, with supplementary credit packs available (50 for 4 EUR or 200 for 12 EUR). Powered by Claude by Anthropic."
       }
     },
     {
       "@type": "Question",
-      "name": "Quelle est la difference entre Pro et Elite ?",
+      "name": "What is the difference between Pro and Elite?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Pro (9 EUR/month or 79 EUR/year): unlimited demo uploads, 2D Replay, Advanced KPIs, AI Diagnostic refresh per match, AI Coach Chat capped at 5 messages/day (extra credit packs available). Elite (29 EUR/month or 290 EUR/year): everything in Pro + AI Coach Chat 30 messages/day + team tools (anti-strat, prep veto BO3/BO5, pro benchmarks, team dashboard)."
@@ -139,12 +187,12 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       "name": "How do I cancel my subscription?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Depuis ton espace compte, en 1 clic, sans justification. L'acces premium reste actif jusqu'a la fin de la periode payee. Not frais de resiliation."
+        "text": "From your account dashboard, in 1 click, no justification required. Premium access remains active until the end of the paid period. No cancellation fees."
       }
     },
     {
       "@type": "Question",
-      "name": "Mes donnees sont-elles conservees si je passe en Free ?",
+      "name": "Is my data kept if I downgrade to Free?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Yes. Your past analyses remain accessible from your history even after downgrading to Free. You will only lose access to new Pro features (2D Replay, Advanced KPIs, AI Diagnostic refresh per match, AI Coach Chat 5 msg/day). No data lost."

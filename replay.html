@@ -2627,7 +2627,7 @@ function buildFrames(round) {
   const durSec = span / 64;
   // N = durSec * FPS gives real-time playback. The old clamp at 1800 frames
   // capped wall-clock playback at 60s, which compressed any round longer than
-  // 60s into 60s of wall time → 1.5x–2x constant speedup that felt worst at
+  // 60s into 60s of wall time = 1.5x to 2x constant speedup that felt worst at
   // round start when players sprint out of spawn. Raise to 7200 (= 4 minutes
   // at 30fps) so every realistic round plays at true 1x.
   const N = Math.min(7200, Math.max(80, Math.round(durSec * FPS)));
