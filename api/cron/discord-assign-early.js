@@ -45,8 +45,16 @@ module.exports = async function handler(req, res) {
   const GUILD_ID = process.env.DISCORD_GUILD_ID;
   const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
-  if (!BOT_TOKEN || !GUILD_ID) {
-    return res.status(503).json({ error: 'Discord env vars missing (BOT_TOKEN/GUILD_ID)' });
+  const missing = [];
+  if (!BOT_TOKEN) missing.push('DISCORD_BOT_TOKEN');
+  if (!GUILD_ID)  missing.push('DISCORD_GUILD_ID');
+  if (missing.length > 0) {
+    console.error('[cron/discord-assign-early] missing env vars:', missing.join(', '));
+    return res.status(503).json({
+      error: 'Discord env vars missing in Production scope',
+      missing,
+      hint: 'Verifie Vercel -> Settings -> Env Vars que ces vars ont le badge Production coche',
+    });
   }
 
   // Pas de role configure -> early-window fermee, on no-op proprement.
