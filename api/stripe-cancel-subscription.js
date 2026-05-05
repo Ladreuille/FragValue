@@ -48,10 +48,10 @@ export default async function handler(req, res) {
     const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
     if (authErr || !user) return res.status(401).json({ error: 'Session invalide' });
 
-    // Recupere le stripe_customer_id du user
+    // Recupere le stripe_customer_id du user (colonne reelle: subscription_tier)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_customer_id, plan')
+      .select('stripe_customer_id, subscription_tier')
       .eq('id', user.id)
       .single();
 
@@ -59,7 +59,8 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Aucun abonnement Stripe trouve pour ce compte.' });
     }
 
-    if (!profile.plan || profile.plan === 'free') {
+    const userPlan = profile.subscription_tier || 'free';
+    if (userPlan === 'free') {
       return res.status(400).json({ error: 'Aucun abonnement actif a resilier.' });
     }
 
@@ -109,7 +110,7 @@ export default async function handler(req, res) {
       await supabase.from('subscription_events').insert({
         user_id: user.id,
         event_type: 'cancel_requested',
-        plan: profile.plan,
+        plan: userPlan,
         stripe_customer_id: profile.stripe_customer_id,
         ip: (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || null,
         user_agent: (req.headers['user-agent'] || '').slice(0, 200),
@@ -126,7 +127,7 @@ export default async function handler(req, res) {
     try {
       const tpl = require('./_lib/email-templates.js');
       const { sendEmail } = await import('./_lib/email.js');
-      const planLabel = profile.plan?.startsWith('elite') ? 'Elite' : 'Pro';
+      const planLabel = userPlan.startsWith('elite') ? 'Elite' : 'Pro';
       const t = tpl.cancellationConfirmation({
         nickname: user.email?.split('@')[0] || 'joueur',
         planLabel,

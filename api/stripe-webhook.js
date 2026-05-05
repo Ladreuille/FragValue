@@ -222,11 +222,12 @@ export default async function handler(req, res) {
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
 
-        // Update profile.plan = 'pro' ou 'elite' selon planMeta (source de
-        // verite single pour les pages frontend qui lisent profiles.plan).
+        // Update profile.subscription_tier = 'pro' ou 'elite' selon planMeta
+        // (source de verite single pour les pages frontend qui lisent profiles).
+        // Schema reel : la colonne s'appelle subscription_tier (pas plan).
         const profilePlanCheckout = planMeta.startsWith('elite') || planMeta.startsWith('team') ? 'elite' : 'pro';
         await sb.from('profiles')
-          .update({ plan: profilePlanCheckout, updated_at: new Date().toISOString() })
+          .update({ subscription_tier: profilePlanCheckout })
           .eq('id', userId);
 
         // DISCORD SYNC : si user a deja lie son Discord avant le 1er paiement,
@@ -313,13 +314,13 @@ export default async function handler(req, res) {
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' });
 
-        // Update profiles.plan pour qu'il reste source de verite single
-        // (utilise par les pages /pricing.html, /account.html, etc.).
+        // Update profiles.subscription_tier pour qu'il reste source de verite
+        // single (utilise par les pages /pricing.html, /account.html, etc.).
         const profilePlan = sub.status === 'active' || sub.status === 'trialing'
           ? (planMeta2.startsWith('elite') || planMeta2.startsWith('team') ? 'elite' : 'pro')
           : 'free';
         await sb.from('profiles')
-          .update({ plan: profilePlan, updated_at: new Date().toISOString() })
+          .update({ subscription_tier: profilePlan })
           .eq('id', userId);
 
         // DISCORD SYNC : si user a lie son Discord, on sync le role auto.
@@ -357,10 +358,10 @@ export default async function handler(req, res) {
           updated_at: new Date().toISOString(),
         }).eq('stripe_subscription_id', sub.id);
 
-        // Downgrade profile.plan -> free
+        // Downgrade profile.subscription_tier -> free
         if (userIdDel) {
           await sb.from('profiles')
-            .update({ plan: 'free', updated_at: new Date().toISOString() })
+            .update({ subscription_tier: 'free' })
             .eq('id', userIdDel);
 
           // DISCORD SYNC : retire les roles Pro/Elite, applique Free.

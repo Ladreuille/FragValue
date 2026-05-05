@@ -193,11 +193,11 @@ async function handleMyPlan(interaction) {
 
   const { data: profile } = await sb
     .from('profiles')
-    .select('plan, faceit_nickname')
+    .select('subscription_tier, faceit_nickname')
     .eq('id', link.user_id)
     .maybeSingle();
 
-  const plan = profile?.plan || 'free';
+  const plan = profile?.subscription_tier || 'free';
   const planEmoji = plan === 'elite' ? '💎' : plan === 'pro' ? '⭐' : '🎮';
   const planLabel = plan === 'elite' ? 'Elite' : plan === 'pro' ? 'Pro' : 'Free';
   const nickname = profile?.faceit_nickname ? `@${profile.faceit_nickname}` : '';

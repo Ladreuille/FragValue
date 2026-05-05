@@ -102,12 +102,14 @@ module.exports = async function handler(req, res) {
         if (faceitPlayerId) {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('id, plan')
+            .select('id, subscription_tier')
             .eq('faceit_player_id', faceitPlayerId)
             .maybeSingle();
           // Auto-analyse = feature payante (Pro / Elite). Free users skip
           // pour ne pas burn leur quota sans leur consentement.
-          if (profile && (profile.plan === 'pro' || profile.plan === 'elite' || profile.plan === 'team')) {
+          // Schema reel : profiles.subscription_tier (pas profiles.plan).
+          const profileTier = profile?.subscription_tier;
+          if (profile && (profileTier === 'pro' || profileTier === 'elite' || profileTier === 'team')) {
             userId = profile.id;
           }
         }

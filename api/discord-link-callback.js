@@ -126,12 +126,13 @@ export default async function handler(req, res) {
     }
 
     // 8. Recupere le plan FragValue actuel du user pour assigner le bon role
+    // (colonne reelle: subscription_tier dans profiles)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('plan')
+      .select('subscription_tier')
       .eq('id', userId)
       .maybeSingle();
-    const plan = profile?.plan || 'free';
+    const plan = profile?.subscription_tier || 'free';
 
     // 9. Add l'user au guild FragValue s'il n'y est pas deja (scope guilds.join)
     // Best-effort : si fail, on continue quand meme (l'user peut join manuellement)

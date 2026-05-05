@@ -140,20 +140,25 @@ function wrapHtml(subject, innerHtml, baseUrl) {
 }
 
 // Recupere la liste des recipients selon l'audience demandee.
+// Note schema : la table profiles a `subscription_tier` (pas `plan`) et
+// `created_at` (pas `updated_at`). On adapte les filtres en consequence.
 async function fetchRecipients(supabase, audience, limit) {
-  let query = supabase.from('profiles').select('id, plan, faceit_nickname, created_at, updated_at');
+  let query = supabase.from('profiles').select('id, subscription_tier, faceit_nickname, created_at, signup_at');
   switch (audience) {
     case 'free':
-      query = query.eq('plan', 'free');
+      query = query.eq('subscription_tier', 'free');
       break;
     case 'pro':
-      query = query.eq('plan', 'pro');
+      query = query.eq('subscription_tier', 'pro');
       break;
     case 'elite':
-      query = query.eq('plan', 'elite');
+      query = query.eq('subscription_tier', 'elite');
       break;
     case 'active_30d':
-      query = query.gte('updated_at', new Date(Date.now() - 30 * 86400000).toISOString());
+      // Pas d'updated_at en DB : on fallback sur signup_at recent (proxy
+      // pour "user nouveau") ou created_at. Pour vraie activite, il faudrait
+      // joindre matches.last_synced_at ou demos.analysed_at - trop complexe ici.
+      query = query.gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString());
       break;
     case 'linked_discord':
       // Subquery via JOIN aurait ete plus propre, mais on filter cote app
@@ -194,7 +199,7 @@ async function fetchRecipients(supabase, audience, limit) {
           user_id: id,
           email,
           firstName: profile?.faceit_nickname || email.split('@')[0],
-          plan: profile?.plan || 'free',
+          plan: profile?.subscription_tier || 'free',
         });
       }
     } catch (_) { /* skip */ }
