@@ -71,7 +71,7 @@ h1{font-family:var(--display);font-size:32px;letter-spacing:.02em;margin-bottom:
 
     <div class="field">
       <label class="field-label" for="subject">Subject (objet de l'email)</label>
-      <input type="text" id="subject" class="field-input" maxlength="200" value="🎮 On vient de lancer le Discord FragValue · viens taper la discu">
+      <input type="text" id="subject" class="field-input" maxlength="200" value="On vient de lancer le Discord FragValue, viens taper la discu">
     </div>
 
     <div class="field">
@@ -92,11 +92,16 @@ h1{font-family:var(--display);font-size:32px;letter-spacing:.02em;margin-bottom:
       <input type="text" id="discordInvite" class="field-input" value="https://discord.gg/fragvalue">
     </div>
 
+    <div class="field">
+      <label class="field-label" for="singleEmail">Email override (test 1 destinataire, prioritaire sur audience)</label>
+      <input type="email" id="singleEmail" class="field-input" placeholder="ex: qdreuillet@gmail.com (laisser vide pour utiliser audience)">
+    </div>
+
     <div class="row">
       <div class="field" style="flex:1;min-width:200px">
-        <label class="field-label" for="audience">Audience</label>
+        <label class="field-label" for="audience">Audience (ignoree si email override defini)</label>
         <select id="audience" class="field-select">
-          <option value="test">test (3 users max · safe)</option>
+          <option value="test">test (3 users max, safe)</option>
           <option value="all">all (tous les users)</option>
           <option value="free">free (users plan free uniquement)</option>
           <option value="pro">pro (Pro uniquement)</option>
@@ -153,8 +158,13 @@ async function runBroadcast(dryRun) {
   const discordInvite = document.getElementById('discordInvite').value.trim();
   const audience = document.getElementById('audience').value;
   const limit = parseInt(document.getElementById('limit').value) || null;
+  const singleEmail = (document.getElementById('singleEmail').value || '').trim().toLowerCase();
 
   if (!subject) { showMsg('Subject requis.', 'error'); return; }
+  if (singleEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(singleEmail)) {
+    showMsg('Email override invalide.', 'error');
+    return;
+  }
 
   const sendBtn = document.getElementById('sendBtn');
   const sendIcon = document.getElementById('sendBtnIcon');
@@ -184,6 +194,7 @@ async function runBroadcast(dryRun) {
       limit,
       dryRun,
     };
+    if (singleEmail) body.singleEmail = singleEmail;
 
     const res = await fetch('/api/email-broadcast', {
       method: 'POST',

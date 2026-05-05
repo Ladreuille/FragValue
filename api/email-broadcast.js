@@ -219,6 +219,37 @@ async function fetchRecipients(supabase, audience, limit) {
   return recipients;
 }
 
+// Mode test cible : envoi a UN email precis (override audience).
+// Cherche le user dans auth.users via listUsers (paginate par 1000).
+// Necessaire pour le user_id qui sert au token unsubscribe signe.
+// Note : marketing_opt_out NE filtre PAS ici - le sender admin a explicitement
+// targete cet email pour test, donc on respecte l'intention.
+async function fetchSingleRecipient(supabase, email) {
+  // listUsers retourne max 1000 par page. Pour ~< 50k users on parcourt.
+  let page = 1;
+  while (page < 50) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error || !data?.users || data.users.length === 0) break;
+    const user = data.users.find(u => (u.email || '').toLowerCase() === email);
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, subscription_tier, faceit_nickname')
+        .eq('id', user.id)
+        .maybeSingle();
+      return [{
+        user_id: user.id,
+        email: user.email,
+        firstName: profile?.faceit_nickname || user.email.split('@')[0],
+        plan: profile?.subscription_tier || 'free',
+      }];
+    }
+    if (data.users.length < 1000) break;
+    page++;
+  }
+  return [];
+}
+
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
   if (ALLOWED_ORIGIN_RE.test(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
@@ -251,6 +282,7 @@ export default async function handler(req, res) {
     const audience = body.audience || 'all';
     const limit = body.limit ? Math.min(parseInt(body.limit), 5000) : null;
     const dryRun = !!body.dryRun;
+    const singleEmail = (body.singleEmail || '').trim().toLowerCase();
 
     if (!subject || typeof subject !== 'string') {
       return res.status(400).json({ error: 'subject required' });
@@ -258,11 +290,16 @@ export default async function handler(req, res) {
     if (subject.length > 200) {
       return res.status(400).json({ error: 'subject too long (max 200 chars)' });
     }
+    if (singleEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(singleEmail)) {
+      return res.status(400).json({ error: 'singleEmail invalide' });
+    }
 
-    // Anti-double-broadcast (1 broadcast unique par subject + templateKey + day)
-    const dayKey = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    const broadcastSlug = `${templateKey}_${dayKey}_${subject.slice(0, 60).replace(/[^a-zA-Z0-9]/g, '_')}`;
-    if (!dryRun) {
+    // Anti-double-broadcast (1 broadcast unique par subject + templateKey + day).
+    // On skip cette protection si singleEmail est defini : un test dirige peut
+    // etre relance plusieurs fois dans la meme journee.
+    if (!dryRun && !singleEmail) {
+      const dayKey = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      const broadcastSlug = `${templateKey}_${dayKey}_${subject.slice(0, 60).replace(/[^a-zA-Z0-9]/g, '_')}`;
       const { data: existing } = await supabase
         .from('email_broadcast_log')
         .select('id, sent_count')
@@ -277,9 +314,25 @@ export default async function handler(req, res) {
     }
 
     // Fetch recipients
-    const recipients = await fetchRecipients(supabase, audience, limit);
+    let recipients;
+    if (singleEmail) {
+      recipients = await fetchSingleRecipient(supabase, singleEmail);
+      if (recipients.length === 0) {
+        return res.status(404).json({
+          error: `Aucun user FragValue trouve avec l'email ${singleEmail}`,
+          hint: 'L\'email doit correspondre a un compte existant (auth.users)',
+        });
+      }
+    } else {
+      recipients = await fetchRecipients(supabase, audience, limit);
+    }
     if (recipients.length === 0) {
-      return res.status(200).json({ ok: true, audience, sent: 0, message: 'No recipients matching audience' });
+      return res.status(200).json({
+        ok: true,
+        audience: singleEmail ? `singleEmail:${singleEmail}` : audience,
+        sent: 0,
+        message: 'No recipients matching audience',
+      });
     }
 
     // Mode dry run : retourne juste le preview + count
