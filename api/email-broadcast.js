@@ -294,12 +294,18 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'singleEmail invalide' });
     }
 
+    // Slug d'identification du broadcast (utilise pour idempotence + log).
+    // Pour singleEmail, on suffixe l'email pour eviter les collisions cross-test.
+    const dayKey = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const subjectSlug = subject.slice(0, 60).replace(/[^a-zA-Z0-9]/g, '_');
+    const broadcastSlug = singleEmail
+      ? `${templateKey}_${dayKey}_${subjectSlug}_${singleEmail.replace(/[^a-zA-Z0-9]/g, '_')}`
+      : `${templateKey}_${dayKey}_${subjectSlug}`;
+
     // Anti-double-broadcast (1 broadcast unique par subject + templateKey + day).
     // On skip cette protection si singleEmail est defini : un test dirige peut
     // etre relance plusieurs fois dans la meme journee.
     if (!dryRun && !singleEmail) {
-      const dayKey = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-      const broadcastSlug = `${templateKey}_${dayKey}_${subject.slice(0, 60).replace(/[^a-zA-Z0-9]/g, '_')}`;
       const { data: existing } = await supabase
         .from('email_broadcast_log')
         .select('id, sent_count')
