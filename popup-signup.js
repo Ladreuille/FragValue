@@ -41,6 +41,13 @@
 
   if (wasDismissedRecently()) return;
 
+  // Skip popup sur mobile et tablette (< 1024px). Sur petit ecran, la popup
+  // couvre 90% du viewport et interrompt brutalement la navigation, ce qui
+  // tue la conversion (anti-pattern UX e-commerce confirme). Le user mobile
+  // verra l'objection-killer du hero + le CTA inline. Desktop garde la popup
+  // a 12s/60% scroll qui marche bien sur grand ecran.
+  if (typeof window !== 'undefined' && window.innerWidth < 1024) return;
+
   /* ── Inject CSS ─────────────────────────────────────── */
   var css = [
     '.fv-popup-overlay{',

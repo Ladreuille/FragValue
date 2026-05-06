@@ -198,6 +198,12 @@
     nav.fv-nav .fv-burger svg{width:20px;height:20px;color:#e8eaea}
     nav.fv-nav .fv-burger[aria-expanded="true"] svg{color:#b8ff57}
 
+    /* Anti-overflow horizontal mobile : le drawer fixed avec translateX(100%)
+       n'est pas clippe par body overflow-x (les fixed se basent sur le viewport).
+       Sans ce fix, le drawer cree 21-25px de scroll horizontal sur les petits
+       viewports type iPhone SE 320px. */
+    html{overflow-x:hidden}
+
     /* ── Mobile drawer (full overlay from right) ────────────────────── */
     .fv-mobile-drawer{position:fixed;top:0;right:0;bottom:0;width:min(320px,85vw);background:linear-gradient(180deg,#0f1010 0%,#0a0c0c 100%);border-left:1px solid rgba(184,255,87,.18);box-shadow:-12px 0 32px rgba(0,0,0,.6);z-index:9999;transform:translateX(100%);transition:transform .25s ease;overflow-y:auto;display:flex;flex-direction:column;padding:72px 20px 32px}
     .fv-mobile-drawer.open{transform:translateX(0)}
@@ -209,7 +215,7 @@
     .fv-mobile-close svg{width:18px;height:18px}
     .fv-mobile-drawer .fv-mobile-section{margin-bottom:20px}
     .fv-mobile-drawer .fv-mobile-section-label{font-family:'Anton',sans-serif;font-size:11px;color:#b8ff57;letter-spacing:.12em;text-transform:uppercase;margin:0 0 8px 4px;opacity:.8}
-    .fv-mobile-drawer .fv-mobile-link{display:flex;align-items:center;gap:10px;padding:12px 14px;font-family:'Space Mono',monospace;font-size:13px;color:#d8dcdc;text-decoration:none;border-radius:6px;transition:all .15s;border:1px solid transparent}
+    .fv-mobile-drawer .fv-mobile-link{display:flex;align-items:center;gap:10px;padding:12px 14px;min-height:44px;font-family:'Space Mono',monospace;font-size:13px;color:#d8dcdc;text-decoration:none;border-radius:6px;transition:all .15s;border:1px solid transparent}
     .fv-mobile-drawer .fv-mobile-link:hover,.fv-mobile-drawer .fv-mobile-link:focus-visible{background:rgba(184,255,87,.08);color:#b8ff57;border-color:rgba(184,255,87,.18);outline:none}
     .fv-mobile-drawer .fv-mobile-link.active{color:#b8ff57;background:rgba(184,255,87,.06)}
     .fv-mobile-drawer .fv-mobile-divider{height:1px;background:rgba(184,255,87,.1);margin:16px 4px}
