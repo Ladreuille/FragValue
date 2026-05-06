@@ -32,8 +32,8 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <link rel="preload" href="/fonts/spacemono-400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/spacemono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/fonts/fonts.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -154,6 +154,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     .hero-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;position:relative;z-index:1}
     @media(max-width:600px){.hero-kpis{grid-template-columns:repeat(3,1fr)}}
     .hero-kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+    @media(max-width:480px){.hero-kpi{padding:8px 6px}.hero-kpi-val{font-size:16px}.hero-kpi-label{font-size:8px;margin-top:3px}}
     .hero-kpi-val{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.8px;line-height:1}
     .hero-kpi-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-top:4px;font-family:var(--mono)}
     .fvscore-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
@@ -656,11 +657,11 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     <div class="modal-body">
       <div class="modal-field">
         <label>Nom de l'équipe</label>
-        <input id="rosterName" type="text" placeholder="Ex: FragValue Elite" maxlength="40"/>
+        <input id="rosterName" type="text" placeholder="Ex: FragValue Elite" maxlength="40" aria-label="Nom de l'equipe"/>
       </div>
       <div class="modal-field">
         <label>Tag (3-6 caractères, optionnel)</label>
-        <input id="rosterTag" type="text" placeholder="Ex: FVT" maxlength="6" style="text-transform:uppercase"/>
+        <input id="rosterTag" type="text" placeholder="Ex: FVT" maxlength="6" style="text-transform:uppercase" aria-label="Tag de l'equipe (3 a 6 caracteres)"/>
       </div>
       <div class="modal-field">
         <label>Description (optionnel)</label>
@@ -679,7 +680,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       </div>
       <div class="modal-field">
         <label>URL fiche FACEIT <span style="color:var(--gold);font-weight:700">· obligatoire pour Prep Veto</span></label>
-        <input id="rosterFaceitUrl" type="url" placeholder="https://www.faceit.com/fr/teams/abc123-..." maxlength="200"/>
+        <input id="rosterFaceitUrl" type="url" placeholder="https://www.faceit.com/fr/teams/abc123-..." maxlength="200" aria-label="URL de la fiche FACEIT de l'equipe"/>
         <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;line-height:1.5">Sans cette URL : roster cree mais Prep Veto inaccessible. Recommande : copie l'URL depuis ta page FACEIT team. Detection ESEA auto si tu joues les ligues.</div>
       </div>
       <div class="modal-err" id="rosterCreateErr"></div>
@@ -726,7 +727,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     <div class="modal-body">
       <div class="modal-field">
         <label>Pseudo FACEIT du joueur</label>
-        <input id="inviteNickname" type="text" placeholder="Ex: s1mple"/>
+        <input id="inviteNickname" type="text" placeholder="Ex: s1mple" aria-label="Pseudo FACEIT du joueur a inviter"/>
       </div>
       <div class="modal-field">
         <label>Rôle proposé (optionnel)</label>
@@ -757,7 +758,12 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <script>
 const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
-const sb = supabase.createClient(SB_URL, SB_ANON);
+// Supabase CDN charge en defer (gain LCP : ~350ms en moins). createClient est
+// donc retarde a DOMContentLoaded, vu que `supabase` global est seulement
+// disponible apres l'execution du script defer. Toutes les fonctions ci-dessous
+// referencent `sb` mais ne l'utilisent que dans des bodies async appeles depuis
+// init() ou des handlers onclick : tous executent apres DOMContentLoaded.
+let sb = null;
 let currentUser = null, playerData = null, fvChart = null;
 
 async function init() {
@@ -2176,32 +2182,37 @@ function showLoading(show,text) {
 
 async function logout() { await sb.auth.signOut(); window.location.href='index.html'; }
 
-// Gestion globale des erreurs d'init : evite que les placeholders "Chargement..."
-// restent a l'écran indefiniment si Supabase / API / parser sont down.
-init().catch(err => {
-  console.error('[dashboard] init failed:', err);
-  showLoading(false);
-  const hero = document.getElementById('profileHeroCard');
-  if (hero) {
-    hero.innerHTML = `
-      <div style="text-align:center;padding:40px 24px">
-        <div style="font:700 20px 'Anton',sans-serif;color:#e8eaea;letter-spacing:.05em;margin-bottom:12px">Service temporairement indisponible</div>
-        <div style="color:#7a8080;font-size:14px;line-height:1.6;margin-bottom:20px">Impossible de charger ton dashboard pour le moment. Réessaie dans quelques instants.</div>
-        <button onclick="window.location.reload()" style="background:#b8ff57;color:#000;padding:10px 20px;border:none;border-radius:6px;font:700 12px 'Space Mono',monospace;letter-spacing:.06em;text-transform:uppercase;cursor:pointer">Recharger</button>
-      </div>`;
-  }
-  // Remplace aussi les autres placeholders bloquants
-  const replacers = [
-    ['fvScoreVal', '-'],
-    ['fvScoreLabel', 'Indisponible'],
-    ['improvementsPanel', '<div class="empty-state"><div class="empty-title">Analyse indisponible</div><div class="empty-sub">Service temporairement hors ligne.</div></div>'],
-  ];
-  replacers.forEach(([id, html]) => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = html;
+// Init wrappee dans DOMContentLoaded : la CDN Supabase est en defer (cf. balise
+// script en haut de page) donc `supabase` global est seulement dispo a ce moment.
+// La gestion d'erreur globale evite que les placeholders "Chargement..." restent
+// a l'ecran indefiniment si Supabase / API / parser sont down.
+document.addEventListener('DOMContentLoaded', function() {
+  sb = supabase.createClient(SB_URL, SB_ANON);
+  init().catch(err => {
+    console.error('[dashboard] init failed:', err);
+    showLoading(false);
+    const hero = document.getElementById('profileHeroCard');
+    if (hero) {
+      hero.innerHTML = `
+        <div style="text-align:center;padding:40px 24px">
+          <div style="font:700 20px 'Anton',sans-serif;color:#e8eaea;letter-spacing:.05em;margin-bottom:12px">Service temporairement indisponible</div>
+          <div style="color:#7a8080;font-size:14px;line-height:1.6;margin-bottom:20px">Impossible de charger ton dashboard pour le moment. Réessaie dans quelques instants.</div>
+          <button onclick="window.location.reload()" style="background:#b8ff57;color:#000;padding:10px 20px;border:none;border-radius:6px;font:700 12px 'Space Mono',monospace;letter-spacing:.06em;text-transform:uppercase;cursor:pointer">Recharger</button>
+        </div>`;
+    }
+    // Remplace aussi les autres placeholders bloquants
+    const replacers = [
+      ['fvScoreVal', '-'],
+      ['fvScoreLabel', 'Indisponible'],
+      ['improvementsPanel', '<div class="empty-state"><div class="empty-title">Analyse indisponible</div><div class="empty-sub">Service temporairement hors ligne.</div></div>'],
+    ];
+    replacers.forEach(([id, html]) => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = html;
+    });
+    const coach = document.getElementById('coachAiCard');
+    if (coach) coach.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-title">Diagnostic indisponible</div></div>';
   });
-  const coach = document.getElementById('coachAiCard');
-  if (coach) coach.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-title">Diagnostic indisponible</div></div>';
 });
 </script>
 <script src="/nav.js"></script>

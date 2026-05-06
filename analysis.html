@@ -48,7 +48,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <link rel="preload" href="/fonts/spacemono-400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/spacemono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/fonts/fonts.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -737,7 +737,12 @@ function escHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').r
 
 const SUPABASE_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
-const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+// Supabase CDN charge en defer (gain LCP : ~350ms en moins). createClient est
+// donc retarde a DOMContentLoaded, vu que `supabase` global est seulement
+// dispo apres l'execution du script defer. Toutes les fonctions ci-dessous
+// referencent `_sb` mais ne l'utilisent que dans des bodies async appeles depuis
+// init() ou des handlers onclick : tous executent apres DOMContentLoaded.
+let _sb = null;
 
 // =====================================================================
 // MAP CONFIG
@@ -3240,24 +3245,30 @@ function renderCoachBilan(c, kills, rounds) {
 }
 
 // =====================================================================
-// LAUNCH
+// LAUNCH (wrappee dans DOMContentLoaded vu que la CDN Supabase est en defer)
 // =====================================================================
-init();
+document.addEventListener('DOMContentLoaded', function() {
+  _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  // Expose pour le share popover (cf. plus bas dans le fichier).
+  window._sbClient = _sb;
 
-// Nav auth toggle
-_sb.auth.getSession().then(({ data: { session } }) => {
-  const loginBtn = document.getElementById('navLoginBtn');
-  const accountBtn = document.getElementById('navAccountBtn');
-  const matchesBtn = document.getElementById('navMatchesBtn');
-  if (!loginBtn || !accountBtn) return;
-  if (session) {
-    loginBtn.style.display = 'none';
-    accountBtn.style.display = '';
-    if (matchesBtn) matchesBtn.style.display = '';
-  } else {
-    loginBtn.style.display = '';
-    accountBtn.style.display = 'none';
-  }
+  init();
+
+  // Nav auth toggle.
+  _sb.auth.getSession().then(({ data: { session } }) => {
+    const loginBtn = document.getElementById('navLoginBtn');
+    const accountBtn = document.getElementById('navAccountBtn');
+    const matchesBtn = document.getElementById('navMatchesBtn');
+    if (!loginBtn || !accountBtn) return;
+    if (session) {
+      loginBtn.style.display = 'none';
+      accountBtn.style.display = '';
+      if (matchesBtn) matchesBtn.style.display = '';
+    } else {
+      loginBtn.style.display = '';
+      accountBtn.style.display = 'none';
+    }
+  });
 });
 
 // ══════════════════════════════════════════════════════════════════════
@@ -3395,8 +3406,8 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Expose le client Supabase pour la popover
-window._sbClient = _sb;
+// window._sbClient est expose dans le handler DOMContentLoaded plus haut
+// (refactor defer Supabase, cf. commentaire pres de `let _sb = null;`).
 </script>
 <script src="/nav.js"></script>
 <script src="/footer.js" defer></script>
