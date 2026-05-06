@@ -23,8 +23,20 @@ const { createClient } = require('@supabase/supabase-js');
 // Liste des emails admin (en lowercase pour match case-insensitive). Bypass
 // permanent vers plan='elite' utile pour : tests internes du killer feature
 // AI Coach, debug en prod sans devoir souscrire, demo a des prospects.
-// Override possible via env var FRAGVALUE_ADMIN_EMAILS (comma-separated).
-const ADMIN_EMAILS = (process.env.FRAGVALUE_ADMIN_EMAILS || 'qdreuillet@gmail.com')
+//
+// Lecture env vars (priorite descendante) :
+//   1. FRAGVALUE_ADMIN_EMAILS (nom canonique, prefere)
+//   2. ADMIN_EMAILS (legacy, garde pour back-compat avec les routes admin
+//      qui le lisaient avant la refonte)
+//   3. fallback hardcode 'qdreuillet@gmail.com,valuefrag@gmail.com'
+//
+// Cette liste est aussi utilisee par admin-dashboard, admin-test-alert,
+// email-broadcast pour gate les endpoints admin.
+const ADMIN_EMAILS = (
+    process.env.FRAGVALUE_ADMIN_EMAILS
+    || process.env.ADMIN_EMAILS
+    || 'qdreuillet@gmail.com,valuefrag@gmail.com'
+  )
   .split(',')
   .map(e => e.trim().toLowerCase())
   .filter(Boolean);

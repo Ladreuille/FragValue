@@ -13,13 +13,13 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-// Modele par plan :
-// - Free : Haiku 4.5 (rapide, cache 30j, cout faible)
-// - Pro / Elite : Sonnet 4.5 (raisonnement plus fin, meilleures references
-//   pros, analyse tactique plus profonde - difference visible avec langage HLTV)
-const CLAUDE_MODEL_FREE = 'claude-haiku-4-5';
-const CLAUDE_MODEL_PRO  = 'claude-sonnet-4-5';
-const CLAUDE_ENDPOINT   = 'https://api.anthropic.com/v1/messages';
+const { COACH, FAST, ENDPOINT: CLAUDE_ENDPOINT } = require('./_lib/claude-models');
+// Modele par plan.
+// Free : Haiku (FAST), rapide, cache 30j, cout faible.
+// Pro / Elite : Sonnet (COACH), raisonnement plus fin, meilleures references
+// pros, analyse tactique plus profonde (difference visible avec langage HLTV).
+const CLAUDE_MODEL_FREE = FAST;
+const CLAUDE_MODEL_PRO  = COACH;
 const FACEIT_BASE = 'https://open.faceit.com/data/v4';
 const CACHE_TTL_DAYS = 7;
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;

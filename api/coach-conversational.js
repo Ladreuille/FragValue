@@ -45,23 +45,22 @@
 //   - Refus poli si question hors-scope (matchmaking, hardware, etc.)
 
 const { createClient } = require('@supabase/supabase-js');
-const { requirePro, getUserPlan } = require('./_lib/subscription');
+const { requirePro, getUserPlan, ADMIN_EMAILS } = require('./_lib/subscription');
 const { getCredits, consumeCredit } = require('./_lib/coach-credits');
 
+const { COACH, FAST, ENDPOINT: CLAUDE_ENDPOINT } = require('./_lib/claude-models');
+
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
-// Sonnet 4.5 par defaut : qualite >> Haiku pour coaching contextualise.
-// Haiku reserve aux taches utilitaires (intent classification, suggestions
-// follow-up, titre auto). Cf. ultrareview report.
-const CLAUDE_MODEL    = 'claude-sonnet-4-5';
-const CLAUDE_MODEL_FAST = 'claude-haiku-4-5'; // pour suggestions/classifications
-const CLAUDE_ENDPOINT = 'https://api.anthropic.com/v1/messages';
+// Sonnet 4.5 par defaut (COACH) : qualite >> Haiku pour coaching contextualise.
+// Haiku (FAST) reserve aux taches utilitaires (intent classification,
+// suggestions follow-up, titre auto).
+const CLAUDE_MODEL      = COACH;
+const CLAUDE_MODEL_FAST = FAST;
 const MAX_MESSAGE_LEN = 500;
 const MAX_RESPONSE_TOKENS = 700;
 const ROLLING_WINDOW = 10; // nb messages d'historique inclus dans le prompt
 const SOFT_CAP_CONVERSATION = 50;
-// Liste admins (case-insensitive). Override via env FRAGVALUE_ADMIN_EMAILS.
-const ADMIN_EMAILS = (process.env.FRAGVALUE_ADMIN_EMAILS || 'qdreuillet@gmail.com')
-  .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+// ADMIN_EMAILS est importe depuis ./_lib/subscription (source unique).
 
 // Limites par tier (revu 02/05/2026 : pricing freemium gradue).
 // - Pro 5/jour    : preview de la feature, suffisant pour 1 question par demo

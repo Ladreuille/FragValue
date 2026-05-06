@@ -13,8 +13,10 @@ import { createClient } from '@supabase/supabase-js';
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 
+// Lit FRAGVALUE_ADMIN_EMAILS (canonique) puis ADMIN_EMAILS (legacy).
 function getAdminEmails() {
-  const fromEnv = (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  const raw = process.env.FRAGVALUE_ADMIN_EMAILS || process.env.ADMIN_EMAILS || '';
+  const fromEnv = raw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
   const FALLBACK = ['qdreuillet@gmail.com', 'valuefrag@gmail.com'];
   return Array.from(new Set([...fromEnv, ...FALLBACK]));
 }

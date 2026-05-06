@@ -35,11 +35,12 @@ import { makeUnsubUrl } from './_lib/email-unsub.js';
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 
 // Liste des emails admin autorises a trigger un broadcast.
-// On lit depuis env var ADMIN_EMAILS (separateur virgule), avec fallback hardcoded
-// pour eviter qu'un oubli env var bloque l'admin.
+// Lit FRAGVALUE_ADMIN_EMAILS (nom canonique, cf. _lib/subscription.js) puis
+// ADMIN_EMAILS (legacy), avec fallback hardcode owner pour eviter qu'un oubli
+// env var bloque l'admin.
 function getAdminEmails() {
-  const fromEnv = (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-  // Fallback pour le owner. A modifier selon ton email.
+  const raw = process.env.FRAGVALUE_ADMIN_EMAILS || process.env.ADMIN_EMAILS || '';
+  const fromEnv = raw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
   const FALLBACK = ['qdreuillet@gmail.com', 'valuefrag@gmail.com'];
   return Array.from(new Set([...fromEnv, ...FALLBACK]));
 }

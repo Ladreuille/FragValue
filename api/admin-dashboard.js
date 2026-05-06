@@ -24,8 +24,11 @@ const PRICE_MONTHLY = {
   elite_yearly:  290 / 12,   // ~24.17
 };
 
+// Lit FRAGVALUE_ADMIN_EMAILS (canonique) puis ADMIN_EMAILS (legacy), avec
+// fallback hardcode owner. Source unique : _lib/subscription.js.
 function getAdminEmails() {
-  const fromEnv = (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  const raw = process.env.FRAGVALUE_ADMIN_EMAILS || process.env.ADMIN_EMAILS || '';
+  const fromEnv = raw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
   const FALLBACK = ['qdreuillet@gmail.com', 'valuefrag@gmail.com'];
   return Array.from(new Set([...fromEnv, ...FALLBACK]));
 }

@@ -23,9 +23,9 @@
 //   dediee pour MVP).
 
 const { createClient } = require('@supabase/supabase-js');
+const { FAST, ENDPOINT: CLAUDE_ENDPOINT } = require('./_lib/claude-models');
 
-const CLAUDE_MODEL = 'claude-haiku-4-5';
-const CLAUDE_ENDPOINT = 'https://api.anthropic.com/v1/messages';
+const CLAUDE_MODEL = FAST;
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 const DAILY_LIMIT = 20;
 const { ADMIN_EMAILS } = require('./_lib/subscription');
