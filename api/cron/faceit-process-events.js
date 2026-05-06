@@ -35,16 +35,12 @@ function sb() {
 }
 
 module.exports = async function handler(req, res) {
-  // Auth cron : Vercel Cron envoie un header `Authorization: Bearer <CRON_SECRET>`
-  // (configure dans vercel.json + env var). En manuel, on accepte aussi
-  // ?secret=<CRON_SECRET> dans la query.
+  // Auth cron header-only : Vercel envoie `Authorization: Bearer <CRON_SECRET>`.
+  // Pas de fallback ?secret= en query : le token apparaitrait dans les logs
+  // Vercel et tout proxy intermediaire (referrer, access logs).
   const auth = req.headers.authorization || '';
   const expectedSecret = process.env.CRON_SECRET;
-  const querySecret = (req.query?.secret) || '';
-  const valid =
-    (expectedSecret && auth === `Bearer ${expectedSecret}`) ||
-    (expectedSecret && querySecret === expectedSecret);
-  if (!valid) {
+  if (!expectedSecret || auth !== `Bearer ${expectedSecret}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

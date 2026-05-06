@@ -24,13 +24,13 @@
 const { createClient } = require('@supabase/supabase-js');
 
 module.exports = async function handler(req, res) {
+  // Auth header-only (cf. autres crons). Pas de query string pour eviter le
+  // leak du token dans les logs.
   const expected = process.env.CRON_SECRET;
   const auth = req.headers.authorization || '';
-  const querySecret = (req.query?.secret) || '';
-  const valid =
-    (expected && auth === `Bearer ${expected}`) ||
-    (expected && querySecret === expected);
-  if (!valid) return res.status(401).json({ error: 'Unauthorized' });
+  if (!expected || auth !== `Bearer ${expected}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
     return res.status(503).json({ error: 'Supabase env vars missing' });

@@ -19,14 +19,11 @@ function sb() {
 }
 
 module.exports = async function handler(req, res) {
-  // Auth : Vercel Cron envoie Authorization: Bearer <CRON_SECRET>
+  // Auth header-only : Vercel Cron envoie Authorization: Bearer <CRON_SECRET>.
+  // Pas de ?secret= en query (leak token dans logs).
   const auth = req.headers.authorization || '';
   const expectedSecret = process.env.CRON_SECRET;
-  const querySecret = (req.query?.secret) || '';
-  const valid =
-    (expectedSecret && auth === `Bearer ${expectedSecret}`) ||
-    (expectedSecret && querySecret === expectedSecret);
-  if (!valid) {
+  if (!expectedSecret || auth !== `Bearer ${expectedSecret}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

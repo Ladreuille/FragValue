@@ -26,13 +26,11 @@ const MILESTONES = [
 ];
 
 module.exports = async function handler(req, res) {
+  // Auth cron : header-only Authorization Bearer (Vercel cron auto). Pas de
+  // ?secret= en query pour eviter de laisser fuiter le token dans les logs.
   const auth = req.headers.authorization || '';
   const expectedSecret = process.env.CRON_SECRET;
-  const querySecret = (req.query?.secret) || '';
-  const valid =
-    (expectedSecret && auth === `Bearer ${expectedSecret}`) ||
-    (expectedSecret && querySecret === expectedSecret);
-  if (!valid) {
+  if (!expectedSecret || auth !== `Bearer ${expectedSecret}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

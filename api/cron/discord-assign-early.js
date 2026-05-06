@@ -22,22 +22,19 @@
 //   - Pour fermer la fenetre Early : delete la var d'env Vercel + redeploy.
 //     Les anciens membres gardent leur role, les nouveaux n'en auront plus.
 //
-// Auth : requiert le header `Authorization: Bearer <CRON_SECRET>` (Vercel cron)
-//        ou `?secret=<CRON_SECRET>` en query (run manuel).
+// Auth : header `Authorization: Bearer <CRON_SECRET>` exclusivement (Vercel
+// cron envoie ce header automatiquement). Pour run manuel : utiliser curl avec
+// le header, jamais de secret en query string (leak risque dans les logs).
 //
 // Schedule : toutes les 5 min via vercel.json crons.
 
 const { listGuildMembers, assignRole, DiscordApiError } = require('../_lib/discord.js');
 
 module.exports = async function handler(req, res) {
-  // Auth cron
+  // Auth cron : header-only, fail-closed.
   const expectedSecret = process.env.CRON_SECRET;
   const auth = req.headers.authorization || '';
-  const querySecret = (req.query?.secret) || '';
-  const valid =
-    (expectedSecret && auth === `Bearer ${expectedSecret}`) ||
-    (expectedSecret && querySecret === expectedSecret);
-  if (!valid) {
+  if (!expectedSecret || auth !== `Bearer ${expectedSecret}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

@@ -32,13 +32,10 @@ const MILESTONES = [
 ];
 
 module.exports = async function handler(req, res) {
+  // Auth header-only Bearer. Pas de ?secret= en query (leak risque).
   const auth = req.headers.authorization || '';
   const expectedSecret = process.env.CRON_SECRET;
-  const querySecret = (req.query?.secret) || '';
-  const valid =
-    (expectedSecret && auth === `Bearer ${expectedSecret}`) ||
-    (expectedSecret && querySecret === expectedSecret);
-  if (!valid) {
+  if (!expectedSecret || auth !== `Bearer ${expectedSecret}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

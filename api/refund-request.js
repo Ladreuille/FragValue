@@ -89,6 +89,27 @@ export default async function handler(req, res) {
     const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
     if (authErr || !user) return res.status(401).json({ error: 'Session invalide' });
 
+    // Rate limit POST : 1 demande max / 24h par user. Empeche le spam de
+    // double-refund en cas de bug ou clic frenetique. GET (eligibility check)
+    // reste autorise sans limite.
+    if (req.method === 'POST') {
+      const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+      const { data: recent } = await supabase
+        .from('refund_requests')
+        .select('id, status, created_at')
+        .eq('user_id', user.id)
+        .gte('created_at', since)
+        .limit(1)
+        .maybeSingle();
+      if (recent) {
+        return res.status(429).json({
+          error: 'rate_limited',
+          message: 'Tu as deja fait une demande de remboursement dans les dernieres 24h. Si elle a echoue, contacte le support a contact@fragvalue.com.',
+          retry_after_hours: 24,
+        });
+      }
+    }
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('stripe_customer_id, stripe_subscription_id, subscription_tier')
