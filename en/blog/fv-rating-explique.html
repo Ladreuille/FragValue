@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <title>FV Rating explained: the formula behind the indicator - FragValue</title>
+  <meta name="description" content="The FV Rating combines impact, consistency, clutch factor and side balance. We open the full formula, explain why HLTV Rating 2.1 isn't always the best benchmark for a FACEIT player, and how to read your score.">
+  <meta name="keywords" content="FV Rating, HLTV rating 2.0, CS2 rating, CS2 impact, CS2 rating formula">
+  <link rel="canonical" href="https://fragvalue.com/en/blog/fv-rating-explique.html">
+  <link rel="alternate" hreflang="fr" href="https://fragvalue.com/blog/fv-rating-explique.html">
+  <link rel="alternate" hreflang="en" href="https://fragvalue.com/en/blog/fv-rating-explique.html">
+  <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/blog/fv-rating-explique.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="FV Rating explained: the formula behind the number">
+  <meta property="og:description" content="Opening up the FV Rating formula: impact + consistency + clutch + side balance.">
+  <meta property="og:url" content="https://fragvalue.com/en/blog/fv-rating-explique.html">
+  <meta property="og:image" content="https://fragvalue.com/og/blog.png">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://fragvalue.com/en/"},
+      {"@type": "ListItem", "position": 2, "name": "Blog", "item": "https://fragvalue.com/en/blog.html"},
+      {"@type": "ListItem", "position": 3, "name": "FV Rating explained: how we calculate your real CS2 impact", "item": "https://fragvalue.com/en/blog/fv-rating-explique.html"}
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "FV Rating explained: the formula behind the number",
+    "description": "The full FragValue CS2 FV Rating formula, with the 4 weighted components.",
+    "datePublished": "2026-04-22",
+    "dateModified": "2026-04-22",
+    "author": { "@type": "Organization", "name": "FragValue" },
+    "publisher": {
+      "@type": "Organization",
+      "name": "FragValue",
+      "logo": { "@type": "ImageObject", "url": "https://fragvalue.com/fragvalue_icon.svg" }
+    },
+    "mainEntityOfPage": "https://fragvalue.com/en/blog/fv-rating-explique.html",
+    "inLanguage": "en"
+  }
+  </script>
+
+  <link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+  <link rel="stylesheet" href="/blog-style.css">
+</head>
+<body>
+
+<nav></nav>
+
+<article class="article-wrap">
+  <div class="article-breadcrumb"><a href="/en/blog.html">Blog</a> / Product</div>
+  <div class="article-tag">Product</div>
+  <h1 class="article-title">FV Rating explained: how we calculate your real CS2 impact</h1>
+  <p class="article-lead">FV Rating combines 4 weighted factors: per-round impact, consistency, clutch factor and side balance. We open the full formula, explain why HLTV Rating 2.1 isn't always the best benchmark for a FACEIT player, and how to read your score.</p>
+  <div class="article-meta">
+    <span class="article-meta-item">April 22, 2026</span>
+    <span class="article-meta-item">6 min read</span>
+    <span class="article-meta-item">By FragValue</span>
+  </div>
+
+  <div class="article-body">
+
+<h2>Why we built the FV Rating</h2>
+<p>HLTV Rating 2.1 has become the standard for measuring a pro player's impact. But it is calibrated <strong>on pro matches</strong> (tier 1-2 LAN and online), with a very specific context: coordinated 5v5, called strats, coordinated utility.</p>
+<p>For a FACEIT player in solo queue, that context does not exist. You play with randoms, you are the IGL (or nobody is), strats are improvised. The rating must <strong>reflect impact in this context</strong>, not extrapolate from pro matches.</p>
+<p>So we designed FV Rating for <em>your FACEIT environment</em>, with 4 components that each measure a different aspect of your contribution to the team.</p>
+
+<h2>The 4 weighted components</h2>
+<p>The complete formula:</p>
+<div class="callout">
+  <div class="callout-title">FV Rating = weighted average</div>
+  <div class="callout-body">
+    <p><strong>40% Per-round impact</strong> + <strong>25% Consistency</strong> + <strong>20% Clutch factor</strong> + <strong>15% Side balance</strong></p>
+    <p>Centered on 1.00 (average player at your level), typically between 0.70 and 1.30.</p>
+  </div>
+</div>
+
+<h3>Component 1: Per-round impact (40%)</h3>
+<p>The "offensive" part: how much value you generate each round.</p>
+<p>Sub-formula:</p>
+<ul>
+  <li>Kills per round (KPR) normalized vs level</li>
+  <li>Damage per round (ADR) normalized vs level</li>
+  <li>Multi-kills (2k, 3k, 4k, 5k) weighted non-linearly: a 3k counts more than three single kills</li>
+  <li>Opening duels won (first kill of the round)</li>
+</ul>
+<p>Why 40%: it is the most tangible component. You generate damage or you don't. But it is not 100% because making kills without context (eco fragging, padding) does not measure the difference at high level. To understand the raw stats that feed this factor, check the <a href="/en/stats-guide.html">complete CS2 metrics guide</a> where each KPI is broken down (KPR, ADR, opening duels, multi-kills).</p>
+
+<h3>Component 2: Consistency (25%)</h3>
+<p>The "reliability" part: are you present every round?</p>
+<p>Sub-formula:</p>
+<ul>
+  <li>KAST % (Kills / Assists / Survived / Traded)</li>
+  <li>Standard deviation of your stats over 20 matches (lower is better)</li>
+  <li>Ghost rounds (0 kill + 0 assist + early death): penalty if &gt; 4 per match</li>
+  <li>Frequency of matches with &lt; 0.80 individual FV Rating (your "off days")</li>
+</ul>
+<p>Why 25%: an inconsistent carry is less useful than a regular player with moderate impact. The matches you lose are the ones where you are absent, not the ones where you don't carry. This consistency gap also shows up in <a href="/en/blog/adr-kast-cs2-expliques.html">our article on ADR and KAST</a>, which explains why KAST distinguishes truly steady players from volatile carries.</p>
+
+<h3>Component 3: Clutch factor (20%)</h3>
+<p>The "pressure" part: your performance in moments that matter.</p>
+<p>Sub-formula:</p>
+<ul>
+  <li>1vX win rates (1v1, 1v2, 1v3+) weighted</li>
+  <li>Decisive rounds (close score, key economy rounds) win rate</li>
+  <li>Overtime performance (where applicable)</li>
+  <li>Clutch when bomb is planted (retake vs defend)</li>
+</ul>
+<p>Why 20%: decisive rounds are rare but disproportionately important. Winning one 1v2 clutch often shifts the momentum of an entire half. We normalized vs the minimum number of rounds (if you played 0 clutches, the factor is neutral, not penalized).</p>
+
+<h3>Component 4: Side balance (15%)</h3>
+<p>The "completeness" part: are you good on CT AND on T, or only on one side?</p>
+<p>Sub-formula:</p>
+<ul>
+  <li>CT Win Rate vs T Win Rate: bonus if both are decent, penalty if either is &lt; 40%</li>
+  <li>Role diversity: do you play entry, lurker, support depending on the round?</li>
+</ul>
+<p>Why 15%: a 70% CT / 30% T player is less valuable than a 55% / 55% one. You can't pick only the sides where you shine.</p>
+
+<h2>How your FV Rating compares to others</h2>
+<table class="stats-table">
+  <thead>
+    <tr><th>FV Rating</th><th>Equivalent FACEIT level</th><th>Translation</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>0.70 to 0.85</td><td>Level 3-5</td><td>You are stuck or regressing</td></tr>
+    <tr><td>0.85 to 0.95</td><td>Level 5-7</td><td>You are holding your ground</td></tr>
+    <tr><td>0.95 to 1.05</td><td>Level 7-9</td><td>You do your job, the team can win</td></tr>
+    <tr><td>1.05 to 1.15</td><td>Level 9-10</td><td>You carry regularly</td></tr>
+    <tr><td>1.15 to 1.25</td><td>Top Level 10</td><td>You are in the top 5% of your level</td></tr>
+    <tr><td>1.25+</td><td>Semi-pro / pro</td><td>Serious competitive level</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">Important to understand</div>
+  <div class="callout-body">
+    <p>The FV Rating is <strong>normalized vs your level</strong>. A 1.05 at level 5 means "you are above the level 5 average". You will get a different rating with the same stats at level 10 (because the bar is higher).</p>
+    <p>That is why FV Rating doesn't directly compare a level 5 to a level 10: it compares each one to its own benchmark. If you aim to climb levels, read our <a href="/en/levels.html">FACEIT level-by-level roadmap</a> which details expectations per tier and the KPIs to target.</p>
+  </div>
+</div>
+
+<h2>Why we don't copy HLTV Rating 2.1</h2>
+<p>HLTV Rating 2.1 is a great metric, but it was calibrated for:</p>
+<ul>
+  <li><strong>Pro LAN and online tier 1-2 matches</strong>: very different context from FACEIT solo</li>
+  <li><strong>Coordinated utility</strong>: pros have 4 teammates setting up</li>
+  <li><strong>Strict competitive maps</strong>: reduced map pool, no Dust2 or Vertigo pickup</li>
+</ul>
+<p>If we apply HLTV Rating 2.1 to your FACEIT play, you get a number that <em>underestimates</em> your clutches (you take more in solo queue) and <em>overestimates</em> your damage (no organized trade frags).</p>
+<p>We ran internal tests: across 10k FACEIT profiles analyzed, HLTV Rating 2.1 and FV Rating correlate at 0.82 (strong correlation, but not identical). The 18% divergence is concentrated on "solo carry" and "silent support" profiles, exactly the profiles HLTV Rating reads poorly.</p>
+
+<h2>How to use your FV Rating</h2>
+
+<h3>1. Compare it to your own history</h3>
+<p>A given month's FV Rating isn't interesting in absolute terms. What matters is your <strong>trend</strong>. 30d at 0.92, 90d at 0.87? You are progressing. It is dropping? You are regressing, analyze what changed.</p>
+
+<h3>2. Compare it to your teammates</h3>
+<p>On <a href="/en/compare.html">the compare page</a>, you can put 2 to 5 profiles side by side. If you play with someone at 1.05 and you sit at 0.90, the question is: what does he do that you don't?</p>
+
+<h3>3. Compare it to your opponents</h3>
+<p>Before an important match or a scrim, check the FV Rating of opposing players on <a href="/en/scout.html">the Scout</a>. You can <em>anticipate</em> where their carry will be (high ADR, high HS%).</p>
+
+<h3>4. Check your components</h3>
+<p>On the <a href="/en/dashboard.html">dashboard</a>, we give you the breakdown of the 4 components. If your FV Rating sits at 1.00 with "Impact 1.10, Consistency 0.85, Clutch 1.05, Side 0.95", your real gap is consistency. You have matches where you disappear.</p>
+
+<h2>Known limitations</h2>
+<p>Honest disclaimer:</p>
+<ul>
+  <li>FV Rating is based on <strong>your last 20 matches</strong>. If you played 19 solo and 1 stack match, the stack weighs heavily.</li>
+  <li>It does not account for <strong>your team composition</strong> (a level 10 with 4 level 5 teammates will see a deflated FV Rating because teammates lose rounds).</li>
+  <li>It <strong>does not yet integrate comms or qualitative game sense</strong> (we are working on that via AI demo analysis).</li>
+</ul>
+
+<p>It is a <em>useful but not perfect</em> metric. Read with context (queue type, stack vs solo, maps played, current form). To go further and unlock the AI Diagnostic that refreshes per match and tells you <em>what to do</em> with your FV Rating, see the <a href="/en/pricing.html">FragValue Pro and Elite plans</a> (9€/month, no commitment).</p>
+
+  </div>
+
+  <div class="article-cta">
+    <div class="article-cta-title">See your FV Rating live</div>
+    <div class="article-cta-sub">Connect your FACEIT, FragValue calculates your FV Rating on your last 20 matches with the breakdown of all 4 components. You see exactly where your gaps are.</div>
+    <a href="/en/login.html" class="article-cta-btn">Create my account</a>
+  </div>
+
+  <div class="article-footer">
+    <div class="article-footer-title">Read next</div>
+    <div class="related-grid">
+      <a class="related-card" href="/en/blog/adr-kast-cs2-expliques.html">
+        <div class="related-card-title">ADR, KAST, FV Rating: the 3 key stats</div>
+        <div class="related-card-meta">Stats / 7 min</div>
+      </a>
+      <a class="related-card" href="/en/blog/comment-progresser-cs2-2026.html">
+        <div class="related-card-title">How to improve at CS2</div>
+        <div class="related-card-meta">Hub guide / 9 min</div>
+      </a>
+      <a class="related-card" href="/en/blog/passer-level-10-faceit.html">
+        <div class="related-card-title">From Level 4 to Level 10 FACEIT</div>
+        <div class="related-card-meta">Progression / 8 min</div>
+      </a>
+    </div>
+  </div>
+
+</article>
+
+<script src="/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <title>ADR, KAST, FV Rating: the CS2 stats that actually tell your level - FragValue</title>
+  <meta name="description" content="K/D is misleading. ADR, KAST and FV Rating measure your real CS2 impact. Each stat explained, how it is calculated, FACEIT level thresholds, and why they matter more than K/D.">
+  <meta name="keywords" content="CS2 ADR, CS2 KAST, FV Rating, CS2 stats explained, CS2 K/D, CS2 impact, HLTV rating 2.0">
+  <link rel="canonical" href="https://fragvalue.com/en/blog/adr-kast-cs2-expliques.html">
+  <link rel="alternate" hreflang="fr" href="https://fragvalue.com/blog/adr-kast-cs2-expliques.html">
+  <link rel="alternate" hreflang="en" href="https://fragvalue.com/en/blog/adr-kast-cs2-expliques.html">
+  <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/blog/adr-kast-cs2-expliques.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="ADR, KAST, FV Rating: the 3 CS2 stats that really matter">
+  <meta property="og:description" content="K/D is misleading. Here is how to read ADR, KAST and FV Rating like a pro analyst.">
+  <meta property="og:url" content="https://fragvalue.com/en/blog/adr-kast-cs2-expliques.html">
+  <meta property="og:image" content="https://fragvalue.com/og/blog.png">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://fragvalue.com/en/"},
+      {"@type": "ListItem", "position": 2, "name": "Blog", "item": "https://fragvalue.com/en/blog.html"},
+      {"@type": "ListItem", "position": 3, "name": "ADR, KAST, FV Rating: the 3 stats that actually tell your level", "item": "https://fragvalue.com/en/blog/adr-kast-cs2-expliques.html"}
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "ADR, KAST, FV Rating: the 3 CS2 stats that really matter",
+    "description": "Complete guide to the CS2 stats that measure your real impact.",
+    "datePublished": "2026-04-22",
+    "dateModified": "2026-04-22",
+    "author": { "@type": "Organization", "name": "FragValue" },
+    "publisher": {
+      "@type": "Organization",
+      "name": "FragValue",
+      "logo": { "@type": "ImageObject", "url": "https://fragvalue.com/fragvalue_icon.svg" }
+    },
+    "mainEntityOfPage": "https://fragvalue.com/en/blog/adr-kast-cs2-expliques.html",
+    "inLanguage": "en"
+  }
+  </script>
+
+  <link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+  <link rel="stylesheet" href="/blog-style.css">
+</head>
+<body>
+
+<nav></nav>
+
+<article class="article-wrap">
+  <div class="article-breadcrumb"><a href="/en/blog.html">Blog</a> / Stats</div>
+  <div class="article-tag">Stats</div>
+  <h1 class="article-title">ADR, KAST, FV Rating: the 3 stats that actually tell your level</h1>
+  <p class="article-lead">K/D is misleading. ADR, KAST and FV Rating measure your real impact in the team. We explain what each metric means, how it is calculated, and the thresholds for each FACEIT level.</p>
+  <div class="article-meta">
+    <span class="article-meta-item">April 22, 2026</span>
+    <span class="article-meta-item">7 min read</span>
+    <span class="article-meta-item">By FragValue</span>
+  </div>
+
+  <div class="article-body">
+
+<h2>Why K/D is not enough</h2>
+<p>K/D (kills divided by deaths) is the most-watched and most-misleading stat. Concrete example: a player with 25/15 on a map lost 16-11 can sit at a 1.67 K/D, while his teammate at 18/13 with 95 ADR and 82% KAST was much more useful in the effort to win rounds.</p>
+<p>K/D says nothing about:</p>
+<ul>
+  <li><strong>When</strong> you got your kills (an eco kill and a decisive kill count the same)</li>
+  <li>The <strong>impact</strong> of your deaths (dying early in opening costs more than a save)</li>
+  <li>The <strong>damage</strong> piled up that didn't end in a kill (and that helped your teammates)</li>
+  <li>Your contribution on rounds where you got <em>zero kills</em> (assist, flash, trade)</li>
+</ul>
+<p>The 3 stats below each fix a blind spot of K/D.</p>
+
+<h2>1. ADR (Average Damage per Round)</h2>
+<p><strong>ADR = total damage / number of rounds</strong>. It is the most direct stat to measure your offensive contribution, whether you finish your kills or not.</p>
+<p>Why it matters: in CS2, a kill = 100 HP minimum. But dealing 180 damage spread across 2 enemies (one at 100 HP = kill, the other at 80 HP = pre-damaged) is often more useful for the team than a single clean kill. Your teammate finishes the second one without risk.</p>
+
+<h3>How it is calculated</h3>
+<p>Every bullet that hits counts as damage (capped at 100 HP per enemy per round, beyond is overkill that doesn't count). FACEIT sums the damage from all your shots over rounds played, then divides by round count.</p>
+
+<h3>Thresholds per FACEIT level (averages observed across 10k players)</h3>
+<table class="stats-table">
+  <thead>
+    <tr><th>Level</th><th>Average ADR</th><th>Top 10% ADR</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Level 4</td><td>62 to 70</td><td>78+</td></tr>
+    <tr><td>Level 6</td><td>70 to 78</td><td>85+</td></tr>
+    <tr><td>Level 8</td><td>78 to 86</td><td>92+</td></tr>
+    <tr><td>Level 10</td><td>85 to 95</td><td>100+</td></tr>
+    <tr><td>Pro tier</td><td>90 to 105</td><td>115+</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">Pro benchmark</div>
+  <div class="callout-body">
+    <p>HLTV top 20 pros sit around <strong>85 to 95 ADR</strong> in official matches. Pure entries like donk or m0NESY can climb to 100+. If you put up 95 ADR at FACEIT level 10, you have the offensive profile of a serious competitive player.</p>
+  </div>
+</div>
+
+<h2>2. KAST (Kills, Assists, Survived, Traded %)</h2>
+<p><strong>KAST</strong> measures the percentage of rounds where you had at least <em>one</em> positive contribution: a kill, an assist, surviving, or being traded (your death avenged within 5 seconds).</p>
+<p>It is the best metric to measure your <strong>steady impact</strong> in the team. A player with 40 kills but 60% KAST = he carries a few rounds and is absent on the others. A player with 20 kills but 80% KAST = he is useful on almost every round. KAST is also one of the main factors of the <a href="/en/blog/fv-rating-explique.html">consistency component of the FV Rating</a> (25% of the final score).</p>
+
+<h3>How it is calculated</h3>
+<p>Each round, FACEIT checks:</p>
+<ul>
+  <li><strong>K</strong>ill: at least 1 kill?</li>
+  <li><strong>A</strong>ssist: substantial damage on a teammate kill, or flash assist?</li>
+  <li><strong>S</strong>urvived: alive at round end?</li>
+  <li><strong>T</strong>raded: died but a teammate traded your death within 5s?</li>
+</ul>
+<p>If at least one of the 4 is true, you count for KAST that round. KAST % = rounds with at least 1 check / total rounds.</p>
+
+<h3>Thresholds per FACEIT level</h3>
+<table class="stats-table">
+  <thead>
+    <tr><th>Level</th><th>Average KAST</th><th>Diagnostic</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Level 4-6</td><td>62% to 68%</td><td>Gaps on more than 1 round in 3</td></tr>
+    <tr><td>Level 6-8</td><td>68% to 73%</td><td>Decent contribution</td></tr>
+    <tr><td>Level 8-10</td><td>73% to 78%</td><td>Very steady, few ghost rounds</td></tr>
+    <tr><td>Pro tier</td><td>75% to 82%</td><td>Present on 4 rounds out of 5</td></tr>
+  </tbody>
+</table>
+
+<h3>The trap to avoid</h3>
+<p>A KAST that is too high (&gt; 80% over a long period) with low ADR can be a signal of <em>passive play</em>. You survive a lot, you tap little. That is useful in support roles but a problem in entry. Both stats must be read together.</p>
+
+<div class="callout warning">
+  <div class="callout-title">Rule of thumb</div>
+  <div class="callout-body">
+    <p>If KAST &gt; 75% and ADR &lt; 75: you play too safe, take more initiative.</p>
+    <p>If ADR &gt; 85 and KAST &lt; 65%: you put up flashes of brilliance but you die too early. Work on post-kill positioning.</p>
+  </div>
+</div>
+
+<h2>3. FV Rating: our composite metric</h2>
+<p><strong>FV Rating</strong> is the FragValue equivalent of HLTV Rating 2.1. It is a composite indicator that weights several inputs to reflect your <em>overall impact</em>.</p>
+
+<h3>What it contains</h3>
+<p>FV Rating combines 4 weighted factors:</p>
+<ol>
+  <li><strong>Per-round impact</strong> (kills, damage, multi-kills): 40%</li>
+  <li><strong>Consistency</strong> (KAST, frequency of zero rounds): 25%</li>
+  <li><strong>Clutch factor</strong> (1vX played and won): 20%</li>
+  <li><strong>Side balance</strong> (CT vs T performance): 15%</li>
+</ol>
+<p>We explain the full formula in <a href="/en/blog/fv-rating-explique.html">this dedicated article</a>. The number typically sits between 0.70 and 1.30.</p>
+
+<h3>How to read your FV Rating</h3>
+<table class="stats-table">
+  <thead>
+    <tr><th>FV Rating</th><th>Level</th><th>Translation</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>&lt; 0.80</td><td>Beginner</td><td>You're getting carried. Focus on fundamentals.</td></tr>
+    <tr><td>0.80 to 0.95</td><td>Intermediate</td><td>You hold your ground. Still gaps.</td></tr>
+    <tr><td>0.95 to 1.05</td><td>Solid</td><td>You do your job. Team can win.</td></tr>
+    <tr><td>1.05 to 1.15</td><td>Impact</td><td>You win rounds for the team.</td></tr>
+    <tr><td>1.15 to 1.25</td><td>Carry</td><td>You carry the team consistently.</td></tr>
+    <tr><td>&gt; 1.25</td><td>Pro tier</td><td>Serious competitive level.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">Difference vs HLTV Rating 2.1</div>
+  <div class="callout-body">
+    <p>HLTV Rating 2.1 is calculated on <strong>pro</strong> matches (LAN, online tier 1-2). It does not factor in your FACEIT play. FV Rating is specific to your FACEIT history and accounts for the skill of your opponents (a kill against a level 10 weighs more than a kill against a level 3).</p>
+  </div>
+</div>
+
+<h2>How to use these 3 stats together</h2>
+<p>The real value is reading them in <strong>combination</strong>. Here are 4 typical profiles these 3 stats reveal:</p>
+
+<h3>Profile "Offensive carry"</h3>
+<p><strong>FV Rating 1.10+, ADR 90+, KAST 70%</strong>. You make the difference when you take your duels, but you have ghost rounds. Good for open-up and entry roles.</p>
+
+<h3>Profile "Steady impact"</h3>
+<p><strong>FV Rating 1.05+, ADR 80+, KAST 75%+</strong>. The ideal profile. You are present each round and you put up damage. Everyone wants this player on their team.</p>
+
+<h3>Profile "Passive support"</h3>
+<p><strong>FV Rating 0.95, ADR 70, KAST 80%+</strong>. You survive well, you trade, you help, but you do little direct damage. Useful as pure support (IGL, flash), limited elsewhere.</p>
+
+<h3>Profile "Inconsistent"</h3>
+<p><strong>FV Rating 0.85, ADR 70, KAST 62%</strong>. High variance. You play matches at 1.20 and matches at 0.50. Consistency problem, possibly tilt. Mental focus.</p>
+
+<h2>Where to see your stats on FragValue</h2>
+<p>We compute these 3 stats automatically over your last 20 FACEIT matches:</p>
+<ul>
+  <li><a href="/en/dashboard.html">Dashboard</a>: overview with 30-day trend</li>
+  <li><a href="/en/scout.html">Scout</a>: same view for any FACEIT profile</li>
+  <li><a href="/en/compare.html">Compare</a>: 2 to 5 players side by side</li>
+  <li><a href="/en/team.html">Team</a>: collective stats for your roster</li>
+</ul>
+
+  </div>
+
+  <div class="article-cta">
+    <div class="article-cta-title">See your stats in 30 seconds</div>
+    <div class="article-cta-sub">Connect your FACEIT, FragValue returns your FV Rating, ADR, KAST, K/D and HS% on the last 20 matches with your level benchmarks. Free, no card.</div>
+    <a href="/en/login.html" class="article-cta-btn">Analyze my stats</a>
+  </div>
+
+  <div class="article-footer">
+    <div class="article-footer-title">Read next</div>
+    <div class="related-grid">
+      <a class="related-card" href="/en/blog/comment-progresser-cs2-2026.html">
+        <div class="related-card-title">How to improve at CS2 in 2026</div>
+        <div class="related-card-meta">Hub guide / 9 min</div>
+      </a>
+      <a class="related-card" href="/en/blog/fv-rating-explique.html">
+        <div class="related-card-title">FV Rating: the formula behind the number</div>
+        <div class="related-card-meta">Product / 6 min</div>
+      </a>
+      <a class="related-card" href="/en/blog/passer-level-10-faceit.html">
+        <div class="related-card-title">From Level 4 to Level 10 FACEIT</div>
+        <div class="related-card-meta">Progression / 8 min</div>
+      </a>
+    </div>
+  </div>
+
+</article>
+
+<script src="/nav.js"></script>
+</body>
+</html>

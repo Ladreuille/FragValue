@@ -52,7 +52,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     "@type": "Blog",
     "name": "FragValue Blog",
     "description": "Data-driven CS2 guides to improve at FACEIT",
-    "url": "https://fragvalue.com/blog.html",
+    "url": "https://fragvalue.com/en/blog.html",
     "inLanguage": "en-US",
     "publisher": {
       "@type": "Organization",
@@ -149,14 +149,14 @@ const ARTICLES = [
 
 function formatDate(iso) {
   try {
-    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    return new Date(iso).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
   } catch { return iso; }
 }
 
 function renderBlog() {
   const grid = document.getElementById('blogGrid');
   grid.innerHTML = ARTICLES.map(a => `
-    <a class="blog-card${a.featured ? ' featured' : ''}" href="/blog/${a.slug}.html">
+    <a class="blog-card${a.featured ? ' featured' : ''}" href="/en/blog/${a.slug}.html">
       <div class="blog-card-tag">${a.tag}</div>
       <div class="blog-card-title">${a.title}</div>
       <div class="blog-card-excerpt">${a.excerpt}</div>
