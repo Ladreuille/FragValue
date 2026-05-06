@@ -204,6 +204,17 @@
        viewports type iPhone SE 320px. */
     html{overflow-x:hidden}
 
+    /* WCAG 2.3.3 : respect des preferences user pour les animations. Coupe
+       toutes les transitions/animations FragValue si l'OS demande motion-reduce
+       (Reduce Motion sur iOS, ou setting equivalent Android/desktop). */
+    @media (prefers-reduced-motion: reduce){
+      .fv-mobile-drawer,.fv-mobile-backdrop,.fv-notif-panel,.fv-burger,
+      .fv-bell,.fv-section-btn,.fv-section-btn::after,.fv-skip-link,
+      .fv-popup-overlay,.fv-popup-card{transition:none !important;animation:none !important}
+      .ticker-track{animation:none !important}
+      .fv-pulse,.fv-account-dot{animation:none !important}
+    }
+
     /* ── Mobile drawer (full overlay from right) ────────────────────── */
     .fv-mobile-drawer{position:fixed;top:0;right:0;bottom:0;width:min(320px,85vw);background:linear-gradient(180deg,#0f1010 0%,#0a0c0c 100%);border-left:1px solid rgba(184,255,87,.18);box-shadow:-12px 0 32px rgba(0,0,0,.6);z-index:9999;transform:translateX(100%);transition:transform .25s ease;overflow-y:auto;display:flex;flex-direction:column;padding:72px 20px 32px}
     .fv-mobile-drawer.open{transform:translateX(0)}
@@ -213,7 +224,7 @@
     .fv-mobile-close:hover{border-color:rgba(184,255,87,.4);color:#b8ff57}
     .fv-mobile-close:focus-visible{outline:2px solid #b8ff57;outline-offset:2px}
     .fv-mobile-close svg{width:18px;height:18px}
-    .fv-mobile-drawer .fv-mobile-section{margin-bottom:20px}
+    .fv-mobile-drawer .fv-mobile-section{margin-bottom:20px;display:flex;flex-direction:column;gap:6px}
     .fv-mobile-drawer .fv-mobile-section-label{font-family:'Anton',sans-serif;font-size:11px;color:#b8ff57;letter-spacing:.12em;text-transform:uppercase;margin:0 0 8px 4px;opacity:.8}
     .fv-mobile-drawer .fv-mobile-link{display:flex;align-items:center;gap:10px;padding:12px 14px;min-height:44px;font-family:'Space Mono',monospace;font-size:13px;color:#d8dcdc;text-decoration:none;border-radius:6px;transition:all .15s;border:1px solid transparent}
     .fv-mobile-drawer .fv-mobile-link:hover,.fv-mobile-drawer .fv-mobile-link:focus-visible{background:rgba(184,255,87,.08);color:#b8ff57;border-color:rgba(184,255,87,.18);outline:none}
@@ -355,13 +366,18 @@
     skip.href = '#main-content';
     skip.textContent = T.skipLink;
     document.body.insertBefore(skip, document.body.firstChild);
-    // Au click, cible le <main> ou le 1er h1 et lui donne le focus programmatique
+    // Garantir des le load qu'une cible existe pour href="#main-content".
+    // Sans ca, le href pointe sur un id inexistant et est invisible aux
+    // screen readers / outils a11y qui n'executent pas le JS click.
+    const skipTarget = document.querySelector('main, #main-content, h1') || document.body;
+    if (skipTarget && !skipTarget.id) skipTarget.id = 'main-content';
+    if (!skipTarget.hasAttribute('tabindex')) skipTarget.setAttribute('tabindex', '-1');
+    // Au click, donne le focus programmatique a la cible (le href #main-content
+    // jump natif, mais tabindex -1 + focus() force la lecture par screen reader).
     skip.addEventListener('click', e => {
       e.preventDefault();
-      const target = document.querySelector('main, #main-content, h1') || document.body;
-      if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
-      target.focus();
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      skipTarget.focus();
+      skipTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
 

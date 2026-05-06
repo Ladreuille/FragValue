@@ -50,6 +50,9 @@
 
   /* ── Inject CSS ─────────────────────────────────────── */
   var css = [
+    '@media (prefers-reduced-motion: reduce){',
+    '  .fv-popup-overlay,.fv-popup-card{transition:none !important;animation:none !important}',
+    '}',
     '.fv-popup-overlay{',
     '  position:fixed;inset:0;z-index:9999;',
     '  display:flex;align-items:center;justify-content:center;',

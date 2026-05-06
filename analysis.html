@@ -215,7 +215,16 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 }
 
 /* STATS TABLE */
+/* Mobile : sur viewport <480px les colonnes stat (KAST/ADR/HS%/etc.) totalisent
+   ~520px min ce qui depasse l'ecran. On rend la table scrollable horizontalement
+   en interne (display:block + overflow-x:auto) plutot que casser le layout page.
+   Les inner tr/thead/tbody restent en table-layout pour preserver l'alignement. */
 .stat-table{width:100%;border-collapse:collapse}
+@media (max-width:480px){
+  .stat-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .stat-table thead,.stat-table tbody,.stat-table tfoot{display:table;width:100%;min-width:520px;table-layout:fixed}
+  .stat-table tr{display:table-row}
+}
 .stat-table th{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 6px;text-align:center;border-bottom:2px solid var(--border);white-space:nowrap}
 .stat-table th:first-child{text-align:left;padding-left:12px}
 .stat-table td{padding:10px 6px;border-bottom:1px solid var(--border);text-align:center;font-size:11px}
