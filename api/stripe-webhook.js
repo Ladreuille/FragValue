@@ -402,6 +402,29 @@ export default async function handler(req, res) {
         }
 
         const planMeta2 = sub.metadata?.plan || 'pro_monthly';
+
+        // Edge case : un user peut avoir cree 2 subs en parallele (ex.
+        // checkout Elite abandonne puis checkout Pro confirme). L'event
+        // webhook arrive pour le sub abandonne (incomplete_expired) APRES
+        // le sub actif. Sans garde, on ecraserait la sub active. Skip si
+        // la row existante est active/trialing et que l'incoming est un
+        // sub_id different en etat terminal.
+        const TERMINAL_STATES = ['canceled', 'incomplete_expired', 'unpaid'];
+        const ACTIVE_STATES   = ['active', 'trialing'];
+        const { data: existingSub } = await sb
+          .from('subscriptions')
+          .select('stripe_subscription_id, status')
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (existingSub
+            && existingSub.stripe_subscription_id
+            && existingSub.stripe_subscription_id !== sub.id
+            && ACTIVE_STATES.includes(existingSub.status)
+            && TERMINAL_STATES.includes(sub.status)) {
+          console.warn(`[Stripe] Skip subscription.updated for ${sub.id} (${sub.status}) : user ${userId} has active sub ${existingSub.stripe_subscription_id}`);
+          break;
+        }
+
         await sb.from('subscriptions').upsert({
           user_id: userId,
           stripe_subscription_id: sub.id,
@@ -449,11 +472,18 @@ export default async function handler(req, res) {
 
       case 'customer.subscription.deleted': {
         const sub = event.data.object;
+        // maybeSingle() pour ne pas throw si la sub deletee n'a jamais ete
+        // sync en DB (cas typique : sub abandonnee incomplete_expired qu'on a
+        // skip lors du subscription.updated par la garde multi-subs).
         const { data: existingDel } = await sb.from('subscriptions')
           .select('user_id')
           .eq('stripe_subscription_id', sub.id)
-          .single();
+          .maybeSingle();
         const userIdDel = existingDel?.user_id;
+        if (!userIdDel) {
+          console.log(`[Stripe] Skip subscription.deleted ${sub.id} : not tracked in DB (likely abandoned/duplicate sub)`);
+          break;
+        }
 
         await sb.from('subscriptions').update({
           status: 'canceled',

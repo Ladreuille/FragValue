@@ -117,19 +117,9 @@ module.exports = async function handler(req, res) {
             kast = demoRow.kast != null ? Math.round(demoRow.kast) : null;
             adr = demoRow.adr != null ? Math.round(demoRow.adr) : null;
           }
-          // Tente de recuperer le 1er axe Coach IA s'il existe deja en DB
-          const { data: roadmap } = await sb
-            .from('coach_roadmaps')
-            .select('weak_points')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          if (roadmap?.weak_points && Array.isArray(roadmap.weak_points) && roadmap.weak_points[0]) {
-            const wp = roadmap.weak_points[0];
-            mainAxis = wp.title || wp.text || (typeof wp === 'string' ? wp : null);
-            if (mainAxis) mainAxis = String(mainAxis).slice(0, 200);
-          }
+          // mainAxis (axe Coach IA principal) reste null tant que la feature
+          // roadmap n'est pas implementee. Le template demoAnalysisReady gere
+          // le cas null gracefully (omet la section "axe Coach IA").
         } catch (_) {}
       }
 
