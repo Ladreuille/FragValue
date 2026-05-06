@@ -190,4 +190,33 @@
   };
 
   init();
+
+  // ── Core Web Vitals -> GA4 ────────────────────────────────────────────
+  // Charge le package web-vitals depuis jsdelivr et envoie LCP/INP/CLS/FCP/
+  // TTFB a GA4 via window.fvTrack. Les events apparaissent dans GA4 sous le
+  // meme nom (LCP, INP, etc.) et permettent de monitorer les Core Web Vitals
+  // sans dependre uniquement de Search Console (lent + partiel).
+  //
+  // Best-effort : si le CDN tombe ou si le user a bloque les analytics, on
+  // ne casse rien. Pas de PII envoyee, juste les valeurs perf brutes.
+  if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
+    import('https://cdn.jsdelivr.net/npm/web-vitals@4/dist/web-vitals.attribution.js').then((wv) => {
+      function send(metric) {
+        if (typeof window.fvTrack !== 'function') return;
+        // CLS est un score [0..1], on multiplie par 1000 pour avoir un int lisible
+        // dans GA4. Les autres metriques sont en ms.
+        const val = metric.name === 'CLS' ? Math.round(metric.value * 1000) : Math.round(metric.value);
+        window.fvTrack(metric.name, {
+          value: val,
+          metric_id: metric.id,
+          metric_rating: metric.rating,
+          metric_delta: Math.round(metric.delta || 0),
+          metric_navigation_type: metric.navigationType,
+        });
+      }
+      ['onCLS', 'onINP', 'onLCP', 'onFCP', 'onTTFB'].forEach((fn) => {
+        try { if (typeof wv[fn] === 'function') wv[fn](send); } catch (_) {}
+      });
+    }).catch(() => { /* CDN indispo : skip */ });
+  }
 })();
