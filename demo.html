@@ -1508,6 +1508,12 @@ async function startAnalysis() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000);
     const res = await fetch(PARSER_URL + '/parse', { method:'POST', body:fd, signal: controller.signal });
+
+    if (res.status === 422) {
+      const data = await res.json().catch(() => ({}));
+      showError(data.message || "Cette demo n'a pas pu etre parsee. Essaie une autre demo.");
+      return;
+    }
     clearTimeout(timeout);
 
     // Fetch terminé  - annuler les timers et finir proprement
