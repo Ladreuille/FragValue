@@ -1507,15 +1507,47 @@ async function startAnalysis() {
   );
 
   try {
-    go(0, 3, 'Connexion au serveur', 'Initialisation...');
-    go(0, 6, 'Envoi du fichier', selectedFile.name);
-    const fd = new FormData();
-    fd.append('demo', selectedFile);
-    fd.append('options', JSON.stringify(['Heatmaps','2D Replay','Utility Map','Stats équipes']));
+    go(0, 3, 'Connexion au serveur', 'Verification de la session...');
 
+    // ── 1. Auth check : on a besoin du JWT pour signer l'upload Supabase
+    //     ET pour s'authentifier aupres du parser via Authorization header.
+    const { data: { user }, error: authErr } = await _sb.auth.getUser();
+    if (authErr || !user) throw new Error('Tu dois etre connecte pour analyser une demo.');
+
+    // ── 2. Upload direct vers Supabase Storage (bypass Railway proxy
+    //     -> plus de timeout 5min sur l'upload, marche meme pour 450+ MB).
+    go(0, 6, 'Envoi du fichier', selectedFile.name + ' (' + Math.round(fileSizeMB) + ' MB)');
+    const fileId = crypto.randomUUID();
+    const storagePath = user.id + '/' + fileId + '.dem';
+    const { error: uploadErr } = await _sb.storage
+      .from('demos-incoming')
+      .upload(storagePath, selectedFile, { cacheControl: '3600', upsert: false });
+    if (uploadErr) throw new Error('Upload Supabase echec : ' + uploadErr.message);
+
+    // ── 3. Recup du JWT actif pour le call parser
+    const { data: { session } } = await _sb.auth.getSession();
+    const jwt = session?.access_token;
+    if (!jwt) throw new Error('Session expiree, reconnecte-toi.');
+
+    // ── 4. POST parser avec payload JSON tiny (< 1 KB) -> Railway proxy
+    //     voit juste un petit POST instant, pas un upload multipart de 450 MB.
+    //     Le parser fait le download Supabase->Railway server-to-server.
+    go(1, 12, 'Parser en cours', 'Lecture de la demo cote serveur...');
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
-    const res = await fetch(PARSER_URL + '/parse', { method:'POST', body:fd, signal: controller.signal });
+    const res = await fetch(PARSER_URL + '/parse-from-storage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + jwt,
+      },
+      body: JSON.stringify({
+        bucket: 'demos-incoming',
+        path: storagePath,
+        options: ['Heatmaps','2D Replay','Utility Map','Stats équipes'],
+      }),
+      signal: controller.signal,
+    });
 
     if (res.status === 422) {
       const data = await res.json().catch(() => ({}));
