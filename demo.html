@@ -1061,7 +1061,7 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
       <button type="button" id="tabUrl" role="tab" aria-selected="false" class="upload-mode-tab" onclick="switchUploadMode('url')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
         URL match FACEIT
-        <span style="font-size:9px;background:var(--accent);color:#000;padding:1px 6px;border-radius:8px;margin-left:6px;font-weight:700;letter-spacing:.04em">NEW</span>
+        <span style="font-size:9px;background:var(--card);color:var(--accent);border:1px solid rgba(184,255,87,.3);padding:1px 6px;border-radius:8px;margin-left:6px;font-weight:700;letter-spacing:.04em">BIENTOT</span>
       </button>
     </div>
 
@@ -1084,22 +1084,24 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
 
     <!-- Mode 2 : URL FACEIT (auto-fetch via Downloads API serveur) -->
     <div class="url-zone" id="urlZone" style="display:none;border:1px dashed var(--border2);border-radius:var(--radius2);padding:24px 22px;background:var(--bg);animation:fadeUp .4s ease forwards">
-      <div class="upload-icon" style="background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.15)">
+      <div class="upload-icon" style="background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.2);margin:0 auto 14px">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
         </svg>
       </div>
-      <div class="upload-title" style="margin-bottom:8px">Colle l'URL de ton match FACEIT</div>
-      <div class="upload-sub" style="margin-bottom:14px">On recupere la demo automatiquement &middot; <strong>Pas de download manuel</strong></div>
-      <input type="url" id="faceitUrlInput" autocomplete="off" placeholder="https://www.faceit.com/fr/cs2/room/1-xxxxxxx-..." style="width:100%;background:var(--card);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color .15s;margin-bottom:12px" aria-label="URL match FACEIT">
-      <button type="button" class="upload-btn" id="faceitUrlSubmit" onclick="submitFaceitUrl()" style="margin-top:0">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:6px"><polyline points="20 6 9 17 4 12"/></svg>
-        Analyser ce match
-      </button>
-      <div id="faceitUrlMsg" role="status" aria-live="polite" style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;display:none"></div>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:14px;line-height:1.6">
-        Le match doit etre <strong>termine</strong> et avoir moins de 4 semaines (les demos FACEIT sont purgees apres ~30j).
+      <div class="upload-title" style="margin-bottom:8px;text-align:center">Auto-sync FACEIT en attente</div>
+      <div class="upload-sub" style="margin-bottom:18px;max-width:460px;margin-left:auto;margin-right:auto;text-align:center">Notre demande d'acces a la <strong>Downloads API officielle FACEIT</strong> est en cours de revue par leur equipe partenariats. Une fois validee, tu pourras coller un lien match et on telechargera la demo automatiquement.</div>
+      <input type="url" id="faceitUrlInput" autocomplete="off" placeholder="Coller un lien match FACEIT (bientot)" disabled style="width:100%;max-width:480px;display:block;margin:0 auto 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--text3);outline:none;cursor:not-allowed;opacity:.55" aria-label="URL match FACEIT (bientot disponible)">
+      <div style="text-align:center">
+        <a href="account.html#settings" class="upload-btn" data-teaser-cta="faceit-url-sync" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;justify-content:center">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Activer les notifs
+        </a>
+      </div>
+      <div id="faceitUrlMsg" role="status" aria-live="polite" style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;display:none;text-align:center"></div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:18px;line-height:1.6;text-align:center">
+        En attendant : utilise l'onglet <strong style="color:var(--text2)">Upload .dem</strong> ci-dessus &middot; tu telecharges ta demo depuis faceit.com (bouton "Download demo" sur la page du match) puis tu la deposes ici.
       </div>
     </div>
 
