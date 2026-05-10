@@ -1,68 +1,85 @@
-// api/ai-roadmap.js
-// Genere un diagnostic de roadmap personnalise unique par user via Claude API.
-// Cache Supabase 7 jours pour contenir le cout et accelerer les rendus.
+// api/ai-roadmap.js · FragValue Coach IA · ROADMAP DIAGNOSTIC 10/10
 //
-// Input  : GET /api/ai-roadmap (Authorization: Bearer <supabase_jwt>)
-//          + optionnel ?refresh=1 pour forcer un recompute
-// Output : { diagnosis: {...}, cached: bool, cachedAt: ISO, userLevel, eloTarget }
+// Genere un diagnostic CS2 personnalise (niveau coach pro humain) via Claude Opus 4.7
+// avec adaptive thinking + extended thinking + self-eval loop sur rubric 10 axes.
+//
+// Pipeline :
+//   1. Fetch FACEIT stats (20 last matches) + FragValue Demos + Pro benchmarks (HLTV)
+//   2. Detect role (entry/awp/igl/support/lurker/rifler) + level tier
+//   3. Get drill candidates depuis library (axes prioritaires du role)
+//   4. Fetch previous diagnosis from diagnostic_history (progress tracking)
+//   5. Build prompt systeme (rubric + drill IDs + pro benchmarks - stable, cached 1h)
+//   6. Call Claude Opus 4.7 via withSelfEval (regen 1x si axe < 10)
+//   7. Save to diagnostic_history (axe 9) + ai_roadmap_cache (legacy)
+//   8. Return enrichi avec backward compat fields pour le frontend
+//
+// Models par plan :
+//   - Free  : Sonnet 4.6 + adaptive thinking + effort high  (cap a 1 diag/mois)
+//   - Pro   : Opus 4.7 + adaptive thinking + effort xhigh   (refresh illimite)
+//   - Elite : Opus 4.7 + adaptive thinking + effort max     (refresh illimite)
+//
+// Cost estimation par diagnostic Pro/Elite :
+//   - Input  : ~5K tokens (cache hit ~80% sur system prompt = ~$0.005)
+//   - Output : ~8K tokens (avec thinking)  = ~$0.20
+//   - Total  : ~$0.20-0.25/diag · acceptable vu valeur perçue
 //
 // ENV VARS requises :
-//   - ANTHROPIC_API_KEY (Claude API)
-//   - FACEIT_API_KEY    (pour fetch stats)
-//   - SUPABASE_URL / SUPABASE_SERVICE_KEY
+//   - ANTHROPIC_API_KEY · FACEIT_API_KEY · SUPABASE_URL · SUPABASE_SERVICE_KEY · STRIPE_SECRET_KEY
 
 const { createClient } = require('@supabase/supabase-js');
+const { isAdminUser } = require('./_lib/subscription');
+const { callClaude, MODELS, estimateCostUsd } = require('./_lib/claude-client');
+const { withSelfEval } = require('./_lib/self-eval');
+const { getBenchmarksByMap, formatBenchmarksForPrompt } = require('./_lib/pro-benchmarks');
+const { detectRole, getRoleFocus } = require('./_lib/role-detection');
+const { getDrillsByAxis, listAllDrillIds, getDrillById } = require('./_lib/drill-library');
+const { buildRubricInstructions, buildJsonSchema } = require('./_lib/diagnostic-rubric');
+const { buildBaseSystemPrompt, detectLocale } = require('./_lib/cs2-lexicon');
 
-// Modele par plan :
-// - Free : Haiku 4.5 (rapide, cache 30j, cout faible)
-// - Pro / Elite : Sonnet 4.5 (raisonnement plus fin, meilleures references
-//   pros, analyse tactique plus profonde - difference visible avec langage HLTV)
-const CLAUDE_MODEL_FREE = 'claude-haiku-4-5';
-const CLAUDE_MODEL_PRO  = 'claude-sonnet-4-5';
-const CLAUDE_ENDPOINT   = 'https://api.anthropic.com/v1/messages';
 const FACEIT_BASE = 'https://open.faceit.com/data/v4';
 const CACHE_TTL_DAYS = 7;
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 
+let _sb = null;
 function sb() {
-  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+  if (_sb) return _sb;
+  _sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+  return _sb;
 }
 
-// ── FACEIT level ELO ranges (aligne avec levels.html) ─────────────────────
+// FACEIT level → ELO target table (aligne avec levels.html)
 const LEVEL_TARGETS_ELO = {
-  1: 501,  2: 751,  3: 901,  4: 1051, 5: 1201,
+  1: 501, 2: 751, 3: 901, 4: 1051, 5: 1201,
   6: 1351, 7: 1531, 8: 1751, 9: 2001, 10: 2401,
 };
 
-// ── Resolve auth + cache lookup ──────────────────────────────────────────
+function getTier(level) {
+  if (level >= 9) return 'elite';
+  if (level >= 7) return 'high';
+  if (level >= 5) return 'mid';
+  return 'low';
+}
+
+// Auth
 async function getUser(authHeader) {
   if (!authHeader) return null;
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
   if (!token) return null;
-  const s = sb();
-  const { data, error } = await s.auth.getUser(token);
+  const { data, error } = await sb().auth.getUser(token);
   if (error || !data?.user) return null;
   return data.user;
 }
 
-// Determine le plan de l'utilisateur (free / pro / team) via Stripe.
-// Retourne aussi isAdmin pour l'admin bypass.
-const { isAdminUser } = require('./_lib/subscription');
 async function resolveUserPlan(user) {
   if (!user) return { plan: 'free', isAdmin: false };
-  if (isAdminUser(user)) {
-    return { plan: 'elite', isAdmin: true };
-  }
+  if (isAdminUser(user)) return { plan: 'elite', isAdmin: true };
   try {
-    const s = sb();
-    const { data: profile } = await s
+    const { data: profile } = await sb()
       .from('profiles')
       .select('stripe_customer_id')
       .eq('id', user.id)
       .single();
     if (!profile?.stripe_customer_id) return { plan: 'free', isAdmin: false };
-
-    // Check abonnement actif via Stripe (source de verite)
     if (!process.env.STRIPE_SECRET_KEY) return { plan: 'free', isAdmin: false };
     const Stripe = (await import('stripe')).default;
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -72,30 +89,17 @@ async function resolveUserPlan(user) {
       limit: 1,
     });
     if (!subs.data.length) return { plan: 'free', isAdmin: false };
-
-    const sub = subs.data[0];
-    const priceId = sub.items.data[0]?.price?.id || '';
-    let plan = 'free';
-    const eliceM = process.env.STRIPE_PRICE_ELITE_MONTHLY || process.env.STRIPE_PRICE_TEAM_MONTHLY;
-    const eliceY = process.env.STRIPE_PRICE_ELITE_ANNUEL  || process.env.STRIPE_PRICE_TEAM_ANNUEL;
-    if (priceId.includes('elite') || priceId.includes('team') || priceId === eliceM || priceId === eliceY) plan = 'elite';
-    else if (priceId.includes('pro') || sub.items.data[0]?.price?.unit_amount >= 500) plan = 'pro';
-    return { plan, isAdmin: false };
-  } catch { return { plan: 'free', isAdmin: false }; }
+    const priceId = subs.data[0].items.data[0]?.price?.id || '';
+    if (priceId.includes('elite') || priceId.includes('team')) return { plan: 'elite', isAdmin: false };
+    return { plan: 'pro', isAdmin: false };
+  } catch {
+    return { plan: 'free', isAdmin: false };
+  }
 }
 
-// Check combien de diagnostics IA l'user a genere ce mois-ci.
-// Utilise la colonne cached_at de la derniere generation.
-// Pour les Free, on se base sur le cached_at : si < 30 jours, pas de regen.
-function monthsAgo(dateStr, n) {
-  if (!dateStr) return true;
-  const ageMs = Date.now() - new Date(dateStr).getTime();
-  return ageMs > n * 30 * 24 * 60 * 60 * 1000;
-}
-
+// Cache lookup (table existante ai_roadmap_cache)
 async function readCache(userId) {
-  const s = sb();
-  const { data } = await s
+  const { data } = await sb()
     .from('ai_roadmap_cache')
     .select('diagnosis, cached_at, nickname, faceit_level, faceit_elo')
     .eq('user_id', userId)
@@ -116,21 +120,54 @@ async function writeCache(userId, profile, diagnosis) {
       diagnosis,
       cached_at:    new Date().toISOString(),
     }, { onConflict: 'user_id' });
-  } catch (e) { console.warn('ai-roadmap cache write error:', e.message); }
+  } catch (e) { console.warn('[ai-roadmap] cache write error:', e.message); }
 }
 
-// ── FACEIT stats fetch (20 last matches) ─────────────────────────────────
+// History pour progress tracking (axe 9)
+async function getPreviousDiagnostic(userId) {
+  try {
+    const { data } = await sb()
+      .from('diagnostic_history')
+      .select('diagnosis, top_priorities, axis_scores, generated_at')
+      .eq('user_id', userId)
+      .eq('endpoint', 'ai-roadmap')
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data || null;
+  } catch (e) {
+    console.warn('[ai-roadmap] previous diag fetch failed:', e.message);
+    return null;
+  }
+}
+
+async function saveDiagnosticHistory(userId, diagnosis, model, usage) {
+  try {
+    const topPriorities = (diagnosis.topPriorities || []).map(p => p.problem || '').slice(0, 3);
+    await sb().from('diagnostic_history').insert({
+      user_id: userId,
+      endpoint: 'ai-roadmap',
+      diagnosis,
+      top_priorities: topPriorities,
+      axis_scores: diagnosis.axisScores || null,
+      confidence_avg: diagnosis.confidence || null,
+      model,
+      output_tokens: usage?.output_tokens || null,
+    });
+  } catch (e) {
+    console.warn('[ai-roadmap] history insert failed:', e.message);
+  }
+}
+
+// FACEIT stats fetch (20 last matches)
 async function fetchFaceitStats(nickname, apiKey) {
   const h = { Authorization: 'Bearer ' + apiKey };
-
-  // Player basic info
   const pRes = await fetch(`${FACEIT_BASE}/players?nickname=${encodeURIComponent(nickname)}`, { headers: h });
   if (!pRes.ok) throw new Error('FACEIT player lookup failed ' + pRes.status);
   const player = await pRes.json();
   const playerId = player.player_id;
   const cs2 = player.games?.cs2 || {};
 
-  // Recent stats (20 last matches) + lifetime
   const [recentRes, lifetimeRes] = await Promise.all([
     fetch(`${FACEIT_BASE}/players/${playerId}/games/cs2/stats?limit=20`, { headers: h }),
     fetch(`${FACEIT_BASE}/players/${playerId}/stats/cs2`, { headers: h }),
@@ -138,7 +175,6 @@ async function fetchFaceitStats(nickname, apiKey) {
   const recent = recentRes.ok ? await recentRes.json() : { items: [] };
   const lifetime = lifetimeRes.ok ? await lifetimeRes.json() : {};
 
-  // Aggregate the 20 last matches
   const items = recent.items || [];
   const n = items.length || 1;
   const sum = (getter) => items.reduce((s, it) => s + (parseFloat(getter(it)) || 0), 0);
@@ -157,22 +193,24 @@ async function fetchFaceitStats(nickname, apiKey) {
     .sort((a, b) => b.matches - a.matches);
 
   const wins = sum(it => (it.stats?.['Result'] || '') === '1' ? 1 : 0);
-  const stats = {
+  return {
     nickname: player.nickname,
     country: (player.country || '').toUpperCase(),
     elo: cs2.faceit_elo || null,
     level: cs2.skill_level || null,
     matchesAnalyzed: n,
     winRate: Math.round((wins / n) * 100),
-    avgKd: +(sum(it => it.stats?.['K/D Ratio']) / n).toFixed(2),
+    avgKd:  +(sum(it => it.stats?.['K/D Ratio']) / n).toFixed(2),
     avgAdr: +(sum(it => it.stats?.['ADR']) / n).toFixed(0),
-    avgHs: +(sum(it => it.stats?.['Headshots %']) / n).toFixed(0),
+    avgHs:  +(sum(it => it.stats?.['Headshots %']) / n).toFixed(0),
     avgKast: +(sum(it => it.stats?.['KAST']) / n).toFixed(0) || null,
     avgKr:  +(sum(it => it.stats?.['K/R Ratio']) / n).toFixed(2),
-    totalKills: sum(it => it.stats?.['Kills']),
+    totalKills:  sum(it => it.stats?.['Kills']),
     totalDeaths: sum(it => it.stats?.['Deaths']),
     totalAssists: sum(it => it.stats?.['Assists']),
     totalRounds: sum(it => it.stats?.['Rounds']),
+    firstKills:  sum(it => it.stats?.['Entry Wins']),  // FACEIT entry frags
+    firstDeaths: sum(it => it.stats?.['Entry Losses']),
     lifetime: {
       matches: parseInt(lifetime.lifetime?.['Matches']) || null,
       winRate: parseFloat(lifetime.lifetime?.['Win Rate %']) || null,
@@ -181,31 +219,38 @@ async function fetchFaceitStats(nickname, apiKey) {
     },
     mapStats: mapStats.slice(0, 6),
   };
-
-  return stats;
 }
 
-// ── FragValue Demos context (option C partielle) ─────────────────────────
-// Recupere les demos analysees par le user via notre parser Railway et
-// calcule quelques stats qu'on injecte dans le prompt Claude. Differenciateur
-// cle vs les coachs IA concurrents qui ne voient que les stats FACEIT agregees.
+// FragValue demos context (FV Rating moyen + key rounds via matches.demo_data)
+// Pour l'axe 6 (granularite round-by-round), on extract les rounds cles
+// (clutch, multi-kill, eco win, force win) des 3 derniers matches du user.
 async function fetchFragValueDemos(userId) {
   try {
-    const s = sb();
-    const { data, error } = await s
-      .from('demos')
-      .select('map, fv_rating, analysed_at')
-      .eq('user_id', userId)
-      .order('analysed_at', { ascending: false })
-      .limit(20);
-    if (error || !data || data.length === 0) return null;
+    // Fetch en parallele : demos agreg + matches.demo_data (rounds detail)
+    const [demosRes, matchesRes] = await Promise.all([
+      sb()
+        .from('demos')
+        .select('id, map, fv_rating, analysed_at, total_kills, rounds')
+        .eq('user_id', userId)
+        .order('analysed_at', { ascending: false })
+        .limit(20),
+      sb()
+        .from('matches')
+        .select('id, faceit_match_id, map, winner, rounds, demo_data, created_at')
+        .eq('user_id', userId)
+        .not('demo_data', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(3),
+    ]);
+
+    const data = demosRes?.data || [];
+    if (data.length === 0) return null;
 
     const withRating = data.filter(d => d.fv_rating != null);
     const avgFvRating = withRating.length > 0
-      ? +(withRating.reduce((sum, d) => sum + Number(d.fv_rating), 0) / withRating.length).toFixed(2)
+      ? +(withRating.reduce((s, d) => s + Number(d.fv_rating), 0) / withRating.length).toFixed(2)
       : null;
 
-    // Map la plus jouee
     const byMap = {};
     data.forEach(d => {
       const m = d.map || 'unknown';
@@ -213,12 +258,19 @@ async function fetchFragValueDemos(userId) {
     });
     const topMap = Object.entries(byMap).sort((a, b) => b[1] - a[1])[0]?.[0];
 
+    // Extract key rounds depuis matches.demo_data (axe 6 = 10/10)
+    const keyRounds = extractKeyRounds(matchesRes?.data || []);
+
     return {
       demosCount:     data.length,
       avgFvRating,
       topMap:         topMap && topMap !== 'unknown' ? topMap : null,
       lastDemoMap:    data[0].map || null,
       lastDemoRating: data[0].fv_rating != null ? Number(data[0].fv_rating).toFixed(2) : null,
+      recentDemos: data.slice(0, 5).map(d => ({
+        map: d.map, fvr: d.fv_rating, kills: d.total_kills, rounds: d.rounds,
+      })),
+      keyRounds, // [{ matchMap, roundNum, type, description }, ...]
     };
   } catch (e) {
     console.warn('[ai-roadmap] fetchFragValueDemos failed:', e.message);
@@ -226,194 +278,263 @@ async function fetchFragValueDemos(userId) {
   }
 }
 
-// ── Prompt construction + Claude call ────────────────────────────────────
-// ── Benchmarks FACEIT par niveau (references HLTV/pros amateurs 2026) ─────
-// Utilises dans le prompt pour que Claude classe les stats de l'user en
-// "faible / moyen / bon / excellent" selon son vrai niveau. Evite les
-// conseils hors-contexte ("K/D 1.05 faible" pour un lvl 4 c'est faux).
-const LEVEL_BENCHMARKS = {
-  low:    { elo: '800-1200',   kd: '0.85-1.00', adr: '60-72',  hs: '28-40', kast: '62-68' }, // lvl 3-4
-  mid:    { elo: '1200-1530',  kd: '1.00-1.15', adr: '72-85',  hs: '35-45', kast: '68-72' }, // lvl 5-6
-  high:   { elo: '1530-2000',  kd: '1.10-1.25', adr: '85-100', hs: '40-50', kast: '72-76' }, // lvl 7-8
-  elite:  { elo: '2000-2400+', kd: '1.20-1.45', adr: '95-115', hs: '45-55', kast: '75-82' }, // lvl 9-10
-};
-function getTier(level) {
-  if (level >= 9) return 'elite';
-  if (level >= 7) return 'high';
-  if (level >= 5) return 'mid';
-  return 'low';
+// Extract rounds cles des matches.demo_data : clutch, multi, eco win, opening
+// Retourne max 8 rounds avec description courte (1 phrase) pour injection prompt.
+function extractKeyRounds(matches) {
+  const result = [];
+  for (const m of matches) {
+    if (!m.demo_data) continue;
+    const d = m.demo_data;
+    const matchMap = (m.map || '').replace('de_', '');
+
+    // demo_data structure varie selon le parser. On essaie plusieurs paths.
+    const rounds = d.rounds || d.roundsData || d.matchRounds || [];
+    if (!Array.isArray(rounds)) continue;
+
+    for (const r of rounds.slice(0, 24)) {
+      const num = r.number || r.round || r.roundNum;
+      if (!num) continue;
+
+      // Detect le type de round notable
+      let type = null, description = null;
+      const roundKills = r.kills || r.roundKills || [];
+      const userKills = roundKills.filter(k => k.user_kill === true || k.byUser === true).length;
+      const userDeath = roundKills.find(k => k.user_death === true || k.userDeath === true);
+
+      if (r.clutch === true || r.clutchRound) {
+        type = 'clutch';
+        description = `R${num} ${matchMap}: clutch ${r.clutchType || ''} ${r.won ? 'gagne' : 'perdu'}`;
+      } else if (userKills >= 3) {
+        type = 'multi';
+        description = `R${num} ${matchMap}: ${userKills}K (multi-kill), round ${r.won ? 'gagne' : 'perdu'}`;
+      } else if (r.eco_win === true || (r.economy === 'eco' && r.won)) {
+        type = 'eco_win';
+        description = `R${num} ${matchMap}: eco-win, ${userKills}K`;
+      } else if (r.opening_kill === true && userDeath) {
+        type = 'opening_loss';
+        description = `R${num} ${matchMap}: opening loss (mort early ${userDeath.callout || ''})`;
+      }
+
+      if (type && description) {
+        result.push({ matchMap, roundNum: num, type, description });
+        if (result.length >= 8) return result;
+      }
+    }
+  }
+  return result;
 }
 
-function buildPrompt(stats, fvContext) {
+// Construit le SYSTEM PROMPT (stable - cache 1h via cache_control)
+//
+// Contient :
+//   - Persona coach pro CS2
+//   - Style guide HLTV / lexique CS2
+//   - Rubric 10 axes
+//   - Drill library complete (IDs + axes + level + duree)
+//   - Schema JSON output
+//   - Pro benchmarks pour la map cle (si dispo)
+//
+// Cache hit = ~5K tokens reutilises (~80% reduction cout)
+function buildSystemPrompt(opts) {
+  const { benchmarks, locale = 'fr' } = opts;
+  const benchmarksBlock = benchmarks ? formatBenchmarksForPrompt(benchmarks) : '';
+
+  // buildBaseSystemPrompt fournit : persona + style + lexique CS2 + pros CORE + map pool
+  return buildBaseSystemPrompt({
+    locale,
+    persona: locale === 'en'
+      ? "You are FragValue Coach IA, pro-level CS2 coach (FACEIT lvl 10, ex semi-pro EU, 15y competitive). You analyze players from their FACEIT stats and demos to produce a personalized diagnosis worthy of a human pro coach (Top 20 HLTV equivalent rating). This diagnosis is FragValue's signature: it MUST be flawless."
+      : "Tu es FragValue Coach IA, coach CS2 niveau professionnel (lvl 10 FACEIT, ex-joueur semi-pro EU, 15 ans competitive). Tu analyses des joueurs sur la base de leurs stats FACEIT et demos pour produire un diagnostic personnalise digne d'un coach pro humain (rating Top 20 HLTV equivalent). Ce diagnostic est la marque de fabrique FragValue : il doit etre IRREPROCHABLE.",
+    extraSections: `═══ DRILL LIBRARY (use ONLY these IDs) ═══
+
+${listAllDrillIds()}
+
+You MUST pick 3-5 drills from THIS LIST ONLY. No invention. drillId in JSON output must match EXACTLY.
+
+${benchmarksBlock ? `═══ PRO BENCHMARKS FOR KEY MAP ═══\n\n${benchmarksBlock}\n\n` : ''}═══ RUBRIC 10 AXES (each scored 1-10) ═══
+
+${buildRubricInstructions()}
+
+Target 10/10 on ALL axes. If you can't (e.g. no history for axis 9), explain in axisNotes. Axis 8 (Structure) must be 10 mandatory.`,
+  });
+}
+
+// User message : stats specifiques user (volatile, pas cache)
+function buildUserMessage(opts) {
+  const { stats, fvContext, role, previousDiag, drillCandidates } = opts;
+  const tier = getTier(stats.level || 1);
   const nextLevel = Math.min((stats.level || 1) + 1, 11);
   const eloTarget = stats.level >= 10 ? 2400 : LEVEL_TARGETS_ELO[stats.level];
   const eloGap = Math.max(0, eloTarget - (stats.elo || 0));
-  const tier = getTier(stats.level || 1);
-  const b = LEVEL_BENCHMARKS[tier];
 
-  // Section optionnelle : donnees FragValue Demos (si l'user a analyse des demos)
-  const fvSection = fvContext && fvContext.demosCount > 0
-    ? `\nFragValue Demos (analyses locales depuis le parser FV) :
-- Demos analysees : ${fvContext.demosCount}
-- FV Rating moyen : ${fvContext.avgFvRating ?? 'n/a'} (echelle HLTV 2.1 style : 0.80 faible, 1.00 moyen, 1.15 bon, 1.30+ pro-level)
-- Map la plus jouee : ${fvContext.topMap || 'n/a'}
-- Derniere demo analysee : ${fvContext.lastDemoMap || 'n/a'} (FV Rating ${fvContext.lastDemoRating ?? 'n/a'})`
+  const keyRoundsBlock = (fvContext?.keyRounds || []).length > 0
+    ? `\n\nROUNDS CLES (3 derniers matches FragValue, axe 6 round-by-round)
+${fvContext.keyRounds.map(r => `- ${r.description}`).join('\n')}
+
+Cite ces rounds specifiques quand tu identifies des patterns (ex: "Sur ${fvContext.keyRounds[0]?.matchMap || 'tes maps'} R${fvContext.keyRounds[0]?.roundNum || 'X'}, tu as eu un ${fvContext.keyRounds[0]?.type || 'pattern'}, qui montre que...").`
     : '';
 
-  return `Tu es un coach CS2 professionnel ecrit pour FragValue. Ton profil : 15 ans de competitive (lvl 10 FACEIT, ex-joueur semi-pro EU), expert des stats HLTV et de la meta CS2 2026. Tu connais par coeur les rosters Vitality, G2, FaZe, Spirit, NaVi, MOUZ, Heroic, Cloud9 et les patterns de donk (Spirit), ZywOo (Vitality), m0NESY (G2), ropz (FaZe), broky (FaZe), NiKo (G2), s1mple, magixx, apEX, cadiaN, Aleksib, HObbit.
+  const fvSection = fvContext && fvContext.demosCount > 0
+    ? `\n\nFRAGVALUE DEMOS (n=${fvContext.demosCount} parsees)
+- FV Rating moyen : ${fvContext.avgFvRating ?? 'n/a'} (echelle HLTV 2.1 : 0.80 faible / 1.00 moyen / 1.15 bon / 1.30+ pro)
+- Map la plus jouee : ${fvContext.topMap || 'n/a'}
+- Derniere demo : ${fvContext.lastDemoMap || 'n/a'} (FV Rating ${fvContext.lastDemoRating ?? 'n/a'})
+- Demos recentes : ${(fvContext.recentDemos || []).map(d => `${d.map} (FV ${d.fvr ?? 'n/a'}, ${d.kills}K/${d.rounds}R)`).join(' | ')}${keyRoundsBlock}`
+    : '';
 
-Ton ton : direct, factuel, pas bienveillant pour rien. Tu parles comme un analyste HLTV. Si un joueur a un aim moyen tu lui dis "ton aim c'est du lvl 5 standard, pas pro". Pas de compliments gratuits. Pas d'emojis.
+  const previousSection = previousDiag
+    ? `\n\nDIAG PRECEDENT (${new Date(previousDiag.generated_at).toISOString().slice(0, 10)})
+Top priorites alors : ${(previousDiag.top_priorities || []).join(' | ')}
+Axis scores : ${JSON.stringify(previousDiag.axis_scores || {})}
 
-Voici les stats FACEIT du joueur (20 derniers matchs CS2) :
+Pour l'axe 9 (Suivi progression), compare les stats actuelles aux stats du diag precedent et produis des deltas chiffres dans progressTracking.`
+    : `\n\nDIAG PRECEDENT : aucun (premier diag pour ce joueur)
+Pour l'axe 9, indique progressTracking: null et axisScore axe 9 = 7/10 max (pas de baseline a comparer).`;
+
+  const drillSuggestions = drillCandidates && drillCandidates.length
+    ? `\n\nDRILLS CANDIDATS (selection pre-filtree par role+level, choisis-en 3-5 dans le JSON output) :
+${drillCandidates.map(d => `- ${d.id} (${d.axes.join('+')}, ${d.durationMin}min) : ${d.name}`).join('\n')}`
+    : '';
+
+  return `JOUEUR A DIAGNOSTIQUER
 
 IDENTITE
 - Pseudo : ${stats.nickname}
 - Niveau FACEIT : ${stats.level} (tier ${tier})
 - ELO : ${stats.elo} (cible lvl ${nextLevel} : ${eloTarget}, gap : ${eloGap} ELO)
+- Role detecte : ${role.role} (confidence ${role.confidence}, signaux ${JSON.stringify(role.signals)})
+- Description role : ${getRoleFocus(role.role).description}
+- Pros similaires (style/role) : ${getRoleFocus(role.role).proExamples.join(', ')}
 
-PERFORMANCE (20 derniers matchs)
-- Matchs : ${stats.matchesAnalyzed}, winrate ${stats.winRate}%
-- K/D : ${stats.avgKd} (benchmark tier ${tier} : ${b.kd})
-- ADR : ${stats.avgAdr} (benchmark : ${b.adr})
-- HS% : ${stats.avgHs}% (benchmark : ${b.hs})
-- KAST : ${stats.avgKast}% (benchmark : ${b.kast})
-- K/R : ${stats.avgKr}
-- Volume : ${stats.totalKills} kills, ${stats.totalDeaths} deaths, ${stats.totalAssists} assists sur ${stats.totalRounds} rounds
+PERFORMANCE 20 DERNIERS MATCHS
+- Matchs : ${stats.matchesAnalyzed} · Winrate : ${stats.winRate}%
+- K/D : ${stats.avgKd} · ADR : ${stats.avgAdr} · HS% : ${stats.avgHs}% · KAST : ${stats.avgKast}% · K/R : ${stats.avgKr}
+- Opening : ${stats.firstKills}W vs ${stats.firstDeaths}L (ratio ${role.metrics.openingRatio})
+- Volume : ${stats.totalKills}K / ${stats.totalDeaths}D / ${stats.totalAssists}A sur ${stats.totalRounds} rounds
 
 LIFETIME
-- Total matchs : ${stats.lifetime.matches}
-- Winrate lifetime : ${stats.lifetime.winRate}%
-- K/D lifetime : ${stats.lifetime.avgKd}
-- Longest win streak : ${stats.lifetime.longestStreak}
+- Total matchs : ${stats.lifetime.matches} · Winrate : ${stats.lifetime.winRate}% · K/D : ${stats.lifetime.avgKd} · Longest streak : ${stats.lifetime.longestStreak}
 
 MAP POOL (20 derniers matchs)
-${stats.mapStats.map(m => `- de_${m.map} : ${m.matches} matchs, winrate ${m.winRate}%`).join('\n')}
-${fvSection}
+${stats.mapStats.map(m => `- de_${m.map} : ${m.matches} matchs, winrate ${m.winRate}%`).join('\n')}${fvSection}${previousSection}${drillSuggestions}
 
-ANALYSE ATTENDUE
-Produis un diagnostic JSON au format exact ci-dessous. Tutoiement obligatoire. Langage HLTV : utilise Rating 2.1, Impact, KAST, ADR, opening duels, entry fragger, trade kill, clutch, multi-kill, utility damage, crosshair placement, spray control, prefire, pre-aim, crosshair placement, peek (wide/jiggle/shoulder peek), off-angle, retake, execute, stack, rotate, trade bait, flash pop, wallbang. Pas d'accents sur les termes techniques (kast, adr, hltv, elo, cs).
+═══ INSTRUCTIONS ═══
 
-{
-  "summary": "2 a 3 phrases style analyse HLTV. Identifie le ROLE implicite du joueur (entry fragger / rifler support / AWPer / lurker / IGL) d'apres ses stats, pointe le levier n1. Max 320 caracteres.",
-  "strengths": [
-    "Point fort 1 avec chiffre ET contexte HLTV. Ex: 'ADR 89 au-dessus du benchmark lvl 6 (72-85), profil entry/impact'",
-    "Point fort 2 similaire",
-    "Point fort 3 similaire"
-  ],
-  "weaknesses": [
-    "Faiblesse 1 avec chiffre ET diagnostic. Ex: 'KAST 64% sous le benchmark (68-72), tu meurs trop souvent sans trade, positionnement a travailler'",
-    "Faiblesse 2",
-    "Faiblesse 3"
-  ],
-  "actions": [
-    {
-      "title": "Action courte imperative (max 6 mots)",
-      "detail": "Implementation concrete avec REFERENCE pro ou map/workshop specifique. Ex: 'Fais 400 kills/jour sur aim_botz map USP + AK, style crosshair placement comme ropz. Vise 45% HS sur 5 matchs'. Pas de 'fais du DM', toujours specifique."
-    },
-    {
-      "title": "Action 2",
-      "detail": "Detail specifique"
-    },
-    {
-      "title": "Action 3",
-      "detail": "Detail specifique"
-    },
-    {
-      "title": "Action 4",
-      "detail": "Detail specifique (peut concerner mental, tilt, pistol, utility)"
-    }
-  ],
-  "weeklyGoal": "Objectif chiffre measurable sur 5 prochains matchs. Format HLTV : 'Atteindre KAST 72% sur 5 matchs' ou 'Gagner 3/5 pistol rounds'. Aligne sur la faiblesse n1.",
-  "mapTip": {
-    "map": "Map la plus faible (winrate le plus bas parmi celles avec >= 3 matchs). Si winrate partout bon, prend la moins jouee (< 2 matchs) qui appartient a l'Active Duty.",
-    "advice": "Conseil tactique 2-3 phrases : cite 1 position forte, 1 utility essentielle avec nom precis (ex: 'molo connector mirage CT', 'smoke xbox long dust2'), et 1 reference pro qui excelle sur cette map (ex: 'Regarde donk sur mirage T side mid control')."
-  },
-  "proReference": {
-    "name": "Nom d'un pro actuel qui a un STYLE similaire au joueur (pas juste meilleur, similaire en role/stats/approach).",
-    "team": "Team actuelle du pro",
-    "why": "Pourquoi ce pro : 1 phrase qui relie le profil du joueur au style du pro. Ex: 'Comme ropz, tu as un K/D solide mais un impact par round (KR) qui pourrait monter avec plus d'agressivite early round'."
-  },
-  "warmupRoutine": [
-    { "duration": "5 min", "task": "Tache precise 1 (ex: aim_botz map pistol + rifle 200 kills)" },
-    { "duration": "10 min", "task": "Tache 2 (ex: DM FFA 1 match sur AIM_BOTZ ou Warmup.cfg)" },
-    { "duration": "10 min", "task": "Tache 3 (ex: prefire map dust2 long lineup)" },
-    { "duration": "5 min", "task": "Tache 4 (ex: reflex cooldown, crosshair placement static)" }
-  ],
-  "roadmap7days": [
-    { "day": "Jour 1", "title": "Titre court", "detail": "Action du jour (max 80 chars)" },
-    { "day": "Jour 2", "title": "Titre", "detail": "Action" },
-    { "day": "Jour 3", "title": "Titre", "detail": "Action" },
-    { "day": "Jour 4", "title": "Titre", "detail": "Action" },
-    { "day": "Jour 5", "title": "Titre", "detail": "Action" },
-    { "day": "Jour 6", "title": "Titre", "detail": "Action (dimanche : match official)" },
-    { "day": "Jour 7", "title": "Review", "detail": "Analyse des 3 dernieres demos + ajustements semaine 2" }
-  ],
-  "mapSetups": {
-    "map": "Meme map que mapTip",
-    "setups": [
-      { "name": "Nom lineup precis (ex: 'Molo Connector CT Mirage')", "role": "CT ou T", "why": "Impact : ce que ca empeche / ouvre" },
-      { "name": "2e lineup", "role": "CT ou T", "why": "Impact" }
-    ]
-  },
-  "mentalTip": "1 conseil mental / discipline / tilt management specifique au profil. Ex: 'Tu as un winrate 42% en T-side vs 58% CT. Arrete de forcer des entry fragger ton role quand tu es IGL-passif. Accepte ton style support.'"
+Produis un diagnostic JSON STRICT selon le schema (cf. system prompt) qui vise 10/10 sur les 10 axes du rubric.
+
+Points critiques :
+- topPriorities : 3 priorites strictement, classees par impact x effort (axe 5)
+- deepDive : 2-5 analyses avec proComparison citant chiffres pros (axe 1, 2, 6)
+- drills : 3-5 drillId valides depuis la library (axe 3)
+- proRefs : 1-3 pros similaires en style/role (axe 4)
+- progressTracking : compare au diag precedent si dispo (axe 9), sinon null
+- axisScores : auto-evaluation 1-10 sur les 10 axes (axe 8 = 10 obligatoire)
+- axisNotes : justification courte si une note < 10
+- confidence : confiance globale [0-1]
+
+Reponds UNIQUEMENT avec le JSON valide, sans markdown fences, sans prose autour.`;
 }
 
-REGLES STRICTES
-- Tutoiement obligatoire partout.
-- Aucun emoji, aucune phrase type ("tu es un bon joueur", "continue comme ca").
-- Chiffres precis obligatoires dans strengths/weaknesses (ex: "K/D 1.05", "KAST 68%", "ADR 76").
-- References pros reelles 2026 (donk, ZywOo, m0NESY, ropz, broky, NiKo, s1mple, magixx, apEX, cadiaN, HObbit, Aleksib, karrigan, b1t, Jame, sh1ro).
-- Lineup/setups avec noms precis (ex: "smoke Xbox long dust2", "molo banana inferno", "flash popflash A apps mirage").
-- Workshop maps pour warmup : aim_botz, Yprac Arena, prefire_series, FastAim/Reflex training.
-- roadmap7days doit etre progressif : jour 1-2 fondamentaux, jour 3-4 tactique, jour 5-6 match, jour 7 review.
-- Adapte au tier :
-  * tier low (lvl 3-4) : focus aim/crosshair placement/spray control, utility basique
-  * tier mid (lvl 5-6) : focus KAST/positioning/trade/util lineups
-  * tier high (lvl 7-8) : focus tactique/map knowledge/clutch/pistol/anti-eco
-  * tier elite (lvl 9-10) : focus meta/IGL micro-decisions/mental/consistency pro-level
-- Si la stat est DANS le benchmark tier, ne la marque pas comme faiblesse.
-- mapSetups : toujours 2 lineups reels CS2 (pas inventes).
-- proReference : reference un pro dont le PROFIL colle, pas juste le meilleur joueur.
+// Map le nouveau schema 10/10 → champs legacy attendus par le frontend
+// Garde la backward compat tout en exposant la nouvelle richesse via diagnostic.*
+function mapToLegacyFormat(d, opts = {}) {
+  const { stats } = opts;
 
-Reponds UNIQUEMENT par le JSON valide, sans texte avant/apres, sans markdown fence.`;
-}
-
-async function callClaude(prompt, apiKey, model) {
-  const res = await fetch(CLAUDE_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: model || CLAUDE_MODEL_FREE,
-      // JSON enrichi (pro_reference, warmup, roadmap7days, mapSetups,
-      // mentalTip) demande plus de tokens. 3000 couvre large.
-      max_tokens: 3000,
-      messages: [{ role: 'user', content: prompt }],
-    }),
+  // Charge les drills complets pour exposer leurs details au frontend
+  const drillsResolved = (d.drills || []).map(dr => {
+    const full = getDrillById(dr.drillId);
+    if (!full) return { duration: '?', task: dr.reason };
+    return {
+      duration: `${full.durationMin} min`,
+      task: `${full.name} (${full.workshop}) · ${full.instructions} · cible: ${dr.targetMetric}`,
+    };
   });
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error('Claude API ' + res.status + ': ' + errText.slice(0, 200));
-  }
-  const data = await res.json();
-  const text = data.content?.[0]?.text || '';
-  if (!text) throw new Error('Claude returned empty content');
+  // Forces : utilise le nouveau schema strengths[] (axe rubric)
+  const strengths = (d.strengths || []).map(s =>
+    `${s.evidence} · ${s.vsBenchmark} (${s.axis})`
+  );
 
-  // Tentative de parse JSON. Le prompt demande JSON strict mais on
-  // robustifie en virant d eventuelles fences markdown.
-  const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-  try {
-    return JSON.parse(cleaned);
-  } catch (e) {
-    throw new Error('Claude response not valid JSON: ' + text.slice(0, 200));
+  // Faiblesses : top priorites avec details chiffres
+  const weaknesses = (d.topPriorities || []).map(p =>
+    `${p.problem} (impact: ${p.impact}, conf: ${p.confidence}, n=${p.sampleSize})`
+  );
+
+  const actions = (d.topPriorities || []).map((p, i) => ({
+    title: `Priorite ${i + 1} : ${p.axis}`,
+    detail: `${p.problem} · ${p.impact} · evidence: ${p.evidence}`,
+  }));
+
+  // Map tip : prend la map la plus faible du user (winrate min, >= 3 matchs)
+  // Si le deepDive cite une map specifique, on prefere ca
+  let weakestMap = null;
+  if (stats?.mapStats?.length) {
+    const candidates = stats.mapStats.filter(m => m.matches >= 3).sort((a, b) => a.winRate - b.winRate);
+    weakestMap = candidates[0] || stats.mapStats[stats.mapStats.length - 1];
   }
+  const mapDive = (d.deepDive || []).find(dd => dd.roundRefs && dd.roundRefs.length > 0) || (d.deepDive || [])[0];
+  const mapTip = (weakestMap || mapDive) ? {
+    map: weakestMap ? `de_${weakestMap.map}` : null,
+    advice: mapDive ? `${mapDive.observation} · ${mapDive.proComparison}` : 'Travaille les lineups + prefire angles principaux',
+  } : null;
+
+  // Pro reference principale
+  const mainProRef = (d.proRefs || [])[0];
+  const proReference = mainProRef ? {
+    name: mainProRef.proName,
+    team: mainProRef.team,
+    why: mainProRef.why,
+  } : null;
+
+  // Roadmap 7 jours : repartie sur 7 jours (mix drills + match + review)
+  const roadmap7days = [];
+  for (let i = 0; i < 7; i++) {
+    if (i < drillsResolved.length) {
+      roadmap7days.push({
+        day: `Jour ${i + 1}`,
+        title: drillsResolved[i].duration,
+        detail: drillsResolved[i].task.slice(0, 200),
+      });
+    } else if (i === 5) {
+      roadmap7days.push({ day: `Jour 6`, title: 'Match', detail: '2 matchs FACEIT · applique les drills · note 3 erreurs' });
+    } else if (i === 6) {
+      roadmap7days.push({ day: `Jour 7`, title: 'Review', detail: 'Analyse des 3 dernieres demos via FragValue · ajustements semaine 2' });
+    } else {
+      roadmap7days.push({ day: `Jour ${i + 1}`, title: 'Repos actif', detail: '1h DM + visionnage demos pros HLTV (donk / ZywOo)' });
+    }
+  }
+
+  return {
+    // Legacy fields (frontend actuel)
+    summary: d.summary,
+    strengths,
+    weaknesses,
+    actions,
+    weeklyGoal: d.topPriorities?.[0]?.impact || null,
+    mapTip,
+    proReference,
+    warmupRoutine: drillsResolved.slice(0, 4),
+    roadmap7days,
+    mapSetups: null,
+    mentalTip: d.topPriorities?.find(p => p.axis === 'mental')?.problem || null,
+
+    // Nouveaux champs 10/10 (frontend peut migrer)
+    diagnostic: {
+      strengths: d.strengths,
+      topPriorities: d.topPriorities,
+      deepDive: d.deepDive,
+      drills: d.drills,
+      drillsResolved,
+      proRefs: d.proRefs,
+      progressTracking: d.progressTracking,
+      axisScores: d.axisScores,
+      axisNotes: d.axisNotes,
+      confidence: d.confidence,
+    },
+  };
 }
 
-// ── Handler principal ─────────────────────────────────────────────────────
+// Handler principal
 module.exports = async function handler(req, res) {
   const origin = req.headers.origin || '';
   if (ALLOWED_ORIGIN_RE.test(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
@@ -423,49 +544,39 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Auth obligatoire
   const user = await getUser(req.headers.authorization);
   if (!user) return res.status(401).json({ error: 'Non authentifie' });
 
-  // Resolve FACEIT nickname depuis profiles
+  // Resolve nickname
   let nickname = null;
   try {
-    const { data: profile } = await sb().from('profiles')
-      .select('faceit_nickname')
-      .eq('id', user.id).single();
+    const { data: profile } = await sb().from('profiles').select('faceit_nickname').eq('id', user.id).single();
     nickname = profile?.faceit_nickname;
   } catch {}
   if (!nickname) return res.status(400).json({ error: 'Aucun compte FACEIT lie' });
 
-  // ── Gating par plan ────────────────────────────────────────────────────
-  // Free : 1 diagnostic par mois maximum. Le cache existant est renvoye,
-  //        mais le bouton Refresh est bloque (429 ai_limit_reached).
-  // Pro / Elite : refresh illimite.
+  // Plan gating
   const { plan, isAdmin } = await resolveUserPlan(user);
-  const isPro = plan === 'pro' || plan === 'elite' || plan === 'team' || isAdmin;
+  const isPro = plan === 'pro' || plan === 'elite' || isAdmin;
 
   const cached = await readCache(user.id);
   const forceRefresh = req.query.refresh === '1';
 
-  // Si refresh demande ET plan Free : verifier qu'on a pas deja un diagnostic
-  // genere dans les 30 derniers jours. Si oui -> 429 avec code upgrade.
   if (forceRefresh && !isPro && cached) {
-    const cachedAgeMs = Date.now() - new Date(cached.cached_at).getTime();
-    const cachedAgeDays = cachedAgeMs / (1000 * 60 * 60 * 24);
+    const cachedAgeDays = (Date.now() - new Date(cached.cached_at).getTime()) / (1000 * 60 * 60 * 24);
     if (cachedAgeDays < 30) {
       const nextAvailable = new Date(new Date(cached.cached_at).getTime() + 30 * 24 * 60 * 60 * 1000);
       return res.status(429).json({
         error: 'Limite mensuelle atteinte',
         code: 'ai_limit_reached',
         plan: 'free',
-        message: 'Le plan Free permet 1 diagnostic IA par mois. Passe a Pro pour refresh illimite.',
+        message: 'Plan Free permet 1 diagnostic IA par mois. Passe a Pro pour refresh illimite.',
         nextAvailableAt: nextAvailable.toISOString(),
         currentDiagnosis: cached.diagnosis,
       });
     }
   }
 
-  // Cas normal : on sert le cache si dispo et pas de refresh demande
   if (!forceRefresh && cached) {
     return res.status(200).json({
       diagnosis: cached.diagnosis,
@@ -478,41 +589,96 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // Si plan Free et PAS de cache : autoriser la premiere generation
-  // Si plan Free et cache < 30j (sans forceRefresh) : on a deja renvoye
-  //   le cache au-dessus, donc on arrive ici seulement si cache expire
-  //   (>30j) ou forceRefresh=true (deja gere).
-
-  // Verif env vars avant de commencer
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(503).json({ error: 'ANTHROPIC_API_KEY non configure' });
-  }
-  if (!process.env.FACEIT_API_KEY) {
-    return res.status(503).json({ error: 'FACEIT_API_KEY non configure' });
-  }
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'ANTHROPIC_API_KEY non configure' });
+  if (!process.env.FACEIT_API_KEY) return res.status(503).json({ error: 'FACEIT_API_KEY non configure' });
 
   try {
-    // 1. Fetch en parallele :
-    //    - stats FACEIT fraiches (20 matchs + lifetime + per-map)
-    //    - context FragValue Demos (FV Rating moyen, maps analysees)
-    const [stats, fvContext] = await Promise.all([
+    // 1. Fetch en parallele : FACEIT stats + FragValue demos + previous diag
+    const [stats, fvContext, previousDiag] = await Promise.all([
       fetchFaceitStats(nickname, process.env.FACEIT_API_KEY),
       fetchFragValueDemos(user.id),
+      getPreviousDiagnostic(user.id),
     ]);
 
-    // 2. Build prompt enrichi + call Claude avec le bon model selon plan
-    const prompt = buildPrompt(stats, fvContext);
-    const model = (plan === 'pro' || plan === 'elite' || plan === 'team' || isAdmin)
-      ? CLAUDE_MODEL_PRO
-      : CLAUDE_MODEL_FREE;
-    const diagnosis = await callClaude(prompt, process.env.ANTHROPIC_API_KEY, model);
+    // 2. Pro benchmarks pour la map la plus jouee
+    const topMap = stats.mapStats?.[0]?.map || fvContext?.topMap;
+    const benchmarks = await getBenchmarksByMap(topMap);
 
-    // 3. Cache pour 7 jours (inclut le model utilise pour debug/analytics)
-    diagnosis._meta = { model, generatedAt: new Date().toISOString(), hasFvContext: !!fvContext };
-    await writeCache(user.id, stats, diagnosis);
+    // 3. Detect role + select drill candidates
+    const role = detectRole(stats);
+    const roleFocus = getRoleFocus(role.role);
+    const drillCandidates = getDrillsByAxis(roleFocus.primaryAxes, stats.level || 5, 8);
+
+    // 4. Detection locale + Build prompts (system stable, cache 1h)
+    const locale = detectLocale({
+      acceptLanguage: req.headers['accept-language'],
+      referer: req.headers.referer || '',
+    });
+    const systemPrompt = buildSystemPrompt({ benchmarks, locale });
+    const userMessage = buildUserMessage({
+      stats, fvContext, role, previousDiag, drillCandidates,
+    });
+
+    // 5. Model selection par plan
+    const model = isPro ? MODELS.OPUS_47 : MODELS.SONNET_46;
+    const effort = isAdmin || plan === 'elite' ? 'max' : isPro ? 'xhigh' : 'high';
+    // maxTokens : 8000 pour rester sous le timeout Vercel function 60s
+    // (avec adaptive thinking + effort xhigh, > 8K peut depasser 60s)
+    const maxTokens = 8000;
+
+    // 6. Call Claude avec self-eval loop (regen 1x si axe < threshold)
+    // + cap cout dur a $1 pour eviter les explosions (regen recursive)
+    // + JSON schema natif Anthropic pour validation API
+    const evalResult = await withSelfEval({
+      model,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }],
+      maxTokens,
+      effort,
+      thinking: { type: 'adaptive', display: 'summarized' },
+      cacheSystem: true,
+      // Pas de cacheTtl 1h ici : ai-roadmap est appele 1×/sem max par user.
+      // Le cache TTL 5min default suffit (entre regen + retry self-eval).
+      // 1h coute 2× write vs 1.25× pour 5min, sans benefit ici.
+      jsonSchema: buildJsonSchema({ requireProgressTracking: false }),
+      threshold: 9, // 9-10 acceptes (10 difficile garanti structurellement)
+      maxRetries: 1,
+      maxCostUsd: 0.60, // cap dur : abort si depasse (vs $1.00 trop laxe)
+      onAttempt: (n, d) => {
+        if (n > 1) console.log(`[ai-roadmap] regen attempt ${n}, axisScores:`, d.axisScores);
+      },
+    });
+
+    const { diagnosis, attempts, axisScoresSummary, usageTotal, estimatedCostUsd, weakAxes } = evalResult;
+
+    // 7. Map vers schema legacy + nouveau (avec stats pour mapTip pertinent)
+    const finalDiagnosis = mapToLegacyFormat(diagnosis, { stats });
+    finalDiagnosis._meta = {
+      model: evalResult.model || model,
+      generatedAt: new Date().toISOString(),
+      hasFvContext: !!fvContext,
+      hasBenchmarks: !!benchmarks,
+      benchmarksMap: benchmarks?.map || null,
+      role: role.role,
+      roleConfidence: role.confidence,
+      hasPreviousDiag: !!previousDiag,
+      attempts,
+      axisScoresSummary,
+      weakAxes: weakAxes.map(a => a.id),
+      tokensTotal: (usageTotal?.input_tokens || 0) + (usageTotal?.output_tokens || 0),
+      cacheReadTokens: usageTotal?.cache_read_input_tokens || 0,
+      estimatedCostUsd,
+      thinkingExcerpt: (evalResult.thinking || '').slice(0, 500),
+    };
+
+    // 8. Save to caches
+    await Promise.all([
+      writeCache(user.id, stats, finalDiagnosis),
+      saveDiagnosticHistory(user.id, diagnosis, evalResult.model || model, usageTotal),
+    ]);
 
     return res.status(200).json({
-      diagnosis,
+      diagnosis: finalDiagnosis,
       cached: false,
       cachedAt: new Date().toISOString(),
       nickname: stats.nickname,
@@ -521,7 +687,7 @@ module.exports = async function handler(req, res) {
       plan,
     });
   } catch (err) {
-    console.error('ai-roadmap error:', err);
-    return res.status(500).json({ error: 'Erreur serveur', detail: err.message.slice(0, 200) });
+    console.error('[ai-roadmap] error:', err);
+    return res.status(500).json({ error: 'Erreur serveur', detail: String(err.message || err).slice(0, 200) });
   }
 };
