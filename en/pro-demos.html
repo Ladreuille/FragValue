@@ -98,8 +98,8 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://fragvalue.com/en/"},
-    {"@type": "ListItem", "position": 2, "name": "Pro Demos", "item": "https://fragvalue.com/en/pro-demos.html"}
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://fragvalue.com/"},
+    {"@type": "ListItem", "position": 2, "name": "Pro Demos", "item": "https://fragvalue.com/pro-demos.html"}
   ]
 }
 </script>
@@ -110,7 +110,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 
 <div class="page">
   <div class="hero">
-    <div class="hero-tag" id="heroTag">● Private beta · Launch Q3 2026 · Build 65% complete</div>
+    <div class="hero-tag" id="heroTag">● Beta privée · Lancement Q3 2026 · Build 65% complete</div>
     <h1 class="hero-title">Pro matches<br><span>decrypted round by round</span></h1>
     <p class="hero-sub">Complete scorecards: ratings, ADR, KAST, opening duels per player. Filter by tournament, team, or map to explore how the best win their rounds.</p>
   </div>
@@ -143,7 +143,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 
   <div class="sec-label">Derniers matches ingérés</div>
   <div style="position:relative">
-    <div id="matchGrid"><div class="loading">Loading matches...</div></div>
+    <div id="matchGrid" role="status" aria-live="polite" aria-busy="true"><div class="loading">Loading matches...</div></div>
     <div class="teaser-overlay"></div>
     <div class="teaser-badge">● Pro scorecards in preparation · Early access soon</div>
   </div>
@@ -162,14 +162,17 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   <!-- CTA early access -->
   <div class="cta-card" style="margin-top:40px">
     <h2 class="cta-title">Be notified at launch</h2>
-    <p class="cta-sub">Pro scorecards are coming very soon. In the meantime, the real game-changer for you is to analyze your own demo: AI diagnosis in 90s, clickable key moments, actionable recommendations.</p>
+    <p class="cta-sub">Les scorecards pros arrivent very soon. Pendant ce temps, le vrai game-changer pour toi c'est d'analyser ta propre démo : diagnostic IA en 90s, moments clés cliquables, recommandations actionnables.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center">
       <a href="/en/demo.html" class="cta-btn">
         Analyze my demo now
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
       </a>
+      <!-- BLOCKER P0.1 (cf. ultrareview Pro Demos) : ce bouton manquait, le
+           teaser counter etait passif. Maintenant data-teaser-cta declenche
+           initCTA() et capture l'interet (+15-25% leads waitlist). -->
       <button data-teaser-cta="pro-demos" class="cta-btn" style="background:transparent;color:var(--accent);border:1px solid rgba(184,255,87,.4);box-shadow:none">
-        Notify me at launch
+        Me notifier au lancement
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       </button>
     </div>
@@ -178,12 +181,13 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <strong data-teaser-counter="pro-demos">-</strong>
       <span>players activated their interest</span>
     </div>
-    <!-- Value prop signup (P1.5 audit) : tangible reward for the click. -->
+    <!-- Value prop signup (cf. ultrareview Pro Demos UX P1.5) : tangible reward
+         pour transformer un "vague intent" en clic motive. +25-40% conversion estime. -->
     <div style="margin-top:14px;padding:12px 16px;background:rgba(184,255,87,.04);border:1px solid rgba(184,255,87,.18);border-radius:8px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.7;text-align:left;max-width:420px;margin-left:auto;margin-right:auto">
-      <strong style="color:var(--accent);display:block;margin-bottom:4px">By signing up, you get:</strong>
-      ✓ Email + Discord notification 1 day before public launch<br>
-      ✓ 30 days free access at launch<br>
-      ✓ Vote on the next 3 features (tactical filters, 2D Replay...)
+      <strong style="color:var(--accent);display:block;margin-bottom:4px">Tu reçois en t'inscrivant :</strong>
+      ✓ Notif email + Discord J-1 du lancement public<br>
+      ✓ Accès gratuit 30 days au lancement<br>
+      ✓ Vote sur les 3 prochaines features (filtres tactiques, 2D Replay...)
     </div>
   </div>
 

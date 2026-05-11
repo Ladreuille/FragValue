@@ -36,7 +36,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <meta property="og:image" content="https://fragvalue.com/og/home.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="CS2 FACEIT demo analysis by FragValue">
+<meta property="og:image:alt" content="Analysis de demos CS2 FACEIT par FragValue">
 <meta property="og:locale" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Analyze a demo CS2 · FragValue">
@@ -44,7 +44,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <meta name="twitter:image" content="https://fragvalue.com/og/home.png">
 <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/fragvalue_icon.svg">
-<title>Analyze a demo CS2 FACEIT · AI Coach · FragValue</title>
+<title>Analyze a CS2 FACEIT demo · AI Coach · FragValue</title>
 <link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/spacemono-400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/spacemono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -628,7 +628,7 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
 }
 .welcome-toast-close:hover{color:var(--text)}
 
-/* UPLOAD MODE TABS (upload .dem vs FACEIT URL) */
+/* UPLOAD MODE TABS (upload .dem vs URL FACEIT) */
 .upload-mode-tab{
   flex:1;background:var(--card);border:1px solid var(--border);
   color:var(--text2);font-family:var(--mono);font-size:11px;font-weight:700;
@@ -646,7 +646,7 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
   .upload-mode-tab{font-size:10px;padding:9px 10px;min-height:44px}
 }
 
-/* URL ZONE (mode 2) */
+/* URL ZONE (mode 2) - micro-tweaks pour finaliser le visuel */
 .url-zone:focus-within{border-color:rgba(184,255,87,.5);background:rgba(184,255,87,.02)}
 #faceitUrlInput:focus{border-color:var(--accent)}
 #faceitUrlInput::placeholder{color:var(--text3);font-size:11.5px}
@@ -838,8 +838,10 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
 
-/* Mobile UX P0 (ref. Mobile UX audit 6.5/10) : drag-drop doesn't work on
-   touch devices, hide drag text + shortcut, full-width upload button. */
+/* Mobile UX P0 (cf. ultrareview Mobile UX 6.5/10) :
+   sur mobile, le drag-drop ne marche not (touch != drag), on cache le texte
+   "Glisse-depose" et le raccourci Ctrl+U. Le bouton "Choose a file"
+   reste full-width et bien visible. */
 @media (max-width:640px){
   .upload-sub .us-sep{display:none}
   .upload-shortcut{display:none}
@@ -854,8 +856,8 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://fragvalue.com/en/"},
-    {"@type": "ListItem", "position": 2, "name": "Analyze a demo", "item": "https://fragvalue.com/en/demo.html"}
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://fragvalue.com/"},
+    {"@type": "ListItem", "position": 2, "name": "Analyze a demo", "item": "https://fragvalue.com/demo.html"}
   ]
 }
 </script>
@@ -1047,23 +1049,23 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
       <div class="quota-bar-track"><div class="quota-bar-fill" id="quotaBarFill" style="width:0%"></div></div>
     </div>
 
-    <label for="fileInput" class="visually-hidden" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Pick a FACEIT .dem file (max 500 MB)</label>
-    <input type="file" id="fileInput" name="fileInput" accept=".dem" aria-label="Pick a FACEIT .dem file (max 500 MB)"/>
+    <label for="fileInput" class="visually-hidden" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Choose a file .dem FACEIT (max 500 MB)</label>
+    <input type="file" id="fileInput" name="fileInput" accept=".dem" aria-label="Choose a file .dem FACEIT (max 500 MB)"/>
 
-    <!-- Tabs : 2 modes - upload .dem OR FACEIT match URL -->
-    <div class="upload-mode-tabs" role="tablist" aria-label="Demo submission mode" style="display:flex;gap:6px;margin-bottom:14px">
+    <!-- Tabs : 2 modes pour soumettre un match - upload .dem OU URL FACEIT -->
+    <div class="upload-mode-tabs" role="tablist" aria-label="Mode de soumission de demo" style="display:flex;gap:6px;margin-bottom:14px">
       <button type="button" id="tabUpload" role="tab" aria-selected="true" class="upload-mode-tab active" onclick="switchUploadMode('upload')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Upload .dem
       </button>
       <button type="button" id="tabUrl" role="tab" aria-selected="false" class="upload-mode-tab" onclick="switchUploadMode('url')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        FACEIT match URL
-        <span style="font-size:9px;background:var(--accent);color:#000;padding:1px 6px;border-radius:8px;margin-left:6px;font-weight:700;letter-spacing:.04em">NEW</span>
+        URL match FACEIT
+        <span style="font-size:9px;background:var(--card);color:var(--accent);border:1px solid rgba(184,255,87,.3);padding:1px 6px;border-radius:8px;margin-left:6px;font-weight:700;letter-spacing:.04em">BIENTOT</span>
       </button>
     </div>
 
-    <!-- Mode 1 : Upload .dem (existing zone) -->
+    <!-- Mode 1 : Upload .dem (zone existante) -->
     <div class="upload-zone" id="uploadZone">
       <div class="upload-icon">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
@@ -1073,31 +1075,33 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
         </svg>
       </div>
       <div class="upload-title">Drop your demo</div>
-      <div class="upload-sub">Drag and drop your <strong>.dem FACEIT</strong> file here <span class="us-sep">&middot;</span> Max 500 MB</div>
+      <div class="upload-sub">Drag and drop your file <strong>.dem FACEIT</strong> ici <span class="us-sep">&middot;</span> Max 500 MB</div>
       <button class="upload-btn" onclick="document.getElementById('fileInput').click();event.stopPropagation()">
         Choose a file
       </button>
       <span class="upload-shortcut">Shortcut <kbd id="kbdShortcut">Ctrl U</kbd> to open the file picker</span>
     </div>
 
-    <!-- Mode 2 : FACEIT URL (auto-fetch via Downloads API server-side) -->
+    <!-- Mode 2 : URL FACEIT (auto-fetch via Downloads API serveur) -->
     <div class="url-zone" id="urlZone" style="display:none;border:1px dashed var(--border2);border-radius:var(--radius2);padding:24px 22px;background:var(--bg);animation:fadeUp .4s ease forwards">
-      <div class="upload-icon" style="background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.15)">
+      <div class="upload-icon" style="background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.2);margin:0 auto 14px">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
         </svg>
       </div>
-      <div class="upload-title" style="margin-bottom:8px">Paste your FACEIT match URL</div>
-      <div class="upload-sub" style="margin-bottom:14px">We fetch the demo automatically &middot; <strong>No manual download</strong></div>
-      <input type="url" id="faceitUrlInput" autocomplete="off" placeholder="https://www.faceit.com/en/cs2/room/1-xxxxxxx-..." style="width:100%;background:var(--card);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color .15s;margin-bottom:12px" aria-label="FACEIT match URL">
-      <button type="button" class="upload-btn" id="faceitUrlSubmit" onclick="submitFaceitUrl()" style="margin-top:0">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:6px"><polyline points="20 6 9 17 4 12"/></svg>
-        Analyze this match
-      </button>
-      <div id="faceitUrlMsg" role="status" aria-live="polite" style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;display:none"></div>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:14px;line-height:1.6">
-        Match must be <strong>finished</strong> and less than 4 weeks old (FACEIT demos are purged after ~30d).
+      <div class="upload-title" style="margin-bottom:8px;text-align:center">Auto-sync FACEIT pending</div>
+      <div class="upload-sub" style="margin-bottom:18px;max-width:460px;margin-left:auto;margin-right:auto;text-align:center">Notre demande d'acces a la <strong>Downloads API officielle FACEIT</strong> est en cours de revue par leur equipe partenariats. Une fois validee, tu pourras coller un lien match et on telechargera la demo automatiquement.</div>
+      <input type="url" id="faceitUrlInput" autocomplete="off" placeholder="Coller un lien match FACEIT (bientot)" disabled style="width:100%;max-width:480px;display:block;margin:0 auto 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--text3);outline:none;cursor:not-allowed;opacity:.55" aria-label="URL match FACEIT (bientot disponible)">
+      <div style="text-align:center">
+        <a href="account.html#settings" class="upload-btn" data-teaser-cta="faceit-url-sync" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;justify-content:center">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Activer les notifs
+        </a>
+      </div>
+      <div id="faceitUrlMsg" role="status" aria-live="polite" style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;display:none;text-align:center"></div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:18px;line-height:1.6;text-align:center">
+        En attendant : utilise l'onglet <strong style="color:var(--text2)">Upload .dem</strong> ci-dessus &middot; tu telecharges ta demo depuis faceit.com (bouton "Download demo" sur la page du match) puis tu la deposes ici.
       </div>
     </div>
 
@@ -1221,8 +1225,8 @@ document.getElementById('fileInput').addEventListener('change', e => {
 
 function handleFile(f) {
   hideError();
-  if (!f.name.endsWith('.dem')) { showError('This isn\'t a CS2 demo. We need a .dem file (FACEIT, MatchMaking or custom server). Drop the .dem you downloaded from FACEIT.'); return; }
-  if (f.size > 500*1024*1024) { showError('Your demo is ' + fmt(f.size) + ', max is 500 MB. Tip: if it\'s a long Best of 3, download a single map instead. Need help? contact@fragvalue.com'); return; }
+  if (!f.name.endsWith('.dem')) { showError('Ce fichier n\'est not une démo CS2. Il faut un .dem (FACEIT, MatchMaking or serveur custom). Glisse le .dem que tu as téléchargé depuis FACEIT.'); return; }
+  if (f.size > 500*1024*1024) { showError('Ta démo fait ' + fmt(f.size) + ', le max est 500 MB. Astuce : si elle vient d\'un long Best of 3, télécharge la map en solo. Besoin d\'aide ? contact@fragvalue.com'); return; }
   selectedFile = f;
   document.getElementById('fileName').textContent = f.name;
   document.getElementById('fileSize').textContent = fmt(f.size);
@@ -1244,7 +1248,7 @@ function fmt(b) {
   return b >= 1024*1024 ? (b/1024/1024).toFixed(1)+' MB' : (b/1024).toFixed(0)+' KB';
 }
 
-// === Switch between 2 modes : upload .dem (default) vs FACEIT URL ====
+// === Switch entre les 2 modes : upload .dem (defaut) vs URL FACEIT ====
 function switchUploadMode(mode) {
   const tabUpload = document.getElementById('tabUpload');
   const tabUrl    = document.getElementById('tabUrl');
@@ -1269,7 +1273,7 @@ function switchUploadMode(mode) {
   }
 }
 
-// === Submit a FACEIT match URL to backend (Downloads API) ============
+// === Soumet une URL match FACEIT au backend (Downloads API) ============
 async function submitFaceitUrl() {
   const input  = document.getElementById('faceitUrlInput');
   const btn    = document.getElementById('faceitUrlSubmit');
@@ -1279,33 +1283,35 @@ async function submitFaceitUrl() {
   msg.classList.remove('error', 'success');
 
   if (!value) {
-    msg.textContent = 'Paste your FACEIT match URL (or the match_id directly: 1-xxx-...).';
+    msg.textContent = 'Colle l\'URL de ton match FACEIT (or directement le match_id 1-xxx-...).';
     msg.classList.add('error'); msg.style.display = 'block';
     input.focus();
     return;
   }
 
+  // Validation client basique : URL FACEIT OU match_id format 1-uuid
   const isMatchUrl = /faceit\.com\/[a-z]{2}\/cs2?\/room\/1-[a-f0-9-]{30,}/i.test(value);
   const isMatchId  = /^1-[a-f0-9-]{30,}$/i.test(value);
   if (!isMatchUrl && !isMatchId) {
-    msg.textContent = 'Invalid format. Examples: https://www.faceit.com/en/cs2/room/1-xxxxxx... or 1-xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';
+    msg.textContent = 'Format invalide. Exemples acceptes : https://www.faceit.com/fr/cs2/room/1-xxxxxx... or 1-xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';
     msg.classList.add('error'); msg.style.display = 'block';
     input.focus();
     return;
   }
 
+  // Auth check
   const { data: { session } } = await _sb.auth.getSession();
   if (!session) {
-    msg.textContent = 'Sign in to use this feature. Redirecting...';
+    msg.textContent = 'Sign in pour utiliser cette feature. Redirection en cours...';
     msg.classList.add('error'); msg.style.display = 'block';
-    setTimeout(() => { window.location.href = 'login.html?redirect=/en/demo.html'; }, 1500);
+    setTimeout(() => { window.location.href = 'login.html?redirect=/demo.html'; }, 1500);
     return;
   }
 
   btn.disabled = true;
   const originalLabel = btn.innerHTML;
-  btn.innerHTML = '<span class="spinner-inline" aria-hidden="true" style="display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-right:6px"></span>Processing...';
-  msg.textContent = 'Contacting FACEIT to fetch your demo... (5-15s)';
+  btn.innerHTML = '<span class="spinner-inline" aria-hidden="true" style="display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-right:6px"></span>Traitement...';
+  msg.textContent = 'On contacte FACEIT pour recuperer ta demo... (5-15s)';
   msg.classList.add('success'); msg.style.display = 'block';
 
   if (typeof window.fvTrack === 'function') window.fvTrack('faceit_url_submit', { input_type: isMatchUrl ? 'url' : 'id' });
@@ -1322,30 +1328,34 @@ async function submitFaceitUrl() {
     const d = await res.json();
 
     if (!res.ok) {
+      // Mapping codes d'erreur backend -> messages user-friendly
       const errMap = {
-        no_scope: 'Service temporarily unavailable. Contact support.',
-        demo_not_found: 'Demo not found. FACEIT demos are available for ~2-4 weeks after the match.',
-        unauthorized: 'FACEIT auth issue. Try again in a few minutes.',
-        no_demos: 'No demo available for this match (still in progress?).',
-        quota_exceeded: 'Analysis quota reached. Upgrade to Pro for unlimited.',
+        no_scope: 'Service temporairement indisponible. Contacte le support.',
+        demo_not_found: 'Demo introuvable. Les demos FACEIT sont dispos ~2-4 semaines apres le match.',
+        unauthorized: 'Probleme d\'authentification cote FACEIT. Reessaie dans quelques minutes.',
+        no_demos: 'No demo available pour ce match (encore en cours ?).',
+        quota_exceeded: 'Tu as atteint ton quota d\'analyses. Passe Pro pour des analyses sans limite.',
       };
-      msg.textContent = errMap[d.code] || d.error || 'Unknown error. Try again.';
+      msg.textContent = errMap[d.code] || d.error || 'Error inconnue. Reessaie.';
       msg.classList.remove('success'); msg.classList.add('error');
       btn.disabled = false; btn.innerHTML = originalLabel;
       if (typeof window.fvTrack === 'function') window.fvTrack('faceit_url_error', { code: d.code, status: res.status });
       return;
     }
 
-    msg.textContent = 'Demo fetched. Redirecting to your analysis...';
+    // Succes : redirige vers la page de resultats apres parsing.
+    msg.textContent = 'Demo recuperee. Redirection vers ton analyse...';
     msg.classList.remove('error'); msg.classList.add('success');
     if (typeof window.fvTrack === 'function') window.fvTrack('faceit_url_success', { match_id: d.matchId });
 
+    // Le parser Railway tourne en async (~30-90s). On redirige vers
+    // heatmap-results qui affichera "parsing in progress" + poll status.
     setTimeout(() => {
-      window.location.href = '/en/heatmap-results.html?match=' + encodeURIComponent(d.matchId);
+      window.location.href = '/heatmap-results.html?match=' + encodeURIComponent(d.matchId);
     }, 1200);
   } catch (err) {
     console.error('[faceit-url-submit] network error:', err);
-    msg.textContent = 'Network error. Check your connection and try again.';
+    msg.textContent = 'Error reseau. Verifie ta connexion et reessaie.';
     msg.classList.remove('success'); msg.classList.add('error');
     btn.disabled = false; btn.innerHTML = originalLabel;
   }
@@ -1448,6 +1458,13 @@ async function startAnalysis() {
   const bar   = document.getElementById('progressBar');
   let currentPct = 0;
 
+  // Timeout dynamique : 3 min de base + 2 min par 100 MB, plafonne a 20 min.
+  // Couvre l'upload (slow ADSL ~10 Mbps) + le parsing serveur. Une demo de
+  // 450 MB met ~6 min a uploader + ~2-3 min a parser, donc ~10 min total.
+  // Declare ici (not dans le try) pour etre accessible depuis le catch.
+  const fileSizeMB = selectedFile.size / (1024 * 1024);
+  const timeoutMs = Math.min(20, 3 + Math.ceil(fileSizeMB / 100) * 2) * 60 * 1000;
+
   function go(i, pct, title, sub) {
     steps.forEach((el, j) => {
       el.classList.remove('active','done');
@@ -1464,24 +1481,25 @@ async function startAnalysis() {
   // Chaque étape a un timing réaliste basé sur ce que fait réellement le parser.
   // Les messages > 80s sont rassurants en cas de parsing plus long que prevu
   // (grosse demo, serveur charge) pour reduire le taux d'abandon.
-  // Microcopy ultrareview item 11 (lift +18-30% retention loading) : each
-  // sub-message teases a CS2 insight to turn passive waiting into education.
+  // Microcopy ultrareview item 11 (lift +18-30% retention loading) : chaque
+  // sub-message teaser un insight CS2 concret pour transformer l'attente passive
+  // en education + anchoring de la valeur. References pros / benchmarks Lvl 7.
   const autoSteps = [
     { delay:800,  step:0, pct:8,  title:'Uploading file',            sub:'Transferring...' },
-    { delay:3000, step:1, pct:20, title:'Parsing CS2',                 sub:'Reading raw ticks (128t FACEIT servers)' },
-    { delay:5000, step:1, pct:32, title:'Parsing CS2',                 sub:'Extracting positions · FACEIT Lvl 7 average wins 58% of opening duels' },
-    { delay:8000, step:2, pct:44, title:'Computing zones',            sub:'Analyzing rounds · 1 CS2 round = 16 individual stats tracked' },
-    { delay:12000,step:2, pct:54, title:'Computing zones',            sub:'Mapping grenades · Pro smoke setups = +23% kills/round' },
-    { delay:18000,step:3, pct:63, title:'Generating heatmaps',        sub:'Kill zones · We compare with HLTV top 20 (rating 1.05-1.30)' },
-    { delay:25000,step:3, pct:70, title:'Generating heatmaps',        sub:'Trajectories · AWP delivers 1.42 kill/round ratio at pro level' },
-    { delay:35000,step:4, pct:76, title:'FV Rating',                  sub:'Per-round impact · Checking if you aced this match (rare: 1 in 47)' },
-    { delay:50000,step:4, pct:82, title:'FV Rating',                  sub:'Weighting KPIs · Lvl 7 KAST average = 68%, top 1% = 78%+' },
-    { delay:70000,step:4, pct:87, title:'Finalizing',                 sub:'Cross-analyzing your last 20 matches for AI Coach diagnostic...' },
-    // Reassurance messages > 80s (large demos)
-    { delay:85000, step:4, pct:89, title:'Finalizing',                sub:'Large demo · More ticks = more accurate analysis' },
-    { delay:120000,step:4, pct:91, title:'Finalizing',                sub:'Server busy · Your FV Rating is coming any second now' },
-    { delay:180000,step:4, pct:93, title:'Finalizing',                sub:'Complex map · Long 5v5 rounds = many events to score' },
-    { delay:240000,step:4, pct:95, title:'Finalizing',                sub:'Last step · Generating your personalized report' },
+    { delay:3000, step:1, pct:20, title:'Parsing CS2',                 sub:'Lecture des ticks bruts (128t serveurs FACEIT)' },
+    { delay:5000, step:1, pct:32, title:'Parsing CS2',                 sub:'Extraction positions · La moyenne FACEIT Lvl 7 marque 58% des duels d\'ouverture' },
+    { delay:8000, step:2, pct:44, title:'Computing zones',            sub:'Analysis des rounds · 1 round CS2 = 16 stats individuelles trackees' },
+    { delay:12000,step:2, pct:54, title:'Computing zones',            sub:'Mapping grenades · L\'impact de smokes pros = +23% kills/round' },
+    { delay:18000,step:3, pct:63, title:'Generating heatmaps',     sub:'Kill zones · On compare avec le top 20 HLTV (rating 1.05-1.30)' },
+    { delay:25000,step:3, pct:70, title:'Generating heatmaps',     sub:'Trajectoires · L\'AWP rapporte 1.42 ratio kill/round chez les pros' },
+    { delay:35000,step:4, pct:76, title:'FV Rating',                   sub:'Impact par round · On checke si t\'as ace ce match (rare : 1 sur 47)' },
+    { delay:50000,step:4, pct:82, title:'FV Rating',                   sub:'Pondération KPIs · KAST Lvl 7 average = 68%, top 1% = 78%+' },
+    { delay:70000,step:4, pct:87, title:'Finalizing',                sub:'On croise tes Last 20 matches pour le diagnostic AI Coach...' },
+    // Messages rassurants si le parsing depasse les 80s (grosses demos)
+    { delay:85000, step:4, pct:89, title:'Finalizing',               sub:'Demo volumineuse · Plus on a de ticks, plus l\'analyse est précise' },
+    { delay:120000,step:4, pct:91, title:'Finalizing',               sub:'Serveur chargé · Ton FV Rating arrive dans quelques instants' },
+    { delay:180000,step:4, pct:93, title:'Finalizing',               sub:'Map complexe · 5v5 rounds longs = beaucoup d\'événements à scorer' },
+    { delay:240000,step:4, pct:95, title:'Finalizing',               sub:'Derniere etape · Génération du rapport personnalisé' },
   ];
 
   const timers = autoSteps.map(s =>
@@ -1489,16 +1507,53 @@ async function startAnalysis() {
   );
 
   try {
-    go(0, 3, 'Connecting to server', 'Initialization...');
-    go(0, 6, 'Uploading file', selectedFile.name);
-    const fd = new FormData();
-    fd.append('demo', selectedFile);
-    fd.append('options', JSON.stringify(['Heatmaps','2D Replay','Utility Map','Team Stats']));
+    go(0, 3, 'Connecting to server', 'Verification de la session...');
 
-    // Timeout 5 minutes
+    // ── 1. Auth check : on a besoin du JWT pour signer l'upload Supabase
+    //     ET pour s'authentifier aupres du parser via Authorization header.
+    const { data: { user }, error: authErr } = await _sb.auth.getUser();
+    if (authErr || !user) throw new Error('Tu dois etre connecte pour analyser une demo.');
+
+    // ── 2. Upload direct vers Supabase Storage (bypass Railway proxy
+    //     -> plus de timeout 5min sur l'upload, marche meme pour 450+ MB).
+    go(0, 6, 'Uploading file', selectedFile.name + ' (' + Math.round(fileSizeMB) + ' MB)');
+    const fileId = crypto.randomUUID();
+    const storagePath = user.id + '/' + fileId + '.dem';
+    const { error: uploadErr } = await _sb.storage
+      .from('demos-incoming')
+      .upload(storagePath, selectedFile, { cacheControl: '3600', upsert: false });
+    if (uploadErr) throw new Error('Upload Supabase echec : ' + uploadErr.message);
+
+    // ── 3. Recup du JWT actif pour le call parser
+    const { data: { session } } = await _sb.auth.getSession();
+    const jwt = session?.access_token;
+    if (!jwt) throw new Error('Session expiree, reconnecte-toi.');
+
+    // ── 4. POST parser avec payload JSON tiny (< 1 KB) -> Railway proxy
+    //     voit juste un petit POST instant, not un upload multipart de 450 MB.
+    //     Le parser fait le download Supabase->Railway server-to-server.
+    go(1, 12, 'Parser en cours', 'Lecture de la demo cote serveur...');
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000);
-    const res = await fetch(PARSER_URL + '/parse', { method:'POST', body:fd, signal: controller.signal });
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(PARSER_URL + '/parse-from-storage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + jwt,
+      },
+      body: JSON.stringify({
+        bucket: 'demos-incoming',
+        path: storagePath,
+        options: ['Heatmaps','2D Replay','Utility Map','Team Stats'],
+      }),
+      signal: controller.signal,
+    });
+
+    if (res.status === 422) {
+      const data = await res.json().catch(() => ({}));
+      showError(data.message || "Cette demo n'a not pu etre parsee. Essaie une autre demo.");
+      return;
+    }
     clearTimeout(timeout);
 
     // Fetch terminé  - annuler les timers et finir proprement
@@ -1571,7 +1626,7 @@ async function startAnalysis() {
       });
     }
 
-    go(5, 100, 'Clutch.', 'Your analysis is ready. Pulling up the numbers now.');
+    go(5, 100, 'Clutch.', 'Ton analyse est prête. On t\'emmène voir les chiffres.');
     bar.style.background = 'var(--success)';
     await new Promise(r => setTimeout(r, 600));
     window.location.href = 'heatmap-results.html';
@@ -1581,7 +1636,7 @@ async function startAnalysis() {
     prog.style.display = 'none';
     document.getElementById('analyseBtn').disabled = false;
     const msg = err.name === 'AbortError'
-      ? 'Timeout (5 min). File may be too large or server overloaded. Try again in a few minutes.'
+      ? `Délai dépassé (${Math.round(timeoutMs/60000)} min) sur un fichier de ${Math.round(fileSizeMB)} MB. Réessaie or splitte ta demo si c'est un match long.`
       : 'Error : ' + err.message;
     showError(msg);
   }

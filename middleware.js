@@ -58,6 +58,9 @@ const TRANSLATED_PAGES = new Set([
   'how-it-works.html',
   'sitemap.html',
   'astuces.html',
+  // Audit 2026-05-11
+  '404.html',
+  'unsubscribed.html',
 ]);
 
 // User-Agents de bots / crawlers connus. On les laisse passer en FR (canonique)

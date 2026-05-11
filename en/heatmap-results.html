@@ -496,8 +496,8 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       .fv-hero-tier{margin:0 auto}
       .fv-hero-meta{grid-template-columns:repeat(4,auto);justify-content:center;padding:12px 0 0;border-left:none;border-top:1px solid var(--border)}
     }
-    /* Mobile UX P0 (cf. ultrareview Mobile UX 6.5/10) : 4 cols cramped
-       below 560px, switch to 2x2 grid for readable numbers. */
+    /* Mobile UX P0 (cf. ultrareview Mobile UX 6.5/10) : a < 560px,
+       4 colonnes egales rendent les chiffres illisibles. On passe en 2x2. */
     @media (max-width:560px){
       .team-stats-row{grid-template-columns:repeat(2,1fr) !important;gap:8px !important}
       .fv-hero-meta{grid-template-columns:repeat(2,1fr);gap:14px}
@@ -1012,7 +1012,7 @@ function showPlayerStats(name){
       const wMap={};playerKills.forEach(k=>{const w=(k.weapon||'').replace('weapon_','').toLowerCase();if(w)wMap[w]=(wMap[w]||0)+1;});
       return Object.entries(wMap).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([w,ct])=>{
         const file={ak47:'ak47',m4a1:'m4a1',m4a1_silencer:'m4a1_silencer',awp:'awp',deagle:'deagle',glock:'glock',usp_silencer:'usp_silencer',hkp2000:'hkp2000',p250:'p250',famas:'famas',galilar:'galilar',galil:'galilar',aug:'aug',sg556:'sg556',ssg08:'ssg08',scar20:'scar20',g3sg1:'g3sg1',mp9:'mp9',mac10:'mac10',mp7:'mp7',ump45:'ump45',p90:'p90',mp5sd:'mp5sd',bizon:'bizon',fiveseven:'fiveseven',tec9:'tec9',elite:'elite',cz75a:'cz75a',revolver:'revolver',nova:'nova',xm1014:'xm1014',mag7:'mag7',sawedoff:'sawedoff',m249:'m249',negev:'negev',knife:'knife',knife_t:'knife_t',hegrenade:'hegrenade',flashbang:'flashbang',smokegrenade:'smokegrenade',molotov:'molotov',incgrenade:'incgrenade',c4:'c4',taser:'taser'}[w];
-        const icon=file?'<img src="icons/'+file+'.svg" height="16" style="vertical-align:middle;opacity:.85">':'';
+        const icon=file?'<img src="icons/'+file+'.svg" height="16" alt="" role="presentation" style="vertical-align:middle;opacity:.85">':'';
         return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;font-size:10px">'+icon+'<span style="color:var(--text2)">'+ct+'</span></span>';
       }).join('');
     })()}
@@ -1334,7 +1334,7 @@ function drawUtility(mapName,W,H){
 
 function updateLegend(){
   let items=[];
-  if(currentHeatmap==='utility')items=[{color:'rgba(245,200,66,.9)',label:'<img src="icons/flashbang.svg" height="14" style="vertical-align:middle;opacity:.7"> Flash'},{color:'rgba(45,212,160,.8)',label:'<img src="icons/smokegrenade.svg" height="14" style="vertical-align:middle;opacity:.7"> Smoke'},{color:'rgba(240,107,107,.85)',label:'<img src="icons/hegrenade.svg" height="14" style="vertical-align:middle;opacity:.7"> HE'},{color:'rgba(237,160,32,.85)',label:'<img src="icons/molotov.svg" height="14" style="vertical-align:middle;opacity:.7"> Molotov'}];
+  if(currentHeatmap==='utility')items=[{color:'rgba(245,200,66,.9)',label:'<img src="icons/flashbang.svg" height="14" alt="" role="presentation" style="vertical-align:middle;opacity:.7"> Flash'},{color:'rgba(45,212,160,.8)',label:'<img src="icons/smokegrenade.svg" height="14" alt="" role="presentation" style="vertical-align:middle;opacity:.7"> Smoke'},{color:'rgba(240,107,107,.85)',label:'<img src="icons/hegrenade.svg" height="14" alt="" role="presentation" style="vertical-align:middle;opacity:.7"> HE'},{color:'rgba(237,160,32,.85)',label:'<img src="icons/molotov.svg" height="14" alt="" role="presentation" style="vertical-align:middle;opacity:.7"> Molotov'}];
   else if(currentHeatmap==='duels')items=[{color:'#2DD4A0',label:'>65%'},{color:'#F5C842',label:'45-65%'},{color:'#F06B6B',label:'<45%'}];
   else{items=[...activePlayers].map(n=>({color:getColor(n).solid,label:n}));if(showCT)items.push({color:'#4A9EFF',label:'CT'});if(showT)items.push({color:'#F5C842',label:'T'});}
   const mlEl=document.getElementById('mapLegend');if(!mlEl)return;

@@ -61,6 +61,9 @@ const PAGES = [
   // Plan du site + Astuces (avril 2026)
   'sitemap.html',
   'astuces.html',
+  // Pages utilitaires manquantes (audit 2026-05-11)
+  '404.html',
+  'unsubscribed.html',
 ];
 
 // Charge le dictionnaire (objet plat { "fr": "en" })

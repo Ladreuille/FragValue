@@ -162,8 +162,8 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://fragvalue.com/en/"},
-    {"@type": "ListItem", "position": 2, "name": "Login", "item": "https://fragvalue.com/en/login.html"}
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://fragvalue.com/"},
+    {"@type": "ListItem", "position": 2, "name": "Sign in", "item": "https://fragvalue.com/login.html"}
   ]
 }
 </script>
@@ -214,7 +214,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <!-- EMAIL FORM -->
     <div id="loginForm">
       <div class="field">
-        <label class="field-label" for="emailInput">Email to get your analyses</label>
+        <label class="field-label" for="emailInput">Email pour recevoir tes analyses</label>
         <input type="email" class="field-input" id="emailInput" placeholder="nico@example.com" autocomplete="email" required/>
       </div>
       <div class="field" id="passwordField">
@@ -228,7 +228,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 
       <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        <span id="submitLabel">Access my dashboard →</span>
+        <span id="submitLabel">Go to my dashboard →</span>
       </button>
 
       <div id="magicLinkRow" style="text-align:center;margin-top:12px">
@@ -398,7 +398,7 @@ function switchTab(m, btn) {
 
   const isSignup = m === 'signup';
   document.getElementById('passwordConfirmField').style.display = isSignup ? '' : 'none';
-  document.getElementById('submitLabel').textContent = isSignup ? 'Start my 3 free analyses' : 'Access my dashboard →';
+  document.getElementById('submitLabel').textContent = isSignup ? 'Start my 3 free analyses' : 'Go to my dashboard →';
   document.getElementById('magicLinkRow').style.display = isSignup ? 'none' : '';
   document.getElementById('switchText').innerHTML = isSignup
     ? 'Already have an account? <a href="#" onclick="switchTab(\'login\',null);return false">Sign in</a>'
@@ -439,7 +439,7 @@ async function handleSubmit() {
           }
         }
       } catch (_) {}
-      showMsg('GG. Your FragValue account is live. Check your inbox (and spam folder) to confirm in 1 click, then we\'ll crack open your first demo.', 'success');
+      showMsg('GG. Ton compte FragValue est ouvert. Check tes mails (et les spams) pour confirmer en 1 clic, et on attaque ta première démo.', 'success');
     } else {
       const { data: signinData, error } = await _sb.auth.signInWithPassword({ email, password: pass });
       if (error) throw error;
@@ -494,7 +494,7 @@ async function sendMagicLink(e) {
   try {
     const { error } = await _sb.auth.signInWithOtp({ email, options: { emailRedirectTo: getAuthOrigin() + '/account.html' } });
     if (error) throw error;
-    showMsg('Magic link sent. Check your inbox (and spam folder) to click in 1 click.', 'success');
+    showMsg('Lien magique envoyé. Check tes mails (et les spams) pour cliquer en 1 clic.', 'success');
   } catch(e) { showMsg(translateAuthError(e), 'error'); }
 }
 

@@ -23,7 +23,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   <meta charset="UTF-8"/>
   <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/fragvalue_icon.svg">
-  <meta name="description" content="FragValue dashboard: your last 20 FACEIT matches, FV Rating, AI Coach improvement areas, players watchlist and CS2 team roster.">
+  <meta name="description" content="Dashboard FragValue : your last 20 FACEIT matches, FV Rating, axes d'amélioration AI Coach, watchlist players et roster d'équipe CS2.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
   <meta name="robots" content="noindex,follow">
 <meta name="theme-color" content="#0A0C10">
@@ -519,8 +519,8 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   <!-- MAIN -->
   <main class="main" id="main">
 
-    <!-- Single page H1 (visually-hidden) : one H1 per page (WCAG) -->
-    <h1 style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">FragValue Dashboard: your CS2 stats and improvement areas</h1>
+    <!-- H1 unique pour la page (visually-hidden) : un seul H1 par page (cf. WCAG) -->
+    <h1 style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Dashboard FragValue : tes stats CS2 et axes d'amelioration</h1>
 
     <!-- VUE D'ENSEMBLE -->
     <div class="tab-panel active" id="panelOverview">
@@ -914,7 +914,7 @@ function renderCoachDiagnosis(card, data) {
   const strength = (d.strengths || [])[0] || '-';
   const axe   = (d.weaknesses || [])[0] || '-';
   const goal  = d.weeklyGoal || '-';
-  const refreshLabel = (data.plan === 'pro' || data.plan === 'elite' || data.plan === 'team') ? 'Regenerate' : '1/month';
+  const refreshLabel = (data.plan === 'pro' || data.plan === 'elite' || data.plan === 'team') ? 'Regenerate' : '1/mois';
   card.innerHTML = ''
     + '<div class="coach-ai-head">'
     + '  <div class="coach-ai-icon">'
@@ -1483,7 +1483,7 @@ function renderImprovements(d) {
       </div>
       <div class="impr-cols">
         ${g.strengths.length?`<div class="impr-col"><div class="impr-col-header strength"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Strong points</div>${g.strengths.map(s=>`<div class="impr-item strength"><div class="impr-item-icon strength">${icons[s.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-label">${s.label}</div><div class="impr-item-detail">${s.detail}</div></div></div>`).join('')}</div>`:''}
-        ${g.improvements.length?`<div class="impr-col"><div class="impr-col-header improvement"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Priority areas</div>${g.improvements.map(imp=>`<div class="impr-item improvement ${imp.priority}"><div class="impr-item-icon improvement">${icons[imp.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-header-row"><div class="impr-item-label">${imp.label}</div><div class="impr-priority-badge ${imp.priority}">${imp.priority==='high'?'High priority':imp.priority==='medium'?'A travailler':'Secondary'}</div></div><div class="impr-item-detail">${imp.detail}</div><div class="impr-item-advice">${imp.advice}</div><div class="impr-item-metric">${imp.metric}</div></div></div>`).join('')}</div>`:''}
+        ${g.improvements.length?`<div class="impr-col"><div class="impr-col-header improvement"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Priority areas</div>${g.improvements.map(imp=>`<div class="impr-item improvement ${imp.priority}"><div class="impr-item-icon improvement">${icons[imp.icon]||icons.fv}</div><div class="impr-item-content"><div class="impr-item-header-row"><div class="impr-item-label">${imp.label}</div><div class="impr-priority-badge ${imp.priority}">${imp.priority==='high'?'High priority':imp.priority==='medium'?'To work on':'Secondary'}</div></div><div class="impr-item-detail">${imp.detail}</div><div class="impr-item-advice">${imp.advice}</div><div class="impr-item-metric">${imp.metric}</div></div></div>`).join('')}</div>`:''}
       </div>
     </div>`;
 }
@@ -1598,8 +1598,8 @@ function dismissPendingRoster() {
   sessionStorage.removeItem('pendingRosterInvites');
   document.getElementById('rosterContent').innerHTML = `
     <div class="empty-state">
-      <div class="empty-title">Aucune équipe pour l'instant</div>
-      <div class="empty-sub">Crée ton équipe pour inviter des coéquipiers et suivre les stats collectives.</div>
+      <div class="empty-title">No team yet</div>
+      <div class="empty-sub">Create your team to invite teammates and track collective stats.</div>
       <button class="empty-btn" onclick="openCreateRosterModal()">Create my team</button>
     </div>`;
 }
@@ -1786,7 +1786,7 @@ async function loadTeamStats(rosterId) {
                 const isWorst = a.worst_map && m.map === a.worst_map.map;
                 const color = m.team_win_rate >= 55 ? 'var(--success)' : m.team_win_rate >= 45 ? 'var(--gold)' : 'var(--danger)';
                 return `<div class="team-map-pill" style="border-color:${color};color:${color}">
-                  ${isBest ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px" title="Best map"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>' : ''}${isWorst ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px" title="A travailler"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : ''}
+                  ${isBest ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px" title="Best map"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>' : ''}${isWorst ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px" title="To work on"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : ''}
                   ${name} · ${m.team_win_rate}% · ${m.total_matches}M
                 </div>`;
               }).join('')}
@@ -1801,7 +1801,8 @@ async function loadTeamStats(rosterId) {
 
 // ══ Modals ═══════════════════════════════════════════════════════════════
 // A11Y : aria-hidden toggle + focus trap basique (cf. WCAG SC 2.1.2 No keyboard trap inverse,
-// SC 4.1.2 Name, Role, Value).
+// SC 4.1.2 Name, Role, Value). Sauvegarde l'element focus avant ouverture pour le restaurer
+// au close, focus le premier element interactif a l'ouverture, et capture Escape + Tab cyclique.
 let _modalLastFocus = null;
 let _modalActiveId  = null;
 function _modalFocusables(modal) {
@@ -1827,6 +1828,7 @@ function openModal(id) {
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
   document.addEventListener('keydown', _modalKeyHandler);
+  // Focus le 1er element interactif (skip le bouton close pour ne not fermer avec Enter direct)
   setTimeout(() => {
     const focusables = _modalFocusables(modal);
     const target = Array.from(focusables).find(f => !f.classList.contains('modal-close')) || focusables[0];
@@ -1840,6 +1842,7 @@ function closeModal(id) {
   modal.setAttribute('aria-hidden', 'true');
   document.removeEventListener('keydown', _modalKeyHandler);
   _modalActiveId = null;
+  // Restore focus on the trigger element
   if (_modalLastFocus && typeof _modalLastFocus.focus === 'function') {
     _modalLastFocus.focus();
   }
@@ -2038,8 +2041,8 @@ async function leaveRoster() {
   // Reset a l'empty state
   document.getElementById('rosterContent').innerHTML = `
     <div class="empty-state">
-      <div class="empty-title">Aucune équipe pour l'instant</div>
-      <div class="empty-sub">Crée ton équipe pour inviter des coéquipiers et suivre les stats collectives.</div>
+      <div class="empty-title">No team yet</div>
+      <div class="empty-sub">Create your team to invite teammates and track collective stats.</div>
       <button class="empty-btn" onclick="openCreateRosterModal()">Create my team</button>
     </div>`;
 }
@@ -2053,8 +2056,8 @@ async function deleteRoster() {
   _currentRoster = null;
   document.getElementById('rosterContent').innerHTML = `
     <div class="empty-state">
-      <div class="empty-title">Aucune équipe pour l'instant</div>
-      <div class="empty-sub">Crée ton équipe pour inviter des coéquipiers et suivre les stats collectives.</div>
+      <div class="empty-title">No team yet</div>
+      <div class="empty-sub">Create your team to invite teammates and track collective stats.</div>
       <button class="empty-btn" onclick="openCreateRosterModal()">Create my team</button>
     </div>`;
   document.getElementById('rosterInvitations').innerHTML = '';

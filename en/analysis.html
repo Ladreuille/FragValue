@@ -215,7 +215,16 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
 }
 
 /* STATS TABLE */
+/* Mobile : sur viewport <480px les colonnes stat (KAST/ADR/HS%/etc.) totalisent
+   ~520px min ce qui depasse l'ecran. On rend la table scrollable horizontalement
+   en interne (display:block + overflow-x:auto) plutot que casser le layout page.
+   Les inner tr/thead/tbody restent en table-layout pour preserver l'alignement. */
 .stat-table{width:100%;border-collapse:collapse}
+@media (max-width:480px){
+  .stat-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .stat-table thead,.stat-table tbody,.stat-table tfoot{display:table;width:100%;min-width:520px;table-layout:fixed}
+  .stat-table tr{display:table-row}
+}
 .stat-table th{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:10px 6px;text-align:center;border-bottom:2px solid var(--border);white-space:nowrap}
 .stat-table th:first-child{text-align:left;padding-left:12px}
 .stat-table td{padding:10px 6px;border-bottom:1px solid var(--border);text-align:center;font-size:11px}
@@ -545,7 +554,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
       <h2 class="share-popover-title" id="sharePopoverTitle">Share cette analyse</h2>
       <div class="share-popover-sub">Un lien public unique vers ton analyse. Sans login requis pour les destinataires. Fonctionne sur Twitter, Discord, etc.</div>
       <div class="share-url-row">
-        <label for="sharePopoverUrl" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Public link of the analysis</label>
+        <label for="sharePopoverUrl" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Lien public de l'analyse</label>
         <input type="text" class="share-url-input" id="sharePopoverUrl" readonly value="Generation du lien..."/>
         <button class="share-url-copy" id="sharePopoverCopyBtn" onclick="copyShareUrl()">Copier</button>
       </div>
@@ -607,9 +616,17 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <!-- Locked state (Free / non logged in) - VISIBLE par defaut, masque
          si l'utilisateur est Pro or Elite via initCoachChat -->
     <div class="coach-chat-locked" id="coachLocked">
-      <div class="coach-chat-locked-h">Discute avec ton AI Coach</div>
-      <p class="coach-chat-locked-sub">Pose tes questions sur ce match. Le Coach reference les rounds avec des liens cliquables qui ouvrent le replay 2D au moment exact, raisonne avec un lexique CS2 100% scene pro (HLTV, Liquipedia, casters), et te donne 1 action concrete a chaque reponse. <strong style="color:var(--accent)">Pro : 5 msg/day &middot; Elite : 30 msg/day</strong>.</p>
-      <a href="pricing.html" class="coach-chat-locked-cta">Choisir mon plan →</a>
+      <div class="coach-chat-locked-h">Le AI Coach en exemple concret</div>
+      <p class="coach-chat-locked-sub">Voilà à quoi ressemble une réponse — référence d'un round précis, lexique CS2 100% scène pro, et 1 action concrète à chaque fois.</p>
+      <div class="coach-chat-preview">
+        <div class="coach-chat-preview-msg user">Pourquoi j'ai perdu le round 14 ?</div>
+        <div class="coach-chat-preview-msg ai">Tu prends ton duel à long en [R14] sans util. L'adversaire avait 2 flashs en main. Work on tes pre-flashes : un Pop Flash sur long avant de peek aurait inversé l'engagement. <strong style="color:var(--accent)">→ Action : 1 setup pop-flash long Mirage à l'entraînement.</strong></div>
+      </div>
+      <div class="coach-chat-locked-ctas">
+        <a href="/dashboard.html#coachAiCard" class="coach-chat-locked-cta">Lancer mon diagnostic IA gratuit</a>
+        <a href="pricing.html" class="coach-chat-locked-cta-secondary">Discuter en unlimited — Pro 9€/month</a>
+      </div>
+      <p class="coach-chat-locked-note">AI diagnosis inclus dans Free (1/mois). Chat unlimited avec Pro (5 msg/day) or Elite (30 msg/day).</p>
     </div>
 
     <!-- Empty state (not encore de messages) -->

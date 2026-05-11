@@ -256,12 +256,21 @@
   // de version traduite pour le moment).
   const enPrefix = FV_LANG === 'en' ? '/en' : '';
   const link = (path) => {
-    // Pages traduites par build-i18n.js : on prefixe /en/. Sinon on garde tel quel.
-    const TRANSLATED = ['/index.html', '/pricing.html', '/demo.html', '/login.html',
+    // SYNC avec scripts/build-i18n.js PAGES + middleware.js TRANSLATED_PAGES.
+    // 33 pages au total (toutes les pages dont la version EN existe).
+    const TRANSLATED = [
+      '/index.html', '/pricing.html', '/demo.html', '/login.html',
       '/cgv.html', '/mentions-legales.html', '/privacy.html', '/lineup-library.html',
       '/pro-demos.html', '/pro-benchmarks.html', '/prep-veto.html', '/anti-strat.html',
       '/levels.html', '/stats-guide.html', '/compare-outils.html',
-      '/how-it-works.html', '/sitemap.html', '/astuces.html'];
+      '/how-it-works.html', '/sitemap.html', '/astuces.html',
+      // Pages user-authentifiees (sync ajout Phase 6 build-i18n)
+      '/account.html', '/dashboard.html', '/matches.html', '/scout.html',
+      '/compare.html', '/team.html', '/blog.html', '/onboarding.html',
+      // Pages techniques + post-analyse (sync ajout Phase 9 build-i18n)
+      '/replay.html', '/analysis.html', '/heatmap-results.html', '/pro-match.html',
+      '/share.html', '/extension-auth.html', '/faceit-callback.html',
+    ];
     return TRANSLATED.includes(path) ? (enPrefix + path) : path;
   };
   const sections = [
@@ -349,7 +358,7 @@
         <span class="fv-bell-badge" id="navBellBadge" style="display:none">0</span>
       </button>
       <a href="${link('/login.html')}" class="fv-login" id="navLoginBtn">${T.connexion}</a>
-      <a href="/account.html" class="fv-cta" id="navAccountBtn" style="display:none">${T.monEspace}<span class="fv-account-dot" id="navFeedbackDot" title="${T.feedbackTooltip}"></span></a>
+      <a href="${link('/account.html')}" class="fv-cta" id="navAccountBtn" style="display:none">${T.monEspace}<span class="fv-account-dot" id="navFeedbackDot" title="${T.feedbackTooltip}"></span></a>
     </div>
     <button class="fv-burger" type="button" aria-label="${T.ariaBurgerOpen}" aria-expanded="false" aria-controls="fvMobileDrawer">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
@@ -478,7 +487,7 @@
       <div class="fv-mobile-divider"></div>
       <a href="${link('/pricing.html')}" class="fv-mobile-link">${T.tarifs}</a>
       <a href="${link('/login.html')}" class="fv-mobile-link" id="navMobileLoginBtn">${T.connexion}</a>
-      <a href="/account.html" class="fv-mobile-cta" id="navMobileAccountBtn" style="display:none">${T.monEspace}</a>
+      <a href="${link('/account.html')}" class="fv-mobile-cta" id="navMobileAccountBtn" style="display:none">${T.monEspace}</a>
     `;
 
     const backdrop = document.createElement('div');
@@ -676,7 +685,7 @@
         <div class="fv-notif-empty">${T.notifLoading}</div>
       </div>
       <div class="fv-notif-footer">
-        <a href="/account.html#feedback">${T.notifViewTickets}</a>
+        <a href="${link('/account.html')}#feedback">${T.notifViewTickets}</a>
       </div>
     `;
     document.body.appendChild(panel);

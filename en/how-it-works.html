@@ -40,7 +40,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <meta name="twitter:image" content="https://fragvalue.com/og/home.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
 <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
-<title>How it works · Analyze your CS2 FACEIT demo · FragValue</title>
+<title>How it works · Analyze ta démo CS2 FACEIT · FragValue</title>
 <link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/spacemono-400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/spacemono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -172,8 +172,8 @@ main{max-width:880px;margin:0 auto;padding:48px 24px 96px;position:relative;z-in
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://fragvalue.com/en/"},
-    {"@type": "ListItem", "position": 2, "name": "How it works", "item": "https://fragvalue.com/en/how-it-works.html"}
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://fragvalue.com/"},
+    {"@type": "ListItem", "position": 2, "name": "How it works", "item": "https://fragvalue.com/how-it-works.html"}
   ]
 }
 </script>
@@ -211,7 +211,7 @@ main{max-width:880px;margin:0 auto;padding:48px 24px 96px;position:relative;z-in
         <div class="step-num">1</div>
         <div class="step-body">
           <div class="step-h">Go to your FACEIT history</div>
-          <p class="step-p">Sign in sur <a href="https://www.faceit.com" target="_blank" rel="noopener">faceit.com</a>, clique sur ton avatar en haut a droite, puis <strong>Mes statistiques</strong> or <strong>Profile</strong>. Tu vois la liste de tes derniers matches CS2.</p>
+          <p class="step-p">Sign in sur <a href="https://www.faceit.com" target="_blank" rel="noopener">faceit.com</a>, clique sur ton avatar en haut a droite, puis <strong>Mes statistiques</strong> or <strong>Profile</strong>. You see the list of your latest CS2 matches.</p>
         </div>
       </div>
       <div class="step">
@@ -224,7 +224,7 @@ main{max-width:880px;margin:0 auto;padding:48px 24px 96px;position:relative;z-in
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-body">
-          <div class="step-h">Clique sur <strong>"Télécharger la demo"</strong></div>
+          <div class="step-h">Clique sur <strong>"Download demo"</strong></div>
           <p class="step-p">Dans la fiche match, scroll jusqu'au bouton <strong>Telecharger la demo</strong> (souvent pres du scoreboard, or dans un menu "..."). FACEIT te donne un lien direct vers le fichier <code>.dem.gz</code> compresse.</p>
           <div class="warn">
             <div class="warn-ico">!</div>
@@ -352,7 +352,7 @@ main{max-width:880px;margin:0 auto;padding:48px 24px 96px;position:relative;z-in
         <div class="step-num">F</div>
         <div class="step-body">
           <div class="step-h">Free · Free demo</div>
-          <p class="step-p"><strong>1 yearalyse demo / mois.</strong> FV Rating + scoreboard + coach IA basique. Page Pro Benchmarks accessible (preview mode). Idéal pour decouvrir.</p>
+          <p class="step-p"><strong>1 yearalyse demo / mois.</strong> FV Rating + scoreboard + basic AI coach. Pro Benchmarks page accessible (preview mode). Ideal to discover.</p>
         </div>
       </div>
       <div class="step">
@@ -454,7 +454,8 @@ main{max-width:880px;margin:0 auto;padding:48px 24px 96px;position:relative;z-in
 </main>
 
 <script>
-// A11Y FAQ : transforme les .faq-card en boutons accessibles (cf. WCAG SC 4.1.2 + ARIA-22)
+// A11Y FAQ : transforme les .faq-card en boutons accessibles (role=button + aria-expanded
+// + aria-controls + clavier Enter/Space) cf. WCAG SC 4.1.2 + ARIA-22.
 (function initFaqA11y(){
   document.querySelectorAll('.faq-card').forEach((card, i) => {
     const q = card.querySelector('.faq-q');
@@ -469,6 +470,7 @@ main{max-width:880px;margin:0 auto;padding:48px 24px 96px;position:relative;z-in
     card.setAttribute('aria-controls', aId);
     a.setAttribute('role', 'region');
     a.setAttribute('aria-labelledby', qId);
+    // Toggle aria-expanded quand .open change (delegate via le onclick existant)
     card.addEventListener('click', () => {
       card.setAttribute('aria-expanded', card.classList.contains('open') ? 'true' : 'false');
     });
