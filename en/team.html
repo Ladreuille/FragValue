@@ -422,7 +422,7 @@ function renderHero(roster, players, aggregated, mode, isOwner) {
   const regionItem = roster.region ? `<span class="team-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${escHtml(roster.region)}</span>` : '';
   const createdItem = roster.created_at ? `<span class="team-meta-item">Créée le ${formatDate(roster.created_at)}</span>` : '';
   const modeHint = mode === 'my'
-    ? `<div class="mode-hint">Tu regardes <strong>ton équipe</strong>${isOwner ? ' (en tant qu\'owner)' : ' (en tant que membre)'}</div>`
+    ? `<div class="mode-hint">You're viewing <strong>your team</strong>${isOwner ? ' (as owner)' : ' (as member)'}</div>`
     : `<div class="mode-hint">Vue <strong>publique</strong> de cette équipe</div>`;
 
   return `
@@ -515,7 +515,7 @@ function renderScoreSection(aggregated, players) {
         <div class="score-info">
           <div class="score-rank ${rankClass}">${escHtml(rank)}</div>
           <div class="score-headline">${headline}</div>
-          <div class="score-sub">Average du FV Score individuel de chaque membre sur les Last 20 matches (${members} / ${players.length} membres avec FACEIT lié). Même formule que ton dashboard perso.</div>
+          <div class="score-sub">Average of each member's individual FV Score over the last 20 matches (${members} / ${players.length} members with FACEIT linked). Same formula as your personal dashboard.</div>
         </div>
       </div>
     </div>
