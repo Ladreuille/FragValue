@@ -691,13 +691,26 @@ function inferSituationContext(userMessage, demoContext) {
   const q = String(userMessage || '').toLowerCase();
   const map = demoContext?.demo?.map || null;
 
-  // Side : on tente de deduire en fonction du score / target player team.
-  // Si pas dispo, on laisse null = RAG cherchera CT + T + both.
+  // Side : un joueur joue les 2 cotes dans un match CS2, donc par defaut on
+  // laisse null (RAG cherche CT + T + both via la regle 'both' dans la SQL fn).
+  // Override seulement si l'user mentionne explicitement un cote dans sa question.
+  // Note : on ne deduit PAS depuis demoContext.targetPlayer.team car ce champ
+  // contient "team_1"/"team_2" (FACEIT format) qui n'est pas mappable a CT/T
+  // sans contexte half. Strict-match 'CT' / 'T' uniquement.
   let side = null;
-  const you = demoContext?.targetPlayer;
-  if (you?.team) {
-    side = String(you.team).toUpperCase().startsWith('T') ? 'T'
-      : String(you.team).toUpperCase().startsWith('C') ? 'CT' : null;
+  // q est deja lowercase, donc on match contre lowercase. CT-side >> T-side
+  // dans l'ordre pour eviter que "ct-side" match aussi T-side (substring).
+  if (/\bct\b|\bcote?\s*ct\b|ct[-\s]?side\b/.test(q)) side = 'CT';
+  else if (/\bt[-\s]?side\b|\bcote?\s*t\b(?!\w)/.test(q)) side = 'T';
+  // Fallback : si demoContext.targetPlayer.team est strictement 'CT' ou 'T'
+  // (string brute, pas team_1/team_2), on l'utilise.
+  if (!side) {
+    const you = demoContext?.targetPlayer;
+    if (you?.team) {
+      const tm = String(you.team).toUpperCase().trim();
+      if (tm === 'CT') side = 'CT';
+      else if (tm === 'T') side = 'T';
+    }
   }
 
   // Situation type detection par keywords

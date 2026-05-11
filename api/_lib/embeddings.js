@@ -55,9 +55,12 @@ async function embedBatch(texts, opts = {}) {
   if (!Array.isArray(texts) || texts.length === 0) {
     throw new Error('embedBatch: texts must be a non-empty array');
   }
-  const cleaned = texts.map(t => String(t || '').trim()).filter(Boolean);
-  if (cleaned.length === 0) {
-    throw new Error('embedBatch: all texts are empty after trimming');
+  // IMPORTANT : on ne filter PAS les empty texts (sinon les indices misalignent
+  // avec ceux passes par l'appelant). On throw si un input est vide pour eviter
+  // un bug silencieux ou le seed insere des embeddings sur les mauvaises rows.
+  const cleaned = texts.map(t => String(t || '').trim());
+  for (let i = 0; i < cleaned.length; i++) {
+    if (!cleaned[i]) throw new Error(`embedBatch: input ${i} is empty after trimming`);
   }
 
   const { inputType = 'document', provider = null } = opts;

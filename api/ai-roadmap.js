@@ -397,7 +397,7 @@ Pour l'axe 9, indique progressTracking: null et axisScore axe 9 = 7/10 max (pas 
 ${drillCandidates.map(d => `- ${d.id} (${d.axes.join('+')}, ${d.durationMin}min) : ${d.name}`).join('\n')}`
     : '';
 
-  const ragSection = ragBlock ? `\n\n${ragBlock}\n\nUTILISE ces demos pros pour ancrer les comparaisons proComparison (axe 1) + axes faibles (axe 5). Cite [REF-N] quand tu fais une recommandation tiree de la demo, et inclus replay_link dans deepDive.proComparison.replayLink si l'URL existe. JAMAIS d'invention de demo : si la liste est vide ou [sim < 65%], n'utilise pas cette demo comme source primaire.\n` : '';
+  const ragSection = ragBlock ? `\n\n${ragBlock}\n\nUTILISE ces demos pros pour ancrer les comparaisons deepDive[].proComparison (axe 1, 2) + axes faibles (axe 5). Quand tu cites une demo, integre [REF-N] dans le texte proComparison (qui est une string : ex "Karrigan smoke deep CT + flash coffin sur retake A inferno (PGL Major 2024) [REF-2] — toi tu retake sans util."). Si la demo a un replay_link (URL HLTV), inline-le dans la string apres [REF-N]. proComparison reste une string dans le JSON output — n'utilise PAS d'objet. JAMAIS d'invention de demo : si la liste est vide ou [sim < 65%], n'utilise pas cette demo comme source primaire.\n` : '';
 
   return `JOUEUR A DIAGNOSTIQUER${ragSection}
 
