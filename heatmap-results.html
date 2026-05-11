@@ -1086,22 +1086,65 @@ window.addEventListener('load',()=>{
   }catch(e){console.error('heatmap-results init error:',e);}
 });
 
-// FV Hero Card : affiche le FV Rating du target player en gros avec
-// color-coding (excellent / solide / moyen / weak) + stats complementaires.
-// Si pas de target, prend le MVP (meilleur FV rating).
-function renderFvHeroCard(){
+// Fetch le nickname FACEIT du user connecté depuis profiles.
+// Cache en variable globale pour eviter de re-query a chaque render.
+let _userNicknameCache = undefined; // undefined = pas encore fetched, null = pas connecte
+async function getUserFaceitNickname() {
+  if (_userNicknameCache !== undefined) return _userNicknameCache;
+  try {
+    const _sbU = supabase.createClient(_sbUrl, _sbAnon);
+    const { data: { user } } = await _sbU.auth.getUser();
+    if (!user) { _userNicknameCache = null; return null; }
+    const { data: profile } = await _sbU.from('profiles')
+      .select('faceit_nickname')
+      .eq('id', user.id)
+      .maybeSingle();
+    _userNicknameCache = profile?.faceit_nickname || null;
+    return _userNicknameCache;
+  } catch (_) {
+    _userNicknameCache = null;
+    return null;
+  }
+}
+
+// FV Hero Card : affiche le FV Rating selon la priorite :
+//   1. User connecte si present dans la partie  → "Ton impact" (FV Rating du user)
+//   2. targetPlayer de la demo (joueur cible analyse) → "Impact de <nom>"
+//   3. MVP du match (meilleur FV Rating)              → "MVP du match : <nom>"
+//
+// Bug fix (2026-05-11) : avant on affichait toujours "Ton impact" avec le FV
+// Rating du targetPlayer/MVP, ce qui etait trompeur quand le user analysait
+// une demo ou il n'etait pas (ex: demo pro, demo d'un mate, etc.).
+async function renderFvHeroCard(){
   try{
     const players = demoData?.playerStats || [];
     const rounds = (demoData?.rounds || []).filter(r => !r.isKnife);
     const numR = rounds.length || 1;
     if (!players.length) return;
 
+    // 1. Fetch user nickname (async, mais on continue sync si timeout)
+    const userNickname = await getUserFaceitNickname();
     const target = demoData.meta?.targetPlayer;
-    let p = target ? players.find(pl => pl.name === target) : null;
-    // Si pas de target ou non trouve : prendre le MVP (meilleur rating calcule)
+
+    // 2. Determine quel joueur afficher + mode (user/target/mvp)
+    let p = null, mode = null;
+
+    // Priorite 1 : user connecte present dans la partie (match exact ou case-insensitive)
+    if (userNickname) {
+      p = players.find(pl => pl.name === userNickname)
+        || players.find(pl => pl.name?.toLowerCase() === userNickname.toLowerCase());
+      if (p) mode = 'user';
+    }
+    // Priorite 2 : targetPlayer de la demo (joueur choisi au parsing)
+    if (!p && target) {
+      p = players.find(pl => pl.name === target);
+      if (p) mode = 'target';
+    }
+    // Priorite 3 : MVP du match (fallback)
     if (!p) {
       p = players.map(pl => ({ ...pl, _r: calcFvRating(pl.kills, pl.deaths, 0, numR) }))
                  .sort((a,b) => b._r - a._r)[0];
+      mode = 'mvp';
     }
     if (!p) return;
 
@@ -1111,29 +1154,65 @@ function renderFvHeroCard(){
     const hsPct = (p.kills > 0 && typeof p.hsKills === 'number')
       ? Math.round((p.hsKills / p.kills) * 100) + '%' : '-';
 
-    // Classification : benchmarks Faceit/HLTV amateurs -> pros
+    // Label adaptatif selon le mode (ne pas mentir au user)
+    let label, namePrefix = '';
+    if (mode === 'user') {
+      label = 'Ton impact';
+    } else if (mode === 'target') {
+      label = `Impact ${p.name}`;
+      namePrefix = `${p.name} `;
+    } else {
+      label = `MVP du match`;
+      namePrefix = `${p.name} `;
+    }
+
+    // Classification + contexte adapte au mode (2e personne si user, 3e sinon)
     let tier, tierLabel, context;
+    const youOr = mode === 'user' ? 'Tu' : `${p.name}`;
+    const yourOr = mode === 'user' ? 'tes' : 'ses';
+    const youOrShort = mode === 'user' ? 'tu' : 'il';
+
     if (rating >= 1.30) {
       tier = 'excellent';
       tierLabel = 'Excellent';
-      context = `Performance <strong>niveau pro</strong>. Tu domines ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds. Au-dessus de 90% des joueurs FACEIT.`;
+      context = mode === 'user'
+        ? `Performance <strong>niveau pro</strong>. Tu domines ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds. Au-dessus de 90% des joueurs FACEIT.`
+        : `Performance <strong>niveau pro</strong>. ${p.name} domine ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds. Au-dessus de 90% des joueurs FACEIT.`;
     } else if (rating >= 1.10) {
       tier = 'solid';
       tierLabel = 'Solide';
-      context = `Match <strong>au-dessus de la moyenne</strong> FACEIT. Tu impactes ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds. Continue comme ça.`;
+      context = mode === 'user'
+        ? `Match <strong>au-dessus de la moyenne</strong> FACEIT. Tu impactes ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds. Continue comme ça.`
+        : `Match <strong>au-dessus de la moyenne</strong> FACEIT. ${p.name} impacte ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds.`;
     } else if (rating >= 0.90) {
       tier = 'average';
       tierLabel = 'Dans la moyenne';
-      context = `Performance <strong>standard</strong>. ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds. Regarde les heatmaps pour identifier où tu peux gagner du tempo.`;
+      context = mode === 'user'
+        ? `Performance <strong>standard</strong>. ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds. Regarde les heatmaps pour identifier où tu peux gagner du tempo.`
+        : `Performance <strong>standard</strong> de ${p.name}. ${p.kills} kills pour ${p.deaths} deaths sur ${numR} rounds.`;
     } else {
       tier = 'weak';
       tierLabel = 'A ameliorer';
-      context = `Match <strong>difficile</strong> avec ${p.kills} kills pour ${p.deaths} deaths. Analyse tes morts dans la heatmap et travaille les duels desavantageux.`;
+      context = mode === 'user'
+        ? `Match <strong>difficile</strong> avec ${p.kills} kills pour ${p.deaths} deaths. Analyse tes morts dans la heatmap et travaille les duels desavantageux.`
+        : `Match <strong>difficile</strong> pour ${p.name} : ${p.kills} kills pour ${p.deaths} deaths.`;
+    }
+
+    // Note pour les modes target/mvp : ajouter une mention discrete que le user
+    // n'est pas le joueur affiche, pour eviter toute confusion.
+    if (mode === 'target') {
+      context += ` <span style="color:var(--text2);font-size:11px;display:block;margin-top:6px">Joueur cible defini lors du parsing. Tu n'es pas dans cette partie ?</span>`;
+    } else if (mode === 'mvp') {
+      context += ` <span style="color:var(--text2);font-size:11px;display:block;margin-top:6px">Tu n'es pas dans cette partie. On t'affiche le MVP du match a la place.</span>`;
     }
 
     const card = document.getElementById('fvHeroCard');
     if (!card) return;
     card.dataset.tier = tier;
+    card.dataset.mode = mode;
+    // Update label (Ton impact / Impact <nom> / MVP du match)
+    const labelEl = card.querySelector('.fv-hero-label');
+    if (labelEl) labelEl.textContent = label;
     document.getElementById('fvHeroScore').textContent = rating.toFixed(2);
     document.getElementById('fvHeroTierLabel').textContent = tierLabel;
     document.getElementById('fvHeroContext').innerHTML = context;
@@ -3462,6 +3541,10 @@ function showShareStatus(msg) {
 }
 
 // ── Sauvegarde FV Rating dans Supabase ───────────────────────────
+// IMPORTANT : on save UNIQUEMENT le FV Rating du joueur connecte (user FACEIT
+// nickname present dans la partie). Sinon on save null pour eviter de polluer
+// l'agregat utilise par ai-roadmap.js (qui calcule la moyenne des fv_rating
+// du user sur ses 20 dernieres demos).
 async function saveRatingToSupabase() {
   try {
     const demoId = sessionStorage.getItem('lastDemoId');
@@ -3471,28 +3554,32 @@ async function saveRatingToSupabase() {
     const { data: { session } } = await _sb.auth.getSession();
     if (!session) return;
 
-    // Calculer le FV Rating du targetPlayer ou de la moyenne
     const players = demoData?.playerStats || [];
     const allRounds = demoData?.rounds || [];
     const numR = allRounds.filter(r => !r.isKnife).length || 1;
-    const kills = demoData?.kills || [];
 
-    // Prendre le meilleur joueur ou le target
-    const target = demoData?.meta?.targetPlayer;
+    // Fetch le nickname FACEIT du user connecte
+    const userNickname = await getUserFaceitNickname();
+
     let fvr = null;
-    if (typeof calcFvRating === 'function') {
-      const p = target
-        ? players.find(pl => pl.name === target)
-        : players.sort((a,b) => b.kills - a.kills)[0];
+    if (typeof calcFvRating === 'function' && userNickname) {
+      // Cherche le user dans la partie (match exact ou case-insensitive)
+      const p = players.find(pl => pl.name === userNickname)
+        || players.find(pl => pl.name?.toLowerCase() === userNickname.toLowerCase());
       if (p) {
         fvr = parseFloat(calcFvRating(p.kills, p.deaths, 0, numR).toFixed(2));
+        console.log('[FragValue] User present dans la partie, FV Rating user:', fvr);
+      } else {
+        console.log('[FragValue] User pas dans la partie, fv_rating reste null (pas pollue)');
       }
     }
 
     if (fvr !== null) {
       await _sb.from('demos').update({ fv_rating: fvr }).eq('id', demoId).eq('user_id', session.user.id);
-      console.log('[FragValue] FV Rating sauvegardé:', fvr);
+      console.log('[FragValue] FV Rating user sauvegardé:', fvr);
     }
+    // Si fvr === null, on ne touche pas a la ligne demos (fv_rating reste null
+    // ou conserve sa valeur precedente si re-analyse de la meme demo).
 
     // Notification "Diagnostic IA pret" : envoie une notif persistante
     // visible sur la cloche de la nav (poussera l'user a re-engager s'il
