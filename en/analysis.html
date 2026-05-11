@@ -2126,7 +2126,7 @@ function renderProInsights(insights, cached, tokens) {
 //      celui d'un autre player quand demoData.meta.targetPlayer etait absent
 //      or incorrect (ex: demo replay mode, FACEIT match d'une team-mate).
 //   2. demoData.meta.targetPlayer set lors de l'upload (legacy / fallback).
-//   3. MVP du match (plus haut FVR) si rien d'autre ne match.
+//   3. Match MVP (plus haut FVR) si rien d'autre ne match.
 function getTargetPlayer(c) {
   if (!c || !c.stats || !c.stats.length) return null;
 
@@ -2144,7 +2144,7 @@ function getTargetPlayer(c) {
     if (found) return found;
   }
 
-  // Fallback : MVP du match (plus haut FVR) - on prevent l'affichage d'un
+  // Fallback : Match MVP (plus haut FVR) - on prevent l'affichage d'un
   // player random si on n'a aucune source fiable.
   return [...c.stats].sort((a, b) => b.fvr - a.fvr)[0];
 }

@@ -213,9 +213,16 @@ function addI18nHeaders(html, pageName) {
   }
 
   // 5. og:url : ajouter /en/
+  // BUG FIX (2026-05-11) : meme bug que canonical - le regex `[^"']+` (>=1 char)
+  // ne matchait pas la home root (`https://fragvalue.com/` sans path apres /).
+  // Now `[^"']*` accepte chaine vide + on traite le cas index special.
   out = out.replace(
-    /(<meta\s+property=["']og:url["']\s+content=["'])https:\/\/fragvalue\.com\/([^"']+)(["'])/i,
-    `$1https://fragvalue.com/en/$2$3`
+    /(<meta\s+property=["']og:url["']\s+content=["'])https:\/\/fragvalue\.com\/([^"']*)(["'])/i,
+    (match, prefix, path, suffix) => {
+      // Cas root ("") -> /en/ (home EN). Cas page.html -> /en/page.html.
+      const enPath = path === '' ? 'en/' : `en/${path}`;
+      return `${prefix}https://fragvalue.com/${enPath}${suffix}`;
+    }
   );
 
   return out;
