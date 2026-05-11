@@ -1364,13 +1364,24 @@ function coachRenderMessages() {
 // Backward compat : [R12] format toujours supporte (au cas ou).
 function renderCoachResponse(text) {
   if (!text) return '';
+  // BUG FIX 2026-05-11 : strip les tags `<conf level="..." n="..."/>` et
+  // autres tags meta du system prompt (drill, etc.) qui sont metadata interne
+  // et ne doivent pas s'afficher en texte brut au user. Le system prompt
+  // demande a Claude de les utiliser pour la calibration confidence (axe 10
+  // du rubric), mais le frontend ne les rend pas comme badge (pour l'instant).
+  let cleaned = text
+    .replace(/<conf\s+[^>]*\/>/gi, '')        // <conf level="low" n="0"/>
+    .replace(/<conf\s+[^>]*>[^<]*<\/conf>/gi, '') // <conf>...</conf> (variante)
+    .replace(/<drill\s+[^>]*\/>/gi, '')        // <drill id="..."/> si emis
+    .replace(/<drill\s+[^>]*>[^<]*<\/drill>/gi, '');
+
   const tokens = [];
   // Match XML cite tags + legacy [R12] format
   const regex = /<cite\s+([^>]+)>([^<]*)<\/cite>|\[R(\d+)(?:-R(\d+))?\]/g;
   let lastIdx = 0;
   let m;
-  while ((m = regex.exec(text)) !== null) {
-    if (m.index > lastIdx) tokens.push({ type: 'text', value: text.slice(lastIdx, m.index) });
+  while ((m = regex.exec(cleaned)) !== null) {
+    if (m.index > lastIdx) tokens.push({ type: 'text', value: cleaned.slice(lastIdx, m.index) });
     if (m[1]) {
       // <cite ...>...</cite>
       const attrs = parseCiteAttrs(m[1]);
@@ -1382,7 +1393,7 @@ function renderCoachResponse(text) {
     }
     lastIdx = m.index + m[0].length;
   }
-  if (lastIdx < text.length) tokens.push({ type: 'text', value: text.slice(lastIdx) });
+  if (lastIdx < cleaned.length) tokens.push({ type: 'text', value: cleaned.slice(lastIdx) });
 
   return tokens.map(t => {
     if (t.type === 'text') return escHtml(t.value);

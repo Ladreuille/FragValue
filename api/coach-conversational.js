@@ -148,6 +148,51 @@ function parseRefs(text) {
   return refs;
 }
 
+// Normalise le context frontend (plat) vers le format backend (nested).
+// Frontend (analysis.html) envoie : { map, score, winner, rounds, targetPlayer, matchStats }
+// Backend (buildPromptBlocks) attend : { demo, match, scoreboard, targetPlayer, ... }
+// Bug fix 2026-05-11 : sans cette normalisation, le check `if (context && context.demo)`
+// dans buildPromptBlocks echouait, et Claude recevait `<warning>No demo data</warning>`.
+function normalizeFrontendContext(ctx) {
+  if (!ctx) return null;
+  // Deja format backend (nested) ? On retourne tel quel.
+  if (ctx.demo && typeof ctx.demo === 'object') return ctx;
+  // Sinon, frontend plat -> normalize en backend format
+  const score = Array.isArray(ctx.score) ? ctx.score : [0, 0];
+  return {
+    demo: {
+      id: ctx.demo_id || null,
+      map: ctx.map || null,
+      rounds: ctx.rounds || (score[0] + score[1]) || 0,
+      totalKills: ctx.totalKills || null,
+      fvRating: ctx.targetPlayer?.fvr || null,
+    },
+    match: (ctx.score || ctx.winner) ? {
+      scoreCt: score[0] || 0,
+      scoreT: score[1] || 0,
+      winner: ctx.winner || '-',
+    } : null,
+    targetPlayer: ctx.targetPlayer || null,
+    scoreboard: Array.isArray(ctx.matchStats) ? ctx.matchStats.map(p => ({
+      name: p.name,
+      team: p.team,
+      kills: p.kills || 0,
+      deaths: p.deaths || 0,
+      assists: p.assists || 0,
+      kast: p.kast || 0,
+      adr: p.adr || 0,
+      hsPct: p.hsPct || 0,
+      fvr: p.fvr || null,
+      fk: p.fk || 0,
+      isUser: p.isUser || (ctx.targetPlayer?.name === p.name) || false,
+    })) : [],
+    profile: ctx.profile || null,
+    benchmarks: ctx.benchmarks || null,
+    lastDiag: ctx.lastDiag || null,
+    momentum: ctx.momentum || null,
+  };
+}
+
 // Construit le contexte demo si pas encore cache dans la conversation.
 // Lit demos + match_players pour avoir scoreboard + stats target player.
 async function buildDemoContext(supabase, demoId, userId) {
@@ -987,11 +1032,38 @@ module.exports = async function handler(req, res) {
 
   try {
     // 1. Build/fetch context demo
-    let demoContext = inboundContext;
+    // BUG FIX (2026-05-11) : Frontend envoie un objet plat { map, score,
+    // winner, rounds, targetPlayer, matchStats } mais buildPromptBlocks
+    // attend la structure nested { demo, match, scoreboard, ... }. Sans
+    // normalisation, le check `if (context && context.demo)` falsait et
+    // injectait `<warning>No demo data available</warning>` -> Claude
+    // disait "Pas de demo data chargée, je vole à l'aveugle".
+    let demoContext = inboundContext ? normalizeFrontendContext(inboundContext) : null;
     if (!demoContext) {
       demoContext = await buildDemoContext(supabase, demoId, user.id);
       if (demoContext?.error === 'forbidden') {
         return res.status(403).json({ error: 'Cette demo ne t\'appartient pas' });
+      }
+    }
+
+    // Enrich avec benchmarks pros + lastDiag (server-side, pas dans frontend)
+    if (demoContext && demoContext.demo?.map) {
+      if (!demoContext.benchmarks) {
+        try {
+          demoContext.benchmarks = await getBenchmarksByMap(demoContext.demo.map);
+        } catch (_) {}
+      }
+      if (!demoContext.lastDiag) {
+        try {
+          const { data: ld } = await supabase.from('diagnostic_history')
+            .select('top_priorities, generated_at, axis_scores')
+            .eq('user_id', user.id)
+            .eq('endpoint', 'ai-roadmap')
+            .order('generated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          demoContext.lastDiag = ld || null;
+        } catch (_) {}
       }
     }
 
