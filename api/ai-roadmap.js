@@ -35,6 +35,7 @@ const { detectRole, getRoleFocus } = require('./_lib/role-detection');
 const { getDrillsByAxis, listAllDrillIds, getDrillById } = require('./_lib/drill-library');
 const { buildRubricInstructions, buildJsonSchema } = require('./_lib/diagnostic-rubric');
 const { buildBaseSystemPrompt, detectLocale } = require('./_lib/cs2-lexicon');
+const { findRelevantProSituations, formatSituationsForPrompt } = require('./_lib/pro-situations-rag');
 
 const FACEIT_BASE = 'https://open.faceit.com/data/v4';
 const CACHE_TTL_DAYS = 7;
@@ -361,7 +362,7 @@ Target 10/10 on ALL axes. If you can't (e.g. no history for axis 9), explain in 
 
 // User message : stats specifiques user (volatile, pas cache)
 function buildUserMessage(opts) {
-  const { stats, fvContext, role, previousDiag, drillCandidates } = opts;
+  const { stats, fvContext, role, previousDiag, drillCandidates, ragBlock } = opts;
   const tier = getTier(stats.level || 1);
   const nextLevel = Math.min((stats.level || 1) + 1, 11);
   const eloTarget = stats.level >= 10 ? 2400 : LEVEL_TARGETS_ELO[stats.level];
@@ -396,7 +397,9 @@ Pour l'axe 9, indique progressTracking: null et axisScore axe 9 = 7/10 max (pas 
 ${drillCandidates.map(d => `- ${d.id} (${d.axes.join('+')}, ${d.durationMin}min) : ${d.name}`).join('\n')}`
     : '';
 
-  return `JOUEUR A DIAGNOSTIQUER
+  const ragSection = ragBlock ? `\n\n${ragBlock}\n\nUTILISE ces demos pros pour ancrer les comparaisons proComparison (axe 1) + axes faibles (axe 5). Cite [REF-N] quand tu fais une recommandation tiree de la demo, et inclus replay_link dans deepDive.proComparison.replayLink si l'URL existe. JAMAIS d'invention de demo : si la liste est vide ou [sim < 65%], n'utilise pas cette demo comme source primaire.\n` : '';
+
+  return `JOUEUR A DIAGNOSTIQUER${ragSection}
 
 IDENTITE
 - Pseudo : ${stats.nickname}
@@ -609,6 +612,35 @@ module.exports = async function handler(req, res) {
     const roleFocus = getRoleFocus(role.role);
     const drillCandidates = getDrillsByAxis(roleFocus.primaryAxes, stats.level || 5, 8);
 
+    // 3b. RAG : recupere 3-5 demos pros pertinentes pour les axes faibles
+    // (ou primaryAxes du role si pas de diag precedent). Latence : 200-500ms
+    // (1 embedding + 1 RPC). Echec silencieux si env keys manquent.
+    let ragBlock = '';
+    try {
+      // Axes prioritaires : weakAxes du previousDiag si dispo, sinon role.primaryAxes
+      let axesForRag = roleFocus.primaryAxes;
+      if (previousDiag?.axis_scores) {
+        const weak = Object.entries(previousDiag.axis_scores)
+          .filter(([, score]) => score < 7)
+          .sort((a, b) => a[1] - b[1])
+          .map(([k]) => k);
+        if (weak.length > 0) axesForRag = weak.slice(0, 3);
+      }
+      // Hint = nickname + role + map dominante + axes
+      const hint = `Coach diagnostic ${role.role} role player. Map principale ${topMap || 'mixed'}. Axes a travailler : ${axesForRag.join(', ')}. Identifier patterns pros exemplaires.`;
+      const situations = await findRelevantProSituations(sb(), {
+        map: topMap,
+        // side : pas connu globalement (le user joue les 2 cotes), on cherche les deux
+        axes: axesForRag,
+        userQueryHint: hint,
+      }, { k: 5, minNotable: 7, similarityThreshold: 0.50 });
+      if (situations.length > 0) {
+        ragBlock = formatSituationsForPrompt(situations);
+      }
+    } catch (e) {
+      console.warn('[ai-roadmap] RAG failed silently:', e.message);
+    }
+
     // 4. Detection locale + Build prompts (system stable, cache 1h)
     const locale = detectLocale({
       acceptLanguage: req.headers['accept-language'],
@@ -616,7 +648,7 @@ module.exports = async function handler(req, res) {
     });
     const systemPrompt = buildSystemPrompt({ benchmarks, locale });
     const userMessage = buildUserMessage({
-      stats, fvContext, role, previousDiag, drillCandidates,
+      stats, fvContext, role, previousDiag, drillCandidates, ragBlock,
     });
 
     // 5. Model selection par plan

@@ -50,6 +50,7 @@ const { getCredits, consumeCredit } = require('./_lib/coach-credits');
 const { detectRole, getRoleFocus } = require('./_lib/role-detection');
 const { getBenchmarksByMap, formatBenchmarksForPrompt } = require('./_lib/pro-benchmarks');
 const { listAllDrillIds, getDrillById } = require('./_lib/drill-library');
+const { findRelevantProSituations, formatSituationsForPrompt } = require('./_lib/pro-situations-rag');
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 // Opus 4.7 par defaut : marque de fabrique FragValue, le diag doit etre IRREPROCHABLE.
@@ -497,6 +498,7 @@ Pour CHAQUE reponse non-triviale (>2 phrases attendues), tu DOIS structurer :
 ${listAllDrillIds().split('\n').slice(0, 15).join(' · ')}
    ... (cf. drill-library complete dans api/_lib/drill-library.js · liste tronquee ici)
 5. **Confidence + sample size** via <conf level="high|medium|low" n="147"/> en fin (axe 10)
+6. **Reference pro RAG** quand un bloc "DEMOS PROS PERTINENTES (RAG)" est present dans le user message en cours : cite la demo pro avec [REF-N] en l'integrant naturellement dans le coaching. Ex : "Sur ce retake banane 3v2 [REF-1] karrigan utilise systematiquement un smoke deep CT + flash over coffin — toi tu retake sans util au round 8, d'ou le wipe." Si replay_link existe dans la demo pro, mentionne-le tel quel (URL HLTV). N'invente JAMAIS de demo si le bloc RAG est absent ou vide. Ne cite pas une demo si [sim < 65%] sauf comme contexte secondaire.
 
 Si <previous_diag> est dans le contexte, REFERENCE-LE pour l'axe 9 (suivi progres) :
    Ex: "Depuis ton diag d'il y a 12j, tu cibles encore [priorite]. Aujourd'hui tu es a X (vs Y avant)."
@@ -634,7 +636,12 @@ async function countTodayUserMessages(supabase, userId) {
 // Build messages array partage entre callClaude et streamClaude pour
 // eviter la duplication. Inject demo_data dans le 1er user message avec
 // cache_control 1h (90% savings sur questions 2-N).
-function buildMessagesArray(demoDataBlock, conversationMessages) {
+//
+// Si `ragBlock` fourni, il est inject DEVANT le DERNIER user message
+// (la question en cours). Le ragBlock est intentionnellement NON CACHE
+// car il est question-specific (~500-1500 tokens supplementaires par
+// question, mais avec une qualite de reponse "+pro" significative).
+function buildMessagesArray(demoDataBlock, conversationMessages, ragBlock) {
   const filtered = conversationMessages
     .filter(m => m.role === 'user' || m.role === 'assistant')
     .map(m => ({ role: m.role, content: String(m.content) }));
@@ -649,18 +656,88 @@ function buildMessagesArray(demoDataBlock, conversationMessages) {
     }];
   }
   const firstUserIdx = filtered.findIndex(m => m.role === 'user');
+  const lastUserIdx = filtered.length - 1 - [...filtered].reverse().findIndex(m => m.role === 'user');
   return filtered.map((m, i) => {
     if (i === firstUserIdx) {
+      // Premier user message : on injecte demoDataBlock cache
+      // Si c'est aussi le LAST user message ET qu'on a un ragBlock, on prepend le RAG
+      const content = [
+        { type: 'text', text: demoDataBlock, cache_control: { type: 'ephemeral', ttl: '1h' } },
+      ];
+      if (i === lastUserIdx && ragBlock) {
+        content.push({ type: 'text', text: ragBlock });
+      }
+      content.push({ type: 'text', text: m.content });
+      return { role: 'user', content };
+    }
+    if (i === lastUserIdx && ragBlock && m.role === 'user') {
+      // Dernier user message different du first : on inject RAG juste devant
       return {
         role: 'user',
         content: [
-          { type: 'text', text: demoDataBlock, cache_control: { type: 'ephemeral', ttl: '1h' } },
+          { type: 'text', text: ragBlock },
           { type: 'text', text: m.content },
         ],
       };
     }
     return m;
   });
+}
+
+// Heuristique de detection situation pour RAG. Mappe la question + le
+// contexte demo vers des filtres utilisables par search_pro_situations.
+// Retourne { map, side, situationType, axes, userQueryHint }.
+function inferSituationContext(userMessage, demoContext) {
+  const q = String(userMessage || '').toLowerCase();
+  const map = demoContext?.demo?.map || null;
+
+  // Side : on tente de deduire en fonction du score / target player team.
+  // Si pas dispo, on laisse null = RAG cherchera CT + T + both.
+  let side = null;
+  const you = demoContext?.targetPlayer;
+  if (you?.team) {
+    side = String(you.team).toUpperCase().startsWith('T') ? 'T'
+      : String(you.team).toUpperCase().startsWith('C') ? 'CT' : null;
+  }
+
+  // Situation type detection par keywords
+  let situationType = null;
+  if (/(\b1v|clutch)/i.test(q)) situationType = /perdu|lost|fail|rate|raté/i.test(q) ? 'clutch_lost' : 'clutch_won';
+  else if (/retake/i.test(q)) situationType = /perdu|lost|raté|fail/i.test(q) ? 'retake_lost' : 'retake_won';
+  else if (/exec|execute/i.test(q)) situationType = /perdu|fail|raté/i.test(q) ? 'execute_lost' : 'execute_won';
+  else if (/opening|first kill|first duel|opening duel/i.test(q)) situationType = /perdu|lost|mort/i.test(q) ? 'opening_loss' : 'opening_kill';
+  else if (/anti.?eco/i.test(q)) situationType = 'anti_eco';
+  else if (/force.?buy|force buy/i.test(q)) situationType = 'force_win';
+  else if (/\beco\b/i.test(q)) situationType = 'eco_win';
+  else if (/post.?plant/i.test(q)) situationType = 'post_plant';
+  else if (/pre.?plant/i.test(q)) situationType = 'pre_plant';
+  else if (/lurk/i.test(q)) situationType = 'lurk_impact';
+  else if (/multi.?kill|3k|4k|ace/i.test(q)) situationType = 'multi_kill';
+  else if (/flash/i.test(q)) situationType = 'flash_assist';
+  else if (/smoke|util/i.test(q)) situationType = 'util_setup';
+  else if (/duel|aim|tir/i.test(q)) situationType = 'aim_duel';
+
+  // Axes detection par keywords
+  const axes = [];
+  if (/aim|tir|viser|precision|précision|frag/i.test(q)) axes.push('aim');
+  if (/crosshair|placement|reticule|réticule/i.test(q)) axes.push('crosshair');
+  if (/spray|recoil|burst/i.test(q)) axes.push('spray');
+  if (/util|smoke|flash|molly|granade|nade|grenade/i.test(q)) axes.push('utility');
+  if (/position|spot|hold|anchor|angle/i.test(q)) axes.push('positioning');
+  if (/gamesense|lecture|decision|décision|read|rotation/i.test(q)) axes.push('gamesense');
+  if (/eco|buy|economy|economie|économie|argent|force/i.test(q)) axes.push('economy');
+  if (/mental|tilt|panique|stress|calme/i.test(q)) axes.push('mental');
+  if (/movement|deplac|déplac|peek|jiggle|strafe/i.test(q)) axes.push('movement');
+  if (/comm|call|voice|info|micro/i.test(q)) axes.push('comms');
+  if (/reaction|réaction|reflex|réflex|temps de/i.test(q)) axes.push('reaction');
+
+  return {
+    map,
+    side,
+    situationType,
+    axes,
+    userQueryHint: String(userMessage || '').slice(0, 400),
+  };
 }
 
 // Streaming Claude API : appelle avec stream=true et retourne un async
@@ -674,11 +751,11 @@ function buildMessagesArray(demoDataBlock, conversationMessages) {
 //
 // On extract uniquement les text_delta pour streamer au client, et on
 // accumule l'usage pour persister a la fin.
-async function* streamClaude(systemInstructions, demoDataBlock, conversationMessages) {
+async function* streamClaude(systemInstructions, demoDataBlock, conversationMessages, ragBlock) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY manquant');
 
-  const messages = buildMessagesArray(demoDataBlock, conversationMessages);
+  const messages = buildMessagesArray(demoDataBlock, conversationMessages, ragBlock);
   const system = [{
     type: 'text',
     text: systemInstructions,
@@ -771,43 +848,13 @@ async function* streamClaude(systemInstructions, demoDataBlock, conversationMess
 // (system instructions + demo data). Permet 90% de savings sur les questions
 // 2-N de la meme conversation. Mode non-streaming, garde pour fallback +
 // pour les contextes ou le streaming n'est pas pratique.
-async function callClaude(systemInstructions, demoDataBlock, conversationMessages) {
+async function callClaude(systemInstructions, demoDataBlock, conversationMessages, ragBlock) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY manquant');
 
-  // Construction des messages : on injecte le demo_data en 1er user message
-  // pour pouvoir le cacher, puis on append l'historique conversation.
-  const filtered = conversationMessages
-    .filter(m => m.role === 'user' || m.role === 'assistant')
-    .map(m => ({ role: m.role, content: String(m.content) }));
-
-  // Inject demo_data block au debut du 1er user message (ou cree un 1er message)
-  let messages;
-  if (filtered.length === 0) {
-    // Fallback : pas de message, on ajoute le demo_data + un primer
-    messages = [{
-      role: 'user',
-      content: [
-        { type: 'text', text: demoDataBlock, cache_control: { type: 'ephemeral', ttl: '1h' } },
-        { type: 'text', text: 'Bonjour, je vais te poser des questions sur cette demo.' },
-      ],
-    }];
-  } else {
-    // Pre-pend demo_data a la 1re user message avec cache_control
-    const firstUserIdx = filtered.findIndex(m => m.role === 'user');
-    messages = filtered.map((m, i) => {
-      if (i === firstUserIdx) {
-        return {
-          role: 'user',
-          content: [
-            { type: 'text', text: demoDataBlock, cache_control: { type: 'ephemeral', ttl: '1h' } },
-            { type: 'text', text: m.content },
-          ],
-        };
-      }
-      return m;
-    });
-  }
+  // On utilise buildMessagesArray pour garder la logique DRY entre callClaude
+  // et streamClaude (inject demoData cache + ragBlock uncached).
+  const messages = buildMessagesArray(demoDataBlock, conversationMessages, ragBlock);
 
   // System prompt en array avec cache_control 1h sur les instructions stables
   const system = [
@@ -1089,6 +1136,24 @@ module.exports = async function handler(req, res) {
     // 5. Build prompt blocks (system stable + demo_data cacheable)
     const { systemInstructions, demoDataBlock } = buildPromptBlocks(demoContext);
 
+    // 5b. RAG : recherche jusqu'a 3 demos pros similaires a la question.
+    // Inject comme bloc de contexte UNCACHED dans le dernier user message.
+    // Echec silencieux : si la RAG ne marche pas (env key manquant, embedding
+    // fail, etc.), on continue sans — la qualite baisse mais le coach reste
+    // operationnel. Latence ajoutee : ~200-500ms (embed) + ~50-150ms (RPC).
+    let ragBlock = '';
+    try {
+      const sitCtx = inferSituationContext(message, demoContext);
+      const situations = await findRelevantProSituations(supabase, sitCtx, {
+        k: 3, minNotable: 7, similarityThreshold: 0.55,
+      });
+      if (situations.length > 0) {
+        ragBlock = formatSituationsForPrompt(situations);
+      }
+    } catch (e) {
+      console.warn('[coach-conv] RAG failed silently:', e.message);
+    }
+
     // ─── 6a. Mode STREAMING SSE ─────────────────────────────────────────
     if (wantsStream) {
       // Headers SSE : pas de cache, pas de buffering nginx, keep-alive
@@ -1116,7 +1181,7 @@ module.exports = async function handler(req, res) {
       req.on('close', () => { aborted = true; });
 
       try {
-        for await (const chunk of streamClaude(systemInstructions, demoDataBlock, history)) {
+        for await (const chunk of streamClaude(systemInstructions, demoDataBlock, history, ragBlock)) {
           if (aborted) break;
           if (chunk.type === 'text') {
             fullText += chunk.text;
@@ -1192,7 +1257,7 @@ module.exports = async function handler(req, res) {
 
     // ─── 6b. Mode JSON classique (fallback / pas de streaming) ─────────
     const { text, tokensIn, tokensOut, cacheReadTokens, cacheCreationTokens, model } =
-      await callClaude(systemInstructions, demoDataBlock, history);
+      await callClaude(systemInstructions, demoDataBlock, history, ragBlock);
 
     // 7. Parse refs depuis la reponse
     const refs = parseRefs(text);
