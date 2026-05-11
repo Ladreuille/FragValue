@@ -5,12 +5,13 @@
 // Pour l'axe 1 du rubric (Specificite tactique) et le ton "marque de fabrique"
 // FragValue : tous les prompts utilisent le MEME vocabulaire pro CS2.
 //
-// Map pool a jour : avril 2026 · Active Duty CS2 :
-//   Mirage, Inferno, Nuke, Ancient, Anubis, Dust2, Train (Cache reintroduite, Vertigo retiree)
+// Map pool a jour : mai 2026 · Active Duty CS2 :
+//   Mirage, Inferno, Nuke, Ancient, Anubis, Dust2, Overpass
+//   (Train OUT, Overpass IN apres rotation Valve)
 //
 // Pros 2026 verifies (rosters Q1-Q2 2026) : 13 noms surs.
 
-// Active Duty 2026 (mise a jour avril 2026)
+// Active Duty mai 2026
 const ACTIVE_DUTY_MAPS_2026 = [
   'mirage',
   'inferno',
@@ -18,8 +19,8 @@ const ACTIVE_DUTY_MAPS_2026 = [
   'ancient',
   'anubis',
   'dust2',
-  'train',
-  // Note: Vertigo retiree, Overpass + Cache en rotation selon majors
+  'overpass',
+  // Note: Train OUT (mai 2026), Vertigo OUT
 ];
 
 // Pros CORE — noms suffisamment stables sur la scene 2024-2026 pour etre cites
@@ -148,10 +149,10 @@ const STYLE_GUIDE_BLOCK = `═══ STYLE & TON ═══
 - Ton inspire de HLTV.org, Liquipedia, casters/analystes (HenryG, Launders, Thorin, SPUNJ, machine, Vince Hill)`;
 
 // Map pool block dynamique
-const MAP_POOL_BLOCK = `═══ MAP POOL CS2 ACTUEL (avril 2026) ═══
+const MAP_POOL_BLOCK = `═══ MAP POOL CS2 ACTUEL (mai 2026) ═══
 
-Active Duty : Mirage · Inferno · Nuke · Ancient · Anubis · Dust2 · Train
-Cache reintroduite (rotation Major), Vertigo retiree.
+Active Duty : Mirage · Inferno · Nuke · Ancient · Anubis · Dust2 · Overpass
+Train OUT, Vertigo OUT. Overpass IN (rotation Valve).
 
 Callouts par map (memorise les) :
 - Mirage : connector, palace, ramp, jungle, ticket, A site, B site, market, top mid, lower
@@ -160,7 +161,7 @@ Callouts par map (memorise les) :
 - Nuke : outside, ramp, secret, vent, T main, A site (top), B site (bottom), heaven, hell, lobby, squeaky
 - Ancient : main hall, donut, B halls, B site, ramp, mid, water, A site, temple
 - Anubis : A site, B site, mid, connector, water, T spawn, alley, palace, heaven
-- Train : ivy, popdog, alley, ladder room, oil, A site (planks/ivy), B site (back train/red)`;
+- Overpass : A site (heaven, monster, bathrooms), B site (bench, tunnels, water, banana), connector, fountain, A long, B long, mid (toilets, balcony), party, short`;
 
 // Build le system prompt complet partage entre endpoints.
 // Locale = 'fr' (default) ou 'en'. Le ton/lexique reste identique en EN
@@ -220,10 +221,10 @@ Examples:
 - BAD : "You play like XYZ from Team ABC" (team claims often false)
 - BAD : citing a pro absent from the CORE list`;
 
-const MAP_POOL_BLOCK_EN = `═══ CS2 MAP POOL (April 2026) ═══
+const MAP_POOL_BLOCK_EN = `═══ CS2 MAP POOL (May 2026) ═══
 
-Active Duty: Mirage · Inferno · Nuke · Ancient · Anubis · Dust2 · Train
-Cache reintroduced (Major rotation), Vertigo retired.
+Active Duty: Mirage · Inferno · Nuke · Ancient · Anubis · Dust2 · Overpass
+Train OUT, Vertigo OUT. Overpass IN (Valve rotation).
 
 Map callouts (memorize them):
 - Mirage: connector, palace, ramp, jungle, ticket, A site, B site, market, top mid, lower
@@ -232,7 +233,7 @@ Map callouts (memorize them):
 - Nuke: outside, ramp, secret, vent, T main, A site (top), B site (bottom), heaven, hell, lobby, squeaky
 - Ancient: main hall, donut, B halls, B site, ramp, mid, water, A site, temple
 - Anubis: A site, B site, mid, connector, water, T spawn, alley, palace, heaven
-- Train: ivy, popdog, alley, ladder room, oil, A site (planks/ivy), B site (back train/red)`;
+- Overpass: A site (heaven, monster, bathrooms), B site (bench, tunnels, water, banana), connector, fountain, A long, B long, mid (toilets, balcony), party, short`;
 
 function buildBaseSystemPromptEN({ persona, extraSections }) {
   // CS2 lexicon stays in english by default (it's the scene's working language).
