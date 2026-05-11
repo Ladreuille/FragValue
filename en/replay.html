@@ -1476,7 +1476,7 @@ let playStartIdx = 0;      // frameIdx au moment du start (peut etre fractionnai
 let isolatedPlayer = null; // nom du player isolé via click sur dot (path highlight)
 let hoveredPlayer = null;  // nom du player hover pour tooltip live
 
-// Track les events visuels deja triggered pour ne not re-spawn au scrub
+// Track les events visuels deja triggered pour ne pas re-spawn au scrub
 // arriere or au replay du round. Cle = 'kill-<tick>-<victim>' / 'mk-<tick>-<attacker>'
 const _firedEvents = new Set();
 let _lastFiredTick = -1; // tick du dernier drawFrame, sert a detecter le scrub backward
@@ -1497,8 +1497,8 @@ function detectMultikillAt(tick) {
     && (k.tick || 0) >= tick - MK_TICK_WINDOW
     && (k.tick || 0) <= tick);
   if (chain.length < 2) return null;
-  // Verifie qu'il n'y a not un kill futur dans la window (pour ne trigger
-  // qu'au DERNIER kill de la chain, not aux intermediaires).
+  // Verifie qu'il n'y a pas un kill futur dans la window (pour ne trigger
+  // qu'au DERNIER kill de la chain, pas aux intermediaires).
   const hasLater = allKills.some(k => k.attacker === attacker
     && (k.tick || 0) > tick
     && (k.tick || 0) <= tick + MK_TICK_WINDOW);
@@ -1559,7 +1559,7 @@ function spawnDamageFloat(killEvent, frame) {
 
 // Check les events qui doivent fire visuellement a ce tick (kills, multikills).
 // Idempotent via _firedEvents Set : si on rejoue le meme tick (RAF interp),
-// on ne re-spawn not les floats. Si on scrub backward (le tick courant
+// on ne re-spawn pas les floats. Si on scrub backward (le tick courant
 // devient < dernier fired), on clear le set pour autoriser un replay.
 function checkKillEventsAtTick(tick) {
   if (tick < _lastFiredTick) {
@@ -1680,7 +1680,7 @@ async function checkReplayAccess() {
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI'
     );
     const { data:{ session } } = await _sb.auth.getSession();
-    if (!session) return false; // non connecte = not d'accès replay
+    if (!session) return false; // non connecte = pas d'accès replay
     const subRes = await fetch('/api/check-subscription', {
       method: 'POST',
       headers: {
@@ -1698,7 +1698,7 @@ async function checkReplayAccess() {
 
 // ══ INIT ═════════════════════════════════════════════════════════════════════
 window.addEventListener('load', async () => {
-  // Debug overlay : gate derriere ?debug=1 dans l'URL (not affiché en prod normale).
+  // Debug overlay : gate derriere ?debug=1 dans l'URL (pas affiché en prod normale).
   try {
     const _qs = new URLSearchParams(window.location.search);
     window._fvDebugOverlay = _qs.get('debug') === '1';
@@ -1736,7 +1736,7 @@ window.addEventListener('load', async () => {
     detectKnifeRounds();
     convertPositionTicks();
     recalcRoundBoundaries();
-    // Precharge les SVGs des armes droppees (fire & forget, not bloquant).
+    // Precharge les SVGs des armes droppees (fire & forget, pas bloquant).
     // Les images seront prêtes bien avant le premier rendu d'un kill.
     preloadWeaponIcons();
     loadMapImage(() => {
@@ -1896,7 +1896,7 @@ function recalcRoundBoundaries() {
   const LANDS_ON_GROUND = { smoke: 1, molotov: 1, incgren: 1, decoy: 1 };  // types avec phase de repos (HE/flash explosent en vol)
   const STATIONARY_SQ = 100;   // (10 units)^2 : threshold pour considerer la grenade au sol
   // Seuil de "teleport" entre deux samples consecutifs. Parser utilisé maintenant
-  // entityId matching (not de cross-entity pollution) ET downsample bounce-preserving
+  // entityId matching (pas de cross-entity pollution) ET downsample bounce-preserving
   // qui garde peu de points avec gros gaps spatiaux (une HE flight a 1500 u/s peut
   // avoir des segments de 150-300 units entre samples). Seuil a 1200 units pour ne
   // couper QUE les vrais teleports cross-map.
@@ -1955,7 +1955,7 @@ function recalcRoundBoundaries() {
   });
   // Passe 2 : detecter sauts anormaux dans g.path (> 1000 units entre deux
   // samples consecutifs = teleport = parser a mixte deux entites/grenades).
-  // Applique a TOUTES les grenades, not juste les clampees. Tronquer au
+  // Applique a TOUTES les grenades, pas juste les clampees. Tronquer au
   // premier saut anormal pour eviter les trajectoires zigzag a travers les murs.
   // Pour HE/flash : detecter aussi les renversements de direction multiples
   // (path zigzague = parser a recupere des samples d'entites différentes).
@@ -1984,7 +1984,7 @@ function recalcRoundBoundaries() {
       jumpTruncated++;
       return;
     }
-    // Renversements de direction : HE/flash/molo/incgren ne zigzaguent not.
+    // Renversements de direction : HE/flash/molo/incgren ne zigzaguent pas.
     // Un HE/flash a max 1-2 bounces avant explosion, un molo/inc peut rouler
     // après landing mais rarement > 3 reversals dramatiques.
     const key = typeKey(g.type || '');
@@ -2038,11 +2038,11 @@ function recalcRoundBoundaries() {
     }
   });
   // Passe 3 : forcer endTick = detonTick + duree de l'effet par type, pour
-  // TOUTES les grenades. Sinon les HE non-clampees ne montrent not leur
+  // TOUTES les grenades. Sinon les HE non-clampees ne montrent pas leur
   // shockwave (parser laisse endTick <= detonTick -> isActive fires 0 tick).
   // Capper aussi la longueur de path par type : filet de sécurité si les
   // truncations stationnaire/jump/reversal ratent un cas.
-  // Cap path length très eleve : parser downsample déjà a ~100 points, not
+  // Cap path length très eleve : parser downsample déjà a ~100 points, pas
   // besoin de re-cap côté frontend (on coupait les bounces finaux avant).
   const MAX_PATH_PTS = { hegre: 300, flash: 300, smoke: 300, molotov: 300, incgren: 300, decoy: 300 };
   let skipped = 0;
@@ -2062,7 +2062,7 @@ function recalcRoundBoundaries() {
     // de l'event detonate exact, plus fiable que path[N-1] qui peut etre
     // sur des debris/residus. Si path pollue, path=[] (straight-line vers
     // detonX/Y).
-    // Safety : grenade avec path vide ET detonX/Y invalide (= parser n'à not
+    // Safety : grenade avec path vide ET detonX/Y invalide (= parser n'à pas
     // pu déterminer la detonation). Nullifier detonTick pour que le rendu
     // skip cette grenade entierement (au lieu d'afficher une ligne random
     // vers (0,0) or une coord bizarre).
@@ -2176,7 +2176,7 @@ function renderTeamPlayers(containerId, players) {
   }).join('');
 }
 
-// Calcule scores par TEAM (not par side) en tenant compte du halftime switch.
+// Calcule scores par TEAM (pas par side) en tenant compte du halftime switch.
 // MR12 standard CS2 : halftime après 12 rounds joues (displayNum 1-12 = 1ere
 // mi-temps, displayNum 13+ = 2eme mi-temps or les teams ont switch de side).
 // Team A = commence CT. Team B = commence T.
@@ -2419,14 +2419,14 @@ function updatePlayerStates(frame) {
     }
 
     // Kit icon (pince-a-couper) a droite de la barre de vie.
-    // Visible uniquement pour CT (T ne peut not defuse). Active quand le
+    // Visible uniquement pour CT (T ne peut pas defuse). Active quand le
     // player a un kit, dimme (sombre) sinon.
     const kitEl = row.querySelector('[data-field="kit"]');
     if (kitEl) {
       const _peakStats = currentRoundPeakStats[p.name] || {};
       const hasDefuser = state?.hasDefuser || _peakStats.defuser || false;
       // Affiché le kit seulement si CT vivant AVEC kit (comme kevlar/casque :
-      // rien si not equipe, blanc sinon).
+      // rien si pas equipe, blanc sinon).
       const showKit = team === 'CT' && alive && !disconnected && hasDefuser;
       kitEl.classList.toggle('visible', showKit);
     }
@@ -2451,7 +2451,7 @@ function updatePlayerStates(frame) {
     } else {
       let html = '';
       // Weapon principale du player (priorite slot 1 > 2 > couteau) : on
-      // préféré l'arme "la plus significative" detenue, not celle en main
+      // préféré l'arme "la plus significative" detenue, pas celle en main
       // (qui est souvent un couteau au freeze-time malgre le buy).
       const bestW = currentRoundBestWeapon[p.name] || state?.weapon;
       if (bestW) {
@@ -2638,15 +2638,15 @@ function buildFrames(round) {
   currentRoundPos = roundPos;
 
   // Peak inventory par player pour ce round : calcule depuis les events
-  // item_pickup du parser (inventory_as_string n'est not disponible en
+  // item_pickup du parser (inventory_as_string n'est pas disponible en
   // demoparser2 v6). Chaque pickup dans la fenêtre [startTick, endTick] du
   // round compte. Les grenades lancees seront deduites au rendu HUD.
   currentRoundPeak = {};
   currentRoundBestWeapon = {};
   const pickupsAll = demoData.grenadePickups || {};
   // Fenêtre de pickup/buy pour ce round : 20s avant le startTick (= tout le
-  // freeze phase + quelques ticks de marge). NB : on ne peut not utiliser
-  // prevRd.endTick car ce champ parser vaut ~startTick - 1 (not round_end
+  // freeze phase + quelques ticks de marge). NB : on ne peut pas utiliser
+  // prevRd.endTick car ce champ parser vaut ~startTick - 1 (pas round_end
   // comme attendu), ce qui collapse la fenêtre a 1 tick.
   const BUY_WINDOW_TICKS = 20 * 128;  // 20s de buy time max (128 tick/s)
   let rdStart = Math.max(0, (roundData.startTick || 0) - BUY_WINDOW_TICKS);
@@ -2657,7 +2657,7 @@ function buildFrames(round) {
   const rdEnd = roundData.gameplayEnd || roundData.endTick || Infinity;
   // Round 0 : detecter match_start via le money reset ($16000 warmup -> $800
   // pistol). Les pickups warmup sont contamines sinon et faussent le HUD
-  // (grenades achetees pendant warmup qui n'existent not en pistol).
+  // (grenades achetees pendant warmup qui n'existent pas en pistol).
   if (round === 0) {
     const candidates = [];
     Object.keys(positions).forEach(name => {
@@ -2683,7 +2683,7 @@ function buildFrames(round) {
     return 0;
   };
   // Buy-state au dernier tick <= freezeEnd (= état post-buy juste avant play).
-  // Money/armor/helmet/defuser = snapshot au plus proche de freezeEnd : not de
+  // Money/armor/helmet/defuser = snapshot au plus proche de freezeEnd : pas de
   // pollution du warmup ($16000 reset a $800 au match_start) ni des kill bonus.
   // Weapon = peak sur la fenêtre pour capter l'intent meme si knife equipe
   // au dernier tick.
@@ -2763,7 +2763,7 @@ function buildFrames(round) {
       // Interpolation angulaire fluide entre deux samples yaw : utilisé
       // la différence la plus courte (wrap-around a +/- 180°).
       // Exemple : lerp de 170° vers -170° passe par 180° (10° de rotation),
-      // not par 0° (340° de rotation).
+      // pas par 0° (340° de rotation).
       const prevYaw = prev.yaw ?? 0;
       const nextYaw = next.yaw ?? 0;
       let yawDiff = nextYaw - prevYaw;
@@ -2825,7 +2825,7 @@ function buildFrames(round) {
 
 // ══ DRAW FRAME ═══════════════════════════════════════════════════════════════
 // Interpole un angle (yaw) entre 2 valeurs en gerant le wrap 360
-// Ex: lerp 350 -> 10 a t=.5 doit donner 0 (not 180), via la diff la plus courte.
+// Ex: lerp 350 -> 10 a t=.5 doit donner 0 (pas 180), via la diff la plus courte.
 function lerpAngle(a, b, t) {
   let diff = ((b - a) % 360 + 540) % 360 - 180; // shortest signed diff in [-180,180]
   return a + diff * t;
@@ -2840,7 +2840,7 @@ function buildInterpolatedFrame(fA, fB, t) {
   for (const name in fA.players) {
     const pA = fA.players[name];
     const pB = fB.players[name];
-    // Si le player n'existe not dans fB or si l'etat alive change : not d'interp
+    // Si le player n'existe pas dans fB or si l'etat alive change : pas d'interp
     // (eviter de "fade-glide" un dot vers une death).
     if (!pB || pA.alive !== pB.alive) {
       players[name] = pA;
@@ -2894,7 +2894,7 @@ function drawFrame(idx, interp = 0) {
 
   // Grenade trajectories overlay : visualise toutes les utilities du round
   // (smoke/HE/flash/molo/decoy) en polylines colorees + markers detonation.
-  // Placé en arriere-plan pour ne not masquer les dots players.
+  // Placé en arriere-plan pour ne pas masquer les dots players.
   if (showGrenadeTraj) drawGrenadeTrajectories(W, H);
 
   // ── Isolated player path (click sur dot) ─────────────────────────────
@@ -2950,7 +2950,7 @@ function drawFrame(idx, interp = 0) {
   // ── C4 state : porteur actuel or location dropee au sol ──
   // Logique : dernier pickup c4 ≤ tick courant = carrier. Si ce player est
   // mort depuis le pickup sans que personne d'autre n'ait repris, la bombe
-  // est droppee à sa mort location. Si plantee, ne not afficher (rendue par
+  // est droppee à sa mort location. Si plantee, ne pas afficher (rendue par
   // drawEffects).
   let mapC4Carrier = null;
   let mapC4DroppedAt = null;
@@ -2987,7 +2987,7 @@ function drawFrame(idx, interp = 0) {
       return;
     }
     // Le carrier est mort : trouver sa mort après le pickup, c'est la que la
-    // bombe est tombee. S'il n'y à not de pickup posterieur, on affiché au sol.
+    // bombe est tombee. S'il n'y à pas de pickup posterieur, on affiché au sol.
     const carrierDeath = (demoData.kills || []).find(k =>
       k.victim === carrier && k.tick >= latestPickup.tick && k.tick <= tickNow
     );
@@ -3066,7 +3066,7 @@ function drawFrame(idx, interp = 0) {
       ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1; ctx.stroke();
       ctx.restore();
     } else {
-      // Fallback si PNG not encore charge : cercle team + centre player
+      // Fallback si PNG pas encore charge : cercle team + centre player
       ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI * 2);
       ctx.fillStyle = teamColor; ctx.fill();
       ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 1.5; ctx.stroke();
@@ -3139,7 +3139,7 @@ function drawFrame(idx, interp = 0) {
     if (isolatedAlphaMult !== 1) ctx.restore();
   });
 
-  // C4 au sol (bombe droppee, not plantee ni portee) : rendu a la position
+  // C4 au sol (bombe droppee, pas plantee ni portee) : rendu a la position
   // du dernier porteur connu s'il est mort sans transmettre la bombe.
   if (mapC4DroppedAt) {
     const _bp = w2c(mapC4DroppedAt.x, mapC4DroppedAt.y);
@@ -3162,7 +3162,7 @@ function drawFrame(idx, interp = 0) {
 
   // Bomb rendering : delegue entierement a drawEffects (avec timer 40s +
   // detection defuse/explode). Le rendu duplique ici causait une bombe
-  // "tout le temps plantee" car ne verifiait not defuse/explode/round end.
+  // "tout le temps plantee" car ne verifiait pas defuse/explode/round end.
 
   // Effects (grenades + shots + bombe via drawEffects)
   drawEffects(frame, W, H);
@@ -3519,7 +3519,7 @@ function drawTrails(frame, W, H) {
 
     // Densifier le trail via interpolation Catmull-Rom : chaque segment
     // original devient SUB_STEPS petits segments avec tick interpole.
-    // Alpha change d'un not minime entre chaque petit segment = fade smooth.
+    // Alpha change d'un pas minime entre chaque petit segment = fade smooth.
     const densePts = [];
     for (let i = 0; i < trail.length - 1; i++) {
       const p0 = trail[Math.max(0, i - 1)];
@@ -3557,7 +3557,7 @@ function drawTrails(frame, W, H) {
 
 // ══ EFFECTS (grenades + shots) ═══════════════════════════════════════════════
 // ══ Icon glyphs SCL-style ════════════════════════════════════════════════════
-// Formes simples dessinees au canvas, not de textes type SMK / FL.
+// Formes simples dessinees au canvas, pas de textes type SMK / FL.
 function drawCloudIcon(ctx, cx, cy, size, color) {
   const s = size;
   ctx.save();
@@ -3616,7 +3616,7 @@ function drawDecoyIcon(ctx, cx, cy, size, color) {
 }
 
 // Affiché l'icone SVG de la grenade en vol (or un dot fallback si l'image
-// n'est not encore chargee). Petit halo thrower pour identifier qui lance.
+// n'est pas encore chargee). Petit halo thrower pour identifier qui lance.
 function drawNadeInFlight(cx, cy, img, hasImg, throwColor) {
   // Petit halo circulaire colore par le thrower
   ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2);
@@ -3630,7 +3630,7 @@ function drawNadeInFlight(cx, cy, img, hasImg, throwColor) {
     ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h);
     ctx.restore();
   } else {
-    // Fallback dot si l'image SVG n'est not encore chargee
+    // Fallback dot si l'image SVG n'est pas encore chargee
     ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
     ctx.fillStyle = throwColor.solid; ctx.fill();
   }
@@ -3700,7 +3700,7 @@ function drawWeaponDrops(frame, W, H) {
     if (!file) return;
 
     const img = getWeaponImg(file);
-    if (!img.complet || !img.naturalWidth) return; // not encore charge
+    if (!img.complet || !img.naturalWidth) return; // pas encore charge
 
     const _p = w2c(k.victimX, k.victimY);
     const px = _p.x * scaleX, py = _p.y * scaleY;
@@ -3890,7 +3890,7 @@ function drawEffects(frame, W, H) {
   sortedGrenades.forEach(g => {
     if (!g.tick) return;
     if (g.tick < _rStart || g.tick > _rEnd) return;
-    // Si le parser n'à not pu déterminer le point d'explosion (ni via path
+    // Si le parser n'à pas pu déterminer le point d'explosion (ni via path
     // ni via event detonate cohérent), on SKIP totalement cette grenade.
     // Evite le bug "explosion a l'endroit du lancer" du a detonX === g.x.
     if (g.detonX == null || g.detonY == null || g.detonTick == null) return;
@@ -3953,7 +3953,7 @@ function drawEffects(frame, W, H) {
           ctx.lineTo(_pp.x * scaleX, _pp.y * scaleY);
         }
         ctx.lineTo(curX, curY);
-        // Ligne fine pointillee coloree par thrower (style SCL : not d'outline noir)
+        // Ligne fine pointillee coloree par thrower (style SCL : pas d'outline noir)
         ctx.setLineDash([3, 3]);
         ctx.strokeStyle = `rgba(${throwColor.rgb},0.55)`;
         ctx.lineWidth = 1;
@@ -3987,14 +3987,14 @@ function drawEffects(frame, W, H) {
     const px = dx2, py = dy2;
     if (!inBounds(px, py)) return;
     // Double check : si la detonation est quasi au meme endroit que le
-    // lancer (< 20px écran), probable match errone. Ne dessine not l'effet.
+    // lancer (< 20px écran), probable match errone. Ne dessine pas l'effet.
     const impDx = dx2 - lx;
     const impDy = dy2 - ly;
     const impDist = Math.sqrt(impDx * impDx + impDy * impDy);
     if (impDist <= 20) return;
-    // NOTE : ancienne garde "not de path + distance > 350px = bogus" retiree
+    // NOTE : ancienne garde "pas de path + distance > 350px = bogus" retiree
     // car empechait les smokes/grenades a longue portee de rendre quand le
-    // parser n'à not fourni de trajectoire. Le thrower filter + claim flag
+    // parser n'à pas fourni de trajectoire. Le thrower filter + claim flag
     // du parser garantit maintenant que detonX/Y est fiable meme sans path.
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
@@ -4027,7 +4027,7 @@ function drawEffects(frame, W, H) {
     const secLeft = Math.max(0, (g.endTick - tick) / 128);
     const timerTxt = secLeft >= 10 ? Math.round(secLeft) + 's' : secLeft.toFixed(1) + 's';
 
-    // Timer "bare" (not de pill, juste texte fin avec contour noir)
+    // Timer "bare" (pas de pill, juste texte fin avec contour noir)
     const drawBareTimer = (txt, x, y) => {
       pendingLabels.push({ text: txt, x, y, fillColor: '#d8d8d8', fontSize: 9, bare: true });
     };
@@ -4064,7 +4064,7 @@ function drawEffects(frame, W, H) {
       drawCloudIcon(ctx, px, py, 8, `rgba(255,255,255,${a})`);
       drawBareTimer(timerTxt, px, py - r - 6);
     } else if (type.includes('flash')) {
-      // Brief pulse blanc, not de rayons
+      // Brief pulse blanc, pas de rayons
       const r = 6 + (1 - progress) * 18;
       const a = Math.pow(1 - progress, 0.7) * 0.9;
       ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
@@ -4185,7 +4185,7 @@ function drawEffects(frame, W, H) {
       ctx.lineWidth = 1;
       ctx.stroke();
     } else {
-      // Mode bare (timers / labels de type) : contour noir fin, not de pill
+      // Mode bare (timers / labels de type) : contour noir fin, pas de pill
       ctx.lineWidth = 3;
       ctx.strokeStyle = 'rgba(0,0,0,0.75)';
       ctx.strokeText(l.text, l.x, l.y);
@@ -4347,7 +4347,7 @@ function updateHoverTooltip(playerName, mouseX, mouseY) {
   tooltip.classList.remove('ct', 't');
   tooltip.classList.add(p.team === 3 ? 'ct' : 't');
 
-  // Position le tooltip pres du curseur, decalee pour ne not masquer le dot.
+  // Position le tooltip pres du curseur, decalee pour ne pas masquer le dot.
   // Si proche du bord droit/bas du viewport, flippe vers gauche/haut.
   const TT_OFFSET = 18;
   const ttRect = tooltip.getBoundingClientRect();
@@ -4409,7 +4409,7 @@ function setSpeed(s, btn) {
   speed = s;
   document.querySelectorAll('.spd').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
-  // Re-seed le timer pour ne not teleporter (or ralentir brutalement) la
+  // Re-seed le timer pour ne pas teleporter (or ralentir brutalement) la
   // position courante quand on change de vitesse en plein play.
   if (playing) {
     playStartTime = performance.now();
@@ -4551,7 +4551,7 @@ function drawGrenadeTrajectories(W, H) {
 // ══ DEEP-LINK SHARE ══════════════════════════════════════════════════════════
 // URL params supportes :
 //   ?id=DEMOID       (deja gere ailleurs : load la demo)
-//   ?round=N         (round number, not displayNum)
+//   ?round=N         (round number, pas displayNum)
 //   ?tick=T          (tick exact a seek apres le selectRound)
 //   ?iso=NAME        (isolated player path highlight)
 //
@@ -4894,7 +4894,7 @@ function getTargetPlayerName() {
   // > top FV Rating du scoreboard (fallback "auto").
   if (coachAITargetPlayer) return coachAITargetPlayer;
   if (isolatedPlayer) return isolatedPlayer;
-  // FV Rating est stocke en p.fvr (not fvRating !)
+  // FV Rating est stocke en p.fvr (pas fvRating !)
   const stats = (demoData?.playerStats || []).slice().sort((a, b) => (b.fvr || 0) - (a.fvr || 0));
   return stats[0]?.name || null;
 }
@@ -4902,7 +4902,7 @@ function getTargetPlayerName() {
 // Peuple le dropdown avec les 10 players de la demo, groupes par equipe
 // (CT puis T) et sortes par FV Rating decroissant pour mettre les MVP en haut.
 //
-// Champs reels playerStats : p.fvr (not fvRating), team via window._playerTeams.
+// Champs reels playerStats : p.fvr (pas fvRating), team via window._playerTeams.
 function populateCoachAIPlayerDropdown() {
   const sel = document.getElementById('coachAIPlayer');
   if (!sel) return;
@@ -5071,7 +5071,7 @@ function buildCoachAIContext() {
       kills: playerKills,
       deaths: playerDeaths,
       adr: playerStat.adr || 0,
-      // Champs reels : p.fvr (not fvRating). Idem pour les autres.
+      // Champs reels : p.fvr (pas fvRating). Idem pour les autres.
       fvr: playerStat.fvr || 0,
       kast: playerStat.kast || 0,
       hsPct: playerStat.hsPct || 0,
@@ -5199,7 +5199,7 @@ async function runCoachAIAnalysis() {
 }
 
 // Helper : recupere le JWT Supabase depuis la session active.
-// Note : window.supabase est la LIBRARY (avec createClient), not un client.
+// Note : window.supabase est la LIBRARY (avec createClient), pas un client.
 // On instancie un client local qui lit la session depuis localStorage
 // (meme pattern que checkReplayAccess pour rester coherent).
 let _fvAuthSb = null;
@@ -5338,7 +5338,7 @@ function handleDrawEnd() {
     isDrawingStroke = false;
     return;
   }
-  // Validation minimale : ne not sauver les strokes degeneres (1 point pour pencil,
+  // Validation minimale : ne pas sauver les strokes degeneres (1 point pour pencil,
   // start === end pour arrow/circle)
   let valid = true;
   if (currentStroke.type === 'pencil' && currentStroke.points.length < 2) valid = false;

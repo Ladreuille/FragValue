@@ -390,7 +390,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <p>No. The <strong>HLTV Rating 2.1</strong> is the official HLTV formula (weighted KPR/DPR/KAST/Impact/ADR). The <strong>FV Rating</strong> is our in-house index with different weights (4 pillars: Performance / Consistency / Impact / Utility). Both scales are close but not identical. When comparing your FV Rating to pro HLTV Rating, treat it as an "order of magnitude" rather than a strict comparison.</p>
 
       <h4>Is the "level" estimate reliable?</h4>
-      <p>The estimate combines your FV Rating and FACEIT ELO to give an order of magnitude of the solo queue → LAN pro gap. Intentionally conservative: a solo queue lvl 9-10 with 1.10 FV Rating is <strong>not</strong> at the level of a top 100 world LAN pro. Solo queue context (5 randoms vs coached team, mic vs pro tactical comm) creates a gap no stat captures perfectly.</p>
+      <p>L'estimation combine ton FV Rating et ton FACEIT ELO pour donner un ordre de grandeur du gap solo queue → LAN pro. C'est volontairement conservateur : un solo queue lvl 9-10 a 1.10 FV Rating n'est <strong>pas</strong> au niveau d'un pro LAN top 100 mondial. Le contexte solo queue (5 randoms vs equipe coachee, micro vs comm tactique pro) cree un gap qu'aucune stat ne capture parfaitement.</p>
 
       <h4>Sync and data freshness</h4>
       <p>Vercel cron <code>Monday 04:00 UTC</code>: invalidates cache and attempts aggregation from our ingested S-tier matches. If not enough matches in DB, the verified seed remains source of truth. CDN cache <code>s-maxage=900</code> (15 min) with 1h stale-while-revalidate.</p>
@@ -509,7 +509,7 @@ function mapRow(p, i) {
   const fromTop = (benchData && benchData.top20 || []).find(x => x.nickname === p.nickname);
   const country = fromTop ? fromTop.country : null;
   const role = fromTop ? fromTop.role : null;
-  // Enrich avec hltv_id du top20 si not dispo dans la map response
+  // Enrich avec hltv_id du top20 si pas dispo dans la map response
   const enriched = { ...p, hltv_id: p.hltv_id || (fromTop && fromTop.hltv_id) || null };
   const teamRole = [p.team, role ? role.toUpperCase() : null].filter(Boolean).join(' · ');
   return '<div class="top20-row">'
@@ -570,7 +570,7 @@ function renderUserCompare(user, proAvg) {
       + '</a>';
   }
 
-  // Cells : user vs twin (not pro avg)
+  // Cells : user vs twin (pas pro avg)
   const cells = [
     { key: 'fvRating', lbl: 'FV / HLTV Rating', user: user.fvRating, pro: twin.hltv_rating, decimals: 2, max: 1.5, higher: true,
       tooltip: 'FV Rating (you) vs HLTV Rating 2.1 (pro). Equivalent scales but different formulas (see Methodology).' },
@@ -608,7 +608,7 @@ function renderUserCompare(user, proAvg) {
   renderVirtualRank(user);
   // Insights
   renderInsights(cells);
-  // Pro twin narrative + HLTV link (not de duplication des stats)
+  // Pro twin narrative + HLTV link (pas de duplication des stats)
   renderProTwinNarrative(user, twin);
   // Training program (based on biggest gap) -> personnalise
   renderTrainingProgram(user, cells);
@@ -621,7 +621,7 @@ function renderUserCompare(user, proAvg) {
 // Helper : trouve le pro le plus proche stylistiquement dans le pool elargi.
 // SCOUT-AWARE : si l'user a un role detecte par scout.js (AWPer / Entry /
 // Support / Clutch / Rifler), on filtre d'abord le pool par role pour
-// matcher categorie a categorie (un AWP user matche a un AWP pro, not a
+// matcher categorie a categorie (un AWP user matche a un AWP pro, pas a
 // un rifler proche en stats brutes mais avec un style different).
 //
 // Distance : 5 dimensions normalisees (FV Rating, KAST, ADR, K/D, HS%).
@@ -767,7 +767,7 @@ function renderTrainingProgram(user, cells) {
     },
     'adr': {
       title: isEN ? 'Boost ADR · damage check + grenades' : 'Booster ADR · damage check + grenades',
-      sub: isEN ? 'You frag enough but don\'t damage enough · learn to chip enemies between kills' : 'Tu fragges assez mais ne damage not assez · apprends a entamer entre les kills',
+      sub: isEN ? 'You frag enough but don\'t damage enough · learn to chip enemies between kills' : 'Tu fragges assez mais ne damage pas assez · apprends a entamer entre les kills',
       icon: 'M13 2 L3 14 H12 L11 22 L21 10 H12 Z',
       days: [
         { lbl: isEN ? 'Day 1-2 · Spray pattern' : 'Jour 1-2 · Spray pattern', text: isEN ? '<strong>20 min/day</strong> on aim_training : AK 1st mag spray on long-range targets. Discipline = damage.' : '<strong>20 min/day</strong> sur aim_training : spray AK 1st mag sur cibles long-range. Discipline = damage.' },
@@ -781,7 +781,7 @@ function renderTrainingProgram(user, cells) {
       sub: isEN ? 'Your kills are OK but you die too much · prioritize trade kills and avoid solo peeks' : 'Tes kills sont OK mais tu meurs trop · priorise les trade kills et evite les solo peeks',
       icon: 'M3 12h18M12 3v18',
       days: [
-        { lbl: isEN ? 'Day 1-2 · No solo peeks' : 'Jour 1-2 · Zero solo peek', text: isEN ? 'Rule absolute : <strong>never peek alone</strong> on info/duel angles. If your team isn\'t ready, hold your spot.' : 'Regle absolue : <strong>jamais peek seul</strong> sur angles info/duel. Si ton team n\'est not pret, hold ton spot.' },
+        { lbl: isEN ? 'Day 1-2 · No solo peeks' : 'Jour 1-2 · Zero solo peek', text: isEN ? 'Rule absolute : <strong>never peek alone</strong> on info/duel angles. If your team isn\'t ready, hold your spot.' : 'Regle absolue : <strong>jamais peek seul</strong> sur angles info/duel. Si ton team n\'est pas pret, hold ton spot.' },
         { lbl: isEN ? 'Day 3-4 · Trade timing' : 'Jour 3-4 · Timing de trade', text: isEN ? 'Stay <strong>within 1.5s reaction</strong> of a teammate on contact zones. Watch <strong>donk demos</strong> on Vertigo for trade kill examples.' : 'Reste a <strong>1.5s de reaction</strong> d\'un coequipier sur zones de contact. Regarde <strong>demos donk</strong> sur Vertigo pour des trade kills.' },
         { lbl: isEN ? 'Day 5 · Demo your deaths' : 'Jour 5 · Demo tes morts', text: isEN ? 'Watch your last 3 matches focusing only on <strong>your deaths</strong>. Categorize : trade-able / avoidable / unlucky. Goal : 70% trade-able.' : 'Regarde tes 3 derniers matches en focus sur <strong>tes morts uniquement</strong>. Categorise : trade-able / evitable / unlucky. Objectif : 70% trade-able.' },
         { lbl: isEN ? 'Day 6-7 · Apply discipline' : 'Jour 6-7 · Applique discipline', text: isEN ? 'Goal : <strong>+0.10 K/D</strong> on 5 matches. Track deaths : if > 18 in a 24-round map, you\'re still peeking solo.' : 'Objectif : <strong>+0.10 K/D</strong> sur 5 matches. Track morts : si > 18 sur une map en 24 rounds, tu peek encore solo.' },
@@ -850,7 +850,7 @@ async function renderVetoRecommendations(user) {
     + '<div class="veto-info">'
       + (isEN
         ? 'Note: this is based on your overall FV Rating, not your map-specific stats. For per-map calibration, analyze 3+ demos per map via FragValue\'s analyzer.'
-        : 'Note : base sur ton FV Rating global, not tes stats par-map specifiques. Pour calibrer par map, analyse 3+ demos par map via l\'analyzer FragValue.')
+        : 'Note : base sur ton FV Rating global, pas tes stats par-map specifiques. Pour calibrer par map, analyse 3+ demos par map via l\'analyzer FragValue.')
     + '</div>';
 
   document.getElementById('vetoWrap').style.display = 'block';
@@ -890,7 +890,7 @@ function renderTrainingPreview() {
   const previews = [
     { key: 'fvRating', title: isEN ? 'Boost overall impact' : 'Booster l\'impact global', sub: isEN ? 'When FV Rating is your weakest link' : 'Quand FV Rating est le maillon faible', icon: 'M12 20V4M5 12l7-7 7 7' },
     { key: 'kast',     title: isEN ? 'Boost KAST · positioning' : 'Booster KAST · positionnement', sub: isEN ? 'When you die alone in useless angles' : 'Quand tu meurs seul dans des angles inutiles', icon: 'M9 11H1l8-8 8 8h-8v8H9z' },
-    { key: 'adr',      title: isEN ? 'Boost ADR · damage check' : 'Booster ADR · damage check', sub: isEN ? 'When you frag enough but don\'t damage enough' : 'Quand tu fragges assez mais damage not assez', icon: 'M13 2 L3 14 H12 L11 22 L21 10 H12 Z' },
+    { key: 'adr',      title: isEN ? 'Boost ADR · damage check' : 'Booster ADR · damage check', sub: isEN ? 'When you frag enough but don\'t damage enough' : 'Quand tu fragges assez mais damage pas assez', icon: 'M13 2 L3 14 H12 L11 22 L21 10 H12 Z' },
     { key: 'kd',       title: isEN ? 'Boost K/D · stop avoidable deaths' : 'Booster K/D · stop morts evitables', sub: isEN ? 'When kills are OK but you die too much' : 'Quand les kills sont OK mais tu meurs trop', icon: 'M3 12h18M12 3v18' },
   ];
   const introTxt = isEN
@@ -957,14 +957,14 @@ function renderVirtualRank(user) {
   const kast = user.kast || 0;
 
   // FACEIT ELO thresholds : pro level requires sustained ~3500-4000 ELO + LAN proof
-  // Solo queue lvl 10 (2001+ ELO) = excellent solo, mais not pro
+  // Solo queue lvl 10 (2001+ ELO) = excellent solo, mais pas pro
   // Challenger (~2500+) = top 0.1% solo queue, encore loin d'un LAN pro
   let tier, narrative;
   if (elo >= 3500 || (elo >= 3000 && fv >= 1.20 && kast >= 75)) {
     tier = 'Challenger / Pro potential';
     narrative = isEN
       ? 'You\'re at the highest solo queue tier. The gap to pro is now about consistency on LAN, comm and team play, not raw skill.'
-      : 'Tu es au plus haut palier solo queue. Le gap vers le pro c\'est maintenant la consistance LAN, la comm et le teamplay, not le skill brut.';
+      : 'Tu es au plus haut palier solo queue. Le gap vers le pro c\'est maintenant la consistance LAN, la comm et le teamplay, pas le skill brut.';
   } else if (elo >= 2500 || (elo >= 2000 && fv >= 1.15 && kast >= 73)) {
     tier = 'Top 1% solo queue';
     narrative = isEN
@@ -984,12 +984,12 @@ function renderVirtualRank(user) {
     tier = 'FACEIT Lvl 5-7';
     narrative = isEN
       ? 'Mid level. Pro is way ahead. The data here is a long-term north star, not an immediate target. Focus on aim + crosshair placement.'
-      : 'Niveau average. Le pro est tres loin. La data ici est une boussole long-terme, not une cible immediate. Focus aim + crosshair placement.';
+      : 'Niveau average. Le pro est tres loin. La data ici est une boussole long-terme, pas une cible immediate. Focus aim + crosshair placement.';
   } else {
     tier = 'FACEIT Lvl 1-4';
     narrative = isEN
       ? 'Beginner-intermediate. Don\'t obsess over pro stats yet. Build fundamentals first (warmup, crosshair, basic positioning).'
-      : 'Debutant-intermediaire. Ne t\'obsede not sur les stats pros pour l\'instant. Construis les fondamentaux (warmup, crosshair, positionnement de base).';
+      : 'Debutant-intermediaire. Ne t\'obsede pas sur les stats pros pour l\'instant. Construis les fondamentaux (warmup, crosshair, positionnement de base).';
   }
 
   rankEl.textContent = tier;
@@ -1171,7 +1171,7 @@ async function loadMap(map) {
 }
 
 // ─── Fetch user stats (auth required) ────────────────────────────────────
-// Logique : on se base sur les stats du profil FACEIT directement (not
+// Logique : on se base sur les stats du profil FACEIT directement (pas
 // besoin d'uploader une demo). 3 etats seulement :
 //  - Pas connecte         -> Guest (CTA Sign me in)
 //  - Connecte sans FACEIT -> NoFaceit (CTA Link my FACEIT)
@@ -1180,7 +1180,7 @@ async function loadMap(map) {
 async function loadUserStats() {
   try {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) return; // not connecte : Guest reste visible (correct)
+    if (!session) return; // pas connecte : Guest reste visible (correct)
 
     // Connecte : on cache definitivement Guest, on choisit le bon etat plus loin
     document.getElementById('userCompareGuest').style.display = 'none';
@@ -1191,7 +1191,7 @@ async function loadUserStats() {
       .single();
 
     if (profileErr || !profile || !profile.faceit_nickname) {
-      // Connecte mais FACEIT not lie -> CTA "Link my FACEIT"
+      // Connecte mais FACEIT pas lie -> CTA "Link my FACEIT"
       document.getElementById('userCompareNoFaceit').style.display = 'block';
       return;
     }
@@ -1226,7 +1226,7 @@ async function loadUserStats() {
 
     // Cascade recent (Last 20 matches FACEIT) -> lifetime (carriere) ->
     // estimation a partir des stats FACEIT publiques (kd, hs, winrate).
-    // FACEIT API ne fournit not d'HLTV Rating ni de KAST/ADR au niveau
+    // FACEIT API ne fournit pas d'HLTV Rating ni de KAST/ADR au niveau
     // lifetime ; on estime via heuristique calibree sur des donnees
     // publiques :
     //   FV ≈ 0.6 + kd*0.4 (+ bonus HS, winrate, ELO tier)

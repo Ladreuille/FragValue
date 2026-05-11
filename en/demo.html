@@ -839,7 +839,7 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
 @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
 
 /* Mobile UX P0 (cf. ultrareview Mobile UX 6.5/10) :
-   sur mobile, le drag-drop ne marche not (touch != drag), on cache le texte
+   sur mobile, le drag-drop ne marche pas (touch != drag), on cache le texte
    "Glisse-depose" et le raccourci Ctrl+U. Le bouton "Choose a file"
    reste full-width et bien visible. */
 @media (max-width:640px){
@@ -878,7 +878,7 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
 </nav>
 
 <!-- Toast de bienvenue si ?welcome=1 (nouveau signup). Non intrusif,
-     auto-dismiss apres 10s. Positionne en top-right, ne casse not le layout. -->
+     auto-dismiss apres 10s. Positionne en top-right, ne casse pas le layout. -->
 <div class="welcome-toast" id="welcomeToast" style="display:none">
   <div class="welcome-toast-row">
     <div class="welcome-toast-dot"></div>
@@ -1091,7 +1091,7 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
         </svg>
       </div>
       <div class="upload-title" style="margin-bottom:8px;text-align:center">Auto-sync FACEIT pending</div>
-      <div class="upload-sub" style="margin-bottom:18px;max-width:460px;margin-left:auto;margin-right:auto;text-align:center">Notre demande d'acces a la <strong>Downloads API officielle FACEIT</strong> est en cours de revue par leur equipe partenariats. Une fois validee, tu pourras coller un lien match et on telechargera la demo automatiquement.</div>
+      <div class="upload-sub" style="margin-bottom:18px;max-width:460px;margin-left:auto;margin-right:auto;text-align:center">Our access request to the <strong>Downloads API officielle FACEIT</strong> est en cours de revue par leur equipe partenariats. Une fois validee, tu pourras coller un lien match et on telechargera la demo automatiquement.</div>
       <input type="url" id="faceitUrlInput" autocomplete="off" placeholder="Coller un lien match FACEIT (bientot)" disabled style="width:100%;max-width:480px;display:block;margin:0 auto 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--text3);outline:none;cursor:not-allowed;opacity:.55" aria-label="URL match FACEIT (bientot disponible)">
       <div style="text-align:center">
         <a href="account.html#settings" class="upload-btn" data-teaser-cta="faceit-url-sync" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;justify-content:center">
@@ -1225,7 +1225,7 @@ document.getElementById('fileInput').addEventListener('change', e => {
 
 function handleFile(f) {
   hideError();
-  if (!f.name.endsWith('.dem')) { showError('Ce fichier n\'est not une démo CS2. Il faut un .dem (FACEIT, MatchMaking or serveur custom). Glisse le .dem que tu as téléchargé depuis FACEIT.'); return; }
+  if (!f.name.endsWith('.dem')) { showError('Ce fichier n\'est pas une démo CS2. Il faut un .dem (FACEIT, MatchMaking or serveur custom). Glisse le .dem que tu as téléchargé depuis FACEIT.'); return; }
   if (f.size > 500*1024*1024) { showError('Ta démo fait ' + fmt(f.size) + ', le max est 500 MB. Astuce : si elle vient d\'un long Best of 3, télécharge la map en solo. Besoin d\'aide ? contact@fragvalue.com'); return; }
   selectedFile = f;
   document.getElementById('fileName').textContent = f.name;
@@ -1461,7 +1461,7 @@ async function startAnalysis() {
   // Timeout dynamique : 3 min de base + 2 min par 100 MB, plafonne a 20 min.
   // Couvre l'upload (slow ADSL ~10 Mbps) + le parsing serveur. Une demo de
   // 450 MB met ~6 min a uploader + ~2-3 min a parser, donc ~10 min total.
-  // Declare ici (not dans le try) pour etre accessible depuis le catch.
+  // Declare ici (pas dans le try) pour etre accessible depuis le catch.
   const fileSizeMB = selectedFile.size / (1024 * 1024);
   const timeoutMs = Math.min(20, 3 + Math.ceil(fileSizeMB / 100) * 2) * 60 * 1000;
 
@@ -1530,7 +1530,7 @@ async function startAnalysis() {
     if (!jwt) throw new Error('Session expiree, reconnecte-toi.');
 
     // ── 4. POST parser avec payload JSON tiny (< 1 KB) -> Railway proxy
-    //     voit juste un petit POST instant, not un upload multipart de 450 MB.
+    //     voit juste un petit POST instant, pas un upload multipart de 450 MB.
     //     Le parser fait le download Supabase->Railway server-to-server.
     go(1, 12, 'Parser en cours', 'Lecture de la demo cote serveur...');
     const controller = new AbortController();
@@ -1551,7 +1551,7 @@ async function startAnalysis() {
 
     if (res.status === 422) {
       const data = await res.json().catch(() => ({}));
-      showError(data.message || "Cette demo n'a not pu etre parsee. Essaie une autre demo.");
+      showError(data.message || "Cette demo n'a pas pu etre parsee. Essaie une autre demo.");
       return;
     }
     clearTimeout(timeout);
@@ -1865,7 +1865,7 @@ async function renderLiveFeed() {
   if (!track) return;
   try {
     // Top 8 analyses recentes sur les 7 derniers days, avec le nom de la map.
-    // On ne leak not les usernames (anonymise avec "Player #hash" pour privacy).
+    // On ne leak pas les usernames (anonymise avec "Player #hash" pour privacy).
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await _sb.from('demos')
       .select('map, user_id, analysed_at')

@@ -228,7 +228,7 @@ body::before{
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
   pointer-events:none;z-index:0;opacity:.4
 }
-/* SUBTLE GRID PATTERN : effet de fond discret, masque radial pour ne not saturer */
+/* SUBTLE GRID PATTERN : effet de fond discret, masque radial pour ne pas saturer */
 body::after{
   content:'';position:fixed;inset:0;
   background-image:
@@ -411,7 +411,7 @@ section{padding:80px 80px;position:relative;z-index:1}
   transition:transform .35s cubic-bezier(.2,.8,.25,1), border-color .25s, box-shadow .35s, background .35s;
   background:var(--card);
   /* overflow:visible pour que le badge "MOST POPULAR" (top:-12px) ne
-     soit not clip. Les effets internes (aura + particules) sont eux confines
+     soit pas clip. Les effets internes (aura + particules) sont eux confines
      via clip-path sur leur propre element, voir plus bas. */
   overflow:visible;
   isolation:isolate;
@@ -585,10 +585,10 @@ section{padding:80px 80px;position:relative;z-index:1}
 
 /* Badge NEW : feedback user iter 2 - alignement vertical decale + termes
    coupes a la ligne. Refonte :
-   - display:inline-block (not inline-flex qui casse la baseline)
+   - display:inline-block (pas inline-flex qui casse la baseline)
    - white-space:nowrap : "NEW" reste compact, jamais coupe en lettres
    - line-height:1 + padding micro-tuned : meme hauteur visuelle qu'1
-     ligne de texte 12px (donc not de decalage cross-features)
+     ligne de texte 12px (donc pas de decalage cross-features)
    - position relative top:-1px : ajustement fin pour aligner sur baseline
      du texte 12px (sans casser le flux flex parent).
    Le HTML utilise &nbsp; insecable AVANT le badge pour empecher le saut
@@ -918,7 +918,7 @@ footer{
         </div>
       </div>
       <a href="login.html?signup=1&plan=free" class="pricing-btn">Start my 3 free analyses</a>
-      <div class="pricing-cta-sub">Aucune CB · No commitment · Bypass FACEIT inclus</div>
+      <div class="pricing-cta-sub">No CC · No commitment · FACEIT Bypass included</div>
     </div>
 
     <!-- PRO : PROGRESSER -->
@@ -1089,7 +1089,7 @@ footer{
 
   <!-- Trust signals : logos de paiement (cf. ultrareview Trust/Legal P0)
        Indique explicitement les moyens de paiement acceptes pour rassurer
-       avant checkout. Texte simple = not de risque de licence logo. -->
+       avant checkout. Texte simple = pas de risque de licence logo. -->
   <div class="pricing-payment-logos" aria-label="Moyens de paiement acceptés">
     <span class="pricing-payment-logos-label">Payment</span>
     <span class="pricing-payment-logo">Visa</span>
@@ -1297,7 +1297,7 @@ footer{
 <!-- FAQ -->
 <section class="faq-section fade-in">
   <div class="section-tag">Frequently asked questions</div>
-  <h2 class="section-title">Need clarification?</h2>
+  <h2 class="section-title">Need details?</h2>
 
   <div class="faq-list">
 
@@ -1346,7 +1346,7 @@ footer{
         Le plan Free est vraiment gratuit ?
         <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div class="faq-a"><div class="faq-a-inner">Oui, Free est gratuit pour toujours avec 3 analyses de démos par mois, 3 scouts par day, et l'essentiel des stats FACEIT. No credit card required. You can utiliser FragValue sans jamais payer un centime si Free te suffit.</div></div>
+      <div class="faq-a"><div class="faq-a-inner">Yes, Free is free forever with 3 demo analyses per month, 3 scouts per day, and essential FACEIT stats. No credit card required. You can use FragValue without ever paying a cent if Free is enough for you.</div></div>
     </div>
 
     <div class="faq-item">
@@ -1395,7 +1395,7 @@ footer{
 <!-- CTA FINAL -->
 <section class="cta-section fade-in">
   <div class="cta-glow"></div>
-  <div class="section-tag">C'est le moment</div>
+  <div class="section-tag">Now's the time</div>
   <h2>Ready to improve?</h2>
   <p>Start for free, upgrade whenever you want. Your stats are waiting for you.</p>
   <a href="demo.html" class="btn-primary">
@@ -1517,7 +1517,7 @@ async function startCheckout(plan, btn) {
   // afficher la modale de pre-confirmation avec récap conditions + checkbox
   // de renonciation au droit de rétractation (Code conso art. L221-28-13°).
   // Sans cette case cochee, le user a 14j pour se rétracter ET demander remboursement
-  // (jusqu'à 75K EUR d'amende DGCCRF si on n'informe not correctement). Couvre
+  // (jusqu'à 75K EUR d'amende DGCCRF si on n'informe pas correctement). Couvre
   // aussi HIGH #8 (info pre-paiement avec recap).
   const confirmed = await confirmSubscriptionTerms(plan);
   if (!confirmed) {
@@ -1529,7 +1529,7 @@ async function startCheckout(plan, btn) {
   setLoading(true);
 
   // Defensive : si user click avant que window._sb soit init (DOMContentLoaded
-  // not encore fire car defer scripts not finis), on retry brievement.
+  // pas encore fire car defer scripts pas finis), on retry brievement.
   if (!window._sb) await new Promise(r => setTimeout(r, 200));
   const { data: { session } } = await window._sb.auth.getSession();
 
@@ -1584,7 +1584,7 @@ function showError(msg) {
 /* ── BLOCKER LEGAL #4 + HIGH #8 : Modale de pre-confirmation de souscription
    Affiche le recap des conditions + case obligatoire de renonciation au droit de
    retractation (Code conso art. L221-28-13°). Sans cette case cochee, le service
-   ne peut not etre execute immediatement sous peine de remboursement obligatoire
+   ne peut pas etre execute immediatement sous peine de remboursement obligatoire
    pendant 14j (art. L242-13). Couvre aussi l'info pre-paiement obligatoire
    (prix TTC final, frequence, modalites resiliation, art. L221-13). ─────────── */
 function confirmSubscriptionTerms(plan) {
@@ -1785,7 +1785,7 @@ document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 <script src="/nav.js"></script>
 <script src="/teaser.js"></script>
 <script>
-  // Pendant que Stripe Live n'est not encore active : on capture les emails
+  // Pendant que Stripe Live n'est pas encore active : on capture les emails
   // des prospects chauds qui veulent passer Pro. Au lancement (day J du
   // SIRET), on enverra une vague d'emails de notif via /admin/waitlist.html.
   FVTeaser.initCTA('pro-launch', { base: 12, perDay: 0.7 });

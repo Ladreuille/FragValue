@@ -520,7 +520,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   <main class="main" id="main">
 
     <!-- H1 unique pour la page (visually-hidden) : un seul H1 par page (cf. WCAG) -->
-    <h1 style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Dashboard FragValue : tes stats CS2 et axes d'amelioration</h1>
+    <h1 style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">FragValue Dashboard: your CS2 stats and improvement areas</h1>
 
     <!-- VUE D'ENSEMBLE -->
     <div class="tab-panel active" id="panelOverview">
@@ -620,7 +620,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <div class="empty-state">
           <div class="empty-ico"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="28" cy="28" r="14"/><line x1="38.5" y1="38.5" x2="48" y2="48"/><circle cx="28" cy="24" r="4"/><path d="M20 36c0-3 3.5-6 8-6s8 3 8 6"/></svg></div>
           <div class="empty-title">No followed players</div>
-          <div class="empty-sub">Scout un player depuis la page Scout et ajoute-le a ta watchlist pour retrouver rapidement ses stats ici.</div>
+          <div class="empty-sub">Scout a player from the Scout page and add to your watchlist to quickly retrieve stats here.</div>
           <a href="scout.html" class="empty-btn">Go to Scout</a>
         </div>
       </div>
@@ -680,7 +680,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <div class="modal-field">
         <label>URL fiche FACEIT <span style="color:var(--gold);font-weight:700">· obligatoire pour Prep Veto</span></label>
         <input id="rosterFaceitUrl" type="url" placeholder="https://www.faceit.com/fr/teams/abc123-..." maxlength="200"/>
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;line-height:1.5">Sans cette URL : roster cree mais Prep Veto inaccessible. Recommande : copie l'URL depuis ta page FACEIT team. Detection ESEA auto si tu joues les ligues.</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;line-height:1.5">Without this URL: roster created but Prep Veto inaccessible. Recommend: copy the URL from your FACEIT team page. ESEA auto-detect if you play leagues.</div>
       </div>
       <div class="modal-err" id="rosterCreateErr"></div>
     </div>
@@ -947,7 +947,7 @@ function renderCoachDiagnosis(card, data) {
     btn.dataset.state = 'loading';
     btn.disabled = true;
     // Marque la card entière pour qu'on sache que c'est en cours meme
-    // après le re-render (innerHTML reset le btn mais not la classe card)
+    // après le re-render (innerHTML reset le btn mais pas la classe card)
     card.classList.add('coach-ai-refreshing');
     const minSpin = new Promise(r => setTimeout(r, 400));
     await Promise.all([renderCoachAi(true), minSpin]);
@@ -991,7 +991,7 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
-// Pro upgrade nudge · s'affiché uniquement si l'user est free (or not auth)
+// Pro upgrade nudge · s'affiché uniquement si l'user est free (or pas auth)
 // + set body[data-plan=...] pour activer les blur overlays sur .sec-locked
 async function renderPlanNudge() {
   // body[data-plan="free"] est set des le HTML pour eviter le flash unlocked.
@@ -1008,7 +1008,7 @@ async function renderPlanNudge() {
     const plan = d.plan || 'free';
     document.body.dataset.plan = plan;
     wireUnlockClicks();
-    if (plan !== 'free') return; // pro/team : not de nudge
+    if (plan !== 'free') return; // pro/team : pas de nudge
 
     const panel = document.getElementById('panelOverview');
     if (!panel || document.getElementById('planNudge')) return;
@@ -1529,7 +1529,7 @@ async function loadRoster() {
     if (!session) return;
     const headers = { 'Authorization': 'Bearer ' + session.access_token };
 
-    // Mes invitations reçues (ne bloque not le roster si fail)
+    // Mes invitations reçues (ne bloque pas le roster si fail)
     try {
       const invRes = await fetch('/api/roster?view=my_invitations', { headers });
       if (!invRes.ok) throw new Error('HTTP ' + invRes.status);
@@ -1537,7 +1537,7 @@ async function loadRoster() {
       renderInvitations(invData.invitations || []);
     } catch (e) {
       console.warn('[loadRoster] invitations fetch failed:', e.message);
-      // Empty state silencieux, not d'invitations visibles
+      // Empty state silencieux, pas d'invitations visibles
       const invSection = document.getElementById('invitationsSection');
       if (invSection) invSection.innerHTML = '';
     }
@@ -1828,7 +1828,7 @@ function openModal(id) {
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
   document.addEventListener('keydown', _modalKeyHandler);
-  // Focus le 1er element interactif (skip le bouton close pour ne not fermer avec Enter direct)
+  // Focus le 1er element interactif (skip le bouton close pour ne pas fermer avec Enter direct)
   setTimeout(() => {
     const focusables = _modalFocusables(modal);
     const target = Array.from(focusables).find(f => !f.classList.contains('modal-close')) || focusables[0];
@@ -1944,7 +1944,7 @@ async function submitLinkFaceit() {
     if (r.error) { errEl.textContent = r.error; return; }
     const eseaTxt = r.esea && r.esea.division
       ? ` · ESEA ${r.esea.season || ''} ${r.esea.division}`
-      : ' · not de ligue ESEA detectee';
+      : ' · pas de ligue ESEA detectee';
     okEl.innerHTML = `Equipe <strong>${r.team?.name || '-'}</strong> liee · ${(r.team?.members || []).length} membres detectes${eseaTxt}`;
     okEl.style.display = 'block';
     setTimeout(() => { closeModal('modalLinkFaceit'); loadRoster(); }, 1500);

@@ -199,8 +199,8 @@ async function handleCallback() {
       await linkFaceitToProfile(session.user.id, faceitData);
       showSuccess(faceitData);
     } catch (e) {
-      // Le lien FACEIT a échoué (RLS, reseau, DB down). Ne not montrer
-      // showSuccess qui afficherait a tort 'Account lie' alors qu'il ne l'est not.
+      // Le lien FACEIT a échoué (RLS, reseau, DB down). Ne pas montrer
+      // showSuccess qui afficherait a tort 'Account lie' alors qu'il ne l'est pas.
       document.getElementById('card').innerHTML = `
         <div class="error-icon" style="color:var(--danger);font-size:40px;margin-bottom:12px">!</div>
         <div class="title" style="color:var(--danger)">Incomplete linking</div>
@@ -278,7 +278,7 @@ function showSuccess(data) {
   // 1. Si popup detecte : essaye window.close() apres 400ms. Si l'onglet
   //    est toujours visible apres 800ms total, strength le redirect dans
   //    cette fenetre (cas Safari or close() est bloque).
-  // 2. Si not un popup (touch / full-redirect flow) : redirect direct
+  // 2. Si pas un popup (touch / full-redirect flow) : redirect direct
   //    apres 700ms (laisse le temps de voir le succes).
   // 3. Le bouton "Continue" est de toute facon visible immediatement.
   const REDIRECT_DELAY = isPopup ? 400 : 700;

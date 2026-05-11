@@ -544,7 +544,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     }
 
     /* ── UNLOCK PRO : section affichee en bas des resultats quand l'user n'est
-         not Pro/Elite. Teaser visuel + CTA direct vers /pricing.html pour
+         pas Pro/Elite. Teaser visuel + CTA direct vers /pricing.html pour
          pousser la conversion au moment du "aha moment" post-analyse. ── */
     .unlock-pro{
       margin-top:40px;padding:40px 32px;
@@ -1065,7 +1065,7 @@ window.addEventListener('load',()=>{
     if(target) activePlayers.add(target);
     // Tracking activation event (cf. ultrareview Onboarding P0 : 'Demo
     // Viewed' = user a effectivement consulte les resultats de l'analyse,
-    // not juste uploaded le fichier).
+    // pas juste uploaded le fichier).
     if (typeof window.fvTrack === 'function') {
       window.fvTrack('demo_viewed', {
         map: (demoData.meta?.map || '?').toLowerCase().replace('de_', ''),
@@ -1078,7 +1078,7 @@ window.addEventListener('load',()=>{
     // Mettre à day le FV Rating dans Supabase
     saveRatingToSupabase();
     // Affiche la section "Debloque avec Pro" uniquement pour les users Free
-    // (les Pro/Elite voient deja tout, not besoin de les pousser au checkout).
+    // (les Pro/Elite voient deja tout, pas besoin de les pousser au checkout).
     renderUnlockProSection();
     // Affiche le trigger AI Coach juste sous le FV Hero (cf. ultrareview
     // Onboarding P0 : declenche au pic emotionnel post-aha-moment).
@@ -1088,7 +1088,7 @@ window.addEventListener('load',()=>{
 
 // FV Hero Card : affiche le FV Rating du target player en gros avec
 // color-coding (excellent / solide / average / weak) + stats complementaires.
-// Si not de target, prend le MVP (meilleur FV rating).
+// Si pas de target, prend le MVP (meilleur FV rating).
 function renderFvHeroCard(){
   try{
     const players = demoData?.playerStats || [];
@@ -1098,7 +1098,7 @@ function renderFvHeroCard(){
 
     const target = demoData.meta?.targetPlayer;
     let p = target ? players.find(pl => pl.name === target) : null;
-    // Si not de target or non trouve : prendre le MVP (meilleur rating calcule)
+    // Si pas de target or non trouve : prendre le MVP (meilleur rating calcule)
     if (!p) {
       p = players.map(pl => ({ ...pl, _r: calcFvRating(pl.kills, pl.deaths, 0, numR) }))
                  .sort((a,b) => b._r - a._r)[0];
@@ -1147,8 +1147,8 @@ function renderFvHeroCard(){
   }catch(e){ console.warn('[FragValue] renderFvHeroCard:', e.message); }
 }
 
-// Affiche la section unlock-pro seulement si user n'est not Pro/Elite.
-// Permet de ne not polluer l'experience des payants.
+// Affiche la section unlock-pro seulement si user n'est pas Pro/Elite.
+// Permet de ne pas polluer l'experience des payants.
 async function renderUnlockProSection(){
   try{
     const isPro = await fvIsPro();
@@ -1379,7 +1379,7 @@ function calcFvRating(kills, deaths, assists, rounds) {
 
 function calcKAST(name, kills, rounds) {
   // KAST : % de rounds où le player a eu un Kill, Assist, Survived or was Traded
-  // Approximation : rounds avec kill or round survived (not mort)
+  // Approximation : rounds avec kill or round survived (pas mort)
   const totalR = rounds.length || 1;
   let kastRounds = 0;
   rounds.forEach((rd, i) => {
@@ -1652,7 +1652,7 @@ function renderMatchStats() {
   const el = document.getElementById('matchStatsBlock');
   if (el) el.innerHTML = winnerBanner + teamBlock(2, ctNames, '#4A9EFF', ctWins) + teamBlock(3, tNames, '#F5C842', tWins);
 
-  // Highlights + graphique (une seule fois, not sensible au side)
+  // Highlights + graphique (une seule fois, pas sensible au side)
   if (sf === 'both') {
     renderHighlights(kills, players, allRounds);
     renderPerfChart(players, kills, allRounds);
@@ -2259,7 +2259,7 @@ function rfDrawEffects(frame, W, H) {
   sortedGrenades.forEach(g => {
     if (!g.tick) return;
     if (g.tick < _rStart || g.tick > _rEnd) return;
-    // Si le parser n'à not pu déterminer le point d'explosion, on SKIP.
+    // Si le parser n'à pas pu déterminer le point d'explosion, on SKIP.
     if (g.detonX == null || g.detonY == null || g.detonTick == null) return;
 
     const hasPathData = !!(g.path && g.path.length >= 4);
@@ -2339,12 +2339,12 @@ function rfDrawEffects(frame, W, H) {
     if (!isActive) return;
     const {px,py} = detonPos;
     if (!inBounds(px,py,W,H)) return;
-    // Guard : explosion quasi au lancer → ne dessine not (bug match)
+    // Guard : explosion quasi au lancer → ne dessine pas (bug match)
     const impDx = detonPos.px - launchPos.px;
     const impDy = detonPos.py - launchPos.py;
     const impDist = Math.sqrt(impDx*impDx + impDy*impDy);
     if (impDist <= 15) return;
-    // Garde supplementaire si not de path ET distance excessive
+    // Garde supplementaire si pas de path ET distance excessive
     if (!hasPathData && impDist > 400) return;
     const progress = (tick - g.detonTick) / Math.max(g.endTick - g.detonTick, 1);
     const type = g.type || '';
@@ -2376,7 +2376,7 @@ function rfDrawEffects(frame, W, H) {
     const secLeft = Math.max(0, (g.endTick - tick) / 128);
     const timerTxt = secLeft >= 10 ? Math.round(secLeft) + 's' : secLeft.toFixed(1) + 's';
 
-    // Timer bare (not de pill)
+    // Timer bare (pas de pill)
     const pushBareTimer = (txt, x, y) => {
       rfLabels.push({ text: txt, x, y, color: '#d8d8d8', size: 8, bare: true });
     };
@@ -2501,7 +2501,7 @@ function rfDrawEffects(frame, W, H) {
       rfCtx.lineWidth = 1;
       rfCtx.stroke();
     } else {
-      // Mode bare : contour noir fin, not de pill
+      // Mode bare : contour noir fin, pas de pill
       rfCtx.lineWidth = 3;
       rfCtx.strokeStyle = 'rgba(0,0,0,0.75)';
       rfCtx.strokeText(l.text, l.x, l.y);
@@ -2588,7 +2588,7 @@ function rfBuildFrames(round){
   const N = Math.min(1800, Math.max(80, Math.round(durSec * RF_FPS)));
 
   // Seuil anti-traversée de mur : distance max entre 2 footsteps consécutifs
-  // Au-delà, on téléporte directement (not d'interpolation linéaire)
+  // Au-delà, on téléporte directement (pas d'interpolation linéaire)
   // ~500 unités CS2 ≈ largeur d'un couloir étroit, valeur conservative
   const MAX_INTERP_DIST = 500;
 
@@ -2988,7 +2988,7 @@ async function exportPDF() {
     kast: 'Change role: more defensive position or decisive lurks.',
     hs: 'Daily routine: 20 min aim_botz pre-aim angles + recoil control.',
   } : {
-    trading: 'Joue systematiquement en binome, ne not etre a plus de 1s de reaction d\'un coequipier sur les contacts.',
+    trading: 'Joue systematiquement en binome, ne pas etre a plus de 1s de reaction d\'un coequipier sur les contacts.',
     fb: 'Apres le 1er kill, prendre immediatement un choke or infos. Interdit de camper en 5v4.',
     open: 'Revoir le positionnement d\'ouverture. Eviter les peeks agressifs sur les angles pre-aimes.',
     adr: 'Redistribuer les roles : plus de responsabilite (fragger, entry) aux players en retrait.',
@@ -3028,7 +3028,7 @@ async function exportPDF() {
     warnings.push({ key: 'open', label: WARNING_LABELS.weakOpen(names, weakOpeners.length > 1), detail: weakOpeners.map(p => p.name + ' ' + p.firstKills + 'W-' + p.firstDeaths + 'L').join(' · '), severity: weakOpeners.reduce((s, p) => s + (p.firstDeaths - p.firstKills) * 8, 0), action: ACTIONS.open, elo: ELO_IMPACT.open });
   }
   if (adrGap > 40) warnings.push({ key: 'adr', label: WARNING_LABELS.adrGap, detail: (isEN ? 'ADR gap of ' : 'Ecart ADR de ') + adrGap + (isEN ? ' points between ' : ' points entre ') + mvp.name + ' and ' + lowest.name, severity: adrGap - 40, action: ACTIONS.adr, elo: ELO_IMPACT.adr });
-  if (lowKast.length) warnings.push({ key: 'kast', label: WARNING_LABELS.kastLow(lowKast[0].name), detail: 'KAST ' + lowKast[0].kast + (isEN ? '% · does not contribute to most rounds' : '% · ne contribue not a la majorite des rounds'), severity: 60 - lowKast[0].kast, action: ACTIONS.kast, elo: ELO_IMPACT.kast });
+  if (lowKast.length) warnings.push({ key: 'kast', label: WARNING_LABELS.kastLow(lowKast[0].name), detail: 'KAST ' + lowKast[0].kast + (isEN ? '% · does not contribute to most rounds' : '% · ne contribue pas a la majorite des rounds'), severity: 60 - lowKast[0].kast, action: ACTIONS.kast, elo: ELO_IMPACT.kast });
   if (lowHsPlayers.length) warnings.push({ key: 'hs', label: WARNING_LABELS.precisionLow, detail: lowHsPlayers.map(p => p.name + ' ' + p.hsPct + '%').join(' · ') + (isEN ? ' headshots' : ' de headshots'), severity: 30, action: ACTIONS.hs, elo: ELO_IMPACT.hs });
 
   const topStrengths = strengths.sort((a, b) => b.score - a.score).slice(0, 3);
@@ -3040,7 +3040,7 @@ async function exportPDF() {
   const proRef = PRO_REFS_2026[userSideKey];
 
   // ── Heatmap capture (kills + deaths) ─────────────────────────────
-  // On capture le canvas heatmap actuel. Si l'user n'a not selectionne
+  // On capture le canvas heatmap actuel. Si l'user n'a pas selectionne
   // de players, on strength une selection complete temporairement.
   let heatmapKillsImg = null;
   let heatmapDeathsImg = null;
@@ -3497,7 +3497,7 @@ async function saveRatingToSupabase() {
     // Notification "AI diagnosis pret" : envoie une notif persistante
     // visible sur la cloche de la nav (poussera l'user a re-engager s'il
     // quitte le site puis revient). Idempotent via sessionStorage flag
-    // pour ne not dupliquer au refresh.
+    // pour ne pas dupliquer au refresh.
     const notifKey = 'fv_notif_sent_' + demoId;
     if (!sessionStorage.getItem(notifKey)) {
       sessionStorage.setItem(notifKey, '1');

@@ -552,7 +552,7 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
     <div class="share-popover-inner">
       <button class="share-popover-close" onclick="closeSharePopover()" aria-label="Close">&times;</button>
       <h2 class="share-popover-title" id="sharePopoverTitle">Share cette analyse</h2>
-      <div class="share-popover-sub">Un lien public unique vers ton analyse. Sans login requis pour les destinataires. Fonctionne sur Twitter, Discord, etc.</div>
+      <div class="share-popover-sub">A unique public link to your analysis. No login required for recipients. Works on Twitter, Discord, etc.</div>
       <div class="share-url-row">
         <label for="sharePopoverUrl" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Lien public de l'analyse</label>
         <input type="text" class="share-url-input" id="sharePopoverUrl" readonly value="Generation du lien..."/>
@@ -617,9 +617,9 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
          si l'utilisateur est Pro or Elite via initCoachChat -->
     <div class="coach-chat-locked" id="coachLocked">
       <div class="coach-chat-locked-h">Le AI Coach en exemple concret</div>
-      <p class="coach-chat-locked-sub">Voilà à quoi ressemble une réponse — référence d'un round précis, lexique CS2 100% scène pro, et 1 action concrète à chaque fois.</p>
+      <p class="coach-chat-locked-sub">Here's what an answer looks like — reference to a precise round, 100% pro scene CS2 lexicon, and 1 concrete action every time.</p>
       <div class="coach-chat-preview">
-        <div class="coach-chat-preview-msg user">Pourquoi j'ai perdu le round 14 ?</div>
+        <div class="coach-chat-preview-msg user">Why did I lose round 14?</div>
         <div class="coach-chat-preview-msg ai">Tu prends ton duel à long en [R14] sans util. L'adversaire avait 2 flashs en main. Work on tes pre-flashes : un Pop Flash sur long avant de peek aurait inversé l'engagement. <strong style="color:var(--accent)">→ Action : 1 setup pop-flash long Mirage à l'entraînement.</strong></div>
       </div>
       <div class="coach-chat-locked-ctas">
@@ -629,9 +629,9 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-co
       <p class="coach-chat-locked-note">AI diagnosis inclus dans Free (1/mois). Chat unlimited avec Pro (5 msg/day) or Elite (30 msg/day).</p>
     </div>
 
-    <!-- Empty state (not encore de messages) -->
+    <!-- Empty state (pas encore de messages) -->
     <div class="coach-chat-suggestions-empty" id="coachEmpty" style="display:none">
-      <div class="coach-chat-suggestions-empty-h">Pose ta 1re question</div>
+      <div class="coach-chat-suggestions-empty-h">Ask your 1st question</div>
       <p class="coach-chat-suggestions-empty-sub">Le AI Coach a tout le contexte du match. Il citera les rounds en [R12] que tu pourras cliquer pour ouvrir le replay 2D au bon moment. Quelques exemples pour demarrer :</p>
     </div>
 
@@ -764,7 +764,7 @@ const MAP_CONFIG = {
   'de_vertigo':  { img:'maps/de_vertigo_radar_psd.png', posX:-3168, posY:1762, scale:4.0  },
   // Cache (re-ajoutee dans le pool actif CS2 le 28-29 avril 2026).
   // Valeurs basees sur le cache.txt Valve historique CS:GO (la geometrie
-  // world n'a not change entre CS:GO et CS2). A ajuster si offset visible
+  // world n'a pas change entre CS:GO et CS2). A ajuster si offset visible
   // sur les heatmaps : test sur un round et incremente posX/posY de +/-100.
   'de_cache':    { img:'maps/de_cache_radar_psd.png',    posX:-2000, posY:3250, scale:5.5  },
 };
@@ -1084,7 +1084,7 @@ async function init() {
     document.getElementById('mainPage').innerHTML = ''
       + '<div class="empty-msg" style="padding:80px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px">'
       + '  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.7"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>'
-      + '  <div style="font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em">Aucune analyse disponible</div>'
+      + '  <div style="font-family:var(--display);font-size:22px;color:var(--text);letter-spacing:.02em">No analysis available</div>'
       + '  <div style="font-size:13px;color:var(--text2);max-width:380px;line-height:1.6">Lance ta premiere analyse de demo pour debloquer le FV Rating, les heatmaps et le diagnostic AI Coach.</div>'
       + '  <a href="/en/demo.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:12px 24px;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.06em;text-decoration:none;margin-top:6px">Analyze a demo <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>'
       + '</div>';
@@ -1194,7 +1194,7 @@ async function initCoachChat(c, rounds) {
     // Auth + plan check + load existing conversation
     await coachLoadConversation();
 
-    // Debug log : aide a diagnostiquer pourquoi le chat n'apparait not.
+    // Debug log : aide a diagnostiquer pourquoi le chat n'apparait pas.
     // qdreuillet@gmail.com (admin) doit voir plan='elite' via bypass backend.
     console.info('[coach-chat] plan=' + _coachPlan + ' demoId=' + _coachDemoId + ' messages=' + _coachMessages.length);
 
@@ -1224,7 +1224,7 @@ async function coachLoadConversation() {
     const { data: { session } } = await _sb.auth.getSession();
     if (!session) { _coachPlan = 'anon'; return; }
     if (!_coachDemoId) {
-      // Not demo_id -> on ne peut not avoir de conversation persistante,
+      // Not demo_id -> on ne peut pas avoir de conversation persistante,
       // on stay en 'free' pour afficher le state Locked plutot que d'envoyer
       // un POST qui va echouer cote backend.
       _coachPlan = 'free';
@@ -1243,7 +1243,7 @@ async function coachLoadConversation() {
       ' plan=' + _coachPlan + ' source=' + (data.source || '?'));
   } catch (e) {
     console.warn('[coach-chat] load conversation failed:', e.message);
-    // Not fallback optimiste : on bloque sur Locked si on ne peut not verifier
+    // Not fallback optimiste : on bloque sur Locked si on ne peut pas verifier
     // le plan (eviter d'afficher un chat qui va 403 au 1er message envoye).
     _coachPlan = 'free';
   }
@@ -1263,7 +1263,7 @@ function coachShowChat() {
   document.getElementById('coachInputWrap').style.display = 'block';
   document.getElementById('coachResetBtn').style.display = _coachMessages.length > 0 ? 'inline-block' : 'none';
 
-  // Suggestions visibles si not de messages, sinon liste de messages
+  // Suggestions visibles si pas de messages, sinon liste de messages
   const hasMsgs = _coachMessages.length > 0;
   document.getElementById('coachEmpty').style.display = hasMsgs ? 'none' : 'block';
   document.getElementById('coachSuggestions').style.display = hasMsgs ? 'none' : 'flex';
@@ -1411,7 +1411,7 @@ function renderCiteToken(attrs, inner) {
       + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
       + escHtml(lbl) + '</a>';
   }
-  // Pro reference (badge gold, not cliquable pour MVP)
+  // Pro reference (badge gold, pas cliquable pour MVP)
   if (attrs.pro) {
     return '<span class="coach-ref-pro" title="Reference pro">' + escHtml(inner || attrs.pro) + '</span>';
   }
@@ -1446,7 +1446,7 @@ function coachUpdateMeta() {
     limitInfo.textContent = planLbl + ' · ' + limit + ' msg/day';
   }
   // Affichage adapte : si limite atteinte mais credits dispo, indique combien
-  // il reste. Si not de credits, propose l'achat.
+  // il reste. Si pas de credits, propose l'achat.
   const hitLimit = count >= limit;
   if (!hitLimit) {
     meta.textContent = count + ' / ' + limit + ' aujourd\'hui';
@@ -1641,9 +1641,9 @@ async function coachSendMessage(e) {
       let data = {};
       try { data = await r.json(); } catch (_) { /* HTML err */ }
       if (r.status === 429 || r.status === 403) {
-        // Retire user msg + assistant placeholder pour not polluer l'historique
+        // Retire user msg + assistant placeholder pour pas polluer l'historique
         _coachMessages.splice(assistantIdx - 1, 2);
-        // Si limite quotidienne atteinte ET not de credits, ouvre la modale achat
+        // Si limite quotidienne atteinte ET pas de credits, ouvre la modale achat
         if (r.status === 429 && data.buy_credits_url && (data.credits === 0 || data.credits === undefined)) {
           coachShowError(data.message || 'Limite quotidienne atteinte');
           setTimeout(() => coachOpenCreditsModal(), 800);
@@ -1659,7 +1659,7 @@ async function coachSendMessage(e) {
       return false;
     }
 
-    // Si le serveur n'a not streamé (Content-Type JSON), fallback
+    // Si le serveur n'a pas streamé (Content-Type JSON), fallback
     const ct = r.headers.get('Content-Type') || '';
     if (!ct.includes('text/event-stream') || !r.body || !r.body.getReader) {
       // Fallback JSON : le serveur a renvoye du JSON classique
@@ -1948,7 +1948,7 @@ function detectCriticalSituations(c, kills, rounds) {
     const teamDeathsThisRound = roundKills.filter(k => {
       return (c.playerTeam[k.victim] || 0) === youTeam;
     });
-    // Le player cible n'est not mort mais tous ses coequipiers sont morts (4 deaths)
+    // Le player cible n'est pas mort mais tous ses coequipiers sont morts (4 deaths)
     const youDied = roundKills.some(k => k.victim === you.name);
     if (!youDied && teamDeathsThisRound.length === 4) {
       const effectiveSide = sideAtRound(i, youTeam);
@@ -2094,7 +2094,7 @@ async function generateProInsights() {
 function renderProInsights(insights, cached, tokens) {
   const body = document.getElementById('proInsightsBody');
   if (!insights || !insights.length) {
-    body.innerHTML = '<div class="empty-msg">Aucune analyse disponible.</div>';
+    body.innerHTML = '<div class="empty-msg">No analysis available.</div>';
     return;
   }
   const cards = insights.map(ins => `
@@ -3031,7 +3031,7 @@ function renderMoments(kills, rounds, c) {
   moments.sort((a, b) => b.killCount - a.killCount || a.round - b.round);
 
   if (!moments.length) {
-    card.innerHTML = '<div class="empty-msg">Aucun multi-kill detecte (3+ kills dans un round)</div>';
+    card.innerHTML = '<div class="empty-msg">No multi-kill detected (3+ kills in a round)</div>';
     return;
   }
 

@@ -252,13 +252,13 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     currentUser = data.session.user;
 
     // Vérifier si déjà onboardé COMPLETEMENT (mode + faceit lié).
-    // Si mode set mais not faceit_nickname, on autorise l'acces a
+    // Si mode set mais pas faceit_nickname, on autorise l'acces a
     // l'onboarding pour pouvoir lier FACEIT (cas des signups email/Google
     // or le mode est set par defaut a 'player' via column default).
     sb.from('profiles').select('mode,faceit_nickname').eq('id', currentUser.id).single()
       .then(({ data: profile }) => {
         const fullyOnboarded = profile?.mode && profile?.faceit_nickname;
-        // Si tout est lie ET not de demande explicite de relier -> dashboard
+        // Si tout est lie ET pas de demande explicite de relier -> dashboard
         if (fullyOnboarded && !wantsLinkFaceit) {
           window.location.href = 'dashboard.html';
           return;
@@ -379,8 +379,8 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     }
     // Onboarding initial : redirige TOUJOURS vers demo.html pour pousser
     // l'activation (1ere analyse uploadee). Avant : player+FACEIT -> index
-    // (landing publique = not la page d'upload), player sans FACEIT ->
-    // dashboard (not d'incitation a uploader). Maintenant : tout le monde
+    // (landing publique = pas la page d'upload), player sans FACEIT ->
+    // dashboard (pas d'incitation a uploader). Maintenant : tout le monde
     // arrive sur demo.html avec le param `welcome=1` qui declenche le
     // welcome banner contextuel. Cf. ultrareview Onboarding P0.
     if (selectedMode === 'player') {
@@ -389,7 +389,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         : '?welcome=1';
       window.location.href = 'demo.html' + qs;
     } else {
-      // Mode scout : not d'upload de demo, on l'envoie sur scout.html
+      // Mode scout : pas d'upload de demo, on l'envoie sur scout.html
       window.location.href = 'scout.html?welcome=1';
     }
   }

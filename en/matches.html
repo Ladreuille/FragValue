@@ -222,7 +222,7 @@ a.match-card:hover .mc-col-chevron{color:var(--accent);transform:translateX(3px)
 <div class="page">
 
   <!-- Hero "FACEIT sync pending" : tant que l'API officielle FACEIT n'a
-       not valide notre demande d'accès, la synchro auto n'est not encore
+       pas valide notre demande d'accès, la synchro auto n'est pas encore
        fonctionnelle. Waitlist pour etre prévenu en priorite. -->
   <div class="faceit-pending">
     <div class="fp-badge">● FACEIT sync pending</div>
@@ -295,8 +295,8 @@ async function init() {
   const { data:{ session } } = await _sb.auth.getSession();
   if (!session) { window.location.href = 'login.html'; return; }
   _session = session;
-  // Tant que l'API FACEIT n'est not active (waitlist mode), on ne
-  // charge not les matches et on ne poll not. On garde juste les notifs
+  // Tant que l'API FACEIT n'est pas active (waitlist mode), on ne
+  // charge pas les matches et on ne poll pas. On garde juste les notifs
   // pour que le bell nav continue de marcher.
   await loadNotifs();
 }
@@ -411,7 +411,7 @@ function renderCard(m) {
     : isFailed ? 'Failed' : 'En attente';
   const statusClass = isParsed ? 'parsed' : m.status === 'pending' ? 'pending' : isParsing ? 'parsing' : 'failed';
 
-  // Sur les rows non-parsees on n à not encore de map ni de score réel, donc
+  // Sur les rows non-parsees on n à pas encore de map ni de score réel, donc
   // on affiché un placeholder "PENDING" a la place du nom de map et on
   // skippe entièrement le bloc score pour éviter un "0 : 0" disgracieux.
   const ct = m.score_ct ?? 0;
@@ -462,7 +462,7 @@ function renderCard(m) {
     '</div>';
   }
 
-  // Score block : seulement sur les matches parses (les autres n ont not de
+  // Score block : seulement sur les matches parses (les autres n ont pas de
   // score réel et afficher "0 : 0" en gros chiffres est visuellement moche).
   const scoreHtml = isParsed
     ? '<div class="mc-col-score">' +
