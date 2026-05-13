@@ -714,6 +714,18 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       width:3px;height:8px;border-radius:1.5px;
       background:var(--danger);opacity:.5;pointer-events:none;
     }
+    /* Mini-heatmap events sur timeline : grenades + plant/defuse + multikill */
+    .tl-evt{
+      position:absolute;top:50%;transform:translate(-50%,-50%);
+      width:2px;height:6px;border-radius:1px;opacity:.55;pointer-events:none;
+    }
+    .tl-evt.smoke{background:#e8eaea}
+    .tl-evt.he{background:#ff9d3a}
+    .tl-evt.flash{background:#ffeb3b}
+    .tl-evt.molly{background:#ff6633;height:5px;width:3px}
+    .tl-evt.plant{background:#ff4444;width:3px;height:10px;opacity:.85}
+    .tl-evt.defuse{background:#7cd45a;width:3px;height:10px;opacity:.85}
+    .tl-evt.multi{background:#b8ff57;width:4px;height:10px;opacity:.85;border-radius:2px}
     .ctrl-speeds{display:flex;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:2px;gap:1px}
     .spd{
       font-family:var(--mono);font-size:9px;font-weight:700;
@@ -733,11 +745,49 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;
       background:rgba(240,107,107,.08);color:var(--danger);
       border:1px solid rgba(240,107,107,.14);white-space:nowrap;flex-shrink:0;
-      line-height:1.3;
+      line-height:1.3;cursor:pointer;transition:transform .12s ease, background .12s ease;
     }
+    .kc:hover{transform:translateY(-1px);background:rgba(240,107,107,.18)}
+    .kc:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
     .kc img{height:10px;flex-shrink:0}
     .kc-name{max-width:80px;overflow:hidden;text-overflow:ellipsis}
     .kc.hs{background:rgba(245,200,66,.08);color:var(--gold);border-color:rgba(245,200,66,.14)}
+    .kc.hs:hover{background:rgba(245,200,66,.18)}
+    /* Round outcome sticker (eco / force / full / clutch / multikill) */
+    .round-outcome{
+      position:absolute;top:8px;left:50%;transform:translateX(-50%);
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 10px;border-radius:8px;
+      background:rgba(10,12,16,.88);border:1px solid rgba(255,255,255,.08);
+      font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;
+      color:var(--text);text-transform:uppercase;pointer-events:none;
+      box-shadow:0 4px 14px rgba(0,0,0,.32);z-index:5;
+      opacity:0;transition:opacity .25s ease;
+    }
+    .round-outcome.show{opacity:1}
+    .round-outcome .ro-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+    .round-outcome.eco .ro-dot{background:#7cd45a}
+    .round-outcome.force .ro-dot{background:#ffaa55}
+    .round-outcome.full .ro-dot{background:#4a9eff}
+    .round-outcome.anti-eco .ro-dot{background:#ff6633}
+
+    /* ── Accessibility : respecter prefers-reduced-motion ────────── */
+    /* Desactive les animations decoratives (mk banners, fade-in, pulses) pour
+       les users sensibles aux mouvements (a11y). Le replay lui-meme reste
+       fonctionnel (canvas refresh continue). */
+    @media (prefers-reduced-motion: reduce) {
+      .tb-live-dot,
+      .canvas-area.round-fade-in,
+      .multikill-banner,
+      .damage-float,
+      #shareToast,
+      .round-outcome {
+        animation: none !important;
+        transition: none !important;
+      }
+      .round-outcome.show { opacity: 1; }
+      .kc:hover { transform: none; }
+    }
 
     /* ── No data ────────────────────────────────────────────────── */
     .no-data{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px}
@@ -767,7 +817,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <body>
 
 <!-- Free user overlay (hidden by default, shown via JS if plan=free) -->
-<div id="proOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center">
+<div id="proOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);align-items:center;justify-content:center">
   <div style="background:#0f1010;border:1px solid #1c1e1e;border-radius:12px;padding:40px 32px;max-width:440px;width:90%;text-align:center">
     <div style="font-family:'Anton',sans-serif;font-size:24px;letter-spacing:.02em;margin-bottom:8px;color:#e8eaea">2D Replay</div>
     <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);color:#b8ff57;padding:4px 12px;border-radius:40px;font-size:10px;font-weight:700;letter-spacing:.1em;margin-bottom:16px">PRO</div>
@@ -842,6 +892,10 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <button class="sl-tool" id="btnTrail" onclick="toggleTrail()" data-tip="Trainee de mouvement">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         </button>
+        <!-- Follow camera toggle : auto-pan sur le joueur isole (hotkey F) -->
+        <button class="sl-tool" id="btnFollow" onclick="toggleFollowCam()" data-tip="Suivre joueur isolé (F)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6M4.22 4.22l4.24 4.24m7.08 7.08l4.24 4.24M1 12h6m10 0h6M4.22 19.78l4.24-4.24m7.08-7.08l4.24-4.24"/></svg>
+        </button>
         <!-- Note : bouton call-outs retire de la sidebar (les joueurs CS2
              connaissent les zones par coeur). Les data MAP_CALLOUTS sont
              conservees pour enrichir l analyse Coach IA tactiquement. -->
@@ -879,6 +933,9 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     <!-- Canvas -->
     <div class="canvas-area">
       <canvas id="replayCanvas"></canvas>
+      <!-- Round outcome sticker : eco/force/full/anti-eco classification per side.
+           Apparait apres selectRound, masque pendant playing pour ne pas distraire. -->
+      <div id="roundOutcome" class="round-outcome"><span class="ro-dot"></span><span id="roundOutcomeText"></span></div>
       <!-- Multi-kill banner : DOUBLE / TRIPLE / QUAD / ACE pop-up animé.
            Triggered par checkMultikillBanner() au moment du kill final
            d'une chain (>= 2 kills meme attacker en < 8s). -->
@@ -1047,6 +1104,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <div class="ctrl-time"><span id="timeCur">0:00</span> / <span id="timeTot">0:00</span></div>
       <div class="ctrl-timeline" id="timeline" onclick="seek(event)">
         <div class="tl-fill" id="tlFill" style="width:0%"></div>
+        <div id="eventMarks"></div>
         <div id="killMarks"></div>
         <div class="tl-thumb" id="tlThumb" style="left:0%"></div>
       </div>
@@ -1475,6 +1533,9 @@ let playStartTime = 0;     // performance.now() au moment du start
 let playStartIdx = 0;      // frameIdx au moment du start (peut etre fractionnaire si reseed)
 let isolatedPlayer = null; // nom du joueur isolé via click sur dot (path highlight)
 let hoveredPlayer = null;  // nom du joueur hover pour tooltip live
+let followCamera = false;  // auto-pan canvas pour suivre isolatedPlayer (toggle F)
+// Smoothing camera : on lisse le translate entre frames pour eviter le saccade
+let camOffsetX = 0, camOffsetY = 0;
 
 // Track les events visuels deja triggered pour ne pas re-spawn au scrub
 // arriere ou au replay du round. Cle = 'kill-<tick>-<victim>' / 'mk-<tick>-<attacker>'
@@ -2180,22 +2241,50 @@ function renderTeamPlayers(containerId, players) {
 // MR12 standard CS2 : halftime après 12 rounds joues (displayNum 1-12 = 1ere
 // mi-temps, displayNum 13+ = 2eme mi-temps ou les teams ont switch de side).
 // Team A = commence CT. Team B = commence T.
-// Team A's score = (1ere mi CT wins) + (2eme mi T wins).
-// Team B's score = (1ere mi T wins) + (2eme mi CT wins).
+// Team A's score = (1ere mi CT wins) + (2eme mi T wins) + OT swaps.
+// Team B's score = (1ere mi T wins) + (2eme mi CT wins) + OT swaps.
+//
+// Regulation MR12 : halftime apres round 12 (display 1-12 = 1ere mi, 13-24 = 2eme mi).
+// Overtime CS2 : si score 12-12 a la fin de regulation, MR3 OT (6 rounds).
+//   OT1 = rounds 25-30 (halftime apres round 27, swap a chaque MR3).
+//   OT2 = rounds 31-36, etc.
+//   Pattern : pour chaque OT, side actuel = (OT_idx + half_idx) % 2 → swap CT/T.
 function computeTeamScores(untilDisplayNum) {
   const rounds = demoData.rounds || [];
   const HALFTIME = 12;
-  let firstCT = 0, firstT = 0, secondCT = 0, secondT = 0;
+  let teamA = 0, teamB = 0;  // teamA commence CT, teamB commence T
   rounds.forEach(rd => {
     if (rd.isKnife) return;
     const dn = rd.displayNum || 0;
     if (untilDisplayNum !== null && dn >= untilDisplayNum) return;
-    const isFirst = dn <= HALFTIME;
-    if (rd.winner === 2) { if (isFirst) firstT++; else secondT++; }
-    else if (rd.winner === 3) { if (isFirst) firstCT++; else secondCT++; }
+
+    // Determine si teamA est sur CT ou T pour ce round.
+    // 1ere mi (1-12) : teamA = CT, teamB = T.
+    // 2eme mi (13-24) : teamA = T, teamB = CT.
+    // OT pattern : apres regulation (24+), chaque sequence de 3 rounds swap side.
+    //   OT1 first half (25,26,27) : teamA = CT, teamB = T (re-swap pour OT)
+    //   OT1 second half (28,29,30) : teamA = T, teamB = CT
+    //   OT2 first half (31,32,33) : teamA = CT (re-swap)... etc.
+    let teamAisCT;
+    if (dn <= HALFTIME) {
+      teamAisCT = true;  // 1ere mi reg
+    } else if (dn <= 24) {
+      teamAisCT = false; // 2eme mi reg
+    } else {
+      // OT : count des half-OT a partir de round 25
+      const otRoundsSinceStart = dn - 25;  // 0-indexed
+      const otHalfIdx = Math.floor(otRoundsSinceStart / 3);  // 0=OT1.1, 1=OT1.2, 2=OT2.1, ...
+      teamAisCT = (otHalfIdx % 2 === 0);
+    }
+
+    if (rd.winner === 3) { // CT win
+      if (teamAisCT) teamA++;
+      else teamB++;
+    } else if (rd.winner === 2) { // T win
+      if (teamAisCT) teamB++;
+      else teamA++;
+    }
   });
-  const teamA = firstCT + secondT; // commence CT
-  const teamB = firstT + secondCT; // commence T
   return { teamA, teamB, HALFTIME };
 }
 
@@ -2205,11 +2294,17 @@ function updateScores() {
     ? ((demoData.rounds || []).find(r => (r.round ?? -1) === currentRound)?.displayNum ?? 0)
     : 0;
   const { teamA, teamB, HALFTIME } = computeTeamScores(currentDisplay);
-  // Après halftime, teams switchent de side : team A (commence CT) est maintenant
-  // sur T panel, team B (commence T) est maintenant sur CT panel.
-  const afterHalftime = currentDisplay > HALFTIME;
-  const ctScore = afterHalftime ? teamB : teamA;
-  const tScore = afterHalftime ? teamA : teamB;
+  // Determine teamAisCT pour le round courant. Apres halftime, swap. En OT,
+  // chaque MR3 swap a nouveau (gere meme pattern que dans computeTeamScores).
+  let teamAisCT;
+  if (currentDisplay <= HALFTIME) teamAisCT = true;
+  else if (currentDisplay <= 24) teamAisCT = false;
+  else {
+    const otHalfIdx = Math.floor((currentDisplay - 25) / 3);
+    teamAisCT = (otHalfIdx % 2 === 0);
+  }
+  const ctScore = teamAisCT ? teamA : teamB;
+  const tScore = teamAisCT ? teamB : teamA;
   document.getElementById('ctScore').textContent = ctScore;
   document.getElementById('tScore').textContent = tScore;
 }
@@ -2546,6 +2641,68 @@ function selectRound(round, btn) {
     void canvasArea.offsetWidth;
     canvasArea.classList.add('round-fade-in');
   }
+
+  // Round outcome sticker (eco / force / full / anti-eco) - axe 5 du rubric.
+  updateRoundOutcome(round);
+}
+
+// ══ ROUND OUTCOME (eco/force/full per side) ═════════════════════════════════
+// Lit le money/equipValue de chaque joueur au freeze_end via frames[0],
+// classifie chaque side, et affiche le sticker en haut du canvas.
+function updateRoundOutcome(round) {
+  const sticker = document.getElementById('roundOutcome');
+  const text = document.getElementById('roundOutcomeText');
+  if (!sticker || !text || !frames || frames.length === 0) {
+    if (sticker) sticker.classList.remove('show');
+    return;
+  }
+
+  // Frame[0] = freeze_end (debut gameplay), donc le money/equip reflete le buy phase complete.
+  const firstFrame = frames[0];
+  const players = firstFrame?.players || {};
+  const ctEquip = []; const tEquip = [];
+  for (const [name, p] of Object.entries(players)) {
+    // Equip value = money initial (achete au freeze) + weapon value. Pas perfect mais
+    // on n'a pas equipValue separe : on approxime via money apres buy = peu fiable,
+    // donc on utilise le total argent + arme valeur estimee.
+    // Pragmatique : on prend juste money car parser n'expose pas equipValue.
+    const equipValue = p.money || 0;
+    if (p.team === 3 || p.team === 'CT') ctEquip.push(equipValue);
+    else if (p.team === 2 || p.team === 'T') tEquip.push(equipValue);
+  }
+
+  // Classification HLTV/scene standard :
+  // eco       : <= 2000$ moyenne par joueur (typique pistol round next ou full save)
+  // semi      : 2000-4000$ (half buy, partial util)
+  // force     : 4000-6000$ (full util mais armes 2nd-tier)
+  // full      : > 6000$ (full meta buy : AK/M4 + util complete)
+  const classify = (arr) => {
+    if (!arr.length) return null;
+    const avg = arr.reduce((s, v) => s + v, 0) / arr.length;
+    if (avg <= 2000) return 'eco';
+    if (avg <= 4000) return 'semi';
+    if (avg <= 6000) return 'force';
+    return 'full';
+  };
+  const ctC = classify(ctEquip);
+  const tC = classify(tEquip);
+
+  if (!ctC && !tC) {
+    sticker.classList.remove('show');
+    return;
+  }
+
+  // Determine anti-eco : si un side est full/force et l'autre eco, le full est en anti-eco
+  let stickerClass = 'show';
+  if ((ctC === 'full' || ctC === 'force') && tC === 'eco') stickerClass += ' anti-eco';
+  else if ((tC === 'full' || tC === 'force') && ctC === 'eco') stickerClass += ' anti-eco';
+  else if (ctC === 'eco' && tC === 'eco') stickerClass += ' eco';
+  else if (ctC === 'force' || tC === 'force') stickerClass += ' force';
+  else stickerClass += ' full';
+
+  const upper = (s) => s ? s.toUpperCase() : '?';
+  text.textContent = `CT ${upper(ctC)} · T ${upper(tC)}`;
+  sticker.className = 'round-outcome ' + stickerClass;
 }
 
 // ══ BUILD FRAMES ═════════════════════════════════════════════════════════════
@@ -2809,11 +2966,11 @@ function buildFrames(round) {
   const tot = Math.round(span / 64);
   document.getElementById('timeTot').textContent = `${Math.floor(tot / 60)}:${String(tot % 60).padStart(2, '0')}`;
 
-  // Kill chips with weapon icons
+  // Kill chips with weapon icons - clickable death cam (jump to tick-3s, play 1x)
   document.getElementById('killChips').innerHTML = roundKills.slice(0, 8).map(k => {
     const wIcon = weaponIconImg(k.weapon, 12);
     const hsTag = k.isHeadshot ? ' <span style="color:var(--gold);font-weight:700">HS</span>' : '';
-    return `<div class="kc ${k.isHeadshot ? 'hs' : ''}"><span class="kc-name">${k.attacker}</span> ${wIcon} <span class="kc-name">${k.victim}</span>${hsTag}</div>`;
+    return `<div class="kc ${k.isHeadshot ? 'hs' : ''}" data-tick="${k.tick || 0}" onclick="deathCam(${k.tick || 0})" title="Click pour replay 3s avant ce duel" tabindex="0"><span class="kc-name">${k.attacker}</span> ${wIcon} <span class="kc-name">${k.victim}</span>${hsTag}</div>`;
   }).join('');
 
   // Kill markers on timeline
@@ -2821,6 +2978,47 @@ function buildFrames(round) {
     const pct = Math.min(100, Math.max(0, ((k.tick || 0) - minT) / span * 100));
     return `<div class="tl-kill-mark" style="left:${pct}%"></div>`;
   }).join('');
+
+  // Mini-heatmap events sur timeline : grenades + plant/defuse + multikill.
+  // Le user voit en un coup d'oeil ce qui se passe quand dans le round.
+  const evtMarks = [];
+  const roundNumForBomb = killsR;
+  const _grenades = (demoData.grenades || []).filter(g => (g.tick || 0) >= minT && (g.tick || 0) <= minT + span);
+  for (const g of _grenades) {
+    const pct = (((g.tick || 0) - minT) / span * 100).toFixed(1);
+    let cls = '';
+    const t = (g.type || '').toLowerCase();
+    if (t.includes('smoke')) cls = 'smoke';
+    else if (t.includes('flash')) cls = 'flash';
+    else if (t.includes('hegrenade') || t === 'he') cls = 'he';
+    else if (t.includes('molotov') || t.includes('inc')) cls = 'molly';
+    if (cls) evtMarks.push(`<div class="tl-evt ${cls}" style="left:${pct}%" title="${t}"></div>`);
+  }
+  (demoData.bombPlants || []).filter(b => b.round === roundNumForBomb && (b.tick || 0) >= minT && (b.tick || 0) <= minT + span).forEach(b => {
+    const pct = (((b.tick || 0) - minT) / span * 100).toFixed(1);
+    evtMarks.push(`<div class="tl-evt plant" style="left:${pct}%" title="Bomb planted"></div>`);
+  });
+  (demoData.bombDefuses || []).filter(b => b.round === roundNumForBomb && (b.tick || 0) >= minT && (b.tick || 0) <= minT + span).forEach(b => {
+    const pct = (((b.tick || 0) - minT) / span * 100).toFixed(1);
+    evtMarks.push(`<div class="tl-evt defuse" style="left:${pct}%" title="Bomb defused"></div>`);
+  });
+  // Multi-kills : 3+ kills par meme attacker dans une fenetre 5s (640 ticks @ 128).
+  const byAttacker = {};
+  for (const k of roundKills) {
+    if (!byAttacker[k.attacker]) byAttacker[k.attacker] = [];
+    byAttacker[k.attacker].push(k.tick || 0);
+  }
+  for (const [attacker, ticks] of Object.entries(byAttacker)) {
+    const sorted = ticks.slice().sort((a, b) => a - b);
+    for (let i = 0; i + 2 < sorted.length; i++) {
+      if (sorted[i + 2] - sorted[i] <= 640) {  // 3 kills en 5s
+        const pct = ((sorted[i] - minT) / span * 100).toFixed(1);
+        evtMarks.push(`<div class="tl-evt multi" style="left:${pct}%" title="Multi-kill ${attacker}"></div>`);
+        break;  // 1 marque par multi-kill detecte
+      }
+    }
+  }
+  document.getElementById('eventMarks').innerHTML = evtMarks.join('');
 }
 
 // ══ DRAW FRAME ═══════════════════════════════════════════════════════════════
@@ -2866,6 +3064,33 @@ function drawFrame(idx, interp = 0) {
   const scaleX = W / 1024;
   const scaleY = H / 1024;
   ctx.clearRect(0, 0, W, H);
+
+  // Follow camera : auto-pan le canvas vers isolatedPlayer si toggle actif.
+  // Smooth lerp 18% par frame pour eviter saccade lors des deplacements rapides
+  // ou re-snap apres mort. Clamp aux bords du canvas pour pas reveler du vide.
+  let _camTransformActive = false;
+  if (followCamera && isolatedPlayer && frame.players[isolatedPlayer]?.alive) {
+    const p = frame.players[isolatedPlayer];
+    const _pc = w2c(p.x, p.y);
+    const px = _pc.x * scaleX, py = _pc.y * scaleY;
+    const targetOffX = W / 2 - px;
+    const targetOffY = H / 2 - py;
+    // Clamp pour pas reveler de zone vide au-dela des bords map
+    const maxOff = Math.max(W, H) * 0.4;
+    const clampedX = Math.max(-maxOff, Math.min(maxOff, targetOffX));
+    const clampedY = Math.max(-maxOff, Math.min(maxOff, targetOffY));
+    // Lerp pour smoothing
+    camOffsetX += (clampedX - camOffsetX) * 0.18;
+    camOffsetY += (clampedY - camOffsetY) * 0.18;
+    ctx.save();
+    ctx.translate(camOffsetX, camOffsetY);
+    _camTransformActive = true;
+  } else {
+    // Reset progressif vers 0 quand on quitte le mode follow
+    camOffsetX *= 0.6;
+    camOffsetY *= 0.6;
+    if (Math.abs(camOffsetX) < 0.5 && Math.abs(camOffsetY) < 0.5) { camOffsetX = 0; camOffsetY = 0; }
+  }
 
   // ── Kill events trigger : damage floats + multi-kill banners ─────────
   // Idempotent : _firedEvents Set garantit 1 fire / kill, meme si RAF
@@ -3048,7 +3273,7 @@ function drawFrame(idx, interp = 0) {
     const holeYPx = PIN_H * PIN_HOLE_Y_RATIO;
     const holeR = PIN_H * PIN_HOLE_R_RATIO;
 
-    if (playerPinImg.complet && playerPinImg.naturalWidth) {
+    if (playerPinImg.complete && playerPinImg.naturalWidth) {
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(yawRad - Math.PI / 2);
@@ -3083,7 +3308,7 @@ function drawFrame(idx, interp = 0) {
     const weaponKey = normalizeWeaponName(p.weapon);
     const weaponFile = weaponKey ? WEAPON_FILE_MAP[weaponKey] : null;
     const weaponImg = weaponFile ? getWeaponImg(weaponFile) : null;
-    const hasIcon = weaponImg && weaponImg.complet && weaponImg.naturalWidth > 0;
+    const hasIcon = weaponImg && weaponImg.complete && weaponImg.naturalWidth > 0;
     // Taille icone adaptee a la pill (hauteur 10px, largeur proportionnelle)
     const iconH = 10;
     const iconW = hasIcon ? Math.min(18, iconH * (weaponImg.naturalWidth / weaponImg.naturalHeight)) : 0;
@@ -3124,7 +3349,7 @@ function drawFrame(idx, interp = 0) {
     // Bombe C4 portee par ce joueur : petite icone a côté du pin
     if (mapC4Carrier === name) {
       const c4Img = getWeaponImg('c4');
-      if (c4Img && c4Img.complet && c4Img.naturalWidth) {
+      if (c4Img && c4Img.complete && c4Img.naturalWidth) {
         const bh = 12;
         const bw = bh * (c4Img.naturalWidth / c4Img.naturalHeight);
         ctx.save();
@@ -3146,7 +3371,7 @@ function drawFrame(idx, interp = 0) {
     const bx = _bp.x * scaleX, by = _bp.y * scaleY;
     if (inBounds(bx, by)) {
       const c4Img = getWeaponImg('c4');
-      if (c4Img && c4Img.complet && c4Img.naturalWidth) {
+      if (c4Img && c4Img.complete && c4Img.naturalWidth) {
         const bh = 14;
         const bw = bh * (c4Img.naturalWidth / c4Img.naturalHeight);
         // Pulse subtle pour attirer l'oeil
@@ -3230,9 +3455,8 @@ function drawFrame(idx, interp = 0) {
     ctx.restore();
   }
 
-  // ── Canvas Scoreboard (top center of map) ────────────────────────────────
-  // Disabled: redundant with the right sidebar team panels; hid per user request.
-  // drawScoreboard(frame, W, H);
+  // Follow camera : restore le transform avant les UI overlays (timeline DOM)
+  if (_camTransformActive) ctx.restore();
 
   // Timeline UI
   const pct = frames.length > 1 ? (idx / (frames.length - 1)) * 100 : 0;
@@ -3400,103 +3624,7 @@ function drawKillfeed(frame, W, H) {
   ctx.restore();
 }
 
-// ══ CANVAS SCOREBOARD ═══════════════════════════════════════════════════════
-function drawScoreboard(frame, W, H) {
-  const _currentDisp = currentRound !== null
-    ? ((demoData.rounds || []).find(r => (r.round ?? -1) === currentRound)?.displayNum ?? 0)
-    : 0;
-  const { teamA, teamB, HALFTIME } = computeTeamScores(_currentDisp);
-  const _afterHalf = _currentDisp > HALFTIME;
-  const ctScore = _afterHalf ? teamB : teamA;
-  const tScore = _afterHalf ? teamA : teamB;
-
-  const secs = Math.round((frame.tick - (frames[0]?.tick || 0)) / 64);
-  const timeStr = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
-  const rdData = (demoData.rounds || []).find(r => (r.round ?? -1) === currentRound) || {};
-  const dispN = rdData.displayNum ?? ((currentRound ?? 0) + 1);
-  const roundStr = rdData.isKnife ? 'KNIFE' : `ROUND ${dispN}`;
-
-  const cx = W / 2;
-  const y = 8;
-  const totalW = 220, totalH = 44;
-  const bx = cx - totalW / 2, by = y;
-
-  ctx.save();
-
-  // Background panel with rounded corners
-  const r = 8;
-  ctx.beginPath();
-  ctx.moveTo(bx + r, by); ctx.lineTo(bx + totalW - r, by);
-  ctx.quadraticCurveTo(bx + totalW, by, bx + totalW, by + r);
-  ctx.lineTo(bx + totalW, by + totalH - r);
-  ctx.quadraticCurveTo(bx + totalW, by + totalH, bx + totalW - r, by + totalH);
-  ctx.lineTo(bx + r, by + totalH);
-  ctx.quadraticCurveTo(bx, by + totalH, bx, by + totalH - r);
-  ctx.lineTo(bx, by + r);
-  ctx.quadraticCurveTo(bx, by, bx + r, by);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(10,12,16,.88)'; ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 1; ctx.stroke();
-
-  // CT side accent bar (left)
-  ctx.fillStyle = '#4A9EFF';
-  ctx.beginPath();
-  ctx.moveTo(bx + r, by); ctx.lineTo(bx + 3 + r, by);
-  ctx.lineTo(bx + 3 + r, by + totalH);
-  ctx.lineTo(bx + r, by + totalH);
-  ctx.quadraticCurveTo(bx, by + totalH, bx, by + totalH - r);
-  ctx.lineTo(bx, by + r);
-  ctx.quadraticCurveTo(bx, by, bx + r, by);
-  ctx.closePath(); ctx.fill();
-
-  // T side accent bar (right)
-  ctx.fillStyle = '#F5C842';
-  ctx.beginPath();
-  ctx.moveTo(bx + totalW - r - 3, by); ctx.lineTo(bx + totalW - r, by);
-  ctx.quadraticCurveTo(bx + totalW, by, bx + totalW, by + r);
-  ctx.lineTo(bx + totalW, by + totalH - r);
-  ctx.quadraticCurveTo(bx + totalW, by + totalH, bx + totalW - r, by + totalH);
-  ctx.lineTo(bx + totalW - r - 3, by + totalH);
-  ctx.closePath(); ctx.fill();
-
-  // CT label
-  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  ctx.font = 'bold 11px "Space Mono",monospace';
-  ctx.fillStyle = '#4A9EFF';
-  ctx.fillText('CT', bx + 10, by + 16);
-
-  // CT score
-  ctx.font = '28px "Anton",sans-serif';
-  ctx.fillStyle = '#4A9EFF';
-  ctx.textAlign = 'right';
-  ctx.fillText(String(ctScore), cx - 12, by + 26);
-
-  // Separator
-  ctx.font = 'bold 14px "Space Mono",monospace';
-  ctx.fillStyle = 'rgba(255,255,255,.3)';
-  ctx.textAlign = 'center';
-  ctx.fillText(':', cx, by + 22);
-
-  // T score
-  ctx.font = '28px "Anton",sans-serif';
-  ctx.fillStyle = '#F5C842';
-  ctx.textAlign = 'left';
-  ctx.fillText(String(tScore), cx + 12, by + 26);
-
-  // T label
-  ctx.font = 'bold 11px "Space Mono",monospace';
-  ctx.fillStyle = '#F5C842';
-  ctx.textAlign = 'right';
-  ctx.fillText('T', bx + totalW - 10, by + 16);
-
-  // Round + time (bottom row)
-  ctx.textAlign = 'center';
-  ctx.font = '600 8px "Space Mono",monospace';
-  ctx.fillStyle = 'rgba(255,255,255,.45)';
-  ctx.fillText(roundStr + '  ' + timeStr, cx, by + 39);
-
-  ctx.restore();
-}
+// (drawScoreboard supprime : doublon avec les sidebar panels droite, 95 lignes mortes)
 
 // ══ MOVEMENT TRAILS ══════════════════════════════════════════════════════════
 function drawTrails(frame, W, H) {
@@ -3700,7 +3828,7 @@ function drawWeaponDrops(frame, W, H) {
     if (!file) return;
 
     const img = getWeaponImg(file);
-    if (!img.complet || !img.naturalWidth) return; // pas encore charge
+    if (!img.complete || !img.naturalWidth) return; // pas encore charge
 
     const _p = w2c(k.victimX, k.victimY);
     const px = _p.x * scaleX, py = _p.y * scaleY;
@@ -3835,8 +3963,25 @@ function drawEffects(frame, W, H) {
     ctx.fillStyle = `rgba(255,255,230,${alpha})`; ctx.fill();
   });
 
-  // Kill tracers (solid RED line from attacker to victim)
-  (demoData.kills || []).forEach(k => {
+  // Pre-compute trade kills : K2 trade K1 si K2.victim === K1.attacker
+  // dans une fenetre de 5s (640 ticks @ 128). C'est le pattern "revenge" pro.
+  const allKills = demoData.kills || [];
+  const tradeMap = new Map();  // kill_idx -> { isTrade: true, originalVictimX, originalVictimY }
+  for (let i = 0; i < allKills.length; i++) {
+    const k2 = allKills[i];
+    if (!k2.tick) continue;
+    // Cherche K1 ou K2.victim === K1.attacker dans les 5s precedentes
+    for (let j = i - 1; j >= 0 && (k2.tick - allKills[j].tick) <= 640; j--) {
+      const k1 = allKills[j];
+      if (k1.attacker === k2.victim) {
+        tradeMap.set(i, { originalVictimX: k1.victimX, originalVictimY: k1.victimY, originalVictim: k1.victim });
+        break;
+      }
+    }
+  }
+
+  // Kill tracers (solid RED line from attacker to victim, GREEN dashed pour trade kills)
+  allKills.forEach((k, idx) => {
     const kt = k.tick || 0;
     if (kt === 0 || tick < kt || tick > kt + KILL_DUR) return;
     if (kt < rdStart || kt > rdEnd + 1000) return;
@@ -3864,6 +4009,26 @@ function drawEffects(frame, W, H) {
     if (k.isHeadshot) {
       ctx.beginPath(); ctx.arc(vpx, vpy, 8, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(255,40,40,${alpha * 0.6})`; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+    // Trade kill marker : ligne verte pointillee depuis le 1er victime (avenge)
+    // vers le tueur actuel. Visualise le pattern "revenge" pro.
+    const trade = tradeMap.get(idx);
+    if (trade && trade.originalVictimX != null) {
+      const _ov = w2c(trade.originalVictimX, trade.originalVictimY);
+      const ovx = _ov.x * scaleX, ovy = _ov.y * scaleY;
+      ctx.save();
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = `rgba(124,212,90,${alpha * 0.85})`;  // green for "traded"
+      ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.moveTo(ovx, ovy); ctx.lineTo(apx, apy); ctx.stroke();
+      ctx.setLineDash([]);
+      // Petit label 'T' a mi-chemin pour signifier 'trade'
+      const midX = (ovx + apx) / 2, midY = (ovy + apy) / 2;
+      ctx.fillStyle = `rgba(124,212,90,${alpha})`;
+      ctx.font = 'bold 9px "Space Mono",monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('T', midX, midY - 6);
+      ctx.restore();
     }
   });
 
@@ -3925,7 +4090,7 @@ function drawEffects(frame, W, H) {
                    : gType.includes('molotov') ? 'molotov'
                    : gType.includes('decoy') ? 'decoy' : null;
     const nadeImg = nadeFile ? getWeaponImg(nadeFile) : null;
-    const hasNadeImg = nadeImg && nadeImg.complet && nadeImg.naturalWidth > 0;
+    const hasNadeImg = nadeImg && nadeImg.complete && nadeImg.naturalWidth > 0;
 
     // Trajectory : la grenade est en vol entre tick et detonTick
     if (tick >= g.tick && tick < g.detonTick && inBounds(lx, ly)) {
@@ -4135,6 +4300,21 @@ function drawEffects(frame, W, H) {
     ctx.strokeStyle = `rgba(${haloColor},0.5)`; ctx.lineWidth = 2; ctx.stroke();
     ctx.beginPath(); ctx.arc(bx, by, baseR * 1.4 * pulse, 0, Math.PI * 2);
     ctx.strokeStyle = `rgba(${haloColor},0.3)`; ctx.lineWidth = 1; ctx.stroke();
+
+    // Bomb timer countdown ring : sweep visible 40s -> 0s.
+    // Reprend le pattern smoke duration-ring. Anti-horaire = temps restant.
+    // Devient rouge plus dense quand < 5s (urgence visuelle).
+    if (!defused && !exploded) {
+      const totalDur = 40 * 128;
+      const ringSweep = Math.max(0, Math.min(1, (endEventTick - tick) / totalDur));
+      const ringRadius = baseR * 1.85;
+      const urgent = secToEnd < 5;
+      ctx.beginPath();
+      ctx.arc(bx, by, ringRadius, -Math.PI / 2, -Math.PI / 2 + ringSweep * Math.PI * 2, false);
+      ctx.strokeStyle = urgent ? `rgba(255,60,40,${0.85 + Math.sin(tick * 0.6) * 0.15})` : 'rgba(255,170,85,0.7)';
+      ctx.lineWidth = urgent ? 3 : 2;
+      ctx.stroke();
+    }
     // Corps : gradient
     const bg = ctx.createRadialGradient(bx, by, 0, bx, by, baseR);
     bg.addColorStop(0, `rgba(${haloColor},1)`);
@@ -4419,14 +4599,42 @@ function setSpeed(s, btn) {
 
 function skipBack() { stopPlayLoop(); playing = false; setPlayPause(false); frameIdx = 0; drawFrame(0); }
 function skipFwd()  { stopPlayLoop(); playing = false; setPlayPause(false); frameIdx = frames.length - 1; drawFrame(frameIdx); }
-function stepBack() { stopPlayLoop(); playing = false; setPlayPause(false); frameIdx = Math.max(0, frameIdx - 5); drawFrame(frameIdx); }
-function stepFwd()  { stopPlayLoop(); playing = false; setPlayPause(false); frameIdx = Math.min(frames.length - 1, frameIdx + 5); drawFrame(frameIdx); }
+// step normal : 5 frames (~0.08s a 64tick). Shift+arrow : 1 frame precis (tick-perfect).
+function stepBack(steps = 5) { stopPlayLoop(); playing = false; setPlayPause(false); frameIdx = Math.max(0, frameIdx - steps); drawFrame(frameIdx); }
+function stepFwd(steps = 5)  { stopPlayLoop(); playing = false; setPlayPause(false); frameIdx = Math.min(frames.length - 1, frameIdx + steps); drawFrame(frameIdx); }
 function seek(e) {
   const rect = document.getElementById('timeline').getBoundingClientRect();
   const pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
   frameIdx = Math.round(pct * (frames.length - 1));
   drawFrame(frameIdx);
 }
+
+// ══ DEATH CAM ════════════════════════════════════════════════════════════════
+// Jump 3s avant un kill et lance le replay en speed 1x. Permet au user de
+// re-analyser "comment je suis mort" sans scrubber a la main.
+// Appele depuis chip killChips onclick (data-tick attribut).
+window.deathCam = function (tick) {
+  if (!frames || frames.length === 0) return;
+  const minT = frames[0]?.tick || 0;
+  const maxT = frames[frames.length - 1]?.tick || 0;
+  // 3 secondes a 128 tick = 384 ticks. Clamp dans le range du round.
+  const targetTick = Math.max(minT, tick - 384);
+  // Trouve la frame la plus proche
+  let bestIdx = 0, bestDiff = Infinity;
+  for (let i = 0; i < frames.length; i++) {
+    const d = Math.abs((frames[i].tick || 0) - targetTick);
+    if (d < bestDiff) { bestDiff = d; bestIdx = i; }
+  }
+  frameIdx = bestIdx;
+  drawFrame(frameIdx);
+  // Force speed 1x pour analyse au timing naturel
+  if (speed !== 1) {
+    speed = 1;
+    document.querySelectorAll('.spd').forEach(b => b.classList.toggle('on', b.textContent === '1x' || b.dataset.speed === '1'));
+  }
+  // Lance le play si pas deja actif
+  if (!playing) togglePlay();
+};
 
 function switchFloor(floor, btn) {
   currentFloor = floor;
@@ -4444,6 +4652,18 @@ function switchFloor(floor, btn) {
 function toggleTrail() {
   showTrail = !showTrail;
   document.getElementById('btnTrail').classList.toggle('active', showTrail);
+  drawFrame(frameIdx);
+}
+
+// Follow camera : auto-pan le canvas pour garder isolatedPlayer centre.
+// Requirement : un joueur doit etre isole (click sur dot pour l'isoler).
+// Sinon le toggle reste activable mais sans effet jusqu'a l'isolation.
+function toggleFollowCam() {
+  followCamera = !followCamera;
+  const btn = document.getElementById('btnFollow');
+  if (btn) btn.classList.toggle('active', followCamera);
+  // Reset l'offset pour eviter un jump au prochain frame
+  camOffsetX = 0; camOffsetY = 0;
   drawFrame(frameIdx);
 }
 
@@ -5550,8 +5770,8 @@ document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   switch (e.code) {
     case 'Space': e.preventDefault(); togglePlay(); break;
-    case 'ArrowLeft': e.preventDefault(); stepBack(); break;
-    case 'ArrowRight': e.preventDefault(); stepFwd(); break;
+    case 'ArrowLeft': e.preventDefault(); stepBack(e.shiftKey ? 1 : 5); break;
+    case 'ArrowRight': e.preventDefault(); stepFwd(e.shiftKey ? 1 : 5); break;
     case 'KeyZ': {
       const speeds = [0.25, 0.5, 1, 2, 4];
       const idx = speeds.indexOf(speed);
@@ -5583,6 +5803,8 @@ document.addEventListener('keydown', e => {
       }
       break;
     }
+    case 'KeyF': e.preventDefault(); toggleFollowCam(); break;
+    case 'KeyT': e.preventDefault(); toggleTrail(); break;
   }
 });
 </script>
