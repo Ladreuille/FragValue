@@ -808,8 +808,43 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       .sidebar-left{display:none}
     }
     @media(max-width:600px){
-      .main{grid-template-columns:1fr}
-      .sidebar-right{display:none}
+      /* Layout vertical : map prend la largeur full, team panels en bottom sheet
+         togglable via bouton flottant. */
+      .main{grid-template-columns:1fr;grid-template-rows:1fr auto}
+      .sidebar-right{
+        /* Bottom sheet : collapse par defaut, slide-up via .open class JS */
+        position:fixed;left:0;right:0;bottom:0;
+        max-height:55vh;overflow-y:auto;
+        background:#0a0c10;border-top:1px solid var(--border);
+        transform:translateY(calc(100% - 36px));
+        transition:transform .25s ease;
+        z-index:50;
+      }
+      .sidebar-right.open{transform:translateY(0)}
+      /* Bouton handle pour drag/toggle */
+      .sidebar-right::before{
+        content:'PLAYERS';display:flex;align-items:center;justify-content:center;
+        height:36px;font-family:var(--mono);font-size:10px;letter-spacing:.15em;
+        color:var(--text2);cursor:pointer;
+        background:linear-gradient(180deg, rgba(184,255,87,.04), transparent);
+        border-bottom:1px solid var(--border);
+      }
+      /* Controls bar compact mobile */
+      .controls{padding:4px 6px;gap:6px}
+      .ctrl-time{font-size:9px;min-width:64px}
+      .spd{padding:3px 5px;font-size:8px}
+      /* Top bar plus dense */
+      .topbar{padding:6px 8px}
+      .tb-map,.tb-round{font-size:11px}
+      /* Multikill banner taille reduite */
+      .mk-tier{font-size:24px}
+      .mk-by{font-size:11px}
+    }
+    /* Tablette portrait : sidebars condensees */
+    @media(min-width:601px) and (max-width:900px){
+      .sidebar-right{font-size:11px}
+      .player-row{padding:4px 6px}
+      .pt-stat-val{font-size:11px}
     }
   </style>
 <script src="/analytics.js" defer></script>
@@ -914,6 +949,14 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <!-- Trajectoires grenades : visualise toutes les utilities du round (smoke/HE/flash/molo/decoy) en polylines colorees -->
         <button class="sl-tool" id="btnGrenadeTraj" onclick="toggleGrenadeTraj()" data-tip="Trajectoires grenades">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 Q 8 4, 21 6"/><circle cx="21" cy="6" r="2.5" fill="currentColor"/></svg>
+        </button>
+        <!-- Smoke study : overlay TOUTES les smokes du match cross-round (S) -->
+        <button class="sl-tool" id="btnSmokeStudy" onclick="toggleSmokeStudy()" data-tip="Smoke study (lineups match entier) - S">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="14" r="4"/><circle cx="14" cy="9" r="3"/><circle cx="17" cy="16" r="2.5"/></svg>
+        </button>
+        <!-- Audio toggle : kill pops, plant, multi-kill (Web Audio synthese) -->
+        <button class="sl-tool" id="btnAudio" onclick="toggleAudio()" data-tip="Sons (kills, plant, multikill)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
         </button>
         <!-- Drawing tool : annotations tactiques (pencil/arrow/circle/text) sauvees par round -->
         <button class="sl-tool" id="btnDrawing" onclick="toggleDrawingMode()" data-tip="Annoter ce round">
@@ -1536,6 +1579,10 @@ let hoveredPlayer = null;  // nom du joueur hover pour tooltip live
 let followCamera = false;  // auto-pan canvas pour suivre isolatedPlayer (toggle F)
 // Smoothing camera : on lisse le translate entre frames pour eviter le saccade
 let camOffsetX = 0, camOffsetY = 0;
+let showSmokeStudy = false;  // smoke study mode : overlay TOUTES les smokes du match (cross-round)
+let audioEnabled = false;    // Web Audio API : kill sounds, plant, c4 beep, round end (toggle bouton)
+let _audioCtx = null;        // lazy init au 1er click (autoplay policy)
+let _lastBombPlantedFired = -1; // dedup audio bomb_planted par tick
 
 // Track les events visuels deja triggered pour ne pas re-spawn au scrub
 // arriere ou au replay du round. Cle = 'kill-<tick>-<victim>' / 'mk-<tick>-<attacker>'
@@ -1626,6 +1673,7 @@ function checkKillEventsAtTick(tick) {
   if (tick < _lastFiredTick) {
     // Scrub backward detecte : reset les events firees
     _firedEvents.clear();
+    _lastBombPlantedFired = -1;
   }
   _lastFiredTick = tick;
   const allKills = (demoData.kills || []);
@@ -1635,11 +1683,17 @@ function checkKillEventsAtTick(tick) {
     const t = k.tick || 0;
     return t > 0 && t <= tick && t >= tick - 30; // 30 ticks ~= 234ms a 128hz
   });
+  // Audio fire seulement si playback est en cours (pas en scrub manuel).
+  // Sinon scrubber la timeline declenche un cluster de kills → audio chaos.
+  const audioOK = audioEnabled && playing;
+
   for (const k of recentKills) {
     const key = 'kill-' + k.tick + '-' + (k.victim || '');
     if (_firedEvents.has(key)) continue;
     _firedEvents.add(key);
     spawnDamageFloat(k, null);
+    // Audio : kill pop (court, low volume pour pas etre intrusif)
+    if (audioOK) playKillTone(k.isHeadshot);
     // Multi-kill check sur ce kill
     const tier = detectMultikillAt(k.tick);
     if (tier && tier >= 2) {
@@ -1647,9 +1701,87 @@ function checkKillEventsAtTick(tick) {
       if (!_firedEvents.has(mkKey)) {
         _firedEvents.add(mkKey);
         showMultikillBanner(tier, k.attacker);
+        if (audioOK) playMultikillTone(tier);
       }
     }
   }
+
+  // Bomb planted audio : trigger 1 fois par event, seulement en playback live
+  if (audioOK) {
+    const bombPlants = demoData.bombPlants || [];
+    for (const bp of bombPlants) {
+      if (bp.tick && bp.tick > 0 && bp.tick <= tick && bp.tick >= tick - 30 && bp.tick !== _lastBombPlantedFired) {
+        _lastBombPlantedFired = bp.tick;
+        playPlantTone();
+        break;
+      }
+    }
+  }
+}
+
+// ══ AUDIO (Web Audio API synth, pas d'assets externes) ══════════════════════
+// Tous les sons sont synthetises en sin/triangle wave avec envelope ADSR
+// court. Volume default 0.06 (subtle, pas intrusif sur 30s replay).
+function ensureAudio() {
+  if (_audioCtx) return _audioCtx;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  _audioCtx = new AC();
+  return _audioCtx;
+}
+
+function playTone(freq, duration, opts = {}) {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const { volume = 0.06, type = 'sine', attack = 0.005, release = 0.05 } = opts;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  osc.connect(gain).connect(ctx.destination);
+  const now = ctx.currentTime;
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(volume, now + attack);
+  gain.gain.setValueAtTime(volume, now + duration - release);
+  gain.gain.linearRampToValueAtTime(0, now + duration);
+  osc.start(now);
+  osc.stop(now + duration + 0.02);
+}
+
+function playKillTone(isHs) {
+  // Headshot : ton plus aigu + plus court (claquant)
+  if (isHs) {
+    playTone(880, 0.10, { type: 'square', volume: 0.05 });
+    setTimeout(() => playTone(1100, 0.06, { type: 'square', volume: 0.04 }), 30);
+  } else {
+    playTone(220, 0.12, { type: 'sine', volume: 0.05 });
+  }
+}
+
+function playMultikillTone(tier) {
+  // Multi-kill : 2-3 notes ascending pour signifier triple/quad/ace
+  const baseFreq = 440;
+  const steps = tier; // 2 = double, 3 = triple, 4 = quad, 5 = ace
+  for (let i = 0; i < steps; i++) {
+    setTimeout(() => playTone(baseFreq * Math.pow(1.25, i), 0.10, { type: 'triangle', volume: 0.07 }), i * 80);
+  }
+}
+
+function playPlantTone() {
+  // Bomb plant : 2 notes descendantes (tension)
+  playTone(400, 0.15, { type: 'triangle', volume: 0.08 });
+  setTimeout(() => playTone(300, 0.20, { type: 'triangle', volume: 0.08 }), 100);
+}
+
+function toggleAudio() {
+  audioEnabled = !audioEnabled;
+  // Auto-resume si suspendu (page came from background)
+  if (audioEnabled) {
+    const ctx = ensureAudio();
+    if (ctx && ctx.state === 'suspended') ctx.resume();
+  }
+  const btn = document.getElementById('btnAudio');
+  if (btn) btn.classList.toggle('active', audioEnabled);
 }
 let shotsConverted = false;
 // Per-round filtered positions, shared by buildFrames and drawTrails so trails
@@ -1765,6 +1897,23 @@ window.addEventListener('load', async () => {
     window._fvDebugOverlay = _qs.get('debug') === '1';
   } catch(_) { window._fvDebugOverlay = false; }
 
+  // Mobile : toggle bottom sheet players panel sur clic du header sidebar-right.
+  // Detection mobile via media query (recalc au resize si rotation).
+  const setupMobileBottomSheet = () => {
+    const sb = document.querySelector('.sidebar-right');
+    if (!sb || sb._mobileHandlerBound) return;
+    sb._mobileHandlerBound = true;
+    sb.addEventListener('click', (e) => {
+      // Trigge uniquement si on click dans le top 36px (le handle ::before)
+      const rect = sb.getBoundingClientRect();
+      const yInSb = e.clientY - rect.top;
+      if (yInSb >= 0 && yInSb <= 36 && window.innerWidth <= 600) {
+        sb.classList.toggle('open');
+      }
+    });
+  };
+  setupMobileBottomSheet();
+
   // Check plan gating
   const hasAccess = await checkReplayAccess();
   if (!hasAccess) {
@@ -1809,7 +1958,9 @@ window.addEventListener('load', async () => {
       refreshBookmarks();
       // Drawing : load des annotations utilisateur sauvegardees pour cette demo.
       // Filtrage par round se fait au render dans drawAnnotations.
+      // Load hybride : localStorage instant + cloud async merge (cross-device).
       annotations = loadAnnotations();
+      loadAnnotationsHybrid();  // fire-and-forget, redraw si cloud merge
       // Deep-link : si l URL specifie ?round=N, on charge ce round.
       // Sinon le premier round non-knife. Apres selectRound, on applique
       // tick + iso si fournis (params persistent dans le state pour replay).
@@ -3160,6 +3311,11 @@ function drawFrame(idx, interp = 0) {
   // (smoke/HE/flash/molo/decoy) en polylines colorees + markers detonation.
   // Placé en arriere-plan pour ne pas masquer les dots joueurs.
   if (showGrenadeTraj) drawGrenadeTrajectories(W, H);
+
+  // Smoke study mode : overlay TOUTES les smokes du match (cross-round)
+  // pour analyser les lineups recurrents. Mutuellement exclusif avec
+  // grenadeTraj (si les deux on, smoke study prend le dessus).
+  if (showSmokeStudy) drawSmokeStudy(W, H);
 
   // ── Isolated player path (click sur dot) ─────────────────────────────
   // Dessine la trajectoire complete du joueur selectionne dans le round
@@ -4714,8 +4870,32 @@ function toggleFollowCam() {
 
 function toggleGrenadeTraj() {
   showGrenadeTraj = !showGrenadeTraj;
+  // Mutual exclusion : si on active grenadeTraj alors que smokeStudy est on,
+  // on coupe smokeStudy (visuel surcharge sinon)
+  if (showGrenadeTraj && showSmokeStudy) {
+    showSmokeStudy = false;
+    const smBtn = document.getElementById('btnSmokeStudy');
+    if (smBtn) smBtn.classList.remove('active');
+  }
   const btn = document.getElementById('btnGrenadeTraj');
   if (btn) btn.classList.toggle('active', showGrenadeTraj);
+  drawFrame(frameIdx);
+}
+
+// Smoke study : overlay TOUTES les smokes du match (cross-round).
+// Permet au user de voir les lineups recurrents et zones cibles du match
+// pour identifier les patterns tactiques de chaque side.
+function toggleSmokeStudy() {
+  showSmokeStudy = !showSmokeStudy;
+  // Mutual exclusion : si on active smokeStudy alors que grenadeTraj est on,
+  // on coupe grenadeTraj
+  if (showSmokeStudy && showGrenadeTraj) {
+    showGrenadeTraj = false;
+    const gtBtn = document.getElementById('btnGrenadeTraj');
+    if (gtBtn) gtBtn.classList.remove('active');
+  }
+  const btn = document.getElementById('btnSmokeStudy');
+  if (btn) btn.classList.toggle('active', showSmokeStudy);
   drawFrame(frameIdx);
 }
 
@@ -4810,6 +4990,154 @@ function drawGrenadeTrajectories(W, H) {
     ctx.fill();
   }
 
+  ctx.restore();
+}
+
+// ══ SMOKE STUDY ═══════════════════════════════════════════════════════════════
+// Overlay TOUTES les smokes du match (cross-round) avec :
+//  - cluster par impact bucket grid-64u : si N smokes meme spot, taille +
+//  - color code par side (CT bleu, T orange) du thrower
+//  - arc throw -> impact
+// Permet au user de voir les lineups recurrents pro vs amateur sur la map.
+function drawSmokeStudy(W, H) {
+  const smokes = (demoData.grenades || []).filter(g =>
+    g.type && g.type.toLowerCase().includes('smoke') &&
+    g.detonX != null && g.detonY != null
+  );
+  if (!smokes.length) return;
+  const scaleX = W / 1024, scaleY = H / 1024;
+
+  // Determine thrower side via le 1er sample de position pour ce joueur autour
+  // du tick de throw. Si non trouve, fallback 'unknown' (couleur neutre).
+  // Memoize par (thrower, tick) car appele N fois par smoke + 2x pour legend.
+  const positions = demoData.positions || {};
+  const sideCache = new Map();
+  function throwerSide(g) {
+    const key = (g.thrower || '') + '|' + (g.tick || 0);
+    if (sideCache.has(key)) return sideCache.get(key);
+    const pts = positions[g.thrower] || [];
+    let bestPt = null, bestDiff = Infinity;
+    for (const p of pts) {
+      const d = Math.abs((p.tick || 0) - (g.tick || 0));
+      if (d < bestDiff) { bestDiff = d; bestPt = p; }
+    }
+    let side = 'unknown';
+    if (bestPt) {
+      const team = bestPt.t ?? bestPt.team;
+      if (team === 3) side = 'ct';
+      else if (team === 2) side = 't';
+    }
+    sideCache.set(key, side);
+    return side;
+  }
+
+  // Cluster smokes par impact bucket (64u). Compte les occurrences pour
+  // representer les hotspot par taille.
+  const clusters = new Map();  // key="x|y|side" -> { count, throws: [...], impactX, impactY, side }
+  for (const g of smokes) {
+    const side = throwerSide(g);
+    const bx = Math.round(g.detonX / 64) * 64;
+    const by = Math.round(g.detonY / 64) * 64;
+    const key = `${bx}|${by}|${side}`;
+    if (!clusters.has(key)) {
+      clusters.set(key, { count: 0, throws: [], impactX: bx, impactY: by, side });
+    }
+    const c = clusters.get(key);
+    c.count++;
+    c.throws.push({ x: g.x, y: g.y, tick: g.tick });
+  }
+
+  ctx.save();
+  const SIDE_COLORS = {
+    ct:      { line: 'rgba(74,158,255,0.45)',  fill: 'rgba(74,158,255,0.20)', dot: '#4a9eff' },
+    t:       { line: 'rgba(245,200,66,0.45)',  fill: 'rgba(245,200,66,0.20)', dot: '#f5c842' },
+    unknown: { line: 'rgba(200,200,200,0.35)', fill: 'rgba(200,200,200,0.15)', dot: '#cccccc' },
+  };
+
+  // Dessine TOUS les arcs en arriere-plan (un par throw)
+  ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+  for (const cluster of clusters.values()) {
+    const s = SIDE_COLORS[cluster.side];
+    ctx.strokeStyle = s.line;
+    const _imp = w2c(cluster.impactX, cluster.impactY);
+    const ix = _imp.x * scaleX, iy = _imp.y * scaleY;
+    for (const t of cluster.throws) {
+      if (t.x == null) continue;
+      const _thr = w2c(t.x, t.y);
+      const tx = _thr.x * scaleX, ty = _thr.y * scaleY;
+      // Arc Quadratic pour suggerer une trajectoire courbe
+      const midX = (tx + ix) / 2, midY = (ty + iy) / 2 - 20;
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.quadraticCurveTo(midX, midY, ix, iy);
+      ctx.stroke();
+    }
+  }
+  ctx.setLineDash([]);
+
+  // Dessine les impact spots (cluster size = count)
+  for (const cluster of clusters.values()) {
+    const s = SIDE_COLORS[cluster.side];
+    const _imp = w2c(cluster.impactX, cluster.impactY);
+    const ix = _imp.x * scaleX, iy = _imp.y * scaleY;
+    if (!inBounds(ix, iy)) continue;
+    const baseR = 10;
+    const sizeBonus = Math.min(8, cluster.count * 1.6);  // up to 18px radius
+    const r = baseR + sizeBonus;
+    // Halo
+    ctx.beginPath();
+    ctx.arc(ix, iy, r, 0, Math.PI * 2);
+    ctx.fillStyle = s.fill;
+    ctx.fill();
+    ctx.strokeStyle = s.line;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Centre (dot solide)
+    ctx.beginPath();
+    ctx.arc(ix, iy, 3, 0, Math.PI * 2);
+    ctx.fillStyle = s.dot;
+    ctx.fill();
+    // Count badge si > 1
+    if (cluster.count > 1) {
+      ctx.font = 'bold 9px "Space Mono",monospace';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(cluster.count), ix, iy - r - 6);
+    }
+  }
+
+  // Dessine les throw origins (petit dot bordure side color)
+  for (const cluster of clusters.values()) {
+    const s = SIDE_COLORS[cluster.side];
+    for (const t of cluster.throws) {
+      if (t.x == null) continue;
+      const _thr = w2c(t.x, t.y);
+      const tx = _thr.x * scaleX, ty = _thr.y * scaleY;
+      if (!inBounds(tx, ty)) continue;
+      ctx.beginPath();
+      ctx.arc(tx, ty, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = s.dot;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+
+  // Legende top-right du canvas
+  ctx.save();
+  ctx.font = 'bold 10px "Space Mono",monospace';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  const legendW = 140, legendH = 36;
+  ctx.fillRect(W - legendW - 8, 8, legendW, legendH);
+  ctx.fillStyle = '#4a9eff';
+  ctx.fillText(`CT smokes (${smokes.filter(g => throwerSide(g) === 'ct').length})`, W - 12, 12);
+  ctx.fillStyle = '#f5c842';
+  ctx.fillText(`T smokes (${smokes.filter(g => throwerSide(g) === 't').length})`, W - 12, 24);
   ctx.restore();
 }
 
@@ -5516,6 +5844,9 @@ function toggleCoachAIPanel() {
 
 const ANN_STORAGE_PREFIX = 'fv_annotations_';
 
+// localStorage fallback : sync local INSTANTANE, le cloud sync est async par-dessus.
+// Strategie : localStorage = source-of-truth pendant editing (latency 0), Supabase
+// = backup/share/cross-device.
 function loadAnnotations() {
   try {
     const raw = localStorage.getItem(ANN_STORAGE_PREFIX + getDemoId());
@@ -5530,6 +5861,107 @@ function saveAnnotations() {
   try {
     localStorage.setItem(ANN_STORAGE_PREFIX + getDemoId(), JSON.stringify(annotations));
   } catch(_) {}
+  // Async cloud sync (best-effort, ne bloque pas l'UI)
+  scheduleCloudSave();
+}
+
+// Cloud sync (Supabase via API). Debounce 1500ms pour grouper les edits rapides.
+// Si user not logged in OU API fail → no-op (localStorage continue de marcher).
+let _cloudSaveTimer = null;
+function scheduleCloudSave() {
+  if (_cloudSaveTimer) clearTimeout(_cloudSaveTimer);
+  _cloudSaveTimer = setTimeout(() => { _cloudSaveTimer = null; pushAnnotationsToCloud(); }, 1500);
+}
+
+async function getSupabaseAccessToken() {
+  // Trouve le token Supabase stocke par le client SDK (clé pattern sb-*-auth-token)
+  for (const k of Object.keys(localStorage)) {
+    if (!k.startsWith('sb-') || !k.endsWith('-auth-token')) continue;
+    try {
+      const raw = JSON.parse(localStorage.getItem(k));
+      if (raw?.access_token) return raw.access_token;
+    } catch {}
+  }
+  return null;
+}
+
+async function pushAnnotationsToCloud() {
+  const token = await getSupabaseAccessToken();
+  if (!token) return; // user pas connecte
+  const demoId = getDemoId();
+  if (!demoId) return;
+
+  // Groupe par round (1 row par user/demo/round dans Supabase)
+  const byRound = {};
+  for (const a of annotations) {
+    const r = a.round;
+    if (r == null) continue;
+    if (!byRound[r]) byRound[r] = [];
+    byRound[r].push(a);
+  }
+
+  // Push chaque round en parallel (max 8 rounds typiquement)
+  const promises = Object.entries(byRound).map(([round, anns]) =>
+    fetch('/api/replay-annotations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        demo_id: demoId,
+        round_num: parseInt(round, 10),
+        payload: { annotations: anns },
+        is_public: false,
+      }),
+    }).catch(() => null)
+  );
+
+  try { await Promise.all(promises); } catch (_) { /* silent fail */ }
+}
+
+// Au load de la demo, on essaie d'abord le cloud (cross-device), fallback localStorage.
+async function loadAnnotationsHybrid() {
+  // Toujours load localStorage en premier (instant)
+  const local = loadAnnotations();
+  annotations = local;
+
+  // En parallel, tente le cloud pour merger
+  const token = await getSupabaseAccessToken();
+  if (!token) return; // pas logge → localStorage only
+
+  const demoId = getDemoId();
+  if (!demoId) return;
+
+  try {
+    const res = await fetch(`/api/replay-annotations?demo_id=${encodeURIComponent(demoId)}`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!Array.isArray(data.annotations)) return;
+
+    // Merge : cloud a la prio si updated_at plus recent que localStorage (par round)
+    const cloudAnns = [];
+    for (const row of data.annotations) {
+      const payload = row.payload || {};
+      const innerAnns = Array.isArray(payload.annotations) ? payload.annotations : [];
+      cloudAnns.push(...innerAnns);
+    }
+    // Si le cloud a des annotations qu'on n'a pas en local, on les ajoute
+    const localIds = new Set(annotations.map(a => a.id));
+    let mergedCount = 0;
+    for (const cloudA of cloudAnns) {
+      if (cloudA && cloudA.id && !localIds.has(cloudA.id)) {
+        annotations.push(cloudA);
+        mergedCount++;
+      }
+    }
+    if (mergedCount > 0) {
+      saveAnnotations();  // re-save localStorage avec les annotations cloud-merged
+      // Redraw si current round affecte
+      if (typeof drawFrame === 'function' && typeof frameIdx === 'number') {
+        drawFrame(frameIdx);
+      }
+    }
+  } catch (_) { /* silent */ }
 }
 
 // Convert mouse event -> world coords (0-1024 referential).
@@ -5548,9 +5980,11 @@ function handleDrawStart(e) {
   if (currentRound == null) return;
   const w = mouseToWorld(e);
   isDrawingStroke = true;
+  // ID unique : Date.now + random suffix pour eviter collisions sub-ms (cross-device cloud merge)
+  const _genAnnId = () => 'ann-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
   if (drawingTool === 'pencil') {
     currentStroke = {
-      id: 'ann-' + Date.now(),
+      id: _genAnnId(),
       type: 'pencil',
       color: drawingColor,
       points: [{ x: w.x, y: w.y }],
@@ -5559,7 +5993,7 @@ function handleDrawStart(e) {
     };
   } else if (drawingTool === 'arrow') {
     currentStroke = {
-      id: 'ann-' + Date.now(),
+      id: _genAnnId(),
       type: 'arrow',
       color: drawingColor,
       start: { x: w.x, y: w.y },
@@ -5569,7 +6003,7 @@ function handleDrawStart(e) {
     };
   } else if (drawingTool === 'circle') {
     currentStroke = {
-      id: 'ann-' + Date.now(),
+      id: _genAnnId(),
       type: 'circle',
       color: drawingColor,
       center: { x: w.x, y: w.y },
@@ -5641,7 +6075,7 @@ function handleDrawTextClick(e) {
   const text = (window.prompt('Texte a afficher ?', 'Note') || '').trim();
   if (!text) return;
   annotations.push({
-    id: 'ann-' + Date.now(),
+    id: 'ann-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
     type: 'text',
     color: drawingColor,
     pos: { x: w.x, y: w.y },
@@ -5850,6 +6284,7 @@ document.addEventListener('keydown', e => {
     }
     case 'KeyF': e.preventDefault(); toggleFollowCam(); break;
     case 'KeyT': e.preventDefault(); toggleTrail(); break;
+    case 'KeyS': e.preventDefault(); toggleSmokeStudy(); break;
   }
 });
 </script>
