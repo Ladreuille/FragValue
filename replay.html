@@ -2647,8 +2647,54 @@ function selectRound(round, btn) {
 }
 
 // ══ ROUND OUTCOME (eco/force/full per side) ═════════════════════════════════
-// Lit le money/equipValue de chaque joueur au freeze_end via frames[0],
-// classifie chaque side, et affiche le sticker en haut du canvas.
+// Classifie le buy de chaque side par analyse de l'arme + util + armor a
+// quelques secondes apres freeze_end (les joueurs ont termine leur switch).
+//
+// IMPORTANT : on N'UTILISE PAS p.money car c'est le leftover APRES achat
+// (inverse complet : un full-buy laisse $200, un save laisse $5000). Le bon
+// proxy est l'arme tenue + util + armor presents.
+
+// Prix CS2 par arme (catalogues officiels). Classifie par categorie.
+const WEAPON_TIER = {
+  // Eco / pistol (gratuit ou < 700$)
+  knife: 'eco', knife_t: 'eco', bayonet: 'eco', usp_silencer: 'eco', glock: 'eco',
+  hkp2000: 'eco', p2000: 'eco', deagle: 'eco', revolver: 'eco',
+  // Mid pistol / SMG (force territory)
+  p250: 'force', tec9: 'force', fiveseven: 'force', cz75a: 'force', elite: 'force',
+  mp9: 'force', mac10: 'force', mp7: 'force', mp5sd: 'force', ump45: 'force', bizon: 'force',
+  // Heavy / shotgun (force ou semi)
+  nova: 'force', mag7: 'force', sawedoff: 'force', xm1014: 'semi',
+  // Mid rifles (force/semi)
+  galilar: 'force', famas: 'force', ssg08: 'force', p90: 'force',
+  // Full rifles + AWP (full meta)
+  ak47: 'full', m4a1: 'full', m4a1_silencer: 'full', m4a4: 'full',
+  awp: 'full', aug: 'full', sg556: 'full', sg553: 'full',
+  // LMGs : tres rares mais cher
+  m249: 'full', negev: 'force',
+};
+
+function classifyPlayerBuy(p) {
+  if (!p) return null;
+  // Trouve la "vraie" arme : on prend la premiere arme primaire trouvee dans
+  // ses inventaire/weapon (le knife switch est temporaire). Si juste knife/c4
+  // au moment du snap, fallback sur l'armor pour distinguer eco strict vs save.
+  let w = (p.weapon || '').toLowerCase().replace(/^weapon_/, '');
+  // Strip suffixes
+  w = w.replace(/^c4$|^planted_c4$/, 'knife');  // C4 holder = pas une arme
+  let tier = WEAPON_TIER[w];
+  if (!tier) tier = 'eco';  // fallback inconnu = eco
+
+  // Boost tier si util presente (smokes/molly/flash) = signe de full buy
+  const utilCount = (p.smk || 0) + (p.fl || 0) + (p.heg || 0) + (p.mol || 0);
+  if (utilCount >= 3 && tier === 'force') tier = 'full';
+  if (utilCount >= 2 && tier === 'eco') tier = 'force';
+
+  // Boost si armor + helmet (full kit = $1000)
+  if (p.armor > 0 && p.hasHelmet && tier === 'eco') tier = 'force';
+
+  return tier;
+}
+
 function updateRoundOutcome(round) {
   const sticker = document.getElementById('roundOutcome');
   const text = document.getElementById('roundOutcomeText');
@@ -2657,46 +2703,39 @@ function updateRoundOutcome(round) {
     return;
   }
 
-  // Frame[0] = freeze_end (debut gameplay), donc le money/equip reflete le buy phase complete.
-  const firstFrame = frames[0];
-  const players = firstFrame?.players || {};
-  const ctEquip = []; const tEquip = [];
+  // Prend frame ~3s apres freeze_end (frames[10-15] @ 30fps environ). Les
+  // joueurs ont fini de buy + sont sortis du spawn. Si pas assez de frames,
+  // tombe en arriere sur le dernier dispo.
+  const sampleIdx = Math.min(12, frames.length - 1);
+  const sampleFrame = frames[sampleIdx];
+  const players = sampleFrame?.players || {};
+  const ctTiers = []; const tTiers = [];
   for (const [name, p] of Object.entries(players)) {
-    // Equip value = money initial (achete au freeze) + weapon value. Pas perfect mais
-    // on n'a pas equipValue separe : on approxime via money apres buy = peu fiable,
-    // donc on utilise le total argent + arme valeur estimee.
-    // Pragmatique : on prend juste money car parser n'expose pas equipValue.
-    const equipValue = p.money || 0;
-    if (p.team === 3 || p.team === 'CT') ctEquip.push(equipValue);
-    else if (p.team === 2 || p.team === 'T') tEquip.push(equipValue);
+    const tier = classifyPlayerBuy(p);
+    if (!tier) continue;
+    if (p.team === 3 || p.team === 'CT') ctTiers.push(tier);
+    else if (p.team === 2 || p.team === 'T') tTiers.push(tier);
   }
 
-  // Classification HLTV/scene standard :
-  // eco       : <= 2000$ moyenne par joueur (typique pistol round next ou full save)
-  // semi      : 2000-4000$ (half buy, partial util)
-  // force     : 4000-6000$ (full util mais armes 2nd-tier)
-  // full      : > 6000$ (full meta buy : AK/M4 + util complete)
-  const classify = (arr) => {
+  // Agregation : majorite des joueurs = tier du side. Si la majorite est mixed,
+  // pondere : full > force > semi > eco.
+  const tierScore = { eco: 0, force: 1, semi: 1, full: 2 };
+  const tierAvg = (arr) => {
     if (!arr.length) return null;
-    const avg = arr.reduce((s, v) => s + v, 0) / arr.length;
-    if (avg <= 2000) return 'eco';
-    if (avg <= 4000) return 'semi';
-    if (avg <= 6000) return 'force';
+    const avg = arr.reduce((s, t) => s + tierScore[t], 0) / arr.length;
+    if (avg < 0.4) return 'eco';
+    if (avg < 1.2) return 'force';
     return 'full';
   };
-  const ctC = classify(ctEquip);
-  const tC = classify(tEquip);
+  const ctC = tierAvg(ctTiers);
+  const tC = tierAvg(tTiers);
+  if (!ctC && !tC) { sticker.classList.remove('show'); return; }
 
-  if (!ctC && !tC) {
-    sticker.classList.remove('show');
-    return;
-  }
-
-  // Determine anti-eco : si un side est full/force et l'autre eco, le full est en anti-eco
+  // Anti-eco : full vs eco. Force vs eco egalement anti-eco-like.
   let stickerClass = 'show';
-  if ((ctC === 'full' || ctC === 'force') && tC === 'eco') stickerClass += ' anti-eco';
-  else if ((tC === 'full' || tC === 'force') && ctC === 'eco') stickerClass += ' anti-eco';
-  else if (ctC === 'eco' && tC === 'eco') stickerClass += ' eco';
+  if ((ctC === 'full' && tC === 'eco') || (tC === 'full' && ctC === 'eco')) {
+    stickerClass += ' anti-eco';
+  } else if (ctC === 'eco' && tC === 'eco') stickerClass += ' eco';
   else if (ctC === 'force' || tC === 'force') stickerClass += ' force';
   else stickerClass += ' full';
 
@@ -4615,8 +4654,10 @@ function seek(e) {
 // Appele depuis chip killChips onclick (data-tick attribut).
 window.deathCam = function (tick) {
   if (!frames || frames.length === 0) return;
+  // Hard stop le play loop pour eviter race condition avec le nouveau frameIdx.
+  stopPlayLoop(); playing = false; setPlayPause(false);
+
   const minT = frames[0]?.tick || 0;
-  const maxT = frames[frames.length - 1]?.tick || 0;
   // 3 secondes a 128 tick = 384 ticks. Clamp dans le range du round.
   const targetTick = Math.max(minT, tick - 384);
   // Trouve la frame la plus proche
@@ -4627,13 +4668,17 @@ window.deathCam = function (tick) {
   }
   frameIdx = bestIdx;
   drawFrame(frameIdx);
-  // Force speed 1x pour analyse au timing naturel
-  if (speed !== 1) {
-    speed = 1;
-    document.querySelectorAll('.spd').forEach(b => b.classList.toggle('on', b.textContent === '1x' || b.dataset.speed === '1'));
+  // Force speed 1x pour analyse au timing naturel : reuse setSpeed pour
+  // garder l'etat des boutons + re-seed timer coherent.
+  const oneXBtn = document.querySelector('.spd.on') ?
+    Array.from(document.querySelectorAll('.spd')).find(b => b.textContent.trim() === '1x') : null;
+  if (oneXBtn && speed !== 1) {
+    setSpeed(1, oneXBtn);
+  } else {
+    speed = 1;  // safety
   }
-  // Lance le play si pas deja actif
-  if (!playing) togglePlay();
+  // Lance le play (toggle depuis paused etat reset au-dessus)
+  togglePlay();
 };
 
 function switchFloor(floor, btn) {
