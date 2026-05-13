@@ -3,21 +3,21 @@
 // scripts/detect-pro-patterns.js · FragValue · Option B Phase 3
 //
 // Detection de patterns tactiques dans pro_demo_events.
-//
 // Run apres que des demos ont ete parsees (pro_demos.status = 'parsed').
 // Insert dans pro_demo_patterns avec confidence scoring.
 //
-// 5 pattern types detectes :
-//   A) util_lineup       : meme pro lance meme grenade depuis meme spot
-//   B) position_hold     : meme pro hold meme position timing T
-//   C) execute_timing    : team plant site X timing T sur map M
-//   D) post_plant_crossfire : positions hold apres bomb plant
-//   E) opening_position  : positions pre-execute (freeze+5s)
+// 5 SQL functions appelees via supabase.rpc() :
+//   - detect_util_lineups
+//   - detect_position_holds
+//   - detect_execute_timings
+//   - detect_post_plant_crossfires
+//   - detect_opening_positions
 //
-// Threshold : sample_size >= 3 ET confidence >= 0.4
+// Threshold : sample_size >= 3 ET confidence >= 0.4 (modifiable)
 //
 // Usage :
 //   node scripts/detect-pro-patterns.js [--map=mirage] [--type=util_lineup]
+//   node scripts/detect-pro-patterns.js --min-sample=5 --min-confidence=0.5
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -45,110 +45,145 @@ const TYPE_FILTER = args.type || null;
 const MIN_SAMPLE = parseInt(args['min-sample'] || '3', 10);
 const MIN_CONFIDENCE = parseFloat(args['min-confidence'] || '0.4');
 
-// ─── Pattern signature hash (deduplicate runs) ────────────────────────────
 function sigHash(parts) {
   const json = JSON.stringify(parts);
   return crypto.createHash('sha256').update(json).digest('hex').slice(0, 16);
 }
 
-// ─── A) util_lineup ───────────────────────────────────────────────────────
+// ─── Detection wrappers (1 par pattern type) ──────────────────────────────
+// Chaque wrapper :
+//   1. Appelle la SQL function via RPC
+//   2. Transforme chaque row en pattern object (avec pattern_data jsonb)
+//   3. Retourne array de patterns
+
 async function detectUtilLineups() {
-  console.log('[detect] A) util_lineup ...');
+  const { data, error } = await supabase.rpc('detect_util_lineups', {
+    p_map: MAP_FILTER,
+    p_min_sample: MIN_SAMPLE,
+  });
+  if (error) { console.warn('[util_lineup] RPC error:', error.message); return []; }
+  if (!data || !data.length) return [];
 
-  // Pour chaque (pro, map, side, grenade_type, grid-snap from, grid-snap to)
-  // Count occurrences across all rounds, compare to total grenades of same type by same pro.
-  const query = `
-    WITH thrown AS (
-      SELECT
-        pmm.map_name,
-        e.player_steamid,
-        e.player_name,
-        e.player_team,
-        e.grenade_type,
-        (round(e.pos_x / 64) * 64)::int AS thrown_x_bucket,
-        (round(e.pos_y / 64) * 64)::int AS thrown_y_bucket,
-        (round(e.target_pos_x / 64) * 64)::int AS impact_x_bucket,
-        (round(e.target_pos_y / 64) * 64)::int AS impact_y_bucket,
-        ((e.metadata->>'is_jumping')::boolean) AS is_jumping
-      FROM pro_demo_events e
-      JOIN pro_match_maps pmm ON pmm.id = e.pro_match_map_id
-      WHERE e.event_type = 'grenade_detonated'
-        AND e.grenade_type IS NOT NULL
-        AND e.player_steamid IS NOT NULL
-        AND e.target_pos_x IS NOT NULL
-        ${MAP_FILTER ? `AND pmm.map_name = '${MAP_FILTER.replace(/'/g, "''")}'` : ''}
-    ),
-    pattern_counts AS (
-      SELECT
-        map_name, player_steamid, player_name, player_team, grenade_type,
-        thrown_x_bucket, thrown_y_bucket, impact_x_bucket, impact_y_bucket, is_jumping,
-        count(*) AS sample_size
-      FROM thrown
-      GROUP BY 1,2,3,4,5,6,7,8,9,10
-    ),
-    pro_totals AS (
-      SELECT map_name, player_steamid, grenade_type, count(*) AS total
-      FROM thrown
-      GROUP BY 1,2,3
-    )
-    SELECT
-      pc.*,
-      pt.total AS total_opportunities,
-      (pc.sample_size::numeric / pt.total) AS confidence
-    FROM pattern_counts pc
-    JOIN pro_totals pt USING (map_name, player_steamid, grenade_type)
-    WHERE pc.sample_size >= ${MIN_SAMPLE}
-    ORDER BY pc.sample_size DESC
-    LIMIT 500;
-  `;
-
-  const { data, error } = await supabase.rpc('exec_sql_unsafe', { sql: query }).catch(() => ({ data: null, error: 'rpc unavailable' }));
-
-  // Fallback : exec directly via service role (Supabase JS client doesn't expose raw SQL,
-  // so we use a stored function or build via PostgREST manually. For now, log instruction.)
-  if (!data) {
-    console.log(`[detect] util_lineup query needs exec_sql RPC (cf. fix : create function ou utiliser supabase-cli/psql)`);
-    return [];
-  }
-
-  return data;
+  return data.map(r => ({
+    pattern_type: 'util_lineup',
+    map: r.map,
+    side: r.player_team,
+    player_steamid: r.player_steamid,
+    player_name: r.player_name,
+    sample_size: Number(r.sample_size),
+    total_opportunities: Number(r.total_opportunities),
+    confidence: Number(r.confidence),
+    pattern_data: {
+      grenade_type: r.grenade_type,
+      thrown_pos: [r.thrown_x, r.thrown_y],
+      impact_pos: [r.impact_x, r.impact_y],
+      is_jumping: r.is_jumping,
+    },
+  }));
 }
 
-// ─── B) position_hold ─────────────────────────────────────────────────────
 async function detectPositionHolds() {
-  console.log('[detect] B) position_hold ...');
-  // Snapshots a freeze+5s : pour chaque pro, position bucketed grid 128u.
-  // Confidence = sample_size / total rounds same map+side+pro
-  // SQL similaire a util_lineup mais sur position_snapshot events.
-  // (implementation suit la meme structure, abrege ici)
-  return [];
+  const { data, error } = await supabase.rpc('detect_position_holds', {
+    p_map: MAP_FILTER,
+    p_min_sample: MIN_SAMPLE,
+    p_timing_s: 10.0,
+    p_timing_window_s: 5.0,
+  });
+  if (error) { console.warn('[position_hold] RPC error:', error.message); return []; }
+  if (!data || !data.length) return [];
+
+  return data.map(r => ({
+    pattern_type: 'position_hold',
+    map: r.map,
+    side: r.side,
+    player_steamid: r.player_steamid,
+    player_name: r.player_name,
+    sample_size: Number(r.sample_size),
+    total_opportunities: Number(r.total_opportunities),
+    confidence: Number(r.confidence),
+    pattern_data: {
+      position: [r.pos_x_bucket, r.pos_y_bucket],
+      timing_s: 10.0,
+    },
+  }));
 }
 
-// ─── C) execute_timing ────────────────────────────────────────────────────
 async function detectExecuteTimings() {
-  console.log('[detect] C) execute_timing ...');
-  // Pour chaque (team, map, side) : average plant_time + stddev.
-  // Si stddev < 5s sur >= 3 samples → pattern timing strict.
-  return [];
+  const { data, error } = await supabase.rpc('detect_execute_timings', {
+    p_map: MAP_FILTER,
+    p_min_sample: MIN_SAMPLE,
+  });
+  if (error) { console.warn('[execute_timing] RPC error:', error.message); return []; }
+  if (!data || !data.length) return [];
+
+  return data.map(r => ({
+    pattern_type: 'execute_timing',
+    map: r.map,
+    side: r.side,
+    player_steamid: null,  // pattern team-wide
+    player_name: null,
+    sample_size: Number(r.sample_size),
+    total_opportunities: Number(r.total_plants),
+    confidence: Number(r.confidence),
+    pattern_data: {
+      exec_speed: r.exec_speed,
+      avg_plant_time_s: Number(r.avg_plant_time_s),
+      stddev_plant_time_s: Number(r.stddev_plant_time_s),
+    },
+  }));
 }
 
-// ─── D) post_plant_crossfire ──────────────────────────────────────────────
 async function detectPostPlantCrossfires() {
-  console.log('[detect] D) post_plant_crossfire ...');
-  // Pour chaque pair (player1, player2) co-equipiers : positions 5s post-plant.
-  // Confidence = nb rounds avec meme pair de positions / nb post-plants total.
-  return [];
+  const { data, error } = await supabase.rpc('detect_post_plant_crossfires', {
+    p_map: MAP_FILTER,
+    p_min_sample: MIN_SAMPLE,
+  });
+  if (error) { console.warn('[post_plant_crossfire] RPC error:', error.message); return []; }
+  if (!data || !data.length) return [];
+
+  return data.map(r => ({
+    pattern_type: 'post_plant_crossfire',
+    map: r.map,
+    side: r.player_team,
+    player_steamid: r.player_steamid,
+    player_name: r.player_name,
+    sample_size: Number(r.sample_size),
+    total_opportunities: Number(r.total_post_plants),
+    confidence: Number(r.confidence),
+    pattern_data: {
+      position: [r.pos_x_bucket, r.pos_y_bucket],
+    },
+  }));
 }
 
-// ─── E) opening_position ──────────────────────────────────────────────────
 async function detectOpeningPositions() {
-  console.log('[detect] E) opening_position ...');
-  // Snapshot freeze+5s par pro. Tres similaire a position_hold mais focus tres early.
-  return [];
+  const { data, error } = await supabase.rpc('detect_opening_positions', {
+    p_map: MAP_FILTER,
+    p_min_sample: MIN_SAMPLE,
+  });
+  if (error) { console.warn('[opening_position] RPC error:', error.message); return []; }
+  if (!data || !data.length) return [];
+
+  return data.map(r => ({
+    pattern_type: 'opening_position',
+    map: r.map,
+    side: r.side,
+    player_steamid: r.player_steamid,
+    player_name: r.player_name,
+    sample_size: Number(r.sample_size),
+    total_opportunities: Number(r.total_opportunities),
+    confidence: Number(r.confidence),
+    pattern_data: {
+      position: [r.pos_x_bucket, r.pos_y_bucket],
+      timing_s: 5.0,
+    },
+  }));
 }
 
-// ─── Insert patterns ──────────────────────────────────────────────────────
+// ─── Insert pattern (idempotent via signature_hash) ───────────────────────
 async function insertPattern(pattern) {
+  if (pattern.confidence < MIN_CONFIDENCE) return null;
+
   const sig = sigHash([
     pattern.pattern_type,
     pattern.map,
@@ -157,38 +192,35 @@ async function insertPattern(pattern) {
     pattern.pattern_data,
   ]);
 
-  if (pattern.confidence < MIN_CONFIDENCE) return null;
-
-  const { data, error } = await supabase.from('pro_demo_patterns').upsert({
+  const { error } = await supabase.from('pro_demo_patterns').upsert({
     pattern_type: pattern.pattern_type,
     map: pattern.map,
     side: pattern.side,
     signature_hash: sig,
     player_steamid: pattern.player_steamid,
     player_name: pattern.player_name,
-    team_name: pattern.team_name || null,
     sample_size: pattern.sample_size,
     total_opportunities: pattern.total_opportunities,
     confidence: pattern.confidence,
     pattern_data: pattern.pattern_data,
-    description: pattern.description || null,
     last_seen: new Date().toISOString(),
   }, { onConflict: 'signature_hash' });
 
-  if (error) console.warn(`[insert] error : ${error.message}`);
-  return data;
+  if (error) {
+    console.warn(`[insert] error : ${error.message}`);
+    return null;
+  }
+  return true;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────
 async function main() {
   console.log(`[detect-pro-patterns] start (map=${MAP_FILTER || 'all'}, type=${TYPE_FILTER || 'all'}, min_sample=${MIN_SAMPLE}, min_conf=${MIN_CONFIDENCE})`);
 
-  // Verifie qu'on a des events parsees
   const { count } = await supabase.from('pro_demo_events').select('*', { count: 'exact', head: true });
   console.log(`[detect] ${count} events disponibles en DB`);
   if (count === 0) {
-    console.log(`[detect] no events. Run download + parse demos first.`);
-    console.log(`[detect] pipeline : node scripts/discover-pro-demos.js → node scripts/download-pro-demos.js → (parser Railway) → node scripts/detect-pro-patterns.js`);
+    console.log(`[detect] no events. Run discover + download + parser first.`);
     return;
   }
 
@@ -205,17 +237,18 @@ async function main() {
   let totalInserted = 0;
 
   for (const type of toRun) {
-    if (!detectors[type]) {
-      console.warn(`[detect] unknown type : ${type}`);
-      continue;
-    }
+    if (!detectors[type]) { console.warn(`[detect] unknown type : ${type}`); continue; }
     const patterns = await detectors[type]();
     totalDetected += patterns.length;
+    console.log(`[detect] ${type} : ${patterns.length} patterns detectes (avant filtre confidence)`);
+
+    let inserted = 0;
     for (const p of patterns) {
-      const res = await insertPattern({ ...p, pattern_type: type });
-      if (res) totalInserted++;
+      const res = await insertPattern(p);
+      if (res) inserted++;
     }
-    console.log(`[detect] ${type} : ${patterns.length} patterns detectes`);
+    totalInserted += inserted;
+    console.log(`[detect] ${type} : ${inserted} inseres (apres filtre min_conf=${MIN_CONFIDENCE})`);
   }
 
   console.log(`\n[detect-pro-patterns] DONE. detected=${totalDetected}, inserted=${totalInserted}`);
