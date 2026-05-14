@@ -592,8 +592,18 @@ nav:not(.fv-nav){
   display:flex;flex-direction:column;
   justify-content:flex-start;
   gap:6px;
-  overflow:hidden
+  /* overflow-y auto pour permettre le scroll interne quand le content
+     (upload card + file bar + lancer btn + FV Rating loading steps) depasse
+     le viewport. Cas frequent en 1280-1440px desktop quand demo en cours. */
+  overflow-y:auto;overflow-x:hidden;
+  /* Scrollbar discrete (track + thumb subtle) */
+  scrollbar-width:thin;
+  scrollbar-color:var(--border2) transparent;
 }
+.right::-webkit-scrollbar{width:6px}
+.right::-webkit-scrollbar-track{background:transparent}
+.right::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.right::-webkit-scrollbar-thumb:hover{background:var(--text3)}
 
 /* SECTION LABEL  - identique landing */
 .section-label{
