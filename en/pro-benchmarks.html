@@ -443,25 +443,31 @@ function flagImg(country) {
   const code = country.toLowerCase();
   return '<img class="top20-flag" src="https://flagcdn.com/20x15/' + code + '.png" alt="" loading="lazy" onerror="this.style.display=\'none\'"/>';
 }
-// HLTV profile : URL canonique avec ID si dispo, sinon search.
-// Format officiel : https://www.hltv.org/player/<id>/<nickname-lowercase>
-// Le nickname dans l'URL est purement cosmetique (HLTV redirect via id).
-function hltvUrl(nicknameOrPlayer, hltvIdParam) {
-  if (typeof nicknameOrPlayer === 'object' && nicknameOrPlayer) {
-    const id = nicknameOrPlayer.hltv_id || nicknameOrPlayer.hltvId;
-    const nick = nicknameOrPlayer.nickname || '';
-    if (id) {
-      const slug = String(nick).toLowerCase().replace(/[^a-z0-9]/g, '');
-      return 'https://www.hltv.org/player/' + id + '/' + (slug || 'player');
-    }
+// HLTV profile URL : canonical with ID if available, else search fallback.
+// Format : https://www.hltv.org/player/<id>/<slug>
+// HLTV redirects ANY slug to the canonical one as long as ID matches, but
+// the slug must be URL-safe. HLTV nicknames preserve case + underscores +
+// hyphens (e.g. "m0NESY", "daMs_-").
+//
+// Bug fix : old code did .toLowerCase().replace(/[^a-z0-9]/g, '') which
+// DESTROYED nicknames with _- (daMs_- → "dams"). Now preserves case + _-.
+function hltvUrl(playerOrNick, hltvIdParam) {
+  const obj = typeof playerOrNick === 'object' && playerOrNick !== null
+    ? playerOrNick
+    : { nickname: String(playerOrNick || '') };
+  const id = obj.hltv_id || obj.hltvId || hltvIdParam || null;
+  const nick = obj.nickname || '';
+
+  if (!id) {
+    if (!nick) return 'https://www.hltv.org/';
     return 'https://www.hltv.org/search?query=' + encodeURIComponent(nick);
   }
-  const nickname = nicknameOrPlayer;
-  if (hltvIdParam) {
-    const slug = String(nickname).toLowerCase().replace(/[^a-z0-9]/g, '');
-    return 'https://www.hltv.org/player/' + hltvIdParam + '/' + (slug || 'player');
-  }
-  return 'https://www.hltv.org/search?query=' + encodeURIComponent(nickname);
+
+  const slug = String(nick)
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9_\-]/g, '')
+    || 'player';
+  return 'https://www.hltv.org/player/' + id + '/' + slug;
 }
 
 // ─── Render top 20 list ──────────────────────────────────────────────────

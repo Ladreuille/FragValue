@@ -443,24 +443,36 @@ function flagImg(country) {
   return '<img class="top20-flag" src="https://flagcdn.com/20x15/' + code + '.png" alt="" loading="lazy" onerror="this.style.display=\'none\'"/>';
 }
 // HLTV profile : URL canonique avec ID si dispo, sinon search.
-// Format officiel : https://www.hltv.org/player/<id>/<nickname-lowercase>
-// Le nickname dans l'URL est purement cosmetique (HLTV redirect via id).
-function hltvUrl(nicknameOrPlayer, hltvIdParam) {
-  if (typeof nicknameOrPlayer === 'object' && nicknameOrPlayer) {
-    const id = nicknameOrPlayer.hltv_id || nicknameOrPlayer.hltvId;
-    const nick = nicknameOrPlayer.nickname || '';
-    if (id) {
-      const slug = String(nick).toLowerCase().replace(/[^a-z0-9]/g, '');
-      return 'https://www.hltv.org/player/' + id + '/' + (slug || 'player');
-    }
+// Format officiel : https://www.hltv.org/player/<id>/<slug>
+// HLTV redirige TOUT slug vers la version canonique tant que l'ID matche,
+// MAIS le slug doit etre URL-safe. Le nickname HLTV preserve la casse +
+// les underscores/hyphens (ex: "m0NESY", "daMs_-").
+//
+// Bug fix : ancien code faisait .toLowerCase().replace(/[^a-z0-9]/g, '')
+// qui DETRUISAIT les pseudos avec _- (daMs_- → "dams") rendant le slug
+// confus + parfois vide. Maintenant on preserve la casse + autorise _-.
+//
+// Fallback sans ID : redirection vers search page (HLTV n'a pas d'endpoint
+// "go-to-player-by-name", search est le seul moyen).
+function hltvUrl(playerOrNick, hltvIdParam) {
+  const obj = typeof playerOrNick === 'object' && playerOrNick !== null
+    ? playerOrNick
+    : { nickname: String(playerOrNick || '') };
+  const id = obj.hltv_id || obj.hltvId || hltvIdParam || null;
+  const nick = obj.nickname || '';
+
+  if (!id) {
+    if (!nick) return 'https://www.hltv.org/';
     return 'https://www.hltv.org/search?query=' + encodeURIComponent(nick);
   }
-  const nickname = nicknameOrPlayer;
-  if (hltvIdParam) {
-    const slug = String(nickname).toLowerCase().replace(/[^a-z0-9]/g, '');
-    return 'https://www.hltv.org/player/' + hltvIdParam + '/' + (slug || 'player');
-  }
-  return 'https://www.hltv.org/search?query=' + encodeURIComponent(nickname);
+
+  // Slug HLTV-safe : preserve case + _ + -. Strip uniquement les caracteres
+  // vraiment problematiques (slashes, ?, &, espaces remplacees par -).
+  const slug = String(nick)
+    .replace(/\s+/g, '-')                  // spaces → dashes
+    .replace(/[^a-zA-Z0-9_\-]/g, '')       // strip only "vraiment bad" chars
+    || 'player';                            // fallback ultime
+  return 'https://www.hltv.org/player/' + id + '/' + slug;
 }
 
 // ─── Render top 20 list ──────────────────────────────────────────────────
