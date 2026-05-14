@@ -4,6 +4,58 @@ Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/frag
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
+## 2026-05-14 · Endpoint /parse-from-storage (fix upload demo > 200 MB)
+
+**Bug** : `demo.html` (commit `113b76f`, May 9) appelle `/parse-from-storage`
+sur Railway apres upload direct Supabase Storage (bypass Railway proxy pour
+fichiers > 200 MB). Mais cet endpoint n'avait jamais ete implemente cote
+parser → 404 sur upload demo + message UI "Fichier introuvable dans le storage".
+
+**Fix** : ajout du endpoint `POST /parse-from-storage` dans `index.js`.
+
+### Flow
+
+1. Frontend uploade `.dem` vers `demos-incoming/<user_id>/<file_id>.dem`
+2. Frontend POST `/parse-from-storage` avec :
+   ```json
+   {
+     "bucket": "demos-incoming",
+     "path": "<user_id>/<file_id>.dem",
+     "options": ["Heatmaps", "2D Replay", "Utility Map", "Stats équipes"]
+   }
+   ```
+3. Header `Authorization: Bearer <user_jwt_supabase>`
+4. Parser valide le JWT via `supabaseAdmin.auth.getUser(jwt)`
+5. Parser verifie que `path` commence par `<user_id>/` (anti hijack)
+6. Parser whitelist `bucket === 'demos-incoming'` (anti abuse)
+7. Parser download le file via `supabaseAdmin.storage.from(bucket).download(path)`
+8. Save vers temp file, run `parseCS2Demo(tempPath, null, basename)`
+9. Returns `{success: true, data: result}` (meme format que /parse)
+10. Cleanup : `supabaseAdmin.storage.remove([path])` apres parse reussi
+
+### Securite
+
+- JWT user valide via `supabaseAdmin.auth.getUser()` (signature + expiry)
+- Path scope a `<user_id>/` (impossible de parser le file d'un autre user)
+- Bucket whitelist `demos-incoming` only
+- Temp files cleanup via `fs.unlink` finally
+- Pas de retention : le file source dans Storage est delete apres parse OK
+
+### Deploy
+
+```bash
+cd /Users/quentin/Documents/Fragvalue/GitHub/fragvalue-demo-parser
+railway up
+```
+
+Verifier post-deploy :
+```bash
+curl -X POST https://fragvalue-demo-parser-production.up.railway.app/parse-from-storage \
+  -H "Authorization: Bearer invalid" -H "Content-Type: application/json" \
+  -d '{"bucket":"demos-incoming","path":"x/y.dem"}'
+# Devrait retourner 401 {"error":"JWT invalide ou expire"}
+```
+
 ## 2026-04-17 · Durees grenades exactes + timers client en secondes reelles
 
 Les demos FACEIT tournent a **128 tick/s** (confirme par headers des demos).
