@@ -22,6 +22,7 @@ const { buildBaseSystemPrompt, detectLocale } = require('./_lib/cs2-lexicon');
 const { getBenchmarksByMap, formatBenchmarksForPrompt } = require('./_lib/pro-benchmarks');
 const { detectRole, getRoleFocus } = require('./_lib/role-detection');
 const { listAllDrillIds, getDrillById } = require('./_lib/drill-library');
+const { formatDemoRoundsXml } = require('./_lib/demo-rounds-formatter');
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 const DAILY_LIMIT = 10;
@@ -205,6 +206,21 @@ Top priorites alors : ${(lastDiag.top_priorities || []).join(' | ')}
 Si la question concerne une de ces priorites OU le progres global, remplis progressVsLastDiag dans le JSON output avec un delta chiffre (ELO/level si dispo, ou estimation qualitative sinon).`;
   }
 
+  // CRITIQUE axe 6 : injecter le rounds detail si rawDemoData fourni
+  // (frontend passe demoData.kills/rounds/bombs LIGHT depuis sessionStorage).
+  let roundsXml = '';
+  if (context.rawDemoData && you.name) {
+    try {
+      const userTeam = you.team || (you.team_num === 3 ? 'CT' : 'T');
+      roundsXml = formatDemoRoundsXml(context.rawDemoData, you.name, userTeam, {
+        keyRoundsDetail: 4,  // moins que conversational (single-shot, prompt plus court)
+        maxRoundsSummary: 30,
+      });
+    } catch (e) {
+      console.warn('[coach-qa] formatDemoRoundsXml failed:', e.message);
+    }
+  }
+
   return `MATCH CONTEXT
 Map : ${context.map || '?'} · Score : ${context.score?.[0] || 0}-${context.score?.[1] || 0} · Winner : ${context.winner || '-'} · ${context.rounds || '?'} rounds
 
@@ -214,7 +230,7 @@ ${roleSection}
 
 SCOREBOARD
 ${statsLine}
-
+${roundsXml ? '\nROUND-BY-ROUND DETAIL\n' + roundsXml + '\n' : ''}
 ${context.momentum ? 'MOMENTUM\n' + context.momentum + '\n' : ''}${progressSection}
 
 QUESTION

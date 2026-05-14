@@ -162,8 +162,16 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       padding:4px;
     }
     /* La canvas remplit autant que possible tout en préservant l'aspect ratio
-       du radar (1:1 pour toutes les maps CS2). */
-    #replayCanvas{max-width:100%;max-height:100%;display:block}
+       du radar (1:1 pour toutes les maps CS2). aspect-ratio + width:100% +
+       max-height force le canvas a fill le container (vs rester en native
+       1024x1024 = espace noir si container plus large). */
+    #replayCanvas{
+      width:100%;height:auto;
+      max-width:min(100%, calc(100vh - 200px));
+      max-height:100%;
+      aspect-ratio:1/1;
+      display:block;
+    }
 
     /* Round transition : fade-in 200ms applique a la canvas-area au switch
        de round. Evite le 'cut sec' qui pose mal. Triggered via la classe
