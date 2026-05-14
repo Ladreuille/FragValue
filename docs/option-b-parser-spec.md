@@ -170,10 +170,18 @@ type GrenadeType = 'smoke' | 'flash' | 'molotov' | 'incgrenade' | 'hegrenade' | 
   "metadata": {
     "grenade_entity_id": 1247,
     "throw_to_detonation_ticks": 128,  // 2.0s a 64 tick
-    "trajectory_points": [...]          // optionnel : array de waypoints (lourd, peut skip)
+    "trajectory_points": [             // CRITIQUE pour rendu replay 2D - cf section dediee
+      {"tick": 195000, "x": -480, "y": -1620, "z": 165},
+      {"tick": 195002, "x": -460, "y": -1600, "z": 168},
+      {"tick": 195004, "x": -440, "y": -1580, "z": 171},
+      // ... sample tous les 1-2 ticks max (vs 8-16 actuel)
+      {"tick": 195128, "x": 250, "y": 880, "z": 64}
+    ]
   }
 }
 ```
+
+> **Note critique sampling density** : voir section dediee "Sampling Density Grenades" ci-dessous.
 
 ### `kill`
 ```json
@@ -330,15 +338,94 @@ Avant de pousser en prod, valider sur 1 demo connue (ex : un match Astralis era 
 3. Query manuel : `SELECT event_type, count(*) FROM pro_demo_events WHERE pro_match_map_id = X GROUP BY 1;` doit montrer ~30 round_start, ~30 freeze_end, ~30 round_end, ~200 grenades, ~150 kills, ~5-10 bomb_planted, etc.
 4. Spot-check : visualiser 5 events grenade_thrown sur une carte 2D → coherent avec les positions in-game
 
-## Effort estime
+## Sampling Density Grenades (CRITIQUE - bug rendu replay 2D)
+
+### Probleme observe
+
+Bug user-facing rapporte le 14/05/2026 : *"trajectoires des grenades qui traversent les murs au lieu de faire un rebond sur le mur oppose"*.
+
+**Root cause** : le parser sample les positions des grenade entities tous les **8-16 ticks** (intervalle parseTicks par defaut). Entre deux samples, une grenade rapide (HE/flash a velocite ~1500 units/sec) peut :
+1. Hit un mur
+2. Bouncer
+3. Avancer en direction reflechie
+
+Sur le rendu canvas 2D (lineTo entre samples), la straight-line entre sample N et sample N+1 traverse visuellement le mur, alors que la grenade reelle a bouncé.
+
+**Fix client-side** (deja deploye 14/05/2026, commit `63e2b54`) : smoothing Bezier + bounce markers. Cosmetique seulement, ne fixe pas la cause racine.
+
+### Fix parser-side propose
+
+Pour le `trajectory_points` array dans `grenade_detonated`, sampler **tous les 1-2 ticks** (vs 8-16 actuel). A 128 tick/s, ca donne 64-128 samples par seconde de vol.
+
+#### Cout
+
+Pour une demo pro 30 rounds × ~10 grenades/round × ~1s vol moyen :
+- Avant : 300 grenades × ~8 samples = 2400 trajectory points
+- Apres : 300 grenades × ~80 samples = 24000 trajectory points
+
+Storage jsonb increase : ~10x sur le champ `metadata.trajectory_points`. Estimation : 2-5 MB en plus par demo. Acceptable.
+
+Performance parser : parseTicks tous les 1-2 ticks au lieu de 8 = ~5-8x plus de samples traites. Acceptable si parser tourne en async.
+
+#### Implementation cote parser
+
+1. **Detect grenade entities en vol** : utiliser `class_name=BaseCSGrenadeProjectile` ou similaire dans le demoparser2
+2. **Override parseTicks interval** : pour ces entites uniquement, sample tous les 1-2 ticks au lieu du default global
+3. **Filtrer post-detonation** : la grenade entity continue d'exister apres explosion (smoke cloud, inferno, debris). Stop le sampling au tick `detonate_*` event correspondant
+4. **Output dans `trajectory_points`** : array de `{tick, x, y, z}` ordonne par tick croissant
+
+Pseudo-code (a adapter @laihoe/demoparser2 API) :
+```javascript
+const grenades = parser.parseEvents([
+  'smokegrenade_detonate', 'flashbang_detonate', 'hegrenade_detonate',
+  'inferno_startburn', 'decoy_started'
+]);
+
+for (const g of grenades) {
+  const trajStartTick = g.thrown_tick;
+  const trajEndTick = g.detonate_tick;
+  // Sample entity positions tous les 1-2 ticks dans cette plage
+  const trajectoryPoints = parser.parseTicks(
+    ['X', 'Y', 'Z'],
+    { ticks: range(trajStartTick, trajEndTick, 2) },
+    { entity_id: g.grenade_entity_id }
+  );
+  g.metadata.trajectory_points = trajectoryPoints;
+}
+```
+
+#### Effort estime parser
+
+- Override sampling interval pour grenades only : 2-3h
+- Filtrage post-detonation : 1-2h
+- Tests sur 1 demo HE qui bounce sur Inferno apartments → verifier que la ligne hugs le mur correctement : 1-2h
+
+**Total : 0.5-1 jour de dev cote parser Railway.**
+
+### Effort client-side residuel
+
+Une fois le parser denser : RIEN. Le code `drawSmoothTrajectory` deja deploye (commit 63e2b54) :
+- Quadratic Bezier curves entre waypoints : se rapprochent automatiquement de la "vraie" trajectoire avec 16x plus de points
+- Bounce markers : se positionnent automatiquement aux nouveaux points de bounce captures
+- `computeBounceCorrectedPath` : cache via WeakMap, re-cache automatique avec nouveau path
+
+### Validation
+
+Apres deploiement, test cas suivant :
+1. Demo Mirage T-side : 1 HE thrown depuis T-spawn vers A site, bouncing 2 fois (top of CT spawn wall + side wall A-rampe)
+2. Replay 2D + toggle `Trajectoires grenades` (icone parabola)
+3. La ligne doit visiblement hug la geometrie des murs (et plus traverser CT-spawn building visuellement)
+
+## Effort estime total
 
 - Endpoint `/process-pro-demo` : 2-4h (similaire a `/process-match` existant)
 - Position snapshots : 1-2h (parseTicks existe deja, faut emit snapshots aux moments precis)
 - Refactor pour ecrire dans `pro_demo_events` au lieu de `matches.demo_data` : 2-3h
 - Tickrate auto-detect : 1-2h
+- **Grenade sampling density override (nouveau)** : 4-7h
 - Tests + debug sur 1 demo : 2-4h
 
-**Total : 1-2 jours de dev cote parser Railway.**
+**Total : 1.5-2.5 jours de dev cote parser Railway.**
 
 ## Coordination
 
