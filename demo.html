@@ -74,8 +74,17 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 
 html,body{height:100%}
 html{scroll-behavior:smooth}
-/* Sur la page demo on veut zero scroll : tout tient dans le viewport */
-body.demo-no-scroll{overflow:hidden;height:100vh}
+/* Sur la page demo on veut zero scroll : tout tient dans le viewport.
+   APPLIQUE UNIQUEMENT EN DESKTOP : sur tablette/mobile, le layout passe en
+   colonnes empilees et le content depasse le viewport → besoin de scroll. */
+@media (min-width: 1101px) {
+  body.demo-no-scroll{overflow:hidden;height:100vh}
+}
+@media (max-width: 1100px) {
+  /* Tablette + mobile : restore le scroll natif sinon la colonne droite
+     (upload + analyse progressive) est partiellement invisible */
+  body.demo-no-scroll{overflow:visible;height:auto;min-height:100vh}
+}
 body{
   background:var(--bg);color:var(--text);
   font-family:var(--mono);font-size:14px;line-height:1.6;
@@ -546,8 +555,10 @@ nav:not(.fv-nav){
 }
 
 /* Avec le live-feed bottom fixe, on doit reduire le layout de 32px pour
-   que tout tienne SANS scroll (contrainte user). */
-body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
+   que tout tienne SANS scroll (contrainte user). Desktop only. */
+@media (min-width: 1101px) {
+  body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
+}
 
 /* Overlay label sur les cards map (au-dessus de l'image) pour un look plus
    finition, avec gradient bottom qui garantit la lisibilite. */
@@ -819,7 +830,9 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
   }
   .left{grid-area:left;padding:24px 28px}
   .middle{grid-area:middle;padding:0 28px 24px;border-right:1px solid var(--border)}
-  .right{grid-area:right;padding:24px 28px}
+  /* padding-bottom 60px : evite que le content soit masque par la live-feed
+     bottom bar (32px fixed) */
+  .right{grid-area:right;padding:24px 28px 60px}
 }
 @media(max-width:860px){
   .layout{
@@ -829,7 +842,9 @@ body.demo-no-scroll .layout{height:calc(100vh - 56px - 32px)}
   }
   .left{display:none}
   .middle{border-right:none;padding:20px;display:none}
-  .right{padding:40px 20px;min-height:calc(100vh - 56px)}
+  /* padding-bottom : compense la live-feed bar fixed (32px) + 16px breathing,
+     sinon le bottom du content (boutons / loaders) est masque sous la barre. */
+  .right{padding:40px 20px 60px;min-height:auto}
 }
 
 /* ANIMATIONS */
