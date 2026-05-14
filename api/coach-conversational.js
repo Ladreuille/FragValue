@@ -51,6 +51,7 @@ const { detectRole, getRoleFocus } = require('./_lib/role-detection');
 const { getBenchmarksByMap, formatBenchmarksForPrompt } = require('./_lib/pro-benchmarks');
 const { listAllDrillIds, getDrillById } = require('./_lib/drill-library');
 const { findRelevantProSituations, formatSituationsForPrompt } = require('./_lib/pro-situations-rag');
+const { formatDemoRoundsXml } = require('./_lib/demo-rounds-formatter');
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 // Opus 4.7 par defaut : marque de fabrique FragValue, le diag doit etre IRREPROCHABLE.
@@ -191,6 +192,10 @@ function normalizeFrontendContext(ctx) {
     benchmarks: ctx.benchmarks || null,
     lastDiag: ctx.lastDiag || null,
     momentum: ctx.momentum || null,
+    // Propage raw demo_data si le frontend le passe (cas heatmap-results.html
+    // qui a deja parse en sessionStorage). Permet d'avoir round-by-round
+    // detail meme sans round-trip DB.
+    rawDemoData: ctx.rawDemoData || ctx.demoData || null,
   };
 }
 
@@ -277,6 +282,10 @@ async function buildDemoContext(supabase, demoId, userId) {
       } : null,
       benchmarks, // axe 2 (Ancrage benchmark pro)
       lastDiag,   // axe 9 (Suivi progression)
+      // CRITIQUE : raw demo_data (rounds + kills + bombs) pour permettre au
+      // Coach IA de raisonner round-by-round, pas juste stats globales.
+      // Sans ca Claude dit "je n'ai pas le detail tick par tick" (axe 6 = 0/10).
+      rawDemoData: match?.demo_data || null,
     };
   } catch (e) {
     console.warn('[coach-conv] buildDemoContext failed:', e.message);
@@ -447,6 +456,18 @@ Mauvais : "Round 12, tu as push..." (pas de citation, donc pas de lien cliquable
 - Si l'user demande quelque chose qui necessite des donnees absentes (ex: "qui voyait quoi"), dis-le : "Cette info specifique n'est pas dans la demo data."
 - Pour les pro_demos : utilise UNIQUEMENT les ids exactement listes dans le <pro_library> si fourni. Sinon, ne cite pas de pro.
 
+═══ DONNEES DISPONIBLES DANS <demo_data> ═══
+
+Tu disposes (depuis l'integration round-by-round mai 2026) :
+- <rounds> : resume de TOUS les rounds (outcome W/L pour user, econ pistol/eco/force/full, plant/defuse/explode, opening duel, user kills/deaths, weapon de mort du user)
+- <key_rounds> : detail tick-precis avec positions XY pour les 6 rounds notables (multi-kills, opening user, openings importants)
+- <scoreboard> : stats globales des 10 joueurs
+- <pro_benchmarks> : moyennes pros sur la map
+
+Donc tu PEUX repondre a "round 2", "round 12 clutch", "comment je suis mort R7", "quelle econ R3 T-side". Si user demande un round specifique, cherche <round n="X"> dans <rounds> ET <key_rounds>, puis donne une analyse contextuelle basee sur le data.
+
+Tu ne PEUX PAS savoir : qui voyait quoi (line of sight), comms du joueur, sensibilite/DPI souris, FPS in-game. Pour ces infos, dis "pas dans la demo data".
+
 ═══ SCOPE STRICT : CS2 UNIQUEMENT ═══
 
 Tu es UNIQUEMENT un coach Counter-Strike 2 (et CS:GO par extension). Tu refuses POLIMENT mais FERMEMENT toute question hors-scope.
@@ -552,6 +573,23 @@ Format compact, pas de markdown, garde la regle 150 mots max sauf si l'user dema
 
     if (context.profile) {
       demoDataBlock += `<user_profile faceit_nickname="${context.profile.nickname || ''}" faceit_level="${context.profile.level || 0}" faceit_elo="${context.profile.elo || 0}" />\n`;
+    }
+
+    // CRITIQUE axe 6 : rounds detail (kills, plant/defuse, opening duels, econ
+    // bucket) extraits depuis match.demo_data. Sans ca Claude dit "je n'ai pas
+    // le detail tick par tick" et ne peut pas analyser "round 2", "round 12 clutch".
+    if (context.rawDemoData && you) {
+      try {
+        const userName = you.name;
+        const userTeam = you.team || (you.team_num === 3 ? 'CT' : 'T');
+        const roundsXml = formatDemoRoundsXml(context.rawDemoData, userName, userTeam, {
+          keyRoundsDetail: 6,
+          maxRoundsSummary: 30,
+        });
+        if (roundsXml) demoDataBlock += roundsXml + '\n';
+      } catch (e) {
+        console.warn('[coach-conv] formatDemoRoundsXml failed:', e.message);
+      }
     }
   } else {
     demoDataBlock += '<warning>No demo data available, ask user for clarification</warning>\n';
@@ -1124,6 +1162,28 @@ module.exports = async function handler(req, res) {
             .maybeSingle();
           demoContext.lastDiag = ld || null;
         } catch (_) {}
+      }
+      // CRITIQUE axe 6 : enrich rawDemoData depuis matches.demo_data si pas
+      // deja inclus par le frontend. Sinon Coach IA n'a aucun round-by-round.
+      if (!demoContext.rawDemoData && demoContext.demo?.id) {
+        try {
+          // Recupere le faceit_match_id depuis demos puis match.demo_data
+          const { data: demoRow } = await supabase.from('demos')
+            .select('faceit_match_id')
+            .eq('id', demoContext.demo.id)
+            .maybeSingle();
+          if (demoRow?.faceit_match_id) {
+            const { data: matchRow } = await supabase.from('matches')
+              .select('demo_data')
+              .eq('faceit_match_id', demoRow.faceit_match_id)
+              .maybeSingle();
+            if (matchRow?.demo_data) {
+              demoContext.rawDemoData = matchRow.demo_data;
+            }
+          }
+        } catch (e) {
+          console.warn('[coach-conv] enrich rawDemoData failed:', e.message);
+        }
       }
     }
 
