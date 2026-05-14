@@ -56,8 +56,11 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       --border:#1c1e1e;--border2:#252727;
       --accent:#b8ff57;--accent-dim:rgba(184,255,87,.1);
       --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+      --muted:#7a8080;  /* alias text2 pour code legacy (bp-*, ca-*, dt-tool) */
       --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
       --ct:#4A9EFF;--t:#F5C842;
+      /* Couleurs distinctes des player colors pour overlays cross-team (smoke study, etc.) */
+      --ct-darker:#1e6fd9;--t-darker:#d4a420;
       --font:'Space Mono',monospace;--mono:'Space Mono',monospace;
       --display:'Anton',sans-serif;
       --radius:6px;--radius2:12px
@@ -223,10 +226,9 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     .dmg-float.headshot{color:#f5c842}
     .dmg-float:not(.headshot){color:#ff5050}
     @keyframes dmgFloat{
-      0%   {opacity:0;transform:translate(-50%,-50%) scale(.6)}
-      15%  {opacity:1;transform:translate(-50%,-110%) scale(1.1)}
-      35%  {opacity:1;transform:translate(-50%,-170%) scale(1)}
-      100% {opacity:0;transform:translate(-50%,-280%) scale(.95)}
+      0%   {opacity:0;transform:translate(-50%,-50%) scale(.85)}
+      15%  {opacity:1;transform:translate(-50%,-110%) scale(1)}
+      100% {opacity:0;transform:translate(-50%,-280%) scale(1)}
     }
 
     /* ── Share toast : confirmation copie deep-link ─────────────────────
@@ -285,10 +287,12 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     }
     .bp-close{
       background:transparent;border:none;color:var(--muted);
-      font-size:22px;line-height:1;cursor:pointer;padding:0 4px;
-      transition:color .15s
+      width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;
+      cursor:pointer;padding:0;border-radius:6px;
+      transition:color .15s, background .15s
     }
-    .bp-close:hover{color:var(--accent)}
+    .bp-close:hover{color:var(--accent);background:rgba(184,255,87,.08)}
+    .bp-close svg{width:14px;height:14px}
     .bp-actions{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04)}
     .bp-add{
       width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
@@ -478,7 +482,9 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 
     /* ── Drawing toolbar : annotations tactiques (pencil/arrow/circle/text) ── */
     .drawing-toolbar{
-      position:absolute;top:14px;left:50%;
+      /* Decale en bas-center pour eviter overlap avec multikill banner (top:14)
+         et round outcome sticker (top:8). Plus accessible quand on dessine. */
+      position:absolute;bottom:14px;left:50%;
       transform:translateX(-50%);
       z-index:56;
       display:flex;align-items:center;gap:8px;
@@ -504,8 +510,9 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     }
     .dt-tool:hover{background:rgba(184,255,87,.06);color:var(--text)}
     .dt-tool.active{
-      background:rgba(184,255,87,.12);
-      border-color:var(--accent);color:var(--accent)
+      /* Aligned with .sl-tool.active : meme accent-dim background, meme border */
+      background:var(--accent-dim);
+      border-color:rgba(184,255,87,.3);color:var(--accent)
     }
     .dt-color{
       width:18px;height:18px;
@@ -704,28 +711,29 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     .ctrl-timeline:hover{background:var(--border2)}
     .tl-fill{height:100%;background:var(--accent);border-radius:3px;pointer-events:none}
     .tl-thumb{
-      position:absolute;top:50%;width:12px;height:12px;border-radius:50%;
-      background:#fff;border:2px solid var(--accent);
+      position:absolute;top:50%;width:10px;height:10px;border-radius:50%;
+      background:#fff;border:1.5px solid var(--accent);
       transform:translate(-50%,-50%);pointer-events:none;
-      box-shadow:0 0 0 2px rgba(184,255,87,.2);
     }
     .tl-kill-mark{
       position:absolute;top:50%;transform:translate(-50%,-50%);
       width:3px;height:8px;border-radius:1.5px;
       background:var(--danger);opacity:.5;pointer-events:none;
     }
-    /* Mini-heatmap events sur timeline : grenades + plant/defuse + multikill */
+    /* Mini-heatmap events sur timeline : grenades + plant/defuse + multikill.
+       Opacity reduite vs kill marks (qui sont l'info primaire). Plant en orange
+       (et pas rouge) pour distinguer du danger kill rouge. */
     .tl-evt{
       position:absolute;top:50%;transform:translate(-50%,-50%);
-      width:2px;height:6px;border-radius:1px;opacity:.55;pointer-events:none;
+      width:2px;height:5px;border-radius:1px;opacity:.35;pointer-events:none;
     }
     .tl-evt.smoke{background:#e8eaea}
     .tl-evt.he{background:#ff9d3a}
     .tl-evt.flash{background:#ffeb3b}
-    .tl-evt.molly{background:#ff6633;height:5px;width:3px}
-    .tl-evt.plant{background:#ff4444;width:3px;height:10px;opacity:.85}
-    .tl-evt.defuse{background:#7cd45a;width:3px;height:10px;opacity:.85}
-    .tl-evt.multi{background:#b8ff57;width:4px;height:10px;opacity:.85;border-radius:2px}
+    .tl-evt.molly{background:#ff6633;height:5px;width:2px}
+    .tl-evt.plant{background:#ff8800;width:2px;height:7px;opacity:.65}
+    .tl-evt.defuse{background:#7cd45a;width:2px;height:7px;opacity:.65}
+    .tl-evt.multi{background:#b8ff57;width:3px;height:7px;opacity:.7;border-radius:1.5px}
     .ctrl-speeds{display:flex;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:2px;gap:1px}
     .spd{
       font-family:var(--mono);font-size:9px;font-weight:700;
@@ -753,23 +761,60 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     .kc-name{max-width:80px;overflow:hidden;text-overflow:ellipsis}
     .kc.hs{background:rgba(245,200,66,.08);color:var(--gold);border-color:rgba(245,200,66,.14)}
     .kc.hs:hover{background:rgba(245,200,66,.18)}
-    /* Round outcome sticker (eco / force / full / clutch / multikill) */
+    /* Round outcome sticker (eco / force / full) - top-left coin pour eviter
+       overlap multikill banner (top:14 center) et drawing-toolbar (bottom:14). */
     .round-outcome{
-      position:absolute;top:8px;left:50%;transform:translateX(-50%);
-      display:inline-flex;align-items:center;gap:6px;
-      padding:4px 10px;border-radius:8px;
-      background:rgba(10,12,16,.88);border:1px solid rgba(255,255,255,.08);
-      font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;
+      position:absolute;top:10px;left:14px;
+      display:inline-flex;align-items:center;gap:7px;
+      padding:6px 12px;border-radius:8px;
+      background:rgba(10,12,16,.92);border:1px solid rgba(255,255,255,.15);
+      font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;
       color:var(--text);text-transform:uppercase;pointer-events:none;
-      box-shadow:0 4px 14px rgba(0,0,0,.32);z-index:5;
+      box-shadow:0 4px 14px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.3);z-index:5;
       opacity:0;transition:opacity .25s ease;
     }
     .round-outcome.show{opacity:1}
-    .round-outcome .ro-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+    .round-outcome .ro-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
     .round-outcome.eco .ro-dot{background:#7cd45a}
     .round-outcome.force .ro-dot{background:#ffaa55}
     .round-outcome.full .ro-dot{background:#4a9eff}
     .round-outcome.anti-eco .ro-dot{background:#ff6633}
+
+    /* Map loader spinner pendant le download radar image */
+    .map-loader{
+      position:absolute;inset:0;display:none;
+      align-items:center;justify-content:center;flex-direction:column;gap:14px;
+      background:rgba(8,9,9,.92);z-index:30;
+    }
+    .ml-spinner{
+      width:36px;height:36px;border-radius:50%;
+      border:3px solid rgba(184,255,87,.15);border-top-color:var(--accent);
+      animation:spin 0.9s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .ml-text{font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.08em}
+
+    /* Smoke study legend panel (HTML out-of-canvas, evite conflit bookmarks) */
+    .smoke-legend{
+      position:absolute;bottom:14px;left:14px;
+      background:rgba(15,16,16,.96);
+      border:1px solid var(--border);border-radius:8px;
+      padding:8px 12px;min-width:140px;
+      box-shadow:0 4px 14px rgba(0,0,0,.45);z-index:10;
+      pointer-events:none;display:none;
+    }
+    .smoke-legend .sl-title{
+      font-family:var(--display);font-size:11px;letter-spacing:.12em;
+      color:var(--accent);margin-bottom:6px;
+    }
+    .smoke-legend .sl-row{
+      display:flex;align-items:center;gap:6px;
+      font-family:var(--mono);font-size:10px;color:var(--text);
+      line-height:1.5;
+    }
+    .smoke-legend .sl-dot{
+      width:9px;height:9px;border-radius:50%;flex-shrink:0;
+    }
 
     /* ── Accessibility : respecter prefers-reduced-motion ────────── */
     /* Desactive les animations decoratives (mk banners, fade-in, pulses) pour
@@ -816,19 +861,27 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         position:fixed;left:0;right:0;bottom:0;
         max-height:55vh;overflow-y:auto;
         background:#0a0c10;border-top:1px solid var(--border);
-        transform:translateY(calc(100% - 36px));
+        transform:translateY(calc(100% - 44px));
         transition:transform .25s ease;
         z-index:50;
       }
       .sidebar-right.open{transform:translateY(0)}
-      /* Bouton handle pour drag/toggle */
+      /* Header handle visuel (grip pill + texte) avec affordance drag claire.
+         Hauteur 44px (touch target standard iOS/Android). */
       .sidebar-right::before{
+        content:'';display:block;
+        width:36px;height:4px;border-radius:2px;
+        background:rgba(255,255,255,.18);
+        margin:8px auto 4px;
+      }
+      .sidebar-right::after{
         content:'PLAYERS';display:flex;align-items:center;justify-content:center;
-        height:36px;font-family:var(--mono);font-size:10px;letter-spacing:.15em;
-        color:var(--text2);cursor:pointer;
+        height:24px;font-family:var(--mono);font-size:10px;font-weight:700;
+        letter-spacing:.15em;color:var(--text2);cursor:pointer;
         background:linear-gradient(180deg, rgba(184,255,87,.04), transparent);
         border-bottom:1px solid var(--border);
       }
+      .sidebar-right.open::after{color:var(--accent)}
       /* Controls bar compact mobile */
       .controls{padding:4px 6px;gap:6px}
       .ctrl-time{font-size:9px;min-width:64px}
@@ -1012,7 +1065,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <div id="bookmarksPanel" class="bookmarks-panel" style="display:none">
         <div class="bp-header">
           <div class="bp-title">Moments forts</div>
-          <button class="bp-close" onclick="toggleBookmarksPanel()" aria-label="Fermer">×</button>
+          <button class="bp-close" onclick="toggleBookmarksPanel()" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
         <div class="bp-actions">
           <button class="bp-add" onclick="addManualBookmark()">
@@ -1062,7 +1115,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <div id="coachAIPanel" class="coach-ai-panel" style="display:none">
         <div class="bp-header">
           <div class="bp-title"><span class="ca-icon">★</span> Coach IA</div>
-          <button class="bp-close" onclick="toggleCoachAIPanel()" aria-label="Fermer">×</button>
+          <button class="bp-close" onclick="toggleCoachAIPanel()" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
         <!-- Selecteur joueur cible : tous les 10 joueurs du match.
              Au change, sync avec isolatedPlayer (path highlight canvas) pour
@@ -1904,10 +1957,10 @@ window.addEventListener('load', async () => {
     if (!sb || sb._mobileHandlerBound) return;
     sb._mobileHandlerBound = true;
     sb.addEventListener('click', (e) => {
-      // Trigge uniquement si on click dans le top 36px (le handle ::before)
+      // Trigge uniquement si on click dans le top 44px (grip pill + "PLAYERS" label)
       const rect = sb.getBoundingClientRect();
       const yInSb = e.clientY - rect.top;
-      if (yInSb >= 0 && yInSb <= 36 && window.innerWidth <= 600) {
+      if (yInSb >= 0 && yInSb <= 44 && window.innerWidth <= 600) {
         sb.classList.toggle('open');
       }
     });
@@ -1981,12 +2034,27 @@ window.addEventListener('load', async () => {
 });
 
 function loadMapImage(cb) {
+  // Loading state : afficher un spinner pendant le download de la map radar.
+  // Sur connexion lente, evite l'impression de "ca a plante".
+  showMapLoader(true);
   const cfg = MAP_CONFIG[mapName];
-  if (!cfg) { canvas.width = 1024; canvas.height = 1024; cb(); return; }
+  if (!cfg) { canvas.width = 1024; canvas.height = 1024; showMapLoader(false); cb(); return; }
   const img = new Image();
-  img.onload = () => { mapImg = img; canvas.width = img.width; canvas.height = img.height; cb(); };
-  img.onerror = () => { mapImg = null; canvas.width = 1024; canvas.height = 1024; cb(); };
+  img.onload = () => { mapImg = img; canvas.width = img.width; canvas.height = img.height; showMapLoader(false); cb(); };
+  img.onerror = () => { mapImg = null; canvas.width = 1024; canvas.height = 1024; showMapLoader(false); cb(); };
   img.src = cfg.upper ? cfg.upper.img : cfg.img;
+}
+
+function showMapLoader(visible) {
+  let loader = document.getElementById('mapLoader');
+  if (!loader && visible) {
+    loader = document.createElement('div');
+    loader.id = 'mapLoader';
+    loader.className = 'map-loader';
+    loader.innerHTML = '<div class="ml-spinner"></div><div class="ml-text">Chargement de la map...</div>';
+    document.querySelector('.canvas-area')?.appendChild(loader);
+  }
+  if (loader) loader.style.display = visible ? 'flex' : 'none';
 }
 
 function detectKnifeRounds() {
@@ -4486,15 +4554,13 @@ function drawEffects(frame, W, H) {
     const defused = defuse && tick >= defuse.tick;
     const secToEnd = Math.max(0, (endEventTick - tick) / 128);
 
-    // Cercle pulsant rouge (ou vert si defused)
-    const pulse = 1 + Math.sin(tick * 0.3) * 0.15;
+    // Cercle pulsant rouge (ou vert si defused). Pulse plus subtil (.08 vs .15).
+    const pulse = 1 + Math.sin(tick * 0.3) * 0.08;
     const baseR = 9;
     const haloColor = defused ? '80,220,120' : (exploded ? '255,80,0' : '255,40,40');
-    // Halo externe
+    // Halo externe seul (le halo intermediaire 1.4x supprime pour declutter)
     ctx.beginPath(); ctx.arc(bx, by, baseR * 2 * pulse, 0, Math.PI * 2);
     ctx.strokeStyle = `rgba(${haloColor},0.5)`; ctx.lineWidth = 2; ctx.stroke();
-    ctx.beginPath(); ctx.arc(bx, by, baseR * 1.4 * pulse, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(${haloColor},0.3)`; ctx.lineWidth = 1; ctx.stroke();
 
     // Bomb timer countdown ring : sweep visible 40s -> 0s.
     // Reprend le pattern smoke duration-ring. Anti-horaire = temps restant.
@@ -4858,8 +4924,13 @@ function toggleTrail() {
 
 // Follow camera : auto-pan le canvas pour garder isolatedPlayer centre.
 // Requirement : un joueur doit etre isole (click sur dot pour l'isoler).
-// Sinon le toggle reste activable mais sans effet jusqu'a l'isolation.
+// Si pas isole, afficher un toast feedback au lieu de toggle silently.
 function toggleFollowCam() {
+  // Si on veut activer mais aucun player isole, refuse + feedback user
+  if (!followCamera && !isolatedPlayer) {
+    showShareToast('Clique sur un joueur d\'abord pour le suivre');
+    return;
+  }
   followCamera = !followCamera;
   const btn = document.getElementById('btnFollow');
   if (btn) btn.classList.toggle('active', followCamera);
@@ -4883,9 +4954,15 @@ function toggleGrenadeTraj() {
 }
 
 // Smoke study : overlay TOUTES les smokes du match (cross-round).
-// Permet au user de voir les lineups recurrents et zones cibles du match
-// pour identifier les patterns tactiques de chaque side.
+// Si demo n'a aucune smoke, refuse + feedback (eviter toggle ON pour rien).
 function toggleSmokeStudy() {
+  if (!showSmokeStudy) {
+    const smokeCount = ((demoData?.grenades || []).filter(g => g.type && g.type.toLowerCase().includes('smoke'))).length;
+    if (smokeCount === 0) {
+      showShareToast('Aucune smoke dans cette demo');
+      return;
+    }
+  }
   showSmokeStudy = !showSmokeStudy;
   // Mutual exclusion : si on active smokeStudy alors que grenadeTraj est on,
   // on coupe grenadeTraj
@@ -4896,6 +4973,11 @@ function toggleSmokeStudy() {
   }
   const btn = document.getElementById('btnSmokeStudy');
   if (btn) btn.classList.toggle('active', showSmokeStudy);
+  // Hide legend si on coupe le mode
+  if (!showSmokeStudy) {
+    const legend = document.getElementById('smokeStudyLegend');
+    if (legend) legend.style.display = 'none';
+  }
   drawFrame(frameIdx);
 }
 
@@ -5048,9 +5130,11 @@ function drawSmokeStudy(W, H) {
   }
 
   ctx.save();
+  // Couleurs darker que les player colors pour ne pas confondre player dots
+  // et smoke impacts. CT darker = #1e6fd9, T darker = #d4a420.
   const SIDE_COLORS = {
-    ct:      { line: 'rgba(74,158,255,0.45)',  fill: 'rgba(74,158,255,0.20)', dot: '#4a9eff' },
-    t:       { line: 'rgba(245,200,66,0.45)',  fill: 'rgba(245,200,66,0.20)', dot: '#f5c842' },
+    ct:      { line: 'rgba(30,111,217,0.55)',  fill: 'rgba(30,111,217,0.22)', dot: '#1e6fd9' },
+    t:       { line: 'rgba(212,164,32,0.55)',  fill: 'rgba(212,164,32,0.22)', dot: '#d4a420' },
     unknown: { line: 'rgba(200,200,200,0.35)', fill: 'rgba(200,200,200,0.15)', dot: '#cccccc' },
   };
 
@@ -5127,18 +5211,23 @@ function drawSmokeStudy(W, H) {
 
   ctx.restore();
 
-  // Legende top-right du canvas
-  ctx.save();
-  ctx.font = 'bold 10px "Space Mono",monospace';
-  ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
-  const legendW = 140, legendH = 36;
-  ctx.fillRect(W - legendW - 8, 8, legendW, legendH);
-  ctx.fillStyle = '#4a9eff';
-  ctx.fillText(`CT smokes (${smokes.filter(g => throwerSide(g) === 'ct').length})`, W - 12, 12);
-  ctx.fillStyle = '#f5c842';
-  ctx.fillText(`T smokes (${smokes.filter(g => throwerSide(g) === 't').length})`, W - 12, 24);
-  ctx.restore();
+  // Legende HTML panel (out-of-canvas) pour eviter conflit avec bookmarks panel
+  // top-right. Position bottom-left du canvas-area, style coherent FragValue.
+  const ctCount = smokes.filter(g => throwerSide(g) === 'ct').length;
+  const tCount = smokes.filter(g => throwerSide(g) === 't').length;
+  let legend = document.getElementById('smokeStudyLegend');
+  if (!legend) {
+    legend = document.createElement('div');
+    legend.id = 'smokeStudyLegend';
+    legend.className = 'smoke-legend';
+    document.querySelector('.canvas-area')?.appendChild(legend);
+  }
+  legend.innerHTML = `
+    <div class="sl-title">SMOKE STUDY</div>
+    <div class="sl-row"><span class="sl-dot" style="background:#1e6fd9"></span>CT smokes · ${ctCount}</div>
+    <div class="sl-row"><span class="sl-dot" style="background:#d4a420"></span>T smokes · ${tCount}</div>
+  `;
+  legend.style.display = 'block';
 }
 
 // ══ DEEP-LINK SHARE ══════════════════════════════════════════════════════════
@@ -5264,6 +5353,23 @@ async function shareCurrentMoment() {
   // Auto-hide apres animation (matched a CSS keyframe duration 2.5s)
   clearTimeout(shareCurrentMoment._t);
   shareCurrentMoment._t = setTimeout(() => { toast.style.display = 'none'; }, 2500);
+}
+
+// Helper : affiche un toast custom avec un message arbitraire. Reuse share-toast DOM.
+function showShareToast(message) {
+  const toast = document.getElementById('shareToast');
+  const msg = document.getElementById('shareToastMsg');
+  if (!toast || !msg) return;
+  msg.textContent = message;
+  toast.classList.remove('error');
+  toast.style.display = 'none';
+  void toast.offsetWidth;
+  toast.style.display = 'flex';
+  toast.style.animation = 'none';
+  void toast.offsetWidth;
+  toast.style.animation = '';
+  clearTimeout(showShareToast._t);
+  showShareToast._t = setTimeout(() => { toast.style.display = 'none'; }, 2500);
 }
 
 // ══ BOOKMARKS PRO ════════════════════════════════════════════════════════════
