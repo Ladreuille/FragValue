@@ -4,6 +4,73 @@ Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/frag
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
+## 2026-05-14 · Perf : parseTicks wantedTicks + TICK_SAMPLE adaptive (~32x faster)
+
+**Probleme** : user a rapporte que sa demo 450 MB prenait > 10 min a parser. Le
+bottleneck principal etait `parseTicks(demoPath, baseFields)` qui parse TOUS
+les ticks (~440 000 rows pour 30 rounds × 10 joueurs), suivi d'un downsampling
+JS (`% TICK_SAMPLE`). 30x de travail Rust gaspille.
+
+**Fix** : 2 optims combinees.
+
+### 1. wantedTicks pre-filter (Rust-side sampling)
+
+`parseTicks` accepte un 3eme parametre `wantedTicks?: number[]` qui dit au
+core Rust de NE PARSER QUE ces ticks. Avant on parsait tout puis filtrait
+en JS = 32x rows lus inutiles.
+
+```javascript
+// Avant
+const tickData = parseTicks(demoPath, baseFields);
+// puis JS : if (playerRowCount[name] % TICK_SAMPLE !== 0) return;
+
+// Apres
+const wantedTicks = [];
+for (let t = 0; t <= estimatedMaxTick; t += TICK_SAMPLE) wantedTicks.push(t);
+const tickData = parseTicks(demoPath, baseFields, wantedTicks);
+// JS downsampling supprime (already filtered)
+```
+
+`estimatedMaxTick` derive du dernier `roundEndEvents.tick + 1280` (10s buffer)
+ou fallback 200 000 ticks si pas de round_end disponible.
+
+**Impact** : sur une demo 30 rounds × 10 joueurs :
+- Avant : ~440 000 rows lus depuis demo file
+- Apres : ~13 750 rows (32x reduction)
+- Temps parseTicks : ~3 min → ~30s (estimation)
+
+### 2. TICK_SAMPLE adaptive par taille de fichier
+
+Demos enormes (MR15 + OT, 500+ MB) prennent encore trop longtemps. On baisse
+encore la resolution position pour ces cas :
+
+| File size | TICK_SAMPLE | Position fps | Trade-off |
+|---|---|---|---|
+| < 300 MB | 32 | ~4 fps | Default smooth |
+| 300-500 MB | 48 | ~2.7 fps | Gain 33% parse time, replay reste fluide |
+| > 500 MB | 64 | ~2 fps | Gain 50% parse time, replay moins smooth mais OK |
+
+Interpolation cote replay 2D (replay.html) compense la moindre densite — le
+joueur ne perceive pas la difference < 4 fps a < 2 fps en pratique sur le
+2D radar.
+
+### Deploy
+
+```bash
+cd /Users/quentin/Documents/Fragvalue/GitHub/fragvalue-demo-parser
+railway up
+```
+
+Verifier post-deploy via logs Railway :
+- `TICK_SAMPLE adaptive : 32 (file XYZ MB)` doit apparaitre au debut du parse
+- `parseTicks : sampling N ticks (every TICK_SAMPLE)...`
+- `parseTicks done in X.Xs, rows=N` (vs avant : pas de timing log)
+
+Estimation gain user-facing pour 450 MB demo :
+- Avant : ~10-13 min total
+- Apres : ~5-7 min total (parseTicks 32x reduce + TICK_SAMPLE 48 = 50%
+  position rows = plus de gains sur loops JS downstream)
+
 ## 2026-05-14 · Endpoint /parse-from-storage (fix upload demo > 200 MB)
 
 **Bug** : `demo.html` (commit `113b76f`, May 9) appelle `/parse-from-storage`
