@@ -62,67 +62,82 @@ function fmtPos(x, y) {
 }
 
 // Build le rounds XML block compact pour injection prompt.
+//
+// Structure attendue parser output (matches.demo_data) :
+//   demoData.rounds  : [{round, killsRound, winner (2=T|3=CT), startTick, endTick, isKnife, displayNum}]
+//   demoData.kills   : [{round (0-indexed), tick, attacker, victim, weapon, attackerX, attackerY, victimX, victimY, isHeadshot, thruSmoke, isWallbang, ...}]
+//   demoData.bombPlants/bombDefuses/bombExplodes : [{round (1-indexed!), tick, X, Y, ...}]
+//
+// ATTENTION indexing mixed dans le parser :
+//   - kills.round = e.total_rounds_played (0-indexed)
+//   - rounds.round = freezeR = total_rounds_played (0-indexed)
+//   - bombs.round = total_rounds_played + 1 (1-indexed)
+// On normalise vers display = round + 1 (1-indexed user-facing).
 function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
   if (!demoData) return '';
   const { keyRoundsDetail = 6, maxRoundsSummary = 30 } = options;
 
-  // demo_data structure varie selon parser. Try multiple paths.
-  const rounds = demoData.rounds || demoData.roundsData || [];
+  const rounds = demoData.rounds || [];
   const kills = demoData.kills || [];
   const bombPlants = demoData.bombPlants || [];
   const bombDefuses = demoData.bombDefuses || [];
   const bombExplodes = demoData.bombExplodes || [];
+  const grenadesByRound = demoData.grenadesByRound || {};
 
   if (!Array.isArray(rounds) || rounds.length === 0) {
-    // Fallback : on a juste les kills, on regroupe par round_num
     if (!kills.length) return '';
     return formatFromKillsOnly(kills, bombPlants, bombDefuses, bombExplodes, userName, userTeam, maxRoundsSummary);
   }
 
-  // Group kills par round
+  // Group kills par round (0-indexed cote kills)
   const killsByRound = {};
   for (const k of kills) {
     const r = k.round ?? 0;
     if (!killsByRound[r]) killsByRound[r] = [];
     killsByRound[r].push(k);
   }
+  // Sort par tick chaque round pour identifier l'opening duel
+  for (const r in killsByRound) killsByRound[r].sort((a, b) => (a.tick || 0) - (b.tick || 0));
 
-  // Build summary line pour chaque round + collecte les key rounds
   const summaries = [];
   const keyRounds = [];
 
   for (const r of rounds.slice(0, maxRoundsSummary)) {
-    const num = r.number || r.round || r.roundNum || 0;
-    if (!num) continue;
-    const roundKills = killsByRound[num] || [];
+    // Round number : 0-indexed dans le parser, on affiche 1-indexed (displayNum)
+    const rIdx = r.round ?? 0;
+    const displayN = r.displayNum || r.killsRound || (rIdx + 1);
+    if (r.isKnife) continue;  // skip knife rounds (warmup)
+
+    const roundKills = killsByRound[rIdx] || [];
     const userKillsInRound = roundKills.filter(k => k.attacker === userName);
     const userDeathsInRound = roundKills.filter(k => k.victim === userName);
 
-    // Outcome : W si user team a gagne, L sinon
+    // Outcome : winner 2=T, 3=CT. Si user team match winner -> W
     const winnerTeam = r.winner === 2 ? 'T' : r.winner === 3 ? 'CT' : null;
-    // user_team peut changer mi-match (CT 1ere mi, T 2eme mi)
-    // Pour MR12 : rounds 1-12 = user joue selon initial, 13-24 = swap
-    const userSideThisRound = (num <= 12) ? userTeam : (userTeam === 'T' ? 'CT' : 'T');
+    // userSideThisRound : swap apres halftime (round 13+ display = 2eme mi)
+    const userSideThisRound = (displayN <= 12) ? userTeam : (userTeam === 'T' ? 'CT' : 'T');
     const outcome = winnerTeam ? (winnerTeam === userSideThisRound ? 'W' : 'L') : '?';
 
-    // Plant
-    const planted = bombPlants.find(b => b.round === num);
-    const defused = bombDefuses.find(b => b.round === num);
-    const exploded = bombExplodes.find(b => b.round === num);
+    // Bombs : 1-indexed dans parser, donc match avec displayN
+    const planted = bombPlants.find(b => b.round === displayN);
+    const defused = bombDefuses.find(b => b.round === displayN);
+    const exploded = bombExplodes.find(b => b.round === displayN);
     const bombInfo = exploded ? 'plant_explode' : (defused ? 'plant_defused' : (planted ? 'planted' : ''));
 
     // Econ heuristic
-    const econ = classifyEcon(r, userTeam, userKillsInRound, userDeathsInRound);
+    const econ = classifyEconFromKills(displayN, userKillsInRound);
 
     // Event reason
-    const eventReason = r.reason || (exploded ? 't_eliminated' : (defused ? 'ct_eliminated' : winnerTeam ? `${winnerTeam.toLowerCase()}_win` : '?'));
+    const eventReason = exploded ? 't_bomb_explode' :
+                        defused ? 'ct_defuse' :
+                        winnerTeam ? `${winnerTeam.toLowerCase()}_eliminated` : '?';
 
-    // Opening duel
+    // Opening duel = premier kill (kills sorted par tick)
     const opening = roundKills[0];
     let openingStr = '';
     if (opening) {
-      const tag = opening.attacker === userName ? '★ user kill' : opening.victim === userName ? '☠ user died' : '';
-      openingStr = ` opening="${opening.attacker} → ${opening.victim} (${opening.weapon || ''})${tag ? ' ' + tag : ''}"`;
+      const tag = opening.attacker === userName ? '★user_kill' : opening.victim === userName ? '☠user_died' : '';
+      openingStr = ` opening="${escapeXml(opening.attacker)} → ${escapeXml(opening.victim)} (${opening.weapon || ''})${tag ? ' ' + tag : ''}"`;
     }
 
     // User stats du round
@@ -131,22 +146,34 @@ function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
     const userDied = userDeathsInRound[0];
     let diedStr = '';
     if (userDied) {
-      diedStr = ` died_to="${userDied.attacker} (${userDied.weapon || ''}${userDied.isHeadshot ? ', HS' : ''})"`;
+      diedStr = ` died_to="${escapeXml(userDied.attacker)} (${userDied.weapon || ''}${userDied.isHeadshot ? ', HS' : ''}${userDied.thruSmoke ? ', smoke' : ''}${userDied.isWallbang ? ', wallbang' : ''})"`;
+    }
+
+    // Grenades summary
+    const grenSum = grenadesByRound[displayN] || grenadesByRound[rIdx];
+    let grenStr = '';
+    if (grenSum) {
+      const parts = [];
+      if (grenSum.smoke) parts.push(`${grenSum.smoke}smk`);
+      if (grenSum.flash) parts.push(`${grenSum.flash}fl`);
+      if (grenSum.he) parts.push(`${grenSum.he}he`);
+      if (grenSum.molo) parts.push(`${grenSum.molo}mol`);
+      if (parts.length) grenStr = ` nades_round="${parts.join(' ')}"`;
     }
 
     summaries.push(
-      `  <round n="${num}" outcome="${outcome}" econ="${econ}" event="${eventReason}"${bombInfo ? ` bomb="${bombInfo}"` : ''} user_k="${uK}" user_d="${uD}"${openingStr}${diedStr} />`
+      `  <round n="${displayN}" outcome="${outcome}" econ="${econ}" event="${eventReason}"${bombInfo ? ` bomb="${bombInfo}"` : ''} user_k="${uK}" user_d="${uD}"${openingStr}${diedStr}${grenStr} />`
     );
 
-    // Check si key round (multi, opening, clutch)
+    // Key round detection (multi-kill, opening involving user)
     const keyCheck = isKeyRound(roundKills, userName);
     if (keyCheck && keyRounds.length < keyRoundsDetail) {
-      keyRounds.push({ num, kills: roundKills, type: keyCheck.type, detail: keyCheck.detail });
+      keyRounds.push({ displayN, rIdx, kills: roundKills, type: keyCheck.type, detail: keyCheck.detail });
     }
   }
 
   // Build XML
-  let xml = `<rounds n="${rounds.length}" user="${userName}" team="${userTeam}">\n`;
+  let xml = `<rounds n="${summaries.length}" user="${escapeXml(userName)}" team="${userTeam}">\n`;
   xml += summaries.join('\n');
   xml += `\n</rounds>`;
 
@@ -154,10 +181,10 @@ function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
   if (keyRounds.length > 0) {
     xml += '\n<key_rounds>\n';
     for (const kr of keyRounds) {
-      xml += `  <round n="${kr.num}" type="${kr.type}">\n`;
-      for (const k of kr.kills.slice(0, 8)) {  // cap 8 kills per round
+      xml += `  <round n="${kr.displayN}" type="${kr.type}">\n`;
+      for (const k of kr.kills.slice(0, 8)) {
         const isUser = k.attacker === userName ? ' user_kill="true"' : k.victim === userName ? ' user_death="true"' : '';
-        xml += `    <kill tick="${k.tick || 0}" attacker="${k.attacker}" victim="${k.victim}" weapon="${k.weapon || ''}"${k.isHeadshot ? ' hs="true"' : ''}${k.thruSmoke ? ' smoke="true"' : ''}${k.isWallbang ? ' wb="true"' : ''} pos_a="${fmtPos(k.attackerX, k.attackerY)}" pos_v="${fmtPos(k.victimX, k.victimY)}"${isUser} />\n`;
+        xml += `    <kill tick="${k.tick || 0}" attacker="${escapeXml(k.attacker)}" victim="${escapeXml(k.victim)}" weapon="${k.weapon || ''}"${k.isHeadshot ? ' hs="true"' : ''}${k.thruSmoke ? ' smoke="true"' : ''}${k.isWallbang ? ' wb="true"' : ''} pos_a="${fmtPos(k.attackerX, k.attackerY)}" pos_v="${fmtPos(k.victimX, k.victimY)}"${isUser} />\n`;
       }
       xml += `  </round>\n`;
     }
@@ -165,6 +192,22 @@ function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
   }
 
   return xml;
+}
+
+function escapeXml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function classifyEconFromKills(displayN, userKillsInRound) {
+  if (displayN === 1 || displayN === 13) return 'pistol';
+  const k = userKillsInRound[0];
+  if (!k?.weapon) return 'unknown';
+  const w = k.weapon.toLowerCase().replace(/^weapon_/, '');
+  if (/^(ak47|m4a1|m4a4|awp|aug|sg556|sg553)/.test(w)) return 'full';
+  if (/^(galilar|famas|ssg08|mp9|mac10|mp7|p90|ump45|bizon|nova|mag7|xm1014)/.test(w)) return 'force';
+  if (/^(usp_silencer|glock|hkp2000|p2000|deagle|p250|tec9|fiveseven|cz75a|revolver|elite)/.test(w)) return 'eco';
+  return 'unknown';
 }
 
 // Fallback : si demo_data n'a pas de rounds[] structure, on derive depuis kills.
