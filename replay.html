@@ -1175,6 +1175,11 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
           <button class="dt-color" data-color="#ffffff" onclick="selectDrawColor('#ffffff')" style="background:#ffffff"></button>
         </div>
         <div class="dt-divider"></div>
+        <!-- Share : genere un short link pour partager les annotations du round courant -->
+        <button class="dt-clear" id="btnShareAnnot" onclick="shareRoundAnnotations()" title="Partager les annotations de ce round" style="margin-right:6px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Partager
+        </button>
         <button class="dt-clear" onclick="clearRoundAnnotations()" title="Effacer toutes les annotations du round">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
           Effacer
@@ -2085,6 +2090,9 @@ window.addEventListener('load', async () => {
       // Load hybride : localStorage instant + cloud async merge (cross-device).
       annotations = loadAnnotations();
       loadAnnotationsHybrid();  // fire-and-forget, redraw si cloud merge
+      // Si l'URL contient ?annot_share=XXX → charger les annotations partagees
+      // par un coach (acces public, pas besoin d'etre logge).
+      loadSharedAnnotations();
       // Deep-link : si l URL specifie ?round=N, on charge ce round.
       // Sinon le premier round non-knife. Apres selectRound, on applique
       // tick + iso si fournis (params persistent dans le state pour replay).
@@ -6397,6 +6405,89 @@ function selectDrawColor(color) {
   document.querySelectorAll('.dt-color').forEach(b => {
     b.classList.toggle('active', b.dataset.color === color);
   });
+}
+
+// Partage les annotations du round courant via short link.
+// API genere un share_id stable (reuse si deja partage avant), copie l'URL
+// dans le clipboard, montre toast de confirmation.
+async function shareRoundAnnotations() {
+  if (currentRound == null) {
+    showShareToast('Selectionne un round d\'abord');
+    return;
+  }
+  const roundAnns = annotations.filter(a => a.round === currentRound);
+  if (roundAnns.length === 0) {
+    showShareToast('Aucune annotation a partager');
+    return;
+  }
+  const token = await getSupabaseAccessToken();
+  if (!token) {
+    showShareToast('Connecte-toi pour partager');
+    return;
+  }
+  const demoId = getDemoId();
+  if (!demoId) return;
+  try {
+    const res = await fetch('/api/replay-annotations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        demo_id: demoId,
+        round_num: currentRound,
+        payload: { annotations: roundAnns },
+        share: true,  // trigger share_id generation
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.annotation?.share_id) {
+      console.warn('[shareRoundAnnotations] fail', data);
+      showShareToast('Echec partage : ' + (data.error || res.status));
+      return;
+    }
+    const shareUrl = `${location.origin}${location.pathname}?annot_share=${data.annotation.share_id}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showShareToast(`Lien copie · R${currentRound}`);
+    } catch (_) {
+      // Clipboard fail (HTTPS only) → fallback prompt
+      window.prompt('Copie ce lien :', shareUrl);
+    }
+  } catch (e) {
+    console.error('[shareRoundAnnotations] error', e);
+    showShareToast('Erreur reseau');
+  }
+}
+
+// Si l'URL contient ?annot_share=XXX, on charge les annotations publiques
+// partagees (sans necessite d'auth) et on les overlay sur le replay.
+async function loadSharedAnnotations() {
+  const params = new URLSearchParams(window.location.search);
+  const shareId = params.get('annot_share');
+  if (!shareId) return false;
+  try {
+    const res = await fetch(`/api/replay-annotations?share_id=${encodeURIComponent(shareId)}`);
+    if (!res.ok) {
+      console.warn('[loadSharedAnnotations] fail status', res.status);
+      return false;
+    }
+    const data = await res.json();
+    if (!data.annotations?.length) return false;
+    // Merge le payload partage avec les annotations existantes
+    const sharedAnns = [];
+    for (const row of data.annotations) {
+      const inner = row.payload?.annotations || [];
+      sharedAnns.push(...inner);
+    }
+    if (sharedAnns.length === 0) return false;
+    // Append au tableau global (avec tag _shared pour distinction visuelle si voulu)
+    annotations = [...annotations, ...sharedAnns.map(a => ({ ...a, _shared: true }))];
+    showShareToast(`${sharedAnns.length} annotations partagees chargees`);
+    drawFrame(frameIdx);
+    return true;
+  } catch (e) {
+    console.warn('[loadSharedAnnotations] error', e);
+    return false;
+  }
 }
 
 function clearRoundAnnotations() {
