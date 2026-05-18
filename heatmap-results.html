@@ -633,19 +633,34 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   </div>
 </nav>
 
-<div id="noData" class="no-data" style="display:none!important;padding:80px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px">
+<div id="noData" class="no-data" style="display:none;padding:80px 24px;text-align:center;flex-direction:column;align-items:center;gap:14px">
   <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.7" aria-hidden="true">
     <rect x="3" y="3" width="18" height="18" rx="2"/>
     <circle cx="9" cy="9" r="1.5" fill="currentColor"/>
     <circle cx="15" cy="9" r="1.5" fill="currentColor"/>
     <path d="M7 14h10"/>
   </svg>
-  <div class="no-data-title">Aucune demo analysee</div>
-  <p class="no-data-sub" style="max-width:380px">Importe ta premiere demo .dem FACEIT pour debloquer les heatmaps, le FV Rating et le diagnostic Coach IA.</p>
-  <a href="demo.html" class="no-data-btn" style="display:inline-flex;align-items:center;gap:8px;min-width:180px;justify-content:center">
-    Analyser une demo
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-  </a>
+  <div class="no-data-title" id="ndTitle">Aucune demo analysee</div>
+  <p class="no-data-sub" id="ndSub" style="max-width:480px">Importe ta premiere demo .dem FACEIT pour debloquer les heatmaps, le FV Rating et le diagnostic Coach IA.</p>
+  <div id="ndCtaWrap" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+    <a href="demo.html" class="no-data-btn" id="ndCtaPrimary" style="display:inline-flex;align-items:center;gap:8px;min-width:180px;justify-content:center">
+      Analyser une demo
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+    <a href="matches.html" class="no-data-btn" id="ndCtaSecondary" style="display:none;background:transparent;border:1px solid var(--accent);color:var(--accent);align-items:center;gap:8px;justify-content:center">
+      Voir mes matchs
+    </a>
+  </div>
+  <!-- Help row : 2 chips contextual quand user a 0 demo -->
+  <div id="ndHints" style="display:none;margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-family:'Space Mono',monospace;font-size:11px">
+    <a href="how-it-works.html" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:40px;color:var(--text2);text-decoration:none">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      Comment ca marche ?
+    </a>
+    <a href="login.html#faceit" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.2);border-radius:40px;color:var(--accent);text-decoration:none" id="ndHintFaceit">
+      Lier FACEIT (auto-sync)
+    </a>
+  </div>
 </div>
 
 <div class="page" id="mainContent" style="display:none">
@@ -918,6 +933,85 @@ function fvShowProModal(featureName){
 const _sbUrl='https://xmyruycvvkmcwysfygcq.supabase.co';
 const _sbAnon='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
 
+// Empty state contextuel : adapte le wording selon l'etat user.
+// 4 etats possibles :
+//   1. Pas connecte                    -> "Connecte-toi pour analyser"
+//   2. Connecte, 0 demo, 0 match       -> "Lance ta 1ere analyse" (first-time)
+//   3. Connecte, demos existantes       -> "Tu as N demos, ouvre-en une"
+//   4. Connecte, matchs en cours parse  -> "Analyse en cours, reviens dans 5 min"
+async function renderContextualEmpty() {
+  const sb = supabase.createClient(_sbUrl, _sbAnon);
+  const { data: { session } } = await sb.auth.getSession();
+  const titleEl = document.getElementById('ndTitle');
+  const subEl = document.getElementById('ndSub');
+  const ctaPrim = document.getElementById('ndCtaPrimary');
+  const ctaSec = document.getElementById('ndCtaSecondary');
+  const hints = document.getElementById('ndHints');
+  const hintFaceit = document.getElementById('ndHintFaceit');
+
+  if (!session) {
+    // Etat 1 : non connecte
+    titleEl.textContent = 'Connecte-toi pour analyser';
+    subEl.textContent = 'Pour debloquer les heatmaps, le FV Rating et le diagnostic Coach IA, cree un compte gratuit (no spam, no CB).';
+    ctaPrim.textContent = 'Connexion';
+    ctaPrim.href = 'login.html';
+    hints.style.display = 'flex';
+    return;
+  }
+
+  // Connecte : check profile + matches en parallele
+  const [profileRes, matchesRes] = await Promise.all([
+    sb.from('profiles').select('faceit_id, faceit_nickname').eq('id', session.user.id).maybeSingle(),
+    sb.from('matches').select('id, status, parsed_at').eq('user_id', session.user.id).order('parsed_at', { ascending: false, nullsFirst: false }).limit(5),
+  ]);
+  const profile = profileRes.data;
+  const matches = matchesRes.data || [];
+  const hasFaceit = !!(profile?.faceit_id || profile?.faceit_nickname);
+  const parsedMatches = matches.filter(m => m.status === 'parsed');
+  const parsingMatches = matches.filter(m => m.status === 'parsing' || m.status === 'pending');
+
+  if (parsingMatches.length > 0) {
+    // Etat 4 : analyse en cours
+    titleEl.textContent = 'Analyse en cours...';
+    subEl.textContent = `${parsingMatches.length} match${parsingMatches.length > 1 ? 's' : ''} en cours de parsing. Ca prend 2-5 min selon la taille des demos. Reviens sur Mes matchs ou rafraichis la page dans quelques minutes.`;
+    ctaPrim.textContent = 'Voir mes matchs';
+    ctaPrim.href = 'matches.html';
+    ctaSec.style.display = 'inline-flex';
+    ctaSec.textContent = 'Rafraichir';
+    ctaSec.href = '#';
+    ctaSec.onclick = (e) => { e.preventDefault(); location.reload(); };
+    return;
+  }
+
+  if (parsedMatches.length > 0) {
+    // Etat 3 : demos existantes (la 1ere est la plus recente)
+    const last = parsedMatches[0];
+    titleEl.textContent = `Tu as deja ${parsedMatches.length} demo${parsedMatches.length > 1 ? 's' : ''} analysee${parsedMatches.length > 1 ? 's' : ''}`;
+    subEl.textContent = 'Cette page se charge automatiquement quand tu ouvres une analyse depuis "Mes matchs". Va y selectionner la demo que tu veux explorer.';
+    ctaPrim.textContent = 'Ouvrir mes matchs';
+    ctaPrim.href = 'matches.html';
+    return;
+  }
+
+  // Etat 2 : connecte, 0 demo
+  if (hasFaceit) {
+    titleEl.textContent = 'Aucune demo analysee · ton compte FACEIT est lie';
+    subEl.textContent = 'Clique "Importer mes 5 derniers" sur Mes matchs pour analyser tes parties recentes en 1 clic. Tu peux aussi uploader une .dem manuellement.';
+    ctaPrim.textContent = 'Mes matchs';
+    ctaPrim.href = 'matches.html';
+    ctaSec.style.display = 'inline-flex';
+    ctaSec.textContent = 'Upload manuel';
+    ctaSec.href = 'demo.html';
+    hintFaceit.style.display = 'none';  // deja lie
+  } else {
+    titleEl.textContent = 'Lance ta premiere analyse';
+    subEl.textContent = 'Soit tu lies ton compte FACEIT pour l\'auto-sync (Pro/Elite) et l\'import 5 derniers, soit tu drag-dropes une .dem directement.';
+    ctaPrim.textContent = 'Analyser une demo';
+    ctaPrim.href = 'demo.html';
+  }
+  hints.style.display = 'flex';
+}
+
 let playerColorMap={}, demoData=null, activePlayers=new Set();
 let currentHeatmap='kills', currentFloor='upper', showCT=true, showT=true;
 let canvas, ctx, mapImage=null;
@@ -1050,11 +1144,19 @@ function expandKills(kills){
   }));
 }
 
-window.addEventListener('load',()=>{
+window.addEventListener('load',async ()=>{
   canvas=document.getElementById('heatmapCanvas');
   if(canvas) ctx=canvas.getContext('2d');
   const raw=sessionStorage.getItem('demoData');
-  if(!raw){document.getElementById('noData').style.display='block';return;}
+  if(!raw){
+    const nd = document.getElementById('noData');
+    nd.style.display = 'flex';
+    // Intelligent empty state : si user connecte, on personnalise.
+    try {
+      await renderContextualEmpty();
+    } catch (e) { console.warn('renderContextualEmpty:', e?.message); }
+    return;
+  }
   try{
     demoData=JSON.parse(raw);
     // Décompresser les kills si envoyés en format compact par le parser
