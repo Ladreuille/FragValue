@@ -45,6 +45,10 @@
     const anchorText = (link.textContent || '').trim().slice(0, 80);
     const fromPage = location.pathname.replace(/^\//, '') || 'index.html';
 
+    // CRITIQUE : utilise transport_type 'beacon' pour garantir que l'event
+    // GA4 part AVANT que la page navigue. Sans ca, sur slow network le
+    // beacon est cancel par la navigation et l'event est perdu. C'est le
+    // pattern recommande GA4 docs pour les events click-then-navigate.
     try {
       if (typeof window.fvTrack === 'function') {
         window.fvTrack('upsell_click', {
@@ -52,6 +56,16 @@
           placement,
           anchor_text: anchorText,
           target_url: link.href,
+          transport_type: 'beacon',
+        });
+      } else if (typeof window.gtag === 'function') {
+        // Fallback direct gtag si fvTrack n'est pas dispo sur la page
+        window.gtag('event', 'upsell_click', {
+          from_page: fromPage,
+          placement,
+          anchor_text: anchorText,
+          target_url: link.href,
+          transport_type: 'beacon',
         });
       }
     } catch (_) {}

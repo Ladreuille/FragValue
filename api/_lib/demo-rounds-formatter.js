@@ -57,27 +57,35 @@ function classifyEcon(round, userTeam, userKillsInRound, userDeathsInRound) {
 
 // Format une position en compact callout approxime (pas de map data, juste raw coords).
 // Si mapName fourni, utilise le callout-mapper pour donner un nom lisible.
-function fmtPos(x, y, mapName) {
+// z optionnel : utile pour Nuke (A=top, B=basement).
+function fmtPos(x, y, mapName, z) {
   if (x == null || y == null) return '?';
   if (mapName) {
     try {
       const { fmtPosCallout } = require('./callout-mapper.js');
-      return fmtPosCallout(mapName, x, y);
+      return fmtPosCallout(mapName, x, y, z);
     } catch { /* fallback raw coords */ }
   }
   return `${Math.round(x)},${Math.round(y)}`;
 }
 
-// Detect trade-kill : kill within TRADE_WINDOW_TICKS d'une mort cote attaquant.
-// Approx 5s a 128 tick = 640 ticks. CS2 demos sont 64 ou 128 ticks selon source.
-const TRADE_WINDOW_TICKS = 640;
-function isTradeKill(currentKill, allKillsInRound) {
+// Detect trade-kill : kill within TRADE_WINDOW_SECONDS d'une mort cote attaquant.
+// On utilise la fenetre en SECONDES (pas en ticks) pour rester correct quel
+// que soit le tick rate du demo (64 pour FACEIT user, 64 pour pro HLTV, 128
+// pour serveur perso ou demo Valve). Le caller passe tickRate via options.
+//
+// Pourquoi 5s : c'est la fenetre standard CS:GO / CS2 cote stats trade (HLTV
+// utilise 5s, Leetify aussi). Au-dela on considere que le kill suivant n'est
+// plus une consequence direct de la mort initiale.
+const TRADE_WINDOW_SECONDS = 5;
+function isTradeKill(currentKill, allKillsInRound, tickRate = 64) {
   if (!currentKill?.attacker || !currentKill?.tick) return false;
+  const windowTicks = TRADE_WINDOW_SECONDS * tickRate;
   // Find teammates morts juste avant (qui ont la meme team que l'attaquant actuel)
   for (const k of allKillsInRound) {
     if (k === currentKill) continue;
     if (k.tick > currentKill.tick) continue;
-    if (currentKill.tick - k.tick > TRADE_WINDOW_TICKS) continue;
+    if (currentKill.tick - k.tick > windowTicks) continue;
     // Si le mort de k a la meme team que l'attaquant actuel, c'est une trade
     if (k.victimTeam != null && currentKill.attackerTeam != null && k.victimTeam === currentKill.attackerTeam) {
       return true;
@@ -128,6 +136,9 @@ function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
   const grenadesByRound = demoData.grenadesByRound || {};
   // mapName injected pour le callout-mapper. Sans ca, on retombe sur les coords brutes.
   const mapName = demoData.meta?.map || demoData.map || options.mapName || '';
+  // tickRate pour la fenetre trade kill (5s window). Source de verite :
+  // demoData.meta.tickRate (parser le pose) > options.tickRate > default 64.
+  const tickRate = demoData.meta?.tickRate || demoData.tickRate || options.tickRate || 64;
 
   if (!Array.isArray(rounds) || rounds.length === 0) {
     if (!kills.length) return '';
@@ -182,7 +193,7 @@ function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
     let openingStr = '';
     if (opening) {
       const tag = opening.attacker === userName ? '★user_kill' : opening.victim === userName ? '☠user_died' : '';
-      const openingPos = fmtPos(opening.victimX, opening.victimY, mapName);
+      const openingPos = fmtPos(opening.victimX, opening.victimY, mapName, opening.victimZ);
       openingStr = ` opening="${escapeXml(opening.attacker)} → ${escapeXml(opening.victim)} (${opening.weapon || ''}) @ ${openingPos}${tag ? ' ' + tag : ''}"`;
     }
 
@@ -192,13 +203,13 @@ function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
     const userDied = userDeathsInRound[0];
     let diedStr = '';
     if (userDied) {
-      const deathPos = fmtPos(userDied.victimX, userDied.victimY, mapName);
+      const deathPos = fmtPos(userDied.victimX, userDied.victimY, mapName, userDied.victimZ);
       diedStr = ` died_to="${escapeXml(userDied.attacker)} (${userDied.weapon || ''}${userDied.isHeadshot ? ', HS' : ''}${userDied.thruSmoke ? ', smoke' : ''}${userDied.isWallbang ? ', wallbang' : ''}) @ ${deathPos}"`;
     }
     // Trade kills user dans le round (utile pour eval awareness/teamplay)
     let tradeStr = '';
     if (uK > 0) {
-      const tradesAsTrader = userKillsInRound.filter(k => isTradeKill(k, roundKills)).length;
+      const tradesAsTrader = userKillsInRound.filter(k => isTradeKill(k, roundKills, tickRate)).length;
       if (tradesAsTrader > 0) tradeStr = ` user_trades="${tradesAsTrader}"`;
     }
     // Team economy aggregate (T=... CT=...)
@@ -240,8 +251,8 @@ function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
       xml += `  <round n="${kr.displayN}" type="${kr.type}">\n`;
       for (const k of kr.kills.slice(0, 8)) {
         const isUser = k.attacker === userName ? ' user_kill="true"' : k.victim === userName ? ' user_death="true"' : '';
-        const isTrade = isTradeKill(k, kr.kills) ? ' trade="true"' : '';
-        xml += `    <kill tick="${k.tick || 0}" attacker="${escapeXml(k.attacker)}" victim="${escapeXml(k.victim)}" weapon="${k.weapon || ''}"${k.isHeadshot ? ' hs="true"' : ''}${k.thruSmoke ? ' smoke="true"' : ''}${k.isWallbang ? ' wb="true"' : ''}${isTrade} pos_a="${fmtPos(k.attackerX, k.attackerY, mapName)}" pos_v="${fmtPos(k.victimX, k.victimY, mapName)}"${isUser} />\n`;
+        const isTrade = isTradeKill(k, kr.kills, tickRate) ? ' trade="true"' : '';
+        xml += `    <kill tick="${k.tick || 0}" attacker="${escapeXml(k.attacker)}" victim="${escapeXml(k.victim)}" weapon="${k.weapon || ''}"${k.isHeadshot ? ' hs="true"' : ''}${k.thruSmoke ? ' smoke="true"' : ''}${k.isWallbang ? ' wb="true"' : ''}${isTrade} pos_a="${fmtPos(k.attackerX, k.attackerY, mapName, k.attackerZ)}" pos_v="${fmtPos(k.victimX, k.victimY, mapName, k.victimZ)}"${isUser} />\n`;
       }
       xml += `  </round>\n`;
     }

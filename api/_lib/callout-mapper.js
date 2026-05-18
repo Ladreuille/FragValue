@@ -19,9 +19,15 @@
 // transformees). Si le parser fait deja une transformation (ex. inversion Y),
 // adapter ici. Test E2E rapide via le smoke-test en bas de fichier.
 
-// Helper : check si (x, y) est dans une zone rectangulaire {minX, maxX, minY, maxY}.
-function inZone(x, y, zone) {
-  return x >= zone.minX && x <= zone.maxX && y >= zone.minY && y <= zone.maxY;
+// Helper : check si (x, y, z) est dans une zone rectangulaire 2D ou 3D.
+// Si la zone declare minZ/maxZ, on filtre aussi sur l'altitude (utile pour
+// les maps verticales type Nuke ou A site est sur le toit, B en sous-sol).
+function inZone(x, y, zone, z) {
+  if (x < zone.minX || x > zone.maxX) return false;
+  if (y < zone.minY || y > zone.maxY) return false;
+  if (zone.minZ != null && z != null && z < zone.minZ) return false;
+  if (zone.maxZ != null && z != null && z > zone.maxZ) return false;
+  return true;
 }
 
 // Coords des zones broad par map. Chaque zone = (callout, box).
@@ -57,17 +63,23 @@ const ZONES = {
     { name: 'ct_spawn',       minX: 1500, maxX: 2900, minY: -1500, maxY:    50 },
   ],
 
-  // ── NUKE ──────────────────────────────────────────────────────────────
-  // Vertical map : A site = top floor (Z high), B site = bottom (Z low).
-  // En 2D coords X/Y on a A et B qui se superposent. On distingue via
-  // approximation X/Y meme si Z ferait mieux le job.
+  // ── NUKE (map verticale : A en haut Z>0, B en sous-sol Z<-200) ──────
+  // Sans Z, A et B se superposent en X/Y (meme empreinte horizontale).
+  // CS2 world Z: A site floor ~ -415, B site floor ~ -785 (par radar).
+  // On utilise Z=-500 comme seuil A/B (au-dessus = A area, en-dessous = B).
+  // Zones SANS minZ/maxZ s'appliquent sur n'importe quel Z (zones 2D-only).
   de_nuke: [
+    // Outside : zone exterieure cote T/CT exterior
     { name: 'outside',        minX: -200, maxX:  900, minY:-1000, maxY:    0 },
-    { name: 'A_site_main',    minX:  -50, maxX:  850, minY:  100, maxY:   850 },
-    { name: 'A_heaven',       minX:  100, maxX:  800, minY:  600, maxY:   900 },
-    { name: 'A_hut',          minX:-1000, maxX: -200, minY:    0, maxY:   600 },
-    { name: 'A_ramp',         minX:    0, maxX:  600, minY:  900, maxY:  1500 },
-    { name: 'B_site',         minX:    0, maxX:  900, minY:  100, maxY:   850 },  // overlaps A en 2D
+    // A site : floor superieur (Z > -500)
+    { name: 'A_site',         minX:  -50, maxX:  850, minY:  100, maxY:   850, minZ: -500, maxZ:  500 },
+    { name: 'A_heaven',       minX:  100, maxX:  800, minY:  600, maxY:   900, minZ: -200, maxZ:  500 },
+    { name: 'A_hut',          minX:-1000, maxX: -200, minY:    0, maxY:   600, minZ: -500, maxZ:  500 },
+    { name: 'A_ramp',         minX:    0, maxX:  600, minY:  900, maxY:  1500, minZ: -500, maxZ:  500 },
+    // B site : sous-sol (Z < -500)
+    { name: 'B_site',         minX:    0, maxX:  900, minY:  100, maxY:   850, minZ:-1000, maxZ: -500 },
+    { name: 'B_halls',        minX: -600, maxX:  100, minY:  100, maxY:   850, minZ:-1000, maxZ: -500 },
+    // Spawns (Z indifferent, leur X/Y est unique)
     { name: 't_spawn',        minX: 1500, maxX: 2700, minY:-1700, maxY:  -400 },
     { name: 'ct_spawn',       minX: 1700, maxX: 2700, minY:  100, maxY:  1500 },
   ],
@@ -133,22 +145,25 @@ function normalizeMap(mapName) {
   return m;
 }
 
-// API principale : retourne le callout pour (mapName, x, y) ou '' si inconnu.
-function posToCallout(mapName, x, y) {
+// API principale : retourne le callout pour (mapName, x, y, [z]) ou '' si inconnu.
+// Le 4e param z est optionnel : utilise pour Nuke (A=top, B=basement) ou
+// d'autres futures maps verticales (Vertigo aussi mais hors active duty).
+function posToCallout(mapName, x, y, z) {
   if (x == null || y == null) return '';
   const map = normalizeMap(mapName);
   const zones = ZONES[map];
   if (!zones) return '';
   for (const zone of zones) {
-    if (inZone(x, y, zone)) return zone.name;
+    if (inZone(x, y, zone, z)) return zone.name;
   }
   return '';  // hors zones connues : on retourne vide (Claude verra les coords brutes)
 }
 
 // Helper : formate position en "callout (x,y)" si callout dispo, sinon "(x,y)".
-function fmtPosCallout(mapName, x, y) {
+// z optionnel passe a posToCallout pour les maps verticales.
+function fmtPosCallout(mapName, x, y, z) {
   if (x == null || y == null) return '?';
-  const callout = posToCallout(mapName, x, y);
+  const callout = posToCallout(mapName, x, y, z);
   const coords = `${Math.round(x)},${Math.round(y)}`;
   return callout ? `${callout} (${coords})` : coords;
 }

@@ -51,23 +51,30 @@ export default async function handler(req, res) {
     const monthIso= new Date(now - 30 * dayMs).toISOString();
 
     // ── Active Users (DAU/WAU/MAU)
-    // Definition "active" = a fait une action tracee (notification recue,
-    // demo analysee, diagnostic genere, ou coach msg envoye) dans la fenetre.
-    // On unifie via SELECT DISTINCT user_id depuis 4 tables source.
+    // Definition "active" = action recente confirmee de l'user (pas juste un
+    // row insere). On exclut `matches.created_at` car ca correspond a quand
+    // l'user a uploaded historiquement, pas a son activite recente.
+    // Sources gardees :
+    //   - notifications.created_at  (notif recue = user actif sur le site)
+    //   - diagnostic_history.generated_at (call Coach IA = user actif)
+    //   - coach_messages.created_at (chat = user actif)
+    //   - matches.parsed_at (match termine par parser = activite recente)
+    //
+    // TODO future : ajouter une colonne profiles.last_seen_at MAJ par
+    // /api/heartbeat depuis chaque page (single source of truth).
     const activeUsersInWindow = async (sinceIso) => {
-      const tables = [
-        { table: 'notifications', col: 'user_id', date: 'created_at' },
-        { table: 'matches',       col: 'user_id', date: 'created_at' },
-        { table: 'diagnostic_history', col: 'user_id', date: 'generated_at' },
-        { table: 'coach_messages', col: 'conversation_id', date: 'created_at' }, // indirect via conv -> user
-      ];
       const ids = new Set();
-      // 3 directes
-      for (const t of tables.slice(0, 3)) {
-        const { data } = await sb.from(t.table).select(t.col).gte(t.date, sinceIso);
-        (data || []).forEach(r => { if (r[t.col]) ids.add(r[t.col]); });
+      // Tables avec user_id direct
+      const direct = [
+        { table: 'notifications', date: 'created_at' },
+        { table: 'diagnostic_history', date: 'generated_at' },
+        { table: 'matches', date: 'parsed_at' },  // parsed_at = match termine
+      ];
+      for (const t of direct) {
+        const { data } = await sb.from(t.table).select('user_id').gte(t.date, sinceIso).not('user_id', 'is', null);
+        (data || []).forEach(r => { if (r.user_id) ids.add(r.user_id); });
       }
-      // coach_messages : resolve via coach_conversations
+      // coach_messages : resolve via coach_conversations.user_id
       const { data: msgs } = await sb.from('coach_messages').select('conversation_id').gte('created_at', sinceIso);
       if (msgs && msgs.length) {
         const convIds = [...new Set(msgs.map(m => m.conversation_id).filter(Boolean))];
@@ -90,9 +97,21 @@ export default async function handler(req, res) {
     ]);
 
     // ── Churn (last 30 days)
+    // Formule standard SaaS : churn_rate = canceled_in_period / active_at_start_of_period
+    // On approxime active_at_start = active_now + canceled_in_period (rebuild start state).
+    // Sources :
+    //   - subscriptions actuellement actives (active_at_end)
+    //   - subscriptions resiliees dans la periode (cancel_at_period_end=true ou status=canceled
+    //     avec current_period_end recent OR status changed to canceled in 30d).
+    //
+    // Sub timing note : on identifie "canceled in window" via subscription_events
+    // (audit log L215-1) si dispo, sinon fallback sur subscriptions table (moins precis
+    // car subscriptions garde l'etat courant, pas l'historique).
     const churnQueries = Promise.all([
-      sb.from('subscriptions').select('user_id, plan, status, current_period_end, cancel_at_period_end').gte('current_period_end', monthIso),
-      sb.from('subscriptions').select('user_id, plan').eq('status', 'active'),
+      // Toutes les subs : on filtre cote JS pour distinguer active vs canceled
+      sb.from('subscriptions').select('user_id, plan, status, current_period_end, cancel_at_period_end, payment_failed_at'),
+      // Audit log : events de resiliation des 30 derniers jours (source authoritative)
+      sb.from('subscription_events').select('user_id, event_type, created_at').gte('created_at', monthIso).in('event_type', ['canceled', 'subscription_canceled', 'cancel_at_period_end_set']).catch(() => ({ data: [] })),
     ]);
 
     // ── Recent signups
@@ -127,14 +146,30 @@ export default async function handler(req, res) {
     const proUsers = activeSubsRes.count || 0;
     const conversionPct = signups > 0 ? (proUsers / signups) * 100 : 0;
 
-    // Churn breakdown
-    const [recentSubsRes, allActiveSubsRes] = churn;
-    const recentSubs = recentSubsRes.data || [];
-    const allActiveSubs = allActiveSubsRes.data || [];
-    const cancelledLast30 = recentSubs.filter(s => s.cancel_at_period_end === true || s.status === 'canceled').length;
-    const churnPct = (recentSubs.length + cancelledLast30) > 0 ? (cancelledLast30 / (recentSubs.length + cancelledLast30)) * 100 : 0;
-    const activePro = allActiveSubs.filter(s => (s.plan || '').toLowerCase().includes('pro')).length;
-    const activeElite = allActiveSubs.filter(s => /elite|team/i.test(s.plan || '')).length;
+    // Churn breakdown (formule SaaS standard)
+    const [allSubsRes, cancelEventsRes] = churn;
+    const allSubs = allSubsRes.data || [];
+    const cancelEvents = cancelEventsRes.data || [];
+
+    // active_at_end : subs avec status='active' MAINTENANT (period_end dans le futur ou nullable)
+    const activeAtEnd = allSubs.filter(s => s.status === 'active' && (!s.current_period_end || new Date(s.current_period_end) > now));
+    const activePro = activeAtEnd.filter(s => /pro/i.test(s.plan || '')).length;
+    const activeElite = activeAtEnd.filter(s => /elite|team/i.test(s.plan || '')).length;
+    const activeTotal = activeAtEnd.length;
+
+    // canceled_in_window : events de cancel dans les 30 derniers jours (sub_events authoritative)
+    // Fallback : subs avec cancel_at_period_end=true et period_end recent
+    const cancelledFromEvents = cancelEvents.length;
+    const cancelledFromSubs = allSubs.filter(s =>
+      s.cancel_at_period_end === true ||
+      (s.status === 'canceled' && s.current_period_end && new Date(s.current_period_end) >= new Date(monthIso))
+    ).length;
+    const cancelledLast30 = Math.max(cancelledFromEvents, cancelledFromSubs);
+
+    // active_at_start = active_at_end + canceled_in_window (rebuild start state)
+    // churn_pct = canceled / active_at_start
+    const activeAtStart = activeTotal + cancelledLast30;
+    const churnPct = activeAtStart > 0 ? (cancelledLast30 / activeAtStart) * 100 : 0;
 
     // Trends
     const [signups7Res, signups30Res, conv30Res] = trends;
@@ -163,7 +198,7 @@ export default async function handler(req, res) {
         churn_pct: Math.round(churnPct * 100) / 100,
         active_pro: activePro,
         active_elite: activeElite,
-        active_total: activePro + activeElite,
+        active_total: activeTotal,
       },
       trends: {
         signups_7d: signups7Res.count || 0,

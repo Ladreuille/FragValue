@@ -234,10 +234,10 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <div style="width:32px;height:32px;border-radius:8px;background:rgba(184,255,87,.1);display:flex;align-items:center;justify-content:center;color:var(--accent)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
         </div>
-        <div style="font-family:'Space Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)">RECOMMANDE</div>
+        <div style="font-family:'Space Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)" id="faImportBadge">RECOMMANDE</div>
       </div>
-      <div style="font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.02em">Importer mes 5 derniers</div>
-      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text2);line-height:1.5">FACEIT lié = 1 clic → 5 matchs analysés en 5 min. Le plus rapide pour voir tes stats.</div>
+      <div style="font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.02em" id="faImportTitle">Importer mes 5 derniers</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text2);line-height:1.5" id="faImportDesc">FACEIT lié = 1 clic → 5 matchs analysés en 5 min. Le plus rapide pour voir tes stats.</div>
     </a>
 
     <a class="fa-card" href="demo.html" style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--border2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
@@ -250,14 +250,14 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text2);line-height:1.5">Drag-drop d'un fichier .dem (FACEIT, Matchmaking, server perso). Analyse en 2-5 min.</div>
     </a>
 
-    <a class="fa-card" href="pro-benchmarks.html" style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--border2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
+    <a class="fa-card" href="pro-benchmarks.html" id="faBenchmarks" style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--border2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
       <div style="display:flex;align-items:center;gap:8px">
         <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;color:var(--text2)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         </div>
       </div>
-      <div style="font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.02em">Voir le top 20 HLTV</div>
-      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text2);line-height:1.5">ZywOo, donk, ropz... Compare-toi aux meilleurs sur 4 KPIs. Sans inscription.</div>
+      <div style="font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.02em" id="faBenchmarksTitle">Voir le top 20 HLTV</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text2);line-height:1.5" id="faBenchmarksDesc">ZywOo, donk, ropz... Compare-toi aux meilleurs sur 4 KPIs. Sans inscription.</div>
     </a>
   </div>
 
@@ -406,6 +406,35 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     } else {
       document.getElementById('step3Title').textContent = 'Ton espace scout est prêt !';
       document.getElementById('step3Sub').textContent = 'Commence par analyser un joueur ou configure ta watchlist de recrutement.';
+    }
+
+    // Adapte les first-action cards selon le state user (P1 fix : avant on
+    // affichait toujours "FACEIT lié = 1 clic" meme si l user avait skippe).
+    const faImport = document.getElementById('faImport');
+    const faImportBadge = document.getElementById('faImportBadge');
+    const faImportTitle = document.getElementById('faImportTitle');
+    const faImportDesc = document.getElementById('faImportDesc');
+    const faBenchmarksTitle = document.getElementById('faBenchmarksTitle');
+    const faBenchmarksDesc = document.getElementById('faBenchmarksDesc');
+
+    if (verifiedFaceitNick) {
+      // FACEIT lie : import 5 derniers est vraiment le best first action
+      faImportBadge.textContent = 'RECOMMANDE';
+      faImportTitle.textContent = 'Importer mes 5 derniers';
+      faImportDesc.textContent = `${verifiedFaceitNick} lie. 1 clic → 5 matchs analysés en 5 min.`;
+      if (faImport) faImport.href = 'matches.html';
+    } else {
+      // FACEIT skippe : rediriger vers la liaison
+      faImportBadge.textContent = 'COMMENCE PAR';
+      faImportTitle.textContent = 'Lier mon compte FACEIT';
+      faImportDesc.textContent = 'Active l\'import en 1 clic + (Pro/Elite) l\'auto-sync sur chaque match. Tu peux aussi skip et upload une .dem manuellement.';
+      if (faImport) faImport.href = 'account.html#settings';
+    }
+
+    // Adapte la 3e card selon le mode (scout vs player)
+    if (selectedMode === 'scout') {
+      faBenchmarksTitle.textContent = 'Explorer les pros';
+      faBenchmarksDesc.textContent = 'Stats détaillées du top 60 mondial, par map et par role. Idéal pour benchmarker tes recrues.';
     }
   }
 

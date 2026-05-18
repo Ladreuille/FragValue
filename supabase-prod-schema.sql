@@ -478,15 +478,306 @@ CREATE POLICY "Delete watchlist perso" ON public.watchlist FOR DELETE USING (aut
 CREATE POLICY "Insert watchlist perso" ON public.watchlist FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Watchlist perso" ON public.watchlist FOR ALL USING (auth.uid() = user_id);
 
--- ── 7. Notes (NON inclus dans ce dump) ───────────────────────────────────
+-- ── 7. Custom Functions (RPC + triggers) ─────────────────────────────────
+-- Les fonctions pgvector (halfvec_*, sparsevec_*, vector_*) sont auto-creees
+-- par CREATE EXTENSION vector et NE SONT PAS incluses ici (sinon ~5000 lignes
+-- de bytecode bindings C inutiles pour un local dev setup).
+
+-- ── 7a. Detection patterns pros (utilisees par cron detect-pro-patterns) ─
+
+CREATE OR REPLACE FUNCTION public.detect_execute_timings(p_map text DEFAULT NULL::text, p_min_sample integer DEFAULT 3)
+ RETURNS TABLE(map text, side text, exec_speed text, sample_size bigint, total_plants bigint, confidence numeric, avg_plant_time_s numeric, stddev_plant_time_s numeric)
+ LANGUAGE sql STABLE
+AS $function$
+  WITH plants AS (
+    SELECT pmm.map_name AS map, e.player_team AS side, e.round_time_s AS plant_time_s,
+      CASE WHEN e.round_time_s < 30 THEN 'fast' WHEN e.round_time_s < 60 THEN 'default' ELSE 'slow' END AS exec_speed
+    FROM public.pro_demo_events e
+    JOIN public.pro_match_maps pmm ON pmm.id = e.pro_match_map_id
+    WHERE e.event_type = 'bomb_planted' AND e.player_team = 'T' AND e.round_time_s IS NOT NULL
+      AND (p_map IS NULL OR pmm.map_name = p_map)
+  ),
+  totals AS (SELECT map, side, count(*) AS total_plants FROM plants GROUP BY 1,2)
+  SELECT p.map, p.side, p.exec_speed, count(*) AS sample_size, t.total_plants,
+    round((count(*)::numeric / t.total_plants)::numeric, 3) AS confidence,
+    round(avg(p.plant_time_s)::numeric, 1) AS avg_plant_time_s,
+    round(stddev_samp(p.plant_time_s)::numeric, 1) AS stddev_plant_time_s
+  FROM plants p JOIN totals t USING (map, side)
+  GROUP BY p.map, p.side, p.exec_speed, t.total_plants
+  HAVING count(*) >= p_min_sample
+  ORDER BY confidence DESC;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.detect_position_holds(p_map text DEFAULT NULL::text, p_min_sample integer DEFAULT 5, p_timing_s numeric DEFAULT 10.0, p_timing_window_s numeric DEFAULT 5.0)
+ RETURNS TABLE(map text, side text, player_steamid text, player_name text, pos_x_bucket integer, pos_y_bucket integer, sample_size bigint, total_opportunities bigint, confidence numeric)
+ LANGUAGE sql STABLE
+AS $function$
+  WITH snapshots AS (
+    SELECT pmm.map_name AS map, e.player_team AS side, e.player_steamid, e.player_name,
+      (round(e.pos_x / 128) * 128)::int AS pos_x_bucket,
+      (round(e.pos_y / 128) * 128)::int AS pos_y_bucket,
+      e.pro_match_map_id, e.round_num
+    FROM public.pro_demo_events e
+    JOIN public.pro_match_maps pmm ON pmm.id = e.pro_match_map_id
+    WHERE e.event_type = 'position_snapshot' AND e.player_steamid IS NOT NULL
+      AND e.player_team IN ('CT','T')
+      AND e.round_time_s BETWEEN (p_timing_s - p_timing_window_s/2) AND (p_timing_s + p_timing_window_s/2)
+      AND (p_map IS NULL OR pmm.map_name = p_map)
+  ),
+  counts AS (SELECT map, side, player_steamid, player_name, pos_x_bucket, pos_y_bucket, count(*) AS sample_size FROM snapshots GROUP BY 1,2,3,4,5,6),
+  totals AS (SELECT map, side, player_steamid, count(DISTINCT (pro_match_map_id, round_num)) AS total FROM snapshots GROUP BY 1,2,3)
+  SELECT c.map, c.side, c.player_steamid, c.player_name, c.pos_x_bucket, c.pos_y_bucket,
+    c.sample_size, t.total AS total_opportunities,
+    round((c.sample_size::numeric / t.total)::numeric, 3) AS confidence
+  FROM counts c JOIN totals t USING (map, side, player_steamid)
+  WHERE c.sample_size >= p_min_sample
+  ORDER BY c.sample_size DESC, confidence DESC LIMIT 500;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.detect_opening_positions(p_map text DEFAULT NULL::text, p_min_sample integer DEFAULT 5)
+ RETURNS TABLE(map text, side text, player_steamid text, player_name text, pos_x_bucket integer, pos_y_bucket integer, sample_size bigint, total_opportunities bigint, confidence numeric)
+ LANGUAGE sql STABLE
+AS $function$
+  -- Reuse detect_position_holds avec timing 5s (early-round setup)
+  SELECT * FROM public.detect_position_holds(p_map, p_min_sample, 5.0, 4.0);
+$function$;
+
+CREATE OR REPLACE FUNCTION public.detect_post_plant_crossfires(p_map text DEFAULT NULL::text, p_min_sample integer DEFAULT 3)
+ RETURNS TABLE(map text, player_steamid text, player_name text, player_team text, pos_x_bucket integer, pos_y_bucket integer, sample_size bigint, total_post_plants bigint, confidence numeric)
+ LANGUAGE sql STABLE
+AS $function$
+  WITH plants AS (SELECT e.pro_match_map_id, e.round_num, e.tick AS plant_tick FROM public.pro_demo_events e WHERE e.event_type = 'bomb_planted'),
+  post_plant_pos AS (
+    SELECT pmm.map_name AS map, e.player_steamid, e.player_name, e.player_team,
+      (round(e.pos_x / 128) * 128)::int AS pos_x_bucket,
+      (round(e.pos_y / 128) * 128)::int AS pos_y_bucket,
+      e.pro_match_map_id, e.round_num
+    FROM public.pro_demo_events e
+    JOIN public.pro_match_maps pmm ON pmm.id = e.pro_match_map_id
+    JOIN plants p ON p.pro_match_map_id = e.pro_match_map_id AND p.round_num = e.round_num
+    WHERE e.event_type = 'position_snapshot' AND e.player_steamid IS NOT NULL
+      AND e.player_team IN ('CT','T')
+      AND e.tick BETWEEN p.plant_tick + 320 AND p.plant_tick + 640
+      AND (p_map IS NULL OR pmm.map_name = p_map)
+  ),
+  counts AS (SELECT map, player_steamid, player_name, player_team, pos_x_bucket, pos_y_bucket, count(*) AS sample_size FROM post_plant_pos GROUP BY 1,2,3,4,5,6),
+  totals AS (SELECT map, player_steamid, count(DISTINCT (pro_match_map_id, round_num)) AS total FROM post_plant_pos GROUP BY 1,2)
+  SELECT c.map, c.player_steamid, c.player_name, c.player_team, c.pos_x_bucket, c.pos_y_bucket,
+    c.sample_size, t.total AS total_post_plants,
+    round((c.sample_size::numeric / t.total)::numeric, 3) AS confidence
+  FROM counts c JOIN totals t USING (map, player_steamid)
+  WHERE c.sample_size >= p_min_sample
+  ORDER BY c.sample_size DESC, confidence DESC LIMIT 500;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.detect_util_lineups(p_map text DEFAULT NULL::text, p_min_sample integer DEFAULT 3)
+ RETURNS TABLE(map text, player_steamid text, player_name text, player_team text, grenade_type text, thrown_x integer, thrown_y integer, impact_x integer, impact_y integer, is_jumping boolean, sample_size bigint, total_opportunities bigint, confidence numeric)
+ LANGUAGE sql STABLE
+AS $function$
+  WITH thrown AS (
+    SELECT pmm.map_name AS map, e.player_steamid, e.player_name, e.player_team, e.grenade_type,
+      (round(e.pos_x / 64) * 64)::int AS thrown_x,
+      (round(e.pos_y / 64) * 64)::int AS thrown_y,
+      (round(e.target_pos_x / 64) * 64)::int AS impact_x,
+      (round(e.target_pos_y / 64) * 64)::int AS impact_y,
+      COALESCE((e.metadata->>'is_jumping')::boolean, false) AS is_jumping
+    FROM public.pro_demo_events e
+    JOIN public.pro_match_maps pmm ON pmm.id = e.pro_match_map_id
+    WHERE e.event_type = 'grenade_detonated' AND e.grenade_type IS NOT NULL
+      AND e.player_steamid IS NOT NULL AND e.target_pos_x IS NOT NULL
+      AND (p_map IS NULL OR pmm.map_name = p_map)
+  ),
+  counts AS (SELECT map, player_steamid, player_name, player_team, grenade_type, thrown_x, thrown_y, impact_x, impact_y, is_jumping, count(*) AS sample_size FROM thrown GROUP BY 1,2,3,4,5,6,7,8,9,10),
+  totals AS (SELECT map, player_steamid, grenade_type, count(*) AS total FROM thrown GROUP BY 1,2,3)
+  SELECT c.map, c.player_steamid, c.player_name, c.player_team, c.grenade_type,
+    c.thrown_x, c.thrown_y, c.impact_x, c.impact_y, c.is_jumping,
+    c.sample_size, t.total AS total_opportunities,
+    round((c.sample_size::numeric / t.total)::numeric, 3) AS confidence
+  FROM counts c JOIN totals t USING (map, player_steamid, grenade_type)
+  WHERE c.sample_size >= p_min_sample
+  ORDER BY c.sample_size DESC, confidence DESC LIMIT 500;
+$function$;
+
+-- ── 7b. RAG search (Coach IA pro_demo_situations) ────────────────────────
+
+CREATE OR REPLACE FUNCTION public.search_pro_situations(query_embedding vector, query_map text DEFAULT NULL::text, query_side text DEFAULT NULL::text, query_situation_type text DEFAULT NULL::text, match_count integer DEFAULT 3, min_similarity double precision DEFAULT 0.5, min_notable_rating integer DEFAULT 0, query_axes text[] DEFAULT NULL::text[])
+ RETURNS TABLE(id uuid, map text, side text, situation_type text, round_num integer, pro_name text, match_event text, description text, tactical_notes text, key_callouts text[], axes_demonstrated text[], replay_link text, notable_rating integer, similarity double precision)
+ LANGUAGE sql STABLE
+AS $function$
+  SELECT s.id, s.map, s.side, s.situation_type, s.round_num, s.pro_name, s.match_event,
+    s.description, s.tactical_notes, s.key_callouts, s.axes_demonstrated, s.replay_link, s.notable_rating,
+    1 - (s.embedding <=> query_embedding) as similarity
+  FROM public.pro_demo_situations s
+  WHERE s.embedding IS NOT NULL
+    AND (query_map IS NULL OR s.map = query_map)
+    AND (query_side IS NULL OR s.side = query_side OR s.side = 'both')
+    AND (query_situation_type IS NULL OR s.situation_type = query_situation_type)
+    AND (min_notable_rating = 0 OR s.notable_rating >= min_notable_rating)
+    AND (query_axes IS NULL OR s.axes_demonstrated && query_axes)
+    AND 1 - (s.embedding <=> query_embedding) >= min_similarity
+  ORDER BY s.embedding <=> query_embedding
+  LIMIT match_count;
+$function$;
+
+-- ── 7c. Utility / housekeeping ───────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION public.clean_expired_cache()
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+  DELETE FROM player_advanced_cache WHERE cached_at < NOW() - INTERVAL '7 days';
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.gen_referral_code()
+ RETURNS text
+ LANGUAGE plpgsql
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+DECLARE
+  chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  result TEXT := '';
+  i INT;
+BEGIN
+  FOR i IN 1..8 LOOP
+    result := result || substr(chars, floor(random() * length(chars) + 1)::int, 1);
+  END LOOP;
+  RETURN result;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.feature_interest_counts(slug text DEFAULT NULL::text)
+ RETURNS TABLE(feature_slug text, total bigint, users bigint, anons bigint)
+ LANGUAGE sql STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT fi.feature_slug, count(*) AS total,
+    count(*) FILTER (WHERE fi.user_id IS NOT NULL) AS users,
+    count(*) FILTER (WHERE fi.user_id IS NULL) AS anons
+  FROM public.feature_interests fi
+  WHERE slug IS NULL OR fi.feature_slug = slug
+  GROUP BY fi.feature_slug
+  ORDER BY total DESC;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.scout_waitlist_progress()
+ RETURNS TABLE(total_users bigint, opted_in_users bigint, threshold integer, unlocked boolean)
+ LANGUAGE sql STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT (SELECT count(*) FROM auth.users) AS total_users,
+    (SELECT count(*) FROM public.profiles WHERE scout_opt_in = true) AS opted_in_users,
+    1000 AS threshold,
+    ((SELECT count(*) FROM auth.users) >= 1000) AS unlocked;
+$function$;
+
+-- ── 7d. Trigger functions + Triggers ─────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+ RETURNS trigger
+ LANGUAGE plpgsql SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, avatar_url)
+  VALUES (NEW.id, NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'avatar_url')
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.set_referral_code()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+DECLARE
+  new_code TEXT;
+  tries INT := 0;
+BEGIN
+  IF NEW.referral_code IS NULL THEN
+    LOOP
+      new_code := public.gen_referral_code();
+      EXIT WHEN NOT EXISTS (SELECT 1 FROM public.profiles WHERE referral_code = new_code);
+      tries := tries + 1;
+      IF tries > 10 THEN EXIT; END IF;
+    END LOOP;
+    NEW.referral_code := new_code;
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.touch_coach_credits_updated_at()
+ RETURNS trigger LANGUAGE plpgsql
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END; $function$;
+
+CREATE OR REPLACE FUNCTION public.touch_conversation_updated_at()
+ RETURNS trigger LANGUAGE plpgsql
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+BEGIN
+  UPDATE public.coach_conversations
+     SET updated_at = now(), message_count = message_count + 1
+   WHERE id = NEW.conversation_id;
+  RETURN NEW;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.discord_links_set_updated_at()
+ RETURNS trigger LANGUAGE plpgsql
+AS $function$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END; $function$;
+
+CREATE OR REPLACE FUNCTION public.fv_annotations_set_updated_at()
+ RETURNS trigger LANGUAGE plpgsql
+AS $function$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $function$;
+
+-- ── Triggers attaches ───────────────────────────────────────────────────
+
+-- Auth users -> auto-create profile (utilise handle_new_user)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+DROP TRIGGER IF EXISTS profiles_set_referral_code ON public.profiles;
+CREATE TRIGGER profiles_set_referral_code
+  BEFORE INSERT ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.set_referral_code();
+
+DROP TRIGGER IF EXISTS coach_credits_touch_updated_at ON public.coach_credits;
+CREATE TRIGGER coach_credits_touch_updated_at
+  BEFORE UPDATE ON public.coach_credits
+  FOR EACH ROW EXECUTE FUNCTION public.touch_coach_credits_updated_at();
+
+DROP TRIGGER IF EXISTS trg_coach_messages_touch ON public.coach_messages;
+CREATE TRIGGER trg_coach_messages_touch
+  AFTER INSERT ON public.coach_messages
+  FOR EACH ROW EXECUTE FUNCTION public.touch_conversation_updated_at();
+
+DROP TRIGGER IF EXISTS trg_discord_links_updated_at ON public.discord_links;
+CREATE TRIGGER trg_discord_links_updated_at
+  BEFORE UPDATE ON public.discord_links
+  FOR EACH ROW EXECUTE FUNCTION public.discord_links_set_updated_at();
+
+DROP TRIGGER IF EXISTS fv_annotations_updated_at ON public.fv_annotations;
+CREATE TRIGGER fv_annotations_updated_at
+  BEFORE UPDATE ON public.fv_annotations
+  FOR EACH ROW EXECUTE FUNCTION public.fv_annotations_set_updated_at();
+
+-- ── 8. Notes (NON inclus dans ce dump) ───────────────────────────────────
 --
 -- Ce dump ne capture PAS :
---   - Functions / triggers : ex. handle_new_user(), update_updated_at_column()
---   - Views materialisees
---   - Sequences (auto-creees par les SERIAL/bigint columns)
---   - Grants / roles
---   - Cron job definitions (gerees par Vercel cron, pas pg_cron)
---   - Storage buckets RLS (gerees via Supabase dashboard)
+--   - pgvector internals (halfvec_*, vector_*) : auto-installed via CREATE
+--     EXTENSION vector au step 1.
+--   - Sequences (auto-creees par les SERIAL/bigint columns).
+--   - Grants / roles (Supabase auto-setup).
+--   - Cron job definitions (gerees par Vercel cron, pas pg_cron).
+--   - Storage buckets RLS (gerees via Supabase dashboard).
+--   - Triggers/functions internes a auth.* et storage.* schemas.
 --
 -- Pour avoir le dump VRAIMENT complet :
 --
