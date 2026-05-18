@@ -41,56 +41,60 @@ function wrap(title, contentHtml) {
 
 // === WELCOME (post signup) ===============================================
 // Declenche apres confirmation email reussie. Pousse vers la 1re analyse.
+// v2 mai 2026 : ajoute mention auto-sync FACEIT (Pro/Elite) + per-day pricing
+// + subject line plus action-oriented.
 function welcome({ nickname }) {
   const name = nickname || 'joueur';
-  const subject = 'Bienvenue sur FragValue, ' + name + ' · prêt pour ton 1er diagnostic ?';
+  // Subject A/B candidate : explicit action + curiosity gap sur "FV Rating"
+  const subject = 'Ton 1er FV Rating CS2 t\'attend, ' + name;
   const html = wrap(subject, `
     <h1 style="font-family:${FONT_STACK};font-size:24px;line-height:1.2;color:#e8eaea;margin:0 0 16px;font-weight:800">Bienvenue ${name}.</h1>
-    <p style="font-size:14px;color:#a8b0b0;margin:0 0 18px">Ton compte FragValue est actif. Voici ce que tu peux faire dès maintenant :</p>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 18px">Ton compte FragValue est actif. 3 choses a faire pour avoir ta premiere analyse :</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px">
       <tr><td style="padding:14px 16px;background:#080909;border:1px solid #1c1e1e;border-radius:10px;border-left:3px solid #b8ff57">
-        <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">1. ANALYSE TA 1RE DEMO</div>
-        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">Glisse ton fichier .dem FACEIT, reçois ton FV Rating, heatmaps et plan d'action en moins de 2 minutes. <strong style="color:#e8eaea">1 analyse gratuite par mois</strong> sur le plan Free.</div>
+        <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">1. LIE TON COMPTE FACEIT</div>
+        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">1 clic depuis ton espace. Une fois lie, tu peux importer tes 5 derniers matchs FACEIT en 1 clic, et (Pro/Elite) <strong style="color:#b8ff57">l'auto-sync</strong> analyse chaque match automatiquement des qu'il se termine.</div>
       </td></tr>
       <tr><td style="height:8px"></td></tr>
       <tr><td style="padding:14px 16px;background:#080909;border:1px solid #1c1e1e;border-radius:10px;border-left:3px solid #b8ff57">
-        <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">2. CONNECTE TON FACEIT</div>
-        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">Pour débloquer le diagnostic IA personnalisé et la roadmap 7 jours basée sur tes 20 derniers matchs.</div>
+        <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">2. ANALYSE TA 1RE DEMO</div>
+        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">FV Rating, heatmaps, diagnostic Coach IA en moins de 2 minutes. Drag-drop .dem ou colle une URL match FACEIT. <strong style="color:#e8eaea">3 analyses/mois</strong> en Free.</div>
       </td></tr>
       <tr><td style="height:8px"></td></tr>
       <tr><td style="padding:14px 16px;background:#080909;border:1px solid #1c1e1e;border-radius:10px;border-left:3px solid #b8ff57">
-        <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">3. PASSE PRO POUR LES OUTILS COMPLETS</div>
-        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">2D Replay frame par frame, KPIs avancés, Diagnostic IA illimité + Chat Coach IA 5 msg/jour, Match Report tactique. <strong style="color:#e8eaea">Sans engagement</strong>, annulation en 1 clic.</div>
+        <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">3. PRO POUR PROGRESSER PLUS VITE</div>
+        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">Auto-sync FACEIT + 2D Replay + Chat Coach IA 5 msg/jour + KPIs avances. <strong style="color:#e8eaea">9 EUR/mois</strong> (0,30 EUR/jour, moins d'un cafe). Sans engagement, 14j satisfait ou rembourse.</div>
       </td></tr>
     </table>
 
     <p style="text-align:center;margin:24px 0 8px">
-      <a href="${BASE_URL}/demo.html?welcome=1" style="display:inline-block;background:#b8ff57;color:#000;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.04em;font-family:${FONT_STACK}">Analyser ma 1re demo &rsaquo;</a>
+      <a href="${BASE_URL}/onboarding.html" style="display:inline-block;background:#b8ff57;color:#000;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.04em;font-family:${FONT_STACK}">Configurer mon compte &rsaquo;</a>
     </p>
 
-    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">Une question ? Réponds simplement à ce mail, c'est moi qui lis :)</p>
+    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">Une question ? Reponds simplement a ce mail, c'est moi qui lis :)</p>
   `);
   const text = `Bienvenue ${name},
 
-Ton compte FragValue est actif. Voici ce que tu peux faire :
+Ton compte FragValue est actif. 3 etapes pour avoir ta 1ere analyse :
 
-1. ANALYSE TA 1RE DEMO
-   Glisse ton fichier .dem FACEIT et reçois ton FV Rating + heatmaps + plan d'action.
-   1 analyse gratuite par mois sur le plan Free.
+1. LIE TON COMPTE FACEIT
+   1 clic depuis ton espace. Une fois lie, import 5 derniers matchs en 1 clic +
+   (Pro/Elite) auto-sync analyse chaque match automatiquement.
 
-2. CONNECTE TON FACEIT
-   Pour le diagnostic IA personnalisé basé sur tes 20 derniers matchs.
+2. ANALYSE TA 1RE DEMO
+   FV Rating, heatmaps, diagnostic Coach IA en 2 min.
+   Drag-drop .dem ou colle une URL match FACEIT. 3 analyses/mois en Free.
 
-3. PASSE PRO (sans engagement)
-   2D Replay complet, KPIs avancés, Diagnostic IA illimité + Chat Coach 5/jour, Match Report.
-   Dès 9€/mois, annulation en 1 clic.
+3. PRO POUR PROGRESSER PLUS VITE
+   Auto-sync + 2D Replay + Chat Coach IA 5/jour + KPIs avances.
+   9 EUR/mois (0,30 EUR/jour), 14j satisfait ou rembourse.
 
-Lance ta 1re analyse : ${BASE_URL}/demo.html?welcome=1
+Configurer mon compte : ${BASE_URL}/onboarding.html
 
-Une question ? Réponds à ce mail.
+Une question ? Reponds a ce mail.
 
-L'équipe FragValue
+L'equipe FragValue
 ${BASE_URL}`;
   return { subject, html, text };
 }
