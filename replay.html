@@ -957,6 +957,48 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       /* Multikill banner taille reduite */
       .mk-tier{font-size:24px}
       .mk-by{font-size:11px}
+      /* Drawing toolbar : remontee au-dessus de la bottom sheet handle (44px)
+         + tools agrandis a 36px (compromis entre touch target 44px iOS HIG
+         et tenir 7 tools dans 360px width). Background plus opaque pour
+         lisibilite sur fond canvas. */
+      .drawing-toolbar{
+        bottom:56px;             /* bottom-sheet handle 44px + 12px margin */
+        padding:8px 10px;
+        gap:6px;
+        max-width:calc(100vw - 24px);
+        flex-wrap:nowrap;        /* horizontal scroll si trop de tools */
+        overflow-x:auto;
+      }
+      .dt-tool{
+        width:36px;height:36px;
+        flex-shrink:0;
+      }
+      .dt-color{
+        width:24px;height:24px;
+        flex-shrink:0;
+      }
+      .dt-clear{
+        padding:7px 10px;font-size:11px;
+        flex-shrink:0;
+      }
+      /* Bookmarks panel : full-width mobile, 90vw max, scrollable vertical.
+         Sinon le panel 280px deborderait sur des ecrans 320-375px. */
+      .bookmarks-panel{
+        top:8px;right:8px;left:8px;
+        width:auto;max-width:none;
+        max-height:50vh;
+      }
+      .bp-header{padding:8px 10px}
+      .bp-title{font-size:12px}
+      .bookmark-item{padding:8px 10px}  /* compact list rows */
+      /* Smoke legend : meme pattern, retrecit a 90vw centree */
+      .smoke-legend{
+        left:50%;transform:translateX(-50%);right:auto;
+        max-width:calc(100vw - 24px);
+      }
+      /* Kill feed : reduce font + max-width pour ne pas occuper toute la map */
+      .kill-feed{font-size:10px;max-width:calc(100vw - 24px)}
+      .kc-name{max-width:60px}
     }
     /* Tablette portrait : sidebars condensees */
     @media(min-width:601px) and (max-width:900px){

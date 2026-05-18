@@ -758,8 +758,66 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       .sidebar-left{display:none}
     }
     @media(max-width:600px){
-      .main{grid-template-columns:1fr}
-      .sidebar-right{display:none}
+      /* Vertical layout: map fills width, team panels in slide-up bottom sheet. */
+      .main{grid-template-columns:1fr;grid-template-rows:1fr auto}
+      .sidebar-right{
+        position:fixed;left:0;right:0;bottom:0;
+        max-height:55vh;overflow-y:auto;
+        background:#0a0c10;border-top:1px solid var(--border);
+        transform:translateY(calc(100% - 44px));
+        transition:transform .25s ease;
+        z-index:50;
+      }
+      .sidebar-right.open{transform:translateY(0)}
+      .sidebar-right::before{
+        content:'';display:block;
+        width:36px;height:4px;border-radius:2px;
+        background:rgba(255,255,255,.18);
+        margin:8px auto 4px;
+      }
+      .sidebar-right::after{
+        content:'PLAYERS';display:flex;align-items:center;justify-content:center;
+        height:24px;font-family:var(--mono);font-size:10px;font-weight:700;
+        letter-spacing:.15em;color:var(--text2);cursor:pointer;
+        background:linear-gradient(180deg, rgba(184,255,87,.04), transparent);
+        border-bottom:1px solid var(--border);
+      }
+      .sidebar-right.open::after{color:var(--accent)}
+      .controls{padding:4px 6px;gap:6px}
+      .ctrl-time{font-size:9px;min-width:64px}
+      .spd{padding:3px 5px;font-size:8px}
+      .topbar{padding:6px 8px}
+      .tb-map,.tb-round{font-size:11px}
+      .mk-tier{font-size:24px}
+      .mk-by{font-size:11px}
+      .drawing-toolbar{
+        bottom:56px;
+        padding:8px 10px;gap:6px;
+        max-width:calc(100vw - 24px);
+        flex-wrap:nowrap;overflow-x:auto;
+      }
+      .dt-tool{width:36px;height:36px;flex-shrink:0}
+      .dt-color{width:24px;height:24px;flex-shrink:0}
+      .dt-clear{padding:7px 10px;font-size:11px;flex-shrink:0}
+      .bookmarks-panel{
+        top:8px;right:8px;left:8px;
+        width:auto;max-width:none;
+        max-height:50vh;
+      }
+      .bp-header{padding:8px 10px}
+      .bp-title{font-size:12px}
+      .bookmark-item{padding:8px 10px}
+      .smoke-legend{
+        left:50%;transform:translateX(-50%);right:auto;
+        max-width:calc(100vw - 24px);
+      }
+      .kill-feed{font-size:10px;max-width:calc(100vw - 24px)}
+      .kc-name{max-width:60px}
+    }
+    @media(min-width:601px) and (max-width:900px){
+      .sidebar-right{font-size:11px}
+      .player-row{padding:4px 6px}
+      .pt-stat-val{font-size:11px}
     }
   </style>
 <script src="/analytics.js" defer></script>
@@ -1703,6 +1761,23 @@ window.addEventListener('load', async () => {
     const _qs = new URLSearchParams(window.location.search);
     window._fvDebugOverlay = _qs.get('debug') === '1';
   } catch(_) { window._fvDebugOverlay = false; }
+
+  // Mobile: toggle bottom-sheet players panel on sidebar-right header click.
+  // Detection via media query (recalc on resize / rotation).
+  const setupMobileBottomSheet = () => {
+    const sb = document.querySelector('.sidebar-right');
+    if (!sb || sb._mobileHandlerBound) return;
+    sb._mobileHandlerBound = true;
+    sb.addEventListener('click', (e) => {
+      const rect = sb.getBoundingClientRect();
+      const yInSb = e.clientY - rect.top;
+      // Trigger only if click in top 44px (grip pill + "PLAYERS" label area)
+      if (yInSb >= 0 && yInSb <= 44 && window.innerWidth <= 600) {
+        sb.classList.toggle('open');
+      }
+    });
+  };
+  setupMobileBottomSheet();
 
   // Check plan gating
   const hasAccess = await checkReplayAccess();
