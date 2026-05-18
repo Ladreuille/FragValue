@@ -7,7 +7,7 @@
 // Strategie :
 // 1. Pull les events DEMO_READY / match_demo_ready non-processed (max 20/run).
 // 2. Pour chaque event :
-//    - Resoudre le user_id FragValue depuis le faceit_player_id (table profiles)
+//    - Resoudre le user_id FragValue depuis le faceit_id (table profiles)
 //    - Skip si pas d'utilisateur lie OU pas Pro/Elite (auto-analyse = feature payante)
 //    - Demander une signed URL via Downloads API
 //    - Upsert match en DB (status='parsing')
@@ -90,8 +90,10 @@ module.exports = async function handler(req, res) {
 
       try {
         // Resolution user_id : d'abord chercher si un user FragValue est lie au player FACEIT.
-        // Le payload FACEIT inclut typiquement le faceit_player_id dans
+        // Le payload FACEIT inclut typiquement le player_id dans
         // payload.players[] ou payload.payload.player_id selon l'event.
+        // Stocke cote DB dans profiles.faceit_id (set par faceit-callback.html
+        // au moment du link OAuth via api/faceit-auth.js).
         const faceitPlayerId =
           ev.payload?.payload?.player_id ||
           ev.payload?.player_id ||
@@ -103,7 +105,7 @@ module.exports = async function handler(req, res) {
           const { data: profile } = await supabase
             .from('profiles')
             .select('id, subscription_tier')
-            .eq('faceit_player_id', faceitPlayerId)
+            .eq('faceit_id', faceitPlayerId)
             .maybeSingle();
           // Auto-analyse = feature payante (Pro / Elite). Free users skip
           // pour ne pas burn leur quota sans leur consentement.

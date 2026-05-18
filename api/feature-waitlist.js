@@ -26,9 +26,10 @@ const ALLOWED_SLUGS = new Set([
   // (en attente du SIRET). Une fois live, on supprime ce slug et on remet
   // les boutons checkout sur pricing.html.
   'pro-launch',
-  // faceit-sync : waitlist pendant que l'API FACEIT n'a pas encore repondu
-  // a la demande d'acces. Page /matches.html est en mode teaser tant que
-  // la synchro auto n'est pas operationnelle.
+  // faceit-sync : retire le 2026-05-18 (API FACEIT validee + webhook actif).
+  // On garde le slug accepte cote backend pour ne pas casser les emails de
+  // confirmation deja envoyes a la waitlist (lien "tu es inscrit"), mais on
+  // ne capture plus de nouveau signup cote frontend (matches.html active).
   'faceit-sync',
 ]);
 

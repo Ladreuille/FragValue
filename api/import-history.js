@@ -1,16 +1,25 @@
 // api/import-history.js
 // Importe les 5 derniers matchs FACEIT du user (de moins d 1 mois) et lance
-// le parsing parser Railway via l extension FragValue.
+// le parsing parser Railway directement via la FACEIT Downloads API.
 //
 // POURQUOI CES LIMITES :
 //  - FACEIT purge les fichiers .dem du CDN Backblaze apres ~30 jours. Au-dela
 //    de cette fenetre, le parser retourne systematiquement "err_nf0 file not
 //    found" et les rows finissent en failed - inutile de les queuer.
 //  - On cap a 5 matches pour limiter le fan-out auto et eviter de saturer
-//    l extension qui doit aller chercher une URL presignee fraiche pour
-//    chaque match (un appel api.faceit.com authentifie par match). Au-dela,
-//    l utilisateur passe par l upload manuel de .dem via /demo.html.
+//    la Downloads API (rate limits FACEIT). Au-dela, l user passe par
+//    l upload manuel de .dem via /demo.html ou l auto-sync via webhook.
+//
+// HISTORIQUE :
+//  - v0.2 (avr 2026) : requerait l extension Chrome car les demo_url renvoyes
+//    par Data API pointaient sur le CDN Backblaze decommissionne.
+//  - v0.3 (mai 2026) : scope Downloads API valide cote FACEIT, on fait tout
+//    server-side. L extension reste optionnelle pour les matchs > 30j.
 import { createClient } from '@supabase/supabase-js';
+
+// NB : les helpers CJS sont require()s dynamiquement dans le handler pour
+// eviter les problemes de named-imports ESM->CJS (Vercel runtime Node).
+// Meme convention que parse-from-faceit-url.js.
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -19,7 +28,7 @@ const supabase = createClient(
 
 const FACEIT_API_KEY = process.env.FACEIT_API_KEY;
 const PARSER_URL = process.env.PARSER_URL || 'https://fragvalue-demo-parser-production.up.railway.app';
-const PARSER_SECRET = process.env.FACEIT_WEBHOOK_SECRET || '';
+const PARSER_SECRET = process.env.PARSER_SECRET || process.env.FACEIT_WEBHOOK_SECRET || '';
 
 // Configuration de l import automatique. Aligne sur la politique de retention
 // FACEIT (~30j) + plafond sur le fan-out extension.
@@ -39,6 +48,14 @@ export default async function handler(req, res) {
 
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: 'Non authentifie' });
+
+  // require dynamique des helpers CJS (cf. note en tete de fichier)
+  const {
+    getMatchDemoUrls,
+    requestSignedDownloadUrl,
+    FaceitDownloadsError,
+  } = require('./_lib/faceit-downloads.js');
+  const { fetchWithTimeout } = require('./_lib/fetch-with-timeout.js');
 
   try {
     const token = authHeader.replace('Bearer ', '');
@@ -109,14 +126,12 @@ export default async function handler(req, res) {
     });
     const skippedTooOld = items.length - eligibleItems.length;
 
-    // Inserer les matches en pending.
-    // IMPORTANT: depuis v0.2 on ne declenche PLUS le parser Railway ici car
-    // les URLs renvoyees par open.faceit.com/data/v4 pointent toutes sur le
-    // CDN regional Backblaze decommissionne par FACEIT en 2024. A la place,
-    // l'extension navigateur FragValue reprend cette liste et va chercher
-    // des URLs presignees fraiches via www.faceit.com (authentifie via
-    // cookies user), puis les envoie a /api/submit-demo-url qui fait le
-    // fan-out au parser avec l'override demoUrl.
+    // v0.3 : depuis la validation du scope Downloads API (mai 2026), on fait
+    // tout server-side. Pour chaque match eligible : Data API -> resource_url,
+    // Downloads API -> signed URL, parser Railway -> /process-match. L
+    // extension Chrome n est plus necessaire pour les matchs < 30j (elle
+    // reste utilisable comme fallback pour les matchs > 30j si l user en
+    // dispose encore localement).
     const imported = [];
     for (const m of eligibleItems) {
       const matchId = m.match_id;
@@ -144,16 +159,67 @@ export default async function handler(req, res) {
         continue;
       }
 
-      // Insert une nouvelle row ou reset une row 'failed' / 'pending' sans
-      // donnees parsees. Pas de map : m.i1 est une URL d'image FACEIT, pas
-      // un nom de map. Le parser ecrit le vrai map sur le succes.
+      // Resoudre le resource_url + signed URL via Downloads API.
+      // On garde le try/catch par match pour ne pas bloquer l'import des
+      // autres matchs si un seul echoue (demo pas encore prete, no_scope, etc.).
+      let signedUrl = null;
+      let resolvedMap = null;
+      try {
+        const meta = await getMatchDemoUrls(matchId);
+        const resourceUrl = meta.demo_urls?.[0];
+        if (!resourceUrl) {
+          imported.push({ matchId, status: 'no_demo_yet' });
+          continue;
+        }
+        resolvedMap = meta.map || null;
+        signedUrl = await requestSignedDownloadUrl(resourceUrl);
+      } catch (e) {
+        const code = e instanceof FaceitDownloadsError ? e.code : null;
+        console.warn(`[import-history] resolve failed for ${matchId}:`, e.message);
+        // Insert quand meme en 'failed' pour que l user voie pourquoi.
+        await supabase.from('matches').upsert({
+          id: matchId,
+          faceit_match_id: matchId,
+          user_id: user.id,
+          status: 'failed',
+          error_message: code ? `faceit_${code}` : (e.message || 'resolve_failed').slice(0, 200),
+        }, { onConflict: 'faceit_match_id' });
+        imported.push({ matchId, status: 'failed', code });
+        continue;
+      }
+
+      // Upsert match en status='parsing' + demo_url signe.
       await supabase.from('matches').upsert({
         id: matchId,
         faceit_match_id: matchId,
         user_id: user.id,
-        status: 'pending',
+        status: 'parsing',
+        demo_url: signedUrl,
+        map: resolvedMap,
         error_message: null,
       }, { onConflict: 'faceit_match_id' });
+
+      // Fire parser Railway (fan-out, on n attend pas la fin).
+      // On laisse 30s de timeout : le parser fetch la demo puis repond 200,
+      // le worker continue en background. Si parser non-200, on log mais on
+      // garde le row en 'parsing' (poll cote UI permettra retry).
+      try {
+        const parserRes = await fetchWithTimeout(`${PARSER_URL}/process-match`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${PARSER_SECRET}`,
+          },
+          body: JSON.stringify({ matchId, demoUrl: signedUrl }),
+        }, 30000);
+        if (!parserRes.ok) {
+          const txt = await parserRes.text().catch(() => '');
+          console.warn(`[import-history] parser non-200 for ${matchId}: ${parserRes.status} ${txt.slice(0, 200)}`);
+        }
+      } catch (e) {
+        console.warn(`[import-history] parser fire failed for ${matchId}:`, e.message);
+        // Pas de fail : l user verra le retry button dans l UI
+      }
 
       imported.push({ matchId, status: 'queued' });
     }
@@ -167,9 +233,8 @@ export default async function handler(req, res) {
       skippedTooOld,
       maxMatches: AUTO_IMPORT_MAX_MATCHES,
       maxAgeDays: AUTO_IMPORT_MAX_AGE_DAYS,
-      // Flag lu par l'UI pour afficher le hint extension si elle n'est pas
-      // installee. Le flow auto-import ne peut pas marcher sans extension.
-      extensionRequired: true,
+      // v0.3 : tout server-side, plus besoin de l extension pour < 30j.
+      extensionRequired: false,
     });
   } catch (err) {
     console.error('import-history error:', err);

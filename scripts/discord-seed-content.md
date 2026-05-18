@@ -171,7 +171,7 @@ Si vous avez des questions sur l'app (features Pro, Coach IA, etc.) : #help-supp
 - Cron sync-drift = self-healing
 
 **Ce qui arrive cette semaine** :
-- Auto-import des matchs FACEIT (en attente scope FACEIT, ETA ~2 semaines)
+- Auto-import des matchs FACEIT (LIVE : webhook DEMO_READY + cron toutes les 5 min)
 - 1ère demo review collective dimanche 19h CET (Vitality vs MOUZ Cologne)
 - Pro Demos viewer expansion : 5 nouvelles scorecards Major
 

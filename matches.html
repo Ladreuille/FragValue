@@ -176,25 +176,18 @@ a.match-card:hover .mc-col-chevron{color:var(--accent);transform:translateX(3px)
 
 @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
-/* ═══ FACEIT sync en attente (teaser) ═══════════════════════════════════ */
-.faceit-pending{background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:14px;padding:36px 32px;margin-bottom:32px;text-align:center}
-.fp-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.35);color:var(--accent);padding:5px 12px;border-radius:40px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px}
-.fp-title{font-family:var(--display);font-size:clamp(28px,4vw,42px);line-height:1.05;letter-spacing:.02em;margin-bottom:10px;color:var(--text)}
-.fp-title span{color:var(--accent);text-shadow:0 0 18px rgba(184,255,87,.3)}
-.fp-sub{font-family:var(--mono);font-size:13px;color:var(--text2);line-height:1.65;max-width:580px;margin:0 auto 22px}
-.fp-cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:12px 22px;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s;border:none;cursor:pointer}
-.fp-cta:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,255,87,.3)}
-.fp-cta[data-state="saved"]{background:var(--border2);color:var(--text);cursor:default}
-.fp-cta[data-state="saved"]:hover{transform:none;filter:none;box-shadow:none}
-.fp-counter{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:5px 14px;background:var(--card);border:1px solid var(--border);border-radius:40px;font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.04em}
-.fp-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:fpPulse 1.8s ease-in-out infinite}
-.fp-counter strong{color:var(--accent);font-weight:700}
-@keyframes fpPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
-
-/* Blur du contenu matches (aperçu derriere le teaser) */
-.matches-blur{position:relative}
-.matches-blur-content{filter:blur(2px) saturate(.85);pointer-events:none;user-select:none;opacity:.7}
-.matches-blur-veil{position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,rgba(8,9,9,.6) 50%,var(--bg) 100%);pointer-events:none;z-index:2;border-radius:12px}
+/* ═══ Auto-sync banner (Pro/Elite confirm OR Free upsell) ════════════════ */
+.auto-sync-banner{display:flex;align-items:center;gap:14px;padding:14px 18px;margin:18px 0 24px;background:var(--card);border:1px solid var(--border);border-radius:12px}
+.auto-sync-banner.is-pro{border-color:rgba(184,255,87,.3);background:linear-gradient(135deg,rgba(184,255,87,.06),rgba(184,255,87,.01))}
+.auto-sync-banner.is-free{border-color:rgba(184,255,87,.2)}
+.asb-icon{flex:0 0 28px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:rgba(184,255,87,.12);color:var(--accent)}
+.auto-sync-banner.is-free .asb-icon{background:rgba(255,255,255,.04);color:var(--text2)}
+.asb-body{flex:1;min-width:0}
+.asb-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);letter-spacing:.04em;margin-bottom:3px}
+.asb-sub{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.55}
+.asb-cta{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#000;padding:8px 14px;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s}
+.asb-cta:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 6px 16px rgba(184,255,87,.25)}
+@media (max-width:680px){.auto-sync-banner{flex-direction:column;align-items:flex-start;gap:10px}.asb-cta{align-self:stretch;justify-content:center}}
 </style>
 <script src="/analytics.js" defer></script>
 </head>
@@ -221,43 +214,37 @@ a.match-card:hover .mc-col-chevron{color:var(--accent);transform:translateX(3px)
 
 <div class="page">
 
-  <!-- Hero "FACEIT sync en attente" : tant que l'API officielle FACEIT n'a
-       pas valide notre demande d'accès, la synchro auto n'est pas encore
-       fonctionnelle. Waitlist pour etre prévenu en priorite. -->
-  <div class="faceit-pending">
-    <div class="fp-badge">● Synchronisation FACEIT en attente</div>
-    <h1 class="fp-title">L'API FACEIT<br><span>arrive bientôt</span></h1>
-    <p class="fp-sub">Notre demande d'accès à l'API officielle FACEIT a été remontée à leur équipe partenariats. Une fois validée, FragValue ira chercher automatiquement la demo de chacun de tes matchs récents (~30 j) et te renverra l'analyse complète : FV Rating, KAST, ADR, heatmaps par match.<br><br>Active les notifications pour être prévenu en priorité dès le feu vert.</p>
-    <a href="account.html#settings" class="fp-cta" data-teaser-cta="faceit-sync">
-      Activer les notifications
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-    </a>
-    <div class="fp-counter">
-      <span class="fp-dot"></span>
-      <strong data-teaser-counter="faceit-sync">-</strong>
-      <span>joueurs en attente</span>
+  <!-- FACEIT sync ACTIVE (mai 2026) : l'API officielle FACEIT (Data + Downloads)
+       est validee, le webhook DEMO_READY pousse les matchs en cron toutes les
+       5 min via api/cron/faceit-process-events.js. Le bouton "Importer" appelle
+       /api/matches-import pour catch les 5 derniers matchs <30j. -->
+  <div class="page-head">
+    <div>
+      <div class="page-title">MES <span>MATCHS</span></div>
+      <div class="page-sub">Analyse automatique de tes matchs FACEIT</div>
     </div>
+    <button class="btn-import" id="importBtn" onclick="importHistory()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      Importer mes 5 derniers matchs
+    </button>
   </div>
 
-  <!-- Aperçu de ce qui s'affichera une fois la sync active (floute) -->
-  <div class="matches-blur">
-    <div class="matches-blur-content">
-      <div class="page-head">
-        <div>
-          <div class="page-title">MES <span>MATCHS</span></div>
-          <div class="page-sub">Analyse automatique de tes matchs FACEIT</div>
-        </div>
-        <button class="btn-import" id="importBtn" disabled>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          Importer mes 5 derniers matchs
-        </button>
-      </div>
-      <div class="sl">Historique</div>
-      <div id="matchesContainer">
-        <div style="text-align:center;padding:60px 20px;font-size:11px;color:var(--text3)">Aperçu indisponible pendant la période d'attente.</div>
-      </div>
+  <!-- Auto-sync info banner : Pro/Elite -> confirmation ; Free -> upsell.
+       Le contenu est swap par init() une fois la subscription_tier connue. -->
+  <div id="autoSyncBanner" class="auto-sync-banner" style="display:none">
+    <div class="asb-icon" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
-    <div class="matches-blur-veil"></div>
+    <div class="asb-body">
+      <div class="asb-title" id="asbTitle"></div>
+      <div class="asb-sub" id="asbSub"></div>
+    </div>
+    <a class="asb-cta" id="asbCta" style="display:none" href="pricing.html">Passer Pro</a>
+  </div>
+
+  <div class="sl">Historique</div>
+  <div id="matchesContainer">
+    <div style="text-align:center;padding:60px 20px;font-size:11px;color:var(--text3)">Chargement de tes matchs...</div>
   </div>
 </div>
 
@@ -295,10 +282,60 @@ async function init() {
   const { data:{ session } } = await _sb.auth.getSession();
   if (!session) { window.location.href = 'login.html'; return; }
   _session = session;
-  // Tant que l'API FACEIT n'est pas active (waitlist mode), on ne
-  // charge pas les matchs et on ne poll pas. On garde juste les notifs
-  // pour que le bell nav continue de marcher.
-  await loadNotifs();
+  // FACEIT sync active (mai 2026) : on charge les matchs et on poll
+  // pour rafraichir l'etat de parsing en arriere-plan. En parallele on
+  // fetch la subscription_tier pour ajuster la banner auto-sync.
+  await Promise.all([loadNotifs(), loadMatches(), renderAutoSyncBanner()]);
+  schedulePoll();
+}
+
+// Banner auto-sync : confirme la feature pour Pro/Elite, upsell pour Free.
+// L'auto-sync via webhook DEMO_READY n'est volontairement disponible que
+// pour les tiers payants (cron skip Free pour ne pas burn leur quota
+// d'analyses sans consentement, cf. api/cron/faceit-process-events.js).
+async function renderAutoSyncBanner() {
+  try {
+    const { data: profile } = await _sb.from('profiles')
+      .select('subscription_tier, faceit_id, faceit_nickname')
+      .eq('id', _session.user.id)
+      .maybeSingle();
+    const banner = document.getElementById('autoSyncBanner');
+    if (!banner) return;
+    const tier = profile?.subscription_tier || 'free';
+    const hasFaceit = !!(profile?.faceit_id || profile?.faceit_nickname);
+
+    if (!hasFaceit) {
+      banner.className = 'auto-sync-banner is-free';
+      document.getElementById('asbTitle').textContent = 'Lie ton compte FACEIT';
+      document.getElementById('asbSub').textContent = 'Une fois lie, on peut analyser tes derniers matchs en 1 clic et (Pro/Elite) lancer l\'auto-sync sur chaque fin de partie.';
+      const cta = document.getElementById('asbCta');
+      cta.textContent = 'Lier FACEIT';
+      cta.href = 'account.html#settings';
+      cta.style.display = 'inline-flex';
+      banner.style.display = 'flex';
+      return;
+    }
+
+    if (tier === 'pro' || tier === 'elite' || tier === 'team') {
+      banner.className = 'auto-sync-banner is-pro';
+      document.getElementById('asbTitle').textContent = 'Auto-sync FACEIT actif';
+      document.getElementById('asbSub').textContent = 'Tes matchs FACEIT sont analyses automatiquement des qu\'ils se terminent. Tu seras notifie quand l\'analyse est prete.';
+      document.getElementById('asbCta').style.display = 'none';
+      banner.style.display = 'flex';
+    } else {
+      banner.className = 'auto-sync-banner is-free';
+      document.getElementById('asbTitle').textContent = 'Passe Pro pour l\'auto-sync';
+      document.getElementById('asbSub').textContent = 'Tu peux deja importer tes 5 derniers matchs manuellement. L\'auto-sync (analyse a chaque fin de match) est reserve aux abonnes Pro/Elite.';
+      const cta = document.getElementById('asbCta');
+      cta.textContent = 'Passer Pro';
+      cta.href = 'pricing.html';
+      cta.style.display = 'inline-flex';
+      banner.style.display = 'flex';
+    }
+  } catch (e) {
+    // Echec silencieux : la banner reste cachee, le reste de la page fonctionne.
+    console.warn('renderAutoSyncBanner failed:', e?.message);
+  }
 }
 
 function schedulePoll() {
@@ -709,11 +746,5 @@ init();
 <script src="/nav.js"></script>
 <script src="/footer.js" defer></script>
 <script src="/empty-state.js"></script>
-<script src="/teaser.js"></script>
-<script>
-  // Waitlist FACEIT sync : en attendant l'API officielle, on capture
-  // les emails des users qui veulent la sync des leur dispo.
-  FVTeaser.initCTA('faceit-sync', { base: 18, perDay: 0.6 });
-</script>
 </body>
 </html>

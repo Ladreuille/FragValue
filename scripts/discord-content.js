@@ -102,7 +102,7 @@ Les releases & nouvelles features de **fragvalue.com** seront annoncées ici.
 - ✅ **Résiliation 3 clics** native (conformité loi juin 2023)
 
 ## 🔜 En cours
-- 🟡 **FACEIT Downloads API** : analyse auto des matchs FACEIT liés (en attente scope côté FACEIT)
+- 🟢 **FACEIT Downloads API** : analyse auto des matchs FACEIT liés (LIVE depuis mai 2026)
 - 🟡 **Pro Demos viewer** : décryptage round-by-round des matchs Major / BLAST / ESL
 - 🟡 **Coach IA Conversational** : améliorations system prompt, citations cliquables`,
       },
@@ -126,8 +126,10 @@ Où on en est sur le produit, par priorité.
 - Discord intégration (rôle auto Pro/Elite)
 - Stripe LIVE + dunning + cancellation 3 clics
 
+## 🟢 Just shipped
+- **FACEIT Downloads API** auto-import (LIVE depuis mai 2026, webhook DEMO_READY → cron 5 min)
+
 ## 🟡 In progress
-- **FACEIT Downloads API** auto-import (en attente côté FACEIT, ETA ~1-2 semaines)
 - **Pro Demos viewer** scorecards round-by-round (Q3 2026)
 - **Weekly Coach IA report** email automatique
 
