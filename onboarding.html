@@ -213,22 +213,56 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   </div>
 </div>
 
-<!-- STEP 3 : Prêt -->
+<!-- STEP 3 : Prêt + first-action choice -->
 <div class="step" id="step3" style="display:none">
   <div class="steps-indicator">
     <div class="step-dot done"></div>
     <div class="step-dot done"></div>
     <div class="step-dot active"></div>
   </div>
-  <div style="display:inline-flex;align-items:center;justify-content:center;width:88px;height:88px;border-radius:50%;background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.3);margin-bottom:20px;color:var(--accent)">
-    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <div style="display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px;border-radius:50%;background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.3);margin-bottom:18px;color:var(--accent)">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
   </div>
   <div class="eyebrow">Tout est prêt</div>
   <h1 class="step-title" id="step3Title">Bienvenue sur FragValue !</h1>
-  <p class="step-sub" id="step3Sub">Ton compte est configuré. Commence par analyser ton premier joueur.</p>
-  <button class="cta-btn" onclick="finish()">
-    Accéder à mon espace
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  <p class="step-sub" id="step3Sub">Pour avoir tes premières analyses, choisis par où tu veux commencer :</p>
+
+  <!-- 3 first-action cards : visual + 1-clic -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;max-width:760px;margin:0 auto 22px;text-align:left">
+    <a class="fa-card" href="matches.html" id="faImport" style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 16px;background:rgba(184,255,87,.04);border:1px solid rgba(184,255,87,.25);border-radius:12px;text-decoration:none;color:var(--text);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(184,255,87,.25)';this.style.transform='none'">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(184,255,87,.1);display:flex;align-items:center;justify-content:center;color:var(--accent)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        </div>
+        <div style="font-family:'Space Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)">RECOMMANDE</div>
+      </div>
+      <div style="font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.02em">Importer mes 5 derniers</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text2);line-height:1.5">FACEIT lié = 1 clic → 5 matchs analysés en 5 min. Le plus rapide pour voir tes stats.</div>
+    </a>
+
+    <a class="fa-card" href="demo.html" style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--border2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;color:var(--text2)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+      </div>
+      <div style="font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.02em">Upload une .dem</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text2);line-height:1.5">Drag-drop d'un fichier .dem (FACEIT, Matchmaking, server perso). Analyse en 2-5 min.</div>
+    </a>
+
+    <a class="fa-card" href="pro-benchmarks.html" style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--border2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;color:var(--text2)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+      </div>
+      <div style="font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.02em">Voir le top 20 HLTV</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text2);line-height:1.5">ZywOo, donk, ropz... Compare-toi aux meilleurs sur 4 KPIs. Sans inscription.</div>
+    </a>
+  </div>
+
+  <button class="cta-ghost" onclick="finish()" style="font-size:11px;opacity:.6;margin-top:4px">
+    Ou aller direct à mon espace →
   </button>
 </div>
 
@@ -288,6 +322,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 
   function goStep2() {
     if (!selectedMode) return;
+    try { window.fvTrack && window.fvTrack('onboarding_step', { step: 1, completed_action: 'select_mode', mode: selectedMode }); } catch (_) {}
     document.getElementById('step1').style.display = 'none';
     document.getElementById('step2').style.display = 'block';
     document.getElementById('progressFill').style.width = '66%';
@@ -330,11 +365,14 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   }
 
   function skipFaceit() {
+    try { window.fvTrack && window.fvTrack('onboarding_step', { step: 2, completed_action: 'skip_faceit', mode: selectedMode }); } catch (_) {}
     verifiedFaceitNick = null;
     goStep3();
   }
 
   async function goStep3() {
+    try { window.fvTrack && window.fvTrack('onboarding_step', { step: 2, completed_action: 'verify_faceit', mode: selectedMode, faceit_linked: !!verifiedFaceitNick }); } catch (_) {}
+
     // Sauvegarder mode + faceit dans Supabase via upsert
     if (currentUser) {
       const update = {
@@ -372,6 +410,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   }
 
   function finish() {
+    try { window.fvTrack && window.fvTrack('onboarding_complete', { mode: selectedMode, faceit_linked: !!verifiedFaceitNick, ctx: wantsLinkFaceit ? 'link_only' : 'full' }); } catch (_) {}
     // Si l'user est venu pour lier/modifier FACEIT depuis Mon Espace -> retour la
     if (wantsLinkFaceit) {
       window.location.href = 'account.html#settings';
