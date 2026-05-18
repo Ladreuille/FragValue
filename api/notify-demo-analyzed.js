@@ -105,17 +105,21 @@ module.exports = async function handler(req, res) {
     // Idempotence cote front : sessionStorage flag, donc 1 seul appel par demoId.
     try {
       // Recupere les infos demo + Coach IA pour enrichir l'email
+      // Les stats user-specifiques (kast, adr) sont dans match_players, pas
+      // dans demos (qui n'a que fv_rating + rounds + total_kills). On joint
+      // par (match_id = demoId) + user_id pour avoir la row du user lui-meme.
       let kast = null, adr = null, mainAxis = null;
       if (demoId) {
         try {
-          const { data: demoRow } = await sb
-            .from('demos')
+          const { data: mpRow } = await sb
+            .from('match_players')
             .select('kast, adr')
-            .eq('id', demoId)
+            .eq('match_id', demoId)
+            .eq('user_id', user.id)
             .maybeSingle();
-          if (demoRow) {
-            kast = demoRow.kast != null ? Math.round(demoRow.kast) : null;
-            adr = demoRow.adr != null ? Math.round(demoRow.adr) : null;
+          if (mpRow) {
+            kast = mpRow.kast != null ? Math.round(mpRow.kast) : null;
+            adr = mpRow.adr != null ? Math.round(mpRow.adr) : null;
           }
           // mainAxis (axe Coach IA principal) reste null tant que la feature
           // roadmap n'est pas implementee. Le template demoAnalysisReady gere
