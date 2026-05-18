@@ -72,7 +72,7 @@ const SEED_TOP20_2026 = [
   { rank: 10, nickname: 'Spinx',    team: 'MOUZ',         country: 'IL', role: 'rifler',  hltv_id: 16732, maps_played: 36, hltv_rating: 1.10, kast_pct: 75, adr: 76, kpr: 0.68, hs_pct: 51, kd: 1.07 }, // primary lurker MOUZ
   { rank: 11, nickname: 'Twistzz',  team: 'FaZe',         country: 'CA', role: 'rifler',  hltv_id: 10394, maps_played: 28, hltv_rating: 1.09, kast_pct: 73, adr: 78, kpr: 0.70, hs_pct: 53, kd: 1.07 },
   { rank: 12, nickname: 'mezii',    team: 'Vitality',     country: 'GB', role: 'support', hltv_id: 18933, maps_played: 30, hltv_rating: 1.08, kast_pct: 74, adr: 74, kpr: 0.66, hs_pct: 50, kd: 1.05 },
-  { rank: 13, nickname: 'Senzu',    team: 'Passion UA',   country: 'MN', role: 'rifler',  hltv_id: 23158, maps_played: 30, hltv_rating: 1.08, kast_pct: 73, adr: 74, kpr: 0.65, hs_pct: 50, kd: 1.05 }, // loan Passion UA fev 2026
+  { rank: 13, nickname: 'Senzu',    team: 'Passion UA',   country: 'MN', role: 'rifler',  maps_played: 30, hltv_rating: 1.08, kast_pct: 73, adr: 74, kpr: 0.65, hs_pct: 50, kd: 1.05 }, // loan Passion UA fev 2026 - hltv_id retire (seed/metadata inconsistent : 23158 vs 23148)
   { rank: 14, nickname: 'XANTARES', team: 'Aurora',       country: 'TR', role: 'rifler',  hltv_id: 4805,  maps_played: 32, hltv_rating: 1.07, kast_pct: 71, adr: 78, kpr: 0.71, hs_pct: 56, kd: 1.04 },
   { rank: 15, nickname: 'YEKINDAR', team: 'FURIA',        country: 'LV', role: 'entry',   hltv_id: 18062, maps_played: 30, hltv_rating: 1.07, kast_pct: 71, adr: 80, kpr: 0.71, hs_pct: 55, kd: 1.04 },
   { rank: 16, nickname: 'xertioN',  team: 'MOUZ',         country: 'IL', role: 'igl',     hltv_id: 21770, maps_played: 35, hltv_rating: 1.06, kast_pct: 72, adr: 76, kpr: 0.68, hs_pct: 52, kd: 1.04 }, // IGL MOUZ post-shuffle (torzsi est l'AWP)
@@ -86,23 +86,23 @@ const SEED_TOP20_2026 = [
   // Stats : moyenne approximative saison 2025 + Q1 2026 (profils HLTV).
   { rank: 21, nickname: 'jL',        team: 'MOUZ',         country: 'LV', role: 'rifler',  hltv_id: 21709, maps_played: 30, hltv_rating: 1.07, kast_pct: 73, adr: 80, kpr: 0.72, hs_pct: 56, kd: 1.06 }, // loan from NaVi
   { rank: 22, nickname: 'broky',     team: 'FaZe',         country: 'BA', role: 'awp',     hltv_id: 16341, maps_played: 28, hltv_rating: 1.05, kast_pct: 71, adr: 73, kpr: 0.67, hs_pct: 47, kd: 1.04 },
-  { rank: 23, nickname: 'huNter-',   team: 'G2',           country: 'BA', role: 'igl',     hltv_id: 11816, maps_played: 30, hltv_rating: 1.04, kast_pct: 70, adr: 78, kpr: 0.71, hs_pct: 52, kd: 1.03 }, // IGL G2 depuis 2025 (SunPayus est AWP)
+  { rank: 23, nickname: 'huNter-',   team: 'G2',           country: 'BA', role: 'igl',     maps_played: 30, hltv_rating: 1.04, kast_pct: 70, adr: 78, kpr: 0.71, hs_pct: 52, kd: 1.03 }, // IGL G2 depuis 2025 (SunPayus est AWP) - hltv_id retire (collision avec ropz 11816)
   { rank: 24, nickname: 'jks',       team: 'FlyQuest',     country: 'AU', role: 'rifler',  hltv_id: 7322,  maps_played: 30, hltv_rating: 1.04, kast_pct: 71, adr: 74, kpr: 0.67, hs_pct: 51, kd: 1.03 }, // FlyQuest pas 100T
   { rank: 25, nickname: 'BlameF',    team: 'BIG',          country: 'DK', role: 'igl',     hltv_id: 11219, maps_played: 30, hltv_rating: 1.06, kast_pct: 73, adr: 78, kpr: 0.69, hs_pct: 50, kd: 1.04 }, // IGL/captain BIG depuis jan 2026
-  { rank: 26, nickname: 'tabseN',    team: 'BIG',          country: 'DE', role: 'rifler',  hltv_id: 7322,  maps_played: 30, hltv_rating: 0.98, kast_pct: 70, adr: 68, kpr: 0.62, hs_pct: 49, kd: 0.96 }, // n'est plus IGL, BlameF a pris la place
+  { rank: 26, nickname: 'tabseN',    team: 'BIG',          country: 'DE', role: 'rifler',  maps_played: 30, hltv_rating: 0.98, kast_pct: 70, adr: 68, kpr: 0.62, hs_pct: 49, kd: 0.96 }, // n'est plus IGL, BlameF a pris la place - hltv_id retire (collision avec jks 7322)
   { rank: 27, nickname: 'siuhy',     team: 'Liquid',       country: 'PL', role: 'igl',     hltv_id: 19831, maps_played: 32, hltv_rating: 0.98, kast_pct: 71, adr: 67, kpr: 0.61, hs_pct: 50, kd: 0.97 }, // Liquid full-time depuis juin 2025
   { rank: 28, nickname: 'karrigan',  team: 'Falcons',      country: 'DK', role: 'igl',     hltv_id: 429,   maps_played: 30, hltv_rating: 0.94, kast_pct: 70, adr: 65, kpr: 0.59, hs_pct: 47, kd: 0.93 }, // Falcons depuis avril 2026
   { rank: 29, nickname: 'aleksib',   team: 'NaVi',         country: 'FI', role: 'igl',     hltv_id: 9960,  maps_played: 30, hltv_rating: 0.99, kast_pct: 71, adr: 67, kpr: 0.61, hs_pct: 49, kd: 0.97 },
   { rank: 30, nickname: 'rain',      team: '100 Thieves',  country: 'NO', role: 'igl',     hltv_id: 8568,  maps_played: 28, hltv_rating: 0.99, kast_pct: 70, adr: 72, kpr: 0.68, hs_pct: 50, kd: 0.98 }, // IGL 100T depuis nov 2025
   { rank: 31, nickname: 'hooxi',     team: 'Astralis',     country: 'DK', role: 'igl',     hltv_id: 16920, maps_played: 30, hltv_rating: 0.92, kast_pct: 69, adr: 64, kpr: 0.57, hs_pct: 46, kd: 0.91 },
-  { rank: 32, nickname: 'jabbi',     team: 'Astralis',     country: 'DK', role: 'rifler',  hltv_id: 19887, maps_played: 30, hltv_rating: 1.05, kast_pct: 72, adr: 76, kpr: 0.69, hs_pct: 51, kd: 1.04 },
+  { rank: 32, nickname: 'jabbi',     team: 'Astralis',     country: 'DK', role: 'rifler',  maps_played: 30, hltv_rating: 1.05, kast_pct: 72, adr: 76, kpr: 0.69, hs_pct: 51, kd: 1.04 }, // hltv_id retire (collision avec torzsi 19887)
   { rank: 33, nickname: 'staehr',    team: 'Astralis',     country: 'DK', role: 'rifler',  hltv_id: 20460, maps_played: 30, hltv_rating: 1.02, kast_pct: 71, adr: 72, kpr: 0.66, hs_pct: 50, kd: 1.01 },
   { rank: 34, nickname: 'NAF',       team: 'Liquid',       country: 'CA', role: 'rifler',  hltv_id: 8520,  maps_played: 28, hltv_rating: 1.04, kast_pct: 72, adr: 75, kpr: 0.68, hs_pct: 51, kd: 1.03 },
   { rank: 35, nickname: 'EliGE',     team: 'Liquid',       country: 'US', role: 'rifler',  hltv_id: 8738,  maps_played: 28, hltv_rating: 1.05, kast_pct: 72, adr: 77, kpr: 0.69, hs_pct: 50, kd: 1.04 },
   { rank: 36, nickname: 'malbsmd',   team: 'Liquid',       country: 'GT', role: 'rifler',  hltv_id: 21554, maps_played: 30, hltv_rating: 1.06, kast_pct: 73, adr: 78, kpr: 0.69, hs_pct: 51, kd: 1.05 }, // trade Liquid mars 2026
   { rank: 37, nickname: 'fallen',    team: 'FURIA',        country: 'BR', role: 'rifler',  hltv_id: 1225,  maps_played: 30, hltv_rating: 0.94, kast_pct: 69, adr: 65, kpr: 0.57, hs_pct: 45, kd: 0.92 }, // role swap : a passe l'AWP a molodoy
   { rank: 38, nickname: 'yuurih',    team: 'FURIA',        country: 'BR', role: 'rifler',  hltv_id: 14159, maps_played: 32, hltv_rating: 1.04, kast_pct: 71, adr: 75, kpr: 0.68, hs_pct: 52, kd: 1.03 },
-  { rank: 39, nickname: 'kyousuke',  team: 'Falcons',      country: 'KZ', role: 'entry',   hltv_id: 24598, maps_played: 28, hltv_rating: 1.06, kast_pct: 72, adr: 78, kpr: 0.70, hs_pct: 53, kd: 1.05 }, // entry fragger Falcons
+  { rank: 39, nickname: 'kyousuke',  team: 'Falcons',      country: 'KZ', role: 'entry',   maps_played: 28, hltv_rating: 1.06, kast_pct: 72, adr: 78, kpr: 0.70, hs_pct: 53, kd: 1.05 }, // entry fragger Falcons - hltv_id retire (24598 etait incorrect, redirigeait vers mauvais profil)
   { rank: 40, nickname: 'TeSeS',     team: 'Falcons',      country: 'DK', role: 'support', hltv_id: 19937, maps_played: 28, hltv_rating: 1.03, kast_pct: 71, adr: 74, kpr: 0.67, hs_pct: 51, kd: 1.02 }, // anchor/support utility-heavy
   { rank: 41, nickname: 'jcobbb',    team: 'FaZe',         country: 'PL', role: 'rifler',  hltv_id: 22377, maps_played: 28, hltv_rating: 1.06, kast_pct: 72, adr: 77, kpr: 0.69, hs_pct: 53, kd: 1.05 },
   { rank: 42, nickname: 'tn1r',      team: 'Spirit',       country: 'RU', role: 'rifler',  hltv_id: 22585, maps_played: 32, hltv_rating: 1.05, kast_pct: 73, adr: 76, kpr: 0.68, hs_pct: 53, kd: 1.04 },
@@ -116,14 +116,14 @@ const SEED_TOP20_2026 = [
   { rank: 50, nickname: 'maka',      team: '3DMAX',        country: 'FR', role: 'igl',     hltv_id: 11842, maps_played: 30, hltv_rating: 0.96, kast_pct: 70, adr: 66, kpr: 0.60, hs_pct: 49, kd: 0.95 }, // IGL/AWP hybrid : on garde IGL comme primary
   { rank: 51, nickname: 'misutaaa',  team: '3DMAX',        country: 'FR', role: 'rifler',  hltv_id: 16733, maps_played: 30, hltv_rating: 1.04, kast_pct: 71, adr: 75, kpr: 0.67, hs_pct: 51, kd: 1.03 },
   { rank: 52, nickname: 'blitz',     team: 'MongolZ',      country: 'MN', role: 'igl',     hltv_id: 21277, maps_played: 30, hltv_rating: 0.99, kast_pct: 71, adr: 68, kpr: 0.62, hs_pct: 50, kd: 0.98 },
-  { rank: 53, nickname: '910',       team: 'MongolZ',      country: 'MN', role: 'awp',     hltv_id: 23158, maps_played: 30, hltv_rating: 1.07, kast_pct: 73, adr: 78, kpr: 0.70, hs_pct: 50, kd: 1.06 },
+  { rank: 53, nickname: '910',       team: 'MongolZ',      country: 'MN', role: 'awp',     maps_played: 30, hltv_rating: 1.07, kast_pct: 73, adr: 78, kpr: 0.70, hs_pct: 50, kd: 1.06 }, // hltv_id retire (collision avec Senzu seed 23158)
   { rank: 54, nickname: 'mzinho',    team: 'MongolZ',      country: 'MN', role: 'rifler',  hltv_id: 22660, maps_played: 30, hltv_rating: 1.03, kast_pct: 71, adr: 74, kpr: 0.67, hs_pct: 53, kd: 1.02 },
   { rank: 55, nickname: 'device',    team: '100 Thieves',  country: 'DK', role: 'awp',     hltv_id: 7592,  maps_played: 28, hltv_rating: 1.05, kast_pct: 72, adr: 73, kpr: 0.66, hs_pct: 47, kd: 1.04 },
   { rank: 56, nickname: 'stavn',     team: 'NIP',          country: 'DK', role: 'awp',     hltv_id: 18548, maps_played: 28, hltv_rating: 1.05, kast_pct: 72, adr: 76, kpr: 0.69, hs_pct: 52, kd: 1.04 }, // NIP primary AWP depuis avril 2026
   { rank: 57, nickname: 'w0nderful', team: 'NaVi',         country: 'UA', role: 'awp',     hltv_id: 22600, maps_played: 30, hltv_rating: 1.05, kast_pct: 72, adr: 73, kpr: 0.67, hs_pct: 47, kd: 1.04 },
   { rank: 58, nickname: 'gr1ks',     team: 'BIG',          country: 'BY', role: 'awp',     maps_played: 28, hltv_rating: 1.04, kast_pct: 71, adr: 72, kpr: 0.66, hs_pct: 47, kd: 1.03 },
   { rank: 59, nickname: 'ultimate',  team: 'Liquid',       country: 'PL', role: 'awp',     maps_played: 28, hltv_rating: 1.03, kast_pct: 71, adr: 72, kpr: 0.66, hs_pct: 48, kd: 1.02 }, // Liquid AWP
-  { rank: 60, nickname: 'SunPayus',  team: 'G2',           country: 'ES', role: 'awp',     hltv_id: 19887, maps_played: 28, hltv_rating: 1.04, kast_pct: 71, adr: 73, kpr: 0.66, hs_pct: 47, kd: 1.03 }, // G2 AWP
+  { rank: 60, nickname: 'SunPayus',  team: 'G2',           country: 'ES', role: 'awp',     maps_played: 28, hltv_rating: 1.04, kast_pct: 71, adr: 73, kpr: 0.66, hs_pct: 47, kd: 1.03 }, // G2 AWP - hltv_id retire (collision avec torzsi 19887)
 ];
 
 // ── PLAYER_METADATA : dict elargi nickname → role/country/team ──────────
@@ -153,7 +153,7 @@ const PLAYER_METADATA = {
   'niko':     { role: 'rifler',  country: 'BA', team: 'Falcons',      hltv_id: 3741  },
   'karrigan': { role: 'igl',     country: 'DK', team: 'Falcons',      hltv_id: 429   }, // signed avr 2026
   'teses':    { role: 'support', country: 'DK', team: 'Falcons',      hltv_id: 19937 }, // anchor/utility-heavy
-  'kyousuke': { role: 'entry',   country: 'KZ', team: 'Falcons',      hltv_id: 24598 }, // entry fragger
+  'kyousuke': { role: 'entry',   country: 'KZ', team: 'Falcons' }, // entry fragger (hltv_id retire : 24598 redirige vers mauvais profil)
   'kyxsan':   { role: 'rifler',  country: 'PL', team: 'Falcons',      hltv_id: 19374 }, // benche apr 2026
 
   // ─── FaZe (post-karrigan + rain departs) ───
@@ -169,7 +169,7 @@ const PLAYER_METADATA = {
   'torzsi':   { role: 'awp',     country: 'HU', team: 'MOUZ',         hltv_id: 19887 },
   'jl':       { role: 'rifler',  country: 'LV', team: 'MOUZ',         hltv_id: 21709 }, // loan from NaVi
   'xelex':    { role: 'rifler',  country: 'CZ', team: 'MOUZ' },
-  'brollan':  { role: 'rifler',  country: 'SE', team: 'MOUZ',         hltv_id: 14176 }, // benche apr 2026
+  'brollan':  { role: 'rifler',  country: 'SE', team: 'MOUZ' }, // benche apr 2026 - hltv_id retire (14176 etait KSCERATO)
   'jimpphat': { role: 'rifler',  country: 'FI', team: 'MOUZ',         hltv_id: 19400 }, // benche apr 2026
 
   // ─── Natus Vincere (NaVi) ───
@@ -187,10 +187,10 @@ const PLAYER_METADATA = {
   'fallen':   { role: 'rifler',  country: 'BR', team: 'FURIA',        hltv_id: 1225  }, // role swap : a passe l'AWP a molodoy
 
   // ─── G2 (huNter- IGL post-2025) ───
-  'huntr':    { role: 'igl',     country: 'BA', team: 'G2',           hltv_id: 11816 }, // alias huNter-, IGL
-  'hunter-':  { role: 'igl',     country: 'BA', team: 'G2',           hltv_id: 11816 }, // IGL G2
+  'huntr':    { role: 'igl',     country: 'BA', team: 'G2' }, // alias huNter-, IGL - hltv_id retire (11816 etait ropz)
+  'hunter-':  { role: 'igl',     country: 'BA', team: 'G2' }, // IGL G2 - hltv_id retire (11816 etait ropz)
   'nertz':    { role: 'rifler',  country: 'IL', team: 'G2',           hltv_id: 19815 },
-  'sunpayus': { role: 'awp',     country: 'ES', team: 'G2',           hltv_id: 19887 },
+  'sunpayus': { role: 'awp',     country: 'ES', team: 'G2' }, // hltv_id retire (19887 etait torzsi)
   'heavygod': { role: 'rifler',  country: 'IL', team: 'G2',           hltv_id: 22510 },
   'matys':    { role: 'rifler',  country: 'SK', team: 'G2',           hltv_id: 21677 },
 
@@ -211,9 +211,9 @@ const PLAYER_METADATA = {
   // ─── The MongolZ ───
   'blitz':    { role: 'igl',     country: 'MN', team: 'MongolZ',      hltv_id: 21277 },
   'techno4k': { role: 'rifler',  country: 'MN', team: 'MongolZ',      hltv_id: 22533 },
-  '910':      { role: 'awp',     country: 'MN', team: 'MongolZ',      hltv_id: 23158 },
+  '910':      { role: 'awp',     country: 'MN', team: 'MongolZ' }, // hltv_id retire (collision avec Senzu seed 23158)
   'mzinho':   { role: 'rifler',  country: 'MN', team: 'MongolZ',      hltv_id: 22660 },
-  'senzu':    { role: 'rifler',  country: 'MN', team: 'Passion UA',   hltv_id: 23148 }, // loan Passion UA fev 2026
+  'senzu':    { role: 'rifler',  country: 'MN', team: 'Passion UA' }, // loan Passion UA fev 2026 - hltv_id retire (seed 23158 vs metadata 23148 incoherents)
   'cobrazera':{ role: 'rifler',  country: 'MN', team: 'MongolZ' },
 
   // ─── Eternal Fire (international 2026, MisteM IGL) ───
@@ -243,14 +243,14 @@ const PLAYER_METADATA = {
 
   // ─── Astralis (phzy AWP, hooxi IGL) ───
   'hooxi':    { role: 'igl',     country: 'DK', team: 'Astralis',      hltv_id: 16920 },
-  'jabbi':    { role: 'rifler',  country: 'DK', team: 'Astralis',      hltv_id: 19887 },
+  'jabbi':    { role: 'rifler',  country: 'DK', team: 'Astralis' }, // hltv_id retire (19887 etait torzsi)
   'phzy':     { role: 'awp',     country: 'SE', team: 'Astralis' },
   'staehr':   { role: 'rifler',  country: 'DK', team: 'Astralis',      hltv_id: 20460 },
   'ryu':      { role: 'rifler',  country: 'LT', team: 'Astralis' },
 
   // ─── BIG (BlameF IGL post-jan 2026) ───
   'blamef':   { role: 'igl',     country: 'DK', team: 'BIG',           hltv_id: 11219 }, // IGL/captain depuis jan 2026
-  'tabsen':   { role: 'rifler',  country: 'DE', team: 'BIG',           hltv_id: 7322  }, // n'est plus IGL
+  'tabsen':   { role: 'rifler',  country: 'DE', team: 'BIG' }, // n'est plus IGL - hltv_id retire (7322 etait jks)
   'jdc':      { role: 'rifler',  country: 'DE', team: 'BIG' },
   'faven':    { role: 'rifler',  country: 'DE', team: 'BIG' },
   'gr1ks':    { role: 'awp',     country: 'BY', team: 'BIG' },
