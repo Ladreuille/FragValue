@@ -109,9 +109,8 @@ assert(xml.match(/n="1"[^/]*opening="quentin → enemy1[^"]*★user_kill/), 'R1 
 assert(xml.match(/n="2"[^/]*opening="enemy1 → quentin[^"]*☠user_died/), 'R2 opening = user died');
 
 console.log('\nTest 7 : died_to attribute');
-assert(xml.match(/n="2"[^/]*died_to="enemy1 \(deagle, HS\)"/), 'R2 died_to weapon + HS flag');
-// round=6 (kills) → displayNum=6 (parser, because round 3 isKnife=true skipped)
-// 0-indexed round 6 = display 6 (R3 knife n'incremente pas le displayCounter)
+// Suffix " @ <callout> (x,y)" est optionnel (depend de demoData.meta.map present + zone reconnue).
+assert(xml.match(/n="2"[^/]*died_to="enemy1 \(deagle, HS\)( @ [^"]+)?"/), 'R2 died_to weapon + HS flag');
 assert(xml.match(/n="6"[^/]*died_to="enemy1 \(awp[^"]*wallbang/), 'R6 died_to wallbang flag');
 
 console.log('\nTest 8 : bomb info');
@@ -128,8 +127,9 @@ assert(xml.includes('<round n="3" type="multi">'), 'R3 detect comme multi (3K)')
 assert(xml.includes('user_kill="true"'), 'kill du user tag dans key round');
 
 console.log('\nTest 10 : positions rendered');
-assert(xml.match(/pos_a="\d+,\d+"/), 'pos_a coord rendered');
-assert(xml.match(/pos_v="\d+,\d+"/), 'pos_v coord rendered');
+// Format peut etre soit raw coords "200,200" soit avec callout prefix "mid (200,200)"
+assert(xml.match(/pos_a="(?:[a-z_]+ \()?-?\d+,-?\d+\)?"/), 'pos_a coord rendered (with optional callout prefix)');
+assert(xml.match(/pos_v="(?:[a-z_]+ \()?-?\d+,-?\d+\)?"/), 'pos_v coord rendered (with optional callout prefix)');
 
 console.log('\nTest 11 : grenades summary');
 assert(xml.match(/n="1"[^/]*nades_round="1smk"/), 'R1 1 smoke');

@@ -56,9 +56,52 @@ function classifyEcon(round, userTeam, userKillsInRound, userDeathsInRound) {
 }
 
 // Format une position en compact callout approxime (pas de map data, juste raw coords).
-function fmtPos(x, y) {
+// Si mapName fourni, utilise le callout-mapper pour donner un nom lisible.
+function fmtPos(x, y, mapName) {
   if (x == null || y == null) return '?';
+  if (mapName) {
+    try {
+      const { fmtPosCallout } = require('./callout-mapper.js');
+      return fmtPosCallout(mapName, x, y);
+    } catch { /* fallback raw coords */ }
+  }
   return `${Math.round(x)},${Math.round(y)}`;
+}
+
+// Detect trade-kill : kill within TRADE_WINDOW_TICKS d'une mort cote attaquant.
+// Approx 5s a 128 tick = 640 ticks. CS2 demos sont 64 ou 128 ticks selon source.
+const TRADE_WINDOW_TICKS = 640;
+function isTradeKill(currentKill, allKillsInRound) {
+  if (!currentKill?.attacker || !currentKill?.tick) return false;
+  // Find teammates morts juste avant (qui ont la meme team que l'attaquant actuel)
+  for (const k of allKillsInRound) {
+    if (k === currentKill) continue;
+    if (k.tick > currentKill.tick) continue;
+    if (currentKill.tick - k.tick > TRADE_WINDOW_TICKS) continue;
+    // Si le mort de k a la meme team que l'attaquant actuel, c'est une trade
+    if (k.victimTeam != null && currentKill.attackerTeam != null && k.victimTeam === currentKill.attackerTeam) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Classifie l'economy aggregee de l'equipe T et CT sur le round, retourne
+// une string compacte "T=force CT=full" ou "" si indeterminable.
+function classifyTeamEcon(displayN, roundKills) {
+  if (displayN === 1 || displayN === 13) return 'T=pistol CT=pistol';
+  // Group kills par team de l attaquant -> weapons utilises -> tier dominant
+  const econByTeam = { T: 'unknown', CT: 'unknown' };
+  for (const team of ['T', 'CT']) {
+    const teamNum = team === 'T' ? 2 : 3;
+    const weapons = roundKills.filter(k => k.attackerTeam === teamNum).map(k => (k.weapon || '').toLowerCase().replace(/^weapon_/, ''));
+    if (weapons.length === 0) continue;
+    if (weapons.some(w => /^(awp|ak47|m4a1|m4a4|aug|sg556|sg553)/.test(w))) econByTeam[team] = 'full';
+    else if (weapons.some(w => /^(galilar|famas|ssg08|mp9|mac10|mp7|p90|ump45|bizon)/.test(w))) econByTeam[team] = 'force';
+    else if (weapons.every(w => /^(usp_silencer|glock|hkp2000|p2000|deagle|p250|tec9|fiveseven|cz75a|revolver|elite)/.test(w))) econByTeam[team] = 'eco';
+  }
+  if (econByTeam.T === 'unknown' && econByTeam.CT === 'unknown') return '';
+  return `T=${econByTeam.T} CT=${econByTeam.CT}`;
 }
 
 // Build le rounds XML block compact pour injection prompt.
@@ -83,6 +126,8 @@ function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
   const bombDefuses = demoData.bombDefuses || [];
   const bombExplodes = demoData.bombExplodes || [];
   const grenadesByRound = demoData.grenadesByRound || {};
+  // mapName injected pour le callout-mapper. Sans ca, on retombe sur les coords brutes.
+  const mapName = demoData.meta?.map || demoData.map || options.mapName || '';
 
   if (!Array.isArray(rounds) || rounds.length === 0) {
     if (!kills.length) return '';
@@ -137,7 +182,8 @@ function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
     let openingStr = '';
     if (opening) {
       const tag = opening.attacker === userName ? '★user_kill' : opening.victim === userName ? '☠user_died' : '';
-      openingStr = ` opening="${escapeXml(opening.attacker)} → ${escapeXml(opening.victim)} (${opening.weapon || ''})${tag ? ' ' + tag : ''}"`;
+      const openingPos = fmtPos(opening.victimX, opening.victimY, mapName);
+      openingStr = ` opening="${escapeXml(opening.attacker)} → ${escapeXml(opening.victim)} (${opening.weapon || ''}) @ ${openingPos}${tag ? ' ' + tag : ''}"`;
     }
 
     // User stats du round
@@ -146,8 +192,18 @@ function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
     const userDied = userDeathsInRound[0];
     let diedStr = '';
     if (userDied) {
-      diedStr = ` died_to="${escapeXml(userDied.attacker)} (${userDied.weapon || ''}${userDied.isHeadshot ? ', HS' : ''}${userDied.thruSmoke ? ', smoke' : ''}${userDied.isWallbang ? ', wallbang' : ''})"`;
+      const deathPos = fmtPos(userDied.victimX, userDied.victimY, mapName);
+      diedStr = ` died_to="${escapeXml(userDied.attacker)} (${userDied.weapon || ''}${userDied.isHeadshot ? ', HS' : ''}${userDied.thruSmoke ? ', smoke' : ''}${userDied.isWallbang ? ', wallbang' : ''}) @ ${deathPos}"`;
     }
+    // Trade kills user dans le round (utile pour eval awareness/teamplay)
+    let tradeStr = '';
+    if (uK > 0) {
+      const tradesAsTrader = userKillsInRound.filter(k => isTradeKill(k, roundKills)).length;
+      if (tradesAsTrader > 0) tradeStr = ` user_trades="${tradesAsTrader}"`;
+    }
+    // Team economy aggregate (T=... CT=...)
+    const teamEcon = classifyTeamEcon(displayN, roundKills);
+    const teamEconStr = teamEcon ? ` team_econ="${teamEcon}"` : '';
 
     // Grenades summary
     const grenSum = grenadesByRound[displayN] || grenadesByRound[rIdx];
@@ -162,7 +218,7 @@ function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
     }
 
     summaries.push(
-      `  <round n="${displayN}" outcome="${outcome}" econ="${econ}" event="${eventReason}"${bombInfo ? ` bomb="${bombInfo}"` : ''} user_k="${uK}" user_d="${uD}"${openingStr}${diedStr}${grenStr} />`
+      `  <round n="${displayN}" outcome="${outcome}" econ="${econ}"${teamEconStr} event="${eventReason}"${bombInfo ? ` bomb="${bombInfo}"` : ''} user_k="${uK}" user_d="${uD}"${tradeStr}${openingStr}${diedStr}${grenStr} />`
     );
 
     // Key round detection (multi-kill, opening involving user)
@@ -184,7 +240,8 @@ function formatDemoRoundsXml(demoData, userName, userTeam, options = {}) {
       xml += `  <round n="${kr.displayN}" type="${kr.type}">\n`;
       for (const k of kr.kills.slice(0, 8)) {
         const isUser = k.attacker === userName ? ' user_kill="true"' : k.victim === userName ? ' user_death="true"' : '';
-        xml += `    <kill tick="${k.tick || 0}" attacker="${escapeXml(k.attacker)}" victim="${escapeXml(k.victim)}" weapon="${k.weapon || ''}"${k.isHeadshot ? ' hs="true"' : ''}${k.thruSmoke ? ' smoke="true"' : ''}${k.isWallbang ? ' wb="true"' : ''} pos_a="${fmtPos(k.attackerX, k.attackerY)}" pos_v="${fmtPos(k.victimX, k.victimY)}"${isUser} />\n`;
+        const isTrade = isTradeKill(k, kr.kills) ? ' trade="true"' : '';
+        xml += `    <kill tick="${k.tick || 0}" attacker="${escapeXml(k.attacker)}" victim="${escapeXml(k.victim)}" weapon="${k.weapon || ''}"${k.isHeadshot ? ' hs="true"' : ''}${k.thruSmoke ? ' smoke="true"' : ''}${k.isWallbang ? ' wb="true"' : ''}${isTrade} pos_a="${fmtPos(k.attackerX, k.attackerY, mapName)}" pos_v="${fmtPos(k.victimX, k.victimY, mapName)}"${isUser} />\n`;
       }
       xml += `  </round>\n`;
     }
