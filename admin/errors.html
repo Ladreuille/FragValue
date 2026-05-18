@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,follow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin · Errors · FragValue</title>
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;--surface:#0f1010;--card:#131414;
+  --border:#1c1e1e;--border2:#252727;
+  --accent:#b8ff57;--accent2:#7ddd1a;
+  --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+  --success:#2dd4a0;--danger:#ff4444;--warn:#f5c842;
+  --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  --r:6px;--r2:12px
+}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;padding:24px 16px}
+.wrap{max-width:1280px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+h1{font-family:var(--display);font-size:30px;letter-spacing:.02em}
+h1 span{color:var(--accent);text-shadow:0 0 16px rgba(184,255,87,.3)}
+.subtitle{font-size:11px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--card);color:var(--text2);padding:8px 14px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--border2);cursor:pointer;transition:all .15s;text-decoration:none}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent)}
+.btn.warn{border-color:rgba(245,200,66,.5);color:var(--warn)}
+.btn.warn:hover{background:rgba(245,200,66,.08)}
+.btn.danger{border-color:rgba(255,68,68,.5);color:var(--danger)}
+.btn.danger:hover{background:rgba(255,68,68,.08)}
+
+.tabs{display:flex;gap:4px;margin-bottom:18px;background:var(--card);padding:4px;border-radius:var(--r);border:1px solid var(--border);width:fit-content}
+.tab{background:transparent;border:none;color:var(--text2);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;padding:7px 14px;border-radius:4px;cursor:pointer;transition:all .15s}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--accent);color:#000}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px}
+.kpi-label{font-size:9.5px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+.kpi-val{font-family:var(--display);font-size:32px;color:var(--text);line-height:1}
+.kpi-val.accent{color:var(--accent)}
+.kpi-val.danger{color:var(--danger)}
+.kpi-val.warn{color:var(--warn)}
+.kpi-sub{font-size:10px;color:var(--text2);margin-top:6px;line-height:1.5}
+
+/* Grouped view : 1 card par fingerprint */
+.error-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;margin-bottom:10px;transition:border-color .15s}
+.error-group:hover{border-color:var(--border2)}
+.eg-head{display:flex;align-items:center;gap:12px;cursor:pointer}
+.eg-count{font-family:var(--display);font-size:22px;color:var(--accent);min-width:50px;text-align:center;line-height:1}
+.eg-count.high{color:var(--danger)}
+.eg-count.mid{color:var(--warn)}
+.eg-body{flex:1;min-width:0}
+.eg-msg{font-size:12px;color:var(--text);line-height:1.5;word-break:break-word;margin-bottom:4px}
+.eg-meta{display:flex;gap:10px;font-size:10px;color:var(--text3);letter-spacing:.04em;flex-wrap:wrap}
+.eg-meta span{display:inline-flex;align-items:center;gap:4px}
+.eg-meta .route{color:var(--accent);background:rgba(184,255,87,.06);padding:2px 6px;border-radius:4px;font-weight:700}
+.eg-fp{font-size:9px;color:var(--text3);font-family:var(--mono);opacity:.6}
+.eg-actions{display:flex;gap:6px;flex-shrink:0}
+
+.eg-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.error-group.open .eg-detail{display:block}
+.eg-stack{font-family:var(--mono);font-size:10px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;overflow-x:auto;white-space:pre;line-height:1.5;max-height:200px;overflow-y:auto}
+.eg-sample-list{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.eg-sample{font-size:10px;color:var(--text2);padding:6px 8px;background:var(--bg);border-left:2px solid var(--border);border-radius:0 4px 4px 0}
+.eg-sample .ua{color:var(--text3);font-size:9px}
+
+/* List view : 1 row par erreur */
+.list-row{display:grid;grid-template-columns:140px 1fr auto;gap:12px;padding:10px 0;font-size:11px;color:var(--text2);border-top:1px solid var(--border);align-items:start;cursor:pointer;transition:background .15s}
+.list-row:first-child{border-top:none}
+.list-row:hover{background:rgba(255,255,255,.02)}
+.list-row.resolved{opacity:.5}
+.lr-date{font-size:10px;color:var(--text3)}
+.lr-msg{color:var(--text);line-height:1.5;word-break:break-word;min-width:0}
+.lr-route{font-size:9.5px;color:var(--accent);margin-top:2px}
+.lr-actions{flex-shrink:0;display:flex;gap:6px}
+
+.empty{text-align:center;padding:60px 20px;color:var(--text3);font-size:12px}
+.err{color:var(--danger);background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.3);padding:14px 18px;border-radius:var(--r);font-size:12px;margin-bottom:18px}
+.loading{text-align:center;padding:40px;color:var(--text3);font-size:11px}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(184,255,87,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+.toolbar .toggle{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none}
+.toolbar .toggle input{accent-color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>ERROR <span>TRACKING</span></h1>
+      <div class="subtitle" id="refreshInfo">Chargement...</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="load()">Refresh</button>
+      <a href="/admin/dashboard.html" class="btn">Dashboard</a>
+      <a href="/admin/feedback.html" class="btn">Feedback</a>
+    </div>
+  </header>
+
+  <div id="errMsg" class="err" style="display:none"></div>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Total erreurs (30j)</div><div class="kpi-val" id="kpiTotal">--</div><div class="kpi-sub">non resolues seulement</div></div>
+    <div class="kpi"><div class="kpi-label">Groupes distincts</div><div class="kpi-val accent" id="kpiGroups">--</div><div class="kpi-sub">fingerprints uniques</div></div>
+    <div class="kpi"><div class="kpi-label">Top groupe</div><div class="kpi-val danger" id="kpiTopCount">--</div><div class="kpi-sub" id="kpiTopMsg">--</div></div>
+    <div class="kpi"><div class="kpi-label">Derniere 24h</div><div class="kpi-val warn" id="kpiRecent">--</div><div class="kpi-sub">erreurs frais</div></div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="grouped" role="tab" aria-selected="true">Groupes (fingerprint)</button>
+    <button class="tab" data-tab="recent" role="tab">Derniers 50</button>
+    <button class="tab" data-tab="resolved" role="tab">Resolus</button>
+  </div>
+
+  <div class="toolbar">
+    <label class="toggle"><input type="checkbox" id="hideFetchNetwork"> Hide [fetch-network] (offline/adblock noise)</label>
+  </div>
+
+  <div id="content">
+    <div class="loading"><span class="spinner"></span>Chargement des erreurs...</div>
+  </div>
+</div>
+
+<script>
+(async function(){
+  const SUPABASE_URL = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMjA2MzQsImV4cCI6MjA1Nzg5NjYzNH0.zS8R-uIN6c1ohRkUlsm98zNK0pAJrhDPHd_AIIxZsDg';
+  const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  const { data:{ session } } = await _sb.auth.getSession();
+  if (!session) { window.location.href = '/login.html'; return; }
+
+  let _currentTab = 'grouped';
+  let _hideFetch = false;
+
+  window.load = load;
+
+  function showErr(msg) {
+    const el = document.getElementById('errMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  async function fetchJSON(url) {
+    const r = await fetch(url, { headers: { Authorization: 'Bearer ' + session.access_token } });
+    if (!r.ok) {
+      const t = await r.text().catch(() => '');
+      throw new Error(`${r.status}: ${t.slice(0,200)}`);
+    }
+    return r.json();
+  }
+
+  function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+  function relTime(iso) {
+    const d = new Date(iso);
+    const diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 60) return 'a l\'instant';
+    if (diff < 3600) return Math.floor(diff/60) + 'min';
+    if (diff < 86400) return Math.floor(diff/3600) + 'h';
+    if (diff < 86400 * 7) return Math.floor(diff/86400) + 'j';
+    return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+  }
+
+  function isNetworkNoise(msg) {
+    return /\[fetch-network\]/i.test(msg || '');
+  }
+
+  async function load() {
+    document.getElementById('content').innerHTML = '<div class="loading"><span class="spinner"></span>Chargement...</div>';
+    document.getElementById('errMsg').style.display = 'none';
+
+    try {
+      if (_currentTab === 'grouped') {
+        const j = await fetchJSON('/api/admin-errors?grouped=1&limit=100');
+        renderGrouped(j.groups || j.errors || []);
+        updateKPIs(j.groups || j.errors || []);
+      } else if (_currentTab === 'recent') {
+        const j = await fetchJSON('/api/admin-errors?limit=50');
+        renderList(j.errors || [], false);
+      } else if (_currentTab === 'resolved') {
+        const j = await fetchJSON('/api/admin-errors?all=1&limit=50');
+        renderList((j.errors || []).filter(e => e.resolved), true);
+      }
+      document.getElementById('refreshInfo').textContent = 'Maj : ' + new Date().toLocaleTimeString('fr-FR');
+    } catch (e) {
+      showErr(e.message);
+      document.getElementById('content').innerHTML = '';
+    }
+  }
+
+  function updateKPIs(groups) {
+    const filtered = _hideFetch ? groups.filter(g => !isNetworkNoise(g.message)) : groups;
+    const total = filtered.reduce((sum, g) => sum + (g.count || 0), 0);
+    document.getElementById('kpiTotal').textContent = total;
+    document.getElementById('kpiGroups').textContent = filtered.length;
+    const top = filtered[0] || {};
+    document.getElementById('kpiTopCount').textContent = top.count || '--';
+    document.getElementById('kpiTopMsg').textContent = (top.message || '').slice(0, 80) || '--';
+    const dayAgo = Date.now() - 86400 * 1000;
+    const recent = filtered.reduce((sum, g) => sum + (new Date(g.last_seen).getTime() > dayAgo ? g.count : 0), 0);
+    document.getElementById('kpiRecent').textContent = recent;
+  }
+
+  function renderGrouped(groups) {
+    const filtered = _hideFetch ? groups.filter(g => !isNetworkNoise(g.message)) : groups;
+    if (filtered.length === 0) {
+      document.getElementById('content').innerHTML = '<div class="empty">Aucune erreur a afficher ✨</div>';
+      return;
+    }
+
+    const html = filtered.map((g, i) => {
+      const cls = g.count >= 20 ? 'high' : g.count >= 5 ? 'mid' : '';
+      return `
+        <div class="error-group" data-i="${i}">
+          <div class="eg-head" onclick="this.parentElement.classList.toggle('open')">
+            <div class="eg-count ${cls}">${g.count}</div>
+            <div class="eg-body">
+              <div class="eg-msg">${escapeHtml((g.message || '(no message)').slice(0, 200))}</div>
+              <div class="eg-meta">
+                ${g.route ? `<span class="route">${escapeHtml(g.route)}</span>` : ''}
+                <span>Last: ${relTime(g.last_seen)}</span>
+                <span>First: ${relTime(g.first_seen)}</span>
+                <span class="eg-fp">fp: ${escapeHtml(g.fingerprint || '').slice(0,12)}</span>
+              </div>
+            </div>
+            <div class="eg-actions" onclick="event.stopPropagation()">
+              <button class="btn warn" onclick="resolveGroup('${escapeHtml(g.fingerprint)}')">Resolve all</button>
+            </div>
+          </div>
+          <div class="eg-detail">
+            ${g.stack ? `<div style="font-size:10px;color:var(--text3);margin-bottom:6px">STACK SAMPLE :</div><div class="eg-stack">${escapeHtml(g.stack.slice(0, 1500))}</div>` : ''}
+            ${g.samples && g.samples.length ? `
+              <div style="font-size:10px;color:var(--text3);margin-top:10px;margin-bottom:6px">SAMPLES (${g.samples.length}) :</div>
+              <div class="eg-sample-list">
+                ${g.samples.slice(0,5).map(s => `
+                  <div class="eg-sample">
+                    <div>${escapeHtml(s.message || '').slice(0,200)}</div>
+                    <div class="ua">${relTime(s.created_at)} · ${escapeHtml((s.user_agent || '').slice(0, 60))}</div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('content').innerHTML = html;
+  }
+
+  function renderList(errors, isResolved) {
+    const filtered = _hideFetch ? errors.filter(e => !isNetworkNoise(e.message)) : errors;
+    if (filtered.length === 0) {
+      document.getElementById('content').innerHTML = '<div class="empty">' + (isResolved ? 'Aucune erreur resolue.' : 'Aucune erreur ✨') + '</div>';
+      return;
+    }
+    const html = filtered.map(e => `
+      <div class="list-row ${e.resolved ? 'resolved' : ''}" onclick="window.location.href='#err-${e.id}'">
+        <div class="lr-date">${relTime(e.created_at)}<br><span style="font-size:9px">${escapeHtml(e.level || 'error')}</span></div>
+        <div>
+          <div class="lr-msg">${escapeHtml((e.message || '').slice(0, 200))}</div>
+          ${e.route ? `<div class="lr-route">${escapeHtml(e.route)}</div>` : ''}
+        </div>
+        <div class="lr-actions" onclick="event.stopPropagation()">
+          ${!e.resolved ? `<button class="btn" onclick="resolveOne('${e.id}')">Resolve</button>` : '<span style="font-size:10px;color:var(--success)">✓ resolved</span>'}
+        </div>
+      </div>
+    `).join('');
+    document.getElementById('content').innerHTML = html;
+  }
+
+  window.resolveOne = async function(id) {
+    if (!confirm('Marquer comme resolu ?')) return;
+    try {
+      await fetch('/api/admin-errors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ id, resolved: true }),
+      });
+      load();
+    } catch (e) { showErr(e.message); }
+  };
+
+  window.resolveGroup = async function(fingerprint) {
+    if (!confirm('Marquer TOUT le groupe (' + fingerprint.slice(0,12) + ') comme resolu ?')) return;
+    try {
+      await fetch('/api/admin-errors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ fingerprint, resolved: true }),
+      });
+      load();
+    } catch (e) { showErr(e.message); }
+  };
+
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => {
+        x.classList.remove('active');
+        x.setAttribute('aria-selected', 'false');
+      });
+      t.classList.add('active');
+      t.setAttribute('aria-selected', 'true');
+      _currentTab = t.dataset.tab;
+      load();
+    });
+  });
+
+  document.getElementById('hideFetchNetwork').addEventListener('change', (e) => {
+    _hideFetch = e.target.checked;
+    load();
+  });
+
+  await load();
+})();
+</script>
+</body>
+</html>
