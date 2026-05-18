@@ -395,6 +395,16 @@ function renderMatches(matches) {
 function friendlyReason(msg) {
   const m = (msg || '').toLowerCase();
   if (!m) return { title: 'Parser error', sub: 'Unknown cause · restart the match' };
+  // FACEIT Downloads API errors (server-side via api/_lib/faceit-downloads.js)
+  if (m.includes('faceit_no_scope') || m.includes('faceit_no_downloads_token')) {
+    return { title: 'FACEIT Downloads API pending', sub: 'FACEIT review in progress (~30 days). Use manual .dem upload meanwhile.' };
+  }
+  if (m.includes('faceit_demo_not_found')) {
+    return { title: 'Demo not found', sub: 'The demo is not (or no longer) in FACEIT\'s CDN' };
+  }
+  if (m.includes('faceit_unauthorized')) {
+    return { title: 'FACEIT key invalid', sub: 'The API key is no longer recognized · contact support' };
+  }
   // Tags emitted by the extension resolver (background.js friendlyResolveError)
   if (m.startsWith('demo_expired:')) {
     return { title: 'Demo expired', sub: 'FACEIT purges demos after ~30 days' };
@@ -618,14 +628,28 @@ async function importHistory() {
     }
 
     const data = await r.json();
+
+    // ── Circuit-breaker FACEIT scope missing ─────────────────────────────
+    // If the FACEIT key lacks downloads_api scope, the API returns a
+    // top-level scopeError. Show a clear message, don't advance steps
+    // (nothing was actually queued).
+    if (data.scopeError && data.scopeError.code === 'no_scope') {
+      document.getElementById('ovTitle').textContent = 'FACEIT scope pending';
+      setOvSub(data.scopeError.message || 'The downloads_api scope is not active yet.');
+      setOvFill(100);
+      document.getElementById('ovClose').style.display = 'flex';
+      if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Import my last 5 matches'; }
+      return;
+    }
+
     // Étapes 0-2 done
     markStepsDoneUntil(2);
     setOvStep(3, 'active');
     setOvFill(65);
     const skipped = data.skippedTooOld || 0;
-    const subImport = (data.imported || 0) + ' matches en file' +
-      (skipped > 0 ? ' (' + skipped + ' trop anciens ignores)' : '') +
-      ' · analyse en cours';
+    const subImport = (data.imported || 0) + ' matches queued' +
+      (skipped > 0 ? ' (' + skipped + ' too old, skipped)' : '') +
+      ' · analysis in progress';
     setOvSub(subImport);
 
     await loadMatches();

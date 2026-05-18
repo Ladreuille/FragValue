@@ -396,6 +396,16 @@ function renderMatches(matches) {
 function friendlyReason(msg) {
   const m = (msg || '').toLowerCase();
   if (!m) return { title: 'Erreur parser', sub: 'Cause inconnue · relancez le match' };
+  // FACEIT Downloads API errors (server-side via api/_lib/faceit-downloads.js)
+  if (m.includes('faceit_no_scope') || m.includes('faceit_no_downloads_token')) {
+    return { title: 'FACEIT Downloads API en attente', sub: 'Validation FACEIT en cours (~30j). Utilise l\'upload .dem manuel en attendant.' };
+  }
+  if (m.includes('faceit_demo_not_found')) {
+    return { title: 'Demo introuvable', sub: 'La demo n\'est pas (ou plus) dans le CDN FACEIT' };
+  }
+  if (m.includes('faceit_unauthorized')) {
+    return { title: 'Cle FACEIT invalide', sub: 'La cle API n\'est plus reconnue · contacte le support' };
+  }
   // Tags emitted by the extension resolver (background.js friendlyResolveError)
   if (m.startsWith('demo_expired:')) {
     return { title: 'Demo expirée', sub: 'FACEIT purge les demos après ~30 jours' };
@@ -619,6 +629,20 @@ async function importHistory() {
     }
 
     const data = await r.json();
+
+    // ── Circuit-breaker FACEIT scope manquant ────────────────────────────
+    // Si la cle FACEIT n'a pas le scope downloads_api, l'API renvoie un
+    // top-level scopeError. On affiche un message clair et on n'avance pas
+    // les etapes (rien n'a ete queue).
+    if (data.scopeError && data.scopeError.code === 'no_scope') {
+      document.getElementById('ovTitle').textContent = 'FACEIT scope en attente';
+      setOvSub(data.scopeError.message || 'Le scope downloads_api n\'est pas encore actif.');
+      setOvFill(100);
+      document.getElementById('ovClose').style.display = 'flex';
+      if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Importer mes 5 derniers matchs'; }
+      return;
+    }
+
     // Étapes 0-2 done
     markStepsDoneUntil(2);
     setOvStep(3, 'active');

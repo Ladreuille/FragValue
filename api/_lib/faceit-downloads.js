@@ -3,8 +3,16 @@
 // du fichier .dem.zst chez demos.faceit.com) en URL signee telechargeable
 // avec une duree de vie courte (~5 min).
 //
-// Auth : Bearer FACEIT_API_KEY (Server-side API Key avec scope downloads_api).
-// Endpoint : POST https://open.faceit.com/download/v2/demos/download
+// AUTH (deux tokens DISTINCTS, NE PAS confondre - cf docs FACEIT mai 2026) :
+//   - FACEIT_API_KEY : token Data API (lookup joueurs, match history). Gratuit,
+//     dispo des l'app creee dans App Studio. Utilise pour /data/v4/*.
+//   - FACEIT_DOWNLOADS_TOKEN : token EXCLUSIF Downloads API, obtenu via
+//     application form https://fce.gg/downloads-api-application (review ~30j
+//     par l'equipe partnerships@faceit.com). Sans ce token specifique,
+//     /download/v2/* renvoie systematiquement 403 err_f0 "no valid scope".
+//     Le token est livre par email apres validation.
+//
+// Endpoint Downloads : POST https://open.faceit.com/download/v2/demos/download
 // Body : { "resource_url": "https://demos.faceit.com/cs2/...dem.zst" }
 // Response : { "payload": { "download_url": "https://..." } }
 //
@@ -30,12 +38,36 @@ class FaceitDownloadsError extends Error {
   }
 }
 
-function getApiKey() {
+// Token Data API (lookup joueurs, match history, profile). Required pour
+// tous les appels /data/v4/* (gratuit, auto-disponible apres creation app).
+function getDataApiKey() {
   const key = process.env.FACEIT_API_KEY;
   if (!key) {
     throw new FaceitDownloadsError('FACEIT_API_KEY not configured', { status: 503 });
   }
   return key;
+}
+
+// Token Downloads API (signed URL pour .dem). DIFFERENT du Data API key,
+// gated par application form 30j. Fallback intentionnel sur FACEIT_API_KEY
+// le temps que le token Downloads soit valide -> permet de tester en local
+// avec une cle dev qui a les deux scopes, et fail clairement en prod si la
+// var n'est pas set (au lieu de silently faillir avec no_scope).
+function getDownloadsToken() {
+  const token = process.env.FACEIT_DOWNLOADS_TOKEN;
+  if (!token) {
+    // On accepte FACEIT_API_KEY comme fallback (cas dev / cle multi-scope).
+    // Si elle ne marche pas non plus, le 403 err_f0 sera intercept ci-dessous.
+    const fallback = process.env.FACEIT_API_KEY;
+    if (!fallback) {
+      throw new FaceitDownloadsError(
+        'FACEIT_DOWNLOADS_TOKEN not configured (application form required: https://fce.gg/downloads-api-application)',
+        { status: 503, code: 'no_downloads_token' }
+      );
+    }
+    return fallback;
+  }
+  return token;
 }
 
 // Recupere les details d'un match pour extraire son demo_url.
@@ -45,7 +77,8 @@ function getApiKey() {
 // retourne : { demo_urls: string[], status: string, finished_at: number }
 async function getMatchDemoUrls(matchId) {
   if (!matchId) throw new FaceitDownloadsError('matchId required');
-  const apiKey = getApiKey();
+  // Data API : utilise FACEIT_API_KEY (token Data API, gratuit).
+  const apiKey = getDataApiKey();
 
   const url = `${FACEIT_DATA_BASE}/matches/${encodeURIComponent(matchId)}`;
   const res = await fetch(url, {
@@ -78,12 +111,14 @@ async function getMatchDemoUrls(matchId) {
 // retourne : string (URL signee, valide ~5 min)
 async function requestSignedDownloadUrl(resourceUrl) {
   if (!resourceUrl) throw new FaceitDownloadsError('resourceUrl required');
-  const apiKey = getApiKey();
+  // Downloads API : utilise FACEIT_DOWNLOADS_TOKEN (token EXCLUSIF, gated par
+  // application form 30j). Cf. commentaire en tete de fichier.
+  const downloadsToken = getDownloadsToken();
 
   const res = await fetch(`${FACEIT_DOWNLOADS_BASE}/demos/download`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${downloadsToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ resource_url: resourceUrl }),

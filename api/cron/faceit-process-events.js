@@ -57,6 +57,13 @@ module.exports = async function handler(req, res) {
   const supabase = sb();
   const startedAt = Date.now();
   const stats = { fetched: 0, processed: 0, skipped: 0, failed: 0, errors: [] };
+  // Circuit-breaker no_scope : si la cle FACEIT n'a pas le scope downloads_api,
+  // tous les events vont echouer pareil. Au 1er detect, on flip le flag et
+  // on arrete d'incrementer les retry_count (markProcessed avec error msg)
+  // pour eviter de griller les 5 retries de chaque event. Le scope sera
+  // reactif manuellement quand FACEIT validera ; on relancera le cron a la main
+  // pour rattraper les events stockes.
+  let scopeMissing = false;
 
   try {
     // 1. Pull les events non-processed lies a une demo prete.
@@ -81,6 +88,13 @@ module.exports = async function handler(req, res) {
 
     // 2. Process chaque event (sequentiel pour ne pas saturer le parser Railway).
     for (const ev of events) {
+      // Circuit-breaker no_scope : on a deja detecte que la cle FACEIT
+      // n'a pas le scope. On skip tous les events suivants sans toucher
+      // retry_count (reste a 0) pour reprocess une fois le scope OK.
+      if (scopeMissing) {
+        stats.skipped++;
+        continue;
+      }
       const matchId = ev.match_id || ev.payload?.payload?.match_id || ev.payload?.match_id;
       if (!matchId) {
         stats.skipped++;
@@ -195,6 +209,32 @@ module.exports = async function handler(req, res) {
           : err.message;
         stats.errors.push({ event_id: ev.event_id, match_id: matchId, error: errMsg });
         console.error(`[faceit-process-events] event ${ev.event_id} failed:`, errMsg);
+
+        // Circuit-breaker : detect no_scope OU no_downloads_token -> flip flag,
+        // alerte ops, n incremente PAS retry_count (sinon on cramerait les 5
+        // retries de chaque event). Les events restent processable une fois
+        // le token Downloads API valide.
+        if (err instanceof FaceitDownloadsError && (err.code === 'no_scope' || err.code === 'no_downloads_token')) {
+          scopeMissing = true;
+          const reason = err.code === 'no_downloads_token'
+            ? 'FACEIT_DOWNLOADS_TOKEN env var manquante'
+            : 'FACEIT_DOWNLOADS_TOKEN refuse par scope check (403 err_f0)';
+          console.error(`[faceit-process-events] ${reason} - aborting batch`);
+          try {
+            const { sendAlert } = require('../_lib/alert.js');
+            await sendAlert({
+              severity: 'high',
+              title: 'FACEIT Downloads API non disponible',
+              details: {
+                code: err.code,
+                message: reason,
+                fix: 'Appliquer a https://fce.gg/downloads-api-application (~30j review), puis set FACEIT_DOWNLOADS_TOKEN en Vercel env',
+              },
+              source: 'cron/faceit-process-events',
+            });
+          } catch (_) {}
+          continue;
+        }
 
         // Increment retry_count et ne pas marquer processed_at (will retry next run).
         // Si retry_count >= 5, le filtre du SELECT exclura cet event aux prochains runs.

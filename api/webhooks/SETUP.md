@@ -1,7 +1,24 @@
 # FACEIT Webhooks · Setup checklist
 
-Ce fichier documente comment activer le webhook FACEIT cote FragValue
-maintenant que les credentials Downloads API sont disponibles (mai 2026).
+Ce fichier documente comment activer le webhook FACEIT cote FragValue.
+
+## Pre-requis : Downloads API access (gate-keeper)
+
+⚠️ **Le webhook FACEIT n'est utile que si tu as ACCES au Downloads API.**
+C'est une approbation gated et separee :
+
+1. **Application form** : https://fce.gg/downloads-api-application
+2. **Review** : ~30 jours par l'equipe `partnerships@faceit.com`
+3. **Resultat** : un token EXCLUSIF (different de ton API Key Data API) livre
+   par email. C'est CE token qui va dans la var `FACEIT_DOWNLOADS_TOKEN`.
+
+Confirmation FACEIT staff (channel Discord developers, mai 2026, "shadi") :
+> "You need to submit a request for the demo api key. They send the
+>  documentation in the email."
+
+Sans ce token, `/api/cron/faceit-process-events.js` declenche un circuit-breaker
+(alerte ops via `sendAlert`) qui logge `[code:no_downloads_token]` et n'incremente
+PAS les retry_count -> les events restent reprocessables une fois le token valide.
 
 ## URL publique du webhook
 
@@ -22,7 +39,8 @@ Preview) :
 
 | Var                          | Description                                                              |
 |------------------------------|--------------------------------------------------------------------------|
-| `FACEIT_API_KEY`             | Server-side API Key (Data API + Downloads API). Source de verite.        |
+| `FACEIT_API_KEY`             | Token Data API (gratuit, dispo des creation app). Pour /data/v4/*.       |
+| `FACEIT_DOWNLOADS_TOKEN`     | **Token Downloads API EXCLUSIF** (gated, ~30j via fce.gg). Pour /download/v2/*. Si absent, le code fallback sur FACEIT_API_KEY pour les tests dev. **REQUIS en prod.** |
 | `FACEIT_WEBHOOK_SECRET`      | Valeur du header static que FACEIT enverra a chaque webhook (mode auth defaut FACEIT). Generer avec `openssl rand -hex 32`. |
 | `FACEIT_WEBHOOK_AUTH_HEADER` | (Optionnel, default `X-FACEIT-Token`) Nom du header d'auth. Doit matcher exactement ce qui est configure dans App Studio. |
 
@@ -119,10 +137,19 @@ RLS : deny-all clients. Lecture/ecriture via service_role uniquement.
 
 ### `403 err_f0 "no valid scope provided"` sur `/download/v2/demos/download`
 
-Le scope `downloads_api` n'est pas active sur ta `FACEIT_API_KEY`. Cas
-typique : tu as regenere la key apres l'octroi initial du scope. Solution :
-demander a Adam Harb (ad.harb@ext.efg.gg) de re-appliquer le scope a la
-nouvelle key.
+Cause typique : tu envoies ta `FACEIT_API_KEY` (token Data API) au lieu
+du token Downloads API. Ce sont DEUX tokens differents (cf. section
+"Pre-requis : Downloads API access" en haut). Solution :
+
+1. Verifier ton accord Downloads API via fce.gg/downloads-api-application
+2. Recuperer le token Downloads dans l'email FACEIT recu apres validation
+3. Le mettre dans `FACEIT_DOWNLOADS_TOKEN` cote Vercel (Production +
+   Preview), redeploy
+4. Test : `curl -X POST https://open.faceit.com/download/v2/demos/download
+   -H "Authorization: Bearer $FACEIT_DOWNLOADS_TOKEN" -H "Content-Type: application/json"
+   -d '{"resource_url":"https://demos.faceit.com/cs2/test"}'`
+   - 404 (pas 403) -> token valide, URL test bidon : OK
+   - 403 err_f0 -> token toujours invalide, contacter `partnerships@faceit.com`
 
 ### `401 unauthorized` sur les webhooks entrants
 

@@ -133,7 +133,13 @@ export default async function handler(req, res) {
     // reste utilisable comme fallback pour les matchs > 30j si l user en
     // dispose encore localement).
     const imported = [];
+    // Flag de circuit-breaker : si on detecte un no_scope sur le 1er match,
+    // on abort immediatement le reste pour ne pas polluer la liste avec 5
+    // rows 'failed' identiques. Le user voit un message clair retourne en
+    // top-level (data.scopeError) au lieu de 5 boutons "Reessayer" inutiles.
+    let scopeMissing = false;
     for (const m of eligibleItems) {
+      if (scopeMissing) break;
       const matchId = m.match_id;
       if (!matchId) continue;
 
@@ -161,7 +167,9 @@ export default async function handler(req, res) {
 
       // Resoudre le resource_url + signed URL via Downloads API.
       // On garde le try/catch par match pour ne pas bloquer l'import des
-      // autres matchs si un seul echoue (demo pas encore prete, no_scope, etc.).
+      // autres matchs si un seul echoue (demo pas encore prete).
+      // EXCEPTION : no_scope. Si la cle FACEIT n'a pas downloads_api scope,
+      // tous les matchs vont echouer pareil -> circuit-breaker.
       let signedUrl = null;
       let resolvedMap = null;
       try {
@@ -176,7 +184,18 @@ export default async function handler(req, res) {
       } catch (e) {
         const code = e instanceof FaceitDownloadsError ? e.code : null;
         console.warn(`[import-history] resolve failed for ${matchId}:`, e.message);
-        // Insert quand meme en 'failed' pour que l user voie pourquoi.
+        if (code === 'no_scope' || code === 'no_downloads_token') {
+          // Circuit-breaker : abort sans creer de row 'failed'. Retourne
+          // une erreur top-level qui sera affichee comme une banner.
+          // no_scope         : la cle FACEIT a ete refusee par le scope check
+          // no_downloads_token : FACEIT_DOWNLOADS_TOKEN env var absente
+          // Les deux cas signifient la meme chose pour l user : il faut
+          // attendre la validation du Downloads API (~30j via fce.gg).
+          scopeMissing = true;
+          imported.push({ matchId, status: 'scope_pending', code });
+          break;
+        }
+        // Insert en 'failed' pour les autres erreurs (demo expiree, 401, etc.)
         await supabase.from('matches').upsert({
           id: matchId,
           faceit_match_id: matchId,
@@ -235,6 +254,16 @@ export default async function handler(req, res) {
       maxAgeDays: AUTO_IMPORT_MAX_AGE_DAYS,
       // v0.3 : tout server-side, plus besoin de l extension pour < 30j.
       extensionRequired: false,
+      // Flag remonte si la cle FACEIT n a pas le scope downloads_api active
+      // OU si FACEIT_DOWNLOADS_TOKEN n est pas configure cote env. Pour
+      // l'user l'effet est le meme (impossible de telecharger la demo),
+      // on affiche un message clair plutot que 5 rows 'failed'.
+      scopeError: scopeMissing
+        ? {
+            code: 'no_scope',
+            message: 'FACEIT Downloads API en attente de validation (formulaire fce.gg/downloads-api-application, ~30j). Utilise l\'upload .dem manuel en attendant.',
+          }
+        : null,
     });
   } catch (err) {
     console.error('import-history error:', err);
