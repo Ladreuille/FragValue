@@ -4,6 +4,66 @@ Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/frag
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
+## 2026-05-18 · v6.4.0 — Endpoint `/process-pro-demo` (Option B pipeline MVP)
+
+**Contexte** : pipeline pro demos (HLTV → Supabase Storage → parser → `pro_demo_events`)
+attendait depuis avril. Spec complete dans `docs/option-b-parser-spec.md`. v6.4.0 ship la
+**Phase 1 (events core)**, Phase 2 (position snapshots + player_blinded) est TODO.
+
+### Endpoint
+
+```
+POST /process-pro-demo
+Authorization: Bearer ${FACEIT_WEBHOOK_SECRET}
+{
+  "proMatchMapId": "uuid",         // FK vers pro_match_maps.id
+  "demoUrl": "https://...",         // URL signee Supabase Storage (.dem | .dem.gz | .dem.bz2)
+  "tickRate": 64,                   // 64 pour pro, 128 pour FACEIT
+  "callbackUrl": "https://..."      // optionnel, notif fin
+}
+-> 202 { ok: true, proMatchMapId, queued: true }
+```
+
+### Events emit en Phase 1
+
+- `round_start`, `freeze_end`, `round_end` (avec winner + reason)
+- `kill` (avec pos killer/victim, weapon, headshot, wallbang, smoke, noscope, blind)
+- `bomb_planted`, `bomb_defused`, `bomb_exploded` (avec site A/B)
+- `grenade_thrown` + `grenade_detonated` (avec trajectory_points decimes a ~32 Hz, cap 64 pts)
+
+### Pipeline interne
+
+1. Update `pro_demos.status = 'downloading'`
+2. Download .dem (handle .gz via zlib, .bz2 via `unbzip2-stream` si installe, .zst -> erreur Phase 2)
+3. Update `pro_demos.status = 'parsing'` + bytes_size + parse_started_at
+4. `extractProDemoEvents()` : parseEvent pour rounds/kills/bombs, parseGrenades pour trajectoires
+5. Insert par chunks de 500 dans `pro_demo_events`
+6. Update `pro_demos.status = 'parsed'` + event_count + parse_completed_at
+7. Callback URL POSTed avec `{ proMatchMapId, status, eventCount }` (best-effort, 10s timeout)
+
+### Erreurs
+
+- Toute exception -> `pro_demos.status = 'failed'` + error_message (500 chars max)
+- `retry_count` non-incremente (decision retry confiee a l'operator)
+
+### TODO Phase 2
+
+- `position_snapshot` : extract via `parseTicks` aux ticks freeze_end+5s, +10s, +20s
+  pour chaque joueur vivant (max 1500 snapshots/demo)
+- `player_blinded` : event `player_blind` + calcul duration_seconds
+- `utility_damage` : event `player_hurt` filtered by grenade weapon
+- view angles dans `position_snapshot.metadata` (utile pour jump-throw detection)
+- Callout mapping pos -> nom callout (a calibrer par map)
+- Support .dem.zst (package zstd-napi a ajouter)
+
+### Deploy
+
+```bash
+cd /Users/quentin/Documents/Fragvalue/GitHub/fragvalue-demo-parser
+railway up
+# verifier : curl https://fragvalue-demo-parser-production.up.railway.app/ -> { ..., version: '6.4.0', features: [...] }
+```
+
 ## 2026-05-14 · Perf : parseTicks wantedTicks + TICK_SAMPLE adaptive (~32x faster)
 
 **Probleme** : user a rapporte que sa demo 450 MB prenait > 10 min a parser. Le
