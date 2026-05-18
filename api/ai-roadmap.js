@@ -210,8 +210,15 @@ async function fetchFaceitStats(nickname, apiKey) {
     totalDeaths: sum(it => it.stats?.['Deaths']),
     totalAssists: sum(it => it.stats?.['Assists']),
     totalRounds: sum(it => it.stats?.['Rounds']),
-    firstKills:  sum(it => it.stats?.['Entry Wins']),  // FACEIT entry frags
-    firstDeaths: sum(it => it.stats?.['Entry Losses']),
+    firstKills:  sum(it => parseInt(it.stats?.['Entry Wins']) || 0),  // FACEIT CS2 entry frags
+    // FACEIT CS2 n'expose plus 'Entry Losses' (legacy CSGO). On derive depuis
+    // Entry Count (total entries tente) - Entry Wins (entries gagnees).
+    // Cf. api/scout.js qui fait deja la migration v2 (commentaire L20).
+    firstDeaths: sum(it => {
+      const cnt  = parseInt(it.stats?.['Entry Count']) || 0;
+      const wins = parseInt(it.stats?.['Entry Wins'])  || 0;
+      return Math.max(0, cnt - wins);
+    }),
     lifetime: {
       matches: parseInt(lifetime.lifetime?.['Matches']) || null,
       winRate: parseFloat(lifetime.lifetime?.['Win Rate %']) || null,
