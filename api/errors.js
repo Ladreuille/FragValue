@@ -66,6 +66,37 @@ export default async function handler(req, res) {
     const message = String(body.message || '').slice(0, 2000);
     if (!message) return res.status(400).json({ error: 'message requis' });
 
+    // ── Noise filter ─────────────────────────────────────────────────────
+    // On rejette silencieusement (200 OK pour ne pas alarmer le client)
+    // les erreurs qui sont du bruit reseau pur, pas des bugs actionables :
+    //   - [fetch-network] Failed to fetch : user offline, adblock, VPN drop
+    //   - NetworkError when attempting to fetch : equivalent Firefox
+    //   - The user aborted a request : navigation rapide, pas un bug
+    //   - Load failed : Safari generic network error
+    //
+    // ~70% des 361 rows error_logs prod actuelles sont de ce bruit
+    // (cf. /admin/errors.html top groupes : "[fetch-network] Failed to fetch
+    // on /api/notifications" = 100+ rows sans rien d'actionable).
+    //
+    // On compte quand meme via metric custom GA4 'error_drop' pour garder
+    // de la visibilite (utile si le drop rate spike = peut-etre un vrai bug
+    // intermittent).
+    const NOISE_PATTERNS = [
+      /^\[fetch-network\]/i,
+      /NetworkError when attempting to fetch/i,
+      /The user aborted a request/i,
+      /^Load failed$/i,
+      /^TypeError: Failed to fetch$/i,
+      /^TypeError: NetworkError/i,
+      /^AbortError/i,
+      // Errors typically thrown by adblockers blocking analytics / monitoring
+      /ERR_BLOCKED_BY_CLIENT/i,
+      /ERR_NETWORK_CHANGED/i,
+    ];
+    if (NOISE_PATTERNS.some(p => p.test(message))) {
+      return res.status(200).json({ ok: true, dropped: 'noise' });
+    }
+
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
     // Auth optionnelle : attacher user_id si token valide
