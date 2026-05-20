@@ -98,25 +98,9 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     @keyframes spin{to{transform:rotate(360deg)}}
 
     /* ── Abonnement ─────────────────────────────────────────── */
-    /* Referral card (mai 2026) : code + share + stats filleuls */
-    .referral-card{background:linear-gradient(135deg,rgba(184,255,87,.04),rgba(184,255,87,.01));border:1px solid rgba(184,255,87,.2);border-radius:12px;padding:22px;margin-bottom:16px;position:relative;overflow:hidden}
-    .ref-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:18px}
-    .ref-head-text h3{font-family:var(--display);font-size:18px;letter-spacing:.04em;margin-bottom:4px}
-    .ref-head-text p{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.6;max-width:480px}
-    .ref-code-box{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:12px}
-    .ref-code-val{color:var(--accent);font-weight:700;letter-spacing:.1em;font-size:14px}
-    .ref-copy-btn{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:5px 10px;border-radius:6px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:all .15s}
-    .ref-copy-btn:hover{border-color:var(--accent);color:var(--accent)}
-    .ref-copy-btn.copied{background:var(--accent);color:#000;border-color:var(--accent)}
-    .ref-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
-    .ref-stat{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;padding:12px 14px;text-align:center}
-    .ref-stat-val{font-family:var(--display);font-size:24px;color:var(--text);line-height:1;margin-bottom:3px}
-    .ref-stat-val.accent{color:var(--accent)}
-    .ref-stat-label{font-family:var(--mono);font-size:9.5px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase}
-    .ref-share-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-    .ref-share-btn{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border2);color:var(--text2);padding:8px 14px;border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;cursor:pointer;transition:all .15s}
-    .ref-share-btn:hover{border-color:var(--accent);color:var(--accent)}
-    .ref-note{font-family:var(--mono);font-size:10.5px;color:var(--text3);margin-top:12px;line-height:1.65}
+    /* (CSS .referral-card et .ref-* retire avec la section dupliquee.
+       La section parrainage est rendue dans tab Paramètres avec
+       .settings-card + tier ladder, gere par loadReferral().) */
 
     .sub-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
     .sub-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 0% 50%,rgba(184,255,87,.06),transparent);pointer-events:none}
@@ -306,11 +290,9 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <div class="sub-card-loading"><div class="load-spinner"></div>Chargement de ton abonnement...</div>
       </div>
 
-      <!-- ════════ PARRAINAGE (mai 2026) : 1 mois Pro gratuit par filleul payant ════════ -->
-      <div class="sec-label">Mon parrainage</div>
-      <div class="referral-card" id="referralCard">
-        <div class="sub-card-loading" style="padding:18px"><div class="load-spinner"></div>Chargement...</div>
-      </div>
+      <!-- Section "Mon parrainage" deplacee dans le tab Paramètres (version
+           plus complete avec tier ladder 15/50/100/500). Eviter la duplication
+           d'ID et la confusion UX (2 panels qui parlent du meme sujet). -->
 
       <div class="sec-label">Comparaison des plans</div>
       <div class="plan-compare">
@@ -349,7 +331,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       </div>
 
       <!-- ═════ MES CREDITS COACH IA (Phase 2 packs Stripe one-shot) ═════ -->
-      <div class="sec-label" style="margin-top:32px">Mes crédits Coach IA</div>
+      <div class="sec-label" id="coachCreditsLabel" style="margin-top:32px;display:none">Mes crédits Coach IA</div>
       <div id="coachCreditsCard" class="coach-credits-card" style="display:none">
         <div class="cc-head">
           <div class="cc-balance-wrap">
@@ -376,13 +358,12 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
             <span class="cc-info-value" id="ccPlan">-</span>
           </div>
         </div>
-        <div class="cc-note">1 crédit = 1 message Coach IA au-delà de ta limite quotidienne (Pro 5/jour, Elite 30/jour). Utilisé seulement quand tu dépasses ton quota.</div>
+        <div class="cc-note">1 crédit = 1 message Coach IA au-delà de ta limite quotidienne (Pro 20/jour, Elite 50/jour). Utilisé seulement quand tu dépasses ton quota.</div>
       </div>
-      <div id="coachCreditsLocked" class="coach-credits-locked" style="display:none">
-        <div class="cc-locked-h">Crédits Coach IA</div>
-        <div class="cc-locked-sub">Disponibles après souscription Pro ou Elite. Achète des packs supplémentaires pour discuter au-delà de ta limite quotidienne.</div>
-        <a href="pricing.html" class="cc-locked-cta">Voir les plans →</a>
-      </div>
+      <!-- La card "locked credits" en doublon avec "Comparaison des plans"
+           juste au-dessus a ete retiree. Les users Free voient deja le CTA
+           upgrade dans la sub-card et dans plan-compare. -->
+      <div id="coachCreditsLocked" style="display:none"></div>
 
       <!-- ═════ DISCORD LINK (Phase 2 community + role auto Pro/Elite) ═════ -->
       <div class="sec-label" style="margin-top:32px">Discord</div>
@@ -698,8 +679,9 @@ async function init() {
   refreshFeedbackBadge();
   // Banner d'activation : si l'user n'a jamais analyse de demo, on l'y invite.
   renderFirstDemoBanner(session.user.id);
-  // Referral stats (mai 2026)
-  loadReferralStats();
+  // Note : la section "Mon parrainage" est rendue dans le tab Paramètres
+  // par loadReferral() (declenche par setTab('settings')) - pas besoin de
+  // pre-fetch ici car le tab par defaut est Abonnement.
   // Status des donnees scout pour matching pro twin
   renderProTwinDataStatus(session.user.id);
   if (window.location.search.includes('checkout=success')) {
@@ -741,101 +723,9 @@ async function init() {
   } catch {}
 }
 
-// ════════ Referral system (mai 2026) ════════
-// Affiche le code parrainage de l'user + stats filleuls + share buttons.
-// Recompense : 1 mois Pro gratuit par filleul payant (applique manuellement
-// pour le MVP, automation Stripe coupon en phase 2).
-async function loadReferralStats() {
-  const card = document.getElementById('referralCard');
-  if (!card) return;
-  try {
-    const r = await fetch('/api/referral-stats', {
-      headers: { Authorization: 'Bearer ' + _session.access_token },
-    });
-    if (!r.ok) {
-      card.innerHTML = '<div style="font-family:var(--mono);font-size:11.5px;color:var(--text2);padding:8px 0">Impossible de charger ton code parrainage. <a href="mailto:support@fragvalue.com" style="color:var(--accent)">Contacter le support</a> si ca persiste.</div>';
-      return;
-    }
-    const d = await r.json();
-    if (!d.code) {
-      card.innerHTML = '<div style="font-family:var(--mono);font-size:11.5px;color:var(--text2);padding:8px 0">Code parrainage en cours de generation. Reviens dans quelques minutes.</div>';
-      return;
-    }
-    const shareText = encodeURIComponent("J'utilise FragValue pour analyser mes matchs CS2 avec un Coach IA. Auto-sync FACEIT + diagnostic sur 11 axes. Mon code parrainage pour 1 mois Pro offert :");
-    const shareUrl = encodeURIComponent(d.share_url);
-    card.innerHTML = `
-      <div class="ref-head">
-        <div class="ref-head-text">
-          <h3>Parraine un pote, gagne 1 mois Pro</h3>
-          <p>Chaque filleul qui passe Pro = 1 mois Pro gratuit pour toi. Partage ton code, on track tout automatiquement.</p>
-        </div>
-        <div class="ref-code-box">
-          <span style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">CODE</span>
-          <span class="ref-code-val">${escapeHtml(d.code)}</span>
-          <button class="ref-copy-btn" type="button" onclick="copyReferralCode('${escapeHtml(d.code)}',this)">Copier</button>
-        </div>
-      </div>
-      <div class="ref-stats">
-        <div class="ref-stat">
-          <div class="ref-stat-val">${d.filleuls.total}</div>
-          <div class="ref-stat-label">Filleuls total</div>
-        </div>
-        <div class="ref-stat">
-          <div class="ref-stat-val">${d.filleuls.recent_30d}</div>
-          <div class="ref-stat-label">30 derniers jours</div>
-        </div>
-        <div class="ref-stat">
-          <div class="ref-stat-val accent">${d.filleuls.paying}</div>
-          <div class="ref-stat-label">Filleuls Pro/Elite</div>
-        </div>
-        <div class="ref-stat">
-          <div class="ref-stat-val accent">${d.rewards.months_pending}</div>
-          <div class="ref-stat-label">Mois a crediter</div>
-        </div>
-      </div>
-      <div class="ref-share-row">
-        <button type="button" class="ref-share-btn" onclick="copyReferralLink('${d.share_url}',this)">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M16 6l-4-4-4 4M12 2v13M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
-          Copier le lien
-        </button>
-        <a class="ref-share-btn" href="https://twitter.com/intent/tweet?text=${shareText}%20${shareUrl}" target="_blank" rel="noopener">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-          Tweeter
-        </a>
-        <a class="ref-share-btn" href="https://discord.com/channels/@me?text=${shareText}" target="_blank" rel="noopener">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-          Discord
-        </a>
-      </div>
-      <div class="ref-note">
-        <strong style="color:var(--text2)">Comment ca marche :</strong> ton filleul s'inscrit via <code style="background:rgba(255,255,255,.05);padding:1px 5px;border-radius:3px">fragvalue.com/?ref=${escapeHtml(d.code)}</code>, il passe Pro (ou Elite), tu gagnes 1 mois Pro gratuit credit sur ton prochain renouvellement. Si tu as deja une sub active, contacte le support pour l'appliquer manuellement (automation Stripe en cours).
-      </div>
-    `;
-  } catch (e) {
-    console.warn('[referral] failed:', e?.message);
-    card.innerHTML = '<div style="font-family:var(--mono);font-size:11.5px;color:var(--text2);padding:8px 0">Erreur de chargement. Refresh la page ou reviens dans quelques minutes.</div>';
-  }
-}
-
-function copyReferralCode(code, btn) {
-  navigator.clipboard.writeText(code).then(() => {
-    btn.textContent = 'Copie !';
-    btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = 'Copier'; btn.classList.remove('copied'); }, 1800);
-  }).catch(() => { alert('Copie manuelle : ' + code); });
-}
-
-function copyReferralLink(url, btn) {
-  navigator.clipboard.writeText(url).then(() => {
-    const old = btn.innerHTML;
-    btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg> Lien copie !';
-    setTimeout(() => { btn.innerHTML = old; }, 1800);
-  }).catch(() => { alert('Copie manuelle : ' + url); });
-}
-
-function escapeHtml(s) {
-  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+// Section "Mon parrainage" deplacee dans tab Paramètres :
+// loadReferral() (plus bas) gere la card avec tier ladder + grant banner +
+// stats filleuls. Plus de duplication avec /api/referral-stats.
 
 // Affiche un banner d'activation si l'user n'a jamais analyse de demo.
 // Visible quel que soit le tab actif, pour pousser le "aha moment" de la 1re
@@ -1220,9 +1110,9 @@ async function loadSubscription() {
         <div class="sub-usage">
           <div class="sub-usage-item">
             <div class="sub-usage-label">Analyses démos</div>
-            <div class="sub-usage-val">${usage.analyses_used || 0}<span style="color:var(--text3);font-size:14px"> / 3</span></div>
+            <div class="sub-usage-val">${usage.analyses_used || 0}<span style="color:var(--text3);font-size:14px"> / 5</span></div>
             <div class="sub-usage-sub">ce mois · reset dans ${usage.days_to_reset || 30}j</div>
-            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, ((usage.analyses_used || 0) / 3) * 100)}%"></div></div>
+            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, ((usage.analyses_used || 0) / 5) * 100)}%"></div></div>
           </div>
           <div class="sub-usage-item">
             <div class="sub-usage-label">Scouts joueurs</div>
@@ -1231,10 +1121,10 @@ async function loadSubscription() {
             <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, ((usage.scouts_today || 0) / 3) * 100)}%"></div></div>
           </div>
           <div class="sub-usage-item">
-            <div class="sub-usage-label">Diagnostic IA</div>
-            <div class="sub-usage-val">${usage.ai_used || 0}<span style="color:var(--text3);font-size:14px"> / 1</span></div>
+            <div class="sub-usage-label">Diagnostics IA</div>
+            <div class="sub-usage-val">${usage.ai_used || 0}<span style="color:var(--text3);font-size:14px"> / 4</span></div>
             <div class="sub-usage-sub">ce mois · Pro = illimité</div>
-            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, (usage.ai_used || 0) * 100)}%"></div></div>
+            <div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, ((usage.ai_used || 0) / 4) * 100)}%"></div></div>
           </div>
         </div>
       ` : ''}
@@ -1255,15 +1145,19 @@ async function loadSubscription() {
 let _coachCreditsCache = null;
 async function loadCoachCredits(plan) {
   const cardEl   = document.getElementById('coachCreditsCard');
-  const lockedEl = document.getElementById('coachCreditsLocked');
-  if (!cardEl || !lockedEl) return;
+  const labelEl  = document.getElementById('coachCreditsLabel');
+  if (!cardEl) return;
 
-  // Free / anon -> state locked, pas d'API call
-  if (plan !== 'pro' && plan !== 'elite') {
-    cardEl.style.display   = 'none';
-    lockedEl.style.display = 'block';
+  // Free / anon -> on cache toute la section (label + card). L'upsell
+  // est deja fait par "Comparaison des plans" et "Mon abonnement" plus haut.
+  // Plans payants (pro / elite / lifetime_pro) -> on affiche le solde.
+  const hasPaidPlan = plan === 'pro' || plan === 'elite' || plan === 'lifetime_pro';
+  if (!hasPaidPlan) {
+    cardEl.style.display = 'none';
+    if (labelEl) labelEl.style.display = 'none';
     return;
   }
+  if (labelEl) labelEl.style.display = 'flex';
 
   try {
     const { data: { session } } = await sb.auth.getSession();
@@ -1281,7 +1175,7 @@ async function loadCoachCredits(plan) {
     document.getElementById('ccTotalPurchased').textContent =
       data.total_purchased || 0;
     document.getElementById('ccPlan').textContent =
-      plan === 'elite' ? 'Elite (30 msg/jour inclus)' : 'Pro (20 msg/jour inclus)';
+      plan === 'elite' ? 'Elite (50 msg/jour inclus)' : 'Pro (20 msg/jour inclus)';
 
     // Date d'expiration
     const expEl = document.getElementById('ccExpiry');
@@ -1296,8 +1190,7 @@ async function loadCoachCredits(plan) {
       expEl.innerHTML = 'Pas encore de packs de crédits. <strong style="color:var(--text2)">50 messages = 4€</strong>, <strong style="color:var(--text2)">200 = 12€</strong>. Idéal si t\'as une question précise sur une démo.';
     }
 
-    cardEl.style.display   = 'block';
-    lockedEl.style.display = 'none';
+    cardEl.style.display = 'block';
   } catch (e) {
     console.warn('[coach-credits] load failed:', e.message);
     // Fallback : on affiche au moins la card avec valeurs par defaut
@@ -1439,21 +1332,24 @@ async function linkDiscord() {
 }
 
 async function unlinkDiscord() {
-  if (!confirm('Délier ton compte Discord ? Tu perdras l\'accès aux channels privés Pro/Elite.')) return;
+  if (!confirm('Délier ton compte Discord ? Tu perdras l\'accès aux channels privés Pro/Elite immédiatement.')) return;
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return;
-    // Soft-unlink : on supprime la row discord_links cote front via Supabase RLS
-    // (politique : un user peut DELETE sa propre row, voir migration SQL).
-    const { error } = await sb
-      .from('discord_links')
-      .delete()
-      .eq('user_id', session.user.id);
-    if (error) {
-      showBanner('Erreur lors du delink : ' + error.message, 'err');
+    // Passage par l'API : le serveur retire les roles Pro/Elite du guild
+    // Discord ET supprime la row discord_links. Avant : delete direct via RLS
+    // ne retirait pas les roles cote serveur Discord -> l'user gardait acces
+    // aux channels privies meme apres unlink.
+    const res = await fetch('/api/discord-unlink', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + session.access_token },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      showBanner('Erreur lors du delink : ' + (data.error || 'inconnue'), 'err');
       return;
     }
-    showBanner('Discord delié. Tes rôles seront retirés à la prochaine sync.', 'ok');
+    showBanner('Discord delié. Tes rôles serveur ont été retirés.', 'ok');
     loadDiscordStatus();
   } catch (e) {
     showBanner('Erreur reseau. Reessaie.', 'err');
