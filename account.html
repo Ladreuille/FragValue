@@ -251,6 +251,87 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       .team-seat-fv,.team-seat-status{display:none}
     }
 
+    /* A7 + A8 : Progression card (top axes IA + streak) */
+    .progress-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:20px 22px;margin-bottom:16px;
+    }
+    .progress-grid{
+      display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:flex-start;
+    }
+    @media(max-width:640px){.progress-grid{grid-template-columns:1fr;gap:18px}}
+    .streak-block{
+      background:linear-gradient(135deg,rgba(255,138,61,.08),rgba(245,200,66,.05));
+      border:1px solid rgba(255,138,61,.25);border-radius:10px;
+      padding:18px 22px;text-align:center;min-width:170px;
+    }
+    .streak-val{
+      font-family:var(--display);font-size:42px;line-height:1;color:#ff8a3d;
+      margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:6px;
+    }
+    .streak-val svg{flex-shrink:0}
+    .streak-label{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)}
+    .streak-record{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:8px}
+    .streak-next{
+      font-family:var(--mono);font-size:11px;color:var(--gold);
+      margin-top:6px;line-height:1.4;
+    }
+    .axes-block{flex:1;min-width:0}
+    .axes-h{
+      font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.04em;
+      text-transform:uppercase;margin-bottom:10px;
+    }
+    .axis-row{
+      display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;
+      padding:8px 0;border-bottom:1px solid var(--border);
+    }
+    .axis-row:last-child{border-bottom:none}
+    .axis-rank{
+      font-family:var(--display);font-size:14px;color:var(--text3);
+      background:var(--card);border-radius:50%;width:24px;height:24px;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .axis-rank.priority-1{background:rgba(255,68,68,.12);color:var(--danger)}
+    .axis-rank.priority-2{background:rgba(255,138,61,.12);color:#ff8a3d}
+    .axis-rank.priority-3{background:rgba(245,200,66,.12);color:var(--gold)}
+    .axis-name{font-family:var(--mono);font-size:12px;color:var(--text)}
+    .axis-name-sub{font-size:10px;color:var(--text3);margin-top:2px}
+    .axis-cta{
+      font-family:var(--mono);font-size:10px;color:var(--accent);
+      text-decoration:none;border-bottom:1px solid transparent;
+    }
+    .axis-cta:hover{border-color:var(--accent)}
+
+    /* A9 : Beta features card */
+    .beta-card{
+      background:linear-gradient(135deg,rgba(245,200,66,.04),rgba(184,255,87,.03));
+      border:1px solid rgba(245,200,66,.25);border-radius:12px;
+      padding:20px 22px;margin-bottom:16px;
+    }
+    .beta-intro{
+      font-family:var(--mono);font-size:11.5px;color:var(--text2);line-height:1.7;margin-bottom:14px;
+    }
+    .beta-features{display:flex;flex-direction:column;gap:10px}
+    .beta-feature{
+      display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+      padding:11px 14px;background:var(--card);border:1px solid var(--border);
+      border-radius:8px;
+    }
+    .beta-feature-icon{
+      width:30px;height:30px;border-radius:8px;
+      background:rgba(245,200,66,.12);color:var(--gold);
+      display:flex;align-items:center;justify-content:center;
+    }
+    .beta-feature-text{font-family:var(--mono);font-size:11.5px;color:var(--text2);line-height:1.5}
+    .beta-feature-text strong{display:block;color:var(--text);font-family:var(--display);font-size:13px;letter-spacing:.04em;margin-bottom:2px}
+    .beta-feature-status{
+      font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+      padding:3px 8px;border-radius:40px;
+    }
+    .beta-feature-status.alpha{background:rgba(255,68,68,.1);color:var(--danger);border:1px solid rgba(255,68,68,.25)}
+    .beta-feature-status.beta{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.25)}
+    .beta-feature-status.preview{background:rgba(184,255,87,.1);color:var(--accent);border:1px solid rgba(184,255,87,.25)}
+
     /* A1 : Invoices table */
     .invoices-card{
       background:var(--surface);border:1px solid var(--border);border-radius:12px;
@@ -496,6 +577,10 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <div class="sec-label" id="accountStatsLabel" style="margin-top:24px;display:none">Mes stats globales</div>
       <div id="accountStatsCard" style="display:none"></div>
 
+      <!-- A7 + A8 : Mes axes de progression (top 3 IA priorities) + Streak gamification -->
+      <div class="sec-label" id="progressLabel" style="margin-top:24px;display:none">Ma progression</div>
+      <div id="progressCard" style="display:none"></div>
+
       <!-- A1 : Liste des factures (visible si plan payant + au moins 1 facture) -->
       <div class="sec-label" id="invoicesLabel" style="margin-top:24px;display:none">Mes factures</div>
       <div id="invoicesCard" style="display:none"></div>
@@ -503,6 +588,10 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <!-- A4 : Mes equipiers (visible si plan Elite) -->
       <div class="sec-label" id="teamLabel" style="margin-top:24px;display:none">Mon équipe</div>
       <div id="teamCard" style="display:none"></div>
+
+      <!-- A9 : Beta features (visible Elite + Lifetime Pro) -->
+      <div class="sec-label" id="betaLabel" style="margin-top:24px;display:none">Beta features (acces anticipé)</div>
+      <div id="betaCard" style="display:none"></div>
 
       <!-- Section "Mon parrainage" deplacee dans le tab Paramètres (version
            plus complete avec tier ladder 15/50/100/500). Eviter la duplication
@@ -749,6 +838,33 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <div class="settings-row">
           <div class="settings-label">Email · annonces produit</div>
           <label class="toggle"><input type="checkbox" id="notifProduct"/><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+
+      <!-- A10 : Notifs granulaires - frequence + quiet hours.
+           Les valeurs sont persistees dans notification_prefs JSONB
+           (memes prefs que les toggles ci-dessus). -->
+      <div class="sec-label">Préférences de fréquence</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Fréquence des digests</div>
+          <select class="settings-select" id="notifFrequency">
+            <option value="instant">Instant (chaque event)</option>
+            <option value="daily">Daily digest (1 email/jour)</option>
+            <option value="weekly">Weekly digest (1 email/semaine)</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Heures de calme (no email)</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <input type="time" class="settings-input" id="notifQuietStart" style="width:110px" value="22:00">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">→</span>
+            <input type="time" class="settings-input" id="notifQuietEnd" style="width:110px" value="08:00">
+            <label class="toggle" style="margin-left:8px"><input type="checkbox" id="notifQuietEnabled"/><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+        <div class="settings-row" style="font-family:var(--mono);font-size:10.5px;color:var(--text3);line-height:1.6">
+          Les emails declenches pendant ta plage de calme sont differes au prochain creneau actif. Practical pour les joueurs en horaires decalies.
         </div>
       </div>
 
@@ -1525,6 +1641,12 @@ async function loadSubscription() {
     if (plan === 'elite' || plan === 'team') {
       loadTeamMembers(session.user.email);
     }
+    // A7 + A8 : progression (top axes IA + streak) - tous les plans
+    loadProgress();
+    // A9 : beta features (Elite + Lifetime Pro)
+    if (plan === 'elite' || plan === 'team' || isLifetime) {
+      renderBetaFeatures();
+    }
   } catch(e) {
     card.innerHTML = `<div style="color:var(--text2);font-size:12px">Impossible de charger ton abonnement. <a href="pricing.html" style="color:var(--accent)">Voir les plans</a>.</div>`;
   }
@@ -1653,6 +1775,146 @@ async function loadInvoices() {
     card.style.display = 'none';
     label.style.display = 'none';
   }
+}
+
+// ══ A7 + A8 : Ma progression (top 3 axes IA + streak gamification) ══════
+// Compose 2 affichages :
+//  - Streak block : nombre de jours consecutifs avec demo + record perso
+//  - Axes block : top 3 priorities du dernier diagnostic Coach IA
+// Le card est cache si l'user n'a ni demos ni diagnostic.
+async function loadProgress() {
+  const card  = document.getElementById('progressCard');
+  const label = document.getElementById('progressLabel');
+  if (!card || !label) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const r = await fetch('/api/account-progress', {
+      headers: { Authorization: 'Bearer ' + session.access_token },
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    // Self-hide si rien d'actionable : pas de streak ET pas de diagnostic
+    if ((d.streak_days || 0) === 0 && !d.has_diagnostic) {
+      card.style.display = 'none';
+      label.style.display = 'none';
+      return;
+    }
+
+    // Streak block
+    const streakHtml = `
+      <div class="streak-block">
+        <div class="streak-val">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="#ff8a3d"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
+          ${d.streak_days}
+        </div>
+        <div class="streak-label">jour${d.streak_days > 1 ? 's' : ''} d'affilee</div>
+        ${d.streak_record > d.streak_days ? `<div class="streak-record">Record : ${d.streak_record} jours</div>` : ''}
+        ${d.next_milestone ? `<div class="streak-next">Plus que ${d.next_milestone - d.streak_days}j pour badge ${d.next_milestone}j</div>` : '<div class="streak-next">Tous les milestones atteints</div>'}
+      </div>
+    `;
+
+    // Axes block : top 3 priorities du dernier diagnostic Coach IA
+    let axesHtml;
+    if (d.top_priorities && d.top_priorities.length > 0) {
+      const items = d.top_priorities.slice(0, 3).map((p, i) => {
+        // top_priorities format : peut etre une string "axis_name" ou un obj {axis, score}
+        const name = typeof p === 'string' ? p : (p.axis || p.name || 'axe');
+        const niceName = name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const score = typeof p === 'object' && p.score != null ? ` · score ${p.score}/100` : '';
+        return `<div class="axis-row">
+          <div class="axis-rank priority-${i+1}">${i+1}</div>
+          <div>
+            <div class="axis-name">${escapeHtml(niceName)}</div>
+            <div class="axis-name-sub">Priorite #${i+1}${score}</div>
+          </div>
+          <a href="dashboard.html#axes" class="axis-cta">Voir détail →</a>
+        </div>`;
+      }).join('');
+      axesHtml = `
+        <div class="axes-block">
+          <div class="axes-h">Tes 3 axes a travailler en priorité</div>
+          ${items}
+        </div>
+      `;
+    } else {
+      axesHtml = `
+        <div class="axes-block">
+          <div class="axes-h">Tes axes prioritaires</div>
+          <div style="padding:18px 0;font-family:var(--mono);font-size:11.5px;color:var(--text2);line-height:1.6">
+            Pas encore de diagnostic Coach IA. Analyse une demo et lance le diagnostic pour debloquer tes 3 axes prioritaires personnalises.<br>
+            <a href="demo.html" style="color:var(--accent);text-decoration:none;font-weight:700;display:inline-block;margin-top:8px">Analyser une demo →</a>
+          </div>
+        </div>
+      `;
+    }
+
+    card.className = 'progress-card';
+    card.innerHTML = `<div class="progress-grid">${streakHtml}${axesHtml}</div>`;
+    card.style.display = 'block';
+    label.style.display = 'flex';
+  } catch (e) {
+    console.warn('[progress] failed:', e.message);
+    card.style.display = 'none';
+    label.style.display = 'none';
+  }
+}
+
+// ══ A9 : Beta features card (Elite + Lifetime Pro only) ═════════════════
+// Static placeholder pour l'instant : list les 3-4 features en alpha/beta
+// auxquelles les Elite/Lifetime users ont acces anticipe. Avant le launch
+// public, on update cette liste manuellement (ou on fetch d'un endpoint
+// /api/beta-features une fois qu'on a un vrai roadmap server-driven).
+function renderBetaFeatures() {
+  const card  = document.getElementById('betaCard');
+  const label = document.getElementById('betaLabel');
+  if (!card || !label) return;
+
+  // Roadmap mai 2026 : 3 features en beta + 1 en alpha early.
+  // Edit cette liste quand on ship/retire des betas.
+  const features = [
+    {
+      title: 'Anti-strat patterns',
+      desc: 'Detection de patterns adverses sur N matchs (rotations, util setups, defaults).',
+      status: 'beta',
+    },
+    {
+      title: 'Pro twin matching v2',
+      desc: 'Match ton style sur 11 axes au lieu de 5 (sniper rate, opening, util damage, HS%...).',
+      status: 'beta',
+    },
+    {
+      title: 'Veto coach IA',
+      desc: 'Coach IA conversationnel pour le veto BO3/BO5 base sur ton map pool + adverse.',
+      status: 'preview',
+    },
+    {
+      title: 'CSV/JSON export raw analytics',
+      desc: 'Telecharge l\'analyse complete d\'une demo en raw data pour traitement personnalise.',
+      status: 'alpha',
+    },
+  ];
+
+  const featuresHtml = features.map(f => `
+    <div class="beta-feature">
+      <div class="beta-feature-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div class="beta-feature-text"><strong>${escapeHtml(f.title)}</strong>${escapeHtml(f.desc)}</div>
+      <span class="beta-feature-status ${f.status}">${f.status}</span>
+    </div>
+  `).join('');
+
+  card.className = 'beta-card';
+  card.innerHTML = `
+    <div class="beta-intro">
+      <strong style="color:var(--gold)">Acces anticipé</strong> aux features non encore deployees publiquement.
+      Ton feedback nous aide a iterer vite. Les bugs sont attendus - signale-les via le bouton vert en bas a droite.
+    </div>
+    <div class="beta-features">${featuresHtml}</div>
+  `;
+  card.style.display = 'block';
+  label.style.display = 'flex';
 }
 
 // ══ A4 : Mes equipiers Elite (5 places : admin + 4 invites) ══════════════
@@ -2488,6 +2750,11 @@ async function loadSettings() {
       document.getElementById('notifProTwin').checked = notifs.pro_twin_monthly !== false;
       document.getElementById('notifReferralTier').checked = notifs.referral_tier_reached !== false;
       document.getElementById('notifProduct').checked = notifs.product_news !== false;
+      // A10 : frequency + quiet hours
+      document.getElementById('notifFrequency').value = notifs.frequency || 'instant';
+      document.getElementById('notifQuietStart').value = notifs.quiet_hours_start || '22:00';
+      document.getElementById('notifQuietEnd').value = notifs.quiet_hours_end || '08:00';
+      document.getElementById('notifQuietEnabled').checked = !!notifs.quiet_hours_enabled;
       if (profile.locale) document.getElementById('settingsLang').value = profile.locale;
     }
     const extMarker = document.querySelector('[data-fv-ext-installed]');
@@ -2497,8 +2764,10 @@ async function loadSettings() {
     // si erreur on affiche "Non lié").
     refreshConnexionsCard(session.user.id, profile, !!extMarker);
 
-    ['notifMatches','notifWeekly','notifProTwin','notifReferralTier','notifProduct'].forEach(id => {
-      document.getElementById(id).addEventListener('change', saveNotifPrefs);
+    ['notifMatches','notifWeekly','notifProTwin','notifReferralTier','notifProduct',
+     'notifFrequency','notifQuietStart','notifQuietEnd','notifQuietEnabled'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('change', saveNotifPrefs);
     });
     document.getElementById('settingsLang').addEventListener('change', saveLocale);
 
@@ -2704,6 +2973,11 @@ async function saveNotifPrefs(ev) {
     pro_twin_monthly:      document.getElementById('notifProTwin').checked,
     referral_tier_reached: document.getElementById('notifReferralTier').checked,
     product_news:          document.getElementById('notifProduct').checked,
+    // A10 granular delivery prefs
+    frequency:             document.getElementById('notifFrequency').value || 'instant',
+    quiet_hours_enabled:   document.getElementById('notifQuietEnabled').checked,
+    quiet_hours_start:     document.getElementById('notifQuietStart').value || '22:00',
+    quiet_hours_end:       document.getElementById('notifQuietEnd').value || '08:00',
   };
   const { error } = await sb.from('profiles').update({ notification_prefs: prefs }).eq('id', session.user.id);
   flashSaveFeedback(ev?.target, error);
