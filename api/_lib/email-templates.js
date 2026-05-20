@@ -59,12 +59,17 @@ function welcome({ nickname }) {
       <tr><td style="height:8px"></td></tr>
       <tr><td style="padding:14px 16px;background:#080909;border:1px solid #1c1e1e;border-radius:10px;border-left:3px solid #b8ff57">
         <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">2. ANALYSE TA 1RE DEMO</div>
-        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">FV Rating, heatmaps, diagnostic Coach IA en moins de 2 minutes. Drag-drop .dem ou colle une URL match FACEIT. <strong style="color:#e8eaea">3 analyses/mois</strong> en Free.</div>
+        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">FV Rating, heatmaps, diagnostic Coach IA en moins de 2 minutes. Drag-drop .dem ou colle une URL match FACEIT. <strong style="color:#e8eaea">5 analyses/mois</strong> en Free.</div>
       </td></tr>
       <tr><td style="height:8px"></td></tr>
       <tr><td style="padding:14px 16px;background:#080909;border:1px solid #1c1e1e;border-radius:10px;border-left:3px solid #b8ff57">
-        <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">3. PRO POUR PROGRESSER PLUS VITE</div>
-        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">Auto-sync FACEIT + 2D Replay + Chat Coach IA 5 msg/jour + KPIs avances. <strong style="color:#e8eaea">9 EUR/mois</strong> (0,30 EUR/jour, moins d'un cafe). Sans engagement, 14j satisfait ou rembourse.</div>
+        <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">3. ESSAYER PRO GRATUITEMENT 7 JOURS</div>
+        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">Auto-sync FACEIT + 2D Replay + Coach IA 20 msg/jour + KPIs avances. <strong style="color:#b8ff57">7 jours gratuits</strong> puis 9 EUR/mois (0,30 EUR/jour). CB requise, annulation 1 clic avant la fin du trial = rien debite.</div>
+      </td></tr>
+      <tr><td style="height:8px"></td></tr>
+      <tr><td style="padding:14px 16px;background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:10px">
+        <div style="font-size:13px;color:#b8ff57;font-weight:700;letter-spacing:.04em;margin-bottom:4px">★ OFFRE FONDATEURS LIMITEE : Pro a VIE pour 99 EUR</div>
+        <div style="font-size:12px;color:#a8b0b0;line-height:1.55">50 places seulement. Tu deviens fondateur FragValue, acces Pro a vie + channel Discord #founders. <a href="${BASE_URL}/pricing.html#ltd" style="color:#b8ff57">Voir l'offre &rsaquo;</a></div>
       </td></tr>
     </table>
 
@@ -84,11 +89,14 @@ Ton compte FragValue est actif. 3 etapes pour avoir ta 1ere analyse :
 
 2. ANALYSE TA 1RE DEMO
    FV Rating, heatmaps, diagnostic Coach IA en 2 min.
-   Drag-drop .dem ou colle une URL match FACEIT. 3 analyses/mois en Free.
+   Drag-drop .dem ou colle une URL match FACEIT. 5 analyses/mois en Free.
 
-3. PRO POUR PROGRESSER PLUS VITE
-   Auto-sync + 2D Replay + Chat Coach IA 5/jour + KPIs avances.
-   9 EUR/mois (0,30 EUR/jour), 14j satisfait ou rembourse.
+3. ESSAYER PRO GRATUITEMENT 7 JOURS
+   Auto-sync + 2D Replay + Coach IA 20 msg/jour + KPIs avances.
+   7 jours gratuits puis 9 EUR/mois (0,30 EUR/jour). Annulation avant la fin = rien debite.
+
+* OFFRE FONDATEURS LIMITEE : Pro a VIE 99 EUR (50 places only)
+   ${BASE_URL}/pricing.html#ltd
 
 Configurer mon compte : ${BASE_URL}/onboarding.html
 
@@ -120,7 +128,7 @@ function checkoutSuccess({ nickname, plan, periodEndIso }) {
         <li>Analyses de demos illimitées</li>
         <li>2D Replay frame par frame</li>
         <li>KPIs avancés : entry, trade, flash eff, util damage</li>
-        <li>Diagnostic IA refresh par match avec roadmap 7 jours + Chat Coach 5 msg/jour (Pro) ou 30/jour (Elite)</li>
+        <li>Diagnostic IA refresh par match avec roadmap 7 jours + Chat Coach 20 msg/jour (Pro) ou 50/jour (Elite)</li>
         <li>Match Report round par round</li>
         ${plan?.startsWith('elite') ? '<li><strong>Elite uniquement</strong> : team dashboard, anti-strat, prep veto, pro benchmarks</li>' : ''}
       </ul>
@@ -152,7 +160,7 @@ Ton paiement est confirmé. Tu débloques :
 - Analyses de demos illimitées
 - 2D Replay frame par frame
 - KPIs avancés (entry, trade, flash eff, util dmg)
-- Diagnostic IA refresh par match + Chat Coach 5 msg/jour (Pro) ou 30/jour (Elite)
+- Diagnostic IA refresh par match + Chat Coach 20 msg/jour (Pro) ou 50/jour (Elite)
 - Match Report round par round
 ${plan?.startsWith('elite') ? '- Elite : team dashboard, anti-strat, prep veto, pro benchmarks\n' : ''}
 ${renewDate ? `Renouvellement le ${renewDate}. Annulation en 1 clic depuis ton espace.\n\n` : ''}Lance ta prochaine analyse : ${BASE_URL}/demo.html
@@ -543,7 +551,7 @@ function day3FollowupFree({ nickname, demosCount, fvRating }) {
       <div style="font-size:11px;color:#b8ff57;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">Ce qui change avec Pro</div>
       <ul style="margin:0;padding-left:20px;font-size:13px;color:#a8b0b0;line-height:1.8">
         <li><strong style="color:#e8eaea">Analyses illimitees</strong> · plus de cap a 3/mois, tu refresh apres chaque match FACEIT</li>
-        <li><strong style="color:#e8eaea">Coach IA chat 5 messages/jour</strong> · tu poses des questions ciblees sur tes patterns</li>
+        <li><strong style="color:#e8eaea">Coach IA chat 20 messages/jour</strong> · tu poses des questions ciblees sur tes patterns</li>
         <li><strong style="color:#e8eaea">2D Replay interactif</strong> · re-joue tes rounds clutch frame par frame</li>
         <li><strong style="color:#e8eaea">KPIs avances</strong> · KAST, opening duels WR, multi-kills, trade rate</li>
         <li><strong style="color:#e8eaea">Heatmaps tactiques</strong> · ou tu meurs / tu kill, par map et par side</li>
@@ -566,7 +574,7 @@ ${fvRating ? `Ton FV Rating moyen sur tes ${demosCount} analyse(s) : ${fvRating}
 
 Ce qui change avec Pro :
 - Analyses illimitees (plus de cap a 3/mois, refresh apres chaque match FACEIT)
-- Coach IA chat 5 messages/jour pour des questions ciblees
+- Coach IA chat 20 messages/jour pour des questions ciblees
 - 2D Replay interactif
 - KPIs avances (KAST, opening duels WR, multi-kills)
 - Heatmaps tactiques
@@ -619,4 +627,53 @@ Conformement a notre garantie commerciale 14j. CGV : ${BASE_URL}/cgv.html`;
   return { subject, html, text };
 }
 
-module.exports = { welcome, checkoutSuccess, trialExpiringJ3, coachCreditsPurchased, cancellationConfirmation, yearlyRenewalNotice, paymentFailed, demoAnalysisReady, day3FollowupFree, refundProcessed };
+// === LIFETIME DEAL PURCHASED (launch 50 places, 99 EUR one-time) =========
+function lifetimeDealPurchased({ nickname, amountEur }) {
+  const name = nickname || 'joueur';
+  const subject = 'Tu fais partie des 50 fondateurs FragValue · Pro Lifetime actif';
+  const html = wrap(subject, `
+    <h1 style="font-family:${FONT_STACK};font-size:24px;line-height:1.2;color:#e8eaea;margin:0 0 16px;font-weight:800">Merci ${name}.</h1>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 18px">Ton paiement de <strong style="color:#b8ff57">${amountEur} EUR</strong> est confirme. Tu as maintenant l'acces <strong style="color:#b8ff57">Pro a vie</strong> sur FragValue. Plus jamais de carte bancaire, plus jamais d'abonnement.</p>
+
+    <div style="padding:18px 20px;background:linear-gradient(135deg,rgba(184,255,87,.1),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.35);border-radius:10px;margin-bottom:20px">
+      <div style="font-size:11px;color:#b8ff57;font-weight:700;letter-spacing:.1em;margin-bottom:8px">DEBLOQUE A VIE</div>
+      <ul style="margin:0;padding:0 0 0 18px;font-size:13px;color:#e8eaea;line-height:1.8">
+        <li>Auto-sync FACEIT illimite</li>
+        <li>Coach IA 20 msg/jour</li>
+        <li>Analyses illimitees + 2D Replay frame par frame</li>
+        <li>KPIs avances + Pro benchmarks</li>
+        <li>Toutes les futures features Pro, gratuitement</li>
+      </ul>
+    </div>
+
+    <p style="font-size:12.5px;color:#a8b0b0;line-height:1.65;margin-bottom:20px">
+      Tu fais partie des <strong style="color:#e8eaea">50 fondateurs</strong> qui ont cru au projet avant le launch. Un channel Discord prive <code style="background:#1c1e1e;padding:2px 6px;border-radius:4px;color:#b8ff57;font-family:monospace">#founders</code> t'est reserve.
+    </p>
+
+    <p style="text-align:center;margin:24px 0 8px">
+      <a href="${BASE_URL}/dashboard.html" style="display:inline-block;background:#b8ff57;color:#000;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:800;font-size:14px;letter-spacing:.04em;font-family:${FONT_STACK}">Acceder a mon espace Pro &rsaquo;</a>
+    </p>
+
+    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">Une question ? Reponds directement a ce mail.</p>
+  `);
+  const text = `Merci ${name},
+
+Ton paiement de ${amountEur} EUR est confirme. Tu as l'acces Pro a vie sur FragValue.
+
+DEBLOQUE A VIE :
+- Auto-sync FACEIT illimite
+- Coach IA 20 msg/jour
+- Analyses illimitees + 2D Replay
+- KPIs avances + Pro benchmarks
+- Toutes les futures features Pro, gratuitement
+
+Tu fais partie des 50 fondateurs. Channel Discord prive #founders reserve.
+
+Acceder a mon espace : ${BASE_URL}/dashboard.html
+
+L'equipe FragValue
+${BASE_URL}`;
+  return { subject, html, text };
+}
+
+module.exports = { welcome, checkoutSuccess, trialExpiringJ3, coachCreditsPurchased, cancellationConfirmation, yearlyRenewalNotice, paymentFailed, demoAnalysisReady, day3FollowupFree, refundProcessed, lifetimeDealPurchased };

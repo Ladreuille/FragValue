@@ -450,7 +450,7 @@ nav:not(.fv-nav){
   font-size:9px;color:var(--text3);letter-spacing:.04em
 }
 
-/* QUOTA BAR : barre progressive "X/3 analyses ce mois" au-dessus du upload.
+/* QUOTA BAR : barre progressive "X/5 analyses ce mois" au-dessus du upload.
    Transparence + incitation a l'action. Masquee si user Pro/Elite. */
 .quota-bar{
   padding:10px 12px;margin-bottom:10px;
@@ -1067,7 +1067,7 @@ nav:not(.fv-nav){
 
     <div class="section-label">Upload</div>
 
-    <!-- Quota bar : affiche X/3 analyses ce mois, plan actif.
+    <!-- Quota bar : affiche X/5 analyses ce mois, plan actif.
          Remplie par renderQuotaBar() au load. Masque pour non connecte. -->
     <div class="quota-bar" id="quotaBar" style="display:none">
       <div class="quota-bar-hd">
@@ -1418,7 +1418,10 @@ async function checkPlanGating() {
       }
     } catch (_) {}
 
-    if (plan === 'free' && (count || 0) >= 3) {
+    // FREE_ANALYSES_PER_MONTH : valeur centralisee, alignee avec pricing.html
+    // (5 analyses/mois post-audit pricing mai 2026, vs 3 avant).
+    const FREE_ANALYSES_PER_MONTH = 5;
+    if (plan === 'free' && (count || 0) >= FREE_ANALYSES_PER_MONTH) {
       showUpgradeModal();
       return false;
     }
@@ -1438,8 +1441,9 @@ function showUpgradeModal() {
     <div style="background:#0f1010;border:1px solid #1c1e1e;border-radius:12px;padding:36px 32px;max-width:420px;width:90%;text-align:center">
       <div style="font-family:'Anton',sans-serif;font-size:22px;letter-spacing:.02em;margin-bottom:6px">Limite atteinte</div>
       <p style="font-size:11px;color:#7a8080;line-height:1.7;margin-bottom:20px">
-        Tu as utilisé tes 3 analysés gratuites ce mois ci.<br>
-        Passe a Pro pour des analysés illimitees, le 2D Replay complet, et l'export PDF.
+        Tu as utilise tes 5 analyses gratuites ce mois-ci.<br>
+        Passe Pro pour des analyses illimitees + le 2D Replay + le Coach IA chat.
+        <strong style="color:#b8ff57">Essai 7 jours gratuit, CB requise.</strong>
       </p>
       <a href="index.html#pricing" style="display:inline-block;background:#b8ff57;color:#000;padding:10px 24px;border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em">Voir les plans</a>
       <button onclick="document.getElementById('upgradeModal').style.display='none'" style="display:block;margin:14px auto 0;background:none;border:none;color:#4a5050;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer">Fermer</button>
@@ -1832,11 +1836,13 @@ async function renderQuotaBar(session) {
     } catch (_) {}
 
     if (plan === 'free') {
-      const pct = Math.min(100, (u / 3) * 100);
+      // FREE_ANALYSES_PER_MONTH = 5 (post-audit pricing mai 2026)
+      const FREE_QUOTA = 5;
+      const pct = Math.min(100, (u / FREE_QUOTA) * 100);
       fill.style.width = pct + '%';
-      count.innerHTML = u + '<em>/3</em>';
+      count.innerHTML = u + '<em>/' + FREE_QUOTA + '</em>';
       label.textContent = 'Analyses ce mois';
-      if (u >= 3) {
+      if (u >= FREE_QUOTA) {
         bar.classList.add('quota-full');
         // Bloque l'upload avant meme que l'user ne commence :
         // transforme la zone en CTA "Passer Pro" et desactive le submit.
@@ -1855,7 +1861,7 @@ async function renderQuotaBar(session) {
   }
 }
 
-// Quand le user Free a atteint 3/3 analyses, on bloque le flow en amont
+// Quand le user Free a atteint 3/5 analyses, on bloque le flow en amont
 // plutot qu'apres l'upload. Transforme la submit-btn en CTA "Passer Pro"
 // directement clickable. UX : l'user sait avant meme de choisir un fichier.
 function lockUploadOnQuota(used) {
@@ -1887,7 +1893,7 @@ function lockUploadOnQuota(used) {
 }
 
 // Rend le live feed ticker avec les dernieres analyses publiques.
-// Fallback : si < 3 analyses en DB, on garde le contenu statique de fallback.
+// Fallback : si < 5 analyses en DB, on garde le contenu statique de fallback.
 async function renderLiveFeed() {
   const track = document.getElementById('liveFeedTrack');
   if (!track) return;

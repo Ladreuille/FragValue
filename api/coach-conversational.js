@@ -72,17 +72,19 @@ const SOFT_CAP_CONVERSATION = 50;
 const ADMIN_EMAILS = (process.env.FRAGVALUE_ADMIN_EMAILS || 'qdreuillet@gmail.com')
   .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 
-// Limites par tier (revu 02/05/2026 : pricing freemium gradue).
-// - Pro 5/jour    : preview de la feature, suffisant pour 1 question par demo
-//                   analysee. Atteint la limite = trigger upgrade Elite.
-// - Elite 30/jour : 1-2 deep-dives de demo par jour, ratio cout/value soutenable
-//                   a 19 EUR/mois (cf. cost analysis : ~$0.50 par conv long).
+// Limites par tier (revu 18/05/2026 post audit pricing : Pro 5 -> 20).
+// - Pro 20/jour   : permet de creuser 1-2 demos en profondeur. Cout
+//                   Anthropic reel ~0.01 EUR par message Claude Opus 4.7
+//                   = 20 msg/jour * 30j * 0.01 = 6 EUR/mois max par Pro
+//                   (vs 9 EUR de revenu = marge 33%, soutenable).
+// - Elite 50/jour : usage equipe + power user, ratio cout/value soutenable
+//                   a 25 EUR/mois (~15 EUR cout potentiel max = marge 40%).
 // - Admin         : illimite (cf. ADMIN_EMAILS).
 const DAILY_LIMITS = {
-  pro:   5,
-  elite: 30,
+  pro:   20,
+  elite: 50,
 };
-const HARD_LIMIT_ABSOLUTE = 50; // anti-abuse meme admin override possible
+const HARD_LIMIT_ABSOLUTE = 80; // anti-abuse meme admin override possible
 
 let _sb = null;
 function sb() {
@@ -1046,7 +1048,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   // Plan check : require Pro OU Elite (Free = redirect upgrade).
-  // Pro a acces limite a 5 msg/jour (preview), Elite a 30 msg/jour.
+  // Pro a acces 20 msg/jour, Elite a 50 msg/jour (revu post-audit mai 2026).
   // Streaming temps reel, lexique CS2 pro, replays cliquables : meme experience
   // pour les deux tiers, seule la quantite varie.
   const gate = await requirePro(req, res);

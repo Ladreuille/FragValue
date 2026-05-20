@@ -85,14 +85,19 @@ export default async function handler(req, res) {
       // Metadata pour le webhook : sans supabase_user_id, le checkout.session.completed
       // ne peut pas associer la subscription au bon user en DB.
       metadata: { plan: normalizedPlan },
-      // Trial 7j retire (mai 2026) : le user paye immediatement pour qu'on
-      // valide le flow de paiement en LIVE. Si trial revient plus tard, ajouter :
-      //   trial_period_days: 7
-      // dans subscription_data.
+      // Trial 7j RE-ACTIVE (audit pricing mai 2026) sur Pro UNIQUEMENT.
+      // Pourquoi Pro only : Elite est tier team, trial moins pertinent.
+      // Elite garde un debit immediat (le buyer est decideur informe).
+      // Anti-abuse : 1 trial per user via metadata + Stripe customer dedup.
       subscription_data: {
-        // Propage le plan sur la subscription pour les webhooks de renew/update
-        // (subscription.updated ne contient pas la metadata de session).
         metadata: { plan: normalizedPlan },
+        ...(plan === 'pro_monthly' || plan === 'pro_yearly' ? {
+          trial_period_days: 7,
+          // trial_settings : si CB rejected, fail le checkout (vs essai sans CB)
+          trial_settings: {
+            end_behavior: { missing_payment_method: 'cancel' },
+          },
+        } : {}),
       },
     };
 

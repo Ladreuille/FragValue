@@ -192,6 +192,59 @@ export default async function handler(req, res) {
           break;
         }
 
+        // ─── A.bis. Lifetime Deal one-time (mode 'payment', launch 2026) ───
+        // 99 EUR pour 50 places, lifetime access Pro. Distinct des credits.
+        if (session.mode === 'payment' && session.metadata?.plan === 'lifetime_pro') {
+          const ltdUserId = session.metadata.supabase_uid;
+          if (!ltdUserId || !isValidUuid(ltdUserId)) {
+            console.error('[Stripe] LTD user_id invalide:', ltdUserId, 'session=' + session.id);
+            break;
+          }
+          try {
+            // 1. Update lifetime_purchases : pending -> completed
+            const { error: updErr } = await sb.from('lifetime_purchases')
+              .update({
+                status: 'completed',
+                stripe_payment_intent_id: session.payment_intent || null,
+                purchased_at: new Date().toISOString(),
+              })
+              .eq('stripe_session_id', session.id);
+            if (updErr) console.error('[Stripe] LTD update failed:', updErr.message);
+
+            // 2. Update profiles : subscription_tier = lifetime_pro
+            await sb.from('profiles').update({
+              subscription_tier: 'lifetime_pro',
+            }).eq('id', ltdUserId);
+
+            // 3. Email confirmation LTD
+            try {
+              const { data: profile } = await sb.from('profiles')
+                .select('faceit_nickname').eq('id', ltdUserId).maybeSingle();
+              const { data: userData } = await sb.auth.admin.getUserById(ltdUserId);
+              const userEmail = userData?.user?.email;
+              if (userEmail) {
+                const tpl = require('./_lib/email-templates.js');
+                const { sendEmail } = await import('./_lib/email.js');
+                if (typeof tpl.lifetimeDealPurchased === 'function') {
+                  const t = tpl.lifetimeDealPurchased({
+                    nickname: profile?.faceit_nickname || userEmail.split('@')[0],
+                    amountEur: (session.amount_total || 0) / 100,
+                  });
+                  await sendEmail({ to: userEmail, subject: t.subject, html: t.html, text: t.text });
+                  console.log(`[Stripe] LTD purchase email sent to ${userEmail}`);
+                }
+              }
+            } catch (mailErr) {
+              console.error('[Stripe] LTD email failed (non-blocking):', mailErr.message);
+            }
+
+            console.log(`[Stripe] LTD purchase confirmed for user ${ltdUserId} (session ${session.id})`);
+          } catch (err) {
+            console.error('[Stripe] LTD webhook handler error:', err.message);
+          }
+          break;
+        }
+
         // ─── B. Subscription classique (mode 'subscription') ───
         // GUEST CHECKOUT (cf. ultrareview CRO P0) : si metadata.guest_signup,
         // l'user a paye sans avoir de compte Supabase. On le cree maintenant
