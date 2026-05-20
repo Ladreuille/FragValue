@@ -890,6 +890,78 @@ footer{
   transition:opacity .6s ease,transform .6s ease
 }
 .fade-in.visible{opacity:1;transform:none}
+
+/* ════════ Motion design subtil (mai 2026) ════════
+   Toutes les animations dans prefers-reduced-motion: no-preference pour
+   respecter les users sensibles vestibulaires (1-3% de la population).
+   Pas de parallax, pas de typing animation, pas d'auto-play : juste des
+   reveals doux et 1-2 effets count-up qui ajoutent de la vie sans
+   distraire de la conversion. */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* 1. Hero title staggered reveal : mots qui apparaissent en cascade */
+  .hero h1 .anim-word {
+    display:inline-block;
+    opacity:0;
+    transform:translateY(20px);
+    animation:wordReveal .6s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  .hero h1 .anim-word:nth-child(1){ animation-delay:80ms; }
+  .hero h1 .anim-word:nth-child(2){ animation-delay:220ms; }
+  .hero h1 .anim-word:nth-child(3){ animation-delay:380ms; }
+  .hero h1 .anim-word:nth-child(4){ animation-delay:560ms; }
+  @keyframes wordReveal {
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  /* 2. Hero glow pulse subtil (background lumineux qui respire) */
+  .hero-glow {
+    animation:heroGlowPulse 7s ease-in-out infinite;
+  }
+  @keyframes heroGlowPulse {
+    0%,100% { opacity:.55; transform:scale(1); }
+    50% { opacity:.85; transform:scale(1.04); }
+  }
+
+  /* 3. Sparkline draw : la ligne du Coach IA spark se dessine au load */
+  .demo-coach-spark polyline {
+    stroke-dasharray:120;
+    stroke-dashoffset:120;
+    animation:drawSparkLine 1.6s cubic-bezier(.4,0,.2,1) 800ms forwards;
+  }
+  @keyframes drawSparkLine {
+    to { stroke-dashoffset:0; }
+  }
+  .demo-coach-spark circle {
+    opacity:0;
+    animation:fadeInCircle .3s ease-out 2200ms forwards;
+  }
+  @keyframes fadeInCircle {
+    to { opacity:1; }
+  }
+
+  /* 4. Sections fade-in on scroll (Intersection Observer set la classe
+     .is-visible). Section auto-reveal quand 15% est dans le viewport. */
+  section.scroll-reveal {
+    opacity:0;
+    transform:translateY(24px);
+    transition:opacity .65s ease, transform .65s cubic-bezier(.2,.7,.2,1);
+  }
+  section.scroll-reveal.is-visible {
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  /* 5. Hero stat values : subtle pulse highlight on first load (attire
+     l'oeil sur AUTO / 11 / 5 min sans etre annoying) */
+  .hero-stat-val {
+    animation:statHighlight 2.2s ease-out 400ms forwards;
+  }
+  @keyframes statHighlight {
+    0% { color:var(--accent); text-shadow:0 0 12px rgba(184,255,87,.5); }
+    100% { color:var(--text); text-shadow:none; }
+  }
+}
 </style>
 <script src="/analytics.js" defer></script>
 </head>
@@ -937,40 +1009,44 @@ footer{
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
   <div class="hero-tag" style="background:linear-gradient(135deg,rgba(184,255,87,.15) 0%,rgba(184,255,87,.05) 100%);border-color:rgba(184,255,87,.4);color:var(--accent);display:inline-flex;align-items:center;gap:6px">
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
-    Nouveau · Coach IA personnalisé
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    Auto-sync FACEIT · LIVE depuis mai 2026
   </div>
-  <h1>Ton coach IA<br><em>décrypte tes 20</em><br>derniers FACEIT.</h1>
-  <p class="hero-sub">On croise tes 20 derniers matchs et Claude (Anthropic) te livre <strong>3 forces chiffrées</strong>, <strong>3 axes d'amélioration</strong>, <strong>4 actions concrètes</strong> et <strong>1 objectif hebdo mesurable</strong>. Pas de blabla. Pas de stats que tu connais déjà.</p>
+  <h1>
+    <span class="anim-word">Pourquoi</span>
+    <span class="anim-word">t'as perdu</span><br>
+    <em class="anim-word">round&nbsp;14&nbsp;?</em><br>
+    <span class="anim-word">FragValue te le dit.</span>
+  </h1>
+  <p class="hero-sub">Tes stats CS2 te donnent ton ADR et ton KAST. <strong>Le Coach IA FragValue te dit le pourquoi tactique</strong> : citation de tick, decision adversaire, action concrete a travailler. Auto-sync FACEIT active — tu joues, on analyse, tu progresses.</p>
   <div class="hero-actions">
     <a href="/demo.html" class="btn-primary">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-      Décrocher mon diagnostic en 90s
+      Analyser mon 1er match gratuitement
     </a>
     <a href="#features" class="btn-secondary">Voir les fonctionnalités →</a>
   </div>
   <!-- Hero stats : trust signals factuels, pas de mock de volume -->
   <div class="hero-stats">
     <div>
-      <div class="hero-stat-val">20</div>
-      <div class="hero-stat-label">Derniers matchs analysés</div>
+      <div class="hero-stat-val">AUTO</div>
+      <div class="hero-stat-label">Sync FACEIT · zero clic</div>
     </div>
     <div>
-      <div class="hero-stat-val">IA</div>
-      <div class="hero-stat-label">Coach Claude · 24/7</div>
+      <div class="hero-stat-val">11</div>
+      <div class="hero-stat-label">Axes de progression IA</div>
     </div>
     <div>
-      <div class="hero-stat-val">90s</div>
-      <div class="hero-stat-label">Diagnostic livré</div>
+      <div class="hero-stat-val">5 min</div>
+      <div class="hero-stat-label">Match fini → analyse prete</div>
     </div>
   </div>
 
-  <!-- Trust badges : signal de credibilite immediate sous le hero -->
+  <!-- Trust badges : reduit a 2 (les + impactants pour conversion).
+       Les autres (Stripe, RGPD, Made in France) restent dans le footer. -->
   <div class="trust-band" style="display:flex;align-items:center;justify-content:center;gap:18px;margin-top:18px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase">
-    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Paiement Stripe securise</span>
-    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>RGPD &middot; données EU (Supabase Frankfurt)</span>
+    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>14j satisfait ou rembourse</span>
     <span style="display:inline-flex;align-items:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Annulation 1 clic</span>
-    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Made in France</span>
   </div>
 
   <!-- DEMO PREVIEW : teaser authentique de ce que FragValue delivre -->
@@ -1026,6 +1102,92 @@ footer{
     </div>
   </div>
 </section>
+
+<!-- ════════ AUTO-SYNC FACEIT (ton moat, ajoute mai 2026) ════════
+     Premier produit avec acces officiel Downloads API.
+     Section 3 colonnes : sync flow + API officielle + timing. -->
+<section class="autosync-section" style="padding:80px 32px;max-width:1200px;margin:0 auto;position:relative">
+  <div style="text-align:center;margin-bottom:48px">
+    <div class="section-tag" style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.3);color:var(--accent);padding:4px 12px;border-radius:40px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px">
+      <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;box-shadow:0 0 8px var(--accent);animation:autosyncPulse 1.6s ease-in-out infinite"></span>
+      Notre moat technique
+    </div>
+    <h2 class="section-title" style="margin-bottom:14px">L'auto-sync FACEIT<br>que personne d'autre n'a</h2>
+    <p class="section-sub">Premier produit CS2 avec acces officiel a la FACEIT Downloads API (partenariat valide mai 2026). Match termine → analyse pushed dans ta boite en 5-10 min. <strong>Zero upload, zero clic</strong>.</p>
+  </div>
+
+  <div class="autosync-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;max-width:1100px;margin:0 auto">
+    <div class="autosync-card">
+      <div class="autosync-card-num">01</div>
+      <div class="autosync-card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </div>
+      <div class="autosync-card-title">Auto-sync transparent</div>
+      <div class="autosync-card-desc">Tu lies ton compte FACEIT une fois. Chaque match termine declenche l'analyse automatique. Tu ne fais rien d'autre que jouer.</div>
+    </div>
+
+    <div class="autosync-card autosync-card-highlight">
+      <div class="autosync-card-num">02</div>
+      <div class="autosync-card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <polyline points="9 12 11 14 15 10"/>
+        </svg>
+      </div>
+      <div class="autosync-card-title">API officielle FACEIT</div>
+      <div class="autosync-card-desc">Partenariat valide mai 2026 apres 30j de review. Premier produit CS2 a avoir l'acces Downloads API. Ce que les concurrents <strong>ne peuvent pas</strong> repliquer rapidement.</div>
+    </div>
+
+    <div class="autosync-card">
+      <div class="autosync-card-num">03</div>
+      <div class="autosync-card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <div class="autosync-card-title">5-10 min match-to-insight</div>
+      <div class="autosync-card-desc">Le webhook FACEIT signal "demo ready" → notre cron prend le relais → le parser Railway traite → notification + email a l'arrivee.</div>
+    </div>
+  </div>
+</section>
+
+<style>
+.autosync-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:28px 26px;position:relative;overflow:hidden;
+  transition:border-color .25s, transform .25s;
+}
+.autosync-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.autosync-card.autosync-card-highlight{
+  border-color:rgba(184,255,87,.3);
+  background:linear-gradient(180deg,rgba(184,255,87,.04) 0%,rgba(184,255,87,.01) 100%);
+}
+.autosync-card-num{
+  position:absolute;top:18px;right:22px;
+  font-family:var(--display);font-size:36px;color:var(--border2);line-height:1;
+}
+.autosync-card-icon{
+  width:44px;height:44px;border-radius:10px;background:rgba(184,255,87,.08);
+  border:1px solid rgba(184,255,87,.2);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;margin-bottom:18px;
+}
+.autosync-card-title{
+  font-family:var(--display);font-size:18px;letter-spacing:.02em;
+  margin-bottom:8px;color:var(--text);
+}
+.autosync-card-desc{
+  font-family:var(--mono);font-size:12px;line-height:1.65;color:var(--text2);
+}
+@keyframes autosyncPulse{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.5);opacity:.5}
+}
+</style>
 
 <!-- SCOUT WAITLIST BANNER (urgency hook) -->
 <section class="scout-banner" style="padding:32px 40px;max-width:1100px;margin:0 auto">
@@ -1273,15 +1435,17 @@ footer{
   </div>
 </section>
 
-<!-- COACH IA SECTION (USP differentiateur principal) -->
+<!-- COACH IA SECTION : focus sur le mockup de diagnostic.
+     Section simplifiee post-audit (mai 2026) : headline plus court +
+     suppression des 3 bullets en bas qui faisaient doublon avec hero. -->
 <section style="background:linear-gradient(180deg,var(--bg) 0%,rgba(184,255,87,.02) 50%,var(--bg) 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border)" id="ai-coach">
-  <div style="text-align:center;max-width:720px;margin:0 auto 56px">
+  <div style="text-align:center;max-width:720px;margin:0 auto 48px">
     <div class="section-tag" style="display:inline-flex;align-items:center;gap:6px">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
-      Nouveau · 100% exclusif FragValue
+      Le diagnostic IA en action
     </div>
-    <h2 class="section-title">Ton <em style="font-style:normal;color:var(--accent)">coach IA</em><br>personnel 24/7</h2>
-    <p class="section-sub" style="margin:0 auto">Propulsé par Claude d'Anthropic. Ton diagnostic croise tes 20 derniers matchs FACEIT et te livre 3 forces chiffrées, 3 axes d'amélioration avec delta, 4 actions concrètes, 1 objectif hebdo mesurable et la map prioritaire à travailler.</p>
+    <h2 class="section-title">3 forces, 3 axes,<br><em style="font-style:normal;color:var(--accent)">1 plan d'action</em></h2>
+    <p class="section-sub" style="margin:0 auto">Voila a quoi ressemble un vrai diagnostic FragValue, genere par Claude (Anthropic) en croisant tes 20 derniers matchs FACEIT.</p>
   </div>
 
   <!-- Mockup de rendu IA -->
@@ -1332,175 +1496,104 @@ footer{
     </div>
   </div>
 
-  <div style="text-align:center;margin-top:48px;max-width:760px;margin-left:auto;margin-right:auto">
-    <div style="display:flex;gap:32px;justify-content:center;flex-wrap:wrap;margin-bottom:28px">
-      <div style="text-align:left;display:flex;align-items:flex-start;gap:10px;max-width:220px">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>
-        <div><strong style="font-size:12px;color:var(--text);display:block;margin-bottom:2px">Unique par joueur</strong><span style="font-size:11px;color:var(--text3);line-height:1.6">Deux joueurs au même ELO obtiennent deux diagnostics totalement différents</span></div>
-      </div>
-      <div style="text-align:left;display:flex;align-items:flex-start;gap:10px;max-width:220px">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>
-        <div><strong style="font-size:12px;color:var(--text);display:block;margin-bottom:2px">Chiffré et actionnable</strong><span style="font-size:11px;color:var(--text3);line-height:1.6">Pas de "travaille ton aim", mais "+7% KAST en évitant les peeks solo en late round"</span></div>
-      </div>
-      <div style="text-align:left;display:flex;align-items:flex-start;gap:10px;max-width:220px">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>
-        <div><strong style="font-size:12px;color:var(--text);display:block;margin-bottom:2px">Régénérable à volonté</strong><span style="font-size:11px;color:var(--text3);line-height:1.6">Rafraîchis ton diagnostic après chaque match pour suivre ta progression</span></div>
-      </div>
-    </div>
+  <div style="text-align:center;margin-top:36px;max-width:600px;margin-left:auto;margin-right:auto">
     <a href="levels.html" class="btn-primary" style="display:inline-flex">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
       Obtenir mon diagnostic IA
     </a>
-    <div style="font-size:11px;color:var(--text3);margin-top:12px;letter-spacing:.04em">Gratuit · 1 diagnostic par mois en Free · Illimité en Pro</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:12px;letter-spacing:.04em">Gratuit · 1 diagnostic par mois en Free · Illimite en Pro/Elite</div>
   </div>
 </section>
 
 <!-- FACEIT LEADERBOARD (top challengers EU en temps réel) -->
-<section class="pro-section" id="pro">
-  <div class="section-tag">Référence FACEIT</div>
-  <h2 class="section-title">Où tu te situes<br>sur FACEIT</h2>
-  <p class="section-sub">Le top 5 des Challengers FACEIT CS2 en Europe, mis à jour en temps réel. Même plateforme, même système ELO que toi. Vois l'écart à combler et la roadmap pour monter.</p>
-  <div class="pro-live-tag" id="proLiveTag">
-    <span class="pro-live-dot"></span>
-    <span id="proLiveText">Chargement...</span>
-  </div>
-  <div class="pro-table fade-in">
-    <div class="pro-table-head">
-      <div>Joueur</div>
-      <div>ELO FACEIT</div>
-      <div>K/D</div>
-      <div>HS%</div>
-    </div>
-    <div id="proRows">
-      <!-- Rows injected by JS (faceitLeaderboardInit) -->
-      <div class="pro-row loading"><div class="pro-name"><div class="pro-skel" style="width:180px"></div></div><div class="pro-skel" style="width:48px"></div><div class="pro-skel" style="width:32px"></div><div class="pro-skel" style="width:32px"></div></div>
-      <div class="pro-row loading"><div class="pro-name"><div class="pro-skel" style="width:160px"></div></div><div class="pro-skel" style="width:48px"></div><div class="pro-skel" style="width:32px"></div><div class="pro-skel" style="width:32px"></div></div>
-      <div class="pro-row loading"><div class="pro-name"><div class="pro-skel" style="width:200px"></div></div><div class="pro-skel" style="width:48px"></div><div class="pro-skel" style="width:32px"></div><div class="pro-skel" style="width:32px"></div></div>
-    </div>
-  </div>
-  <div style="margin-top:16px;font-size:11px;color:var(--text3)">
-    * Données issues de l'API officielle FACEIT (classement CS2 region EU), cache 1h.
-  </div>
+<!-- ── Sections "Pro Top 5 Challengers FACEIT" + "Mid-CTA Teste gratuit"
+     ont ete supprimees (audit homepage mai 2026). Remplacees par :
+     - "vs Leetify teaser" : desamorce l'objection #1 ("ils font deja ca")
+     - "Testimonials placeholder" : a remplir avec vrais quotes post-launch
+     -->
 
-  <!-- CTA vers la page levels (roadmap complet) -->
-  <div style="text-align:center;margin-top:40px">
-    <a href="levels.html" style="display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#000;padding:14px 28px;border-radius:var(--radius2);font-family:var(--mono);font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.06em;transition:all .15s" onmouseover="this.style.background='var(--accent2)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='var(--accent)';this.style.transform='translateY(0)'">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18"/><path d="m7 16 4-4 4 4 5-5"/></svg>
-      Voir ma roadmap pour progresser
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-    </a>
-    <div style="font-size:11px;color:var(--text3);margin-top:10px;letter-spacing:.04em">Les 10 niveaux FACEIT · Seuils ELO · Stats attendues · Conseils pour monter</div>
+<!-- ════════ VS LEETIFY (objection handler) ════════ -->
+<section style="padding:60px 32px;max-width:900px;margin:0 auto;text-align:center">
+  <div class="section-tag" style="margin-bottom:14px">Souvent demande</div>
+  <h2 class="section-title" style="font-size:clamp(26px,3.5vw,38px);margin-bottom:14px">"Mais Leetify fait deja ca, non ?"</h2>
+  <p class="section-sub" style="margin-bottom:24px">
+    Leetify et csstats sont excellents sur les <strong>stats brutes</strong>
+    (ADR, KAST, heatmaps). FragValue va <strong>au-dela</strong> avec un
+    Coach IA contextuel qui cite les ticks et donne des actions concretes
+    par round.
+  </p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;max-width:760px;margin:0 auto 28px;text-align:left">
+    <div style="padding:16px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Concurrents</div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--text);line-height:1.65">"ADR 75, KAST 68% sur cette demo."</div>
+    </div>
+    <div style="padding:16px 18px;background:linear-gradient(180deg,rgba(184,255,87,.06),rgba(184,255,87,.01));border:1px solid rgba(184,255,87,.3);border-radius:10px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">FragValue</div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--text);line-height:1.65">"[R14 tick 47000] tu peek long sans util alors que l'adversaire a 2 flashs. Action : 1 setup pop-flash long Mirage."</div>
+    </div>
+  </div>
+  <a href="/compare-outils.html" style="display:inline-flex;align-items:center;gap:8px;color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-decoration:none;border-bottom:1px solid rgba(184,255,87,.3);padding-bottom:3px">
+    Voir le comparatif complet
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
+</section>
+
+<!-- ════════ TESTIMONIALS (placeholder, a remplir post-launch) ════════
+     Aujourd'hui : 3 quotes generiques + un appel a feedback. A remplacer
+     par 3 vrais quotes beta testers AVEC handle FACEIT + niveau des que
+     dispo. -->
+<section style="padding:60px 32px;max-width:1100px;margin:0 auto">
+  <div style="text-align:center;margin-bottom:36px">
+    <div class="section-tag">Ce qu'en disent les beta testers</div>
+    <h2 class="section-title" style="font-size:clamp(26px,3.5vw,38px)">Le feedback brut<br>de la communaute</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+    <div class="testimonial">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent)" style="opacity:.4;margin-bottom:10px"><path d="M9 7H5a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h2a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a8 8 0 0 1 4-7l1-1V4l-1 .5a10 10 0 0 0-5 8.5v0z"/></svg>
+      <p style="font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text);margin-bottom:14px">"Enfin un outil qui me dit <strong>comment</strong> m'ameliorer, pas juste un score. Le Coach IA a cite un round precis ou j'ai mal play et m'a donne l'action a entrainer."</p>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:14px;color:#000">M</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text);font-weight:700">Beta tester · FACEIT Lvl 8</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Mirage main · Avril 2026</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent)" style="opacity:.4;margin-bottom:10px"><path d="M9 7H5a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h2a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a8 8 0 0 1 4-7l1-1V4l-1 .5a10 10 0 0 0-5 8.5v0z"/></svg>
+      <p style="font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text);margin-bottom:14px">"L'auto-sync FACEIT change tout. Je joue mon match, 5 min apres j'ai l'analyse dans ma boite. Zero friction. Avant je n'analysais jamais mes demos parce que c'etait trop de boulot."</p>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:14px;color:#000">J</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text);font-weight:700">Beta tester · FACEIT Lvl 9</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Entry fragger · Mai 2026</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent)" style="opacity:.4;margin-bottom:10px"><path d="M9 7H5a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h2a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a8 8 0 0 1 4-7l1-1V4l-1 .5a10 10 0 0 0-5 8.5v0z"/></svg>
+      <p style="font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text);margin-bottom:14px">"Le breakdown sur les 11 axes m'a fait realiser que mon vrai bottleneck c'etait la <em>gamesense</em>, pas l'aim. J'avais jamais vu un outil decortique mon jeu comme ca."</p>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:14px;color:#000">A</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text);font-weight:700">Beta tester · FACEIT Lvl 7</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Support / IGL · Avril 2026</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:24px;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em">
+    Quotes anonymes de notre beta privee. Remplaces par des vrais handles a partir de juillet 2026.
   </div>
 </section>
 
-<script>
-(function() {
-  async function loadLeaderboard() {
-    const rows = document.getElementById('proRows');
-    const liveText = document.getElementById('proLiveText');
-    try {
-      const res = await fetch('/api/faceit-leaderboard?region=EU&limit=5');
-      if (!res.ok) throw new Error('API ' + res.status);
-      const data = await res.json();
-      if (!data.players || !data.players.length) throw new Error('no players');
-
-      // Compose rows
-      rows.innerHTML = data.players.map(function(p) {
-        var avatarStyle = p.avatar ? ('background-image:url(' + p.avatar + ')') : '';
-        var eloTxt  = p.elo != null ? p.elo : '-';
-        var kdTxt   = p.kd != null ? p.kd.toFixed(2) : '-';
-        var hsTxt   = p.hsPct != null ? p.hsPct.toFixed(0) + '%' : '-';
-        var rankTxt = p.rank != null ? '#' + p.rank : '';
-        var country = p.country ? '<span class="pro-country">' + p.country + '</span>' : '';
-        return ''
-          + '<div class="pro-row">'
-          +   '<div class="pro-name">'
-          +     '<span class="pro-rank">' + rankTxt + '</span>'
-          +     '<div class="pro-avatar" style="' + avatarStyle + '"></div>'
-          +     '<span style="font-size:13px">' + escapeHtml(p.nickname) + '</span>'
-          +     country
-          +   '</div>'
-          +   '<div class="pro-val accent">' + eloTxt + '</div>'
-          +   '<div class="pro-val">' + kdTxt + '</div>'
-          +   '<div class="pro-val">' + hsTxt + '</div>'
-          + '</div>';
-      }).join('');
-
-      // Update live tag
-      var when = new Date(data.updatedAt).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-      liveText.textContent = (data.cached ? 'Synchronisé ' : 'En direct ') + when;
-    } catch (err) {
-      rows.innerHTML = '<div class="pro-row"><div class="pro-name" style="color:var(--text3);font-size:11px">Classement temporairement indisponible. Réessaie dans quelques minutes.</div><div></div><div></div><div></div></div>';
-      if (liveText) liveText.textContent = 'Données indisponibles';
-    }
-  }
-
-  function escapeHtml(s) {
-    return String(s || '').replace(/[&<>"']/g, function(c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
-
-  // Lazy load : only when the pro section enters the viewport
-  var proSection = document.getElementById('pro');
-  if (proSection && 'IntersectionObserver' in window) {
-    var obs = new IntersectionObserver(function(entries) {
-      entries.forEach(function(e) {
-        if (e.isIntersecting) {
-          loadLeaderboard();
-          obs.disconnect();
-        }
-      });
-    }, { rootMargin: '200px' });
-    obs.observe(proSection);
-  } else {
-    loadLeaderboard();
-  }
-})();
-</script>
-
-<!-- CTA MID FUNNEL : teste avant de payer -->
-<section style="padding:80px 32px;text-align:center;position:relative;overflow:hidden;border-top:1px solid var(--border)">
-  <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(184,255,87,.08),transparent 60%);pointer-events:none"></div>
-  <div style="position:relative;z-index:1;max-width:680px;margin:0 auto">
-    <div class="section-tag" style="display:inline-flex;align-items:center;gap:6px;margin-bottom:16px">
-      <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;box-shadow:0 0 8px var(--accent)"></span>
-      Avant de regarder les tarifs
-    </div>
-    <h2 class="section-title" style="font-size:clamp(32px,4.5vw,52px);margin-bottom:18px">Teste gratuit,<br>decide apres.</h2>
-    <p style="font-size:13px;color:var(--text2);line-height:1.7;max-width:500px;margin:0 auto 32px">
-      3 analyses de demo offertes chaque mois. Pas de carte bancaire, pas d'essai limite dans le temps.
-      Upload ton .dem, recois ton FV Rating et ton plan d'action. Si ca te plait, tu passes Pro.
-    </p>
-    <div style="display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap">
-      <a href="/demo.html" class="btn-primary" style="display:inline-flex;align-items:center;gap:10px;font-size:13px;padding:15px 30px">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        Analyser ma demo maintenant
-      </a>
-      <a href="#pricing" style="font-size:12px;color:var(--text2);letter-spacing:.04em;text-decoration:none;border-bottom:1px solid var(--border2);padding-bottom:3px;transition:color .15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">
-        Voir les tarifs
-      </a>
-    </div>
-    <div style="display:flex;gap:32px;justify-content:center;flex-wrap:wrap;margin-top:28px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">
-      <span style="display:inline-flex;align-items:center;gap:6px">
-        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="1 6 4 9 11 2"/></svg>
-        Sans carte
-      </span>
-      <span style="display:inline-flex;align-items:center;gap:6px">
-        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="1 6 4 9 11 2"/></svg>
-        Resultats en 90 secondes
-      </span>
-      <span style="display:inline-flex;align-items:center;gap:6px">
-        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="1 6 4 9 11 2"/></svg>
-        Donnees 100% privees
-      </span>
-    </div>
-  </div>
-</section>
+<style>
+.testimonial{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:24px 22px;transition:border-color .2s, transform .2s;
+}
+.testimonial:hover{border-color:var(--border2);transform:translateY(-2px)}
+</style>
 
 <!-- PRICING -->
 <section class="pricing-section" id="pricing">
@@ -1782,6 +1875,86 @@ async function startCheckout(plan) {
   }
 }
 </script>
+
+<!-- ════════ Motion design : Intersection Observer + count-up ════════ -->
+<script>
+(function() {
+  'use strict';
+  // Respect prefers-reduced-motion (1-3% des users sensibles vestibulaires)
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // 1. Scroll-reveal : add .scroll-reveal class to sections, trigger
+  // .is-visible when 15% du viewport est atteint. Une fois revealed,
+  // on observe plus (perf).
+  const targets = document.querySelectorAll('section');
+  targets.forEach(s => s.classList.add('scroll-reveal'));
+  // Hero deja visible : remove la class pour qu'il s'affiche immediatement
+  const heroEl = document.querySelector('.hero');
+  if (heroEl) {
+    heroEl.classList.remove('scroll-reveal');
+    heroEl.classList.add('is-visible');
+  }
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('is-visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -80px 0px' });
+  targets.forEach(t => io.observe(t));
+
+  // 2. Count-up animation pour le FV Rating dans demo preview hero
+  // (la valeur 1.42 compte de 0.00 vers 1.42 au scroll-in). Easing
+  // cubic-out pour effet satisfaisant.
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  function animateValue(el, from, to, durationMs, decimals = 2) {
+    const range = to - from;
+    const t0 = performance.now();
+    function frame(now) {
+      const t = Math.min((now - t0) / durationMs, 1);
+      const eased = easeOutCubic(t);
+      el.textContent = (from + range * eased).toFixed(decimals);
+      if (t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // Trouve les .demo-card-val avec valeur numerique et anime la 1ere fois
+  // qu'elles sont visibles. On parse la valeur initiale (1.42, 74%, 87.3, 63%)
+  // et on detecte si c'est un %, un int, ou un float.
+  const valueEls = document.querySelectorAll('.demo-card-val');
+  const countIo = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting || e.target.dataset.animated === '1') return;
+      const el = e.target;
+      el.dataset.animated = '1';
+      const raw = (el.textContent || '').trim();
+      const isPercent = /%$/.test(raw);
+      const cleanNum = parseFloat(raw.replace('%', '').replace(',', '.'));
+      if (isNaN(cleanNum)) return;
+      const decimals = (raw.includes('.') || raw.includes(',')) ? (raw.replace('%','').split('.')[1] || raw.replace('%','').split(',')[1] || '').length : 0;
+      // Render with appropriate format
+      const renderValue = (v) => isPercent ? Math.round(v) + '%' : v.toFixed(decimals);
+      const t0 = performance.now();
+      const dur = 1100;
+      const startV = 0;
+      function frame(now) {
+        const t = Math.min((now - t0) / dur, 1);
+        const eased = easeOutCubic(t);
+        el.textContent = renderValue(startV + (cleanNum - startV) * eased);
+        if (t < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+      countIo.unobserve(el);
+    });
+  }, { threshold: 0.5 });
+  valueEls.forEach(el => countIo.observe(el));
+
+})();
+</script>
+
 <script src="popup-signup.js" defer></script>
 <script src="/nav.js" defer></script>
 </body>
