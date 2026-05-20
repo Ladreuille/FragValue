@@ -102,6 +102,112 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
        La section parrainage est rendue dans tab Paramètres avec
        .settings-card + tier ladder, gere par loadReferral().) */
 
+    /* A3 : Card founder (visible uniquement plan=lifetime_pro) */
+    .founder-card{
+      background:linear-gradient(135deg,rgba(245,200,66,.06) 0%,rgba(184,255,87,.04) 100%);
+      border:1px solid rgba(245,200,66,.3);border-radius:12px;
+      padding:22px 24px;margin-bottom:16px;position:relative;overflow:hidden;
+    }
+    .founder-card::before{
+      content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse at top right,rgba(245,200,66,.12),transparent 60%);
+      pointer-events:none;
+    }
+    .founder-card-h{
+      display:flex;align-items:center;gap:10px;
+      font-family:var(--display);font-size:18px;letter-spacing:.04em;
+      background:linear-gradient(135deg,var(--accent),var(--gold));
+      -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+      margin-bottom:6px;position:relative;z-index:1;
+    }
+    .founder-card-sub{
+      font-family:var(--mono);font-size:11.5px;color:var(--text2);line-height:1.65;
+      margin-bottom:18px;position:relative;z-index:1;
+    }
+    .founder-benefits{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;
+      position:relative;z-index:1;
+    }
+    .founder-benefit{
+      background:rgba(255,255,255,.02);border:1px solid var(--border);
+      border-radius:8px;padding:12px 14px;
+      display:flex;align-items:flex-start;gap:10px;
+    }
+    .founder-benefit-icon{
+      flex-shrink:0;width:28px;height:28px;border-radius:6px;
+      background:linear-gradient(135deg,rgba(184,255,87,.15),rgba(245,200,66,.15));
+      color:var(--gold);display:flex;align-items:center;justify-content:center;
+    }
+    .founder-benefit-text{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.55}
+    .founder-benefit-text strong{display:block;color:var(--text);font-family:var(--display);font-size:12px;letter-spacing:.04em;margin-bottom:2px}
+
+    /* A2 : Stats globales card */
+    .stats-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:20px 22px;margin-bottom:16px;
+    }
+    .stats-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;
+    }
+    .stats-item{
+      background:var(--card);border:1px solid var(--border);border-radius:8px;
+      padding:14px 16px;
+    }
+    .stats-val{font-family:var(--display);font-size:26px;line-height:1;color:var(--text);margin-bottom:5px}
+    .stats-val.accent{color:var(--accent)}
+    .stats-val.delta-up{color:var(--success)}
+    .stats-val.delta-down{color:var(--danger)}
+    .stats-label{
+      font-family:var(--mono);font-size:9.5px;color:var(--text3);
+      letter-spacing:.06em;text-transform:uppercase;
+    }
+    .stats-trend{
+      font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;
+    }
+
+    /* A1 : Invoices table */
+    .invoices-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:0;margin-bottom:16px;overflow:hidden;
+    }
+    .invoices-head{
+      padding:14px 18px;border-bottom:1px solid var(--border);
+      display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+    }
+    .invoices-total{font-family:var(--mono);font-size:11px;color:var(--text2)}
+    .invoices-total strong{color:var(--accent);font-family:var(--display);font-size:16px;letter-spacing:.04em;margin-left:6px}
+    .invoices-portal-link{
+      font-family:var(--mono);font-size:11px;color:var(--text3);
+      text-decoration:none;border-bottom:1px solid var(--border2);
+    }
+    .invoices-portal-link:hover{color:var(--accent);border-color:var(--accent)}
+    .invoices-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px}
+    .invoices-table th{
+      text-align:left;padding:10px 18px;font-size:9.5px;letter-spacing:.06em;
+      text-transform:uppercase;color:var(--text3);background:rgba(255,255,255,.015);
+      border-bottom:1px solid var(--border);font-weight:700;
+    }
+    .invoices-table td{padding:12px 18px;border-bottom:1px solid var(--border);color:var(--text2)}
+    .invoices-table tr:last-child td{border-bottom:none}
+    .invoices-table tr:hover td{background:rgba(255,255,255,.012)}
+    .invoices-status{
+      display:inline-flex;align-items:center;padding:2px 8px;border-radius:40px;
+      font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    }
+    .invoices-status.paid{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.25)}
+    .invoices-status.refunded{background:rgba(255,138,61,.1);color:#ff8a3d;border:1px solid rgba(255,138,61,.25)}
+    .invoices-status.open{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.25)}
+    .invoices-status.failed{background:rgba(255,68,68,.1);color:var(--danger);border:1px solid rgba(255,68,68,.25)}
+    .invoices-pdf-link{
+      color:var(--accent);text-decoration:none;font-weight:700;
+      display:inline-flex;align-items:center;gap:4px;
+    }
+    .invoices-pdf-link:hover{text-decoration:underline}
+    @media(max-width:640px){
+      .invoices-table th:nth-child(3),
+      .invoices-table td:nth-child(3){display:none}
+    }
+
     .sub-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
     .sub-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 0% 50%,rgba(184,255,87,.06),transparent);pointer-events:none}
     .sub-card-loading{display:flex;align-items:center;gap:12px;color:var(--text2);font-size:13px;position:relative;z-index:1}
@@ -295,6 +401,18 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <div class="sub-card" id="subCard">
         <div class="sub-card-loading"><div class="load-spinner"></div>Chargement de ton abonnement...</div>
       </div>
+
+      <!-- A3 : Card "Founder benefits" visible uniquement si plan='lifetime_pro'.
+           Rendue par renderFounderCard() declenche depuis loadSubscription. -->
+      <div id="founderCard" style="display:none"></div>
+
+      <!-- A2 : Stats globales du compte (sunk-cost reinforcement) -->
+      <div class="sec-label" id="accountStatsLabel" style="margin-top:24px;display:none">Mes stats globales</div>
+      <div id="accountStatsCard" style="display:none"></div>
+
+      <!-- A1 : Liste des factures (visible si plan payant + au moins 1 facture) -->
+      <div class="sec-label" id="invoicesLabel" style="margin-top:24px;display:none">Mes factures</div>
+      <div id="invoicesCard" style="display:none"></div>
 
       <!-- Section "Mon parrainage" deplacee dans le tab Paramètres (version
            plus complete avec tier ladder 15/50/100/500). Eviter la duplication
@@ -1255,13 +1373,209 @@ async function loadSubscription() {
       ` : ''}
     `;
 
-    // Apres avoir resolu le plan, on charge la section credits Coach IA.
-    // Si Free / Anon -> on affiche le state Locked (CTA upgrade).
-    // Si Pro / Elite -> on charge le solde + on rend la card.
+    // Apres avoir resolu le plan, on charge les sections dependantes.
     loadCoachCredits(plan);
+    // A2 : stats globales (toujours visible, meme Free - sunk-cost reinforcement)
+    loadAccountStats();
+    // A1 : factures (uniquement plans payants : pro / elite / lifetime_pro)
+    if (plan === 'pro' || plan === 'elite' || plan === 'team' || plan === 'lifetime_pro') {
+      loadInvoices();
+    }
+    // A3 : founder card (uniquement lifetime_pro)
+    if (isLifetime) {
+      renderFounderCard();
+    }
   } catch(e) {
     card.innerHTML = `<div style="color:var(--text2);font-size:12px">Impossible de charger ton abonnement. <a href="pricing.html" style="color:var(--accent)">Voir les plans</a>.</div>`;
   }
+}
+
+// ══ A2 : Stats globales du compte ════════════════════════════════════════
+// Renforce le sunk-cost (l'user voit ses investissements en demos analysees,
+// son FV Rating moyen, sa progression) -> reduit le churn.
+async function loadAccountStats() {
+  const card  = document.getElementById('accountStatsCard');
+  const label = document.getElementById('accountStatsLabel');
+  if (!card || !label) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const r = await fetch('/api/account-stats', {
+      headers: { Authorization: 'Bearer ' + session.access_token },
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    // Si l'user n'a pas encore de demos analysees, on cache la section
+    // (eviter d'afficher "0 demos" qui demotive).
+    if ((d.demos_total || 0) === 0 && (d.ai_diagnostics || 0) === 0) {
+      card.style.display = 'none';
+      label.style.display = 'none';
+      return;
+    }
+    const deltaCls = d.fv_rating_delta == null ? ''
+                   : d.fv_rating_delta >= 0    ? 'delta-up'
+                   :                              'delta-down';
+    const deltaTxt = d.fv_rating_delta == null ? ''
+                   : (d.fv_rating_delta >= 0 ? '+' : '') + d.fv_rating_delta.toFixed(1) + '% sur 30j';
+    const memberSinceTxt = d.member_since
+      ? new Date(d.member_since).toLocaleDateString('fr-FR', { month:'long', year:'numeric' })
+      : '-';
+    card.className = 'stats-card';
+    card.innerHTML = `
+      <div class="stats-grid">
+        <div class="stats-item">
+          <div class="stats-val accent">${d.demos_total}</div>
+          <div class="stats-label">Démos analysées</div>
+          <div class="stats-trend">${d.demos_last_30d || 0} sur les 30 derniers jours</div>
+        </div>
+        <div class="stats-item">
+          <div class="stats-val ${deltaCls}">${d.fv_rating_avg != null ? d.fv_rating_avg.toFixed(2) : '-'}</div>
+          <div class="stats-label">FV Rating moyen</div>
+          <div class="stats-trend">${deltaTxt || 'pas assez de donnees'}</div>
+        </div>
+        <div class="stats-item">
+          <div class="stats-val">${d.ai_diagnostics || 0}</div>
+          <div class="stats-label">Diagnostics Coach IA</div>
+          <div class="stats-trend">depuis ton inscription</div>
+        </div>
+        <div class="stats-item">
+          <div class="stats-val" style="font-size:14px;font-family:var(--mono);font-weight:700">${memberSinceTxt}</div>
+          <div class="stats-label">Membre depuis</div>
+          <div class="stats-trend">${d.days_active || 0} jour${(d.days_active || 0) > 1 ? 's' : ''} d'historique</div>
+        </div>
+      </div>`;
+    card.style.display = 'block';
+    label.style.display = 'flex';
+  } catch (e) {
+    console.warn('[account-stats] failed:', e.message);
+    card.style.display = 'none';
+    label.style.display = 'none';
+  }
+}
+
+// ══ A1 : Liste des factures (Stripe + LTD purchases unifies) ═════════════
+async function loadInvoices() {
+  const card  = document.getElementById('invoicesCard');
+  const label = document.getElementById('invoicesLabel');
+  if (!card || !label) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const r = await fetch('/api/invoices?limit=10', {
+      headers: { Authorization: 'Bearer ' + session.access_token },
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    const invoices = d.invoices || [];
+    if (invoices.length === 0) {
+      // Plan payant mais zero facture (cas rare : abonnement en trial pur
+      // jamais encore facture). On cache la section.
+      card.style.display = 'none';
+      label.style.display = 'none';
+      return;
+    }
+    const rows = invoices.map(inv => {
+      const date = new Date(inv.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+      const amount = inv.amount_eur.toFixed(2) + ' ' + inv.currency;
+      const statusLabel = { paid:'Payé', refunded:'Remboursé', open:'En cours', failed:'Échec' }[inv.status] || inv.status;
+      const pdfLink = inv.pdf_url
+        ? `<a href="${inv.pdf_url}" target="_blank" rel="noopener" class="invoices-pdf-link" title="Télécharger PDF">
+             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+             PDF
+           </a>`
+        : inv.source === 'lifetime'
+          ? '<span style="color:var(--text3);font-size:10px">Reçu par email</span>'
+          : '<span style="color:var(--text3)">-</span>';
+      return `<tr>
+        <td>${date}</td>
+        <td><strong style="color:var(--text)">${escapeHtml(inv.plan)}</strong></td>
+        <td>${amount}</td>
+        <td><span class="invoices-status ${inv.status}">${statusLabel}</span></td>
+        <td>${pdfLink}</td>
+      </tr>`;
+    }).join('');
+    card.className = 'invoices-card';
+    card.innerHTML = `
+      <div class="invoices-head">
+        <div class="invoices-total">Total paye sur ton compte <strong>${(d.total_paid_eur || 0).toFixed(2)} ${d.currency || 'EUR'}</strong></div>
+        <a href="#" class="invoices-portal-link" onclick="openStripePortal();return false">Voir l'historique complet sur Stripe →</a>
+      </div>
+      <table class="invoices-table">
+        <thead>
+          <tr><th>Date</th><th>Plan</th><th>Montant</th><th>Statut</th><th>Facture</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    card.style.display = 'block';
+    label.style.display = 'flex';
+  } catch (e) {
+    console.warn('[invoices] failed:', e.message);
+    card.style.display = 'none';
+    label.style.display = 'none';
+  }
+}
+
+// ══ A3 : Founder benefits card (lifetime_pro only) ═══════════════════════
+async function renderFounderCard() {
+  const card = document.getElementById('founderCard');
+  if (!card) return;
+  // Recupere la position dans les 50 places (id de la row lifetime_purchases).
+  // Best-effort : si pas dispo, on omet la mention de place.
+  let placeNumber = null;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      const { data: ltd } = await sb
+        .from('lifetime_purchases')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('status', 'completed')
+        .order('purchased_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (ltd?.id) placeNumber = ltd.id;
+    }
+  } catch {}
+  card.className = 'founder-card';
+  card.innerHTML = `
+    <div class="founder-card-h">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="url(#fgrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <defs><linearGradient id="fgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b8ff57"/><stop offset="1" stop-color="#f5c842"/></linearGradient></defs>
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+      Tu fais partie des founders FragValue${placeNumber ? ` &middot; place #${placeNumber}/50` : ''}
+    </div>
+    <div class="founder-card-sub">
+      Lifetime Deal limited a <strong style="color:var(--text)">50 places</strong> lance en mai 2026. Ton acces Pro est garanti a vie + tu beneficies des features founders exclusives ci-dessous, plus jamais facturees.
+    </div>
+    <div class="founder-benefits">
+      <div class="founder-benefit">
+        <div class="founder-benefit-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+        </div>
+        <div class="founder-benefit-text"><strong>Channel #founders</strong>50 founders only · roadmap input direct au founder</div>
+      </div>
+      <div class="founder-benefit">
+        <div class="founder-benefit-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="founder-benefit-text"><strong>Vote x2 roadmap</strong>Tes votes sur les features comptent double dans le shipping order</div>
+      </div>
+      <div class="founder-benefit">
+        <div class="founder-benefit-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="founder-benefit-text"><strong>Support prioritaire &lt; 2h</strong>Reponses garanties en moins de 2h ouvrees vs 24h Pro standard</div>
+      </div>
+      <div class="founder-benefit">
+        <div class="founder-benefit-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div class="founder-benefit-text"><strong>Early access features</strong>Toutes les nouvelles features Pro debloquees automatiquement, sans surcout</div>
+      </div>
+    </div>
+  `;
+  card.style.display = 'block';
 }
 
 // ══ COACH IA CREDITS (Phase 2) ════════════════════════════════════════════
