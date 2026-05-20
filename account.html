@@ -111,6 +111,9 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     .sub-plan-badge.free{background:rgba(122,128,128,.12);color:var(--text2);border:1px solid var(--border2)}
     .sub-plan-badge.pro{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000}
     .sub-plan-badge.elite{background:linear-gradient(135deg,var(--gold),#d4a52a);color:#000}
+    /* Lifetime Pro (founders 50 places launch) : gradient lime + gold mix
+       pour signaler la singularite du plan vs Pro/Elite recurrent. */
+    .sub-plan-badge.lifetime{background:linear-gradient(135deg,var(--accent) 0%,var(--gold) 100%);color:#000;box-shadow:0 0 0 1px rgba(245,200,66,.3) inset,0 4px 14px -2px rgba(245,200,66,.25)}
     .sub-plan-meta{font-size:12px;color:var(--text2)}
     .sub-plan-meta strong{color:var(--text);font-family:var(--mono)}
     .sub-actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -260,7 +263,10 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
   <main class="main">
     <div class="page-header">
       <h1 class="page-title">Mon espace</h1>
-      <div class="page-sub">Gère ton abonnement, tes préférences et la sécurité de ton compte</div>
+      <!-- Sous-titre dynamique mis a jour par setTab() pour donner le contexte
+           de chaque tab. Ne pas hardcoder "abonnement+prefs+securite" si on
+           est sur le tab Feedback (par ex). -->
+      <div class="page-sub" id="pageSub">Plan, parrainage, credits Coach IA, communauté Discord</div>
     </div>
 
     <!-- FIRST DEMO BANNER : affiche si l'user n'a jamais analyse de demo.
@@ -333,15 +339,24 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <!-- ═════ MES CREDITS COACH IA (Phase 2 packs Stripe one-shot) ═════ -->
       <div class="sec-label" id="coachCreditsLabel" style="margin-top:32px;display:none">Mes crédits Coach IA</div>
       <div id="coachCreditsCard" class="coach-credits-card" style="display:none">
-        <div class="cc-head">
+        <!-- Header redesign : limite quotidienne INCLUSE bien visible
+             a gauche, credits BONUS (au-dela du quota) a droite avec CTA achat.
+             Avant : seul le solde de credits etait montre -> users Free/Pro
+             confus se demandaient "pourquoi acheter des credits si j'ai 20 msg/jour ?". -->
+        <div class="cc-head" style="display:grid;grid-template-columns:1fr 1fr auto;gap:18px;align-items:center">
+          <div class="cc-balance-wrap" style="border-right:1px solid var(--border);padding-right:18px">
+            <div class="cc-balance-label">Quota inclus / jour</div>
+            <div class="cc-balance-value" id="ccDailyQuota" style="color:var(--text)">-</div>
+            <div class="cc-balance-sub" id="ccDailyUsed" style="font-size:11px">Reset minuit · plan <span id="ccPlan">-</span></div>
+          </div>
           <div class="cc-balance-wrap">
-            <div class="cc-balance-label">Solde actuel</div>
+            <div class="cc-balance-label">Crédits bonus</div>
             <div class="cc-balance-value" id="ccBalance">0 <span>credits</span></div>
             <div class="cc-balance-sub" id="ccExpiry">-</div>
           </div>
           <button type="button" class="cc-buy-btn" onclick="openCreditsModal()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Acheter des crédits
+            Acheter
           </button>
         </div>
         <div class="cc-info">
@@ -354,11 +369,11 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
             <span class="cc-info-value">90 jours / achat</span>
           </div>
           <div class="cc-info-item">
-            <span class="cc-info-label">Plan actuel</span>
-            <span class="cc-info-value" id="ccPlan">-</span>
+            <span class="cc-info-label">Tarif</span>
+            <span class="cc-info-value">50 = 4 EUR · 200 = 12 EUR</span>
           </div>
         </div>
-        <div class="cc-note">1 crédit = 1 message Coach IA au-delà de ta limite quotidienne (Pro 20/jour, Elite 50/jour). Utilisé seulement quand tu dépasses ton quota.</div>
+        <div class="cc-note">Les crédits bonus s'utilisent <strong>uniquement quand tu depasses ta limite quotidienne incluse</strong>. Validité 90 jours après achat, non-renouvelables.</div>
       </div>
       <!-- La card "locked credits" en doublon avec "Comparaison des plans"
            juste au-dessus a ete retiree. Les users Free voient deja le CTA
@@ -376,8 +391,23 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
             </div>
             <div style="flex:1;min-width:0">
               <div style="font-family:var(--display);font-size:16px;letter-spacing:.02em;margin-bottom:4px">Lie ton compte Discord</div>
-              <div style="font-family:var(--mono);font-size:11.5px;color:var(--text2);line-height:1.6;margin-bottom:14px">
-                Rejoins la community FragValue : demo reviews collectives, lineups, team-finding, et accès channels privés <strong>Pro</strong> / <strong>Elite</strong> automatique selon ton plan.
+              <div style="font-family:var(--mono);font-size:11.5px;color:var(--text2);line-height:1.6;margin-bottom:10px">
+                Rejoins la community FragValue : demo reviews collectives, lineups, team-finding, et channels privies selon ton plan.
+              </div>
+              <!-- Channels accessibles : visibilite explicite ce que chaque plan debloque. -->
+              <div id="discordChannelsList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;margin-bottom:14px;font-family:var(--mono);font-size:10.5px;color:var(--text3)">
+                <div style="padding:7px 10px;background:rgba(122,128,128,.06);border:1px solid var(--border);border-radius:6px">
+                  <strong style="color:var(--text2)">Free</strong> · #general, #demo-reviews
+                </div>
+                <div style="padding:7px 10px;background:rgba(184,255,87,.06);border:1px solid rgba(184,255,87,.2);border-radius:6px">
+                  <strong style="color:var(--accent)">Pro</strong> · #pro-strats, #lineups-db
+                </div>
+                <div style="padding:7px 10px;background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.2);border-radius:6px">
+                  <strong style="color:var(--gold)">Elite</strong> · #elite-team, #anti-strat
+                </div>
+                <div style="padding:7px 10px;background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(245,200,66,.08));border:1px solid rgba(245,200,66,.3);border-radius:6px">
+                  <strong style="background:linear-gradient(135deg,var(--accent),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Lifetime</strong> · #founders (50 places)
+                </div>
               </div>
               <button type="button" class="sub-btn primary" onclick="linkDiscord()" id="linkDiscordBtn" style="background:#5865F2;color:#fff;border:none">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:6px"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
@@ -465,6 +495,14 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
           <label class="toggle"><input type="checkbox" id="notifWeekly"/><span class="toggle-slider"></span></label>
         </div>
         <div class="settings-row">
+          <div class="settings-label">Email · pro twin update mensuel</div>
+          <label class="toggle"><input type="checkbox" id="notifProTwin"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Email · palier parrainage debloque</div>
+          <label class="toggle"><input type="checkbox" id="notifReferralTier"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="settings-row">
           <div class="settings-label">Email · annonces produit</div>
           <label class="toggle"><input type="checkbox" id="notifProduct"/><span class="toggle-slider"></span></label>
         </div>
@@ -524,6 +562,17 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       </div>
 
       <div class="sec-label">Profil Scout</div>
+      <!-- Context-block explicite avant les champs : RGPD-conscious + boost
+           opt-in en montrant le benefice user "etre visible des recruteurs". -->
+      <div style="background:linear-gradient(135deg,rgba(184,255,87,.05),rgba(184,255,87,.01));border:1px solid rgba(184,255,87,.18);border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px">
+        <div style="width:34px;height:34px;border-radius:8px;background:rgba(184,255,87,.15);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-4.35-4.35"/><circle cx="11" cy="11" r="8"/></svg>
+        </div>
+        <div style="flex:1;font-family:var(--mono);font-size:11.5px;color:var(--text2);line-height:1.65">
+          <strong style="color:var(--text);font-family:var(--display);font-size:13px;letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:5px">Pourquoi remplir le profil scout ?</strong>
+          Les recruteurs filtrent par <strong style="color:var(--text)">role + region + age</strong> pour denicher des talents. Plus ton profil est complet, plus tu apparais dans les bonnes recherches. Donnees age/region <strong>non visibles publiquement</strong> - servent uniquement aux filtres recruteur.
+        </div>
+      </div>
       <div class="settings-card scout-card">
         <div class="settings-row scout-row">
           <label class="toggle"><input type="checkbox" id="scoutOptIn"/><span class="toggle-slider"></span></label>
@@ -687,13 +736,21 @@ async function init() {
   if (window.location.search.includes('checkout=success')) {
     // Banner riche dedie post-checkout : reste visible jusqu'au clic et propose
     // un CTA direct vers l'analyse demo. Pousse l'activation apres conversion.
-    showCheckoutSuccessBanner();
+    showCheckoutSuccessBanner('pro');
     // Funnel : conversion reussie (capture client-side, complete celle du webhook serveur)
     if (typeof window.fvTrack === 'function') window.fvTrack('checkout_success');
     // Force re-fetch : le webhook Stripe peut prendre 2-5s pour peupler la DB
     // après le redirect. On retry une fois après 3s pour catch l'update.
     setTimeout(() => { _subLoaded = false; loadSubscription(); }, 3000);
     // Nettoie le query param pour eviter un replay si refresh
+    try { window.history.replaceState(null, '', window.location.pathname); } catch (_) {}
+  }
+  // Variant LTD : query param ?lifetime=success apres /api/lifetime-deal
+  // checkout reussi. Banner specifique founder + CTA Discord #founders.
+  if (window.location.search.includes('lifetime=success')) {
+    showCheckoutSuccessBanner('lifetime');
+    if (typeof window.fvTrack === 'function') window.fvTrack('lifetime_purchase_success');
+    setTimeout(() => { _subLoaded = false; loadSubscription(); }, 3000);
     try { window.history.replaceState(null, '', window.location.pathname); } catch (_) {}
   }
 
@@ -730,17 +787,28 @@ async function init() {
 // Affiche un banner d'activation si l'user n'a jamais analyse de demo.
 // Visible quel que soit le tab actif, pour pousser le "aha moment" de la 1re
 // analyse. Le banner est un lien vers /demo.html?welcome=1.
+// Suppressions intelligentes :
+//   - Pas de banner si on vient d'un checkout reussi (le checkout banner
+//     en haut prend deja toute la visual attention -> pas de double).
+//   - Pas de banner si le compte est moins de 6h (user vient juste de
+//     signup, le welcome email + onboarding ont deja fait le job).
 async function renderFirstDemoBanner(userId) {
+  // Hide si checkout success/lifetime success banner deja affiche
+  const search = window.location.search || '';
+  if (search.includes('checkout=success') || search.includes('lifetime=success')) return;
   try {
-    const { count, error } = await sb
-      .from('demos')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
-    if (error) return;
-    if ((count || 0) === 0) {
-      const el = document.getElementById('firstDemoBanner');
-      if (el) el.style.display = 'flex';
+    const [{ count: demoCount }, { data: profile }] = await Promise.all([
+      sb.from('demos').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+      sb.from('profiles').select('created_at').eq('id', userId).maybeSingle(),
+    ]);
+    if ((demoCount || 0) > 0) return;
+    // Si signup < 6h, on saute (laisse l'onboarding faire le job).
+    if (profile?.created_at) {
+      const ageMs = Date.now() - new Date(profile.created_at).getTime();
+      if (ageMs < 6 * 3600 * 1000) return;
     }
+    const el = document.getElementById('firstDemoBanner');
+    if (el) el.style.display = 'flex';
   } catch (e) {
     console.warn('[FragValue] firstDemoBanner failed:', e.message);
   }
@@ -822,11 +890,22 @@ async function renderProTwinDataStatus(userId) {
 // Locale pour ce panel (utilise par renderProTwinDataStatus)
 const isEN = document.documentElement.lang === 'en' || window.location.pathname.startsWith('/en/');
 
+// Sous-titres contextuels par tab. Refletent ce que l'user va voir
+// concretement (plus parlant qu'un generique "abonnement+settings+securite").
+const TAB_SUBTITLES = {
+  subscription: 'Plan, factures, credits Coach IA, communauté Discord',
+  settings:     'Profil, notifications, parrainage, données scout',
+  security:     'Mot de passe, sessions, remboursement, suppression',
+  feedback:     'Tickets envoyés à l\'équipe (bug, idée, positif, négatif)',
+};
+
 function setTab(tab, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
   if (btn) btn.classList.add('active');
+  const subEl = document.getElementById('pageSub');
+  if (subEl && TAB_SUBTITLES[tab]) subEl.textContent = TAB_SUBTITLES[tab];
   if (tab === 'subscription') loadSubscription();
   if (tab === 'settings')     loadSettings();
   if (tab === 'feedback')     loadFeedbacks();
@@ -842,26 +921,48 @@ function showBanner(text, type) {
 }
 
 // Banner riche affiche apres un checkout Stripe reussi.
-// Contient un CTA "Analyser ma demo Pro" pour pousser l'activation immediate
-// et reste visible 15s (au lieu de 5s du showBanner standard) ou jusqu'au clic.
-function showCheckoutSuccessBanner() {
+// variant = 'pro'      -> CTA "Analyser ma demo Pro" (push activation)
+// variant = 'lifetime' -> CTA "Rejoindre #founders" (push Discord community)
+// Reste visible 15s ou jusqu'au clic.
+function showCheckoutSuccessBanner(variant = 'pro') {
   const existing = document.getElementById('fvCheckoutSuccessBanner');
   if (existing) existing.remove();
 
+  // Config par variant : couleur + label + CTA + destination.
+  const cfg = variant === 'lifetime' ? {
+    gradient: 'linear-gradient(135deg,rgba(245,200,66,.18),rgba(184,255,87,.12))',
+    border:   'rgba(245,200,66,.5)',
+    iconColor:'#f5c842',
+    title:    'Bienvenue founder',
+    sub:      'Acces Pro a vie · Place sur 50 limited · #founders Discord debloque.',
+    ctaHref:  '#discordCard',
+    ctaLabel: 'Rejoindre #founders',
+    ctaBg:    'linear-gradient(135deg,#b8ff57,#f5c842)',
+  } : {
+    gradient: 'linear-gradient(135deg,rgba(184,255,87,.18),rgba(45,212,160,.12))',
+    border:   'rgba(184,255,87,.45)',
+    iconColor:'#b8ff57',
+    title:    'Pro active',
+    sub:      'Analyses illimitees, 2D Replay, Coach IA 20 msg/jour.',
+    ctaHref:  'demo.html',
+    ctaLabel: 'Analyser une demo',
+    ctaBg:    '#b8ff57',
+  };
+
   const wrap = document.createElement('div');
   wrap.id = 'fvCheckoutSuccessBanner';
-  wrap.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:600;background:linear-gradient(135deg,rgba(184,255,87,.18),rgba(45,212,160,.12));border:1px solid rgba(184,255,87,.45);color:var(--text);font-family:var(--mono);font-size:13px;padding:16px 20px;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.4);display:flex;align-items:center;gap:14px;max-width:calc(100% - 40px);flex-wrap:wrap;opacity:0;transition:opacity .3s';
+  wrap.style.cssText = `position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:600;background:${cfg.gradient};border:1px solid ${cfg.border};color:var(--text);font-family:var(--mono);font-size:13px;padding:16px 20px;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.4);display:flex;align-items:center;gap:14px;max-width:calc(100% - 40px);flex-wrap:wrap;opacity:0;transition:opacity .3s`;
   wrap.innerHTML =
     '<div style="display:flex;align-items:center;gap:10px">' +
-      '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b8ff57" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${cfg.iconColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">` +
         '<circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/>' +
       '</svg>' +
       '<div>' +
-        '<div style="font-family:\'Anton\',sans-serif;font-size:14px;letter-spacing:.04em;color:#b8ff57;text-transform:uppercase">Pro active</div>' +
-        '<div style="font-size:11px;color:var(--text2);margin-top:2px">Analyses illimitees, 2D Replay, Coach IA.</div>' +
+        `<div style="font-family:'Anton',sans-serif;font-size:14px;letter-spacing:.04em;color:${cfg.iconColor};text-transform:uppercase">${cfg.title}</div>` +
+        `<div style="font-size:11px;color:var(--text2);margin-top:2px">${cfg.sub}</div>` +
       '</div>' +
     '</div>' +
-    '<a href="demo.html" style="background:#b8ff57;color:#000;padding:9px 18px;border-radius:6px;font-family:\'Space Mono\',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em;white-space:nowrap">Analyser une demo</a>' +
+    `<a href="${cfg.ctaHref}" style="background:${cfg.ctaBg};color:#000;padding:9px 18px;border-radius:6px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.04em;white-space:nowrap">${cfg.ctaLabel}</a>` +
     '<button type="button" onclick="document.getElementById(\'fvCheckoutSuccessBanner\').remove()" aria-label="Fermer" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 8px;font-size:18px;line-height:1">&times;</button>';
 
   document.body.appendChild(wrap);
@@ -1062,8 +1163,17 @@ async function loadSubscription() {
     const res = await fetch('/api/check-subscription', { method: 'POST', headers });
     const d = await res.json();
     const plan = (d.plan || 'free').toLowerCase();
-    const planLabel = plan === 'pro' ? 'Pro' : plan === 'team' || plan === 'elite' ? 'Elite' : 'Free';
-    const planKey = plan === 'team' ? 'elite' : plan;
+    // Plans payants : pro | elite (alias team) | lifetime_pro (one-time payment).
+    // Pour lifetime_pro on affiche un libelle special "Pro · LIFETIME" + badge
+    // gold founder + pas de prochaine facture + pas de bouton resilier.
+    const isLifetime = plan === 'lifetime_pro';
+    const planLabel = isLifetime ? 'Pro · LIFETIME'
+                    : plan === 'pro' ? 'Pro'
+                    : plan === 'team' || plan === 'elite' ? 'Elite'
+                    : 'Free';
+    const planKey = isLifetime ? 'lifetime'
+                  : plan === 'team' ? 'elite'
+                  : plan;
     const nextBilling = d.current_period_end
       ? new Date(d.current_period_end * 1000).toLocaleDateString('fr-FR')
       : null;
@@ -1088,23 +1198,38 @@ async function loadSubscription() {
       ? `Acces ${planLabel} (${grantReasonLabel}) · expire le <strong>${nextBilling}</strong>`
       : null;
 
+    // Meta-line specifique aux differents etats du plan.
+    let metaLine;
+    if (plan === 'free') {
+      metaLine = 'Plan gratuit · Passe Pro pour débloquer les fonctionnalités avancées';
+    } else if (isLifetime) {
+      metaLine = `<span style="color:var(--gold);font-weight:700">FOUNDER · 50 LIMITED</span> · Acces Pro a vie · <strong>Aucune facture future</strong>`;
+    } else if (isGrantTrial) {
+      metaLine = grantMeta;
+    } else {
+      metaLine = `Statut <strong>${status}</strong>${nextBilling ? ` · Prochaine facture <strong>${nextBilling}</strong>` : ''}${cancelAt ? ` · <span style="color:var(--gold)">${cancelAt}</span>` : ''}`;
+    }
+
+    // Action buttons specifiques au plan.
+    let actionsHtml;
+    if (plan === 'free' || isGrantTrial) {
+      actionsHtml = `<a href="pricing.html" class="sub-btn primary">${isGrantTrial ? 'Continuer en Pro' : 'Passer à Pro'}</a>`;
+    } else if (isLifetime) {
+      // Lifetime : pas de "Resilier", pas de "Changer de plan" (one-time payment).
+      // CTA dedie vers le channel founders Discord + lien factures
+      actionsHtml = `<a href="#discordCard" class="sub-btn primary" onclick="document.getElementById('discordCard').scrollIntoView({behavior:'smooth'});return false">Rejoindre #founders</a>`;
+    } else {
+      // Pro / Elite recurrent : full management
+      actionsHtml = `<button class="sub-btn secondary" onclick="openStripePortal()">Gérer mon abonnement</button><a href="pricing.html" class="sub-btn secondary">Changer de plan</a><button class="sub-btn cancel" onclick="openCancelDialog()" style="background:transparent;border:1px solid rgba(255,68,68,.3);color:var(--danger)">Résilier mon abonnement</button>`;
+    }
+
     card.innerHTML = `
       <div class="sub-head">
         <div class="sub-plan">
-          <div class="sub-plan-badge ${planKey}">${planLabel}${isGrantTrial ? ' <span style="font-size:9px;background:rgba(245,200,66,.2);color:var(--gold);padding:2px 6px;border-radius:3px;margin-left:6px">TRIAL</span>' : ''}</div>
-          <div class="sub-plan-meta">
-            ${plan === 'free'
-              ? `Plan gratuit · Passe Pro pour débloquer les fonctionnalités avancées`
-              : isGrantTrial
-                ? grantMeta
-                : `Statut <strong>${status}</strong>${nextBilling ? ` · Prochaine facture <strong>${nextBilling}</strong>` : ''}${cancelAt ? ` · <span style="color:var(--gold)">${cancelAt}</span>` : ''}`}
-          </div>
+          <div class="sub-plan-badge ${planKey}">${planLabel}${isGrantTrial ? ' <span style="font-size:9px;background:rgba(245,200,66,.2);color:var(--gold);padding:2px 6px;border-radius:3px;margin-left:6px">TRIAL</span>' : ''}${isLifetime ? ' <span style="font-size:9px;background:rgba(245,200,66,.25);color:var(--gold);padding:2px 7px;border-radius:3px;margin-left:6px;font-weight:700">FOUNDER</span>' : ''}</div>
+          <div class="sub-plan-meta">${metaLine}</div>
         </div>
-        <div class="sub-actions">
-          ${plan === 'free' || isGrantTrial
-            ? `<a href="pricing.html" class="sub-btn primary">${isGrantTrial ? 'Continuer en Pro' : 'Passer à Pro'}</a>`
-            : `<button class="sub-btn secondary" onclick="openStripePortal()">Gérer mon abonnement</button><a href="pricing.html" class="sub-btn secondary">Changer de plan</a><button class="sub-btn cancel" onclick="openCancelDialog()" style="background:transparent;border:1px solid rgba(255,68,68,.3);color:var(--danger)">Résilier mon abonnement</button>`}
-        </div>
+        <div class="sub-actions">${actionsHtml}</div>
       </div>
       ${plan === 'free' ? `
         <div class="sub-usage">
@@ -1169,13 +1294,16 @@ async function loadCoachCredits(plan) {
     const data = await r.json();
     _coachCreditsCache = data;
 
-    // Render
+    // Render : quota inclus + plan a gauche, credits bonus a droite
+    const dailyQuota = plan === 'elite' ? 50 : 20;  // lifetime_pro = 20 (same as pro)
+    const planDisplay = plan === 'elite' ? 'Elite' : plan === 'lifetime_pro' ? 'Pro Lifetime' : 'Pro';
+    document.getElementById('ccDailyQuota').innerHTML =
+      dailyQuota + ' <span style="font-size:13px;color:var(--text2)">msg</span>';
+    document.getElementById('ccPlan').textContent = planDisplay;
     document.getElementById('ccBalance').innerHTML =
       (data.balance || 0) + ' <span>credits</span>';
     document.getElementById('ccTotalPurchased').textContent =
       data.total_purchased || 0;
-    document.getElementById('ccPlan').textContent =
-      plan === 'elite' ? 'Elite (50 msg/jour inclus)' : 'Pro (20 msg/jour inclus)';
 
     // Date d'expiration
     const expEl = document.getElementById('ccExpiry');
@@ -1194,8 +1322,13 @@ async function loadCoachCredits(plan) {
   } catch (e) {
     console.warn('[coach-credits] load failed:', e.message);
     // Fallback : on affiche au moins la card avec valeurs par defaut
+    const dailyQuota = plan === 'elite' ? 50 : 20;
+    const planDisplay = plan === 'elite' ? 'Elite' : plan === 'lifetime_pro' ? 'Pro Lifetime' : 'Pro';
+    const dq = document.getElementById('ccDailyQuota');
+    if (dq) dq.innerHTML = dailyQuota + ' <span style="font-size:13px;color:var(--text2)">msg</span>';
+    const cp = document.getElementById('ccPlan');
+    if (cp) cp.textContent = planDisplay;
     document.getElementById('ccBalance').innerHTML = '0 <span>credits</span>';
-    document.getElementById('ccPlan').textContent = plan === 'elite' ? 'Elite' : 'Pro';
     document.getElementById('ccExpiry').textContent = 'Erreur de chargement, ressaie plus tard';
     cardEl.style.display = 'block';
   }
@@ -1447,7 +1580,12 @@ async function openCancelDialog() {
     const periodEnd = profile?.current_period_end
       ? new Date(profile.current_period_end).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })
       : 'la fin de la période en cours';
-    const planLabel = (profile?.plan || 'pro').toUpperCase();
+    const planRaw = (profile?.plan || 'pro').toLowerCase();
+    const planLabel = planRaw.toUpperCase();
+    // Save-churn : si l'user est Elite, on lui propose un downgrade vers Pro
+    // (au lieu de cancel complet) en option intermediaire. Economie 16 EUR/mois
+    // pour lui, on garde une revenue de 9 EUR/mois pour nous (vs 0).
+    const isElite = planRaw === 'elite' || planRaw === 'team';
 
     // Click 2 : modale de confirmation
     const existing = document.getElementById('cancelSubModal');
@@ -1458,13 +1596,28 @@ async function openCancelDialog() {
     modal.setAttribute('aria-modal', 'true');
     modal.setAttribute('aria-labelledby', 'cancelSubTitle');
     modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.78);backdrop-filter:blur(4px)';
+    const downgradeBlock = isElite ? `
+        <div style="background:linear-gradient(135deg,rgba(184,255,87,.08),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(184,255,87,.18);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div style="flex:1">
+              <div style="font-family:var(--display);font-size:13px;letter-spacing:.04em;color:var(--accent);text-transform:uppercase;margin-bottom:4px">Tu peux economiser 16 EUR/mois</div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.55;margin-bottom:10px">Passe en <strong style="color:var(--text)">Pro a 9 EUR/mois</strong> (au lieu de 25 EUR Elite) plutot que tout resilier. Tu gardes analyses illimitees + Coach IA 20 msg/jour + 2D Replay. Tu perds uniquement le team dashboard et l'anti-strat.</div>
+              <button type="button" id="cancelSubDowngrade" style="background:var(--accent);color:#000;border:none;padding:10px 18px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer">Plutot downgrader vers Pro</button>
+            </div>
+          </div>
+        </div>
+    ` : '';
     modal.innerHTML = `
-      <div style="position:relative;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:28px 32px;max-width:480px;width:100%">
+      <div style="position:relative;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:28px 32px;max-width:520px;width:100%">
         <button type="button" id="cancelSubClose" aria-label="Fermer" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer">×</button>
         <h2 id="cancelSubTitle" style="font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:10px;letter-spacing:.02em">Résilier ton abonnement ${planLabel} ?</h2>
         <p style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px">
           Tu peux annuler en 1 clic, sans frais. Ton accès reste actif jusqu'à <strong style="color:var(--text)">${periodEnd}</strong>, ensuite tu repasseras automatiquement en plan Free.
         </p>
+        ${downgradeBlock}
         <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:18px;font-family:var(--mono);font-size:11.5px;color:var(--text2);line-height:1.7">
           <strong style="color:var(--text)">Tes données restent intactes :</strong> historique de matchs, demos analysées, FV Rating, axes Coach IA. Tu pourras te réabonner à tout moment.
         </div>
@@ -1480,6 +1633,34 @@ async function openCancelDialog() {
     const cleanup = () => { try { modal.remove(); } catch(_){} };
     document.getElementById('cancelSubClose').onclick = cleanup;
     document.getElementById('cancelSubKeep').onclick = cleanup;
+    // Click handler : downgrade Elite -> Pro (save churn). Redirige vers
+    // /api/stripe-portal qui permet le change-plan, OU vers /pricing.html avec
+    // le toggle Pro mis en avant.
+    const downgradeBtn = document.getElementById('cancelSubDowngrade');
+    if (downgradeBtn) {
+      downgradeBtn.onclick = async () => {
+        if (typeof window.fvTrack === 'function') window.fvTrack('subscription_downgrade_intent', { from: planRaw, to: 'pro' });
+        cleanup();
+        // Le Stripe Portal est la voie de moindre risque pour le change-plan
+        // (Stripe gere proration automatique + email confirmation natif).
+        // Fallback : redirige vers pricing.html avec un hash pour scroller a Pro.
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          const res = await fetch('/api/stripe-portal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          });
+          const data = await res.json();
+          if (data.url) {
+            window.location.href = data.url;
+          } else {
+            window.location.href = '/pricing.html#pro-monthly';
+          }
+        } catch {
+          window.location.href = '/pricing.html#pro-monthly';
+        }
+      };
+    }
     modal.addEventListener('click', (e) => { if (e.target === modal) cleanup(); });
 
     document.getElementById('cancelSubConfirm').onclick = async () => {
@@ -1651,13 +1832,15 @@ async function loadSettings() {
       const notifs = profile.notification_prefs || {};
       document.getElementById('notifMatches').checked = notifs.match_ready !== false;
       document.getElementById('notifWeekly').checked  = notifs.weekly_report !== false;
+      document.getElementById('notifProTwin').checked = notifs.pro_twin_monthly !== false;
+      document.getElementById('notifReferralTier').checked = notifs.referral_tier_reached !== false;
       document.getElementById('notifProduct').checked = notifs.product_news !== false;
       if (profile.locale) document.getElementById('settingsLang').value = profile.locale;
     }
     const extMarker = document.querySelector('[data-fv-ext-installed]');
     document.getElementById('settingsExt').textContent = extMarker ? 'Installée' : 'Non détectée';
 
-    ['notifMatches','notifWeekly','notifProduct'].forEach(id => {
+    ['notifMatches','notifWeekly','notifProTwin','notifReferralTier','notifProduct'].forEach(id => {
       document.getElementById(id).addEventListener('change', saveNotifPrefs);
     });
     document.getElementById('settingsLang').addEventListener('change', saveLocale);
@@ -1859,9 +2042,11 @@ async function saveNotifPrefs(ev) {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return;
   const prefs = {
-    match_ready:  document.getElementById('notifMatches').checked,
-    weekly_report:document.getElementById('notifWeekly').checked,
-    product_news: document.getElementById('notifProduct').checked,
+    match_ready:           document.getElementById('notifMatches').checked,
+    weekly_report:         document.getElementById('notifWeekly').checked,
+    pro_twin_monthly:      document.getElementById('notifProTwin').checked,
+    referral_tier_reached: document.getElementById('notifReferralTier').checked,
+    product_news:          document.getElementById('notifProduct').checked,
   };
   const { error } = await sb.from('profiles').update({ notification_prefs: prefs }).eq('id', session.user.id);
   flashSaveFeedback(ev?.target, error);
