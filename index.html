@@ -299,7 +299,7 @@ nav{
   transition:opacity 1.2s ease;
   mask-image:radial-gradient(ellipse 75% 80% at 65% 50%,black 40%,transparent 90%);
 }
-.hero-radar.ready{ opacity:.22; }
+.hero-radar.ready{ opacity:.42; }
 @media (max-width:900px){ .hero-radar{ display:none; } }
 @media (prefers-reduced-motion: reduce){ .hero-radar{ display:none; } }
 .hero-tag{
@@ -1928,48 +1928,43 @@ async function startCheckout(plan) {
   resize();
   window.addEventListener('resize', () => { resize(); });
 
-  // ── Map paths (Mirage-inspired, normalises 0-1 dans coordonnees canvas) ──
-  // Simplified geometric outline : A site box, B site box, mid corridor,
-  // T spawn, CT spawn. Pas pixel-perfect, juste evocateur.
-  const MAP_LINES = [
-    // Outer perimeter
-    [[0.10,0.15],[0.95,0.15],[0.95,0.85],[0.10,0.85],[0.10,0.15]],
-    // A site (top right zone)
-    [[0.60,0.20],[0.85,0.20],[0.85,0.40],[0.60,0.40],[0.60,0.20]],
-    // B site (top left zone)
-    [[0.20,0.20],[0.42,0.20],[0.42,0.40],[0.20,0.40],[0.20,0.20]],
-    // Mid corridor
-    [[0.42,0.45],[0.60,0.45],[0.60,0.62],[0.42,0.62],[0.42,0.45]],
-    // T spawn (bottom center)
-    [[0.30,0.70],[0.70,0.70],[0.70,0.82],[0.30,0.82],[0.30,0.70]],
-    // CT spawn (top center connector)
-    [[0.45,0.15],[0.58,0.15]],
-    // Ramp lines
-    [[0.30,0.40],[0.30,0.55],[0.42,0.55]],
-    [[0.70,0.40],[0.70,0.55],[0.60,0.55]],
-  ];
+  // ── Charge le radar PNG officiel CS2 (Mirage) en background. Le PNG est
+  // celui utilise par le 2D Replay et heatmap-results, donc 100% authentique.
+  // On le draw avec globalAlpha 0.35 pour qu'il reste subtil derriere le H1.
+  const mapImg = new Image();
+  let mapImgReady = false;
+  mapImg.onload = () => { mapImgReady = true; };
+  mapImg.onerror = () => { console.warn('[hero-radar] map img failed, fallback to lime outline'); };
+  mapImg.src = '/maps/de_mirage_radar_psd.png';
 
-  // ── Player paths : 5 joueurs, chacun a une polyline de waypoints
-  // qu'il parcourt en boucle. T = orange (3 joueurs attaquent A), CT = blue
-  // (2 joueurs defendent A site).
+  // Mirage radar layout (basé sur le PNG officiel CS2) :
+  //   - A site palace : top-left (~0.18, 0.22)
+  //   - Ticket/CT spawn : top-mid-right (~0.55, 0.25)
+  //   - Mid corridor + window : centre (~0.50, 0.45)
+  //   - B apartments : bottom-left (~0.20, 0.65)
+  //   - B site : bottom-center (~0.40, 0.72)
+  //   - T spawn : bottom-right (~0.75, 0.78)
+  //   - Underpass / B short : bottom-mid (~0.30, 0.55)
+  //
+  // Paths recalibres pour matcher le vrai Mirage : T attaque A side.
   const PLAYERS = [
-    // T side (orange) : depart T spawn -> mid -> A long
-    { team:'T', color:'#ff9544', path:[[0.50,0.78],[0.51,0.55],[0.55,0.45],[0.70,0.30],[0.75,0.25]], speed:0.06 },
-    { team:'T', color:'#ff9544', path:[[0.42,0.78],[0.45,0.55],[0.50,0.45],[0.60,0.30],[0.70,0.27]], speed:0.05 },
-    { team:'T', color:'#ff9544', path:[[0.55,0.78],[0.58,0.55],[0.62,0.45],[0.72,0.32],[0.78,0.28]], speed:0.07 },
-    // CT side (cyan) : positions defense A site
-    { team:'CT', color:'#5b9eff', path:[[0.78,0.30],[0.75,0.27],[0.72,0.32],[0.70,0.36]], speed:0.04 },
-    { team:'CT', color:'#5b9eff', path:[[0.68,0.25],[0.74,0.22],[0.80,0.25],[0.78,0.28]], speed:0.03 },
+    // T side (orange) : T spawn -> mid -> top mid -> A ramp -> A site
+    { team:'T', color:'#ff9544', path:[[0.75,0.78],[0.65,0.65],[0.55,0.50],[0.40,0.35],[0.25,0.25]], speed:0.06 },
+    { team:'T', color:'#ff9544', path:[[0.72,0.80],[0.62,0.68],[0.52,0.52],[0.38,0.38],[0.22,0.28]], speed:0.055 },
+    { team:'T', color:'#ff9544', path:[[0.78,0.76],[0.68,0.62],[0.58,0.48],[0.42,0.32],[0.28,0.22]], speed:0.065 },
+    // CT side (cyan) : defense rotation A palace + jungle
+    { team:'CT', color:'#5b9eff', path:[[0.30,0.22],[0.25,0.27],[0.22,0.32],[0.20,0.28]], speed:0.04 },
+    { team:'CT', color:'#5b9eff', path:[[0.18,0.20],[0.22,0.18],[0.28,0.22],[0.30,0.28]], speed:0.035 },
   ];
 
   // ── Events scriptes (timing en seconds du loop 16s)
-  // Smoke = expanding circle (~3s lifespan), Kill = X flash (~1.5s)
+  // Positions recalibrees pour Mirage : smokes sur jungle/CT, kills sur A site
   const EVENTS = [
-    { t:2.0,  type:'smoke', pos:[0.66,0.32], dur:3.0 },
-    { t:5.5,  type:'kill',  pos:[0.72,0.28], dur:1.5 },
-    { t:8.0,  type:'smoke', pos:[0.48,0.50], dur:3.0 },
-    { t:11.0, type:'kill',  pos:[0.75,0.30], dur:1.5 },
-    { t:13.5, type:'kill',  pos:[0.62,0.45], dur:1.5 },
+    { t:2.0,  type:'smoke', pos:[0.32,0.25], dur:3.0 },  // smoke CT palace
+    { t:5.5,  type:'kill',  pos:[0.26,0.25], dur:1.5 },  // kill A site
+    { t:8.0,  type:'smoke', pos:[0.45,0.40], dur:3.0 },  // smoke jungle
+    { t:11.0, type:'kill',  pos:[0.22,0.22], dur:1.5 },  // kill A palace
+    { t:13.5, type:'kill',  pos:[0.50,0.45], dur:1.5 },  // kill mid
   ];
 
   // ── Round counter scripte : R12 → R13 → R14 sur les 16s du loop
@@ -2014,26 +2009,39 @@ async function startCheckout(plan) {
 
     ctx.clearRect(0, 0, W, H);
 
-    // 1. Map outline (lime lines, opacity 0.45)
-    ctx.strokeStyle = 'rgba(184,255,87,0.45)';
-    ctx.lineWidth = 1;
-    for (const line of MAP_LINES) {
-      ctx.beginPath();
-      for (let i = 0; i < line.length; i++) {
-        const x = line[i][0] * W;
-        const y = line[i][1] * H;
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
+    // 1. Radar PNG officiel CS2 (Mirage). Draw centre, aspect ratio
+    // preserve. globalAlpha bas pour ne pas dominer le H1 + slight
+    // sepia/lime tint via overlay multiply pour matcher la brand.
+    if (mapImgReady) {
+      const imgAR = mapImg.width / mapImg.height;  // ~1 (carre)
+      const drawH = H * 0.92;
+      const drawW = drawH * imgAR;
+      const drawX = (W - drawW) / 2;
+      const drawY = (H - drawH) / 2;
+      ctx.save();
+      ctx.globalAlpha = 0.38;
+      ctx.drawImage(mapImg, drawX, drawY, drawW, drawH);
+      // Overlay lime accent en multiply pour matcher la brand (tres subtil)
+      ctx.globalCompositeOperation = 'overlay';
+      ctx.fillStyle = 'rgba(184,255,87,0.08)';
+      ctx.fillRect(drawX, drawY, drawW, drawH);
+      ctx.restore();
+    } else {
+      // Fallback geometrique le temps que l'image charge (premier paint)
+      ctx.strokeStyle = 'rgba(184,255,87,0.25)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(W * 0.15, H * 0.15, W * 0.7, H * 0.7);
     }
 
-    // 2. A/B site labels (subtle text)
-    ctx.fillStyle = 'rgba(184,255,87,0.4)';
-    ctx.font = '10px "Space Mono", monospace';
+    // 2. A/B site labels (sur les vraies positions Mirage)
+    ctx.fillStyle = 'rgba(184,255,87,0.55)';
+    ctx.font = 'bold 11px "Space Mono", monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('A', 0.725 * W, 0.32 * H);
-    ctx.fillText('B', 0.31 * W, 0.32 * H);
-    ctx.fillText('MID', 0.51 * W, 0.55 * H);
+    ctx.fillText('A', 0.22 * W, 0.22 * H);
+    ctx.fillText('B', 0.38 * W, 0.72 * H);
+    ctx.font = '9px "Space Mono", monospace';
+    ctx.fillStyle = 'rgba(184,255,87,0.4)';
+    ctx.fillText('MID', 0.48 * W, 0.48 * H);
 
     // 3. Radar sweep : ligne lime qui balaye depuis le centre (rotates)
     const sweepCenter = [0.51 * W, 0.50 * H];
