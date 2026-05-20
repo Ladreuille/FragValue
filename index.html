@@ -288,6 +288,20 @@ nav{
   background:radial-gradient(ellipse,rgba(184,255,87,.04) 0%,transparent 70%);
   pointer-events:none
 }
+/* Tactical radar canvas : positionne en background, opacity faible pour
+   ne pas dominer le H1. Hidden sur mobile (perf + visual noise sur
+   petit ecran ou la map est illisible). Hidden si reduced-motion. */
+.hero-radar{
+  position:absolute;top:0;right:0;
+  width:60%;height:100%;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 1.2s ease;
+  mask-image:radial-gradient(ellipse 75% 80% at 65% 50%,black 40%,transparent 90%);
+}
+.hero-radar.ready{ opacity:.22; }
+@media (max-width:900px){ .hero-radar{ display:none; } }
+@media (prefers-reduced-motion: reduce){ .hero-radar{ display:none; } }
 .hero-tag{
   font-size:11px;letter-spacing:.16em;text-transform:uppercase;
   color:var(--accent);border:1px solid rgba(184,255,87,.2);
@@ -1008,6 +1022,11 @@ footer{
 <section class="hero">
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
+  <!-- ════════ Tactical CS2 radar background ════════
+       Canvas 2D anime : mini-Mirage + 5 player dots + smoke expansions
+       + kill markers + radar sweep. Loop 15s. Subtle opacity 0.2.
+       Disabled on mobile (perf) + reduced-motion (accessibility). -->
+  <canvas class="hero-radar" id="heroRadar" aria-hidden="true"></canvas>
   <div class="hero-tag" style="background:linear-gradient(135deg,rgba(184,255,87,.15) 0%,rgba(184,255,87,.05) 100%);border-color:rgba(184,255,87,.4);color:var(--accent);display:inline-flex;align-items:center;gap:6px">
     <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
     Auto-sync FACEIT · LIVE depuis mai 2026
@@ -1874,6 +1893,241 @@ async function startCheckout(plan) {
     setTimeout(() => banner.remove(), 5000);
   }
 }
+</script>
+
+<!-- ════════ Tactical CS2 Radar Background (Hero) ════════
+     Canvas 2D anime qui simule un match CS2 en mini-radar :
+     - Map outline geometrique (Mirage-inspired)
+     - 5 player dots (3 T orange, 2 CT bleus) sur paths scriptes
+     - 2 smoke grenades qui se deploient (cercles expansifs lime)
+     - Kill markers qui flashent (X) et fade out
+     - Radar sweep (ligne qui balaye depuis le centre)
+     - Round counter en coin haut-droit
+     Loop ~16s. DPI-aware (retina ready). RAF-throttled. Pause si tab
+     hidden (visibility API). -->
+<script>
+(function() {
+  'use strict';
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const cv = document.getElementById('heroRadar');
+  if (!cv) return;
+  // Skip mobile (CSS hide aussi, double check ici pour eviter le boot)
+  if (window.innerWidth < 900) return;
+
+  const ctx = cv.getContext('2d');
+  let W = 0, H = 0, dpr = 1;
+
+  function resize() {
+    const rect = cv.getBoundingClientRect();
+    dpr = window.devicePixelRatio || 1;
+    W = rect.width; H = rect.height;
+    cv.width = W * dpr;
+    cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', () => { resize(); });
+
+  // ── Map paths (Mirage-inspired, normalises 0-1 dans coordonnees canvas) ──
+  // Simplified geometric outline : A site box, B site box, mid corridor,
+  // T spawn, CT spawn. Pas pixel-perfect, juste evocateur.
+  const MAP_LINES = [
+    // Outer perimeter
+    [[0.10,0.15],[0.95,0.15],[0.95,0.85],[0.10,0.85],[0.10,0.15]],
+    // A site (top right zone)
+    [[0.60,0.20],[0.85,0.20],[0.85,0.40],[0.60,0.40],[0.60,0.20]],
+    // B site (top left zone)
+    [[0.20,0.20],[0.42,0.20],[0.42,0.40],[0.20,0.40],[0.20,0.20]],
+    // Mid corridor
+    [[0.42,0.45],[0.60,0.45],[0.60,0.62],[0.42,0.62],[0.42,0.45]],
+    // T spawn (bottom center)
+    [[0.30,0.70],[0.70,0.70],[0.70,0.82],[0.30,0.82],[0.30,0.70]],
+    // CT spawn (top center connector)
+    [[0.45,0.15],[0.58,0.15]],
+    // Ramp lines
+    [[0.30,0.40],[0.30,0.55],[0.42,0.55]],
+    [[0.70,0.40],[0.70,0.55],[0.60,0.55]],
+  ];
+
+  // ── Player paths : 5 joueurs, chacun a une polyline de waypoints
+  // qu'il parcourt en boucle. T = orange (3 joueurs attaquent A), CT = blue
+  // (2 joueurs defendent A site).
+  const PLAYERS = [
+    // T side (orange) : depart T spawn -> mid -> A long
+    { team:'T', color:'#ff9544', path:[[0.50,0.78],[0.51,0.55],[0.55,0.45],[0.70,0.30],[0.75,0.25]], speed:0.06 },
+    { team:'T', color:'#ff9544', path:[[0.42,0.78],[0.45,0.55],[0.50,0.45],[0.60,0.30],[0.70,0.27]], speed:0.05 },
+    { team:'T', color:'#ff9544', path:[[0.55,0.78],[0.58,0.55],[0.62,0.45],[0.72,0.32],[0.78,0.28]], speed:0.07 },
+    // CT side (cyan) : positions defense A site
+    { team:'CT', color:'#5b9eff', path:[[0.78,0.30],[0.75,0.27],[0.72,0.32],[0.70,0.36]], speed:0.04 },
+    { team:'CT', color:'#5b9eff', path:[[0.68,0.25],[0.74,0.22],[0.80,0.25],[0.78,0.28]], speed:0.03 },
+  ];
+
+  // ── Events scriptes (timing en seconds du loop 16s)
+  // Smoke = expanding circle (~3s lifespan), Kill = X flash (~1.5s)
+  const EVENTS = [
+    { t:2.0,  type:'smoke', pos:[0.66,0.32], dur:3.0 },
+    { t:5.5,  type:'kill',  pos:[0.72,0.28], dur:1.5 },
+    { t:8.0,  type:'smoke', pos:[0.48,0.50], dur:3.0 },
+    { t:11.0, type:'kill',  pos:[0.75,0.30], dur:1.5 },
+    { t:13.5, type:'kill',  pos:[0.62,0.45], dur:1.5 },
+  ];
+
+  // ── Round counter scripte : R12 → R13 → R14 sur les 16s du loop
+  const ROUND_TIMELINE = [
+    { t:0.0,  r:12, score:'7-5' },
+    { t:6.0,  r:13, score:'8-5' },
+    { t:11.5, r:14, score:'8-6' },
+  ];
+
+  // ── Helpers ─────────────────────────────────────────────────────────
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function lerpPos(p1, p2, t) { return [lerp(p1[0],p2[0],t), lerp(p1[1],p2[1],t)]; }
+
+  // Player position along its path at normalized progress (0-1 loop)
+  function playerPos(player, progress) {
+    const segments = player.path.length - 1;
+    const totalLen = segments;
+    const pos = (progress % 1) * totalLen;
+    const seg = Math.floor(pos);
+    const frac = pos - seg;
+    return lerpPos(player.path[seg], player.path[Math.min(seg+1, segments)], frac);
+  }
+
+  // Currentround info from timeline
+  function currentRound(t) {
+    let r = ROUND_TIMELINE[0];
+    for (const x of ROUND_TIMELINE) { if (t >= x.t) r = x; }
+    return r;
+  }
+
+  // ── Render frame ────────────────────────────────────────────────────
+  let startTime = performance.now();
+  const LOOP_MS = 16000;
+  let visible = true;
+  document.addEventListener('visibilitychange', () => { visible = !document.hidden; if (visible) startTime = performance.now(); });
+
+  function render(now) {
+    if (!visible) { requestAnimationFrame(render); return; }
+    const elapsedMs = (now - startTime) % LOOP_MS;
+    const t = elapsedMs / 1000;  // seconds in loop
+    const progress = elapsedMs / LOOP_MS;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // 1. Map outline (lime lines, opacity 0.45)
+    ctx.strokeStyle = 'rgba(184,255,87,0.45)';
+    ctx.lineWidth = 1;
+    for (const line of MAP_LINES) {
+      ctx.beginPath();
+      for (let i = 0; i < line.length; i++) {
+        const x = line[i][0] * W;
+        const y = line[i][1] * H;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // 2. A/B site labels (subtle text)
+    ctx.fillStyle = 'rgba(184,255,87,0.4)';
+    ctx.font = '10px "Space Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('A', 0.725 * W, 0.32 * H);
+    ctx.fillText('B', 0.31 * W, 0.32 * H);
+    ctx.fillText('MID', 0.51 * W, 0.55 * H);
+
+    // 3. Radar sweep : ligne lime qui balaye depuis le centre (rotates)
+    const sweepCenter = [0.51 * W, 0.50 * H];
+    const sweepAngle = (elapsedMs / LOOP_MS) * Math.PI * 4;  // 2 full rotations per loop
+    const sweepRadius = Math.max(W, H) * 0.6;
+    const sweepGrad = ctx.createConicGradient
+      ? ctx.createConicGradient(sweepAngle, sweepCenter[0], sweepCenter[1])
+      : null;
+    if (sweepGrad) {
+      sweepGrad.addColorStop(0, 'rgba(184,255,87,0.18)');
+      sweepGrad.addColorStop(0.05, 'rgba(184,255,87,0)');
+      sweepGrad.addColorStop(1, 'rgba(184,255,87,0)');
+      ctx.fillStyle = sweepGrad;
+      ctx.beginPath();
+      ctx.arc(sweepCenter[0], sweepCenter[1], sweepRadius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 4. Smoke events : cercles qui s'expandent
+    for (const ev of EVENTS) {
+      if (ev.type !== 'smoke') continue;
+      const localT = t - ev.t;
+      if (localT < 0 || localT > ev.dur) continue;
+      const k = localT / ev.dur;  // 0 -> 1
+      const radius = lerp(4, 28, k);
+      const alpha = lerp(0.6, 0, k);
+      ctx.fillStyle = `rgba(220,230,235,${alpha * 0.4})`;
+      ctx.strokeStyle = `rgba(220,230,235,${alpha})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(ev.pos[0] * W, ev.pos[1] * H, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // 5. Player dots (5 joueurs, T orange + CT cyan)
+    for (const p of PLAYERS) {
+      const playerProg = (progress * p.speed * 10) % 1;
+      const [px, py] = playerPos(p, playerProg);
+      const x = px * W, y = py * H;
+      // Halo glow
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, 12);
+      grd.addColorStop(0, p.color + 'cc');
+      grd.addColorStop(1, p.color + '00');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(x, y, 12, 0, Math.PI * 2);
+      ctx.fill();
+      // Core dot
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 6. Kill markers : X flash + fade out
+    for (const ev of EVENTS) {
+      if (ev.type !== 'kill') continue;
+      const localT = t - ev.t;
+      if (localT < 0 || localT > ev.dur) continue;
+      const k = localT / ev.dur;
+      const alpha = 1 - k;
+      const size = lerp(5, 12, k);
+      ctx.strokeStyle = `rgba(255,107,107,${alpha})`;
+      ctx.lineWidth = 2;
+      const x = ev.pos[0] * W, y = ev.pos[1] * H;
+      ctx.beginPath();
+      ctx.moveTo(x - size, y - size); ctx.lineTo(x + size, y + size);
+      ctx.moveTo(x + size, y - size); ctx.lineTo(x - size, y + size);
+      ctx.stroke();
+    }
+
+    // 7. Round counter en coin haut-droit
+    const round = currentRound(t);
+    ctx.fillStyle = 'rgba(184,255,87,0.65)';
+    ctx.font = 'bold 11px "Space Mono", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(`R${round.r} · ${round.score}`, W * 0.92, H * 0.18);
+    // Subtle "LIVE" indicator with dot
+    ctx.fillStyle = 'rgba(184,255,87,0.4)';
+    ctx.font = '9px "Space Mono", monospace';
+    ctx.fillText('● TACTICAL VIEW', W * 0.92, H * 0.215);
+
+    requestAnimationFrame(render);
+  }
+
+  // Fade-in du canvas une fois pret (evite flash blanc au boot)
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      cv.classList.add('ready');
+      requestAnimationFrame(render);
+    });
+  });
+})();
 </script>
 
 <!-- ════════ Motion design : Intersection Observer + count-up ════════ -->
