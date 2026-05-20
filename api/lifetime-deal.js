@@ -11,15 +11,23 @@
 //   3. Email lifetimeDealPurchased au user
 //
 // Anti-abuse :
-//   - Hard cap 50 ventes
-//   - 1 LTD per user (UNIQUE index sur user_id + status IN pending/completed)
+//   - Hard cap 50 ventes (seulement les rows COMPLETED comptent dans le compteur)
+//   - 1 LTD per user (UNIQUE par status='completed'; un user peut retry apres abandon)
 //   - Auth required (pas de guest LTD : on veut savoir qui est l'early adopter)
+//
+// Comportement du compteur :
+//   - GET retourne sold = count(status='completed')   -> reflete les VRAIES ventes
+//   - POST seat check = count(completed) + count(pending recent 60min)
+//     -> bloque seulement si capacite reellement saturee (sessions Stripe actives)
+//   - Si user clique "Reserver" puis revient sans payer, son row pending reste
+//     en DB mais N'EST PAS compte dans le compteur public au-dela de 60 min.
 
 import { createClient } from '@supabase/supabase-js';
 
 const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-value(-[a-z0-9-]+)?\.vercel\.app)$/;
 const LTD_TOTAL_SEATS = 50;
 const LTD_PRICE_CENTS = 9900;  // 99 EUR
+const PENDING_GRACE_MINUTES = 60;  // window pendant lequel un pending compte dans le seat-check
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
@@ -37,13 +45,18 @@ export default async function handler(req, res) {
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
   // ── GET : counter status (public, no auth required) ──────────────────
+  // BUG FIX : on ne compte QUE les `completed` ici. Avant on comptait aussi
+  // les `pending` -> un user qui cliquait "Reserver" puis revenait sans
+  // payer faisait quand meme decrementer le compteur public (vu sur la
+  // banner /pricing.html#ltd). Maintenant le compteur reflete les vraies
+  // ventes uniquement.
   if (req.method === 'GET') {
     res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=30');
     try {
       const { count, error } = await supabase
         .from('lifetime_purchases')
         .select('id', { count: 'exact', head: true })
-        .in('status', ['pending', 'completed']);
+        .eq('status', 'completed');
       if (error) throw error;
       const sold = count || 0;
       const available = Math.max(0, LTD_TOTAL_SEATS - sold);
@@ -70,28 +83,48 @@ export default async function handler(req, res) {
       const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
       if (authErr || !user) return res.status(401).json({ error: 'Token invalide' });
 
-      // Check : l'user a-t-il deja un LTD pending ou completed ?
-      const { data: existing } = await supabase
+      // Check 1 : l'user a-t-il deja un LTD COMPLETE (=paye) ?
+      // On ne bloque PLUS sur pending : sinon un user qui a clique puis
+      // abandonne ne pourrait plus retry. On bloque uniquement si deja paye.
+      const { data: alreadyPaid } = await supabase
         .from('lifetime_purchases')
-        .select('id, status')
+        .select('id')
         .eq('user_id', user.id)
-        .in('status', ['pending', 'completed'])
+        .eq('status', 'completed')
         .maybeSingle();
-      if (existing) {
+      if (alreadyPaid) {
         return res.status(409).json({
-          error: 'Tu as deja un Lifetime Deal en cours ou complete',
-          status: existing.status,
+          error: 'Tu as deja un Lifetime Deal complete sur ce compte',
+          status: 'completed',
         });
       }
 
-      // Check : reste-t-il des places ?
-      const { count: sold } = await supabase
-        .from('lifetime_purchases')
-        .select('id', { count: 'exact', head: true })
-        .in('status', ['pending', 'completed']);
-      if ((sold || 0) >= LTD_TOTAL_SEATS) {
+      // Check 2 : reste-t-il des places ?
+      // On compte les `completed` + les `pending` recents (60 min) pour
+      // anti-oversold pendant un surge launch (sessions Stripe actives).
+      // Les pending plus vieux que 60 min sont consideres abandonnes.
+      const graceCutoff = new Date(Date.now() - PENDING_GRACE_MINUTES * 60 * 1000).toISOString();
+      const [{ count: soldCompleted }, { count: soldRecentPending }] = await Promise.all([
+        supabase.from('lifetime_purchases')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'completed'),
+        supabase.from('lifetime_purchases')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending')
+          .gte('purchased_at', graceCutoff),
+      ]);
+      const seatsTaken = (soldCompleted || 0) + (soldRecentPending || 0);
+      if (seatsTaken >= LTD_TOTAL_SEATS) {
         return res.status(410).json({ error: 'Lifetime Deal complet (50/50 places vendues)', soldOut: true });
       }
+
+      // Cleanup : si l'user a un pending non-paye qui traine, on le marque
+      // 'expired' AVANT de creer le nouveau. Evite d'accumuler des rows
+      // pending fantomes par user.
+      await supabase.from('lifetime_purchases')
+        .update({ status: 'expired' })
+        .eq('user_id', user.id)
+        .eq('status', 'pending');
 
       // Stripe Checkout one-time payment
       const Stripe = (await import('stripe')).default;
