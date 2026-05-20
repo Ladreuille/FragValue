@@ -415,7 +415,13 @@ section{padding:80px 80px;position:relative;z-index:1}
      via clip-path sur leur propre element, voir plus bas. */
   overflow:visible;
   isolation:isolate;
-  will-change:transform
+  will-change:transform;
+  /* Flex column + margin-top:auto sur .pricing-btn -> aligne les 3 CTA
+     en bas des cards meme si les features ont des hauteurs differentes.
+     La grille parent fait deja align-items:stretch (default grid),
+     donc les 3 cards ont la meme hauteur -> les boutons s'alignent. */
+  display:flex;
+  flex-direction:column
 }
 .pricing-card > *{position:relative;z-index:2}
 .pricing-card:hover{border-color:var(--border2);transform:translateY(-4px)}
@@ -561,7 +567,11 @@ section{padding:80px 80px;position:relative;z-index:1}
   font-family:var(--mono);font-size:12px;font-weight:700;
   text-decoration:none;letter-spacing:.06em;
   transition:all .15s;border:1px solid var(--border2);
-  color:var(--text2);cursor:pointer;background:none
+  color:var(--text2);cursor:pointer;background:none;
+  /* Pousse le CTA en bas de la card (parent flex column).
+     Combine avec align-items:stretch du grid -> les 3 cards ont la meme
+     hauteur, donc les 3 boutons s'alignent sur la meme baseline. */
+  margin-top:auto
 }
 .pricing-btn:hover{border-color:var(--text3);color:var(--text)}
 .pricing-btn.featured{
