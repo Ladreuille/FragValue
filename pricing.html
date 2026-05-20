@@ -753,16 +753,21 @@ section{padding:80px 80px;position:relative;z-index:1}
   .ltd-card-glow,.ltd-pulse-dot{animation:none}
 }
 
-/* Trial badge "7 jours gratuits" sur Pro card (top-right) */
+/* Trial pill "7 jours gratuits" sur Pro card.
+   Ancien : badge flottant top-right qui collait avec le badge "LE PLUS
+   POPULAIRE" centre top -> chevauchement visuel.
+   Nouveau : chip inline integre DANS la card, juste sous le bloc prix.
+   Ne peut plus collisionner avec le badge centre du haut. */
 .trial-badge{
-  position:absolute;top:-12px;right:18px;z-index:2;
-  display:inline-flex;align-items:center;gap:5px;
+  display:inline-flex;align-items:center;gap:6px;
+  margin:6px 0 18px;
   background:linear-gradient(135deg,var(--accent),var(--accent2));
-  color:#000;padding:5px 12px;border-radius:40px;
-  font-family:var(--mono);font-size:9.5px;font-weight:700;
+  color:#000;padding:6px 12px;border-radius:40px;
+  font-family:var(--mono);font-size:10px;font-weight:700;
   letter-spacing:.1em;text-transform:uppercase;
   box-shadow:0 4px 16px rgba(184,255,87,.35);
   animation:trialBadgePulse 2.4s ease-in-out infinite;
+  width:fit-content;
 }
 @keyframes trialBadgePulse{
   0%,100% { transform:scale(1); box-shadow:0 4px 16px rgba(184,255,87,.35); }
@@ -1160,15 +1165,15 @@ footer{
     <div class="pricing-card featured" data-plan="pro">
       <div class="pricing-card-aura" aria-hidden="true"></div>
       <div class="pricing-badge">LE PLUS POPULAIRE</div>
+      <div class="pricing-tag pro">Progresser</div>
+      <div class="pricing-name">Pro</div>
+      <div class="pricing-price" id="proPrice">9<span>&euro;/mois</span></div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:6px;margin-bottom:6px;letter-spacing:.04em">soit <strong style="color:var(--accent)">0,30 &euro;/jour</strong> &middot; apres 7j gratuits</div>
+      <div class="pricing-period" id="proPeriod">ou <strong style="color:var(--accent)">90&euro;/an</strong> (2 mois offerts) &middot; sans engagement</div>
       <div class="trial-badge" aria-label="Essai gratuit 7 jours">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
         7 JOURS GRATUITS
       </div>
-      <div class="pricing-tag pro">Progresser</div>
-      <div class="pricing-name">Pro</div>
-      <div class="pricing-price" id="proPrice">9<span>&euro;/mois</span></div>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:-22px;margin-bottom:8px;letter-spacing:.04em">soit <strong style="color:var(--accent)">0,30 &euro;/jour</strong> &middot; apres 7j gratuits</div>
-      <div class="pricing-period" id="proPeriod">ou <strong style="color:var(--accent)">90&euro;/an</strong> (2 mois offerts) &middot; sans engagement</div>
       <hr class="pricing-divider">
       <div class="pricing-features">
         <!-- 8 bullets cibles : USP > value > standard. Pas de doublons. -->
@@ -1218,7 +1223,7 @@ footer{
       <div class="pricing-tag">Dominer en equipe</div>
       <div class="pricing-name">Elite</div>
       <div class="pricing-price" id="elitePrice">25<span>&euro;/mois</span></div>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:-22px;margin-bottom:8px;letter-spacing:.04em">soit <strong style="color:var(--accent)">5 EUR/joueur/mois</strong> pour une equipe de 5</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:6px;margin-bottom:6px;letter-spacing:.04em">soit <strong style="color:var(--accent)">5 EUR/joueur/mois</strong> pour une equipe de 5</div>
       <div class="pricing-period" id="elitePeriod">ou <strong style="color:var(--accent)">250&euro;/an</strong> (2 mois offerts) &middot; sans engagement</div>
       <hr class="pricing-divider">
       <div class="pricing-features">
