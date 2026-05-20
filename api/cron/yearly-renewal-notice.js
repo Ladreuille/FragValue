@@ -97,7 +97,7 @@ module.exports = async function handler(req, res) {
           if (!email) { skipped++; continue; }
 
           const planLabel = sub.plan?.startsWith('elite') ? 'Elite' : 'Pro';
-          const amount = sub.plan === 'elite_yearly' ? '290 EUR TTC' : '79 EUR TTC';
+          const amount = sub.plan === 'elite_yearly' ? '250 EUR TTC' : '90 EUR TTC';
           const renewDate = new Date(sub.current_period_end).toLocaleDateString('fr-FR', {
             day: 'numeric', month: 'long', year: 'numeric',
           });

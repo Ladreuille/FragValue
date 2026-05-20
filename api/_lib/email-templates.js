@@ -194,7 +194,7 @@ function trialExpiringJ3({ nickname, planLabel, trialEndIso }) {
       <a href="${BASE_URL}/account.html" style="display:inline-block;background:#b8ff57;color:#000;padding:13px 26px;border-radius:8px;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:.04em;margin:0 4px;font-family:${FONT_STACK}">Gérer mon abonnement</a>
     </p>
 
-    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">Astuce : passe au plan annuel pour 2 mois offerts (Pro 79€/an, Elite 290€/an).</p>
+    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5">Astuce : passe au plan annuel pour 2 mois offerts (Pro 90€/an, Elite 250€/an).</p>
   `);
   const text = `${name}, ton essai ${planLabel} expire le ${endDate}.
 
@@ -202,7 +202,7 @@ Si tu continues : aucune action nécessaire, le renouvellement est automatique.
 
 Si tu veux annuler : 1 clic depuis ${BASE_URL}/account.html avant le ${endDate}, aucun prélèvement, tu gardes l'accès jusqu'à la fin.
 
-Astuce : passe au plan annuel pour 2 mois offerts (Pro 79€/an, Elite 290€/an).
+Astuce : passe au plan annuel pour 2 mois offerts (Pro 90€/an, Elite 250€/an).
 
 L'équipe FragValue`;
   return { subject, html, text };

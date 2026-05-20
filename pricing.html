@@ -21,7 +21,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
 
 <meta charset="UTF-8">
-<meta name="description" content="Tarifs FragValue : Free 5 analyses/mois, Pro 9€/mois (analyses illimitées + Coach IA), Elite 29€/mois (Coach IA 30 msg/jour + outils équipe). Sans engagement, 14j rétractation.">
+<meta name="description" content="Tarifs FragValue : Free 5 analyses/mois, Pro 9€/mois ou 90€/an (7 jours essai gratuit, analyses illimitées + Coach IA 20 msg/jour), Elite 25€/mois ou 250€/an (Coach IA 50 msg/jour + outils équipe 5 joueurs), Lifetime Pro 99€ one-time (50 places). Sans engagement, 14j rétractation.">
 <meta name="keywords" content="tarif CS2 analytics, prix coach IA, abonnement FACEIT, FragValue Pro, plan Elite CS2">
 <meta name="theme-color" content="#080909">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
@@ -113,7 +113,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         {
           "@type": "Offer",
           "name": "Pro annuel",
-          "price": "79.00",
+          "price": "90.00",
           "priceCurrency": "EUR",
           "url": "https://fragvalue.com/pricing.html",
           "availability": "https://schema.org/InStock",
@@ -180,7 +180,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       "name": "Quelle est la difference entre Pro et Elite ?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Pro (9 EUR/mois ou 79 EUR/an) : upload de demos sans limite, 2D Replay, KPIs avances, Diagnostic IA refresh par match, Chat Coach IA limite a 20 messages/jour (packs de credits supplementaires disponibles). Elite (29 EUR/mois ou 290 EUR/an) : tout Pro + Chat Coach IA 30 messages/jour + outils equipe (anti-strat, prep veto BO3/BO5, pro benchmarks, dashboard team)."
+        "text": "Pro (9 EUR/mois ou 90 EUR/an, 2 mois offerts) : upload de demos sans limite, 2D Replay, KPIs avances, Diagnostic IA refresh par match, Chat Coach IA limite a 20 messages/jour (packs de credits supplementaires disponibles). Elite (25 EUR/mois ou 250 EUR/an, 2 mois offerts) : tout Pro pour 5 joueurs + Chat Coach IA 50 messages/jour + outils equipe (anti-strat, prep veto BO3/BO5, pro benchmarks, dashboard team)."
       }
     },
     {
@@ -1666,16 +1666,16 @@ function toggleBilling() {
   labelY.classList.toggle('active', isYearly);
 
   if (isYearly) {
-    proPrice.innerHTML = '79<span>\u20ac/an</span>';
-    // Anchoring : prix mensuel barre + economie en pourcentage explicite
-    proPeriod.innerHTML = '<s style="color:var(--text3)">9\u20ac/mois</s> soit <strong style="color:var(--accent)">6,58\u20ac/mois</strong> \u00b7 -27%';
-    if (elitePrice) elitePrice.innerHTML = '290<span>\u20ac/an</span>';
-    if (elitePeriod) elitePeriod.innerHTML = '<s style="color:var(--text3)">29\u20ac/mois</s> soit <strong style="color:var(--accent)">24,17\u20ac/mois</strong> \u00b7 -17%';
+    proPrice.innerHTML = '90<span>\u20ac/an</span>';
+    // Anchoring : prix mensuel barre + 2 mois offerts (90 = 12*9 - 2*9 exact)
+    proPeriod.innerHTML = '<s style="color:var(--text3)">9\u20ac/mois</s> soit <strong style="color:var(--accent)">7,50\u20ac/mois</strong> \u00b7 2 mois offerts';
+    if (elitePrice) elitePrice.innerHTML = '250<span>\u20ac/an</span>';
+    if (elitePeriod) elitePeriod.innerHTML = '<s style="color:var(--text3)">25\u20ac/mois</s> soit <strong style="color:var(--accent)">20,83\u20ac/mois</strong> \u00b7 2 mois offerts';
   } else {
     proPrice.innerHTML = '9<span>\u20ac/mois</span>';
-    proPeriod.innerHTML = 'ou <strong style="color:var(--accent)">79\u20ac/an</strong> (2 mois offerts) \u00b7 sans engagement';
-    if (elitePrice) elitePrice.innerHTML = '29<span>\u20ac/mois</span>';
-    if (elitePeriod) elitePeriod.innerHTML = 'ou <strong style="color:var(--accent)">290\u20ac/an</strong> (2 mois offerts) \u00b7 sans engagement';
+    proPeriod.innerHTML = 'ou <strong style="color:var(--accent)">90\u20ac/an</strong> (2 mois offerts) \u00b7 sans engagement';
+    if (elitePrice) elitePrice.innerHTML = '25<span>\u20ac/mois</span>';
+    if (elitePeriod) elitePeriod.innerHTML = 'ou <strong style="color:var(--accent)">250\u20ac/an</strong> (2 mois offerts) \u00b7 sans engagement';
   }
 
   // Microcopy ultrareview : sync les CTA buttons avec le prix selon period
@@ -1803,9 +1803,9 @@ function confirmSubscriptionTerms(plan) {
   return new Promise((resolve) => {
     const PLAN_INFO = {
       pro_monthly:   { label: 'FragValue Pro',   price: '9 € TTC',   freq: 'mensuel',   yearly: false },
-      pro_yearly:    { label: 'FragValue Pro',   price: '79 € TTC',  freq: 'annuel',    yearly: true  },
-      elite_monthly: { label: 'FragValue Elite', price: '29 € TTC',  freq: 'mensuel',   yearly: false },
-      elite_yearly:  { label: 'FragValue Elite', price: '290 € TTC', freq: 'annuel',    yearly: true  },
+      pro_yearly:    { label: 'FragValue Pro',   price: '90 € TTC',  freq: 'annuel',    yearly: true  },
+      elite_monthly: { label: 'FragValue Elite', price: '25 € TTC',  freq: 'mensuel',   yearly: false },
+      elite_yearly:  { label: 'FragValue Elite', price: '250 € TTC', freq: 'annuel',    yearly: true  },
     };
     const info = PLAN_INFO[plan] || PLAN_INFO.pro_monthly;
     const renewLine = info.yearly

@@ -799,7 +799,7 @@ Channel réservé aux abonnés Pro et Elite.
 ## 💎 Tu veux passer Elite ?
 Accès aux channels Elite + sessions coaching mensuelles + tactical demo reviews + beta features.
 
-29€/mois, sans engagement, annulable en 1 clic. → https://fragvalue.com/pricing.html`,
+25€/mois (250€/an, 2 mois offerts), sans engagement, annulable en 1 clic. → https://fragvalue.com/pricing.html`,
       },
     ],
   },

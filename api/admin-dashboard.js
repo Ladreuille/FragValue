@@ -19,9 +19,9 @@ const ALLOWED_ORIGIN_RE = /^https:\/\/(fragvalue\.com|www\.fragvalue\.com|frag-v
 // Pour les plans yearly, on divise par 12 (MRR equivalent mensuel).
 const PRICE_MONTHLY = {
   pro_monthly:   9,
-  pro_yearly:    79 / 12,    // ~6.58
-  elite_monthly: 29,
-  elite_yearly:  290 / 12,   // ~24.17
+  pro_yearly:    90 / 12,    // 7.50 (2 mois offerts exact vs 9 EUR/mois)
+  elite_monthly: 25,
+  elite_yearly:  250 / 12,   // ~20.83 (2 mois offerts exact vs 25 EUR/mois)
 };
 
 function getAdminEmails() {
