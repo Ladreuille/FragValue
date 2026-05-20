@@ -1930,42 +1930,53 @@ async function startCheckout(plan) {
 
   // ── Charge le radar PNG officiel CS2 (Mirage) en background. Le PNG est
   // celui utilise par le 2D Replay et heatmap-results, donc 100% authentique.
-  // On le draw avec globalAlpha 0.35 pour qu'il reste subtil derriere le H1.
+  // On le draw avec globalAlpha 0.38 pour qu'il reste subtil derriere le H1.
   const mapImg = new Image();
   let mapImgReady = false;
   mapImg.onload = () => { mapImgReady = true; };
   mapImg.onerror = () => { console.warn('[hero-radar] map img failed, fallback to lime outline'); };
   mapImg.src = '/maps/de_mirage_radar_psd.png';
 
-  // Mirage radar layout (basé sur le PNG officiel CS2) :
-  //   - A site palace : top-left (~0.18, 0.22)
-  //   - Ticket/CT spawn : top-mid-right (~0.55, 0.25)
-  //   - Mid corridor + window : centre (~0.50, 0.45)
-  //   - B apartments : bottom-left (~0.20, 0.65)
-  //   - B site : bottom-center (~0.40, 0.72)
-  //   - T spawn : bottom-right (~0.75, 0.78)
-  //   - Underpass / B short : bottom-mid (~0.30, 0.55)
+  // IMPORTANT : positions player/event sont en MAP-RELATIVE (0-1 du rect
+  // de la map dessinee, pas du canvas). Au render on les converti en
+  // canvas-absolute via le transform mapToCanvas(). Sinon les dots
+  // tombent en dehors de la map (le PNG est centre avec marges).
   //
-  // Paths recalibres pour matcher le vrai Mirage : T attaque A side.
+  // Mirage radar layout (Valve PNG officiel, 1024x1024 carre) :
+  //   - A site default (palace pit) : top-left (~0.20, 0.25)
+  //   - A ramp                       : top-mid (~0.42, 0.30)
+  //   - Top mid / window             : centre (~0.48, 0.42)
+  //   - Mid / connector              : centre (~0.50, 0.50)
+  //   - Jungle / catwalk             : top-right (~0.60, 0.30)
+  //   - CT spawn                     : right (~0.70, 0.30)
+  //   - B apartments                 : bottom-left (~0.20, 0.65)
+  //   - B site                       : bottom-mid (~0.32, 0.68)
+  //   - Underpass / B short          : bottom (~0.42, 0.62)
+  //   - T spawn (pyramid)            : bottom-right (~0.62, 0.72)
+  //   - T ramp                       : bottom-mid (~0.50, 0.62)
   const PLAYERS = [
-    // T side (orange) : T spawn -> mid -> top mid -> A ramp -> A site
-    { team:'T', color:'#ff9544', path:[[0.75,0.78],[0.65,0.65],[0.55,0.50],[0.40,0.35],[0.25,0.25]], speed:0.06 },
-    { team:'T', color:'#ff9544', path:[[0.72,0.80],[0.62,0.68],[0.52,0.52],[0.38,0.38],[0.22,0.28]], speed:0.055 },
-    { team:'T', color:'#ff9544', path:[[0.78,0.76],[0.68,0.62],[0.58,0.48],[0.42,0.32],[0.28,0.22]], speed:0.065 },
-    // CT side (cyan) : defense rotation A palace + jungle
-    { team:'CT', color:'#5b9eff', path:[[0.30,0.22],[0.25,0.27],[0.22,0.32],[0.20,0.28]], speed:0.04 },
-    { team:'CT', color:'#5b9eff', path:[[0.18,0.20],[0.22,0.18],[0.28,0.22],[0.30,0.28]], speed:0.035 },
+    // T side (orange) : T spawn -> T ramp -> top mid -> A ramp -> A site
+    { team:'T', color:'#ff9544', path:[[0.60,0.70],[0.52,0.60],[0.48,0.50],[0.42,0.40],[0.28,0.30]], speed:0.06 },
+    { team:'T', color:'#ff9544', path:[[0.62,0.72],[0.55,0.62],[0.50,0.52],[0.40,0.42],[0.25,0.32]], speed:0.055 },
+    { team:'T', color:'#ff9544', path:[[0.58,0.68],[0.50,0.58],[0.46,0.48],[0.38,0.38],[0.30,0.28]], speed:0.065 },
+    // CT side (cyan) : defense A palace + jungle rotation
+    { team:'CT', color:'#5b9eff', path:[[0.32,0.32],[0.28,0.30],[0.26,0.32],[0.30,0.34]], speed:0.04 },
+    { team:'CT', color:'#5b9eff', path:[[0.42,0.32],[0.45,0.30],[0.48,0.32],[0.45,0.34]], speed:0.035 },
   ];
 
-  // ── Events scriptes (timing en seconds du loop 16s)
-  // Positions recalibrees pour Mirage : smokes sur jungle/CT, kills sur A site
   const EVENTS = [
-    { t:2.0,  type:'smoke', pos:[0.32,0.25], dur:3.0 },  // smoke CT palace
-    { t:5.5,  type:'kill',  pos:[0.26,0.25], dur:1.5 },  // kill A site
-    { t:8.0,  type:'smoke', pos:[0.45,0.40], dur:3.0 },  // smoke jungle
-    { t:11.0, type:'kill',  pos:[0.22,0.22], dur:1.5 },  // kill A palace
-    { t:13.5, type:'kill',  pos:[0.50,0.45], dur:1.5 },  // kill mid
+    { t:2.0,  type:'smoke', pos:[0.38,0.32], dur:3.0 },  // smoke CT palace
+    { t:5.5,  type:'kill',  pos:[0.30,0.30], dur:1.5 },  // kill A site
+    { t:8.0,  type:'smoke', pos:[0.48,0.42], dur:3.0 },  // smoke top mid
+    { t:11.0, type:'kill',  pos:[0.26,0.30], dur:1.5 },  // kill A palace
+    { t:13.5, type:'kill',  pos:[0.46,0.45], dur:1.5 },  // kill mid
   ];
+
+  // Stockes au render time pour permettre les conversions map-relative -> canvas
+  let MAP_RECT = { x:0, y:0, w:1, h:1 };
+  function mapToCanvas(p) {
+    return [MAP_RECT.x + p[0] * MAP_RECT.w, MAP_RECT.y + p[1] * MAP_RECT.h];
+  }
 
   // ── Round counter scripte : R12 → R13 → R14 sur les 16s du loop
   const ROUND_TIMELINE = [
@@ -2009,46 +2020,51 @@ async function startCheckout(plan) {
 
     ctx.clearRect(0, 0, W, H);
 
-    // 1. Radar PNG officiel CS2 (Mirage). Draw centre, aspect ratio
-    // preserve. globalAlpha bas pour ne pas dominer le H1 + slight
-    // sepia/lime tint via overlay multiply pour matcher la brand.
+    // 1. Radar PNG officiel CS2 (Mirage). Draw centre + on stocke le
+    // rect dans MAP_RECT pour que les player/event positions soient
+    // converties correctement (map-relative -> canvas absolute).
     if (mapImgReady) {
       const imgAR = mapImg.width / mapImg.height;  // ~1 (carre)
       const drawH = H * 0.92;
       const drawW = drawH * imgAR;
       const drawX = (W - drawW) / 2;
       const drawY = (H - drawH) / 2;
+      MAP_RECT = { x: drawX, y: drawY, w: drawW, h: drawH };
       ctx.save();
       ctx.globalAlpha = 0.38;
       ctx.drawImage(mapImg, drawX, drawY, drawW, drawH);
-      // Overlay lime accent en multiply pour matcher la brand (tres subtil)
+      // Overlay lime accent en multiply pour matcher la brand
       ctx.globalCompositeOperation = 'overlay';
       ctx.fillStyle = 'rgba(184,255,87,0.08)';
       ctx.fillRect(drawX, drawY, drawW, drawH);
       ctx.restore();
     } else {
       // Fallback geometrique le temps que l'image charge (premier paint)
+      MAP_RECT = { x: W * 0.15, y: H * 0.15, w: W * 0.7, h: H * 0.7 };
       ctx.strokeStyle = 'rgba(184,255,87,0.25)';
       ctx.lineWidth = 1;
-      ctx.strokeRect(W * 0.15, H * 0.15, W * 0.7, H * 0.7);
+      ctx.strokeRect(MAP_RECT.x, MAP_RECT.y, MAP_RECT.w, MAP_RECT.h);
     }
 
-    // 2. A/B site labels (sur les vraies positions Mirage)
+    // 2. A/B site labels (positions map-relative, converties)
     ctx.fillStyle = 'rgba(184,255,87,0.55)';
     ctx.font = 'bold 11px "Space Mono", monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('A', 0.22 * W, 0.22 * H);
-    ctx.fillText('B', 0.38 * W, 0.72 * H);
+    const labelA = mapToCanvas([0.25, 0.28]);
+    const labelB = mapToCanvas([0.32, 0.68]);
+    const labelMid = mapToCanvas([0.50, 0.50]);
+    ctx.fillText('A', labelA[0], labelA[1]);
+    ctx.fillText('B', labelB[0], labelB[1]);
     ctx.font = '9px "Space Mono", monospace';
     ctx.fillStyle = 'rgba(184,255,87,0.4)';
-    ctx.fillText('MID', 0.48 * W, 0.48 * H);
+    ctx.fillText('MID', labelMid[0], labelMid[1]);
 
-    // 3. Radar sweep : ligne lime qui balaye depuis le centre (rotates)
-    const sweepCenter = [0.51 * W, 0.50 * H];
-    const sweepAngle = (elapsedMs / LOOP_MS) * Math.PI * 4;  // 2 full rotations per loop
-    const sweepRadius = Math.max(W, H) * 0.6;
+    // 3. Radar sweep : centre = centre de la map (pas du canvas)
+    const [sweepCx, sweepCy] = mapToCanvas([0.50, 0.50]);
+    const sweepAngle = (elapsedMs / LOOP_MS) * Math.PI * 4;  // 2 rotations / loop
+    const sweepRadius = Math.max(MAP_RECT.w, MAP_RECT.h) * 0.7;
     const sweepGrad = ctx.createConicGradient
-      ? ctx.createConicGradient(sweepAngle, sweepCenter[0], sweepCenter[1])
+      ? ctx.createConicGradient(sweepAngle, sweepCx, sweepCy)
       : null;
     if (sweepGrad) {
       sweepGrad.addColorStop(0, 'rgba(184,255,87,0.18)');
@@ -2056,32 +2072,33 @@ async function startCheckout(plan) {
       sweepGrad.addColorStop(1, 'rgba(184,255,87,0)');
       ctx.fillStyle = sweepGrad;
       ctx.beginPath();
-      ctx.arc(sweepCenter[0], sweepCenter[1], sweepRadius, 0, Math.PI * 2);
+      ctx.arc(sweepCx, sweepCy, sweepRadius, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // 4. Smoke events : cercles qui s'expandent
+    // 4. Smoke events : cercles qui s'expandent (positions map-relative)
     for (const ev of EVENTS) {
       if (ev.type !== 'smoke') continue;
       const localT = t - ev.t;
       if (localT < 0 || localT > ev.dur) continue;
-      const k = localT / ev.dur;  // 0 -> 1
+      const k = localT / ev.dur;
       const radius = lerp(4, 28, k);
       const alpha = lerp(0.6, 0, k);
+      const [ex, ey] = mapToCanvas(ev.pos);
       ctx.fillStyle = `rgba(220,230,235,${alpha * 0.4})`;
       ctx.strokeStyle = `rgba(220,230,235,${alpha})`;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(ev.pos[0] * W, ev.pos[1] * H, radius, 0, Math.PI * 2);
+      ctx.arc(ex, ey, radius, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
     }
 
-    // 5. Player dots (5 joueurs, T orange + CT cyan)
+    // 5. Player dots (positions map-relative -> canvas)
     for (const p of PLAYERS) {
       const playerProg = (progress * p.speed * 10) % 1;
       const [px, py] = playerPos(p, playerProg);
-      const x = px * W, y = py * H;
+      const [x, y] = mapToCanvas([px, py]);
       // Halo glow
       const grd = ctx.createRadialGradient(x, y, 0, x, y, 12);
       grd.addColorStop(0, p.color + 'cc');
@@ -2097,7 +2114,7 @@ async function startCheckout(plan) {
       ctx.fill();
     }
 
-    // 6. Kill markers : X flash + fade out
+    // 6. Kill markers : X flash + fade out (positions map-relative)
     for (const ev of EVENTS) {
       if (ev.type !== 'kill') continue;
       const localT = t - ev.t;
@@ -2107,7 +2124,7 @@ async function startCheckout(plan) {
       const size = lerp(5, 12, k);
       ctx.strokeStyle = `rgba(255,107,107,${alpha})`;
       ctx.lineWidth = 2;
-      const x = ev.pos[0] * W, y = ev.pos[1] * H;
+      const [x, y] = mapToCanvas(ev.pos);
       ctx.beginPath();
       ctx.moveTo(x - size, y - size); ctx.lineTo(x + size, y + size);
       ctx.moveTo(x + size, y - size); ctx.lineTo(x - size, y + size);
