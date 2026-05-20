@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Accepte l'invitation Team Elite de ton coequipier sur FragValue.">
+<meta name="robots" content="noindex,follow">
+<title>FragValue · Invitation Team Elite</title>
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#080909;--surface:#0f1010;--card:#131414;--border:#1c1e1e;--border2:#252727;
+    --accent:#b8ff57;--accent2:#7ddd1a;
+    --text:#e8eaea;--text2:#7a8080;--text3:#8a9090;
+    --success:#2dd4a0;--danger:#ff4444;--gold:#f5c842;
+    --mono:'Space Mono',monospace;--display:'Anton',sans-serif;
+  }
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:var(--mono);
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;-webkit-font-smoothing:antialiased;
+  }
+  .invite-card{
+    background:var(--surface);border:1px solid var(--border2);border-radius:14px;
+    padding:36px 32px;max-width:520px;width:100%;
+    box-shadow:0 20px 60px -10px rgba(184,255,87,.08);
+  }
+  .invite-icon{
+    width:56px;height:56px;border-radius:12px;
+    background:linear-gradient(135deg,rgba(184,255,87,.15),rgba(245,200,66,.1));
+    color:var(--accent);display:flex;align-items:center;justify-content:center;
+    margin-bottom:18px;
+  }
+  h1{
+    font-family:var(--display);font-size:28px;letter-spacing:.02em;
+    line-height:1.15;margin-bottom:8px;
+  }
+  .lead{
+    font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:22px;
+  }
+  .benefit-row{
+    display:flex;align-items:flex-start;gap:10px;
+    padding:10px 0;border-top:1px solid var(--border);
+    font-size:12px;color:var(--text2);line-height:1.55;
+  }
+  .benefit-row svg{flex-shrink:0;margin-top:2px;color:var(--accent)}
+  .benefit-row strong{color:var(--text)}
+  .invite-cta{
+    margin-top:22px;
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .btn-primary{
+    background:var(--accent);color:#000;border:none;
+    padding:14px;border-radius:8px;
+    font-family:var(--mono);font-size:13px;font-weight:700;
+    letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    text-decoration:none;
+    transition:transform .15s,filter .15s;
+  }
+  .btn-primary:hover{transform:translateY(-1px);filter:brightness(1.08)}
+  .btn-primary:disabled{opacity:.5;cursor:wait;transform:none;filter:none}
+  .btn-secondary{
+    background:transparent;color:var(--text2);border:1px solid var(--border2);
+    padding:11px;border-radius:8px;
+    font-family:var(--mono);font-size:11px;font-weight:700;
+    letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+    text-decoration:none;text-align:center;
+  }
+  .msg{
+    font-size:12px;line-height:1.6;
+    padding:14px 16px;border-radius:8px;margin-top:14px;
+  }
+  .msg.error{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.3);color:var(--danger)}
+  .msg.success{background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.3);color:var(--success)}
+  .spinner{
+    width:18px;height:18px;border:2px solid var(--border);
+    border-top-color:var(--accent);border-radius:50%;
+    animation:spin .7s linear infinite;display:inline-block;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="invite-card">
+  <div class="invite-icon">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+  </div>
+  <h1 id="title">Invitation Team Elite</h1>
+  <p class="lead" id="lead">Vérification en cours...</p>
+  <div id="benefits" style="display:none">
+    <div class="benefit-row">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <div><strong>Acces Pro complet</strong> · analyses illimitees, 2D Replay, Coach IA 20 msg/jour</div>
+    </div>
+    <div class="benefit-row">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <div><strong>Aucune action de paiement</strong> · ton admin couvre ton acces sous son abonnement Elite</div>
+    </div>
+    <div class="benefit-row">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <div><strong>Channels Discord Elite</strong> · #elite-team + #anti-strat avec attribution automatique</div>
+    </div>
+  </div>
+  <div class="invite-cta" id="cta" style="display:none"></div>
+  <div id="msg"></div>
+</div>
+
+<script>
+const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+const sb = supabase.createClient(SB_URL, SB_ANON);
+
+const params = new URLSearchParams(window.location.search);
+const token = params.get('token');
+
+const titleEl = document.getElementById('title');
+const leadEl  = document.getElementById('lead');
+const benefitsEl = document.getElementById('benefits');
+const ctaEl   = document.getElementById('cta');
+const msgEl   = document.getElementById('msg');
+
+function showError(text) {
+  msgEl.innerHTML = '<div class="msg error">' + text + '</div>';
+}
+function showSuccess(text) {
+  msgEl.innerHTML = '<div class="msg success">' + text + '</div>';
+}
+
+async function init() {
+  if (!token || token.length < 16) {
+    titleEl.textContent = 'Lien invalide';
+    leadEl.textContent = 'Le lien d\'invitation est incomplet ou expire. Demande a ton coequipier de re-generer une invitation.';
+    return;
+  }
+
+  // Verifier la session
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    titleEl.textContent = 'Connecte-toi pour accepter';
+    leadEl.innerHTML = 'Cette invitation est lie a un email specifique. Connecte-toi avec ce mail pour activer ton acces Pro gratuitement, paye par ton coequipier.';
+    benefitsEl.style.display = 'block';
+    ctaEl.style.display = 'flex';
+    const redirect = '/team-invite.html?token=' + encodeURIComponent(token);
+    ctaEl.innerHTML =
+      '<a href="/login.html?redirect=' + encodeURIComponent(redirect) + '" class="btn-primary">Se connecter</a>' +
+      '<a href="/login.html?signup=1&redirect=' + encodeURIComponent(redirect) + '" class="btn-secondary">Creer un compte</a>';
+    return;
+  }
+
+  // Logged in : on tente d'accepter directement
+  titleEl.textContent = 'Activer ton acces Pro';
+  leadEl.innerHTML = 'Bienvenue <strong style="color:var(--text)">' + (session.user.email || '') + '</strong>. Click ci-dessous pour rejoindre la team Elite et activer ton acces Pro complet.';
+  benefitsEl.style.display = 'block';
+  ctaEl.style.display = 'flex';
+  ctaEl.innerHTML =
+    '<button type="button" id="acceptBtn" class="btn-primary">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+      'Accepter et activer Pro' +
+    '</button>' +
+    '<a href="/account.html" class="btn-secondary">Plus tard</a>';
+
+  document.getElementById('acceptBtn').onclick = async () => {
+    const btn = document.getElementById('acceptBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Activation...';
+    try {
+      const res = await fetch('/api/team-members?accept=' + encodeURIComponent(token), {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      const d = await res.json();
+      if (!res.ok || !d.ok) {
+        showError(d.error || 'Erreur ' + res.status);
+        btn.disabled = false;
+        btn.innerHTML = 'Reessayer';
+        return;
+      }
+      showSuccess('Ton acces Pro est active. Tu es maintenant membre de la team. Redirection vers ton compte dans 3s...');
+      ctaEl.style.display = 'none';
+      setTimeout(() => { window.location.href = '/account.html'; }, 3000);
+    } catch (e) {
+      showError('Erreur reseau : ' + e.message);
+      btn.disabled = false;
+      btn.innerHTML = 'Reessayer';
+    }
+  };
+}
+
+init();
+</script>
+</body>
+</html>
