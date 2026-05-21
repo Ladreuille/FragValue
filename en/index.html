@@ -288,6 +288,19 @@ nav{
   background:radial-gradient(ellipse,rgba(184,255,87,.04) 0%,transparent 70%);
   pointer-events:none
 }
+/* Tactical radar canvas : background, faded opacity to not dominate H1.
+   Hidden on mobile (perf + readability on small screens) + reduced-motion. */
+.hero-radar{
+  position:absolute;top:0;right:0;
+  width:60%;height:100%;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 1.2s ease;
+  mask-image:radial-gradient(ellipse 75% 80% at 65% 50%,black 40%,transparent 90%);
+}
+.hero-radar.ready{ opacity:.42; }
+@media (max-width:900px){ .hero-radar{ display:none; } }
+@media (prefers-reduced-motion: reduce){ .hero-radar{ display:none; } }
 .hero-tag{
   font-size:11px;letter-spacing:.16em;text-transform:uppercase;
   color:var(--accent);border:1px solid rgba(184,255,87,.2);
@@ -943,41 +956,48 @@ footer{
 <section class="hero">
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
+  <!-- Tactical CS2 radar background (canvas 2D animation, ported from FR).
+       Disabled on mobile + reduced-motion (accessibility). -->
+  <canvas class="hero-radar" id="heroRadar" aria-hidden="true"></canvas>
   <div class="hero-tag" style="background:linear-gradient(135deg,rgba(184,255,87,.15) 0%,rgba(184,255,87,.05) 100%);border-color:rgba(184,255,87,.4);color:var(--accent);display:inline-flex;align-items:center;gap:6px">
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
-    New · Personalized AI Coach
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    Auto-sync FACEIT · LIVE since May 2026
   </div>
-  <h1>Your AI coach<br><em>decodes your last 20</em><br>FACEIT matches.</h1>
-  <p class="hero-sub">We cross-check your last 20 matches and Claude (Anthropic) delivers <strong>3 quantified strengths</strong>, <strong>3 improvement axes</strong>, <strong>4 concrete actions</strong> and <strong>1 measurable weekly objective</strong>. No fluff. No stats you already know.</p>
+  <h1>
+    <span class="anim-word">Why</span>
+    <span class="anim-word">did you lose</span><br>
+    <em class="anim-word">round&nbsp;14?</em><br>
+    <span class="anim-word">FragValue tells you.</span>
+  </h1>
+  <p class="hero-sub">Your CS2 stats give you ADR and KAST. <strong>FragValue's AI Coach tells you the tactical why</strong>: tick citation, opponent decision, concrete action to drill. FACEIT auto-sync active — you play, we analyze, you progress.</p>
   <div class="hero-actions">
     <a href="/en/demo.html" class="btn-primary">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-      Get my diagnosis in 90s
+      Analyze my first match for free
     </a>
     <a href="#features" class="btn-secondary">See features →</a>
   </div>
   <!-- Hero stats : trust signals factuels, pas de mock de volume -->
   <div class="hero-stats">
     <div>
-      <div class="hero-stat-val">20</div>
-      <div class="hero-stat-label">Last matches analyzed</div>
+      <div class="hero-stat-val">AUTO</div>
+      <div class="hero-stat-label">FACEIT sync · zero click</div>
     </div>
     <div>
-      <div class="hero-stat-val">IA</div>
-      <div class="hero-stat-label">Coach Claude · 24/7</div>
+      <div class="hero-stat-val">11</div>
+      <div class="hero-stat-label">AI progression axes</div>
     </div>
     <div>
-      <div class="hero-stat-val">90s</div>
-      <div class="hero-stat-label">Diagnostic delivered</div>
+      <div class="hero-stat-val">5 min</div>
+      <div class="hero-stat-label">Match ended → analysis ready</div>
     </div>
   </div>
 
-  <!-- Trust badges : signal de credibilite immediate sous le hero -->
+  <!-- Trust badges : reduit a 2 (les + impactants pour conversion).
+       Les autres (Stripe, RGPD, Made in France) restent dans le footer. -->
   <div class="trust-band" style="display:flex;align-items:center;justify-content:center;gap:18px;margin-top:18px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase">
-    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Secure Stripe payment</span>
-    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>GDPR &middot; EU data (Supabase Frankfurt)</span>
+    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>14-day satisfied or refunded</span>
     <span style="display:inline-flex;align-items:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Cancel in 1 click</span>
-    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Made in France</span>
   </div>
 
   <!-- DEMO PREVIEW : teaser authentique de ce que FragValue delivre -->
@@ -1955,6 +1975,9 @@ async function startCheckout(plan) {
 }
 </script>
 <script src="popup-signup.js" defer></script>
+<!-- Shared hero radar canvas animation + scroll-reveal observer.
+     Same file used by FR /index.html for code re-use. -->
+<script src="/hero-radar.js" defer></script>
 <script src="/nav.js" defer></script>
 </body>
 </html>
