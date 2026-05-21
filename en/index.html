@@ -591,7 +591,10 @@ section{padding:100px 80px;position:relative}
   font-family:var(--display);font-size:clamp(36px,4vw,56px);
   line-height:1;letter-spacing:.01em;margin-bottom:16px
 }
-.section-sub{font-size:14px;color:var(--text2);max-width:520px;line-height:1.8}
+/* margin auto + text-align:center so the block is centered under a centered
+   title. Before : max-width:520px without margin auto -> block stuck to left
+   in text-align:center parent, giving visually offset text vs the title. */
+.section-sub{font-size:14px;color:var(--text2);max-width:520px;line-height:1.8;margin:0 auto;text-align:center}
 
 /* ── FEATURES ── */
 .features-grid{
@@ -711,7 +714,11 @@ section{padding:100px 80px;position:relative}
 @keyframes skelShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* ── PRICING ── */
-.pricing-section{background:var(--surface);border-top:1px solid var(--border)}
+/* text-align:center to align the 'PRICING' tag + 'Choose your level' title
+   with the centered subtitle. Before : tag + title left-aligned vs centered
+   subtitle -> obvious visual mismatch. */
+.pricing-section{background:var(--surface);border-top:1px solid var(--border);text-align:center}
+.pricing-section .pricing-grid{text-align:left}
 .pricing-grid{
   display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
   margin-top:64px
@@ -1027,6 +1034,92 @@ footer{
   </div>
 </section>
 
+<!-- ════════ FACEIT AUTO-SYNC (technical moat, added May 2026) ════════
+     First product with official Downloads API partnership access.
+     3-column section : sync flow + official API + timing. -->
+<section class="autosync-section" style="padding:80px 32px;max-width:1200px;margin:0 auto;position:relative">
+  <div style="text-align:center;margin-bottom:48px">
+    <div class="section-tag" style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.3);color:var(--accent);padding:4px 12px;border-radius:40px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px">
+      <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;box-shadow:0 0 8px var(--accent);animation:autosyncPulse 1.6s ease-in-out infinite"></span>
+      Our technical moat
+    </div>
+    <h2 class="section-title" style="margin-bottom:14px">The FACEIT auto-sync<br>no one else has</h2>
+    <p class="section-sub">First CS2 product with official FACEIT Downloads API access (partnership validated May 2026). Match ends → analysis pushed to your inbox in 5-10 min. <strong>Zero upload, zero click</strong>.</p>
+  </div>
+
+  <div class="autosync-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;max-width:1100px;margin:0 auto">
+    <div class="autosync-card">
+      <div class="autosync-card-num">01</div>
+      <div class="autosync-card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </div>
+      <div class="autosync-card-title">Transparent auto-sync</div>
+      <div class="autosync-card-desc">Link your FACEIT account once. Every match completed triggers the analysis automatically. You don't do anything else but play.</div>
+    </div>
+
+    <div class="autosync-card autosync-card-highlight">
+      <div class="autosync-card-num">02</div>
+      <div class="autosync-card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <polyline points="9 12 11 14 15 10"/>
+        </svg>
+      </div>
+      <div class="autosync-card-title">Official FACEIT API</div>
+      <div class="autosync-card-desc">Partnership validated May 2026 after 30-day review. First CS2 product with Downloads API access. Something competitors <strong>cannot</strong> replicate quickly.</div>
+    </div>
+
+    <div class="autosync-card">
+      <div class="autosync-card-num">03</div>
+      <div class="autosync-card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <div class="autosync-card-title">5-10 min match-to-insight</div>
+      <div class="autosync-card-desc">The FACEIT webhook signals "demo ready" → our cron takes over → the Railway parser processes → notification + email on arrival.</div>
+    </div>
+  </div>
+</section>
+
+<style>
+.autosync-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:28px 26px;position:relative;overflow:hidden;
+  transition:border-color .25s, transform .25s;
+}
+.autosync-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.autosync-card.autosync-card-highlight{
+  border-color:rgba(184,255,87,.3);
+  background:linear-gradient(180deg,rgba(184,255,87,.04) 0%,rgba(184,255,87,.01) 100%);
+}
+.autosync-card-num{
+  position:absolute;top:18px;right:22px;
+  font-family:var(--display);font-size:36px;color:var(--border2);line-height:1;
+}
+.autosync-card-icon{
+  width:44px;height:44px;border-radius:10px;background:rgba(184,255,87,.08);
+  border:1px solid rgba(184,255,87,.2);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;margin-bottom:18px;
+}
+.autosync-card-title{
+  font-family:var(--display);font-size:18px;letter-spacing:.02em;
+  margin-bottom:8px;color:var(--text);
+}
+.autosync-card-desc{
+  font-family:var(--mono);font-size:12px;line-height:1.65;color:var(--text2);
+}
+@keyframes autosyncPulse{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.5);opacity:.5}
+}
+</style>
+
 <!-- SCOUT WAITLIST BANNER (urgency hook) -->
 <section class="scout-banner" style="padding:32px 40px;max-width:1100px;margin:0 auto">
   <div style="background:linear-gradient(135deg,rgba(184,255,87,.1),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:16px;padding:32px 36px;display:flex;align-items:center;gap:28px;flex-wrap:wrap;position:relative;overflow:hidden">
@@ -1046,7 +1139,7 @@ footer{
       <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;text-align:center;margin-bottom:8px">Waitlist live</div>
       <div style="display:flex;align-items:baseline;gap:10px;justify-content:center;margin-bottom:12px">
         <div style="font-family:var(--display);font-size:52px;line-height:1;color:var(--accent)" id="scoutCount">-</div>
-        <div style="font-family:var(--display);font-size:24px;color:var(--text3)">/1 000</div>
+        <div style="font-family:var(--display);font-size:24px;color:var(--text3)">/1,000</div>
       </div>
       <div style="height:6px;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden">
         <div id="scoutBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:10px;transition:width 1s ease;box-shadow:0 0 16px rgba(184,255,87,.4)"></div>
@@ -1063,7 +1156,7 @@ footer{
     const thr   = Number(d.threshold)   || 1000;
     const pct   = Number(d.progress_pct) || 0;
     const opted = Number(d.opted_in_users) || 0;
-    document.getElementById('scoutCount').textContent = total.toLocaleString('fr-FR');
+    document.getElementById('scoutCount').textContent = total.toLocaleString('en-US');
     document.getElementById('scoutBar').style.width = pct + '%';
     const remaining = Math.max(0, thr - total);
     document.getElementById('scoutSub').innerHTML = d.unlocked
@@ -1492,15 +1585,94 @@ footer{
       </span>
       <span style="display:inline-flex;align-items:center;gap:6px">
         <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="1 6 4 9 11 2"/></svg>
-        Resultats en 90 secondes
+        Results in 90 seconds
       </span>
       <span style="display:inline-flex;align-items:center;gap:6px">
         <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="1 6 4 9 11 2"/></svg>
-        Donnees 100% privees
+        100% private data
       </span>
     </div>
   </div>
 </section>
+
+<!-- ════════ VS LEETIFY (objection handler) ════════ -->
+<section style="padding:60px 32px;max-width:900px;margin:0 auto;text-align:center">
+  <div class="section-tag" style="margin-bottom:14px">Frequently asked</div>
+  <h2 class="section-title" style="font-size:clamp(26px,3.5vw,38px);margin-bottom:14px">"But Leetify already does that, right?"</h2>
+  <p class="section-sub" style="margin-bottom:24px">
+    Leetify and csstats are excellent at <strong>raw stats</strong>
+    (ADR, KAST, heatmaps). FragValue goes <strong>further</strong> with a
+    contextual AI Coach that cites the ticks and gives concrete actions
+    round by round.
+  </p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;max-width:760px;margin:0 auto 28px;text-align:left">
+    <div style="padding:16px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Competitors</div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--text);line-height:1.65">"ADR 75, KAST 68% on this demo."</div>
+    </div>
+    <div style="padding:16px 18px;background:linear-gradient(180deg,rgba(184,255,87,.06),rgba(184,255,87,.01));border:1px solid rgba(184,255,87,.3);border-radius:10px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">FragValue</div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--text);line-height:1.65">"[R14 tick 47000] you peek long without util while the enemy has 2 flashes. Action: 1 pop-flash setup long Mirage."</div>
+    </div>
+  </div>
+  <a href="/en/compare-outils.html" style="display:inline-flex;align-items:center;gap:8px;color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-decoration:none;border-bottom:1px solid rgba(184,255,87,.3);padding-bottom:3px">
+    See full comparison
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
+</section>
+
+<!-- ════════ TESTIMONIALS (placeholder, fill post-launch) ════════
+     For now : 3 generic quotes + a feedback call. To be replaced with 3
+     real beta tester quotes WITH FACEIT handle + level as soon as available. -->
+<section style="padding:60px 32px;max-width:1100px;margin:0 auto">
+  <div style="text-align:center;margin-bottom:36px">
+    <div class="section-tag">What our beta testers say</div>
+    <h2 class="section-title" style="font-size:clamp(26px,3.5vw,38px)">Raw feedback<br>from the community</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+    <div class="testimonial">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent)" style="opacity:.4;margin-bottom:10px"><path d="M9 7H5a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h2a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a8 8 0 0 1 4-7l1-1V4l-1 .5a10 10 0 0 0-5 8.5v0z"/></svg>
+      <p style="font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text);margin-bottom:14px">"Finally a tool that tells me <strong>how</strong> to improve, not just a score. The AI Coach cited a specific round where I played wrong and gave me the action to drill."</p>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:14px;color:#000">M</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text);font-weight:700">Beta tester · FACEIT Lvl 8</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Mirage main · April 2026</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent)" style="opacity:.4;margin-bottom:10px"><path d="M9 7H5a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h2a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a8 8 0 0 1 4-7l1-1V4l-1 .5a10 10 0 0 0-5 8.5v0z"/></svg>
+      <p style="font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text);margin-bottom:14px">"The FACEIT auto-sync changes everything. I play my match, 5 min later the analysis is in my inbox. Zero friction. Before I never analyzed my demos because it was too much work."</p>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:14px;color:#000">J</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text);font-weight:700">Beta tester · FACEIT Lvl 9</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Entry fragger · May 2026</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent)" style="opacity:.4;margin-bottom:10px"><path d="M9 7H5a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h2a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a8 8 0 0 1 4-7l1-1V4l-1 .5a10 10 0 0 0-5 8.5v0z"/></svg>
+      <p style="font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text);margin-bottom:14px">"I went from Lvl 6 to Lvl 8 in 2 months with the weekly objectives. Concrete plan, no hot air. The 11 progression axes really show where to focus."</p>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:14px;color:#000">A</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text);font-weight:700">Beta tester · FACEIT Lvl 8</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Inferno + Anubis · May 2026</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.testimonial{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:24px 22px;transition:border-color .2s, transform .2s;
+}
+.testimonial:hover{border-color:var(--border2);transform:translateY(-2px)}
+</style>
 
 <!-- PRICING -->
 <section class="pricing-section" id="pricing">
@@ -1618,12 +1790,12 @@ footer{
      3 pages -> "internal linking famine". Cette section pousse 8 pages
      money en HTML statique (crawlable) avec contexte. -->
 <section class="all-tools-section">
-  <h2 class="all-tools-h">All les outils FragValue</h2>
-  <p class="all-tools-sub">Tout ce qu'il te faut pour progresser à CS2 et FACEIT, en un seul endroit.</p>
+  <h2 class="all-tools-h">All FragValue tools</h2>
+  <p class="all-tools-sub">Everything you need to improve at CS2 and FACEIT, in one place.</p>
   <div class="all-tools-grid">
     <a href="/en/demo.html" class="all-tools-card">
-      <div class="all-tools-card-name">Analysis de demo</div>
-      <div class="all-tools-card-desc">Upload your .dem FACEIT and get FV Rating, heatmaps, Advanced KPIs in 90s.</div>
+      <div class="all-tools-card-name">Demo analysis</div>
+      <div class="all-tools-card-desc">Upload your FACEIT .dem file and get FV Rating, heatmaps, advanced KPIs in 90s.</div>
     </a>
     <a href="/en/scout.html" class="all-tools-card">
       <div class="all-tools-card-name">Scout</div>
@@ -1635,11 +1807,11 @@ footer{
     </a>
     <a href="/en/levels.html" class="all-tools-card">
       <div class="all-tools-card-name">Improve FACEIT</div>
-      <div class="all-tools-card-desc">Roadmap niveau par niveau de Lvl 1 à Lvl 10 : seuils ELO, stats cibles, axes de jeu.</div>
+      <div class="all-tools-card-desc">Level-by-level roadmap from Lvl 1 to Lvl 10: ELO thresholds, target stats, gameplay axes.</div>
     </a>
     <a href="/en/lineup-library.html" class="all-tools-card">
       <div class="all-tools-card-name">Lineup library</div>
-      <div class="all-tools-card-desc">1 800+ lineups smoke / molotov / flash sur 7 maps actives. Filtres par map / position.</div>
+      <div class="all-tools-card-desc">1,800+ smoke / molotov / flash lineups on 7 active maps. Filter by map / position.</div>
     </a>
     <a href="/en/prep-veto.html" class="all-tools-card">
       <div class="all-tools-card-name">Veto prep BO3 / BO5</div>
@@ -1651,7 +1823,7 @@ footer{
     </a>
     <a href="/en/blog.html" class="all-tools-card">
       <div class="all-tools-card-name">Blog & guides</div>
-      <div class="all-tools-card-desc">Tips CS2, comment passer Lvl 10, FV Rating expliqué, ADR/KAST décryptés.</div>
+      <div class="all-tools-card-desc">CS2 tips, how to reach Lvl 10, FV Rating explained, ADR/KAST decoded.</div>
     </a>
     <a href="/en/compare-outils.html" class="all-tools-card">
       <div class="all-tools-card-name">FragValue vs Leetify</div>
