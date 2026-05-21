@@ -605,7 +605,11 @@ section{padding:100px 80px;position:relative}
   font-family:var(--display);font-size:clamp(36px,4vw,56px);
   line-height:1;letter-spacing:.01em;margin-bottom:16px
 }
-.section-sub{font-size:14px;color:var(--text2);max-width:520px;line-height:1.8}
+/* margin auto + text-align:center pour que le bloc soit centre sous un
+   titre centre. Avant : max-width:520px sans margin auto -> le bloc se collait
+   a gauche dans le parent text-align:center, donnant un texte visuellement
+   decale par rapport au titre meme si chaque ligne etait centree. */
+.section-sub{font-size:14px;color:var(--text2);max-width:520px;line-height:1.8;margin:0 auto;text-align:center}
 
 /* ── FEATURES ── */
 .features-grid{
@@ -725,7 +729,14 @@ section{padding:100px 80px;position:relative}
 @keyframes skelShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* ── PRICING ── */
-.pricing-section{background:var(--surface);border-top:1px solid var(--border)}
+/* text-align:center pour aligner le tag 'TARIFS' + le titre 'Choisis ton
+   niveau de jeu' avec la subtitle qui etait deja centree (margin auto +
+   text-align:center inline). Avant : tag + titre s'affichaient a gauche
+   alors que la subtitle etait centree -> mismatch visuel. */
+.pricing-section{background:var(--surface);border-top:1px solid var(--border);text-align:center}
+/* Le grid des cards repasse en align par defaut (les cards ne doivent pas
+   etre centrees text-wise a l'interieur). */
+.pricing-section .pricing-grid{text-align:left}
 .pricing-grid{
   display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
   margin-top:64px
