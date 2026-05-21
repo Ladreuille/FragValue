@@ -216,6 +216,29 @@ export default async function handler(req, res) {
               subscription_tier: 'lifetime_pro',
             }).eq('id', ltdUserId);
 
+            // 2.bis. CRITICAL : insert un pro_grant 'lifetime_pro' pour que
+            // getUserPlan() reconnaisse l'user comme Pro (sinon la column
+            // profiles.subscription_tier n'est lue par AUCUN endpoint de
+            // gating - les middleware requirePro/requireElite passent par
+            // resolvePlanFromGrants/resolvePlanFromDB qui ignorent profiles).
+            // expires_at=null = a vie. plan='pro' (le constraint accepte
+            // seulement 'pro' ou 'team', pas de 'lifetime_pro' direct).
+            // Le UI detecte le LTD via grant.reason='lifetime_pro'.
+            try {
+              const { error: grantErr } = await sb.from('pro_grants').insert({
+                user_id: ltdUserId,
+                plan: 'pro',
+                reason: 'lifetime_pro',
+                expires_at: null,
+                metadata: { stripe_session_id: session.id, amount_cents: session.amount_total || 9900 },
+              });
+              if (grantErr && !grantErr.message?.includes('duplicate')) {
+                console.error('[Stripe] LTD pro_grant insert failed:', grantErr.message);
+              }
+            } catch (gErr) {
+              console.error('[Stripe] LTD pro_grant exception:', gErr.message);
+            }
+
             // 3. Email confirmation LTD
             try {
               const { data: profile } = await sb.from('profiles')

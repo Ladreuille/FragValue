@@ -1536,7 +1536,13 @@ async function loadSubscription() {
     // Plans payants : pro | elite (alias team) | lifetime_pro (one-time payment).
     // Pour lifetime_pro on affiche un libelle special "Pro · LIFETIME" + badge
     // gold founder + pas de prochaine facture + pas de bouton resilier.
-    const isLifetime = plan === 'lifetime_pro';
+    //
+    // FIX ULTRAREVIEW : getUserPlan() normalise les LTD comme plan='pro' (via
+    // grants), mais source='grant' avec reason='lifetime_pro' et lifetime=true.
+    // On doit donc detecter le LTD via les 2 chemins :
+    //   1. d.plan === 'lifetime_pro' (si le code legacy renvoie directement)
+    //   2. d.grant?.reason === 'lifetime_pro' (le mode normalise via pro_grants)
+    const isLifetime = plan === 'lifetime_pro' || d.grant?.reason === 'lifetime_pro';
     const planLabel = isLifetime ? 'Pro · LIFETIME'
                     : plan === 'pro' ? 'Pro'
                     : plan === 'team' || plan === 'elite' ? 'Elite'
@@ -2490,17 +2496,25 @@ async function openCancelDialog() {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { window.location.href = 'login.html'; return; }
 
-    // Recupere les infos d'abonnement pour afficher la date de fin
-    const { data: profile } = await sb.from('profiles').select('plan, current_period_end').eq('id', session.user.id).single();
-    const periodEnd = profile?.current_period_end
-      ? new Date(profile.current_period_end).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })
+    // Recupere les infos d'abonnement pour afficher la date de fin.
+    // FIX ULTRAREVIEW : avant on queryait `profiles.plan, current_period_end`
+    // qui N'EXISTENT PAS sur la table profiles -> planRaw fallback toujours 'pro'
+    // -> le bouton 'Plutot downgrader' ne s'affichait JAMAIS pour les Elite.
+    // Source of truth correcte = table subscriptions (cf. check-subscription.js).
+    const { data: sub } = await sb.from('subscriptions')
+      .select('plan, current_period_end')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    const periodEnd = sub?.current_period_end
+      ? new Date(sub.current_period_end).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })
       : 'la fin de la période en cours';
-    const planRaw = (profile?.plan || 'pro').toLowerCase();
+    const planRaw = (sub?.plan || 'pro').toLowerCase();
     const planLabel = planRaw.toUpperCase();
     // Save-churn : si l'user est Elite, on lui propose un downgrade vers Pro
     // (au lieu de cancel complet) en option intermediaire. Economie 16 EUR/mois
     // pour lui, on garde une revenue de 9 EUR/mois pour nous (vs 0).
-    const isElite = planRaw === 'elite' || planRaw === 'team';
+    // Normalisation : Stripe plan keys peuvent etre 'elite_monthly', 'team_yearly' etc.
+    const isElite = /^(elite|team)/.test(planRaw);
 
     // Click 2 : modale de confirmation
     const existing = document.getElementById('cancelSubModal');

@@ -192,13 +192,40 @@ async function revokeInvite(req, res, sb, user) {
   const id = parseInt(req.query.id, 10);
   if (!id) return res.status(400).json({ error: 'Parametre id manquant' });
 
+  // Recupere d'abord la row pour identifier le member_user_id (besoin pour
+  // retirer son pro_grant si invitation acceptee).
+  const { data: row } = await sb.from('team_members')
+    .select('id, member_user_id, status')
+    .eq('id', id)
+    .eq('admin_user_id', user.id)
+    .maybeSingle();
+  if (!row) return res.status(404).json({ error: 'Invitation introuvable' });
+
   const { error } = await sb.from('team_members')
     .update({ status: 'revoked', revoked_at: new Date().toISOString() })
     .eq('id', id)
     .eq('admin_user_id', user.id)
     .in('status', ['pending', 'accepted']);
-
   if (error) return res.status(500).json({ error: error.message });
+
+  // Si l'invite avait ete acceptee, on retire le pro_grant lie a ce
+  // team_member specifique (metadata.team_member_id = id). Sinon, on ne
+  // touche pas (cas pending = jamais de grant cree).
+  if (row.status === 'accepted' && row.member_user_id) {
+    try {
+      await sb.from('pro_grants')
+        .update({ revoked_at: new Date().toISOString() })
+        .eq('user_id', row.member_user_id)
+        .eq('reason', 'team_member_invite')
+        .filter('metadata->>team_member_id', 'eq', String(id))
+        .is('revoked_at', null);
+    } catch (e) {
+      // Non-blocking : le team_member est deja revoked, le grant survivra
+      // mais l'admin peut nous contacter en support pour cleanup manuel.
+      console.warn('[team-members] revoke grant cleanup failed:', e.message);
+    }
+  }
+
   return res.status(200).json({ ok: true });
 }
 
@@ -235,6 +262,29 @@ async function acceptInvite(req, res, sb) {
     .eq('id', invite.id);
 
   if (updErr) return res.status(500).json({ error: updErr.message });
+
+  // CRITICAL : grant le Pro access au nouveau member. Sans ca, l'invite
+  // a beau accepter, son compte reste Free. getUserPlan() lit les
+  // pro_grants pour determiner le plan effectif. expires_at lie a la sub
+  // Elite de l'admin -> si l'admin downgrade, on revoque (TODO phase 2 :
+  // cron qui surveille les subs Elite et revoke les grants associes).
+  try {
+    const { error: grantErr } = await sb.from('pro_grants').insert({
+      user_id: user.id,
+      plan: 'pro',
+      reason: 'team_member_invite',
+      expires_at: null,  // tant que l'admin garde son Elite, le grant tient
+      metadata: {
+        admin_user_id: invite.admin_user_id,
+        team_member_id: invite.id,
+      },
+    });
+    if (grantErr && !grantErr.message?.includes('duplicate')) {
+      console.error('[team-members] pro_grant insert failed:', grantErr.message);
+    }
+  } catch (e) {
+    console.error('[team-members] pro_grant exception:', e.message);
+  }
 
   return res.status(200).json({ ok: true, team_admin_id: invite.admin_user_id });
 }

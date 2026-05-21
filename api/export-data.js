@@ -75,8 +75,14 @@ export default async function handler(req, res) {
       safeFetch('profile',         sb.from('profiles').select('*').eq('id', user.id).maybeSingle()),
       safeFetch('subscriptions',   sb.from('subscriptions').select('*').eq('user_id', user.id)),
       safeFetch('lifetime_purchases', sb.from('lifetime_purchases').select('*').eq('user_id', user.id)),
-      safeFetch('demos',           sb.from('demos').select('id, analysed_at, fv_rating, map_name, faceit_match_id, source').eq('user_id', user.id).order('analysed_at', { ascending: false })),
-      safeFetch('feedback',        sb.from('feedback').select('id, ticket_number, type, message, status, admin_response, created_at, responded_at, tags').eq('user_id', user.id)),
+      // Bug ultrareview : avant on selectait `map_name, faceit_match_id, source`
+      // qui n'existent pas sur la table demos. Le safeFetch echouait silencieusement
+      // -> l'export RGPD retournait demos:[] meme pour un user avec des analyses.
+      // Vraies colonnes : id, user_id, map, rounds, total_kills, analysed_at, fv_rating.
+      safeFetch('demos',           sb.from('demos').select('id, analysed_at, fv_rating, map, rounds, total_kills').eq('user_id', user.id).order('analysed_at', { ascending: false })),
+      // Table 'user_feedback' (pas 'feedback'). Bug trouve a l'ultrareview :
+      // l'export silencieusement skipperait les tickets feedback de l'user.
+      safeFetch('feedback',        sb.from('user_feedback').select('id, ticket_number, type, message, status, admin_response, created_at, responded_at, tags').eq('user_id', user.id)),
       safeFetch('coach_credits',   sb.from('coach_credits').select('*').eq('user_id', user.id).maybeSingle()),
       safeFetch('coach_credits_log', sb.from('coach_credits_log').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(100)),
       safeFetch('referral_code',   sb.from('profiles').select('referral_code, referred_by, referred_at').eq('id', user.id).maybeSingle()),
