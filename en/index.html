@@ -732,12 +732,20 @@ section{padding:100px 80px;position:relative}
    subtitle -> obvious visual mismatch. */
 .pricing-section{background:var(--surface);border-top:1px solid var(--border);text-align:center}
 .pricing-section .pricing-grid{text-align:left}
-/* Same alignment pattern (center header + left cards) for #features
-   and .pro-section so 'Everything FACEIT doesn't tell you' and 'Where
-   you stand on FACEIT' titles match their centered sub-text. */
-#features{text-align:center}
-#features .features-grid{text-align:left}
+/* Center the tag + title + sub of #features and .pro-section so they
+   align with the centered .section-sub paragraph. Belt-and-braces : on
+   ajoute aussi des selecteurs directs sur les enfants au cas ou un autre
+   rule plus specifique passerait devant le parent text-align:center. */
+#features,
 .pro-section{text-align:center}
+#features > .section-tag,
+#features > .section-title,
+#features > .section-sub,
+.pro-section > .section-tag,
+.pro-section > .section-title,
+.pro-section > .section-sub{text-align:center}
+/* Cards et table gardent leur layout interne left-aligned */
+#features .features-grid{text-align:left}
 .pro-section .pro-table{text-align:left}
 .pro-section .pro-live-tag{display:inline-flex}
 .pricing-grid{
