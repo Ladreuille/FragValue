@@ -4,6 +4,66 @@ Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/frag
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
+## 2026-05-23 · v6.4.1 — Bot detection upstream (fix EntityNotFound)
+
+**Contexte** : un user a remonte une demo FACEIT qui crashait le parser avec
+HTTP 500 + body `{ error: "EntityNotFound" }`. Reproduction locale :
+`parsePlayerInfo()` retournait 11 joueurs au lieu de 10. Le 11e etait un BOT
+filler ("Gunner") avec `steamid="11"` (placeholder slot id, pas un Steam ID
+64-bit valide). Tous les `parseEvent()` paniquent ensuite avec
+`EntityNotFound` car la table interne demoparser2 ne sait pas resoudre
+l'entite avec steamid invalide.
+
+**Cause racine** : bug upstream dans `@laihoe/demoparser2` (Rust) qui ne gere
+pas les entites avec steamid malforme. Survient quand un joueur disconnect
+en cours de match FACEIT et que le serveur remplit avec un bot le temps de
+finir le round.
+
+### Fix : detection precoce + 422 friendly
+
+Dans `parseCS2Demo()` step 1, juste apres `parsePlayerInfo()` :
+
+```js
+const VALID_STEAMID = /^7656[0-9]{13}$/;
+const invalid = playerInfoRaw.filter(p => !p.steamid || !VALID_STEAMID.test(String(p.steamid)));
+if (invalid.length > 0) {
+  const err = new Error('DEMO_BOT_DETECTED');
+  err.code = 'DEMO_BOT_DETECTED';
+  err.detail = `Cette demo contient ${invalid.length} entite(s) bot/AFK-filler...`;
+  err.invalidPlayers = sample;
+  throw err;
+}
+```
+
+Les handlers `/parse` et `/parse-from-storage` catchent ce code specifique
+et retournent **HTTP 422** avec `{ error: 'DEMO_BOT_DETECTED', message, invalid_players }`.
+Le frontend demo.html affiche le `message` au lieu d'un "Erreur 500" cryptique.
+
+### Layer 2 : try/catch defensif sur parseEvent('player_death')
+
+Ligne 196 etait l'unique parseEvent NON wrappe en try/catch (tous les autres
+l'etaient deja). Si jamais une autre forme d'entite corrompue passe la
+detection upstream, le wrap retourne `[]` au lieu de crash.
+
+### Verification
+
+```
+node -e "test bot detection on the broken demo"
+=> Players total: 11
+=> Invalid: 1 (Gunner steamid=11)
+=> Fix rejetterait avec 422 DEMO_BOT_DETECTED
+```
+
+### Deploy
+
+```bash
+cd /Users/quentin/Documents/Fragvalue/GitHub/fragvalue-demo-parser
+railway login    # si token expire
+railway up
+# verifier : curl https://fragvalue-demo-parser-production.up.railway.app/
+# -> { ..., version: '6.4.1', ... }
+```
+
 ## 2026-05-18 · v6.4.0 — Endpoint `/process-pro-demo` (Option B pipeline MVP)
 
 **Contexte** : pipeline pro demos (HLTV → Supabase Storage → parser → `pro_demo_events`)
