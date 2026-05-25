@@ -25,8 +25,10 @@
 
   async function loginFaceit() {
     try {
-      // 1. Recupere le clientId via /api/faceit-config (avec fallback hardcode)
-      let clientId = '141a2533-b3b9-45e7-8c98-8cb683871f74';
+      // 1. Recupere le clientId via /api/faceit-config. Fallback hardcode
+      //    aligne sur la prod (verifie via curl /api/faceit-config le 23/05/2026).
+      //    Si /api/faceit-config tombe, le fallback evite invalid_client cote FACEIT.
+      let clientId = '531b5a73-4472-446e-9577-8febdf2d22a4';
       try {
         const res = await fetch('/api/faceit-config');
         const cfg = await res.json();
