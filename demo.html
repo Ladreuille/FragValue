@@ -1765,6 +1765,70 @@ async function startAnalysis() {
       });
     }
 
+    // Email backup "analyse prete" : on tire la notif+email IMMEDIATEMENT
+    // depuis demo.html plutot que d'attendre heatmap-results.html. Pourquoi :
+    // si l'user ferme l'onglet apres le parse (60s d'attente, frequent qu'il
+    // soit parti faire autre chose et revienne plus tard), heatmap-results.html
+    // ne se charge jamais et il rate l'email "ton analyse est prete".
+    //
+    // keepalive:true : modern browser fetch flag qui permet a la requete de
+    // se terminer apres window.location.href = ... (sinon le redirect kill
+    // la fetch en cours, et l'email part jamais).
+    //
+    // Idempotence : on set le flag sessionStorage 'fv_notif_sent_<id>' que
+    // heatmap-results.html check pour skip son propre notify-demo-analyzed.
+    // En cas de double-call (cache miss apres redirect), le serveur insere
+    // 2 notifications mais 1 seul email par mail (best-effort, acceptable).
+    try {
+      const demoId = sessionStorage.getItem('lastDemoId');
+      if (demoId) {
+        const { data: { session } } = await _sb.auth.getSession();
+        if (session) {
+          const notifKey = 'fv_notif_sent_' + demoId;
+          if (!sessionStorage.getItem(notifKey)) {
+            sessionStorage.setItem(notifKey, '1');
+            // Calcul fvRating si on connait le nickname FACEIT du user
+            let fvRating = null;
+            try {
+              const { data: profile } = await _sb.from('profiles')
+                .select('faceit_nickname').eq('id', session.user.id).maybeSingle();
+              const nick = profile?.faceit_nickname;
+              const players = data.data?.playerStats || [];
+              const numR = (data.data?.rounds || []).filter(r => !r.isKnife).length || 1;
+              if (nick && players.length > 0) {
+                const p = players.find(pl => pl.name === nick)
+                  || players.find(pl => pl.name?.toLowerCase() === nick.toLowerCase());
+                if (p) {
+                  // Formule FV Rating (copie de calcFvRating dans heatmap-results.html
+                  // ligne 1557). On garde la formule en local pour eviter une dep
+                  // supplementaire. 4 args : kills, deaths, assists=0, rounds.
+                  const kpr = p.kills / numR, dpr = p.deaths / numR, apr = 0;
+                  const fv = 0.0073 * 75 + 0.3591 * kpr - 0.5329 * dpr
+                    + 0.2372 * (2.13 * kpr + 0.42 * apr - 0.41) + 0.0032 * 70 + 0.1587;
+                  fvRating = parseFloat(fv.toFixed(2));
+                }
+              }
+            } catch (_) {} // best-effort, FV Rating reste null si erreur
+            fetch('/api/notify-demo-analyzed', {
+              method: 'POST',
+              keepalive: true, // survit au window.location.href redirect
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + session.access_token,
+              },
+              body: JSON.stringify({
+                map: data.data?.meta?.map || 'de_cs2',
+                fvRating,
+                demoId,
+              }),
+            }).catch(e => console.warn('[demo] notify-demo-analyzed:', e?.message));
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[demo] email backup error (non-blocking):', e?.message);
+    }
+
     go(5, 100, 'Clutch.', 'Ton analyse est prête. On t\'emmène voir les chiffres.');
     bar.style.background = 'var(--success)';
     await new Promise(r => setTimeout(r, 600));
