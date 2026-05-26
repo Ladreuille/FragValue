@@ -1216,6 +1216,101 @@ nav:not(.fv-nav){
 const PARSER_URL = 'https://fragvalue-demo-parser-production.up.railway.app';
 let selectedFile = null;
 
+// parseViaSSE() : ouvre une connexion Server-Sent Events vers
+// /parse-from-storage-stream pour avoir du progress live pendant le parsing
+// d'une demo 200-500 MB. Retourne une Promise qui resolve avec
+// { data: { success:true, data: <parsed result> } } pour matcher le format
+// de l'ancienne route POST.
+//
+// Events SSE consommes (cf. parser/index.js v6.5.0+) :
+//   connected, download, parsing.players|kills|map|rounds|positions_*|finalize, done, error
+//
+// Mapping vers go(stepIdx, percentage, title, subTitle) :
+//   La fonction go() existante drive la progress UI (5 etapes 0-100%).
+//   On distribue les events SSE sur les etapes pour avoir une UI fluide.
+//
+// Erreurs : reject avec { status, message, code } compatible avec le
+// catch caller. status=422 + code='DEMO_BOT_DETECTED' = afficher direct
+// le message a l'user. Autres errs = fallback POST.
+function parseViaSSE(jwt, storagePath, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const url = PARSER_URL + '/parse-from-storage-stream'
+      + '?bucket=demos-incoming'
+      + '&path=' + encodeURIComponent(storagePath)
+      + '&token=' + encodeURIComponent(jwt);
+
+    let es;
+    try { es = new EventSource(url); }
+    catch (e) { reject({ status: 0, message: 'EventSource non supporte', code: 'NO_EVENTSOURCE' }); return; }
+
+    // Timeout global : si rien recu pendant timeoutMs, on abandon
+    const timeoutId = setTimeout(() => {
+      try { es.close(); } catch(_) {}
+      reject({ status: 0, message: 'Timeout SSE (' + Math.round(timeoutMs/1000) + 's)', code: 'TIMEOUT' });
+    }, timeoutMs || 300000);
+
+    es.onmessage = (e) => {
+      let ev;
+      try { ev = JSON.parse(e.data); } catch(_) { return; }
+      switch (ev.type) {
+        case 'connected':
+          go(1, 14, 'Stream etabli', 'En attente du download depuis Supabase...');
+          break;
+        case 'download':
+          if (ev.progress === 100) {
+            go(2, 28, 'Demo telechargee', ev.message || 'Demarrage du parsing CS2...');
+          } else {
+            go(1, 18, 'Download Supabase -> parser', ev.message || 'En cours...');
+          }
+          break;
+        case 'parsing':
+          if (ev.step === 'players') {
+            go(2, 35, 'Lecture des joueurs', ev.count + ' joueurs detectes');
+          } else if (ev.step === 'kills') {
+            go(2, 45, 'Parsing des kills', ev.count + ' kills extraits du demo');
+          } else if (ev.step === 'map') {
+            go(3, 52, 'Map detectee', ev.name);
+          } else if (ev.step === 'rounds') {
+            go(3, 62, 'Construction des rounds', ev.count + ' rounds');
+          } else if (ev.step === 'positions_start') {
+            go(4, 70, 'Calcul des positions', 'Echantillonnage de ' + ev.ticks + ' ticks...');
+          } else if (ev.step === 'positions_done') {
+            go(4, 82, 'Positions terminees', ev.players + ' joueurs · ' + ev.points + ' points');
+          } else if (ev.step === 'finalize') {
+            go(5, 90, 'Finalisation', 'Assemblage du resultat (kills + heatmaps + stats)...');
+          }
+          break;
+        case 'done':
+          clearTimeout(timeoutId);
+          try { es.close(); } catch(_) {}
+          // On match le shape { data: { success:true, data: ... } } pour
+          // que le caller puisse traiter pareil que l'ancienne route POST.
+          resolve({ data: ev.data, ok: true });
+          break;
+        case 'error':
+          clearTimeout(timeoutId);
+          try { es.close(); } catch(_) {}
+          reject({
+            status: ev.code === 'DEMO_BOT_DETECTED' ? 422 : 500,
+            message: ev.message || ev.error || 'Erreur parser inconnue',
+            code: ev.code || 'PARSE_ERROR',
+          });
+          break;
+      }
+    };
+
+    es.onerror = () => {
+      // EventSource ne distingue pas network-down vs server-close-normal.
+      // Si on a deja recu 'done' avant, le close est normal (resolve a
+      // ete appele, le reject ici est no-op). Si on est ici sans avoir
+      // recu 'done', c'est une vraie erreur reseau.
+      clearTimeout(timeoutId);
+      try { es.close(); } catch(_) {}
+      reject({ status: 0, message: 'Connexion SSE perdue', code: 'SSE_DISCONNECT' });
+    };
+  });
+}
+
 // Pre-warm le serveur Railway des le chargement de la page (évite le cold start).
 // On track le dernier status pour pouvoir avertir l'user avant un upload 500 MB
 // si le parser est down (evite l'attente + frustration).
@@ -1561,40 +1656,52 @@ async function startAnalysis() {
     const jwt = session?.access_token;
     if (!jwt) throw new Error('Session expiree, reconnecte-toi.');
 
-    // ── 4. POST parser avec payload JSON tiny (< 1 KB) -> Railway proxy
-    //     voit juste un petit POST instant, pas un upload multipart de 450 MB.
-    //     Le parser fait le download Supabase->Railway server-to-server.
-    go(1, 12, 'Parser en cours', 'Lecture de la demo cote serveur...');
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-    const res = await fetch(PARSER_URL + '/parse-from-storage', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + jwt,
-      },
-      body: JSON.stringify({
-        bucket: 'demos-incoming',
-        path: storagePath,
-        options: ['Heatmaps','2D Replay','Utility Map','Stats équipes'],
-      }),
-      signal: controller.signal,
-    });
+    // ── 4. Parser via SSE (Server-Sent Events) pour progress live.
+    //     L'endpoint /parse-from-storage-stream push des events :
+    //     download / parsing.players / parsing.kills / parsing.rounds / ...
+    //     L'user voit en live l'etape en cours au lieu d'un spinner generique.
+    //     Si SSE echoue (network, EventSource non-supporte), fallback POST.
+    go(1, 12, 'Connexion au parser', 'Etablissement du stream temps reel...');
+    timers.forEach(t => clearTimeout(t)); // stop les fake-progress timers
 
-    if (res.status === 422) {
-      const data = await res.json().catch(() => ({}));
-      showError(data.message || "Cette demo n'a pas pu etre parsee. Essaie une autre demo.");
-      return;
+    let data;
+    try {
+      data = await parseViaSSE(jwt, storagePath, timeoutMs);
+    } catch (sseErr) {
+      // Erreurs metier : pas de fallback (le POST donnerait le meme resultat)
+      if (sseErr.status === 422 || sseErr.code === 'DEMO_BOT_DETECTED') {
+        showError(sseErr.message || "Cette demo n'a pas pu etre parsee. Essaie une autre demo.");
+        return;
+      }
+      // Erreurs network/SSE : fallback POST classique
+      console.warn('[demo] SSE failed, fallback POST:', sseErr);
+      go(1, 18, 'Reconnexion classique', 'Stream interrompu, basculement vers POST...');
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(PARSER_URL + '/parse-from-storage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + jwt,
+        },
+        body: JSON.stringify({
+          bucket: 'demos-incoming',
+          path: storagePath,
+          options: ['Heatmaps','2D Replay','Utility Map','Stats équipes'],
+        }),
+        signal: controller.signal,
+      });
+      if (res.status === 422) {
+        const d = await res.json().catch(() => ({}));
+        showError(d.message || "Cette demo n'a pas pu etre parsee. Essaie une autre demo.");
+        return;
+      }
+      clearTimeout(timeout);
+      if (!res.ok) { const e = await res.json().catch(()=>({error:'Erreur serveur'})); throw new Error(e.error||'Erreur serveur'); }
+      data = await res.json();
     }
-    clearTimeout(timeout);
-
-    // Fetch terminé  - annuler les timers et finir proprement
-    timers.forEach(t => clearTimeout(t));
-
-    if (!res.ok) { const e = await res.json().catch(()=>({error:'Erreur serveur'})); throw new Error(e.error||'Erreur serveur'); }
 
     go(5, 92, 'Finalisation', 'Traitement des résultats...');
-    const data = await res.json();
     go(5, 97, 'Finalisation', 'Sauvegarde...');
 
     try {
