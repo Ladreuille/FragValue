@@ -154,6 +154,59 @@ module.exports = async function handler(req, res) {
       console.warn('[notify-demo-analyzed] email failed (non-blocking):', emailErr?.message);
     }
 
+    // P1 DISCORD BACKUP (cf. ultrareview Onboarding) : si le user a un Discord
+    // lie (table discord_links), on lui envoie aussi un DM via le bot avec un
+    // lien vers ses heatmaps. C'est une voie de fallback : si son email est
+    // dans le spam ou s'il est plus actif sur Discord, il recoit quand meme
+    // le ping. Best-effort : si Discord plante (DMs bloques, bot offline,
+    // permissions), on ne fail pas la notification in-app.
+    try {
+      const { data: dLink } = await sb
+        .from('discord_links')
+        .select('discord_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (dLink?.discord_id && demoId) {
+        const { sendDirectMessage } = require('./_lib/discord.js');
+        const siteUrl = process.env.SITE_URL || 'https://fragvalue.com';
+        const link = `${siteUrl}/heatmap-results.html?id=${demoId}`;
+        // Format embed Discord : couleur accent FragValue (#b8ff57 = 0xB8FF57)
+        // visuellement coherent avec le branding. Fallback content text pour
+        // les clients Discord qui n'affichent pas les embeds (rares).
+        const fvLine = fvRating
+          ? (isEN ? `**FV Rating** ${fvRating}` : `**FV Rating** ${fvRating}`)
+          : '';
+        const statsLine = (kast != null && adr != null)
+          ? (isEN
+              ? `KAST ${kast}% · ADR ${adr}`
+              : `KAST ${kast}% · ADR ${adr}`)
+          : '';
+        const descLines = [fvLine, statsLine].filter(Boolean).join('\n');
+        const payload = {
+          content: isEN
+            ? `Your **${mapShort}** analysis is ready. ${link}`
+            : `Ton analyse **${mapShort}** est prete. ${link}`,
+          embeds: [{
+            title: isEN ? 'FragValue · Analysis ready' : 'FragValue · Analyse prete',
+            description: descLines || undefined,
+            color: 0xB8FF57,
+            url: link,
+            footer: {
+              text: isEN
+                ? 'Heatmaps, AI Coach diagnosis and 7-day action plan'
+                : 'Heatmaps, diagnostic Coach IA et plan d\'action 7 jours',
+            },
+          }],
+        };
+        await sendDirectMessage(dLink.discord_id, payload);
+        console.log(`[notify-demo-analyzed] discord DM sent to ${dLink.discord_id} for demo ${demoId}`);
+      }
+    } catch (dmErr) {
+      // 403 = user a desactive les DMs du bot. Pas grave, on log et on continue.
+      // 50007 = "Cannot send messages to this user" (idem, user a bloque)
+      console.warn('[notify-demo-analyzed] discord DM failed (non-blocking):', dmErr?.message);
+    }
+
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('[notify-demo-analyzed] error:', err);

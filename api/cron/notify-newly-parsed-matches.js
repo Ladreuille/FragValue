@@ -121,6 +121,21 @@ module.exports = async function handler(req, res) {
     const tpl = require('../_lib/email-templates.js');
     const { sendEmail } = await import('../_lib/email.js');
 
+    // Pre-fetch les discord_links de tous les users du batch en 1 query
+    // (evite N queries dans la boucle for). Map userId -> discord_id.
+    const { data: discordRows } = await supabase
+      .from('discord_links')
+      .select('user_id, discord_id')
+      .in('user_id', userIds);
+    const discordMap = new Map((discordRows || []).map(r => [r.user_id, r.discord_id]));
+    const SITE_URL = process.env.SITE_URL || 'https://fragvalue.com';
+    let sendDirectMessage = null;
+    if (discordRows && discordRows.length > 0) {
+      try {
+        sendDirectMessage = require('../_lib/discord.js').sendDirectMessage;
+      } catch (_) {}
+    }
+
     // 5. Process chaque match : insert notification + envoi email (best-effort)
     for (const m of toProcess) {
       try {
@@ -189,6 +204,35 @@ module.exports = async function handler(req, res) {
           } catch (emailErr) {
             console.warn(`[notify-newly-parsed] email failed for match ${m.id}:`, emailErr?.message);
             // On compte quand meme comme notified (notif in-app a marche)
+          }
+        }
+
+        // ── Discord DM backup (si user a lie son compte Discord)
+        // Idem patten email : best-effort, ne pas fail si DMs bloques.
+        // Pour le cron FACEIT auto-sync, c'est particulierement utile car
+        // l'user n'est pas forcement sur le site quand son match termine.
+        const discordId = discordMap.get(m.user_id);
+        if (discordId && sendDirectMessage) {
+          try {
+            const link = `${SITE_URL}/heatmap-results.html?id=${m.id}`;
+            const descLines = [];
+            if (fvRatingFmt) descLines.push(`**FV Rating** ${fvRatingFmt}`);
+            if (kast != null && adr != null) descLines.push(`KAST ${kast}% · ADR ${adr}`);
+            await sendDirectMessage(discordId, {
+              content: `Ton analyse **${mapShort}** est prete. ${link}`,
+              embeds: [{
+                title: 'FragValue · Analyse prete',
+                description: descLines.length ? descLines.join('\n') : undefined,
+                color: 0xB8FF57,
+                url: link,
+                footer: {
+                  text: 'Heatmaps, diagnostic Coach IA et plan d\'action 7 jours',
+                },
+              }],
+            });
+          } catch (dmErr) {
+            // 403 = DMs bloques par user. 50007 = bot can't message user.
+            console.warn(`[notify-newly-parsed] discord DM failed for match ${m.id}:`, dmErr?.message);
           }
         }
 

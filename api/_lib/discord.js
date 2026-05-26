@@ -201,6 +201,61 @@ async function getMe(userAccessToken) {
   return res.json(); // { id, username, global_name, avatar, email?, ... }
 }
 
+// Cree (ou recupere) le DM channel entre le bot et un user.
+// POST /users/@me/channels avec { recipient_id }.
+// Idempotent : Discord retourne toujours le meme channel pour un user donne.
+// Retourne { id, type, recipients: [...], last_message_id, ... }.
+async function createDMChannel(discordUserId) {
+  if (!discordUserId) throw new DiscordApiError('discordUserId required');
+  const res = await fetch(`${DISCORD_API}/users/@me/channels`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bot ${getBotToken()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ recipient_id: discordUserId }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new DiscordApiError(`createDMChannel failed: ${res.status}`, { status: res.status, body });
+  }
+  return res.json();
+}
+
+// Envoie un DM a un user Discord.
+// 1. Cree le DM channel (POST /users/@me/channels)
+// 2. POST /channels/{channelId}/messages avec le payload (content, embeds, components)
+//
+// LIMITES :
+//   - Le user doit autoriser les DMs du serveur (option Discord cote user).
+//     Si DMs bloques, on recoit un 403 -> on log et on no-op.
+//   - Le bot doit partager au moins un guild avec le user (cas standard car
+//     on l'ajoute via addUserToGuild() au moment du link OAuth).
+//   - Discord rate-limite a 5 DM/sec global pour un bot -> OK pour notre volume.
+//
+// payload : { content?, embeds?, components? } (Discord Message API standard).
+// Doc : https://discord.com/developers/docs/resources/channel#create-message
+async function sendDirectMessage(discordUserId, payload) {
+  if (!discordUserId) throw new DiscordApiError('discordUserId required');
+  if (!payload || (!payload.content && !payload.embeds)) {
+    throw new DiscordApiError('payload must have content or embeds');
+  }
+  const channel = await createDMChannel(discordUserId);
+  const res = await fetch(`${DISCORD_API}/channels/${channel.id}/messages`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bot ${getBotToken()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new DiscordApiError(`sendDirectMessage failed: ${res.status}`, { status: res.status, body });
+  }
+  return res.json(); // { id, channel_id, content, ... }
+}
+
 module.exports = {
   DiscordApiError,
   assignRole,
@@ -212,4 +267,6 @@ module.exports = {
   listGuildMembers,
   exchangeOAuthCode,
   getMe,
+  createDMChannel,
+  sendDirectMessage,
 };
