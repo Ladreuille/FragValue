@@ -787,8 +787,20 @@ nav:not(.fv-nav){
 }
 .progress-title{font-family:var(--display);font-size:18px;letter-spacing:.02em}
 .progress-sub{font-size:10px;color:var(--text3);letter-spacing:.06em;margin-top:3px}
-.progress-track{height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-bottom:18px}
-.progress-fill{height:100%;width:0%;background:var(--accent);border-radius:1px;transition:width .4s ease}
+.progress-track{height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-bottom:18px;position:relative}
+.progress-fill{height:100%;width:0%;background:var(--accent);border-radius:1px;transition:width .4s ease;position:relative;overflow:hidden}
+/* Bar shimmer : un reflet qui glisse sur la barre toutes les 2.4s pour
+   donner l'impression que ca bouge meme quand la width est statique
+   (entre 2 milestones SSE). Subtle car opacity 0.35. */
+.progress-fill::after{
+  content:'';position:absolute;top:0;left:0;height:100%;width:50%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+  animation:barShimmer 2.4s ease-in-out infinite
+}
+@keyframes barShimmer{
+  0%{transform:translateX(-100%)}
+  100%{transform:translateX(220%)}
+}
 .progress-steps{display:flex;flex-direction:column;gap:8px}
 .ps{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--text3);letter-spacing:.04em;transition:color .2s}
 .ps.done{color:var(--success)}
@@ -1249,38 +1261,124 @@ function parseViaSSE(jwt, storagePath, timeoutMs) {
       reject({ status: 0, message: 'Timeout SSE (' + Math.round(timeoutMs/1000) + 's)', code: 'TIMEOUT' });
     }, timeoutMs || 300000);
 
+    // === Polish progress (Task #32) =====================================
+    // 1. CREEP : entre 2 SSE events, le bar reste statique meme si le parser
+    //    bosse (ex: positions_start -> positions_done peut prendre 30s).
+    //    On fait creeper la barre de +0.4%/sec, plafonne a +5% au-dessus de
+    //    la derniere milestone, pour que l'user voie que ca avance.
+    // 2. ROTATING INSIGHTS : pendant un long step, on tourne le sub-message
+    //    avec des insights CS2 (microcopy ultrareview item 11 : transforme
+    //    l'attente en valeur educative).
+    let lastMilestonePct = 0;
+    let lastMilestoneAt = Date.now();
+    let creepTimer = null;
+    let insightTimer = null;
+    let currentInsightIdx = 0;
+    const CREEP_RATE = 0.4; // % par seconde
+    const CREEP_MAX_DELTA = 5; // ne pas depasser milestone + 5%
+    const insights = {
+      players: [
+        'Moyenne FACEIT Lvl 7 : 58% de duels d\'ouverture remportes',
+        'Top 1% Lvl 10 : 0.85 kills/round contre 0.62 a Lvl 7',
+      ],
+      kills: [
+        '1 round CS2 = 16 stats individuelles trackees',
+        'AWP pros : 1.42 ratio kill/round contre 0.95 a Lvl 7',
+      ],
+      rounds: [
+        'L\'impact des smokes pros = +23% kills/round sur les rounds anti-eco',
+        'KAST moyen Lvl 7 = 68%. Top 1% = 78%+',
+      ],
+      positions: [
+        'Echantillonnage 4 ticks/sec pour heatmap precise sans saturer le navigateur',
+        'On track ton orientation YAW pour reperer tes erreurs de pre-aim',
+        'Trajectoires 5v5 = 60 points/round x 24+ rounds = ~7000 points par joueur',
+      ],
+      finalize: [
+        'On croise tes 20 derniers matchs pour le diagnostic Coach IA',
+        'Generation du plan d\'action 7 jours base sur tes axes faibles',
+      ],
+    };
+    function stopCreep() {
+      if (creepTimer) { clearInterval(creepTimer); creepTimer = null; }
+      if (insightTimer) { clearInterval(insightTimer); insightTimer = null; }
+    }
+    function startCreep(targetCap, insightKey) {
+      stopCreep();
+      lastMilestoneAt = Date.now();
+      currentInsightIdx = 0;
+      const elapsedSec = () => (Date.now() - lastMilestoneAt) / 1000;
+      // Creep le bar
+      creepTimer = setInterval(() => {
+        const delta = Math.min(CREEP_MAX_DELTA, elapsedSec() * CREEP_RATE);
+        const newPct = Math.min(targetCap, lastMilestonePct + delta);
+        const bar = document.getElementById('progressBar');
+        if (bar && newPct > parseFloat(bar.style.width)) {
+          bar.style.width = newPct + '%';
+        }
+      }, 1000);
+      // Tourne les insights toutes les 6s si on a + de 1 insight pour ce step.
+      // On attend 5s apres le milestone avant de rotate (sinon flicker du
+      // sub-text trop tot pour les steps rapides comme parsing.players).
+      const arr = insights[insightKey] || [];
+      if (arr.length > 1) {
+        insightTimer = setInterval(() => {
+          if (elapsedSec() < 5) return;
+          currentInsightIdx = (currentInsightIdx + 1) % arr.length;
+          const subEl = document.getElementById('progressSub');
+          if (subEl) subEl.textContent = arr[currentInsightIdx];
+        }, 6000);
+      }
+    }
+    function milestone(pct, capForCreep, insightKey) {
+      lastMilestonePct = pct;
+      lastMilestoneAt = Date.now();
+      startCreep(capForCreep, insightKey);
+    }
+
     es.onmessage = (e) => {
       let ev;
       try { ev = JSON.parse(e.data); } catch(_) { return; }
       switch (ev.type) {
         case 'connected':
           go(1, 14, 'Stream etabli', 'En attente du download depuis Supabase...');
+          milestone(14, 18, null);
           break;
         case 'download':
           if (ev.progress === 100) {
             go(2, 28, 'Demo telechargee', ev.message || 'Demarrage du parsing CS2...');
+            milestone(28, 32, null);
           } else {
             go(1, 18, 'Download Supabase -> parser', ev.message || 'En cours...');
+            milestone(18, 27, null);
           }
           break;
         case 'parsing':
           if (ev.step === 'players') {
-            go(2, 35, 'Lecture des joueurs', ev.count + ' joueurs detectes');
+            go(2, 35, 'Lecture des joueurs', ev.count + ' joueurs detectes · 128t serveurs FACEIT');
+            milestone(35, 42, 'players');
           } else if (ev.step === 'kills') {
-            go(2, 45, 'Parsing des kills', ev.count + ' kills extraits du demo');
+            go(2, 45, 'Parsing des kills', ev.count + ' kills extraits · 1 round CS2 = 16 stats trackees');
+            milestone(45, 50, 'kills');
           } else if (ev.step === 'map') {
-            go(3, 52, 'Map detectee', ev.name);
+            go(3, 52, 'Map detectee', String(ev.name).replace(/^de_/, '').toUpperCase());
+            milestone(52, 60, null);
           } else if (ev.step === 'rounds') {
-            go(3, 62, 'Construction des rounds', ev.count + ' rounds');
+            go(3, 62, 'Construction des rounds', ev.count + ' rounds · Calcul wins T vs CT');
+            milestone(62, 68, 'rounds');
           } else if (ev.step === 'positions_start') {
-            go(4, 70, 'Calcul des positions', 'Echantillonnage de ' + ev.ticks + ' ticks...');
+            go(4, 70, 'Calcul des positions', 'Echantillonnage de ' + ev.ticks + ' ticks pour les heatmaps');
+            milestone(70, 80, 'positions');
           } else if (ev.step === 'positions_done') {
-            go(4, 82, 'Positions terminees', ev.players + ' joueurs · ' + ev.points + ' points');
+            go(4, 82, 'Positions terminees', ev.players + ' joueurs · ' + ev.points + ' points calcules');
+            milestone(82, 88, 'finalize');
           } else if (ev.step === 'finalize') {
             go(5, 90, 'Finalisation', 'Assemblage du resultat (kills + heatmaps + stats)...');
+            milestone(90, 97, 'finalize');
           }
           break;
         case 'done':
+          stopCreep();
           clearTimeout(timeoutId);
           try { es.close(); } catch(_) {}
           // On match le shape { data: { success:true, data: ... } } pour
@@ -1288,6 +1386,7 @@ function parseViaSSE(jwt, storagePath, timeoutMs) {
           resolve({ data: ev.data, ok: true });
           break;
         case 'error':
+          stopCreep();
           clearTimeout(timeoutId);
           try { es.close(); } catch(_) {}
           reject({
@@ -1300,6 +1399,7 @@ function parseViaSSE(jwt, storagePath, timeoutMs) {
     };
 
     es.onerror = () => {
+      stopCreep();
       // EventSource ne distingue pas network-down vs server-close-normal.
       // Si on a deja recu 'done' avant, le close est normal (resolve a
       // ete appele, le reject ici est no-op). Si on est ici sans avoir
