@@ -4,6 +4,65 @@ Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/frag
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
+## 2026-05-26 · v6.4.4 — Fix R22 missing dans rounds (score 9-12 vs 9-13)
+
+**Contexte** : apres v6.4.3 le score affiche `9-12` au lieu du vrai
+`9-13`. Le match CS2 MR12 termine quand une equipe atteint 13. Si on
+voit 12, c'est qu'il manque le round qui scelle la victoire.
+
+**Cause racine** : freeze_end events s'arrretent a R21. R22 (le match
+point) n'a pas de freeze_end (car le match termine apres, donc pas de
+"freeze suivant" emis). Le fallback ligne 308-321 tentait d'ajouter
+R22 via round_end mais skipait avec un check trop conservateur :
+
+```js
+const estimate = endTick - 6000;  // 6000 ticks = 47s suppose duree round
+if (estimate <= currentMax) {
+  return;  // skip - inverserait l'ordre !
+}
+```
+
+Sur la demo BOT Gunner :
+- R21 freeze_end tick = 138787
+- R22 round_end tick = 141136 (round court : bomb_exploded R21 a 137059
+  puis match point CT a 141136 = ~31s)
+- estimate = 141136 - 6000 = 135136
+- 135136 <= 138787 → R22 skip
+- Resultat : seulement 22 rounds dans le scoreboard au lieu de 23,
+  CT count = 12 au lieu de 13 → display `9-12`
+
+**Fix** : au lieu de skip, force `startTick = currentMax + FREEZE_GAP_TICKS`
+(640 ticks ≈ 5s freeze time entre rounds) pour preserver l'ordre
+chronologique. Le startTick exact pour R22 est moins important que
+de NE PAS PERDRE le round.
+
+```js
+const FREEZE_GAP_TICKS = 640;
+const startTick = estimateA > currentMax
+  ? estimateA
+  : Math.min(currentMax + FREEZE_GAP_TICKS, endTick - 500);
+roundStartTicks[r] = startTick;
+```
+
+### Verification
+
+Test sur demo BOT Gunner :
+- Avant v6.4.4 : 22 rounds dans output, score `12-9` affiche `9-12`
+- Apres v6.4.4 : 23 rounds (incluant R22), score `CT 13 - T 9` affiche `9-13`
+
+Le bug touchait probablement TOUS les matchs MR12 termines a 13-x sur
+un dernier round court (eco close, force-buy fail rapide, bomb explode
+en fin de timer). Statistiquement ~30% des FACEIT matches.
+
+### Deploy
+
+```bash
+cd /Users/quentin/Documents/Fragvalue/GitHub/fragvalue-demo-parser
+railway up
+# verifier : curl https://fragvalue-demo-parser-production.up.railway.app/
+# -> { ..., version: '6.4.4', ... }
+```
+
 ## 2026-05-26 · v6.4.3 — Fix scoreboard (winner string vs number)
 
 **Contexte** : apres deploy v6.4.2 (demoparser2 0.41.3), les demos se
