@@ -4,6 +4,64 @@ Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/frag
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
+## 2026-05-26 · v6.4.3 — Fix scoreboard (winner string vs number)
+
+**Contexte** : apres deploy v6.4.2 (demoparser2 0.41.3), les demos se
+parsent enfin. Mais le scoreboard affiche `7-15` au lieu de `13-9`
+(le vrai score CT-T de la demo BOT Gunner).
+
+**Cause racine** : demoparser2 v0.41.3 a change la forme du field
+`winner` dans round_end : retourne maintenant une **string** ('T' / 'CT')
+au lieu d'un **number** (2 / 3) en v0.41.1.
+
+Le fallback round_end de la v6.4.2 contenait :
+```js
+if (e.winner != null && e.winner > 0 && ...)
+```
+`'T' > 0` evalue a `NaN > 0` = false. Le check skip silencieusement
+tous les rounds. Resultat : `roundWinners = {}` -> declenchement du
+fallback derive-from-kills qui produit un score errone (la "derniere
+kill" du round ne correspond pas au winner si la victoire vient d'un
+bomb_exploded ou bomb_defused).
+
+**Fix** : helper `normalizeWinner()` qui accepte string OR number :
+```js
+function normalizeWinner(w) {
+  if (w == null) return null;
+  if (typeof w === 'number') return (w === 2 || w === 3) ? w : null;
+  const s = String(w).toUpperCase().trim();
+  if (s === 'T' || s === '2') return 2;
+  if (s === 'CT' || s === '3') return 3;
+  return null;
+}
+```
+
+Applique aussi au fallback `round_announce_win` (par defense, car
+certaines demos contiennent quand meme cet event avec le nouveau format).
+
+### Verification
+
+Test sur la demo BOT Gunner (1-90646f34-...) :
+- Avant fix : 7-15 (kills-based fallback, faux)
+- Apres fix : CT 13 - T 9 (round_end fallback, correct)
+- 22 rounds parses, 13 CT wins + 9 T wins = 22 (match CS2 MR12 termine
+  quand CT atteint 13).
+
+### Note pour le futur
+
+Si demoparser2 change encore la forme du `winner` field (ex. retour a
+number, ou nouvelle string genre 'Terrorists'), il suffit d'ajouter le
+nouveau cas dans `normalizeWinner()`. Plus de check `> 0` ailleurs.
+
+### Deploy
+
+```bash
+cd /Users/quentin/Documents/Fragvalue/GitHub/fragvalue-demo-parser
+railway up
+# verifier : curl https://fragvalue-demo-parser-production.up.railway.app/
+# -> { ..., version: '6.4.3', ... }
+```
+
 ## 2026-05-26 · v6.4.2 — Upgrade demoparser2 0.41.1 → 0.41.3 (vraie root cause)
 
 **Contexte** : un vrai user externe (pandelimihneagabriel@gmail.com) a
