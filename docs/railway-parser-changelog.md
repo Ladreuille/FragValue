@@ -4,6 +4,64 @@ Le parser Railway (dossier local `/Users/quentin/Documents/Fragvalue/GitHub/frag
 n'est pas versionné git. Ce fichier documente les changements non triviaux
 poussés via `railway up` pour garder un historique.
 
+## 2026-05-26 · v6.4.2 — Upgrade demoparser2 0.41.1 → 0.41.3 (vraie root cause)
+
+**Contexte** : un vrai user externe (pandelimihneagabriel@gmail.com) a
+upload 4 fois la meme demo en 43 secondes le 24/05/2026 = pattern de
+retry sur echec. Investigation locale a revele que SA demo (10 players,
+0 steamid invalide) crash aussi avec EntityNotFound, alors que la bot
+detection v6.4.1 ne la rejette pas (aucun bot a detecter).
+
+**Cause racine reelle** : bug dans demoparser2 v0.41.1 qui panique sur
+certaines demos FACEIT SourceTV avec EntityNotFound, peu importe la
+presence ou non d'un bot. La theorie v6.4.1 etait incomplete (le bot
+Gunner etait un symptome, pas la cause). Test avec demoparser2 v0.41.3
+montre que TOUS les cas sont fixes upstream :
+
+```
+Demo BOT Gunner (11 players, 1 invalid steamid):
+  parseEvent player_death : v0.41.1 FAIL EntityNotFound → v0.41.3 = 171 kills
+  parseEvent round_end    : v0.41.1 FAIL EntityNotFound → v0.41.3 = 24 rounds
+  parseGrenades           : v0.41.1 FAIL EntityNotFound → v0.41.3 = 1.4M events
+
+Demo external user (10 players, 0 invalid steamid):
+  parseEvent player_death : v0.41.1 FAIL EntityNotFound → v0.41.3 = 183 kills
+  parseEvent round_end    : v0.41.1 FAIL EntityNotFound → v0.41.3 = 25 rounds
+  parseGrenades           : v0.41.1 FAIL EntityNotFound → v0.41.3 = 1.1M events
+```
+
+### Changements code
+
+1. **package.json** : `@laihoe/demoparser2@0.41.1 → 0.41.3` (et binary
+   darwin-arm64 / linux-x64 / linux-x64-musl en consequence).
+
+2. **Bot detection v6.4.1 demotee en log seulement** : on garde le warn
+   pour traceabilite (`[demo-bot-info] X player(s) with non-standard
+   steamid`) mais on ne throw plus, on ne rejette plus. v0.41.3 gere
+   ces entites correctement.
+
+3. **Les handlers /parse et /parse-from-storage gardent leur branche
+   `if (err.code === 'DEMO_BOT_DETECTED')`** comme defense en profondeur
+   au cas ou un futur edge case re-emerge.
+
+### Verification
+
+```bash
+node -e "test parsing on les 2 demos failed"
+=> demoparser2 version: 0.41.3
+=> Demo external user : 183 kills, 25 rounds, 1.1M grenades
+=> Demo BOT Gunner    : 171 kills, 24 rounds, 1.4M grenades
+```
+
+### Deploy
+
+```bash
+cd /Users/quentin/Documents/Fragvalue/GitHub/fragvalue-demo-parser
+railway up
+# verifier : curl https://fragvalue-demo-parser-production.up.railway.app/
+# -> { ..., version: '6.4.2', ... }
+```
+
 ## 2026-05-23 · v6.4.1 — Bot detection upstream (fix EntityNotFound)
 
 **Contexte** : un user a remonte une demo FACEIT qui crashait le parser avec
