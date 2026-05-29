@@ -1244,12 +1244,15 @@ let selectedFile = null;
 // Erreurs : reject avec { status, message, code } compatible avec le
 // catch caller. status=422 + code='DEMO_BOT_DETECTED' = afficher direct
 // le message a l'user. Autres errs = fallback POST.
-function parseViaSSE(jwt, storagePath, timeoutMs) {
+function parseViaSSE(jwt, storagePath, timeoutMs, demoId) {
   return new Promise((resolve, reject) => {
+    // Phase 2 progressif (parser v6.6.0+) : on passe demoId pour que le
+    // parser puisse UPDATE la row Supabase quand phase 2 trajectoires done.
     const url = PARSER_URL + '/parse-from-storage-stream'
       + '?bucket=demos-incoming'
       + '&path=' + encodeURIComponent(storagePath)
-      + '&token=' + encodeURIComponent(jwt);
+      + '&token=' + encodeURIComponent(jwt)
+      + (demoId ? '&demoId=' + encodeURIComponent(demoId) : '');
 
     let es;
     try { es = new EventSource(url); }
@@ -1377,12 +1380,23 @@ function parseViaSSE(jwt, storagePath, timeoutMs) {
             milestone(90, 97, 'finalize');
           }
           break;
+        case 'partial_ready':
+          // Parser v6.6.0+ : essentials prets (~30-45s sur grosse demo).
+          // Les trajectoires de grenades arrivent en background via Supabase
+          // Realtime. On peut deja rediriger vers heatmap-results pour
+          // l'experience progressive.
+          stopCreep();
+          clearTimeout(timeoutId);
+          try { es.close(); } catch(_) {}
+          resolve({ data: ev.data, ok: true, partial: true, phase1Sec: ev.phase1Sec });
+          break;
         case 'done':
           stopCreep();
           clearTimeout(timeoutId);
           try { es.close(); } catch(_) {}
-          // On match le shape { data: { success:true, data: ... } } pour
-          // que le caller puisse traiter pareil que l'ancienne route POST.
+          // Fallback : si le parser v6.5.x renvoie 'done' direct (sans
+          // partial_ready), on traite pareil. Le caller verra `partial`
+          // undefined et redirigera de toute facon.
           resolve({ data: ev.data, ok: true });
           break;
         case 'error':
@@ -1756,17 +1770,43 @@ async function startAnalysis() {
     const jwt = session?.access_token;
     if (!jwt) throw new Error('Session expiree, reconnecte-toi.');
 
+    // ── 3.bis. PRE-INSERT demos row (parsing progressif v6.6.0+)
+    //   On INSERT la row AVANT le parsing pour que le parser puisse UPDATE
+    //   directement la row avec trajectories_data quand phase 2 finit.
+    //   parse_session_id = uuid pour correler les events SSE avec la row.
+    //   Le frontend UPDATEra map/rounds/total_kills/fv_rating sur partial_ready.
+    let demoId = null;
+    try {
+      const parseSessionId = crypto.randomUUID();
+      const { data: inserted, error: insertErr } = await _sb.from('demos').insert({
+        user_id: user.id,
+        parse_status: 'parsing',
+        parse_progress: 0,
+        parse_session_id: parseSessionId,
+        analysed_at: new Date().toISOString(),
+      }).select('id').single();
+      if (insertErr) throw insertErr;
+      demoId = inserted?.id;
+      if (demoId) sessionStorage.setItem('lastDemoId', demoId);
+      console.log('[demo] Pre-INSERT demos row:', demoId);
+    } catch (e) {
+      // Fallback : si l'INSERT echoue, on continue sans demoId (le parser
+      // skippe l'UPDATE Supabase, l'user reste sur le flow legacy 'done')
+      console.warn('[demo] pre-INSERT demos failed:', e.message);
+    }
+
     // ── 4. Parser via SSE (Server-Sent Events) pour progress live.
     //     L'endpoint /parse-from-storage-stream push des events :
     //     download / parsing.players / parsing.kills / parsing.rounds / ...
     //     L'user voit en live l'etape en cours au lieu d'un spinner generique.
     //     Si SSE echoue (network, EventSource non-supporte), fallback POST.
+    //     Avec demoId : parser fait flow 2-phases (partial_ready -> redirect).
     go(1, 12, 'Connexion au parser', 'Etablissement du stream temps reel...');
     timers.forEach(t => clearTimeout(t)); // stop les fake-progress timers
 
     let data;
     try {
-      data = await parseViaSSE(jwt, storagePath, timeoutMs);
+      data = await parseViaSSE(jwt, storagePath, timeoutMs, demoId);
     } catch (sseErr) {
       // Erreurs metier : pas de fallback (le POST donnerait le meme resultat)
       if (sseErr.status === 422 || sseErr.code === 'DEMO_BOT_DETECTED') {
@@ -1929,10 +1969,23 @@ async function startAnalysis() {
       console.warn('[demo] email backup error (non-blocking):', e?.message);
     }
 
-    go(5, 100, 'Clutch.', 'Ton analyse est prête. On t\'emmène voir les chiffres.');
+    // Le data.partial vient du parser v6.6.0+ (true = essentials prets,
+    // trajectoires en cours en background). On reflete ca dans la copy.
+    const isPartial = data?.partial === true;
+    go(5, 100,
+       isPartial ? 'Essentiels prets' : 'Clutch.',
+       isPartial
+         ? 'Tes heatmaps + KPIs sont prets. Trajectoires en cours...'
+         : 'Ton analyse est prête. On t\'emmène voir les chiffres.');
     bar.style.background = 'var(--success)';
     await new Promise(r => setTimeout(r, 600));
-    window.location.href = 'heatmap-results.html';
+    // Redirect avec ?id=demoId pour que heatmap-results subscribe au
+    // Realtime de cette row (pour recevoir les trajectoires quand elles arrivent).
+    const targetDemoId = sessionStorage.getItem('lastDemoId');
+    const redirectUrl = targetDemoId
+      ? 'heatmap-results.html?id=' + encodeURIComponent(targetDemoId)
+      : 'heatmap-results.html';
+    window.location.href = redirectUrl;
 
   } catch(err) {
     timers.forEach(t => clearTimeout(t));
@@ -2244,6 +2297,22 @@ async function saveDemoAnalysis(d) {
     const { data:{ session } } = await _sb.auth.getSession();
     if (!session) return;
     const m = d?.meta || {};
+
+    // Si on a deja un demoId (pre-INSERT du flow v6.6.0+), on UPDATE.
+    // Sinon (fallback legacy flow), on INSERT comme avant.
+    const existingDemoId = sessionStorage.getItem('lastDemoId');
+    if (existingDemoId) {
+      const { error } = await _sb.from('demos').update({
+        map:         m.map         || null,
+        rounds:      m.rounds      || null,
+        total_kills: m.totalKills  || null,
+        analysed_at: new Date().toISOString(),
+      }).eq('id', existingDemoId).eq('user_id', session.user.id);
+      if (error) console.warn('[saveDemoAnalysis] UPDATE err:', error.message);
+      return;
+    }
+
+    // Fallback INSERT (parser legacy sans partial_ready)
     const { data: inserted, error } = await _sb.from('demos').insert({
       user_id:     session.user.id,
       map:         m.map         || null,
@@ -2252,7 +2321,6 @@ async function saveDemoAnalysis(d) {
       analysed_at: new Date().toISOString()
     }).select('id').single();
     if (!error && inserted?.id) {
-      // Stocker l'id pour mettre à jour le FV Rating depuis heatmap-results.html
       sessionStorage.setItem('lastDemoId', inserted.id);
     }
   } catch(e) { console.warn('saveDemoAnalysis:', e.message); }

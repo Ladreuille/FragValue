@@ -1188,8 +1188,182 @@ window.addEventListener('load',async ()=>{
     // Affiche le trigger Coach IA juste sous le FV Hero (cf. ultrareview
     // Onboarding P0 : declenche au pic emotionnel post-aha-moment).
     renderCoachIaTrigger();
+
+    // Phase progressive (parser v6.6.0+) : si ?id=<demoId> en URL, on check
+    // le parse_status et on subscribe a Realtime pour recevoir les
+    // trajectoires de grenades quand elles arrivent en background.
+    initProgressiveParsing();
   }catch(e){console.error('heatmap-results init error:',e);}
 });
+
+// ─── PROGRESSIVE PARSING UX (v6.6.0+) ────────────────────────────────
+// L'user a redirige depuis demo.html en mode partial : les essentials
+// (heatmap, FV Rating, scoreboard) sont la, mais les trajectoires de
+// grenades sont en cours de calcul cote Railway (~10-15 min sur grosse
+// demo). On affiche un toast persistant avec progress bar, et quand
+// Realtime push trajectories_data, on merge dans demoData + re-render
+// les sections qui en dependent.
+async function initProgressiveParsing() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const demoId = params.get('id') || sessionStorage.getItem('lastDemoId');
+    if (!demoId) return; // aucun demoId : flow legacy, pas de progressive
+
+    if (typeof supabase === 'undefined') return;
+    const _sbP = supabase.createClient(_sbUrl, _sbAnon);
+    const { data: { session } } = await _sbP.auth.getSession();
+    if (!session) return;
+
+    // Read l'etat courant de la row pour savoir si on est partial ou complete
+    const { data: row, error } = await _sbP.from('demos')
+      .select('parse_status, parse_progress, trajectories_data')
+      .eq('id', demoId)
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    if (error) { console.warn('[progressive] fetch row err:', error.message); return; }
+    if (!row) return;
+
+    console.log('[progressive] initial state:', row.parse_status, row.parse_progress + '%');
+
+    if (row.parse_status === 'complete' && row.trajectories_data) {
+      // Deja complet (ex: user reload la page apres 1h) : merge direct
+      mergeTrajectoriesIntoDemo(row.trajectories_data);
+      return;
+    }
+    if (row.parse_status === 'failed') {
+      // Phase 2 a echoue : on affiche un toast d'erreur (mais essentials marchent)
+      showProgressiveToast({ status: 'failed', progress: 0 });
+      return;
+    }
+    if (row.parse_status === 'parsing' || row.parse_status === 'partial') {
+      // En cours : affiche le toast et subscribe Realtime
+      showProgressiveToast({ status: row.parse_status, progress: row.parse_progress || 0 });
+
+      const channel = _sbP.channel('demos_progressive_' + demoId)
+        .on('postgres_changes', {
+          event: 'UPDATE', schema: 'public', table: 'demos',
+          filter: 'id=eq.' + demoId,
+        }, (payload) => {
+          const newRow = payload.new || {};
+          console.log('[progressive] Realtime UPDATE:', newRow.parse_status, newRow.parse_progress + '%');
+          if (newRow.parse_status === 'complete' && newRow.trajectories_data) {
+            mergeTrajectoriesIntoDemo(newRow.trajectories_data);
+            hideProgressiveToast({ success: true });
+            try { _sbP.removeChannel(channel); } catch(_) {}
+          } else if (newRow.parse_status === 'failed') {
+            showProgressiveToast({ status: 'failed', progress: 0 });
+            try { _sbP.removeChannel(channel); } catch(_) {}
+          } else {
+            // Encore en cours : update la progress bar
+            showProgressiveToast({ status: newRow.parse_status, progress: newRow.parse_progress || 0 });
+          }
+        })
+        .subscribe();
+    }
+  } catch (e) {
+    console.warn('[progressive] init err:', e.message);
+  }
+}
+
+// Merge trajectories_data dans demoData et re-render les sections qui en
+// dependent (heatmap layer grenades, 2D replay grenades). Le user voit
+// les trajectoires apparaitre sans reload.
+function mergeTrajectoriesIntoDemo(t) {
+  if (!t || !demoData) return;
+  // grenades vient avec path polylines complets (calcul Phase 2)
+  if (Array.isArray(t.grenades)) demoData.grenades = t.grenades;
+  if (Array.isArray(t.shots)) demoData.shots = t.shots;
+  if (Array.isArray(t.bombPlants)) demoData.bombPlants = t.bombPlants;
+  if (Array.isArray(t.bombDefuses)) demoData.bombDefuses = t.bombDefuses;
+  if (Array.isArray(t.bombExplodes)) demoData.bombExplodes = t.bombExplodes;
+  // Re-stocke dans sessionStorage (au cas ou le user reload sans re-fetch)
+  try { sessionStorage.setItem('demoData', JSON.stringify(demoData)); } catch (_) {}
+  // Re-render les vues qui utilisent grenades
+  try { if (typeof drawHeatmap === 'function') drawHeatmap(); } catch (_) {}
+  try { if (typeof redrawReplay === 'function') redrawReplay(); } catch (_) {}
+  console.log('[progressive] trajectories merged · grenades:', demoData.grenades?.length || 0);
+}
+
+// Toast persistant en bas-droite avec progress bar pour les trajectoires
+function showProgressiveToast({ status, progress }) {
+  let toast = document.getElementById('progressiveToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'progressiveToast';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#0f1010;border:1px solid #1c1e1e;border-radius:10px;padding:16px 20px;z-index:9998;width:320px;font-family:"Space Mono",monospace;color:#e8eaea;box-shadow:0 12px 36px rgba(0,0,0,0.5);transition:all 0.3s;';
+    toast.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div id="progressiveSpinner" style="width:14px;height:14px;border:2px solid #1c1e1e;border-top-color:#b8ff57;border-radius:50%;animation:spin 1s linear infinite"></div>
+        <div style="font-family:'Anton',sans-serif;font-size:14px;letter-spacing:.06em">TRAJECTOIRES DE GRENADES</div>
+      </div>
+      <div style="font-size:10px;color:#7a8080;line-height:1.5;margin-bottom:10px">
+        On calcule les rebonds des smokes/flashes pour la 2D Replay. Tes heatmaps + KPIs sont deja prets ci-dessus.
+      </div>
+      <div style="height:4px;background:#1c1e1e;border-radius:2px;overflow:hidden;margin-bottom:6px">
+        <div id="progressiveBar" style="height:100%;width:0%;background:linear-gradient(90deg,#b8ff57,#5dff8c);transition:width 0.4s ease"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#7a8080">
+        <span id="progressivePct">0%</span>
+        <span id="progressiveEta">~2-15 min</span>
+      </div>
+    `;
+    document.body.appendChild(toast);
+    // Anim spin CSS si pas deja defini
+    if (!document.getElementById('progressiveStyles')) {
+      const style = document.createElement('style');
+      style.id = 'progressiveStyles';
+      style.textContent = '@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
+      document.head.appendChild(style);
+    }
+  }
+
+  const bar = document.getElementById('progressiveBar');
+  const pctEl = document.getElementById('progressivePct');
+  const etaEl = document.getElementById('progressiveEta');
+
+  if (status === 'failed') {
+    toast.style.borderColor = '#ff6b3f';
+    toast.querySelector('div').style.color = '#ff6b3f';
+    if (pctEl) pctEl.textContent = 'Echec';
+    if (etaEl) etaEl.textContent = 'Reessaie plus tard';
+    if (bar) bar.style.background = '#ff6b3f';
+    return;
+  }
+  if (bar) bar.style.width = (progress || 0) + '%';
+  if (pctEl) pctEl.textContent = Math.round(progress || 0) + '%';
+  if (etaEl) {
+    if (progress >= 90) etaEl.textContent = '~30s restantes';
+    else if (progress >= 50) etaEl.textContent = '~3 min restantes';
+    else if (progress >= 20) etaEl.textContent = '~8 min restantes';
+    else etaEl.textContent = '~10-15 min';
+  }
+}
+
+function hideProgressiveToast({ success }) {
+  const toast = document.getElementById('progressiveToast');
+  if (!toast) return;
+  if (success) {
+    // Anim "complete" puis fade-out
+    toast.style.borderColor = '#b8ff57';
+    const spinner = document.getElementById('progressiveSpinner');
+    if (spinner) {
+      spinner.style.animation = 'none';
+      spinner.style.background = '#b8ff57';
+      spinner.style.border = 'none';
+    }
+    const pctEl = document.getElementById('progressivePct');
+    if (pctEl) pctEl.textContent = '100% · 2D Replay debloquee';
+    const etaEl = document.getElementById('progressiveEta');
+    if (etaEl) etaEl.textContent = '';
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(20px)';
+      setTimeout(() => toast.remove(), 400);
+    }, 3000);
+  } else {
+    toast.remove();
+  }
+}
 
 // Fetch le nickname FACEIT du user connecté depuis profiles.
 // Cache en variable globale pour eviter de re-query a chaque render.
