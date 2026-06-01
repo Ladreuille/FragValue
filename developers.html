@@ -15,19 +15,19 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags:'SameSite=Stri
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="API et MCP server FragValue pour développeurs. Connecte Claude Desktop, Cursor, Cline à tes données CS2 (FV Rating, heatmaps, Coach IA). v0.1 beta disponible.">
-<meta name="keywords" content="FragValue API, FragValue MCP, MCP server CS2, Model Context Protocol, Claude FragValue, FACEIT API, CS2 developer tools">
+<meta name="description" content="Le premier MCP server CS2. Connecte ton agent IA (Claude Desktop, Cursor, Cline, ChatGPT) a tes stats FragValue en 30 secondes. Open source, beta gratuite.">
+<meta name="keywords" content="FragValue API, MCP server CS2, Model Context Protocol, Claude FragValue, FACEIT API, CS2 developer tools, agent IA CS2">
 <link rel="canonical" href="https://fragvalue.com/developers.html">
 <link rel="alternate" hreflang="fr" href="https://fragvalue.com/developers.html">
 <meta name="theme-color" content="#0A0C10">
 
-<meta property="og:title" content="FragValue Developers · MCP Server pour agents IA CS2">
-<meta property="og:description" content="Connecte Claude Desktop, Cursor, Cline à tes données CS2 via le MCP server FragValue. Build des agents pour le coaching, l'analyse, le scouting.">
+<meta property="og:title" content="FragValue Developers · Le premier MCP server CS2">
+<meta property="og:description" content="Connecte Claude Desktop, Cursor, Cline ou ChatGPT a tes stats FragValue en 30 secondes. Open source.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://fragvalue.com/developers.html">
-<meta property="og:image" content="https://fragvalue.com/og/developers.png">
+<meta property="og:image" content="https://fragvalue.com/og/blog.png">
 
-<title>FragValue · Developers (MCP, API, SDK)</title>
+<title>FragValue · Developers (MCP server, API)</title>
 <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/fragvalue_icon.svg">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -42,12 +42,26 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags:'SameSite=Stri
   "@type":"WebPage",
   "name":"FragValue Developers",
   "url":"https://fragvalue.com/developers.html",
-  "description":"API, MCP server et SDK FragValue pour intégrer l'analyse CS2 dans tes agents IA et applications.",
+  "description":"MCP server FragValue pour integrer l'analyse CS2 dans n'importe quel agent IA.",
   "publisher":{
     "@type":"Organization",
     "name":"FragValue",
     "url":"https://fragvalue.com"
   }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"FAQPage",
+  "mainEntity":[
+    {"@type":"Question","name":"C'est quoi un MCP server vs un API REST classique ?","acceptedAnswer":{"@type":"Answer","text":"MCP (Model Context Protocol) est un standard d'Anthropic pour exposer des tools a des agents IA. Au lieu qu'un dev humain ecrive du code pour appeler ton API, c'est un agent IA (Claude, ChatGPT) qui decouvre et appelle les tools tout seul. L'API REST reste utile pour les apps custom ; le MCP est specifique aux agents IA. Les deux sont complementaires."}},
+    {"@type":"Question","name":"Faut-il etre user Pro FragValue pour utiliser le MCP server ?","acceptedAnswer":{"@type":"Answer","text":"Non pour la v0.1 read-only. Tu peux interroger les profiles publics et leurs demos completes sans compte. Pour les actions write (analyse de demos) en v0.3, il faudra etre Pro avec OAuth flow."}},
+    {"@type":"Question","name":"Comment FragValue protege les donnees user ?","acceptedAnswer":{"@type":"Answer","text":"Privacy by default. Aucune donnee user n'est exposee par defaut. L'user doit activer explicitement public_visibility dans ses settings pour que son profile et ses demos soient queryables via MCP. Le RLS Supabase est l'arbitre final."}},
+    {"@type":"Question","name":"Combien ca coute ?","acceptedAnswer":{"@type":"Answer","text":"Gratuit pendant la beta (jusqu'a Q1 2027). Apres : tier Free (100 requetes par mois), Pro (10k par mois) compris dans l'abonnement FragValue Pro, Enterprise (custom)."}},
+    {"@type":"Question","name":"Quels agents supportent MCP aujourd'hui ?","acceptedAnswer":{"@type":"Answer","text":"Claude Desktop (Anthropic), Cursor (l'IDE AI), Cline (extension VS Code), ChatGPT custom GPTs. Plus de 50 clients listes sur la registry Anthropic. Le MCP est le standard ouvert le plus rapide a croitre en 2026."}},
+    {"@type":"Question","name":"Que faire si un tool plante ?","acceptedAnswer":{"@type":"Answer","text":"Le MCP server retourne un message d'erreur structure (McpError). L'agent peut le voir et retry ou afficher l'erreur a l'user. En cas de bug, ouvre une issue sur github.com/Ladreuille/fragvalue-mcp."}}
+  ]
 }
 </script>
 
@@ -64,68 +78,127 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags:'SameSite=Stri
 html,body{background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
+button{font-family:inherit;cursor:pointer}
 
 .wrap{max-width:1100px;margin:0 auto;padding:0 24px}
 
 /* HERO */
-.hero{position:relative;padding:96px 24px 64px;overflow:hidden;border-bottom:1px solid var(--border)}
+.hero{position:relative;padding:88px 24px 56px;overflow:hidden;border-bottom:1px solid var(--border)}
 .hero::before{content:'';position:absolute;top:-30%;left:50%;transform:translateX(-50%);width:120%;height:80%;background:radial-gradient(ellipse at center,rgba(184,255,87,0.10) 0%,transparent 60%);filter:blur(60px);pointer-events:none}
-.hero-eyebrow{position:relative;font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;font-weight:700}
-.hero-title{position:relative;font-family:var(--display);font-size:clamp(48px,8vw,84px);line-height:.95;letter-spacing:-1px;margin-bottom:24px;max-width:900px}
+.hero-eyebrow{position:relative;font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);margin-bottom:18px;font-weight:700}
+.hero-title{position:relative;font-family:var(--display);font-size:clamp(48px,8vw,84px);line-height:.95;letter-spacing:-1px;margin-bottom:18px;max-width:900px}
 .hero-title .accent{color:var(--accent);text-shadow:0 0 40px rgba(184,255,87,0.3)}
-.hero-sub{position:relative;font-size:18px;color:var(--text2);max-width:680px;line-height:1.55}
+.hero-sub{position:relative;font-size:18px;color:var(--text2);max-width:680px;line-height:1.55;margin-bottom:28px}
 
-/* STATUS BAR */
-.status-bar{position:relative;display:flex;flex-wrap:wrap;gap:14px;margin-top:32px}
+.hero-stats{position:relative;display:flex;flex-wrap:wrap;gap:28px;margin-bottom:24px}
+.hero-stat{font-family:var(--mono);font-size:13px;color:var(--text3);letter-spacing:.04em}
+.hero-stat strong{color:var(--accent);font-family:var(--display);font-size:22px;display:block;margin-bottom:2px;letter-spacing:.04em}
+
+.status-bar{position:relative;display:flex;flex-wrap:wrap;gap:14px;margin-bottom:36px}
 .status-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(184,255,87,0.06);border:1px solid rgba(184,255,87,0.24);border-radius:100px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--accent)}
 .status-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 1.5s infinite}
-.status-pill.beta{background:rgba(245,200,66,0.06);border-color:rgba(245,200,66,0.24);color:var(--warning)}
-.status-pill.beta .dot{background:var(--warning);box-shadow:0 0 8px var(--warning)}
-.status-pill.soon{background:rgba(122,128,128,0.06);border-color:rgba(122,128,128,0.24);color:var(--text3)}
-.status-pill.soon .dot{background:var(--text3);animation:none}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.status-pill.neutral{background:rgba(122,128,128,0.06);border-color:rgba(122,128,128,0.24);color:var(--text2)}
+.status-pill.neutral .dot{background:var(--text3);animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* SUPPORTED LOGOS */
+.supported{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:24px;padding-top:28px;border-top:1px solid var(--border)}
+.supported-label{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.18em;text-transform:uppercase}
+.supported-list{display:flex;flex-wrap:wrap;gap:20px;align-items:center}
+.supported-item{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:13px;color:var(--text2);transition:color .15s}
+.supported-item:hover{color:var(--accent)}
+.supported-item svg{width:18px;height:18px;flex-shrink:0}
 
 /* SECTIONS */
-section{padding:80px 0;border-bottom:1px solid var(--border)}
+section{padding:72px 0;border-bottom:1px solid var(--border)}
 .section-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;font-weight:700}
-.section-title{font-family:var(--display);font-size:clamp(36px,5vw,52px);line-height:1;letter-spacing:-.5px;margin-bottom:18px}
-.section-sub{font-size:16px;color:var(--text2);max-width:720px;line-height:1.55;margin-bottom:48px}
+.section-title{font-family:var(--display);font-size:clamp(36px,5vw,52px);line-height:1;letter-spacing:-.5px;margin-bottom:16px}
+.section-sub{font-size:16px;color:var(--text2);max-width:720px;line-height:1.55;margin-bottom:40px}
+
+/* TEST PLAYGROUND */
+.playground{position:relative;padding:32px;background:linear-gradient(135deg,#0c0d0d 0%,#0a0b0b 100%);border:1px solid rgba(184,255,87,0.24);border-radius:14px;overflow:hidden}
+.playground::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent) 30%,var(--accent) 70%,transparent);box-shadow:0 0 12px rgba(184,255,87,0.4)}
+.pg-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.pg-input{flex:1;min-width:200px;padding:14px 18px;background:#080a08;border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:14px;letter-spacing:.04em}
+.pg-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(184,255,87,0.12)}
+.pg-btn{padding:14px 24px;background:var(--accent);color:#000;border:none;border-radius:8px;font-family:var(--display);font-size:14px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;transition:transform .15s,box-shadow .15s}
+.pg-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(184,255,87,0.3)}
+.pg-btn:disabled{opacity:.5;cursor:wait}
+.pg-meta{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.06em;margin-bottom:12px;line-height:1.6}
+.pg-meta code{background:rgba(184,255,87,0.06);color:var(--accent);padding:2px 6px;border-radius:3px;font-size:11px}
+.pg-result{background:#080a08;border:1px solid var(--border2);border-radius:8px;padding:18px 20px;font-family:var(--mono);font-size:12.5px;color:var(--text);line-height:1.7;min-height:80px;white-space:pre-wrap;word-break:break-word;overflow-x:auto;max-height:380px;overflow-y:auto}
+.pg-result.empty{color:var(--text3);font-style:italic}
+.pg-result .ok{color:var(--success)}
+.pg-result .err{color:#ff6b3f}
+.pg-result .key{color:var(--accent)}
 
 /* MCP CARD */
-.mcp-card{position:relative;padding:40px;background:linear-gradient(135deg,#0c0d0d 0%,#0a0b0b 100%);border:1px solid rgba(184,255,87,0.24);border-radius:16px;overflow:hidden}
+.mcp-card{position:relative;padding:36px;background:linear-gradient(135deg,#0c0d0d 0%,#0a0b0b 100%);border:1px solid rgba(184,255,87,0.24);border-radius:16px;overflow:hidden}
 .mcp-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent) 30%,var(--accent) 70%,transparent);box-shadow:0 0 16px rgba(184,255,87,0.5)}
-.mcp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap}
-.mcp-name{font-family:var(--display);font-size:36px;letter-spacing:.5px}
+.mcp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:16px;flex-wrap:wrap}
+.mcp-name{font-family:var(--display);font-size:32px;letter-spacing:.5px}
 .mcp-version{font-family:var(--mono);font-size:13px;color:var(--text3);letter-spacing:.06em}
-.mcp-desc{font-size:16px;color:var(--text2);line-height:1.6;margin-bottom:32px;max-width:760px}
+.mcp-desc{font-size:15px;color:var(--text2);line-height:1.6;margin-bottom:28px;max-width:760px}
 
-.tools-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:32px}
+.tools-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:28px}
 @media(max-width:720px){.tools-grid{grid-template-columns:1fr}}
-.tool{padding:18px 20px;background:rgba(10,12,10,0.5);border:1px solid var(--border2);border-radius:10px;border-left:3px solid var(--accent)}
+.tool{padding:16px 18px;background:rgba(10,12,10,0.5);border:1px solid var(--border2);border-radius:10px;border-left:3px solid var(--accent)}
 .tool-name{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:700;letter-spacing:.04em;margin-bottom:6px}
-.tool-desc{font-size:13px;color:var(--text2);line-height:1.55}
+.tool-desc{font-size:13px;color:var(--text2);line-height:1.5}
 
-.code-block{background:#080a08;border:1px solid var(--border2);border-radius:10px;padding:18px 22px;font-family:var(--mono);font-size:12.5px;color:var(--text);line-height:1.7;overflow-x:auto;margin-bottom:18px}
+.code-label{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;font-weight:700}
+.code-block{background:#080a08;border:1px solid var(--border2);border-radius:10px;padding:16px 20px;font-family:var(--mono);font-size:12.5px;color:var(--text);line-height:1.7;overflow-x:auto;margin-bottom:18px}
 .code-block .comment{color:var(--text3)}
 .code-block .key{color:var(--accent)}
 .code-block .string{color:#5dff8c}
 
-.cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 24px;background:var(--accent);color:#000;text-decoration:none;border-radius:8px;font-family:var(--display);font-size:15px;letter-spacing:.04em;font-weight:700;text-transform:uppercase;transition:transform .15s,box-shadow .15s;border:none;cursor:pointer}
+details{margin-bottom:18px}
+details summary{cursor:pointer;padding:14px 18px;background:rgba(255,255,255,0.02);border:1px solid var(--border2);border-radius:8px;font-family:var(--mono);font-size:13px;color:var(--text2);letter-spacing:.04em;list-style:none;display:flex;align-items:center;gap:10px;transition:background .15s}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:'▸';color:var(--accent);transition:transform .2s;display:inline-block}
+details[open] summary::before{transform:rotate(90deg)}
+details summary:hover{background:rgba(184,255,87,0.04);border-color:rgba(184,255,87,0.2)}
+details[open] summary{border-color:rgba(184,255,87,0.2);background:rgba(184,255,87,0.04);margin-bottom:10px;border-radius:8px 8px 0 0}
+details .code-block{margin-top:0;border-radius:0 0 8px 8px;border-top:none}
+
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 22px;background:var(--accent);color:#000;text-decoration:none;border-radius:8px;font-family:var(--display);font-size:14px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;transition:transform .15s,box-shadow .15s;border:none;cursor:pointer}
 .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,255,87,0.3);text-decoration:none}
 .btn.secondary{background:transparent;color:var(--text);border:1px solid var(--border2)}
 .btn.secondary:hover{box-shadow:0 0 0 1px var(--accent);border-color:var(--accent)}
 
+/* MCP vs REST table */
+.compare-table{width:100%;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.compare-table th{background:rgba(184,255,87,0.04);font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);padding:16px 20px;text-align:left;font-weight:700;border-bottom:1px solid var(--border)}
+.compare-table td{padding:14px 20px;border-bottom:1px solid var(--border);font-size:14px;color:var(--text2);vertical-align:top}
+.compare-table tr:last-child td{border-bottom:none}
+.compare-table td:first-child{font-family:var(--mono);font-size:12px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;width:160px}
+.compare-table .yes{color:var(--success)}
+.compare-table .no{color:var(--text3)}
+
 /* USE CASES */
 .usecase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 @media(max-width:880px){.usecase-grid{grid-template-columns:1fr}}
-.usecase{padding:24px 22px;background:var(--bg2);border:1px solid var(--border);border-radius:12px}
-.usecase-tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);background:rgba(184,255,87,0.06);padding:4px 8px;border-radius:4px;margin-bottom:14px;font-weight:700}
+.usecase{padding:22px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:12px}
+.usecase-tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);background:rgba(184,255,87,0.06);padding:4px 8px;border-radius:4px;margin-bottom:12px;font-weight:700}
 .usecase-title{font-family:var(--display);font-size:22px;line-height:1.2;margin-bottom:10px}
-.usecase-text{font-size:13.5px;color:var(--text2);line-height:1.6}
+.usecase-text{font-size:13.5px;color:var(--text2);line-height:1.55;margin-bottom:14px}
+.usecase-gain{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--success);padding-top:12px;border-top:1px dashed var(--border2)}
+.usecase-gain strong{color:var(--accent);font-family:var(--display);font-size:18px;letter-spacing:.04em;margin-right:6px}
+
+/* PRIVACY */
+.privacy-card{position:relative;padding:32px;background:linear-gradient(135deg,rgba(245,200,66,0.05) 0%,rgba(184,255,87,0.02) 100%);border:1px solid rgba(245,200,66,0.24);border-radius:14px;display:grid;grid-template-columns:80px 1fr;gap:24px;align-items:flex-start}
+@media(max-width:680px){.privacy-card{grid-template-columns:1fr}}
+.privacy-icon{width:64px;height:64px;border:2px solid var(--warning);border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--warning)}
+.privacy-icon svg{width:32px;height:32px}
+.privacy-title{font-family:var(--display);font-size:24px;letter-spacing:.5px;margin-bottom:10px}
+.privacy-text{font-size:14px;color:var(--text2);line-height:1.65;margin-bottom:12px}
+.privacy-text code{background:rgba(245,200,66,0.08);color:var(--warning);padding:2px 6px;border-radius:3px;font-family:var(--mono);font-size:12px}
+.privacy-steps{font-family:var(--mono);font-size:12px;color:var(--text3);line-height:1.9;padding-left:0;list-style:none}
+.privacy-steps li::before{content:'> ';color:var(--accent)}
 
 /* ROADMAP */
-.roadmap{margin-top:0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.roadmap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
 .roadmap-row{display:grid;grid-template-columns:90px 130px 1fr 100px;align-items:center;gap:20px;padding:18px 22px;border-bottom:1px solid var(--border)}
 .roadmap-row:last-child{border-bottom:none}
 .roadmap-version{font-family:var(--display);font-size:18px;color:var(--accent)}
@@ -140,9 +213,26 @@ section{padding:80px 0;border-bottom:1px solid var(--border)}
   .roadmap-status,.roadmap-eta{display:none}
 }
 
+/* FAQ */
+.faq{display:flex;flex-direction:column;gap:10px}
+.faq details{margin:0}
+.faq details summary{padding:18px 22px;font-family:var(--display);font-size:17px;letter-spacing:.02em;color:var(--text);background:var(--bg2);border:1px solid var(--border);border-radius:10px;text-transform:none}
+.faq details summary::before{font-size:16px}
+.faq details[open] summary{border-bottom:none;border-radius:10px 10px 0 0;background:rgba(184,255,87,0.04)}
+.faq-body{padding:18px 22px;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;font-size:14px;color:var(--text2);line-height:1.7}
+.faq-body code{background:rgba(184,255,87,0.06);color:var(--accent);padding:2px 6px;border-radius:3px;font-family:var(--mono);font-size:12px}
+
+/* COMMUNITY CTA */
+.community{padding:48px;background:linear-gradient(135deg,#0c0d0d 0%,#0a0b0b 100%);border:1px solid rgba(184,255,87,0.24);border-radius:14px;text-align:center;position:relative;overflow:hidden}
+.community::before{content:'';position:absolute;top:-50%;left:50%;transform:translateX(-50%);width:120%;height:80%;background:radial-gradient(ellipse at center,rgba(184,255,87,0.10) 0%,transparent 60%);filter:blur(40px);pointer-events:none}
+.community-title{position:relative;font-family:var(--display);font-size:clamp(32px,5vw,44px);line-height:1.05;letter-spacing:-.5px;margin-bottom:14px}
+.community-sub{position:relative;font-size:15px;color:var(--text2);max-width:540px;margin:0 auto 28px;line-height:1.55}
+.community-actions{position:relative;display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+
 /* FOOTER */
-.foot{padding:48px 24px;text-align:center;color:var(--text3);font-size:13px}
+.foot{padding:48px 24px;text-align:center;color:var(--text3);font-size:13px;line-height:1.7}
 .foot a{color:var(--accent)}
+.foot-legal{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.16em;text-transform:uppercase;margin-top:14px}
 </style>
 </head>
 <body>
@@ -151,54 +241,104 @@ section{padding:80px 0;border-bottom:1px solid var(--border)}
 <header class="hero">
   <div class="wrap">
     <div class="hero-eyebrow">// FRAGVALUE / DEVELOPERS</div>
-    <h1 class="hero-title">Build the future of <span class="accent">agentic CS2</span>.</h1>
-    <p class="hero-sub">Connecte Claude Desktop, Cursor, Cline ou n'importe quel agent IA compatible MCP a tes donnees FragValue. Analyse de demos, FV Rating, heatmaps, diagnostic Coach IA accessibles en 1 ligne de config.</p>
+    <h1 class="hero-title">Le premier <span class="accent">MCP server CS2</span>.</h1>
+    <p class="hero-sub">Connecte ton agent IA (Claude Desktop, Cursor, Cline, ChatGPT) a tes stats FragValue en 30 secondes. Build des dashboards coaching, des bots Discord, des overlays Twitch.</p>
+
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>4</strong>Tools live</div>
+      <div class="hero-stat"><strong>30s</strong>Setup Claude Desktop</div>
+      <div class="hero-stat"><strong>0&euro;</strong>Beta gratuite</div>
+      <div class="hero-stat"><strong>MIT</strong>Open source</div>
+    </div>
+
     <div class="status-bar">
-      <span class="status-pill beta"><span class="dot"></span>MCP Server v0.1 · Beta</span>
-      <span class="status-pill soon"><span class="dot"></span>REST API · Q3 2026</span>
-      <span class="status-pill soon"><span class="dot"></span>Webhooks · Q4 2026</span>
-      <span class="status-pill soon"><span class="dot"></span>SDK npm · 2027</span>
+      <span class="status-pill"><span class="dot"></span>MCP Server v0.1 &middot; Live Beta</span>
+      <span class="status-pill neutral"><span class="dot"></span>Open source MIT</span>
+    </div>
+
+    <div class="supported">
+      <span class="supported-label">// Compatible avec</span>
+      <div class="supported-list">
+        <span class="supported-item" title="Claude Desktop">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H5zm2 4h10v2H7V7zm0 4h10v2H7v-2zm0 4h7v2H7v-2z"/></svg>
+          Claude Desktop
+        </span>
+        <span class="supported-item" title="Cursor">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 2 21 12 12 13 13 21"/></svg>
+          Cursor
+        </span>
+        <span class="supported-item" title="Cline VS Code">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Cline (VS Code)
+        </span>
+        <span class="supported-item" title="ChatGPT custom GPTs">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18 9 9 0 0 1 0-18z"/><path d="M3 12h18"/></svg>
+          ChatGPT GPTs
+        </span>
+        <span class="supported-item" title="Tout client MCP">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          Tout client MCP
+        </span>
+      </div>
     </div>
   </div>
 </header>
 
 <section>
   <div class="wrap">
+    <div class="section-eyebrow">// TEST EN LIVE</div>
+    <h2 class="section-title">Essaie en 5 secondes.</h2>
+    <p class="section-sub">Tape le FACEIT nickname d'un joueur qui a active <code style="background:rgba(184,255,87,0.06);color:var(--accent);padding:2px 6px;border-radius:3px;font-family:var(--mono);font-size:13px">public_visibility</code> dans ses settings. Le tool <code style="background:rgba(184,255,87,0.06);color:var(--accent);padding:2px 6px;border-radius:3px;font-family:var(--mono);font-size:13px">list_recent_demos</code> du MCP server tourne directement dans ton navigateur.</p>
+
+    <div class="playground">
+      <div class="pg-meta">Tool : <code>list_recent_demos</code> &middot; params : <code>{ faceit_nickname, limit: 5 }</code> &middot; query directe Supabase RLS</div>
+      <div class="pg-row">
+        <input id="pgNick" class="pg-input" type="text" placeholder="ex: Qwhentin" value="Qwhentin" autocomplete="off"/>
+        <button id="pgBtn" class="pg-btn">Run tool</button>
+      </div>
+      <div id="pgResult" class="pg-result empty">Resultat du tool apres click...</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
     <div class="section-eyebrow">// MODEL CONTEXT PROTOCOL</div>
     <h2 class="section-title">MCP Server v0.1</h2>
-    <p class="section-sub">Le standard ouvert d'Anthropic pour connecter ton service a n'importe quel agent IA. Installe en une commande, configure en 30 secondes.</p>
+    <p class="section-sub">Le standard ouvert d'Anthropic pour connecter ton service a n'importe quel agent IA. 4 tools read-only, communication STDIO/JSON-RPC, install en 1 ligne.</p>
 
     <div class="mcp-card">
       <div class="mcp-header">
         <div class="mcp-name">fragvalue-mcp</div>
-        <div class="mcp-version">v0.1.0 · Beta · MIT License</div>
+        <div class="mcp-version">v0.1.0 &middot; Beta &middot; MIT</div>
       </div>
-      <p class="mcp-desc">4 tools read-only exposes aux agents IA. Resolution par FACEIT nickname ou Supabase user_id, validation Zod, communication STDIO/JSON-RPC standard MCP.</p>
+      <p class="mcp-desc">4 tools exposes aux agents IA, validation Zod sur chaque input, resolution par FACEIT nickname ou Supabase user_id, RLS-protected.</p>
 
       <div class="tools-grid">
         <div class="tool">
           <div class="tool-name">list_recent_demos</div>
-          <div class="tool-desc">Historique des N dernieres demos d'un joueur avec FV Rating, map, rounds, kills, date.</div>
+          <div class="tool-desc">Historique des N dernieres demos d'un joueur (FV Rating, map, rounds, kills, date).</div>
         </div>
         <div class="tool">
           <div class="tool-name">get_demo_analysis</div>
-          <div class="tool-desc">Analyse complete d'une demo par UUID. FV Rating, scoreboard, statut parsing, lien partage.</div>
+          <div class="tool-desc">Analyse complete d'une demo par UUID (FV Rating, scoreboard, statut parsing, lien partage).</div>
         </div>
         <div class="tool">
           <div class="tool-name">get_player_stats</div>
-          <div class="tool-desc">Stats agregees sur N dernieres demos. FV Rating moyen / min / max, tendance, maps preferees.</div>
+          <div class="tool-desc">Stats agregees sur N dernieres demos (FV moyen / min / max, tendance, maps preferees).</div>
         </div>
         <div class="tool">
           <div class="tool-name">search_articles</div>
-          <div class="tool-desc">Recherche dans le blog FragValue par mot-cle. Titres, tags, keywords ponderes.</div>
+          <div class="tool-desc">Recherche dans le blog FragValue par mot-cle (titres, tags, keywords ponderes).</div>
         </div>
       </div>
 
-      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">// Installation</div>
+      <div class="code-label">// Installation</div>
       <div class="code-block">npm install -g fragvalue-mcp</div>
 
-      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin:24px 0 10px">// Configuration Claude Desktop</div>
-      <div class="code-block"><span class="comment">// ~/Library/Application Support/Claude/claude_desktop_config.json</span>
+      <details>
+        <summary>Voir la config Claude Desktop complete</summary>
+        <div class="code-block"><span class="comment">// ~/Library/Application Support/Claude/claude_desktop_config.json</span>
 {
   <span class="key">"mcpServers"</span>: {
     <span class="key">"fragvalue"</span>: {
@@ -210,14 +350,68 @@ section{padding:80px 0;border-bottom:1px solid var(--border)}
       }
     }
   }
-}</div>
+}
+
+<span class="comment">// Cursor : meme JSON dans ~/.cursor/mcp.json
+// Cline : palette de commandes -&gt; "Cline: Edit MCP Settings"</span></div>
+      </details>
 
       <div class="cta-row">
-        <a href="https://github.com/Ladreuille/fragvalue-mcp" class="btn">GitHub repo &rsaquo;</a>
+        <a href="https://github.com/Ladreuille/fragvalue-mcp" class="btn">Star sur GitHub &rsaquo;</a>
         <a href="https://www.npmjs.com/package/fragvalue-mcp" class="btn secondary">npm registry &rsaquo;</a>
-        <a href="mailto:contact@fragvalue.com?subject=MCP%20feedback" class="btn secondary">Feedback beta</a>
+        <a href="mailto:contact@fragvalue.com?subject=MCP%20feedback%20v0.1" class="btn secondary">Feedback beta</a>
       </div>
     </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-eyebrow">// MCP VS REST API</div>
+    <h2 class="section-title">Pour quoi MCP ?</h2>
+    <p class="section-sub">REST API et MCP server sont complementaires. Voici comment choisir.</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th style="color:var(--accent)">MCP server</th>
+          <th>REST API (Q3 2026)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Cible</td>
+          <td>Agents IA (Claude, ChatGPT, Cursor)</td>
+          <td>Devs qui codent une app custom</td>
+        </tr>
+        <tr>
+          <td>Decouverte</td>
+          <td class="yes">Auto via inputSchema</td>
+          <td>Doc + OpenAPI a lire</td>
+        </tr>
+        <tr>
+          <td>Setup</td>
+          <td class="yes">1 ligne JSON dans la config</td>
+          <td>Auth, client HTTP, parsing</td>
+        </tr>
+        <tr>
+          <td>Auth</td>
+          <td>Env vars (v0.1), OAuth (v0.2)</td>
+          <td>API key ou OAuth</td>
+        </tr>
+        <tr>
+          <td>Usage type</td>
+          <td>Chat conversationnel</td>
+          <td>Calls programmatiques</td>
+        </tr>
+        <tr>
+          <td>Standard</td>
+          <td>MCP (Anthropic open spec)</td>
+          <td>HTTP / OpenAPI 3.1</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </section>
 
@@ -225,23 +419,26 @@ section{padding:80px 0;border-bottom:1px solid var(--border)}
   <div class="wrap">
     <div class="section-eyebrow">// CAS D'USAGE</div>
     <h2 class="section-title">Pour qui c'est fait.</h2>
-    <p class="section-sub">3 profils de developpeurs et builders utilisent deja le MCP server FragValue en beta.</p>
+    <p class="section-sub">3 profils utilisent deja le MCP server FragValue en beta privee.</p>
 
     <div class="usecase-grid">
       <div class="usecase">
         <div class="usecase-tag">Coach CS2</div>
         <div class="usecase-title">Rapport hebdo automatique</div>
-        <div class="usecase-text">Tu coach 10-30 students CS2. Tu connectes Claude Desktop au MCP server FragValue. Tu dis "fais-moi le rapport semaine 24 de mes students" et Claude appelle list_recent_demos pour chaque, calcule les tendances, te formate un Discord post pret a copier-coller. Gain : 30 min par semaine.</div>
+        <div class="usecase-text">Tu coach 20 students. Tu dis a Claude "fais le rapport semaine 24" et il appelle list_recent_demos pour chaque, calcule les tendances, formate un Discord post pret a coller.</div>
+        <div class="usecase-gain"><strong>30 min</strong>economisees par semaine</div>
       </div>
       <div class="usecase">
         <div class="usecase-tag">Streamer Twitch</div>
         <div class="usecase-title">Stats live dans le chat</div>
-        <div class="usecase-text">Tu build un bot Twitch en Cursor qui ecoute les commandes !stats. Le bot appelle get_player_stats sur ton compte FragValue et balance les stats dans le chat en 200ms. Plus besoin de hardcoder une commande, l'agent fait la requete et formate.</div>
+        <div class="usecase-text">Tu code un bot Twitch en Cursor. Commande !stats appelle get_player_stats sur ton compte FragValue, balance la reponse en 200ms. Plus de stats hardcodees.</div>
+        <div class="usecase-gain"><strong>10s</strong>par commande chat</div>
       </div>
       <div class="usecase">
         <div class="usecase-tag">Org esports T3</div>
         <div class="usecase-title">Scouting de joueurs</div>
-        <div class="usecase-text">Tu cherches un nouveau joueur pour ton academy team. Tu dis a Claude "compare le FV Rating moyen de Player_A et Player_B sur leurs 50 dernieres demos, regarde leur tendance et leur map preferee". Decision en 30 secondes au lieu d'1h de spreadsheet HLTV.</div>
+        <div class="usecase-text">Tu cherches un joueur pour ton academy. Tu dis a Claude "compare A et B sur 50 demos, tendance et map preferee". Decision en 30 sec au lieu d'1h de spreadsheet HLTV.</div>
+        <div class="usecase-gain"><strong>120x</strong>plus rapide que HLTV manuel</div>
       </div>
     </div>
   </div>
@@ -249,45 +446,72 @@ section{padding:80px 0;border-bottom:1px solid var(--border)}
 
 <section>
   <div class="wrap">
-    <div class="section-eyebrow">// ROADMAP</div>
+    <div class="section-eyebrow">// PRIVACY &amp; DATA</div>
+    <h2 class="section-title">Privacy by default.</h2>
+    <p class="section-sub">Aucune donnee user n'est exposee au MCP server par defaut. L'opt-in est explicite, granulaire et reversible.</p>
+
+    <div class="privacy-card">
+      <div class="privacy-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="privacy-title">Opt-in <code>public_visibility</code></h3>
+        <p class="privacy-text">Tant qu'un user n'active pas <code>public_visibility</code> dans ses settings, ses profile et demos sont totalement invisibles au MCP server (Supabase RLS l'enforce au niveau DB, pas juste au niveau app).</p>
+        <p class="privacy-text">Ce qui est expose une fois opt-in : nickname FACEIT (deja public sur FACEIT), map, rounds, total kills, FV Rating, date d'analyse. Jamais : email, IP, demo file, trajectoires de grenades, conversations Coach IA.</p>
+        <ul class="privacy-steps">
+          <li>Account &rsaquo; Settings &rsaquo; API &amp; Integrations &rsaquo; Activer la visibilite publique</li>
+          <li>Le toggle peut etre desactive a tout moment (RLS recheck en temps reel)</li>
+          <li>L'historique avant l'opt-in n'est jamais reincrement public retroactivement</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-eyebrow">// ROADMAP PUBLIQUE</div>
     <h2 class="section-title">Ou on va.</h2>
-    <p class="section-sub">L'objectif : devenir la couche agentique standard pour le coaching CS2. Suit la roadmap en temps reel sur GitHub.</p>
+    <p class="section-sub">Objectif : devenir la couche agentique standard pour le coaching CS2. Suivi temps reel sur GitHub.</p>
 
     <div class="roadmap">
       <div class="roadmap-row">
         <div class="roadmap-version">v0.1</div>
-        <div class="roadmap-status live">// Live · Beta</div>
-        <div class="roadmap-title">4 tools read-only · STDIO transport · Supabase anon key</div>
+        <div class="roadmap-status live">// Live &middot; Beta</div>
+        <div class="roadmap-title">4 tools read-only &middot; STDIO transport &middot; Supabase anon key</div>
         <div class="roadmap-eta">Juin 2026</div>
       </div>
       <div class="roadmap-row">
         <div class="roadmap-version">v0.2</div>
         <div class="roadmap-status dev">// En cours</div>
-        <div class="roadmap-title">OAuth flow Supabase · acces aux donnees user-specific privees</div>
-        <div class="roadmap-eta">Juillet 2026</div>
+        <div class="roadmap-title">OAuth flow Supabase &middot; acces aux donnees user-specific privees</div>
+        <div class="roadmap-eta">Q3 2026</div>
       </div>
       <div class="roadmap-row">
         <div class="roadmap-version">v0.3</div>
         <div class="roadmap-status next">// Prochain</div>
-        <div class="roadmap-title">Tool analyze_demo (write) · l'agent peut upload + parser</div>
-        <div class="roadmap-eta">Aout 2026</div>
+        <div class="roadmap-title">Tool analyze_demo (write) &middot; l'agent peut upload + parser une demo</div>
+        <div class="roadmap-eta">Q3 2026</div>
       </div>
       <div class="roadmap-row">
-        <div class="roadmap-version">v0.4</div>
+        <div class="roadmap-version">REST</div>
         <div class="roadmap-status next">// Prochain</div>
-        <div class="roadmap-title">compare_to_pro · benchmark vs un pro player via stats HLTV</div>
-        <div class="roadmap-eta">Septembre 2026</div>
+        <div class="roadmap-title">REST API + OpenAPI 3.1 &middot; pour les apps custom (Discord bots, Twitch overlays)</div>
+        <div class="roadmap-eta">Q3 2026</div>
       </div>
       <div class="roadmap-row">
         <div class="roadmap-version">v0.5</div>
         <div class="roadmap-status next">// Prochain</div>
-        <div class="roadmap-title">Serveur HTTP hosted · plus besoin d'install locale</div>
+        <div class="roadmap-title">Webhooks bi-directionnels &middot; recevoir des events FragValue dans ton service</div>
         <div class="roadmap-eta">Q4 2026</div>
       </div>
       <div class="roadmap-row">
         <div class="roadmap-version">v1.0</div>
         <div class="roadmap-status next">// Prochain</div>
-        <div class="roadmap-title">Listing officiel Anthropic MCP registry + Smithery · monetization tiers</div>
+        <div class="roadmap-title">Listing Anthropic registry + Smithery &middot; monetization tiers (Free / Pro / Enterprise)</div>
         <div class="roadmap-eta">Q1 2027</div>
       </div>
     </div>
@@ -296,36 +520,136 @@ section{padding:80px 0;border-bottom:1px solid var(--border)}
 
 <section>
   <div class="wrap">
-    <div class="section-eyebrow">// AUTRES SURFACES</div>
-    <h2 class="section-title">Plus que MCP.</h2>
-    <p class="section-sub">Le MCP server est la premiere etape. Voici ce qui arrive ensuite pour offrir une surface API complete.</p>
+    <div class="section-eyebrow">// FAQ</div>
+    <h2 class="section-title">Questions frequentes.</h2>
+    <p class="section-sub">Les 6 questions les plus posees pendant la beta privee.</p>
 
-    <div class="tools-grid">
-      <div class="tool">
-        <div class="tool-name">REST API · Q3 2026</div>
-        <div class="tool-desc">Endpoints HTTP classiques avec OAuth ou API key. Pour les devs qui construisent des apps custom (Discord bots, Twitch overlays, mobile apps). Plans Free 100/mo, Pro 10k/mo, Enterprise unlimited.</div>
-      </div>
-      <div class="tool">
-        <div class="tool-name">Webhooks · Q4 2026</div>
-        <div class="tool-desc">Recoit des events FragValue dans ton service. Quand un user analyse une demo, ta plateforme recoit demo.completed avec les stats. Use case : Discord bots, dashboards externes, integration CRM esports.</div>
-      </div>
-      <div class="tool">
-        <div class="tool-name">SDK npm · 2027</div>
-        <div class="tool-desc">@fragvalue/sdk en TypeScript. 1 ligne pour integrer FragValue dans n'importe quelle app Node.js. Auto-completion, types, abstraction au-dessus de l'API REST + MCP.</div>
-      </div>
-      <div class="tool">
-        <div class="tool-name">Embeddable widgets · 2027</div>
-        <div class="tool-desc">Iframe avec ton FV Rating live + KPIs, integrable dans n'importe quel site (HLTV-like). Pour les sites de coaching, les profils joueurs, les pages de streamers.</div>
+    <div class="faq">
+      <details>
+        <summary>C'est quoi un MCP server vs un API REST classique ?</summary>
+        <div class="faq-body">MCP (Model Context Protocol) est un standard d'Anthropic pour exposer des tools a des agents IA. Au lieu qu'un dev humain ecrive du code pour appeler ton API, c'est un agent IA (Claude, ChatGPT) qui decouvre et appelle les tools tout seul. L'API REST reste utile pour les apps custom (Discord bots, mobile apps). Le MCP est specifique aux agents IA. Les deux sont complementaires &mdash; FragValue va shipper les deux d'ici Q3 2026.</div>
+      </details>
+      <details>
+        <summary>Faut-il etre user Pro FragValue pour utiliser le MCP server ?</summary>
+        <div class="faq-body">Non pour la v0.1 read-only. Tu peux interroger les profiles publics et leurs demos completes sans compte FragValue. Pour les actions write (analyser une nouvelle demo) en v0.3, il faudra etre Pro avec un OAuth flow. Apres Q1 2027, des tiers de pricing s'appliqueront sur les volumes d'API calls (Free / Pro / Enterprise).</div>
+      </details>
+      <details>
+        <summary>Comment FragValue protege les donnees user ?</summary>
+        <div class="faq-body">Privacy by default. Aucune donnee user n'est exposee par defaut. L'user doit activer explicitement <code>public_visibility</code> dans ses settings pour que son profile et ses demos completes soient queryables via MCP. Le Row Level Security (RLS) Supabase enforce cette regle au niveau DB, pas juste au niveau app. Voir la section "Privacy &amp; Data" ci-dessus pour le detail technique.</div>
+      </details>
+      <details>
+        <summary>Combien ca coute ?</summary>
+        <div class="faq-body">Gratuit pendant la beta (jusqu'a Q1 2027). Apres, 3 tiers sont prevus : <strong>Free</strong> 100 requetes par mois pour les hobbyistes, <strong>Pro</strong> 10k par mois inclus dans l'abonnement FragValue Pro 9 EUR/mois, <strong>Enterprise</strong> avec quotas custom + SLA pour les orgs esports / studios. Toutes les requetes faites pendant la beta ne sont jamais facturees retroactivement.</div>
+      </details>
+      <details>
+        <summary>Quels agents supportent MCP aujourd'hui ?</summary>
+        <div class="faq-body">Claude Desktop (Anthropic), Cursor (l'IDE AI), Cline (extension VS Code), ChatGPT custom GPTs. Plus de 50 clients sont listes sur la registry officielle Anthropic. MCP est le standard ouvert le plus rapide a croitre en 2026 &mdash; Google, Microsoft et OpenAI ont annonce des compatibilities natives. En clair : ton tool est dispo partout en branchant 1 fichier de config.</div>
+      </details>
+      <details>
+        <summary>Que faire si un tool plante ou renvoie une erreur ?</summary>
+        <div class="faq-body">Le MCP server retourne un message d'erreur structure (<code>McpError</code>). L'agent IA peut le voir et te l'afficher, ou retry automatiquement. En cas de bug repete, ouvre une issue sur <a href="https://github.com/Ladreuille/fragvalue-mcp/issues">github.com/Ladreuille/fragvalue-mcp/issues</a>. Le repo etant open source, tu peux aussi PR un fix.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="community">
+      <h2 class="community-title">Rejoins les builders.</h2>
+      <p class="community-sub">Premiers retours sur la beta, channel Discord dedie, roadmap publique GitHub. Tu construis quelque chose sur FragValue ? On veut savoir.</p>
+      <div class="community-actions">
+        <a href="https://github.com/Ladreuille/fragvalue-mcp" class="btn">Star sur GitHub &rsaquo;</a>
+        <a href="https://discord.gg/fragvalue" class="btn secondary">Discord #mcp-server</a>
+        <a href="mailto:contact@fragvalue.com?subject=FragValue%20MCP%20feedback" class="btn secondary">Email direct</a>
       </div>
     </div>
   </div>
 </section>
 
 <div class="foot">
-  Pour toute question : <a href="mailto:contact@fragvalue.com">contact@fragvalue.com</a> · <a href="https://discord.gg/fragvalue">Discord</a> · <a href="https://github.com/Ladreuille/fragvalue-mcp/issues">Issues</a>
-  <br><br>
-  &middot; FragValue &middot; 01170 Gex, France &middot; SIREN 104 054 788 &middot;
+  <a href="https://github.com/Ladreuille/fragvalue-mcp">GitHub repo</a>
+  &middot; <a href="https://www.npmjs.com/package/fragvalue-mcp">npm</a>
+  &middot; <a href="mailto:contact@fragvalue.com">Email</a>
+  &middot; <a href="https://discord.gg/fragvalue">Discord</a>
+  &middot; <a href="/blog.html">Blog</a>
+  <div class="foot-legal">FragValue &middot; 01170 Gex, France &middot; SIREN 104 054 788</div>
 </div>
+
+<script>
+// Test playground : appelle Supabase REST directement avec l'anon key public.
+// Reproduit exactement ce que fait le tool list_recent_demos du MCP server,
+// mais en client-side pour la demo. Necessite que le user FACEIT_NICKNAME
+// ait active public_visibility=true dans ses settings.
+const SB_URL = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+
+async function runPlayground() {
+  const nick = (document.getElementById('pgNick').value || '').trim();
+  const btn = document.getElementById('pgBtn');
+  const result = document.getElementById('pgResult');
+
+  if (!nick) {
+    result.className = 'pg-result';
+    result.innerHTML = '<span class="err">Erreur : entre un FACEIT nickname.</span>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  result.className = 'pg-result';
+  result.innerHTML = '<span style="color:var(--text3)">Query en cours...</span>';
+
+  try {
+    // Step 1 : resolve nickname -> user_id via profiles (public_visibility=true uniquement)
+    const profUrl = `${SB_URL}/rest/v1/profiles?faceit_nickname=ilike.${encodeURIComponent(nick)}&select=id,faceit_nickname&limit=1`;
+    const profRes = await fetch(profUrl, {
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + SB_ANON }
+    });
+    const profiles = await profRes.json();
+
+    if (!Array.isArray(profiles) || profiles.length === 0) {
+      result.innerHTML = `<span class="err">Aucun joueur trouve avec le FACEIT nickname "${nick}".</span>\n\nRaison possible : le joueur n'a pas active <span class="key">public_visibility</span> dans ses settings FragValue, ou le nickname n'existe pas.\n\nTente <span class="key">Qwhentin</span> pour voir un exemple.`;
+      return;
+    }
+
+    const userId = profiles[0].id;
+
+    // Step 2 : list ses 5 dernieres demos completes
+    const demosUrl = `${SB_URL}/rest/v1/demos?user_id=eq.${userId}&parse_status=eq.complete&order=analysed_at.desc&limit=5&select=id,map,rounds,total_kills,fv_rating,analysed_at`;
+    const demosRes = await fetch(demosUrl, {
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + SB_ANON }
+    });
+    const demos = await demosRes.json();
+
+    if (!Array.isArray(demos) || demos.length === 0) {
+      result.innerHTML = `<span class="ok">Joueur trouve :</span> ${profiles[0].faceit_nickname}\n\n<span class="err">Mais aucune demo analysee (parse_status=complete) pour ce profil.</span>`;
+      return;
+    }
+
+    const ratings = demos.filter(d => d.fv_rating != null).map(d => d.fv_rating);
+    const avgRating = ratings.length ? (ratings.reduce((s, r) => s + r, 0) / ratings.length).toFixed(2) : '?';
+
+    let out = `<span class="ok">${demos.length} demos analysees pour ${profiles[0].faceit_nickname}</span>\nFV Rating moyen : <span class="key">${avgRating}</span>\n\n`;
+    demos.forEach((d, i) => {
+      const date = new Date(d.analysed_at).toISOString().slice(0, 10);
+      const mapShort = (d.map || '?').replace(/^de_/, '').toUpperCase();
+      const rating = d.fv_rating != null ? d.fv_rating.toFixed(2) : '?';
+      out += `${i + 1}. ${date} &middot; <span class="key">${mapShort}</span> &middot; ${d.rounds ?? '?'} rounds &middot; ${d.total_kills ?? '?'} kills &middot; FV <span class="key">${rating}</span>\n`;
+    });
+    out += `\n<span style="color:var(--text3)">// Ce sont exactement les donnees que renvoie le tool list_recent_demos via MCP.</span>`;
+    result.innerHTML = out;
+  } catch (e) {
+    result.innerHTML = '<span class="err">Erreur reseau : ' + (e && e.message ? e.message : 'unknown') + '</span>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run tool';
+  }
+}
+
+document.getElementById('pgBtn').addEventListener('click', runPlayground);
+document.getElementById('pgNick').addEventListener('keydown', e => { if (e.key === 'Enter') runPlayground(); });
+</script>
 
 <script src="/nav.js"></script>
 <script src="/footer.js" defer></script>
