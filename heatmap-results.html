@@ -1865,15 +1865,47 @@ function renderMatchStats() {
   const sideKillsFor    = k => sf==='both'||( sf==='ct'?k.attackerTeam===2:k.attackerTeam===3);
   const sideKillsAgainst= k => sf==='both'||( sf==='ct'?k.victimTeam===2  :k.victimTeam===3);
 
-  // Attribution équipe : score CT vs T par joueur, puis partition stricte 5/5
-  const teamScores = players.map(p => {
-    const sCT = kills.filter(k=>(k.attacker===p.name&&k.attackerTeam===2)||(k.victim===p.name&&k.victimTeam===2)).length;
-    const sT  = kills.filter(k=>(k.attacker===p.name&&k.attackerTeam===3)||(k.victim===p.name&&k.victimTeam===3)).length;
-    return { name: p.name, ctScore: sCT, tScore: sT, diff: sCT - sT };
-  }).sort((a,b) => b.diff - a.diff); // plus CT en premier
-  const half = Math.ceil(teamScores.length / 2);
-  const ctSet = new Set(teamScores.slice(0, half).map(p => p.name));
-  const getPlayerTeam = name => ctSet.has(name) ? 2 : 3;
+  // Attribution équipe : on detecte le ROSTER de chaque equipe au round 1
+  // (avant tout swap de mi-temps/OT). C'est le seul moyen fiable de grouper
+  // les joueurs car les team_num changent a chaque swap.
+  // CS2 : team_num 2 = T, team_num 3 = CT.
+  //
+  // Bug v1 : on partitionnait par "sCT - sT" qui mesure juste sur quel side
+  // le joueur a ete actif. Comme chaque joueur joue les 2 sides apres swap,
+  // ca donne 5-5 random au lieu du vrai roster.
+  const round1Kills = kills.filter(k => k.round === 1);
+  const playerStartingTeam = {}; // name -> 2 (T) ou 3 (CT) au round 1
+  round1Kills.forEach(k => {
+    if (k.attacker && k.attackerTeam) playerStartingTeam[k.attacker] = k.attackerTeam;
+    if (k.victim && k.victimTeam) playerStartingTeam[k.victim] = k.victimTeam;
+  });
+  // Fallback : si round 1 sans kills (rare), on prend les premiers kills disponibles
+  if (Object.keys(playerStartingTeam).length < players.length) {
+    for (let r = 2; r <= 5 && Object.keys(playerStartingTeam).length < players.length; r++) {
+      kills.filter(k => k.round === r).forEach(k => {
+        if (k.attacker && k.attackerTeam && !playerStartingTeam[k.attacker]) {
+          playerStartingTeam[k.attacker] = k.attackerTeam;
+        }
+        if (k.victim && k.victimTeam && !playerStartingTeam[k.victim]) {
+          playerStartingTeam[k.victim] = k.victimTeam;
+        }
+      });
+    }
+  }
+  // Roster Team A = joueurs qui ont commence sur T (team_num=2)
+  // Roster Team B = joueurs qui ont commence sur CT (team_num=3)
+  // Note : on appelle ces equipes "teamA" et "teamB" pour eviter confusion
+  // avec les sides T/CT qui swappent. Plus tard on les labelle "Equipe_<best>".
+  const teamARoster = new Set();
+  const teamBRoster = new Set();
+  players.forEach(p => {
+    const t = playerStartingTeam[p.name];
+    if (t === 2) teamARoster.add(p.name);
+    else if (t === 3) teamBRoster.add(p.name);
+  });
+  // getPlayerTeam : retourne 2 ou 3 pour identifier l'equipe stable du joueur
+  // (et non son side current). On reutilise 2/3 pour minimiser le changement.
+  const getPlayerTeam = name => teamARoster.has(name) ? 2 : 3;
 
   // First kill par round (approximation : kill avec tick minimum du round)
   const firstKillMap = {};
@@ -1921,31 +1953,55 @@ function renderMatchStats() {
     teamPlayers[team].push({ name:p.name, kd, kdNum, kills:sKills.length, deaths:sDeaths.length, hsCount, hsPct, adr, kast, fvr, opK, opD, opKdNum, duelPct, mks });
   });
 
-  // CS2 demoparser2 : winner=2 = CT, winner=3 = T
-  // Mais certaines démos retournent winner=1 (CT) ou winner=2 (T)
-  // On détecte automatiquement le format
-  // Détecter le format winner
+  // CS2 demoparser2 : winner=2 = T won, winner=3 = CT won.
+  // Variable nom legacy "ctWins" / "tWins" gardes pour minimal change mais
+  // RECALCULES par equipe (Team A vs Team B) au lieu de par side.
+  //
+  // Algo : pour chaque round, on detecte le team_num actuel de teamA (en
+  // regardant n'importe quel joueur de teamA present dans les kills de ce
+  // round, son attackerTeam ou victimTeam = side de teamA dans ce round).
+  // Si winner === team_num actuel de teamA → teamA gagne. Sinon teamB.
+  //
+  // Fallback si round sans kill : pattern standard MR12 + OT MR3
+  // (rounds 1-12 = teamA on T side, 13-24 = swap, OT swap tous les 3).
   const winnerVals = [...new Set(allRounds.map(r=>r.winner).filter(w=>w>0))];
-  const useAlt = winnerVals.length > 0 && !winnerVals.includes(2) && !winnerVals.includes(3);
-  let ctWins = allRounds.filter(r => useAlt ? r.winner===1 : r.winner===2).length;
-  let tWins  = allRounds.filter(r => useAlt ? r.winner===2 : r.winner===3).length;
+  let ctWins = 0; // = wins de teamA (qui a commence sur T = team_num=2)
+  let tWins  = 0; // = wins de teamB (qui a commence sur CT = team_num=3)
 
-  // Fallback : si winner=0 partout, déduire depuis les kills
-  // L'équipe qui a fait le dernier kill du round a probablement gagné
-  if (ctWins === 0 && tWins === 0 && kills.length > 0) {
-    allRounds.forEach((rd, i) => {
-      const r = i + 1;
-      const rKills = kills.filter(k => k.round === r);
-      if (!rKills.length) return;
-      // Dernier kill du round = tick max
-      const lastKill = rKills.reduce((a,b) => (a.tick||0)>=(b.tick||0)?a:b);
-      // CS2 : team_num CT=3, T=2  - l'attaquant du dernier kill a gagné
-      if (lastKill.attackerTeam === 3) ctWins++;      // CT gagne
-      else if (lastKill.attackerTeam === 2) tWins++;  // T gagne
-    });
-    console.log('[FragValue] Wins déduits des kills  - CT:', ctWins, 'T:', tWins);
+  function teamASideAtRound(r) {
+    // Determine si teamA est sur T (2) ou CT (3) au round r
+    // Methode 1 : kills de ce round
+    const rk = kills.filter(k => k.round === r);
+    for (const k of rk) {
+      if (k.attacker && teamARoster.has(k.attacker)) return k.attackerTeam;
+      if (k.victim   && teamARoster.has(k.victim))   return k.victimTeam;
+    }
+    // Methode 2 : fallback pattern MR12 + OT MR3
+    if (r <= 12) return 2;        // first half : teamA on T
+    if (r <= 24) return 3;        // second half : teamA on CT
+    const otRound = r - 24;
+    return (Math.floor((otRound - 1) / 3) % 2 === 0) ? 2 : 3; // OT alternate
   }
-  console.log('[FragValue] Rounds winner vals:', winnerVals, '| CT wins:', ctWins, '| T wins:', tWins);
+
+  allRounds.forEach((rd, i) => {
+    const r = i + 1;
+    let winner = rd.winner;
+    // Fallback : si winner=0/null, deduire depuis le dernier kill du round
+    if (!winner) {
+      const rk = kills.filter(k => k.round === r);
+      if (rk.length) {
+        const lastKill = rk.reduce((a,b) => (a.tick||0) >= (b.tick||0) ? a : b);
+        winner = lastKill.attackerTeam;
+      }
+    }
+    if (!winner) return; // pas de winner determinable, skip
+
+    const teamASide = teamASideAtRound(r);
+    if (winner === teamASide) ctWins++; // teamA gagne ce round
+    else tWins++;                        // teamB gagne ce round
+  });
+
+  console.log('[FragValue] Score par equipe : teamA(commence T)=' + ctWins + ' · teamB(commence CT)=' + tWins + ' (winner vals: ' + winnerVals.join(',') + ')');
 
   function teamBlock(teamNum, label, color, score) {
     const tPlayers = (teamPlayers[teamNum]||[]).sort((a,b)=>b.fvr-a.fvr);
