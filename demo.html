@@ -1341,7 +1341,12 @@ function parseViaSSE(jwt, storagePath, timeoutMs, demoId) {
 
     es.onmessage = (e) => {
       let ev;
-      try { ev = JSON.parse(e.data); } catch(_) { return; }
+      try { ev = JSON.parse(e.data); }
+      catch(parseErr) {
+        console.error('[FV-SSE] JSON.parse FAILED on message of', e.data.length, 'chars:', parseErr.message);
+        return;
+      }
+      console.log('[FV-SSE] event:', ev.type, ev.step || '', 'dataSize:', ev.data ? JSON.stringify(ev.data).length : 0);
       switch (ev.type) {
         case 'connected':
           go(1, 14, 'Stream etabli', 'En attente du download depuis Supabase...');
@@ -1385,6 +1390,7 @@ function parseViaSSE(jwt, storagePath, timeoutMs, demoId) {
           // Les trajectoires de grenades arrivent en background via Supabase
           // Realtime. On peut deja rediriger vers heatmap-results pour
           // l'experience progressive.
+          console.log('[FV-SSE] PARTIAL_READY received! phase1Sec:', ev.phase1Sec, 'dataKeys:', ev.data ? Object.keys(ev.data) : null);
           stopCreep();
           clearTimeout(timeoutId);
           try { es.close(); } catch(_) {}
