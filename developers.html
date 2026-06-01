@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied',
+  'analytics_storage':'denied','functionality_storage':'granted','security_storage':'granted',
+  'wait_for_update':500,'region':['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags:'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="API et MCP server FragValue pour développeurs. Connecte Claude Desktop, Cursor, Cline à tes données CS2 (FV Rating, heatmaps, Coach IA). v0.1 beta disponible.">
+<meta name="keywords" content="FragValue API, FragValue MCP, MCP server CS2, Model Context Protocol, Claude FragValue, FACEIT API, CS2 developer tools">
+<link rel="canonical" href="https://fragvalue.com/developers.html">
+<link rel="alternate" hreflang="fr" href="https://fragvalue.com/developers.html">
+<meta name="theme-color" content="#0A0C10">
+
+<meta property="og:title" content="FragValue Developers · MCP Server pour agents IA CS2">
+<meta property="og:description" content="Connecte Claude Desktop, Cursor, Cline à tes données CS2 via le MCP server FragValue. Build des agents pour le coaching, l'analyse, le scouting.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fragvalue.com/developers.html">
+<meta property="og:image" content="https://fragvalue.com/og/developers.png">
+
+<title>FragValue · Developers (MCP, API, SDK)</title>
+<link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/fragvalue_icon.svg">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"WebPage",
+  "name":"FragValue Developers",
+  "url":"https://fragvalue.com/developers.html",
+  "description":"API, MCP server et SDK FragValue pour intégrer l'analyse CS2 dans tes agents IA et applications.",
+  "publisher":{
+    "@type":"Organization",
+    "name":"FragValue",
+    "url":"https://fragvalue.com"
+  }
+}
+</script>
+
+<style>
+:root{
+  --bg:#0a0c0a; --bg2:#0f1110; --bg3:#1a1c1a;
+  --border:#1c1e1e; --border2:#2a2c2a;
+  --text:#e8eaea; --text2:#a8b0b0; --text3:#7a8080;
+  --accent:#b8ff57; --success:#5dff8c; --warning:#f5c842;
+  --display:'Anton',sans-serif; --mono:'Space Mono',monospace;
+  --body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+
+/* HERO */
+.hero{position:relative;padding:96px 24px 64px;overflow:hidden;border-bottom:1px solid var(--border)}
+.hero::before{content:'';position:absolute;top:-30%;left:50%;transform:translateX(-50%);width:120%;height:80%;background:radial-gradient(ellipse at center,rgba(184,255,87,0.10) 0%,transparent 60%);filter:blur(60px);pointer-events:none}
+.hero-eyebrow{position:relative;font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;font-weight:700}
+.hero-title{position:relative;font-family:var(--display);font-size:clamp(48px,8vw,84px);line-height:.95;letter-spacing:-1px;margin-bottom:24px;max-width:900px}
+.hero-title .accent{color:var(--accent);text-shadow:0 0 40px rgba(184,255,87,0.3)}
+.hero-sub{position:relative;font-size:18px;color:var(--text2);max-width:680px;line-height:1.55}
+
+/* STATUS BAR */
+.status-bar{position:relative;display:flex;flex-wrap:wrap;gap:14px;margin-top:32px}
+.status-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(184,255,87,0.06);border:1px solid rgba(184,255,87,0.24);border-radius:100px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--accent)}
+.status-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 1.5s infinite}
+.status-pill.beta{background:rgba(245,200,66,0.06);border-color:rgba(245,200,66,0.24);color:var(--warning)}
+.status-pill.beta .dot{background:var(--warning);box-shadow:0 0 8px var(--warning)}
+.status-pill.soon{background:rgba(122,128,128,0.06);border-color:rgba(122,128,128,0.24);color:var(--text3)}
+.status-pill.soon .dot{background:var(--text3);animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* SECTIONS */
+section{padding:80px 0;border-bottom:1px solid var(--border)}
+.section-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;font-weight:700}
+.section-title{font-family:var(--display);font-size:clamp(36px,5vw,52px);line-height:1;letter-spacing:-.5px;margin-bottom:18px}
+.section-sub{font-size:16px;color:var(--text2);max-width:720px;line-height:1.55;margin-bottom:48px}
+
+/* MCP CARD */
+.mcp-card{position:relative;padding:40px;background:linear-gradient(135deg,#0c0d0d 0%,#0a0b0b 100%);border:1px solid rgba(184,255,87,0.24);border-radius:16px;overflow:hidden}
+.mcp-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent) 30%,var(--accent) 70%,transparent);box-shadow:0 0 16px rgba(184,255,87,0.5)}
+.mcp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap}
+.mcp-name{font-family:var(--display);font-size:36px;letter-spacing:.5px}
+.mcp-version{font-family:var(--mono);font-size:13px;color:var(--text3);letter-spacing:.06em}
+.mcp-desc{font-size:16px;color:var(--text2);line-height:1.6;margin-bottom:32px;max-width:760px}
+
+.tools-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:32px}
+@media(max-width:720px){.tools-grid{grid-template-columns:1fr}}
+.tool{padding:18px 20px;background:rgba(10,12,10,0.5);border:1px solid var(--border2);border-radius:10px;border-left:3px solid var(--accent)}
+.tool-name{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:700;letter-spacing:.04em;margin-bottom:6px}
+.tool-desc{font-size:13px;color:var(--text2);line-height:1.55}
+
+.code-block{background:#080a08;border:1px solid var(--border2);border-radius:10px;padding:18px 22px;font-family:var(--mono);font-size:12.5px;color:var(--text);line-height:1.7;overflow-x:auto;margin-bottom:18px}
+.code-block .comment{color:var(--text3)}
+.code-block .key{color:var(--accent)}
+.code-block .string{color:#5dff8c}
+
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 24px;background:var(--accent);color:#000;text-decoration:none;border-radius:8px;font-family:var(--display);font-size:15px;letter-spacing:.04em;font-weight:700;text-transform:uppercase;transition:transform .15s,box-shadow .15s;border:none;cursor:pointer}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,255,87,0.3);text-decoration:none}
+.btn.secondary{background:transparent;color:var(--text);border:1px solid var(--border2)}
+.btn.secondary:hover{box-shadow:0 0 0 1px var(--accent);border-color:var(--accent)}
+
+/* USE CASES */
+.usecase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:880px){.usecase-grid{grid-template-columns:1fr}}
+.usecase{padding:24px 22px;background:var(--bg2);border:1px solid var(--border);border-radius:12px}
+.usecase-tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);background:rgba(184,255,87,0.06);padding:4px 8px;border-radius:4px;margin-bottom:14px;font-weight:700}
+.usecase-title{font-family:var(--display);font-size:22px;line-height:1.2;margin-bottom:10px}
+.usecase-text{font-size:13.5px;color:var(--text2);line-height:1.6}
+
+/* ROADMAP */
+.roadmap{margin-top:0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.roadmap-row{display:grid;grid-template-columns:90px 130px 1fr 100px;align-items:center;gap:20px;padding:18px 22px;border-bottom:1px solid var(--border)}
+.roadmap-row:last-child{border-bottom:none}
+.roadmap-version{font-family:var(--display);font-size:18px;color:var(--accent)}
+.roadmap-status{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.roadmap-status.live{color:var(--success)}
+.roadmap-status.dev{color:var(--warning)}
+.roadmap-status.next{color:var(--text3)}
+.roadmap-title{font-size:14px;color:var(--text)}
+.roadmap-eta{font-family:var(--mono);font-size:11px;color:var(--text3);text-align:right}
+@media(max-width:720px){
+  .roadmap-row{grid-template-columns:80px 1fr;gap:12px}
+  .roadmap-status,.roadmap-eta{display:none}
+}
+
+/* FOOTER */
+.foot{padding:48px 24px;text-align:center;color:var(--text3);font-size:13px}
+.foot a{color:var(--accent)}
+</style>
+</head>
+<body>
+<nav></nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-eyebrow">// FRAGVALUE / DEVELOPERS</div>
+    <h1 class="hero-title">Build the future of <span class="accent">agentic CS2</span>.</h1>
+    <p class="hero-sub">Connecte Claude Desktop, Cursor, Cline ou n'importe quel agent IA compatible MCP a tes donnees FragValue. Analyse de demos, FV Rating, heatmaps, diagnostic Coach IA accessibles en 1 ligne de config.</p>
+    <div class="status-bar">
+      <span class="status-pill beta"><span class="dot"></span>MCP Server v0.1 · Beta</span>
+      <span class="status-pill soon"><span class="dot"></span>REST API · Q3 2026</span>
+      <span class="status-pill soon"><span class="dot"></span>Webhooks · Q4 2026</span>
+      <span class="status-pill soon"><span class="dot"></span>SDK npm · 2027</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="section-eyebrow">// MODEL CONTEXT PROTOCOL</div>
+    <h2 class="section-title">MCP Server v0.1</h2>
+    <p class="section-sub">Le standard ouvert d'Anthropic pour connecter ton service a n'importe quel agent IA. Installe en une commande, configure en 30 secondes.</p>
+
+    <div class="mcp-card">
+      <div class="mcp-header">
+        <div class="mcp-name">fragvalue-mcp</div>
+        <div class="mcp-version">v0.1.0 · Beta · MIT License</div>
+      </div>
+      <p class="mcp-desc">4 tools read-only exposes aux agents IA. Resolution par FACEIT nickname ou Supabase user_id, validation Zod, communication STDIO/JSON-RPC standard MCP.</p>
+
+      <div class="tools-grid">
+        <div class="tool">
+          <div class="tool-name">list_recent_demos</div>
+          <div class="tool-desc">Historique des N dernieres demos d'un joueur avec FV Rating, map, rounds, kills, date.</div>
+        </div>
+        <div class="tool">
+          <div class="tool-name">get_demo_analysis</div>
+          <div class="tool-desc">Analyse complete d'une demo par UUID. FV Rating, scoreboard, statut parsing, lien partage.</div>
+        </div>
+        <div class="tool">
+          <div class="tool-name">get_player_stats</div>
+          <div class="tool-desc">Stats agregees sur N dernieres demos. FV Rating moyen / min / max, tendance, maps preferees.</div>
+        </div>
+        <div class="tool">
+          <div class="tool-name">search_articles</div>
+          <div class="tool-desc">Recherche dans le blog FragValue par mot-cle. Titres, tags, keywords ponderes.</div>
+        </div>
+      </div>
+
+      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">// Installation</div>
+      <div class="code-block">npm install -g fragvalue-mcp</div>
+
+      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin:24px 0 10px">// Configuration Claude Desktop</div>
+      <div class="code-block"><span class="comment">// ~/Library/Application Support/Claude/claude_desktop_config.json</span>
+{
+  <span class="key">"mcpServers"</span>: {
+    <span class="key">"fragvalue"</span>: {
+      <span class="key">"command"</span>: <span class="string">"npx"</span>,
+      <span class="key">"args"</span>: [<span class="string">"-y"</span>, <span class="string">"fragvalue-mcp"</span>],
+      <span class="key">"env"</span>: {
+        <span class="key">"FRAGVALUE_SUPABASE_URL"</span>: <span class="string">"https://xmyruycvvkmcwysfygcq.supabase.co"</span>,
+        <span class="key">"FRAGVALUE_SUPABASE_ANON_KEY"</span>: <span class="string">"ta_clef_anon_ici"</span>
+      }
+    }
+  }
+}</div>
+
+      <div class="cta-row">
+        <a href="https://github.com/Ladreuille/fragvalue-mcp" class="btn">GitHub repo &rsaquo;</a>
+        <a href="https://www.npmjs.com/package/fragvalue-mcp" class="btn secondary">npm registry &rsaquo;</a>
+        <a href="mailto:contact@fragvalue.com?subject=MCP%20feedback" class="btn secondary">Feedback beta</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-eyebrow">// CAS D'USAGE</div>
+    <h2 class="section-title">Pour qui c'est fait.</h2>
+    <p class="section-sub">3 profils de developpeurs et builders utilisent deja le MCP server FragValue en beta.</p>
+
+    <div class="usecase-grid">
+      <div class="usecase">
+        <div class="usecase-tag">Coach CS2</div>
+        <div class="usecase-title">Rapport hebdo automatique</div>
+        <div class="usecase-text">Tu coach 10-30 students CS2. Tu connectes Claude Desktop au MCP server FragValue. Tu dis "fais-moi le rapport semaine 24 de mes students" et Claude appelle list_recent_demos pour chaque, calcule les tendances, te formate un Discord post pret a copier-coller. Gain : 30 min par semaine.</div>
+      </div>
+      <div class="usecase">
+        <div class="usecase-tag">Streamer Twitch</div>
+        <div class="usecase-title">Stats live dans le chat</div>
+        <div class="usecase-text">Tu build un bot Twitch en Cursor qui ecoute les commandes !stats. Le bot appelle get_player_stats sur ton compte FragValue et balance les stats dans le chat en 200ms. Plus besoin de hardcoder une commande, l'agent fait la requete et formate.</div>
+      </div>
+      <div class="usecase">
+        <div class="usecase-tag">Org esports T3</div>
+        <div class="usecase-title">Scouting de joueurs</div>
+        <div class="usecase-text">Tu cherches un nouveau joueur pour ton academy team. Tu dis a Claude "compare le FV Rating moyen de Player_A et Player_B sur leurs 50 dernieres demos, regarde leur tendance et leur map preferee". Decision en 30 secondes au lieu d'1h de spreadsheet HLTV.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-eyebrow">// ROADMAP</div>
+    <h2 class="section-title">Ou on va.</h2>
+    <p class="section-sub">L'objectif : devenir la couche agentique standard pour le coaching CS2. Suit la roadmap en temps reel sur GitHub.</p>
+
+    <div class="roadmap">
+      <div class="roadmap-row">
+        <div class="roadmap-version">v0.1</div>
+        <div class="roadmap-status live">// Live · Beta</div>
+        <div class="roadmap-title">4 tools read-only · STDIO transport · Supabase anon key</div>
+        <div class="roadmap-eta">Juin 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-version">v0.2</div>
+        <div class="roadmap-status dev">// En cours</div>
+        <div class="roadmap-title">OAuth flow Supabase · acces aux donnees user-specific privees</div>
+        <div class="roadmap-eta">Juillet 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-version">v0.3</div>
+        <div class="roadmap-status next">// Prochain</div>
+        <div class="roadmap-title">Tool analyze_demo (write) · l'agent peut upload + parser</div>
+        <div class="roadmap-eta">Aout 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-version">v0.4</div>
+        <div class="roadmap-status next">// Prochain</div>
+        <div class="roadmap-title">compare_to_pro · benchmark vs un pro player via stats HLTV</div>
+        <div class="roadmap-eta">Septembre 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-version">v0.5</div>
+        <div class="roadmap-status next">// Prochain</div>
+        <div class="roadmap-title">Serveur HTTP hosted · plus besoin d'install locale</div>
+        <div class="roadmap-eta">Q4 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-version">v1.0</div>
+        <div class="roadmap-status next">// Prochain</div>
+        <div class="roadmap-title">Listing officiel Anthropic MCP registry + Smithery · monetization tiers</div>
+        <div class="roadmap-eta">Q1 2027</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-eyebrow">// AUTRES SURFACES</div>
+    <h2 class="section-title">Plus que MCP.</h2>
+    <p class="section-sub">Le MCP server est la premiere etape. Voici ce qui arrive ensuite pour offrir une surface API complete.</p>
+
+    <div class="tools-grid">
+      <div class="tool">
+        <div class="tool-name">REST API · Q3 2026</div>
+        <div class="tool-desc">Endpoints HTTP classiques avec OAuth ou API key. Pour les devs qui construisent des apps custom (Discord bots, Twitch overlays, mobile apps). Plans Free 100/mo, Pro 10k/mo, Enterprise unlimited.</div>
+      </div>
+      <div class="tool">
+        <div class="tool-name">Webhooks · Q4 2026</div>
+        <div class="tool-desc">Recoit des events FragValue dans ton service. Quand un user analyse une demo, ta plateforme recoit demo.completed avec les stats. Use case : Discord bots, dashboards externes, integration CRM esports.</div>
+      </div>
+      <div class="tool">
+        <div class="tool-name">SDK npm · 2027</div>
+        <div class="tool-desc">@fragvalue/sdk en TypeScript. 1 ligne pour integrer FragValue dans n'importe quelle app Node.js. Auto-completion, types, abstraction au-dessus de l'API REST + MCP.</div>
+      </div>
+      <div class="tool">
+        <div class="tool-name">Embeddable widgets · 2027</div>
+        <div class="tool-desc">Iframe avec ton FV Rating live + KPIs, integrable dans n'importe quel site (HLTV-like). Pour les sites de coaching, les profils joueurs, les pages de streamers.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="foot">
+  Pour toute question : <a href="mailto:contact@fragvalue.com">contact@fragvalue.com</a> · <a href="https://discord.gg/fragvalue">Discord</a> · <a href="https://github.com/Ladreuille/fragvalue-mcp/issues">Issues</a>
+  <br><br>
+  &middot; FragValue &middot; 01170 Gex, France &middot; SIREN 104 054 788 &middot;
+</div>
+
+<script src="/nav.js"></script>
+<script src="/footer.js" defer></script>
+</body>
+</html>
