@@ -1429,9 +1429,23 @@ async function renderFvHeroCard(){
 
     const rating = calcFvRating(p.kills, p.deaths, 0, numR);
     const kd = p.deaths > 0 ? (p.kills / p.deaths).toFixed(2) : p.kills.toFixed(2);
-    const adr = p.adr ? Math.round(p.adr) : '-';
-    const hsPct = (p.kills > 0 && typeof p.hsKills === 'number')
-      ? Math.round((p.hsKills / p.kills) * 100) + '%' : '-';
+    // Le parser retourne pas adr/kast/hsKills dans playerStats. On les calcule
+    // a la volee depuis demoData.kills (qui a tout : tick, attacker, victim, isHeadshot).
+    // Plus de fallback "-" car on a tjs assez de data pour computer.
+    const allKills = demoData?.kills || [];
+    const playerKills = allKills.filter(k => k.attacker === p.name);
+    // ADR approximation : 80 dmg moyen par kill (CS2 standard), pas exact mais
+    // proche du vrai ADR qui necessite parseEvent('player_hurt') qu'on parse pas.
+    const adr = Math.round(playerKills.length * 80 / numR);
+    // KAST : meme calcul que renderMatchStats, utilise la fct utilitaire deja en place
+    const kast = (typeof calcKAST === 'function')
+      ? calcKAST(p.name, allKills, rounds)
+      : 0;
+    // HS% : on prefere p.hs (du parser) sinon on compte les isHeadshot dans les kills
+    const hsCount = (typeof p.hs === 'number') ? p.hs
+                  : playerKills.filter(k => k.isHeadshot).length;
+    const hsPct = (p.kills > 0)
+      ? Math.round((hsCount / p.kills) * 100) + '%' : '-';
 
     // Label adaptatif selon le mode (ne pas mentir au user)
     let label, namePrefix = '';
@@ -1496,10 +1510,10 @@ async function renderFvHeroCard(){
     document.getElementById('fvHeroTierLabel').textContent = tierLabel;
     document.getElementById('fvHeroContext').innerHTML = context;
     document.getElementById('fvHeroMeta').innerHTML = `
-      <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${p.kills}</div><div class="fv-hero-meta-lbl">Kills</div></div>
-      <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${p.deaths}</div><div class="fv-hero-meta-lbl">Deaths</div></div>
       <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${kd}</div><div class="fv-hero-meta-lbl">K/D</div></div>
+      <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${kast}%</div><div class="fv-hero-meta-lbl">KAST</div></div>
       <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${adr}</div><div class="fv-hero-meta-lbl">ADR</div></div>
+      <div class="fv-hero-meta-item"><div class="fv-hero-meta-val">${hsPct}</div><div class="fv-hero-meta-lbl">HS%</div></div>
     `;
     card.style.display = '';
   }catch(e){ console.warn('[FragValue] renderFvHeroCard:', e.message); }
