@@ -1062,6 +1062,33 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
         <div class="settings-msg" id="exportDataMsg"></div>
       </div>
 
+      <!-- API & Intégrations : opt-in public_visibility pour le MCP server FragValue.
+           Permet aux agents IA (Claude Desktop, Cursor, Cline, ChatGPT) d'accéder
+           aux stats publiques du user. Default OFF (privacy by default). -->
+      <div class="sec-label">API et intégrations</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-label">Visibilité publique API</div>
+          <div class="settings-value">
+            Si activé, ton profil et tes démos analysées (parse_status=complete) deviennent accessibles via l'API publique et le <a href="/developers.html" style="color:var(--accent)">MCP server FragValue</a>. Tu apparaîtras dans les recherches d'agents IA (Claude, Cursor, etc).
+            <br><br>
+            <strong style="color:var(--text)">Ce qui est exposé :</strong> nickname FACEIT, map, rounds, total kills, FV Rating, date d'analyse.
+            <br>
+            <strong style="color:var(--text)">Jamais exposé :</strong> email, IP, fichier de démo, trajectoires de grenades, conversations Coach IA.
+          </div>
+          <label class="toggle-switch" style="position:relative;display:inline-block;width:50px;height:28px;flex-shrink:0">
+            <input type="checkbox" id="publicVisibilityToggle" style="opacity:0;width:0;height:0">
+            <span class="toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#2a2c2a;transition:.3s;border-radius:28px"></span>
+          </label>
+        </div>
+        <div class="settings-msg" id="publicVisibilityMsg"></div>
+      </div>
+      <style>
+        #publicVisibilityToggle:checked + .toggle-slider{background-color:rgba(184,255,87,0.4)}
+        #publicVisibilityToggle:checked + .toggle-slider::before{transform:translateX(22px);background-color:var(--accent)}
+        .toggle-slider::before{position:absolute;content:"";height:22px;width:22px;left:3px;bottom:3px;background-color:#7a8080;transition:.3s;border-radius:50%}
+      </style>
+
       <div class="sec-label danger-label">Zone dangereuse</div>
       <div class="settings-card danger-card">
         <div class="settings-row">
@@ -3116,6 +3143,62 @@ async function refreshConnexionsCard(userId, profile, extInstalled) {
       : 'Non installée - clic "Configurer" pour le tuto d\'installation';
   }
 }
+
+// ══ Toggle public_visibility : opt-in pour le MCP server FragValue ═══════
+// Quand activé, le profil + les demos completes sont accessibles via l'API
+// publique et le MCP server (RLS Supabase enforce avec policies dediees).
+// Reference : /developers.html + table profiles.public_visibility.
+async function loadPublicVisibility() {
+  const toggle = document.getElementById('publicVisibilityToggle');
+  if (!toggle) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    const { data, error } = await sb.from('profiles')
+      .select('public_visibility')
+      .eq('id', session.user.id)
+      .maybeSingle();
+    if (error || !data) return;
+    toggle.checked = data.public_visibility === true;
+  } catch (e) { console.warn('[public_visibility] load err:', e?.message); }
+}
+
+async function togglePublicVisibility() {
+  const toggle = document.getElementById('publicVisibilityToggle');
+  const msg = document.getElementById('publicVisibilityMsg');
+  if (!toggle || !msg) return;
+  const newValue = toggle.checked;
+  // Optimistic UI : on assume succès et revert si erreur
+  msg.className = 'settings-msg';
+  msg.textContent = '';
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error('Session expirée, reconnecte-toi.');
+    const { error } = await sb.from('profiles')
+      .update({ public_visibility: newValue })
+      .eq('id', session.user.id);
+    if (error) throw error;
+    msg.className = 'settings-msg ok';
+    msg.textContent = newValue
+      ? 'Visibilité publique activée. Tu apparais maintenant dans les recherches API et MCP server.'
+      : 'Visibilité publique désactivée. Tes données ne sont plus accessibles via l\'API publique.';
+    if (typeof window.fvTrack === 'function') {
+      window.fvTrack('public_visibility_toggled', { enabled: newValue });
+    }
+    setTimeout(() => { msg.textContent = ''; msg.className = 'settings-msg'; }, 5000);
+  } catch (e) {
+    toggle.checked = !newValue; // revert UI
+    msg.className = 'settings-msg err';
+    msg.textContent = 'Erreur : ' + (e?.message || 'inconnue') + '. Réessaie dans un instant.';
+  }
+}
+
+// Bind le toggle après chargement du DOM
+document.addEventListener('DOMContentLoaded', () => {
+  loadPublicVisibility();
+  const t = document.getElementById('publicVisibilityToggle');
+  if (t) t.addEventListener('change', togglePublicVisibility);
+});
 
 // ══ A5 : Export RGPD ZIP (downloadMyData) ════════════════════════════════
 // Conformite art. 20 RGPD : droit a la portabilite des donnees.
