@@ -1183,26 +1183,26 @@ window.addEventListener('load',async ()=>{
     // Mettre à jour le FV Rating dans Supabase
     saveRatingToSupabase();
     // Affiche la section "Debloque avec Pro" uniquement pour les users Free
-    // (les Pro/Elite voient deja tout, pas besoin de les pousser au checkout).
+    // (les Pro/Elite voient déjà tout, pas besoin de les pousser au checkout).
     renderUnlockProSection();
     // Affiche le trigger Coach IA juste sous le FV Hero (cf. ultrareview
-    // Onboarding P0 : declenche au pic emotionnel post-aha-moment).
+    // Onboarding P0 : déclenché au pic émotionnel post-aha-moment).
     renderCoachIaTrigger();
 
     // Phase progressive (parser v6.6.0+) : si ?id=<demoId> en URL, on check
-    // le parse_status et on subscribe a Realtime pour recevoir les
+    // le parse_status et on subscribe à Realtime pour recevoir les
     // trajectoires de grenades quand elles arrivent en background.
     initProgressiveParsing();
   }catch(e){console.error('heatmap-results init error:',e);}
 });
 
 // ─── PROGRESSIVE PARSING UX (v6.6.0+) ────────────────────────────────
-// L'user a redirige depuis demo.html en mode partial : les essentials
-// (heatmap, FV Rating, scoreboard) sont la, mais les trajectoires de
-// grenades sont en cours de calcul cote Railway (~10-15 min sur grosse
+// L'user a redirigé depuis demo.html en mode partial : les essentials
+// (heatmap, FV Rating, scoreboard) sont là, mais les trajectoires de
+// grenades sont en cours de calcul côté Railway (~10-15 min sur grosse
 // demo). On affiche un toast persistant avec progress bar, et quand
 // Realtime push trajectories_data, on merge dans demoData + re-render
-// les sections qui en dependent.
+// les sections qui en dépendent.
 async function initProgressiveParsing() {
   try {
     const params = new URLSearchParams(window.location.search);
@@ -1214,7 +1214,7 @@ async function initProgressiveParsing() {
     const { data: { session } } = await _sbP.auth.getSession();
     if (!session) return;
 
-    // Read l'etat courant de la row pour savoir si on est partial ou complete
+    // Read l'état courant de la row pour savoir si on est partial ou complete
     const { data: row, error } = await _sbP.from('demos')
       .select('parse_status, parse_progress, trajectories_data')
       .eq('id', demoId)
@@ -1226,12 +1226,12 @@ async function initProgressiveParsing() {
     console.log('[progressive] initial state:', row.parse_status, row.parse_progress + '%');
 
     if (row.parse_status === 'complete' && row.trajectories_data) {
-      // Deja complet (ex: user reload la page apres 1h) : merge direct
+      // Déjà complet (ex: user reload la page après 1h) : merge direct
       mergeTrajectoriesIntoDemo(row.trajectories_data);
       return;
     }
     if (row.parse_status === 'failed') {
-      // Phase 2 a echoue : on affiche un toast d'erreur (mais essentials marchent)
+      // Phase 2 a échoué : on affiche un toast d'erreur (mais essentials marchent)
       showProgressiveToast({ status: 'failed', progress: 0 });
       return;
     }
@@ -1266,8 +1266,8 @@ async function initProgressiveParsing() {
 }
 
 // Merge trajectories_data dans demoData et re-render les sections qui en
-// dependent (heatmap layer grenades, 2D replay grenades). Le user voit
-// les trajectoires apparaitre sans reload.
+// dépendent (heatmap layer grenades, 2D replay grenades). Le user voit
+// les trajectoires apparaître sans reload.
 function mergeTrajectoriesIntoDemo(t) {
   if (!t || !demoData) return;
   // grenades vient avec path polylines complets (calcul Phase 2)
@@ -1276,7 +1276,7 @@ function mergeTrajectoriesIntoDemo(t) {
   if (Array.isArray(t.bombPlants)) demoData.bombPlants = t.bombPlants;
   if (Array.isArray(t.bombDefuses)) demoData.bombDefuses = t.bombDefuses;
   if (Array.isArray(t.bombExplodes)) demoData.bombExplodes = t.bombExplodes;
-  // Re-stocke dans sessionStorage (au cas ou le user reload sans re-fetch)
+  // Re-stocke dans sessionStorage (au cas où le user reload sans re-fetch)
   try { sessionStorage.setItem('demoData', JSON.stringify(demoData)); } catch (_) {}
   // Re-render les vues qui utilisent grenades
   try { if (typeof drawHeatmap === 'function') drawHeatmap(); } catch (_) {}
@@ -1297,7 +1297,7 @@ function showProgressiveToast({ status, progress }) {
         <div style="font-family:'Anton',sans-serif;font-size:14px;letter-spacing:.06em">TRAJECTOIRES DE GRENADES</div>
       </div>
       <div style="font-size:10px;color:#7a8080;line-height:1.5;margin-bottom:10px">
-        On calcule les rebonds des smokes/flashes pour la 2D Replay. Tes heatmaps + KPIs sont deja prets ci-dessus.
+        On calcule les rebonds des smokes/flashes pour la 2D Replay. Tes heatmaps + KPIs sont déjà prêts ci-dessus.
       </div>
       <div style="height:4px;background:#1c1e1e;border-radius:2px;overflow:hidden;margin-bottom:6px">
         <div id="progressiveBar" style="height:100%;width:0%;background:linear-gradient(90deg,#b8ff57,#5dff8c);transition:width 0.4s ease"></div>
@@ -1308,7 +1308,7 @@ function showProgressiveToast({ status, progress }) {
       </div>
     `;
     document.body.appendChild(toast);
-    // Anim spin CSS si pas deja defini
+    // Anim spin CSS si pas déjà défini
     if (!document.getElementById('progressiveStyles')) {
       const style = document.createElement('style');
       style.id = 'progressiveStyles';
@@ -1324,8 +1324,8 @@ function showProgressiveToast({ status, progress }) {
   if (status === 'failed') {
     toast.style.borderColor = '#ff6b3f';
     toast.querySelector('div').style.color = '#ff6b3f';
-    if (pctEl) pctEl.textContent = 'Echec';
-    if (etaEl) etaEl.textContent = 'Reessaie plus tard';
+    if (pctEl) pctEl.textContent = 'Échec';
+    if (etaEl) etaEl.textContent = 'Réessaie plus tard';
     if (bar) bar.style.background = '#ff6b3f';
     return;
   }
@@ -1352,7 +1352,7 @@ function hideProgressiveToast({ success }) {
       spinner.style.border = 'none';
     }
     const pctEl = document.getElementById('progressivePct');
-    if (pctEl) pctEl.textContent = '100% · 2D Replay debloquee';
+    if (pctEl) pctEl.textContent = '100% · 2D Replay débloquée';
     const etaEl = document.getElementById('progressiveEta');
     if (etaEl) etaEl.textContent = '';
     setTimeout(() => {
@@ -1366,8 +1366,8 @@ function hideProgressiveToast({ success }) {
 }
 
 // Fetch le nickname FACEIT du user connecté depuis profiles.
-// Cache en variable globale pour eviter de re-query a chaque render.
-let _userNicknameCache = undefined; // undefined = pas encore fetched, null = pas connecte
+// Cache en variable globale pour éviter de re-query à chaque render.
+let _userNicknameCache = undefined; // undefined = pas encore fetched, null = pas connecté
 async function getUserFaceitNickname() {
   if (_userNicknameCache !== undefined) return _userNicknameCache;
   try {
@@ -1386,14 +1386,14 @@ async function getUserFaceitNickname() {
   }
 }
 
-// FV Hero Card : affiche le FV Rating selon la priorite :
-//   1. User connecte si present dans la partie  → "Ton impact" (FV Rating du user)
-//   2. targetPlayer de la demo (joueur cible analyse) → "Impact de <nom>"
+// FV Hero Card : affiche le FV Rating selon la priorité :
+//   1. User connecté si présent dans la partie  → "Ton impact" (FV Rating du user)
+//   2. targetPlayer de la demo (joueur cible analysé) → "Impact de <nom>"
 //   3. MVP du match (meilleur FV Rating)              → "MVP du match : <nom>"
 //
 // Bug fix (2026-05-11) : avant on affichait toujours "Ton impact" avec le FV
-// Rating du targetPlayer/MVP, ce qui etait trompeur quand le user analysait
-// une demo ou il n'etait pas (ex: demo pro, demo d'un mate, etc.).
+// Rating du targetPlayer/MVP, ce qui était trompeur quand le user analysait
+// une demo où il n'était pas (ex: demo pro, demo d'un mate, etc.).
 async function renderFvHeroCard(){
   try{
     const players = demoData?.playerStats || [];
@@ -1435,13 +1435,13 @@ async function renderFvHeroCard(){
     const allKills = demoData?.kills || [];
     const playerKills = allKills.filter(k => k.attacker === p.name);
     // ADR approximation : 80 dmg moyen par kill (CS2 standard), pas exact mais
-    // proche du vrai ADR qui necessite parseEvent('player_hurt') qu'on parse pas.
+    // proche du vrai ADR qui nécessite parseEvent('player_hurt') qu'on parse pas.
     const adr = Math.round(playerKills.length * 80 / numR);
-    // KAST : meme calcul que renderMatchStats, utilise la fct utilitaire deja en place
+    // KAST : même calcul que renderMatchStats, utilise la fct utilitaire déjà en place
     const kast = (typeof calcKAST === 'function')
       ? calcKAST(p.name, allKills, rounds)
       : 0;
-    // HS% : on prefere p.hs (du parser) sinon on compte les isHeadshot dans les kills
+    // HS% : on préfère p.hs (du parser) sinon on compte les isHeadshot dans les kills
     const hsCount = (typeof p.hs === 'number') ? p.hs
                   : playerKills.filter(k => k.isHeadshot).length;
     const hsPct = (p.kills > 0)
@@ -1879,14 +1879,14 @@ function renderMatchStats() {
   const sideKillsFor    = k => sf==='both'||( sf==='ct'?k.attackerTeam===2:k.attackerTeam===3);
   const sideKillsAgainst= k => sf==='both'||( sf==='ct'?k.victimTeam===2  :k.victimTeam===3);
 
-  // Attribution équipe : on detecte le ROSTER de chaque equipe au round 1
+  // Attribution équipe : on détecte le ROSTER de chaque équipe au round 1
   // (avant tout swap de mi-temps/OT). C'est le seul moyen fiable de grouper
-  // les joueurs car les team_num changent a chaque swap.
+  // les joueurs car les team_num changent à chaque swap.
   // CS2 : team_num 2 = T, team_num 3 = CT.
   //
   // Bug v1 : on partitionnait par "sCT - sT" qui mesure juste sur quel side
-  // le joueur a ete actif. Comme chaque joueur joue les 2 sides apres swap,
-  // ca donne 5-5 random au lieu du vrai roster.
+  // le joueur a été actif. Comme chaque joueur joue les 2 sides après swap,
+  // ça donne 5-5 random au lieu du vrai roster.
   const round1Kills = kills.filter(k => k.round === 1);
   const playerStartingTeam = {}; // name -> 2 (T) ou 3 (CT) au round 1
   round1Kills.forEach(k => {
@@ -1906,9 +1906,9 @@ function renderMatchStats() {
       });
     }
   }
-  // Roster Team A = joueurs qui ont commence sur T (team_num=2)
-  // Roster Team B = joueurs qui ont commence sur CT (team_num=3)
-  // Note : on appelle ces equipes "teamA" et "teamB" pour eviter confusion
+  // Roster Team A = joueurs qui ont commencé sur T (team_num=2)
+  // Roster Team B = joueurs qui ont commencé sur CT (team_num=3)
+  // Note : on appelle ces équipes "teamA" et "teamB" pour éviter confusion
   // avec les sides T/CT qui swappent. Plus tard on les labelle "Equipe_<best>".
   const teamARoster = new Set();
   const teamBRoster = new Set();
@@ -1917,8 +1917,8 @@ function renderMatchStats() {
     if (t === 2) teamARoster.add(p.name);
     else if (t === 3) teamBRoster.add(p.name);
   });
-  // getPlayerTeam : retourne 2 ou 3 pour identifier l'equipe stable du joueur
-  // (et non son side current). On reutilise 2/3 pour minimiser le changement.
+  // getPlayerTeam : retourne 2 ou 3 pour identifier l'équipe stable du joueur
+  // (et non son side current). On réutilise 2/3 pour minimiser le changement.
   const getPlayerTeam = name => teamARoster.has(name) ? 2 : 3;
 
   // First kill par round (approximation : kill avec tick minimum du round)
@@ -1968,29 +1968,29 @@ function renderMatchStats() {
   });
 
   // CS2 demoparser2 : winner=2 = T won, winner=3 = CT won.
-  // Variable nom legacy "ctWins" / "tWins" gardes pour minimal change mais
-  // RECALCULES par equipe (Team A vs Team B) au lieu de par side.
+  // Variable nom legacy "ctWins" / "tWins" gardés pour minimal change mais
+  // RECALCULES par équipe (Team A vs Team B) au lieu de par side.
   //
-  // Algo : pour chaque round, on detecte le team_num actuel de teamA (en
-  // regardant n'importe quel joueur de teamA present dans les kills de ce
+  // Algo : pour chaque round, on détecte le team_num actuel de teamA (en
+  // regardant n'importe quel joueur de teamA présent dans les kills de ce
   // round, son attackerTeam ou victimTeam = side de teamA dans ce round).
   // Si winner === team_num actuel de teamA → teamA gagne. Sinon teamB.
   //
   // Fallback si round sans kill : pattern standard MR12 + OT MR3
   // (rounds 1-12 = teamA on T side, 13-24 = swap, OT swap tous les 3).
   const winnerVals = [...new Set(allRounds.map(r=>r.winner).filter(w=>w>0))];
-  let ctWins = 0; // = wins de teamA (qui a commence sur T = team_num=2)
-  let tWins  = 0; // = wins de teamB (qui a commence sur CT = team_num=3)
+  let ctWins = 0; // = wins de teamA (qui a commencé sur T = team_num=2)
+  let tWins  = 0; // = wins de teamB (qui a commencé sur CT = team_num=3)
 
   function teamASideAtRound(r) {
-    // Determine si teamA est sur T (2) ou CT (3) au round r
-    // Methode 1 : kills de ce round
+    // Détermine si teamA est sur T (2) ou CT (3) au round r
+    // Méthode 1 : kills de ce round
     const rk = kills.filter(k => k.round === r);
     for (const k of rk) {
       if (k.attacker && teamARoster.has(k.attacker)) return k.attackerTeam;
       if (k.victim   && teamARoster.has(k.victim))   return k.victimTeam;
     }
-    // Methode 2 : fallback pattern MR12 + OT MR3
+    // Méthode 2 : fallback pattern MR12 + OT MR3
     if (r <= 12) return 2;        // first half : teamA on T
     if (r <= 24) return 3;        // second half : teamA on CT
     const otRound = r - 24;
@@ -2000,7 +2000,7 @@ function renderMatchStats() {
   allRounds.forEach((rd, i) => {
     const r = i + 1;
     let winner = rd.winner;
-    // Fallback : si winner=0/null, deduire depuis le dernier kill du round
+    // Fallback : si winner=0/null, déduire depuis le dernier kill du round
     if (!winner) {
       const rk = kills.filter(k => k.round === r);
       if (rk.length) {
@@ -2008,14 +2008,14 @@ function renderMatchStats() {
         winner = lastKill.attackerTeam;
       }
     }
-    if (!winner) return; // pas de winner determinable, skip
+    if (!winner) return; // pas de winner déterminable, skip
 
     const teamASide = teamASideAtRound(r);
     if (winner === teamASide) ctWins++; // teamA gagne ce round
     else tWins++;                        // teamB gagne ce round
   });
 
-  console.log('[FragValue] Score par equipe : teamA(commence T)=' + ctWins + ' · teamB(commence CT)=' + tWins + ' (winner vals: ' + winnerVals.join(',') + ')');
+  console.log('[FragValue] Score par équipe : teamA(commence T)=' + ctWins + ' · teamB(commence CT)=' + tWins + ' (winner vals: ' + winnerVals.join(',') + ')');
 
   function teamBlock(teamNum, label, color, score) {
     const tPlayers = (teamPlayers[teamNum]||[]).sort((a,b)=>b.fvr-a.fvr);
@@ -2045,13 +2045,13 @@ function renderMatchStats() {
       </div>
       <div class="ms-cols ms-cols-header">
         <div class="ms-col ms-col-name">Joueur</div>
-        <div class="ms-col" title="Kills - Deaths : difference brute. >0 = positif, contribue au team play.">K-D</div>
+        <div class="ms-col" title="Kills - Deaths : différence brute. >0 = positif, contribue au team play.">K-D</div>
         <div class="ms-col" title="KAST : % de rounds avec un Kill, Assist, Survive ou Trade. Mesure le team play. 70%+ = elite.">KAST</div>
-        <div class="ms-col" title="ADR (Average Damage per Round) : degats moyens par round. 80+ = bon, 100+ = top.">ADR</div>
+        <div class="ms-col" title="ADR (Average Damage per Round) : dégâts moyens par round. 80+ = bon, 100+ = top.">ADR</div>
         <div class="ms-col" title="Opening Kill - Death : 1er duel de chaque round. Indique le risk-taking en entry.">Op. K-D</div>
-        <div class="ms-col" title="% de duels gagnes face a face (1v1 directs, hors trade kills).">Duel%</div>
+        <div class="ms-col" title="% de duels gagnés face à face (1v1 directs, hors trade kills).">Duel%</div>
         <div class="ms-col" title="Multi-kills : rounds avec 2+ kills. Indique l'impact ponctuel (clutch potential).">MKs</div>
-        <div class="ms-col" style="color:var(--success)" title="FV Rating : note synthetique 0.0-2.0 calcule par FragValue. >1.0 = au-dessus moyenne. Combine kills, KAST, ADR, opening, multi-kills, clutch.">FV Rating</div>
+        <div class="ms-col" style="color:var(--success)" title="FV Rating : note synthétique 0.0-2.0 calculée par FragValue. >1.0 = au-dessus moyenne. Combine kills, KAST, ADR, opening, multi-kills, clutch.">FV Rating</div>
       </div>
       ${rows}
     </div>`;
@@ -2060,8 +2060,8 @@ function renderMatchStats() {
   // Noms d'équipe : meilleur joueur par FV Rating
   const ctBest = (teamPlayers[2]||[]).sort((a,b)=>b.fvr-a.fvr)[0]?.name || 'CT';
   const tBest  = (teamPlayers[3]||[]).sort((a,b)=>b.fvr-a.fvr)[0]?.name || 'T';
-  const ctNames = 'Equipe_' + ctBest;
-  const tNames  = 'Equipe_' + tBest;
+  const ctNames = 'Équipe_' + ctBest;
+  const tNames  = 'Équipe_' + tBest;
   // Notification équipe gagnante
   const winner = ctWins > tWins ? {name: ctNames, color: '#4A9EFF', wins: ctWins}
                : tWins > ctWins ? {name: tNames,  color: '#F5C842', wins: tWins}

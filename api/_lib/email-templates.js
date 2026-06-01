@@ -1,6 +1,6 @@
 // api/_lib/email-templates.js
 // Templates HTML pour les emails transactionnels FragValue.
-// Style : cinematic dark, inspire pub North Face / Apple keynote.
+// Style : cinematic dark, inspiré pub North Face / Apple keynote.
 // Inline styles ONLY (no class) pour compat Gmail/Outlook 2016/Apple Mail.
 // Layout : tables seulement (pas de flexbox/grid), fonts fallback system.
 // Palette FV : accent #b8ff57, success #5dff8c, bg #080909/#0f1010, border #1c1e1e/#2a2c2a.
@@ -77,20 +77,20 @@ function eyebrow(text, color) {
   return `<div style="font-family:${MONO_STACK};font-size:11px;color:${color || '#b8ff57'};letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:14px">${text}</div>`;
 }
 
-// Helper : accent line (ligne neon qui separe deux sections)
+// Helper : accent line (ligne neon qui sépare deux sections)
 function accentLine() {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0"><tr><td style="height:1px;background-image:linear-gradient(90deg,#b8ff57 0%,transparent 100%);font-size:0;line-height:0">&nbsp;</td></tr></table>`;
 }
 
 // === WELCOME (post signup) ===============================================
-// Declenche apres confirmation email reussie. Pousse vers la 1re analyse.
+// Déclenché après confirmation email réussie. Pousse vers la 1re analyse.
 function welcome({ nickname }) {
   const name = nickname || 'joueur';
   const subject = 'Ton 1er FV Rating CS2 t\'attend, ' + name;
   const html = wrap(subject, `
     ${eyebrow('// WELCOME // ACCESS GRANTED')}
     <h1 style="font-family:${FONT_STACK};font-size:40px;line-height:1;color:#e8eaea;margin:0 0 20px;font-weight:900;letter-spacing:-.02em">Bienvenue<br><span style="color:#b8ff57;text-shadow:0 0 24px rgba(184,255,87,.35)">${name}.</span></h1>
-    <p style="font-size:15px;color:#a8b0b0;margin:0 0 32px;line-height:1.6;max-width:480px">Ton compte FragValue est actif. 3 etapes pour debloquer ta premiere analyse cinematic, et voir le jeu autrement.</p>
+    <p style="font-size:15px;color:#a8b0b0;margin:0 0 32px;line-height:1.6;max-width:480px">Ton compte FragValue est actif. 3 étapes pour débloquer ta première analyse cinematic, et voir le jeu autrement.</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
 
@@ -100,7 +100,7 @@ function welcome({ nickname }) {
             <td width="44" valign="top" style="font-family:${MONO_STACK};font-size:22px;color:#b8ff57;font-weight:900;letter-spacing:-.02em;padding-right:14px">01</td>
             <td>
               <div style="font-family:${FONT_STACK};font-size:14px;color:#e8eaea;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px">Lie ton compte FACEIT</div>
-              <div style="font-size:13px;color:#a8b0b0;line-height:1.6">1 clic depuis ton espace. Import des 5 derniers matchs, et <strong style="color:#b8ff57">auto-sync</strong> (Pro/Elite) qui analyse chaque match des qu'il se termine.</div>
+              <div style="font-size:13px;color:#a8b0b0;line-height:1.6">1 clic depuis ton espace. Import des 5 derniers matchs, et <strong style="color:#b8ff57">auto-sync</strong> (Pro/Elite) qui analyse chaque match dès qu'il se termine.</div>
             </td>
           </tr>
         </table>
@@ -128,7 +128,7 @@ function welcome({ nickname }) {
             <td width="44" valign="top" style="font-family:${MONO_STACK};font-size:22px;color:#b8ff57;font-weight:900;letter-spacing:-.02em;padding-right:14px">03</td>
             <td>
               <div style="font-family:${FONT_STACK};font-size:14px;color:#e8eaea;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px">Essaie Pro gratuitement 7 jours</div>
-              <div style="font-size:13px;color:#a8b0b0;line-height:1.6">Auto-sync FACEIT, 2D Replay, Coach IA 20 msg/jour, KPIs avances. <strong style="color:#b8ff57">7 jours gratuits</strong> puis 9 EUR/mois (0,30 EUR/jour). Annulation 1 clic avant la fin du trial, rien debite.</div>
+              <div style="font-size:13px;color:#a8b0b0;line-height:1.6">Auto-sync FACEIT, 2D Replay, Coach IA 20 msg/jour, KPIs avancés. <strong style="color:#b8ff57">7 jours gratuits</strong> puis 9 EUR/mois (0,30 EUR/jour). Annulation 1 clic avant la fin du trial, rien débité.</div>
             </td>
           </tr>
         </table>
@@ -141,8 +141,8 @@ function welcome({ nickname }) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px">
       <tr><td style="padding:24px 26px;background-image:linear-gradient(135deg,rgba(184,255,87,.14) 0%,rgba(184,255,87,.03) 60%,rgba(184,255,87,0) 100%);border:1px solid rgba(184,255,87,.4);border-radius:12px">
         <div style="font-family:${MONO_STACK};font-size:10px;color:#b8ff57;letter-spacing:.24em;text-transform:uppercase;font-weight:700;margin-bottom:8px">// FOUNDERS DEAL // 50 PLACES</div>
-        <div style="font-family:${FONT_STACK};font-size:24px;color:#e8eaea;font-weight:900;line-height:1.15;margin-bottom:8px;letter-spacing:-.01em">Pro a VIE pour <span style="color:#b8ff57;text-shadow:0 0 20px rgba(184,255,87,.4)">99 EUR</span></div>
-        <div style="font-size:13px;color:#a8b0b0;line-height:1.6;margin-bottom:14px">Tu deviens fondateur FragValue, acces Pro a vie, channel Discord <span style="color:#b8ff57;font-family:${MONO_STACK}">#founders</span> exclusif. 50 places, on n'en remettra pas.</div>
+        <div style="font-family:${FONT_STACK};font-size:24px;color:#e8eaea;font-weight:900;line-height:1.15;margin-bottom:8px;letter-spacing:-.01em">Pro à VIE pour <span style="color:#b8ff57;text-shadow:0 0 20px rgba(184,255,87,.4)">99 EUR</span></div>
+        <div style="font-size:13px;color:#a8b0b0;line-height:1.6;margin-bottom:14px">Tu deviens fondateur FragValue, accès Pro à vie, channel Discord <span style="color:#b8ff57;font-family:${MONO_STACK}">#founders</span> exclusif. 50 places, on n'en remettra pas.</div>
         <a href="${BASE_URL}/pricing.html#ltd" style="display:inline-block;color:#b8ff57;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid rgba(184,255,87,.4);padding-bottom:2px">Voir l'offre &rsaquo;</a>
       </td></tr>
     </table>
@@ -153,11 +153,11 @@ function welcome({ nickname }) {
       </td></tr>
     </table>
 
-    <p style="font-size:12px;color:#7a8080;margin:28px 0 0;line-height:1.6;text-align:center">Une question ? Reponds simplement a ce mail, c'est moi qui lis.</p>
+    <p style="font-size:12px;color:#7a8080;margin:28px 0 0;line-height:1.6;text-align:center">Une question ? Réponds simplement à ce mail, c'est moi qui lis.</p>
   `);
   const text = `Bienvenue ${name}.
 
-Ton compte FragValue est actif. 3 etapes pour avoir ta 1ere analyse :
+Ton compte FragValue est actif. 3 étapes pour avoir ta 1ère analyse :
 
 01. LIE TON COMPTE FACEIT
     1 clic depuis ton espace. Import 5 derniers matchs + (Pro/Elite)
@@ -168,17 +168,17 @@ Ton compte FragValue est actif. 3 etapes pour avoir ta 1ere analyse :
     Drag-drop .dem ou colle une URL FACEIT. 5 analyses/mois en Free.
 
 03. ESSAIE PRO GRATUITEMENT 7 JOURS
-    Auto-sync, 2D Replay, Coach IA 20 msg/jour, KPIs avances.
-    7 jours gratuits puis 9 EUR/mois. Annulation avant fin trial = rien debite.
+    Auto-sync, 2D Replay, Coach IA 20 msg/jour, KPIs avancés.
+    7 jours gratuits puis 9 EUR/mois. Annulation avant fin trial = rien débité.
 
-FOUNDERS DEAL : Pro a VIE 99 EUR (50 places seulement)
+FOUNDERS DEAL : Pro à VIE 99 EUR (50 places seulement)
 ${BASE_URL}/pricing.html#ltd
 
 Configurer mon compte : ${BASE_URL}/onboarding.html
 
-Une question ? Reponds a ce mail.
+Une question ? Réponds à ce mail.
 
-L'equipe FragValue
+L'équipe FragValue
 ${BASE_URL}`;
   return { subject, html, text };
 }
@@ -193,19 +193,19 @@ function checkoutSuccess({ nickname, plan, periodEndIso }) {
   const renewDate = periodEndIso
     ? new Date(periodEndIso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })
     : null;
-  const subject = `Bienvenue dans ${planLabel}, ton acces premium est actif`;
+  const subject = `Bienvenue dans ${planLabel}, ton accès premium est actif`;
   const html = wrap(subject, `
     ${eyebrow(`// PAYMENT CONFIRMED // ${planLabel.toUpperCase()} ACTIVE`)}
     <h1 style="font-family:${FONT_STACK};font-size:38px;line-height:1.05;color:#e8eaea;margin:0 0 18px;font-weight:900;letter-spacing:-.02em">Bienvenue dans<br><span style="color:#b8ff57;text-shadow:0 0 24px rgba(184,255,87,.4)">${planLabel}</span>, ${name}.</h1>
-    <p style="font-size:15px;color:#a8b0b0;margin:0 0 32px;line-height:1.6">Paiement confirme. Tout est actif des maintenant. Voici ce que tu viens de debloquer.</p>
+    <p style="font-size:15px;color:#a8b0b0;margin:0 0 32px;line-height:1.6">Paiement confirmé. Tout est actif dès maintenant. Voici ce que tu viens de débloquer.</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
       <tr><td style="padding:22px 24px;background-image:linear-gradient(135deg,rgba(184,255,87,.12) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.38);border-radius:12px">
         <div style="font-family:${MONO_STACK};font-size:10px;color:#b8ff57;letter-spacing:.24em;text-transform:uppercase;font-weight:700;margin-bottom:14px">// UNLOCKED NOW</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:${FONT_STACK};font-size:14px;color:#e8eaea;line-height:1.7">
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:8px">Analyses de demos <strong>illimitees</strong></td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:8px">Analyses de demos <strong>illimitées</strong></td></tr>
           <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:8px">2D Replay <strong>frame par frame</strong></td></tr>
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:8px">KPIs avances, entry, trade, flash eff, util damage</td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:8px">KPIs avancés, entry, trade, flash eff, util damage</td></tr>
           <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:8px">Diagnostic IA refresh par match avec roadmap 7 jours, Chat Coach <strong>${plan?.startsWith('elite') ? '50' : '20'} msg/jour</strong></td></tr>
           <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:${plan?.startsWith('elite') ? '8' : '0'}px">Match Report round par round</td></tr>
           ${plan?.startsWith('elite') ? `<tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td><strong style="color:#b8ff57">Elite only,</strong> team dashboard, anti-strat, prep veto, pro benchmarks</td></tr>` : ''}
@@ -223,37 +223,37 @@ function checkoutSuccess({ nickname, plan, periodEndIso }) {
 
     ${accentLine()}
 
-    <!-- BLOCKER LEGAL P0 EMAIL : Mention obligatoire du droit de retractation
+    <!-- BLOCKER LEGAL P0 EMAIL : Mention obligatoire du droit de rétractation
          (Code conso art. L221-13 + L221-28-13). Sans cet email comme support
-         durable, le user a 14j pour exiger remboursement integral. -->
+         durable, le user a 14j pour exiger remboursement intégral. -->
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px">
       <tr><td style="padding:18px 20px;background:#0a0b0b;border:1px solid #1c1e1e;border-radius:10px;font-size:11px;color:#7a8080;line-height:1.7">
-        <div style="font-family:${MONO_STACK};font-size:10px;color:#a8b0b0;letter-spacing:.2em;text-transform:uppercase;font-weight:700;margin-bottom:8px">Information legale</div>
-        Conformement a l'art. L221-28-13 du Code de la consommation, en demandant l'execution immediate du service a la souscription, vous avez renonce a votre droit de retractation de 14 jours pour la partie deja consommee. Vous gardez la possibilite d'annuler votre abonnement a tout moment depuis votre <a href="${BASE_URL}/account.html" style="color:#b8ff57;text-decoration:none">espace compte</a> sans frais ni justification (effet a la fin de la periode payee).
-        ${isYearly ? `<br><br>Abonnements annuels, art. L215-1 du Code de la consommation, nous vous notifierons par email entre 1 et 3 mois avant chaque echeance afin que vous puissiez choisir de ne pas reconduire.` : ''}
+        <div style="font-family:${MONO_STACK};font-size:10px;color:#a8b0b0;letter-spacing:.2em;text-transform:uppercase;font-weight:700;margin-bottom:8px">Information légale</div>
+        Conformément à l'art. L221-28-13 du Code de la consommation, en demandant l'exécution immédiate du service à la souscription, vous avez renoncé à votre droit de rétractation de 14 jours pour la partie déjà consommée. Vous gardez la possibilité d'annuler votre abonnement à tout moment depuis votre <a href="${BASE_URL}/account.html" style="color:#b8ff57;text-decoration:none">espace compte</a> sans frais ni justification (effet à la fin de la période payée).
+        ${isYearly ? `<br><br>Abonnements annuels, art. L215-1 du Code de la consommation, nous vous notifierons par email entre 1 et 3 mois avant chaque échéance afin que vous puissiez choisir de ne pas reconduire.` : ''}
         <br><br>CGV : <a href="${BASE_URL}/cgv.html" style="color:#b8ff57;text-decoration:none">${BASE_URL.replace('https://','')}/cgv.html</a>
       </td></tr>
     </table>
 
-    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5;text-align:center">Besoin d'aide ? Reponds a ce mail, reponse sous 24h.</p>
+    <p style="font-size:11px;color:#7a8080;margin:18px 0 0;line-height:1.5;text-align:center">Besoin d'aide ? Réponds à ce mail, réponse sous 24h.</p>
   `);
   const text = `Bienvenue dans ${planLabel}, ${name}.
 
-Paiement confirme. Tu debloques :
+Paiement confirmé. Tu débloques :
 
-> Analyses de demos illimitees
+> Analyses de demos illimitées
 > 2D Replay frame par frame
-> KPIs avances (entry, trade, flash eff, util dmg)
+> KPIs avancés (entry, trade, flash eff, util dmg)
 > Diagnostic IA refresh par match, Chat Coach ${plan?.startsWith('elite') ? '50' : '20'} msg/jour
 > Match Report round par round
 ${plan?.startsWith('elite') ? '> Elite only : team dashboard, anti-strat, prep veto, pro benchmarks\n' : ''}
 ${renewDate ? `RENOUVELLEMENT AUTO LE ${renewDate}. Annulation 1 clic depuis ton espace.\n\n` : ''}Lance ta prochaine analyse : ${BASE_URL}/demo.html
 
 INFORMATION LEGALE
-Art. L221-28-13 Code de la consommation : en demandant l'execution immediate du service a la souscription, vous avez renonce a votre droit de retractation de 14j pour la partie deja consommee. Annulation possible a tout moment depuis ${BASE_URL}/account.html sans frais (effet fin de periode payee).
-${isYearly ? `Art. L215-1 : abonnements annuels, vous serez notifie par email entre 1 et 3 mois avant chaque echeance.\n` : ''}CGV : ${BASE_URL}/cgv.html
+Art. L221-28-13 Code de la consommation : en demandant l'exécution immédiate du service à la souscription, vous avez renoncé à votre droit de rétractation de 14j pour la partie déjà consommée. Annulation possible à tout moment depuis ${BASE_URL}/account.html sans frais (effet fin de période payée).
+${isYearly ? `Art. L215-1 : abonnements annuels, vous serez notifié par email entre 1 et 3 mois avant chaque échéance.\n` : ''}CGV : ${BASE_URL}/cgv.html
 
-L'equipe FragValue`;
+L'équipe FragValue`;
   return { subject, html, text };
 }
 
@@ -285,7 +285,7 @@ function trialExpiringJ3({ nickname, planLabel, trialEndIso }) {
             <tr><td style="padding:22px 22px;background:#0c0d0d;border:1px solid #2a2c2a;border-radius:12px;height:165px;vertical-align:top">
               <div style="font-family:${MONO_STACK};font-size:10px;color:#a8b0b0;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:10px">Option B &middot; Annuler</div>
               <div style="font-family:${FONT_STACK};font-size:20px;color:#e8eaea;font-weight:900;line-height:1.15;margin-bottom:8px;letter-spacing:-.01em">1 clic, 0 frais</div>
-              <div style="font-size:12px;color:#a8b0b0;line-height:1.55">Annule avant le ${endDate}, aucun prelevement. Acces premium jusqu'a la fin.</div>
+              <div style="font-size:12px;color:#a8b0b0;line-height:1.55">Annule avant le ${endDate}, aucun prélèvement. Accès premium jusqu'à la fin.</div>
             </td></tr>
           </table>
         </td>
@@ -294,7 +294,7 @@ function trialExpiringJ3({ nickname, planLabel, trialEndIso }) {
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px">
       <tr><td align="center">
-        <a href="${BASE_URL}/account.html" style="display:inline-block;background:#b8ff57;color:#000;padding:16px 36px;border-radius:10px;text-decoration:none;font-weight:900;font-size:14px;letter-spacing:.12em;text-transform:uppercase;font-family:${FONT_STACK};box-shadow:0 0 30px rgba(184,255,87,.35),0 8px 20px rgba(0,0,0,.4)">Gerer mon abonnement &rsaquo;</a>
+        <a href="${BASE_URL}/account.html" style="display:inline-block;background:#b8ff57;color:#000;padding:16px 36px;border-radius:10px;text-decoration:none;font-weight:900;font-size:14px;letter-spacing:.12em;text-transform:uppercase;font-family:${FONT_STACK};box-shadow:0 0 30px rgba(184,255,87,.35),0 8px 20px rgba(0,0,0,.4)">Gérer mon abonnement &rsaquo;</a>
       </td></tr>
     </table>
 
@@ -310,16 +310,16 @@ OPTION A. Continuer
 Aucune action. Renouvellement auto le ${endDate}. Tu gardes auto-sync, 2D Replay, Coach IA.
 
 OPTION B. Annuler
-1 clic depuis ${BASE_URL}/account.html avant le ${endDate}. Aucun prelevement. Acces premium jusqu'a la fin.
+1 clic depuis ${BASE_URL}/account.html avant le ${endDate}. Aucun prélèvement. Accès premium jusqu'à la fin.
 
 Tip : passe au plan annuel pour 2 mois offerts (Pro 90 EUR/an, Elite 250 EUR/an).
 
-L'equipe FragValue`;
+L'équipe FragValue`;
   return { subject, html, text };
 }
 
 // === COACH CREDITS PURCHASED ============================================
-// Envoye apres un achat reussi de pack de credits Coach IA via Stripe Checkout.
+// Envoyé après un achat réussi de pack de crédits Coach IA via Stripe Checkout.
 function coachCreditsPurchased({ nickname, packLabel, creditsAdded, balanceAfter, expiresAtIso, amountEur }) {
   const name = nickname || 'joueur';
   const expiresDate = expiresAtIso
@@ -328,13 +328,13 @@ function coachCreditsPurchased({ nickname, packLabel, creditsAdded, balanceAfter
   const amountStr = (typeof amountEur === 'number')
     ? `${amountEur.toFixed(2).replace('.', ',')} EUR`
     : '';
-  const subject = `+${creditsAdded} credits Coach IA actives, merci ${name}`;
+  const subject = `+${creditsAdded} crédits Coach IA activés, merci ${name}`;
 
   const html = wrap(subject, `
     ${eyebrow('// COACH CREDITS // ACTIVATED')}
     <h1 style="font-family:${FONT_STACK};font-size:60px;line-height:.95;color:#b8ff57;margin:0 0 12px;font-weight:900;letter-spacing:-.03em;text-shadow:0 0 32px rgba(184,255,87,.5)">+${creditsAdded}</h1>
-    <p style="font-family:${FONT_STACK};font-size:18px;color:#e8eaea;margin:0 0 8px;font-weight:700;letter-spacing:-.01em">credits Coach IA actives.</p>
-    <p style="font-size:14px;color:#a8b0b0;margin:0 0 32px;line-height:1.6">Merci ${name}, paiement de <strong style="color:#e8eaea">${amountStr}</strong> confirme. Tes credits sont disponibles immediatement sur le Coach IA Conversational.</p>
+    <p style="font-family:${FONT_STACK};font-size:18px;color:#e8eaea;margin:0 0 8px;font-weight:700;letter-spacing:-.01em">crédits Coach IA activés.</p>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 32px;line-height:1.6">Merci ${name}, paiement de <strong style="color:#e8eaea">${amountStr}</strong> confirmé. Tes crédits sont disponibles immédiatement sur le Coach IA Conversational.</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px">
       <tr><td style="padding:24px 26px;background-image:linear-gradient(135deg,rgba(184,255,87,.1) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.35);border-radius:12px">
@@ -345,7 +345,7 @@ function coachCreditsPurchased({ nickname, packLabel, creditsAdded, balanceAfter
             <td align="right" style="color:#e8eaea;font-weight:700">${packLabel}</td>
           </tr>
           <tr>
-            <td style="color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-size:11px">Credits ajoutes</td>
+            <td style="color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-size:11px">Crédits ajoutés</td>
             <td align="right" style="color:#b8ff57;font-weight:900;font-family:${MONO_STACK}">+${creditsAdded}</td>
           </tr>
           <tr>
@@ -353,7 +353,7 @@ function coachCreditsPurchased({ nickname, packLabel, creditsAdded, balanceAfter
             <td align="right" style="color:#e8eaea;font-weight:900;font-size:20px;font-family:${MONO_STACK};border-top:1px solid #2a2c2a;padding-top:8px">${balanceAfter}</td>
           </tr>
           ${expiresDate ? `<tr>
-            <td style="color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-size:11px">Validite</td>
+            <td style="color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-size:11px">Validité</td>
             <td align="right" style="color:#a8b0b0;font-family:${MONO_STACK};font-size:12px">jusqu'au ${expiresDate}</td>
           </tr>` : ''}
         </table>
@@ -361,8 +361,8 @@ function coachCreditsPurchased({ nickname, packLabel, creditsAdded, balanceAfter
     </table>
 
     <p style="font-size:13px;color:#a8b0b0;margin:0 0 28px;line-height:1.7;padding:16px 18px;background:#0a0b0b;border:1px solid #1c1e1e;border-radius:10px">
-      <strong style="color:#e8eaea;font-family:${MONO_STACK};font-size:11px;letter-spacing:.16em;text-transform:uppercase;display:block;margin-bottom:6px">Comment ca marche</strong>
-      1 credit = 1 message au-dela de ta limite quotidienne (Pro 5/jour, Elite 30/jour). Les credits se debitent automatiquement quand tu depasses ton quota.
+      <strong style="color:#e8eaea;font-family:${MONO_STACK};font-size:11px;letter-spacing:.16em;text-transform:uppercase;display:block;margin-bottom:6px">Comment ça marche</strong>
+      1 crédit = 1 message au-delà de ta limite quotidienne (Pro 5/jour, Elite 30/jour). Les crédits se débitent automatiquement quand tu dépasses ton quota.
     </p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -372,26 +372,26 @@ function coachCreditsPurchased({ nickname, packLabel, creditsAdded, balanceAfter
     </table>
 
     <p style="font-size:11px;color:#7a8080;margin:24px 0 0;line-height:1.5;text-align:center">
-      Ta facture est dans <a href="${BASE_URL}/account.html" style="color:#b8ff57;text-decoration:none">ton espace</a>. Une question ? Reponds a ce mail.
+      Ta facture est dans <a href="${BASE_URL}/account.html" style="color:#b8ff57;text-decoration:none">ton espace</a>. Une question ? Réponds à ce mail.
     </p>
   `);
 
-  const text = `+${creditsAdded} credits Coach IA actives. Merci ${name}.
+  const text = `+${creditsAdded} crédits Coach IA activés. Merci ${name}.
 
 TRANSACTION
 Pack            : ${packLabel}
-Credits ajoutes : +${creditsAdded}
-Nouveau solde   : ${balanceAfter} credits
-${expiresDate ? `Validite        : jusqu'au ${expiresDate}` : ''}
+Crédits ajoutés : +${creditsAdded}
+Nouveau solde   : ${balanceAfter} crédits
+${expiresDate ? `Validité        : jusqu'au ${expiresDate}` : ''}
 
 Montant : ${amountStr}
 
-1 credit = 1 message au-dela de ta limite quotidienne (Pro 5/jour, Elite 30/jour).
+1 crédit = 1 message au-delà de ta limite quotidienne (Pro 5/jour, Elite 30/jour).
 
 Lance une analyse et chatte avec le Coach : ${BASE_URL}/demo.html
 Ta facture est dans ton espace : ${BASE_URL}/account.html
 
-L'equipe FragValue`;
+L'équipe FragValue`;
 
   return { subject, html, text };
 }
@@ -401,21 +401,21 @@ function cancellationConfirmation({ nickname, planLabel, periodEndIso }) {
   const name = nickname || 'joueur';
   const endDate = periodEndIso
     ? new Date(periodEndIso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })
-    : 'la fin de la periode courante';
-  const subject = `Resiliation confirmee, ton acces ${planLabel} reste actif jusqu'au ${endDate}`;
+    : 'la fin de la période courante';
+  const subject = `Résiliation confirmée, ton accès ${planLabel} reste actif jusqu'au ${endDate}`;
   const html = wrap(subject, `
     ${eyebrow('// SUBSCRIPTION // CANCELLED')}
-    <h1 style="font-family:${FONT_STACK};font-size:36px;line-height:1.05;color:#e8eaea;margin:0 0 16px;font-weight:900;letter-spacing:-.02em">Resiliation<br><span style="color:#b8ff57;text-shadow:0 0 20px rgba(184,255,87,.35)">confirmee, ${name}.</span></h1>
-    <p style="font-size:15px;color:#a8b0b0;margin:0 0 32px;line-height:1.6">Ton abonnement <strong style="color:#e8eaea">${planLabel}</strong> a ete resilie. Aucun frais supplementaire ne sera preleve.</p>
+    <h1 style="font-family:${FONT_STACK};font-size:36px;line-height:1.05;color:#e8eaea;margin:0 0 16px;font-weight:900;letter-spacing:-.02em">Résiliation<br><span style="color:#b8ff57;text-shadow:0 0 20px rgba(184,255,87,.35)">confirmée, ${name}.</span></h1>
+    <p style="font-size:15px;color:#a8b0b0;margin:0 0 32px;line-height:1.6">Ton abonnement <strong style="color:#e8eaea">${planLabel}</strong> a été résilié. Aucun frais supplémentaire ne sera prélevé.</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px">
       <tr><td style="padding:22px 24px;background-image:linear-gradient(135deg,rgba(184,255,87,.1) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.32);border-radius:12px">
         <div style="font-family:${MONO_STACK};font-size:10px;color:#b8ff57;letter-spacing:.24em;text-transform:uppercase;font-weight:700;margin-bottom:14px">// CE QUI SE PASSE MAINTENANT</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:${FONT_STACK};font-size:13.5px;color:#e8eaea;line-height:1.7">
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:8px">Acces <strong>${planLabel} actif jusqu'au ${endDate}</strong></td></tr>
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:8px">Apres cette date, retour automatique en plan Free</td></tr>
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:8px">Historique conserve, analyses, FV Rating, Coach IA insights</td></tr>
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td>Reabonnement possible a tout moment</td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:8px">Accès <strong>${planLabel} actif jusqu'au ${endDate}</strong></td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:8px">Après cette date, retour automatique en plan Free</td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:8px">Historique conservé, analyses, FV Rating, Coach IA insights</td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td>Réabonnement possible à tout moment</td></tr>
         </table>
       </td></tr>
     </table>
@@ -423,46 +423,46 @@ function cancellationConfirmation({ nickname, planLabel, periodEndIso }) {
     ${accentLine()}
 
     <p style="font-family:${FONT_STACK};font-size:17px;color:#e8eaea;margin:0 0 10px;font-weight:800;letter-spacing:-.01em">Une question rapide.</p>
-    <p style="font-size:14px;color:#a8b0b0;margin:0 0 28px;line-height:1.6">Qu'est-ce qui n'a pas marche ? Reponds simplement a ce mail avec un mot. On lit toutes les reponses, et ca nous aide a faire mieux.</p>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 28px;line-height:1.6">Qu'est-ce qui n'a pas marché ? Réponds simplement à ce mail avec un mot. On lit toutes les réponses, et ça nous aide à faire mieux.</p>
 
-    <!-- Win-back offer : -50% sur la prochaine periode pendant 14j -->
+    <!-- Win-back offer : -50% sur la prochaine période pendant 14j -->
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px">
       <tr><td style="padding:24px 26px;background-image:linear-gradient(135deg,rgba(245,200,66,.12) 0%,rgba(245,200,66,.02) 100%);border:1px solid rgba(245,200,66,.35);border-radius:12px;text-align:center">
         <div style="font-family:${MONO_STACK};font-size:10px;color:#f5c842;letter-spacing:.24em;text-transform:uppercase;font-weight:700;margin-bottom:8px">// WIN-BACK OFFER</div>
-        <div style="font-family:${FONT_STACK};font-size:22px;color:#e8eaea;font-weight:900;line-height:1.15;margin-bottom:8px;letter-spacing:-.01em">Reactive avec <span style="color:#f5c842;text-shadow:0 0 18px rgba(245,200,66,.4)">-50%</span></div>
+        <div style="font-family:${FONT_STACK};font-size:22px;color:#e8eaea;font-weight:900;line-height:1.15;margin-bottom:8px;letter-spacing:-.01em">Réactive avec <span style="color:#f5c842;text-shadow:0 0 18px rgba(245,200,66,.4)">-50%</span></div>
         <p style="font-size:13px;color:#a8b0b0;margin:0 0 16px;line-height:1.5">Sur les 3 prochains mois, avant le ${endDate}.</p>
-        <a href="${BASE_URL}/pricing.html?winback=1" style="display:inline-block;background:#f5c842;color:#000;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:900;font-size:13px;letter-spacing:.12em;text-transform:uppercase;font-family:${FONT_STACK};box-shadow:0 0 26px rgba(245,200,66,.35),0 6px 16px rgba(0,0,0,.4)">Reactiver -50% &rsaquo;</a>
+        <a href="${BASE_URL}/pricing.html?winback=1" style="display:inline-block;background:#f5c842;color:#000;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:900;font-size:13px;letter-spacing:.12em;text-transform:uppercase;font-family:${FONT_STACK};box-shadow:0 0 26px rgba(245,200,66,.35),0 6px 16px rgba(0,0,0,.4)">Réactiver -50% &rsaquo;</a>
       </td></tr>
     </table>
 
-    <p style="font-size:11px;color:#7a8080;margin:24px 0 0;line-height:1.5;text-align:center">Conformement a l'art. L215-1 du Code de la consommation, votre resiliation prendra effet le ${endDate}. Aucune penalite applicable.</p>
+    <p style="font-size:11px;color:#7a8080;margin:24px 0 0;line-height:1.5;text-align:center">Conformément à l'art. L215-1 du Code de la consommation, votre résiliation prendra effet le ${endDate}. Aucune pénalité applicable.</p>
   `);
-  const text = `Resiliation confirmee, ${name}.
+  const text = `Résiliation confirmée, ${name}.
 
-Ton abonnement ${planLabel} a ete resilie. Aucun frais supplementaire.
+Ton abonnement ${planLabel} a été résilié. Aucun frais supplémentaire.
 
 CE QUI SE PASSE MAINTENANT
-> Acces ${planLabel} actif jusqu'au ${endDate}
-> Apres : retour automatique en plan Free
-> Historique conserve (analyses, FV Rating, Coach IA)
-> Reabonnement possible a tout moment
+> Accès ${planLabel} actif jusqu'au ${endDate}
+> Après : retour automatique en plan Free
+> Historique conservé (analyses, FV Rating, Coach IA)
+> Réabonnement possible à tout moment
 
 QU'EST-CE QUI N'A PAS MARCHE ?
-Reponds simplement a ce mail. On lit toutes les reponses.
+Réponds simplement à ce mail. On lit toutes les réponses.
 
 WIN-BACK -50% (valable jusqu'au ${endDate})
 ${BASE_URL}/pricing.html?winback=1
 
-Art. L215-1 Code de la consommation, votre resiliation prend effet le ${endDate}. Aucune penalite.
+Art. L215-1 Code de la consommation, votre résiliation prend effet le ${endDate}. Aucune pénalité.
 
-L'equipe FragValue`;
+L'équipe FragValue`;
   return { subject, html, text };
 }
 
 // === YEARLY RENEWAL NOTICE (L215-1 OBLIGATOIRE) ==========================
 // L215-1-1 du Code conso impose pour les abonnements annuels d'informer le
 // user entre 1 et 3 mois avant chaque renouvellement, via un cron quotidien.
-// Sanction : 15 000 EUR par contrat non-notifie. Ne JAMAIS skipper.
+// Sanction : 15 000 EUR par contrat non-notifié. Ne JAMAIS skipper.
 function yearlyRenewalNotice({ nickname, planLabel, renewDate, daysLeft, amount }) {
   const name = nickname || 'joueur';
   const subject = daysLeft <= 7
@@ -471,12 +471,12 @@ function yearlyRenewalNotice({ nickname, planLabel, renewDate, daysLeft, amount 
   const urgent = daysLeft <= 7;
   const urgencyColor = urgent ? '#f5c842' : '#b8ff57';
   const urgencyText = urgent
-    ? `Plus que <strong style="color:#f5c842">${daysLeft} jours</strong> pour decider.`
-    : `Tu as encore <strong style="color:#e8eaea">${daysLeft} jours</strong> pour decider.`;
+    ? `Plus que <strong style="color:#f5c842">${daysLeft} jours</strong> pour décider.`
+    : `Tu as encore <strong style="color:#e8eaea">${daysLeft} jours</strong> pour décider.`;
   const html = wrap(subject, `
     ${eyebrow(`// L215-1 NOTICE // ${daysLeft}D LEFT`, urgencyColor)}
     <h1 style="font-family:${FONT_STACK};font-size:34px;line-height:1.05;color:#e8eaea;margin:0 0 16px;font-weight:900;letter-spacing:-.02em">Renouvellement<br><span style="color:${urgencyColor};text-shadow:0 0 20px ${urgent ? 'rgba(245,200,66,.4)' : 'rgba(184,255,87,.35)'}">${renewDate}.</span></h1>
-    <p style="font-size:14px;color:#a8b0b0;margin:0 0 28px;line-height:1.6">${urgencyText} Conformement a la loi (art. L215-1 Code de la consommation), nous t'informons de la possibilite de ne pas reconduire ton abonnement.</p>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 28px;line-height:1.6">${urgencyText} Conformément à la loi (art. L215-1 Code de la consommation), nous t'informons de la possibilité de ne pas reconduire ton abonnement.</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px">
       <tr><td style="padding:24px 26px;background:#0a0b0b;border:1px solid #2a2c2a;border-radius:12px">
@@ -487,11 +487,11 @@ function yearlyRenewalNotice({ nickname, planLabel, renewDate, daysLeft, amount 
             <td align="right" style="color:#e8eaea;font-weight:800">${planLabel}</td>
           </tr>
           <tr>
-            <td style="color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-size:11px">Montant qui sera preleve</td>
+            <td style="color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-size:11px">Montant qui sera prélevé</td>
             <td align="right" style="color:#b8ff57;font-weight:900;font-family:${MONO_STACK};font-size:20px">${amount}</td>
           </tr>
           <tr>
-            <td style="color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-size:11px;border-top:1px solid #1c1e1e;padding-top:8px">Date du prelevement</td>
+            <td style="color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-size:11px;border-top:1px solid #1c1e1e;padding-top:8px">Date du prélèvement</td>
             <td align="right" style="color:#e8eaea;font-weight:800;font-family:${MONO_STACK};border-top:1px solid #1c1e1e;padding-top:8px">${renewDate}</td>
           </tr>
         </table>
@@ -513,13 +513,13 @@ function yearlyRenewalNotice({ nickname, planLabel, renewDate, daysLeft, amount 
 
     ${accentLine()}
 
-    <p style="font-size:11px;color:#7a8080;margin:0;line-height:1.6">Si tu ne fais rien, ton abonnement sera reconduit pour 1 an le ${renewDate}. L'annulation reste possible a tout moment depuis ton espace, sans frais (effet fin de periode payee). Conformement a l'art. L215-1-1 du Code de la consommation.</p>
+    <p style="font-size:11px;color:#7a8080;margin:0;line-height:1.6">Si tu ne fais rien, ton abonnement sera reconduit pour 1 an le ${renewDate}. L'annulation reste possible à tout moment depuis ton espace, sans frais (effet fin de période payée). Conformément à l'art. L215-1-1 du Code de la consommation.</p>
   `);
   const text = `Renouvellement ${planLabel} le ${renewDate}.
 
 ${urgencyText.replace(/<[^>]+>/g, '')}
 
-Conformement a la loi (art. L215-1 Code conso), nous t'informons que ton
+Conformément à la loi (art. L215-1 Code conso), nous t'informons que ton
 abonnement ${planLabel} sera reconduit pour 1 an le ${renewDate} pour ${amount}.
 
 CONTRAT
@@ -532,62 +532,62 @@ Date prlvt : ${renewDate}
 2. Annuler en 1 clic depuis ton espace :
    ${BASE_URL}/account.html#cancel
 
-L'annulation reste possible a tout moment, sans frais (effet fin de periode).
+L'annulation reste possible à tout moment, sans frais (effet fin de période).
 
-L'equipe FragValue`;
+L'équipe FragValue`;
   return { subject, html, text };
 }
 
 // === DUNNING SERIE (invoice.payment_failed) ===============================
-// 4 emails progressifs J+0/+3/+5/+7 pour recuperer les paiements echoues.
+// 4 emails progressifs J+0/+3/+5/+7 pour récupérer les paiements échoués.
 function paymentFailed({ nickname, planLabel, milestone, amount, periodEndIso, portalUrl }) {
   const name = nickname || 'joueur';
   const portal = portalUrl || `${BASE_URL}/account.html`;
 
   const variants = {
     'j0': {
-      subject: `Probleme avec ton paiement, 1 minute pour mettre a jour ta carte`,
+      subject: `Problème avec ton paiement, 1 minute pour mettre à jour ta carte`,
       eyebrowText: '// PAYMENT // RETRY NEEDED',
       eyebrowColor: '#b8ff57',
-      heroTitle: `Ton paiement<br><span style="color:#b8ff57;text-shadow:0 0 20px rgba(184,255,87,.35)">n'est pas passe.</span>`,
-      heroSub: `Ta banque a refuse le prelevement de <strong style="color:#e8eaea">${amount}</strong> pour ton abonnement ${planLabel}. Pas de panique, c'est souvent une carte expiree ou un plafond temporaire.`,
+      heroTitle: `Ton paiement<br><span style="color:#b8ff57;text-shadow:0 0 20px rgba(184,255,87,.35)">n'est pas passé.</span>`,
+      heroSub: `Ta banque a refusé le prélèvement de <strong style="color:#e8eaea">${amount}</strong> pour ton abonnement ${planLabel}. Pas de panique, c'est souvent une carte expirée ou un plafond temporaire.`,
       tone: 'reassure',
-      ctaLabel: 'Mettre a jour ma carte',
+      ctaLabel: 'Mettre à jour ma carte',
       ctaSub: '30 secondes',
-      footer: `Ton acces ${planLabel} reste actif. On retentera automatiquement dans 3 jours, ou des que tu mets a jour ta carte.`,
+      footer: `Ton accès ${planLabel} reste actif. On retentera automatiquement dans 3 jours, ou dès que tu mets à jour ta carte.`,
     },
     'j3': {
-      subject: `Ton acces ${planLabel} reste actif, mais ta carte a ete refusee`,
+      subject: `Ton accès ${planLabel} reste actif, mais ta carte a été refusée`,
       eyebrowText: '// PAYMENT // 2ND ATTEMPT FAILED',
       eyebrowColor: '#b8ff57',
       heroTitle: `Rappel,<br><span style="color:#b8ff57;text-shadow:0 0 20px rgba(184,255,87,.35)">paiement en attente.</span>`,
-      heroSub: `Le re-essai automatique a echoue. Ton abonnement ${planLabel} (${amount}) reste actif pour le moment, mais on a besoin que tu mettes a jour ta carte pour eviter une interruption.`,
+      heroSub: `Le re-essai automatique a échoué. Ton abonnement ${planLabel} (${amount}) reste actif pour le moment, mais on a besoin que tu mettes à jour ta carte pour éviter une interruption.`,
       tone: 'reminder',
-      ctaLabel: 'Resoudre maintenant',
+      ctaLabel: 'Résoudre maintenant',
       ctaSub: '30 secondes',
-      footer: `Si tu changes de carte, le prelevement reprendra automatiquement. On te recontactera une derniere fois avant de basculer en Free.`,
+      footer: `Si tu changes de carte, le prélèvement reprendra automatiquement. On te recontactera une dernière fois avant de basculer en Free.`,
     },
     'j5': {
-      subject: `Derniere tentative dans 48h, ton diagnostic IA et heatmaps a sauver`,
+      subject: `Dernière tentative dans 48h, ton diagnostic IA et heatmaps à sauver`,
       eyebrowText: '// PAYMENT // 48H BEFORE DOWNGRADE',
       eyebrowColor: '#f5c842',
       heroTitle: `Plus que <span style="color:#f5c842;text-shadow:0 0 22px rgba(245,200,66,.5)">48h</span><br>avant la bascule Free.`,
-      heroSub: `On a tente 3 fois de prelever ${amount} sans succes. Si rien n'est fait dans 48h, ton acces ${planLabel} sera bascule en Free et tu perdras le Diagnostic IA refresh par match, le Chat Coach IA quotidien, le 2D Replay et les KPIs avances.`,
+      heroSub: `On a tenté 3 fois de prélever ${amount} sans succès. Si rien n'est fait dans 48h, ton accès ${planLabel} sera basculé en Free et tu perdras le Diagnostic IA refresh par match, le Chat Coach IA quotidien, le 2D Replay et les KPIs avancés.`,
       tone: 'urgent',
-      ctaLabel: 'Resoudre maintenant',
+      ctaLabel: 'Résoudre maintenant',
       ctaSub: 'urgent',
-      footer: `Ton historique (analyses, FV Rating, watchlist) sera conserve, mais tu ne pourras plus utiliser les features Pro. Tu pourras te reabonner plus tard.`,
+      footer: `Ton historique (analyses, FV Rating, watchlist) sera conservé, mais tu ne pourras plus utiliser les features Pro. Tu pourras te réabonner plus tard.`,
     },
     'j7': {
       subject: `Ton abonnement passe en Free aujourd'hui, ton historique reste`,
       eyebrowText: '// PAYMENT // FINAL NOTICE',
       eyebrowColor: '#f5c842',
       heroTitle: `Bascule en <span style="color:#f5c842;text-shadow:0 0 22px rgba(245,200,66,.45)">Free</span><br>aujourd'hui.`,
-      heroSub: `Apres 4 tentatives infructueuses sur ${amount}, ton abonnement ${planLabel} a ete suspendu. Tu repasses automatiquement en plan Free. <strong style="color:#b8ff57">Bonne nouvelle,</strong> ton historique complet (analyses, FV Rating, Coach IA insights) reste accessible.`,
+      heroSub: `Après 4 tentatives infructueuses sur ${amount}, ton abonnement ${planLabel} a été suspendu. Tu repasses automatiquement en plan Free. <strong style="color:#b8ff57">Bonne nouvelle,</strong> ton historique complet (analyses, FV Rating, Coach IA insights) reste accessible.`,
       tone: 'final',
-      ctaLabel: 'Reactiver mon abonnement',
+      ctaLabel: 'Réactiver mon abonnement',
       ctaSub: '',
-      footer: `Tu peux te reabonner a tout moment depuis pricing.html. Aucune penalite, aucun frais cache.`,
+      footer: `Tu peux te réabonner à tout moment depuis pricing.html. Aucune pénalité, aucun frais caché.`,
     },
   };
 
@@ -604,10 +604,10 @@ function paymentFailed({ nickname, planLabel, milestone, amount, periodEndIso, p
       <tr><td style="padding:20px 22px;background:#0a0b0b;border:1px solid #1c1e1e;border-radius:12px">
         <div style="font-family:${MONO_STACK};font-size:10px;color:#a8b0b0;letter-spacing:.24em;text-transform:uppercase;font-weight:700;margin-bottom:12px">// CAUSES LES PLUS FREQUENTES</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:${FONT_STACK};font-size:13px;color:#a8b0b0;line-height:1.7">
-          <tr><td width="22" valign="top" style="color:#7a8080;font-family:${MONO_STACK};font-weight:700">01</td><td style="padding-bottom:6px">Carte expiree ou bientot expiree</td></tr>
+          <tr><td width="22" valign="top" style="color:#7a8080;font-family:${MONO_STACK};font-weight:700">01</td><td style="padding-bottom:6px">Carte expirée ou bientôt expirée</td></tr>
           <tr><td width="22" valign="top" style="color:#7a8080;font-family:${MONO_STACK};font-weight:700">02</td><td style="padding-bottom:6px">Plafond mensuel atteint (banque)</td></tr>
-          <tr><td width="22" valign="top" style="color:#7a8080;font-family:${MONO_STACK};font-weight:700">03</td><td style="padding-bottom:6px">Carte signalee par la banque (anti-fraude trop sensible)</td></tr>
-          <tr><td width="22" valign="top" style="color:#7a8080;font-family:${MONO_STACK};font-weight:700">04</td><td>Carte remplacee sans mise a jour</td></tr>
+          <tr><td width="22" valign="top" style="color:#7a8080;font-family:${MONO_STACK};font-weight:700">03</td><td style="padding-bottom:6px">Carte signalée par la banque (anti-fraude trop sensible)</td></tr>
+          <tr><td width="22" valign="top" style="color:#7a8080;font-family:${MONO_STACK};font-weight:700">04</td><td>Carte remplacée sans mise à jour</td></tr>
         </table>
       </td></tr>
     </table>
@@ -622,25 +622,25 @@ function paymentFailed({ nickname, planLabel, milestone, amount, periodEndIso, p
     ${accentLine()}
 
     <p style="font-size:12px;color:#7a8080;margin:0 0 12px;line-height:1.6">${v.footer}</p>
-    <p style="font-size:11px;color:#7a8080;margin:0;line-height:1.5">Besoin d'aide ? Reponds a ce mail, on te repond sous 24h.</p>
+    <p style="font-size:11px;color:#7a8080;margin:0;line-height:1.5">Besoin d'aide ? Réponds à ce mail, on te répond sous 24h.</p>
   `);
   const text = `${v.heroTitle.replace(/<[^>]+>/g, '')}
 
 ${v.heroSub.replace(/<[^>]+>/g, '')}
 
 CAUSES FREQUENTES
-01. Carte expiree ou bientot expiree
+01. Carte expirée ou bientôt expirée
 02. Plafond mensuel atteint (banque)
-03. Carte signalee par la banque (anti-fraude)
-04. Carte remplacee sans mise a jour
+03. Carte signalée par la banque (anti-fraude)
+04. Carte remplacée sans mise à jour
 
 ${v.ctaLabel} : ${portal}
 ${v.ctaSub ? `(${v.ctaSub})\n` : ''}
 ${v.footer}
 
-Besoin d'aide ? Reponds a ce mail.
+Besoin d'aide ? Réponds à ce mail.
 
-L'equipe FragValue`;
+L'équipe FragValue`;
   return { subject: v.subject, html, text };
 }
 
@@ -661,13 +661,13 @@ function demoAnalysisReady({ nickname, demoId, map, fvRating, kast, adr, mainAxi
 
   // Fallback diagnostic IA si mainAxis n'est pas fourni
   const diagnostic = mainAxis || (
-    ratingNum >= 1.20 ? 'Tu portes l\'equipe. Ton impact en clutch et en opening duels est superieur a la moyenne du tier. Continue de prendre les duels que tu maitrises, et regarde les rounds ou tu pourrais ouvrir plutot que trade pour passer un cran au-dessus.'
-    : ratingNum >= 1.05 ? 'Match solide, au-dessus de la moyenne. Le Coach IA a detecte 2 patterns ou tu peux gagner 0,1 FV Rating en mois, notamment sur ton positioning post-plant et ton timing d\'util sur les retake.'
-    : ratingNum >= 0.95 ? 'Match dans la moyenne. Le Coach IA a identifie le moment cle ou la game a bascule : c\'est la qu\'on focus pour ton plan d\'action 7 jours.'
-    : 'Match difficile mais beaucoup d\'apprentissage. Le Coach IA a isole les 3 patterns qui t\'ont coute des rounds, et propose un plan concret pour les corriger sur tes 5 prochains matchs.'
+    ratingNum >= 1.20 ? 'Tu portes l\'équipe. Ton impact en clutch et en opening duels est supérieur à la moyenne du tier. Continue de prendre les duels que tu maîtrises, et regarde les rounds où tu pourrais ouvrir plutôt que trade pour passer un cran au-dessus.'
+    : ratingNum >= 1.05 ? 'Match solide, au-dessus de la moyenne. Le Coach IA a détecté 2 patterns où tu peux gagner 0,1 FV Rating en mois, notamment sur ton positioning post-plant et ton timing d\'util sur les retake.'
+    : ratingNum >= 0.95 ? 'Match dans la moyenne. Le Coach IA a identifié le moment clé où la game a basculé : c\'est là qu\'on focus pour ton plan d\'action 7 jours.'
+    : 'Match difficile mais beaucoup d\'apprentissage. Le Coach IA a isolé les 3 patterns qui t\'ont coûté des rounds, et propose un plan concret pour les corriger sur tes 5 prochains matchs.'
   );
 
-  const subject = `[FV ${ratingStr}] Ton match ${mapClean} est decortique, ${ratingLabel.toLowerCase()}`;
+  const subject = `[FV ${ratingStr}] Ton match ${mapClean} est décortiqué, ${ratingLabel.toLowerCase()}`;
   const html = wrap(subject, `
     ${eyebrow(`// ANALYSE READY // ${mapClean}`)}
 
@@ -720,28 +720,28 @@ function demoAnalysisReady({ nickname, demoId, map, fvRating, kast, adr, mainAxi
     <p style="font-family:${MONO_STACK};font-size:11px;color:#a8b0b0;margin:0 0 14px;letter-spacing:.22em;text-transform:uppercase;font-weight:700">// CE QUI T'ATTEND DANS L'ANALYSE</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;font-family:${FONT_STACK};font-size:13.5px;color:#e8eaea;line-height:1.7">
-      <tr><td width="28" valign="top" style="color:#b8ff57;font-weight:900;font-size:16px">&rsaquo;</td><td style="padding-bottom:8px"><strong>Heatmaps tactiques</strong>, ou tu meurs, ou tu kill, par side</td></tr>
+      <tr><td width="28" valign="top" style="color:#b8ff57;font-weight:900;font-size:16px">&rsaquo;</td><td style="padding-bottom:8px"><strong>Heatmaps tactiques</strong>, où tu meurs, où tu kill, par side</td></tr>
       <tr><td width="28" valign="top" style="color:#b8ff57;font-weight:900;font-size:16px">&rsaquo;</td><td style="padding-bottom:8px"><strong>2D Replay frame par frame</strong>, re-joue tes rounds clutch</td></tr>
       <tr><td width="28" valign="top" style="color:#b8ff57;font-weight:900;font-size:16px">&rsaquo;</td><td><strong>Plan d'action 7 jours</strong>, les 3 axes concrets pour la semaine</td></tr>
     </table>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px">
       <tr><td align="center">
-        <a href="${BASE_URL}/heatmap-results.html?id=${demoId}" style="display:inline-block;background:#b8ff57;color:#000;padding:18px 40px;border-radius:10px;text-decoration:none;font-weight:900;font-size:15px;letter-spacing:.12em;text-transform:uppercase;font-family:${FONT_STACK};box-shadow:0 0 36px rgba(184,255,87,.4),0 10px 24px rgba(0,0,0,.5);text-shadow:0 1px 0 rgba(255,255,255,.2)">Voir l'analyse complete &rsaquo;</a>
+        <a href="${BASE_URL}/heatmap-results.html?id=${demoId}" style="display:inline-block;background:#b8ff57;color:#000;padding:18px 40px;border-radius:10px;text-decoration:none;font-weight:900;font-size:15px;letter-spacing:.12em;text-transform:uppercase;font-family:${FONT_STACK};box-shadow:0 0 36px rgba(184,255,87,.4),0 10px 24px rgba(0,0,0,.5);text-shadow:0 1px 0 rgba(255,255,255,.2)">Voir l'analyse complète &rsaquo;</a>
       </td></tr>
     </table>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px">
       <tr><td align="center">
-        <a href="${BASE_URL}/account.html#coach-credits" style="display:inline-block;color:#a8b0b0;padding:10px 20px;text-decoration:none;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-family:${FONT_STACK};border-bottom:1px solid #2a2c2a">Acheter un pack credits Coach IA &rsaquo;</a>
+        <a href="${BASE_URL}/account.html#coach-credits" style="display:inline-block;color:#a8b0b0;padding:10px 20px;text-decoration:none;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-family:${FONT_STACK};border-bottom:1px solid #2a2c2a">Acheter un pack crédits Coach IA &rsaquo;</a>
       </td></tr>
     </table>
 
     ${accentLine()}
 
-    <p style="font-size:11px;color:#7a8080;margin:0;line-height:1.6;text-align:center">Analyse generee pour ${name} &middot; Match ID <span style="font-family:${MONO_STACK};color:#a8b0b0">${demoId}</span></p>
+    <p style="font-size:11px;color:#7a8080;margin:0;line-height:1.6;text-align:center">Analyse générée pour ${name} &middot; Match ID <span style="font-family:${MONO_STACK};color:#a8b0b0">${demoId}</span></p>
   `);
-  const text = `Analyse terminee, ${name}.
+  const text = `Analyse terminée, ${name}.
 
 ================================
 FV RATING : ${ratingStr}
@@ -756,30 +756,30 @@ DIAGNOSTIC COACH IA
 ${diagnostic}
 
 CE QUI T'ATTEND
-> Heatmaps tactiques (ou tu meurs / kill, par side)
+> Heatmaps tactiques (où tu meurs / kill, par side)
 > 2D Replay frame par frame
 > Plan d'action 7 jours (3 axes concrets)
 
-Voir l'analyse complete :
+Voir l'analyse complète :
 ${BASE_URL}/heatmap-results.html?id=${demoId}
 
-Pack credits Coach IA :
+Pack crédits Coach IA :
 ${BASE_URL}/account.html#coach-credits
 
 Match ID : ${demoId}
 
-L'equipe FragValue`;
+L'équipe FragValue`;
   return { subject, html, text };
 }
 
 // === DAY 3 FOLLOW-UP FREE ================================================
-// Free users actifs (>= 1 demo analysee) qui n'ont pas upgrade.
+// Free users actifs (>= 1 demo analysée) qui n'ont pas upgrade.
 function day3FollowupFree({ nickname, demosCount, fvRating }) {
   const name = String(nickname || 'joueur').replace(/[<>"&]/g, '');
   const subject = `${name}, 3 jours sur FragValue, ce qui change avec Pro`;
   const fvLine = fvRating
-    ? `Ton FV Rating moyen sur tes ${demosCount} analyse(s), <strong style="color:#b8ff57;text-shadow:0 0 12px rgba(184,255,87,.4)">${fvRating}</strong>. Pas mal pour un demarrage.`
-    : `Tu as deja lance ${demosCount} analyse(s) de demo. Pas mal pour un demarrage.`;
+    ? `Ton FV Rating moyen sur tes ${demosCount} analyse(s), <strong style="color:#b8ff57;text-shadow:0 0 12px rgba(184,255,87,.4)">${fvRating}</strong>. Pas mal pour un démarrage.`
+    : `Tu as déjà lancé ${demosCount} analyse(s) de demo. Pas mal pour un démarrage.`;
   const html = wrap(subject, `
     ${eyebrow('// DAY 3 // YOU\'RE IN')}
     <h1 style="font-family:${FONT_STACK};font-size:38px;line-height:1.05;color:#e8eaea;margin:0 0 18px;font-weight:900;letter-spacing:-.02em">3 jours plus tard,<br><span style="color:#b8ff57;text-shadow:0 0 20px rgba(184,255,87,.35)">${name}.</span></h1>
@@ -789,11 +789,11 @@ function day3FollowupFree({ nickname, demosCount, fvRating }) {
       <tr><td style="padding:24px 26px;background-image:linear-gradient(135deg,rgba(184,255,87,.1) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.32);border-radius:12px">
         <div style="font-family:${MONO_STACK};font-size:10px;color:#b8ff57;letter-spacing:.24em;text-transform:uppercase;font-weight:700;margin-bottom:14px">// CE QUI CHANGE AVEC PRO</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:${FONT_STACK};font-size:14px;color:#e8eaea;line-height:1.7">
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px"><strong>Analyses illimitees</strong> <span style="color:#7a8080">/ plus de cap a 3/mois, refresh apres chaque match FACEIT</span></td></tr>
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px"><strong>Coach IA chat 20 messages/jour</strong> <span style="color:#7a8080">/ pose des questions ciblees sur tes patterns</span></td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px"><strong>Analyses illimitées</strong> <span style="color:#7a8080">/ plus de cap à 3/mois, refresh après chaque match FACEIT</span></td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px"><strong>Coach IA chat 20 messages/jour</strong> <span style="color:#7a8080">/ pose des questions ciblées sur tes patterns</span></td></tr>
           <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px"><strong>2D Replay interactif</strong> <span style="color:#7a8080">/ re-joue tes rounds clutch frame par frame</span></td></tr>
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px"><strong>KPIs avances</strong> <span style="color:#7a8080">/ KAST, opening duels WR, multi-kills, trade rate</span></td></tr>
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td><strong>Heatmaps tactiques</strong> <span style="color:#7a8080">/ ou tu meurs, ou tu kill, par map et side</span></td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px"><strong>KPIs avancés</strong> <span style="color:#7a8080">/ KAST, opening duels WR, multi-kills, trade rate</span></td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td><strong>Heatmaps tactiques</strong> <span style="color:#7a8080">/ où tu meurs, où tu kill, par map et side</span></td></tr>
         </table>
       </td></tr>
     </table>
@@ -811,7 +811,7 @@ function day3FollowupFree({ nickname, demosCount, fvRating }) {
       </tr>
     </table>
 
-    <p style="font-size:13px;color:#a8b0b0;margin:0 0 28px;line-height:1.65;text-align:center">Sans engagement, annulable en 1 clic. Pas satisfait dans les 14 premiers jours, on rembourse integralement (art. L221-28-13).</p>
+    <p style="font-size:13px;color:#a8b0b0;margin:0 0 28px;line-height:1.65;text-align:center">Sans engagement, annulable en 1 clic. Pas satisfait dans les 14 premiers jours, on rembourse intégralement (art. L221-28-13).</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px">
       <tr><td align="center">
@@ -821,43 +821,43 @@ function day3FollowupFree({ nickname, demosCount, fvRating }) {
 
     ${accentLine()}
 
-    <p style="font-size:12px;color:#7a8080;margin:0 0 8px;line-height:1.6;text-align:center">Tu preferes rester en Free ? Aucun probleme.</p>
-    <p style="font-size:12px;color:#7a8080;margin:0;line-height:1.6;text-align:center">Tu peux acheter des packs de credits Coach IA a la demande sur <a href="${BASE_URL}/account.html?utm_source=email&utm_medium=lifecycle&utm_campaign=day3_followup" style="color:#b8ff57;text-decoration:none">ton espace</a>, sans abonnement.</p>
+    <p style="font-size:12px;color:#7a8080;margin:0 0 8px;line-height:1.6;text-align:center">Tu préfères rester en Free ? Aucun problème.</p>
+    <p style="font-size:12px;color:#7a8080;margin:0;line-height:1.6;text-align:center">Tu peux acheter des packs de crédits Coach IA à la demande sur <a href="${BASE_URL}/account.html?utm_source=email&utm_medium=lifecycle&utm_campaign=day3_followup" style="color:#b8ff57;text-decoration:none">ton espace</a>, sans abonnement.</p>
   `);
   const text = `3 jours plus tard, ${name}.
 
-${fvRating ? `Ton FV Rating moyen sur tes ${demosCount} analyse(s) : ${fvRating}` : `Tu as deja lance ${demosCount} analyse(s) de demo`}. Pas mal pour un demarrage.
+${fvRating ? `Ton FV Rating moyen sur tes ${demosCount} analyse(s) : ${fvRating}` : `Tu as déjà lancé ${demosCount} analyse(s) de demo`}. Pas mal pour un démarrage.
 
 CE QUI CHANGE AVEC PRO
-> Analyses illimitees (plus de cap a 3/mois, refresh apres chaque match FACEIT)
-> Coach IA chat 20 messages/jour pour des questions ciblees
+> Analyses illimitées (plus de cap à 3/mois, refresh après chaque match FACEIT)
+> Coach IA chat 20 messages/jour pour des questions ciblées
 > 2D Replay interactif frame par frame
-> KPIs avances (KAST, opening duels WR, multi-kills, trade rate)
+> KPIs avancés (KAST, opening duels WR, multi-kills, trade rate)
 > Heatmaps tactiques par map et par side
 
 PRO     : 9 EUR/mois
 DAILY   : 0,30 EUR/jour
 
-Sans engagement, annulable en 1 clic. Satisfait ou rembourse 14 jours (art. L221-28-13).
+Sans engagement, annulable en 1 clic. Satisfait ou remboursé 14 jours (art. L221-28-13).
 
 Voir les plans :
 ${BASE_URL}/pricing.html?utm_source=email&utm_medium=lifecycle&utm_campaign=day3_followup
 
-Tu preferes rester en Free ? Packs credits Coach IA a la demande :
+Tu préfères rester en Free ? Packs crédits Coach IA à la demande :
 ${BASE_URL}/account.html
 
 Bonne progression,
-L'equipe FragValue`;
+L'équipe FragValue`;
   return { subject, html, text };
 }
 
 // === REFUND PROCESSED (self-service 14j) ================================
 function refundProcessed({ email, amount_eur, currency, refund_id }) {
-  const subject = 'Remboursement FragValue confirme, ' + amount_eur + ' ' + currency;
+  const subject = 'Remboursement FragValue confirmé, ' + amount_eur + ' ' + currency;
   const html = wrap(subject, `
     ${eyebrow('// REFUND // PROCESSED')}
-    <h1 style="font-family:${FONT_STACK};font-size:38px;line-height:1.05;color:#e8eaea;margin:0 0 16px;font-weight:900;letter-spacing:-.02em">Remboursement<br><span style="color:#b8ff57;text-shadow:0 0 20px rgba(184,255,87,.35)">confirme.</span></h1>
-    <p style="font-size:14px;color:#a8b0b0;margin:0 0 28px;line-height:1.6">Ton remboursement de <strong style="color:#e8eaea">${amount_eur} ${currency}</strong> a ete declenche cote Stripe. Le credit apparaitra sur ton moyen de paiement sous 5 a 10 jours ouvres selon ta banque.</p>
+    <h1 style="font-family:${FONT_STACK};font-size:38px;line-height:1.05;color:#e8eaea;margin:0 0 16px;font-weight:900;letter-spacing:-.02em">Remboursement<br><span style="color:#b8ff57;text-shadow:0 0 20px rgba(184,255,87,.35)">confirmé.</span></h1>
+    <p style="font-size:14px;color:#a8b0b0;margin:0 0 28px;line-height:1.6">Ton remboursement de <strong style="color:#e8eaea">${amount_eur} ${currency}</strong> a été déclenché côté Stripe. Le crédit apparaîtra sur ton moyen de paiement sous 5 à 10 jours ouvrés selon ta banque.</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px">
       <tr><td style="padding:24px 26px;background:#0a0b0b;border:1px solid #2a2c2a;border-radius:12px">
@@ -868,39 +868,39 @@ function refundProcessed({ email, amount_eur, currency, refund_id }) {
             <td align="right" style="color:#b8ff57;font-weight:900;font-family:${MONO_STACK};font-size:18px">${amount_eur} ${currency}</td>
           </tr>
           <tr>
-            <td style="color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-size:11px">Reference Stripe</td>
+            <td style="color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-size:11px">Référence Stripe</td>
             <td align="right" style="color:#a8b0b0;font-family:${MONO_STACK};font-size:11px">${refund_id}</td>
           </tr>
           <tr>
-            <td style="color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-size:11px;border-top:1px solid #1c1e1e;padding-top:8px">Statut acces premium</td>
-            <td align="right" style="color:#ff6b6b;font-weight:800;font-family:${MONO_STACK};font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-top:1px solid #1c1e1e;padding-top:8px">Annule</td>
+            <td style="color:#7a8080;letter-spacing:.06em;text-transform:uppercase;font-size:11px;border-top:1px solid #1c1e1e;padding-top:8px">Statut accès premium</td>
+            <td align="right" style="color:#ff6b6b;font-weight:800;font-family:${MONO_STACK};font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-top:1px solid #1c1e1e;padding-top:8px">Annulé</td>
           </tr>
         </table>
       </td></tr>
     </table>
 
-    <p style="font-size:13px;color:#a8b0b0;margin:0 0 16px;line-height:1.7">Ton compte FragValue est repasse en plan Free. Tu gardes l'acces a ton historique d'analyses, mais les fonctionnalites Pro (Coach IA, 2D replay, KPIs avances) sont desactivees.</p>
+    <p style="font-size:13px;color:#a8b0b0;margin:0 0 16px;line-height:1.7">Ton compte FragValue est repassé en plan Free. Tu gardes l'accès à ton historique d'analyses, mais les fonctionnalités Pro (Coach IA, 2D replay, KPIs avancés) sont désactivées.</p>
 
-    <p style="font-size:13px;color:#a8b0b0;margin:0 0 28px;line-height:1.7">Si ce remboursement est une erreur ou si tu souhaites te reabonner, contacte-nous a <a href="mailto:contact@fragvalue.com" style="color:#b8ff57;text-decoration:none">contact@fragvalue.com</a>.</p>
+    <p style="font-size:13px;color:#a8b0b0;margin:0 0 28px;line-height:1.7">Si ce remboursement est une erreur ou si tu souhaites te réabonner, contacte-nous à <a href="mailto:contact@fragvalue.com" style="color:#b8ff57;text-decoration:none">contact@fragvalue.com</a>.</p>
 
     ${accentLine()}
 
-    <p style="font-size:11px;color:#7a8080;margin:0;line-height:1.6">Conformement a notre garantie commerciale 14j. Cf. <a href="${BASE_URL}/cgv.html" style="color:#7a8080;text-decoration:underline">CGV art. 9</a>.</p>
+    <p style="font-size:11px;color:#7a8080;margin:0;line-height:1.6">Conformément à notre garantie commerciale 14j. Cf. <a href="${BASE_URL}/cgv.html" style="color:#7a8080;text-decoration:underline">CGV art. 9</a>.</p>
   `);
-  const text = `Remboursement FragValue confirme.
+  const text = `Remboursement FragValue confirmé.
 
 TRANSACTION
 Montant       : ${amount_eur} ${currency}
-Reference     : ${refund_id}
-Statut Pro    : Annule
+Référence     : ${refund_id}
+Statut Pro    : Annulé
 
-Le credit apparaitra sur ton moyen de paiement sous 5 a 10 jours ouvres.
+Le crédit apparaîtra sur ton moyen de paiement sous 5 à 10 jours ouvrés.
 
-Ton acces Pro/Elite a ete annule immediatement. Tu repasses en plan Free et tu gardes l'acces a ton historique.
+Ton accès Pro/Elite a été annulé immédiatement. Tu repasses en plan Free et tu gardes l'accès à ton historique.
 
-Une question ? Reponds a ce mail ou ecris a contact@fragvalue.com.
+Une question ? Réponds à ce mail ou écris à contact@fragvalue.com.
 
-Conformement a notre garantie commerciale 14j. CGV : ${BASE_URL}/cgv.html`;
+Conformément à notre garantie commerciale 14j. CGV : ${BASE_URL}/cgv.html`;
   return { subject, html, text };
 }
 
@@ -911,16 +911,16 @@ function lifetimeDealPurchased({ nickname, amountEur }) {
   const html = wrap(subject, `
     ${eyebrow('// FOUNDERS CLUB // LIFETIME ACCESS')}
     <h1 style="font-family:${FONT_STACK};font-size:42px;line-height:1;color:#e8eaea;margin:0 0 16px;font-weight:900;letter-spacing:-.03em">Welcome to the<br><span style="color:#b8ff57;text-shadow:0 0 28px rgba(184,255,87,.5)">Founders Club.</span></h1>
-    <p style="font-size:15px;color:#a8b0b0;margin:0 0 32px;line-height:1.6">Merci ${name}. Ton paiement de <strong style="color:#e8eaea">${amountEur} EUR</strong> est confirme. Tu as maintenant l'acces <strong style="color:#b8ff57">Pro a vie</strong> sur FragValue. Plus jamais de carte, plus jamais d'abonnement.</p>
+    <p style="font-size:15px;color:#a8b0b0;margin:0 0 32px;line-height:1.6">Merci ${name}. Ton paiement de <strong style="color:#e8eaea">${amountEur} EUR</strong> est confirmé. Tu as maintenant l'accès <strong style="color:#b8ff57">Pro à vie</strong> sur FragValue. Plus jamais de carte, plus jamais d'abonnement.</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px">
       <tr><td style="padding:26px 28px;background-image:linear-gradient(135deg,rgba(184,255,87,.14) 0%,rgba(184,255,87,.02) 100%);border:1px solid rgba(184,255,87,.4);border-radius:14px">
         <div style="font-family:${MONO_STACK};font-size:10px;color:#b8ff57;letter-spacing:.26em;text-transform:uppercase;font-weight:700;margin-bottom:16px">// DEBLOQUE A VIE</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:${FONT_STACK};font-size:14.5px;color:#e8eaea;line-height:1.7">
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px">Auto-sync FACEIT <strong>illimite</strong></td></tr>
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px">Coach IA <strong>20 msg/jour</strong> a vie</td></tr>
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px">Analyses illimitees + <strong>2D Replay frame par frame</strong></td></tr>
-          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px">KPIs avances + <strong>Pro benchmarks</strong></td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px">Auto-sync FACEIT <strong>illimité</strong></td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px">Coach IA <strong>20 msg/jour</strong> à vie</td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px">Analyses illimitées + <strong>2D Replay frame par frame</strong></td></tr>
+          <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td style="padding-bottom:10px">KPIs avancés + <strong>Pro benchmarks</strong></td></tr>
           <tr><td width="22" valign="top" style="color:#b8ff57;font-weight:900">&rsaquo;</td><td>Toutes les futures features Pro, <strong>gratuitement</strong></td></tr>
         </table>
       </td></tr>
@@ -931,36 +931,36 @@ function lifetimeDealPurchased({ nickname, amountEur }) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px">
       <tr><td style="padding:22px 24px;background:#0a0b0b;border:1px solid #2a2c2a;border-radius:12px">
         <div style="font-family:${MONO_STACK};font-size:10px;color:#a8b0b0;letter-spacing:.24em;text-transform:uppercase;font-weight:700;margin-bottom:10px">// EXCLUSIF FONDATEURS</div>
-        <p style="font-family:${FONT_STACK};font-size:14px;color:#e8eaea;margin:0;line-height:1.65">Tu fais partie des <strong style="color:#b8ff57">50 fondateurs</strong> qui ont cru au projet avant le launch. Un channel Discord prive <span style="background:#1c1e1e;padding:3px 8px;border-radius:4px;color:#b8ff57;font-family:${MONO_STACK};font-size:12px">#founders</span> t'est reserve. On y partage les next features, on prend tes retours en premier, et on debrief les sessions ensemble.</p>
+        <p style="font-family:${FONT_STACK};font-size:14px;color:#e8eaea;margin:0;line-height:1.65">Tu fais partie des <strong style="color:#b8ff57">50 fondateurs</strong> qui ont cru au projet avant le launch. Un channel Discord privé <span style="background:#1c1e1e;padding:3px 8px;border-radius:4px;color:#b8ff57;font-family:${MONO_STACK};font-size:12px">#founders</span> t'est réservé. On y partage les next features, on prend tes retours en premier, et on débrief les sessions ensemble.</p>
       </td></tr>
     </table>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center">
-        <a href="${BASE_URL}/dashboard.html" style="display:inline-block;background:#b8ff57;color:#000;padding:18px 40px;border-radius:10px;text-decoration:none;font-weight:900;font-size:15px;letter-spacing:.12em;text-transform:uppercase;font-family:${FONT_STACK};box-shadow:0 0 36px rgba(184,255,87,.4),0 10px 24px rgba(0,0,0,.5)">Acceder a mon espace Pro &rsaquo;</a>
+        <a href="${BASE_URL}/dashboard.html" style="display:inline-block;background:#b8ff57;color:#000;padding:18px 40px;border-radius:10px;text-decoration:none;font-weight:900;font-size:15px;letter-spacing:.12em;text-transform:uppercase;font-family:${FONT_STACK};box-shadow:0 0 36px rgba(184,255,87,.4),0 10px 24px rgba(0,0,0,.5)">Accéder à mon espace Pro &rsaquo;</a>
       </td></tr>
     </table>
 
-    <p style="font-size:11px;color:#7a8080;margin:24px 0 0;line-height:1.5;text-align:center">Une question ? Reponds directement a ce mail.</p>
+    <p style="font-size:11px;color:#7a8080;margin:24px 0 0;line-height:1.5;text-align:center">Une question ? Réponds directement à ce mail.</p>
   `);
   const text = `Welcome to the Founders Club, ${name}.
 
-Ton paiement de ${amountEur} EUR est confirme. Tu as l'acces Pro a vie sur FragValue.
+Ton paiement de ${amountEur} EUR est confirmé. Tu as l'accès Pro à vie sur FragValue.
 
 DEBLOQUE A VIE
-> Auto-sync FACEIT illimite
-> Coach IA 20 msg/jour a vie
-> Analyses illimitees + 2D Replay frame par frame
-> KPIs avances + Pro benchmarks
+> Auto-sync FACEIT illimité
+> Coach IA 20 msg/jour à vie
+> Analyses illimitées + 2D Replay frame par frame
+> KPIs avancés + Pro benchmarks
 > Toutes les futures features Pro, gratuitement
 
 EXCLUSIF FONDATEURS
-Tu fais partie des 50 fondateurs. Channel Discord prive #founders reserve.
-On y partage les next features, on prend tes retours en premier, on debrief les sessions ensemble.
+Tu fais partie des 50 fondateurs. Channel Discord privé #founders réservé.
+On y partage les next features, on prend tes retours en premier, on débrief les sessions ensemble.
 
-Acceder a mon espace : ${BASE_URL}/dashboard.html
+Accéder à mon espace : ${BASE_URL}/dashboard.html
 
-L'equipe FragValue
+L'équipe FragValue
 ${BASE_URL}`;
   return { subject, html, text };
 }

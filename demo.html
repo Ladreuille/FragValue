@@ -1332,13 +1332,13 @@ nav:not(.fv-nav){
         <div class="progress-hero">
           <div class="progress-pct"><span id="progressPctNum">0</span><span class="pct-sym">%</span></div>
           <div class="progress-title" id="progressTitle">Initialisation</div>
-          <div class="progress-sub" id="progressSub">Preparation du stream parser...</div>
+          <div class="progress-sub" id="progressSub">Préparation du stream parser...</div>
         </div>
 
         <!-- Progress bar avec glow -->
         <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
 
-        <!-- Skeleton preview : ce qui arrive bientot (FV Rating en gros + 2 mini cards) -->
+        <!-- Skeleton preview : ce qui arrive bientôt (FV Rating en gros + 2 mini cards) -->
         <div class="progress-preview" aria-hidden="true">
           <div class="pp-card featured">
             <div class="pp-label">Ton FV Rating</div>
@@ -1364,26 +1364,26 @@ nav:not(.fv-nav){
           <div class="ps" id="step5"><div class="ps-dot"></div>Finalisation</div>
         </div>
 
-        <!-- Insight ticker : CS2 fact qui tourne pendant le wait pour eduquer -->
+        <!-- Insight ticker : CS2 fact qui tourne pendant le wait pour éduquer -->
         <div class="progress-insight">
           <div class="pi-label">· INSIGHT CS2 ·</div>
-          <div class="pi-text" id="progressInsight">128 ticks/sec sur les serveurs FACEIT, on parse chaque tick pour reconstruire ta position au pixel pres.</div>
+          <div class="pi-text" id="progressInsight">128 ticks/sec sur les serveurs FACEIT, on parse chaque tick pour reconstruire ta position au pixel près.</div>
         </div>
       </div>
     </div>
 
-    <!-- Recent demos : 3 dernieres analyses du user (lien direct vers resultats) -->
+    <!-- Recent demos : 3 dernières analyses du user (lien direct vers résultats) -->
     <div class="recent-demos" id="recentDemos">
       <div class="recent-demos-hd">
-        <span>Tes dernieres analyses</span>
+        <span>Tes dernières analyses</span>
         <a href="account.html">Tout voir &rsaquo;</a>
       </div>
       <div id="recentDemosList"></div>
     </div>
 
-    <!-- Trust row inline compacte (4 mots cles : privacy + RGPD + no card + retention) -->
+    <!-- Trust row inline compacte (4 mots clés : privacy + RGPD + no card + retention) -->
     <div class="trust-inline">
-      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Privees</span>
+      <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Privées</span>
       <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L3 6v6c0 5 4 9 9 10 5-1 9-5 9-10V6l-9-4z"/></svg>RGPD</span>
       <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Sans carte</span>
       <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>Del 30j</span>
@@ -1392,16 +1392,16 @@ nav:not(.fv-nav){
   </div>
 </div>
 
-<!-- LIVE FEED TICKER : barre fixed bottom avec defile des dernieres analyses.
+<!-- LIVE FEED TICKER : barre fixed bottom avec défilé des dernières analyses.
      Donne une impression de plateforme active. Rempli par renderLiveFeed()
-     depuis la DB (demos recentes) ou fallback sur du contenu generique. -->
+     depuis la DB (demos récentes) ou fallback sur du contenu générique. -->
 <div class="live-feed" id="liveFeed">
   <div class="live-feed-label">
     <span class="lf-dot"></span>
     <span>Live</span>
   </div>
   <div class="live-feed-track" id="liveFeedTrack">
-    <!-- Items injectes par JS au load. Fallback contenu visible en SSR : -->
+    <!-- Items injectés par JS au load. Fallback contenu visible en SSR : -->
     <div class="live-feed-item"><span class="lf-user">FragValue</span><span class="lf-sep">analyse</span><span class="lf-map">de_mirage</span><span class="lf-sep">&middot;</span><span class="lf-rating">FV 1.42</span></div>
     <div class="live-feed-item"><span class="lf-user">FragValue</span><span class="lf-sep">analyse</span><span class="lf-map">de_inferno</span><span class="lf-sep">&middot;</span><span class="lf-rating">FV 1.28</span></div>
     <div class="live-feed-item"><span class="lf-user">FragValue</span><span class="lf-sep">analyse</span><span class="lf-map">de_ancient</span><span class="lf-sep">&middot;</span><span class="lf-rating">FV 1.55</span></div>
@@ -1419,16 +1419,16 @@ let selectedFile = null;
 // { data: { success:true, data: <parsed result> } } pour matcher le format
 // de l'ancienne route POST.
 //
-// Events SSE consommes (cf. parser/index.js v6.5.0+) :
+// Events SSE consommés (cf. parser/index.js v6.5.0+) :
 //   connected, download, parsing.players|kills|map|rounds|positions_*|finalize, done, error
 //
 // Mapping vers go(stepIdx, percentage, title, subTitle) :
-//   La fonction go() existante drive la progress UI (5 etapes 0-100%).
-//   On distribue les events SSE sur les etapes pour avoir une UI fluide.
+//   La fonction go() existante drive la progress UI (5 étapes 0-100%).
+//   On distribue les events SSE sur les étapes pour avoir une UI fluide.
 //
 // Erreurs : reject avec { status, message, code } compatible avec le
 // catch caller. status=422 + code='DEMO_BOT_DETECTED' = afficher direct
-// le message a l'user. Autres errs = fallback POST.
+// le message à l'user. Autres errs = fallback POST.
 function parseViaSSE(jwt, storagePath, timeoutMs, demoId) {
   return new Promise((resolve, reject) => {
     // Phase 2 progressif (parser v6.6.0+) : on passe demoId pour que le
@@ -1441,50 +1441,50 @@ function parseViaSSE(jwt, storagePath, timeoutMs, demoId) {
 
     let es;
     try { es = new EventSource(url); }
-    catch (e) { reject({ status: 0, message: 'EventSource non supporte', code: 'NO_EVENTSOURCE' }); return; }
+    catch (e) { reject({ status: 0, message: 'EventSource non supporté', code: 'NO_EVENTSOURCE' }); return; }
 
-    // Timeout global : si rien recu pendant timeoutMs, on abandon
+    // Timeout global : si rien reçu pendant timeoutMs, on abandon
     const timeoutId = setTimeout(() => {
       try { es.close(); } catch(_) {}
       reject({ status: 0, message: 'Timeout SSE (' + Math.round(timeoutMs/1000) + 's)', code: 'TIMEOUT' });
     }, timeoutMs || 300000);
 
     // === Polish progress (Task #32) =====================================
-    // 1. CREEP : entre 2 SSE events, le bar reste statique meme si le parser
+    // 1. CREEP : entre 2 SSE events, le bar reste statique même si le parser
     //    bosse (ex: positions_start -> positions_done peut prendre 30s).
-    //    On fait creeper la barre de +0.4%/sec, plafonne a +5% au-dessus de
-    //    la derniere milestone, pour que l'user voie que ca avance.
+    //    On fait creeper la barre de +0.4%/sec, plafonné à +5% au-dessus de
+    //    la dernière milestone, pour que l'user voie que ça avance.
     // 2. ROTATING INSIGHTS : pendant un long step, on tourne le sub-message
     //    avec des insights CS2 (microcopy ultrareview item 11 : transforme
-    //    l'attente en valeur educative).
+    //    l'attente en valeur éducative).
     let lastMilestonePct = 0;
     let lastMilestoneAt = Date.now();
     let creepTimer = null;
     let insightTimer = null;
     let currentInsightIdx = 0;
     const CREEP_RATE = 0.4; // % par seconde
-    const CREEP_MAX_DELTA = 5; // ne pas depasser milestone + 5%
+    const CREEP_MAX_DELTA = 5; // ne pas dépasser milestone + 5%
     const insights = {
       players: [
-        'Moyenne FACEIT Lvl 7 : 58% de duels d\'ouverture remportes',
-        'Top 1% Lvl 10 : 0.85 kills/round contre 0.62 a Lvl 7',
+        'Moyenne FACEIT Lvl 7 : 58% de duels d\'ouverture remportés',
+        'Top 1% Lvl 10 : 0.85 kills/round contre 0.62 à Lvl 7',
       ],
       kills: [
-        '1 round CS2 = 16 stats individuelles trackees',
-        'AWP pros : 1.42 ratio kill/round contre 0.95 a Lvl 7',
+        '1 round CS2 = 16 stats individuelles trackées',
+        'AWP pros : 1.42 ratio kill/round contre 0.95 à Lvl 7',
       ],
       rounds: [
         'L\'impact des smokes pros = +23% kills/round sur les rounds anti-eco',
         'KAST moyen Lvl 7 = 68%. Top 1% = 78%+',
       ],
       positions: [
-        'Echantillonnage 4 ticks/sec pour heatmap precise sans saturer le navigateur',
-        'On track ton orientation YAW pour reperer tes erreurs de pre-aim',
+        'Échantillonnage 4 ticks/sec pour heatmap précise sans saturer le navigateur',
+        'On track ton orientation YAW pour repérer tes erreurs de pre-aim',
         'Trajectoires 5v5 = 60 points/round x 24+ rounds = ~7000 points par joueur',
       ],
       finalize: [
         'On croise tes 20 derniers matchs pour le diagnostic Coach IA',
-        'Generation du plan d\'action 7 jours base sur tes axes faibles',
+        'Génération du plan d\'action 7 jours basé sur tes axes faibles',
       ],
     };
     function stopCreep() {
@@ -1506,8 +1506,8 @@ function parseViaSSE(jwt, storagePath, timeoutMs, demoId) {
         }
       }, 1000);
       // Tourne les insights toutes les 6s si on a + de 1 insight pour ce step.
-      // On attend 5s apres le milestone avant de rotate (sinon flicker du
-      // sub-text trop tot pour les steps rapides comme parsing.players).
+      // On attend 5s après le milestone avant de rotate (sinon flicker du
+      // sub-text trop tôt pour les steps rapides comme parsing.players).
       const arr = insights[insightKey] || [];
       if (arr.length > 1) {
         insightTimer = setInterval(() => {
@@ -1534,12 +1534,12 @@ function parseViaSSE(jwt, storagePath, timeoutMs, demoId) {
       console.log('[FV-SSE] event:', ev.type, ev.step || '', 'dataSize:', ev.data ? JSON.stringify(ev.data).length : 0);
       switch (ev.type) {
         case 'connected':
-          go(1, 14, 'Stream etabli', 'En attente du download depuis Supabase...');
+          go(1, 14, 'Stream établi', 'En attente du download depuis Supabase...');
           milestone(14, 18, null);
           break;
         case 'download':
           if (ev.progress === 100) {
-            go(2, 28, 'Demo telechargee', ev.message || 'Demarrage du parsing CS2...');
+            go(2, 28, 'Demo téléchargée', ev.message || 'Démarrage du parsing CS2...');
             milestone(28, 32, null);
           } else {
             go(1, 18, 'Download Supabase -> parser', ev.message || 'En cours...');
@@ -1548,33 +1548,33 @@ function parseViaSSE(jwt, storagePath, timeoutMs, demoId) {
           break;
         case 'parsing':
           if (ev.step === 'players') {
-            go(2, 35, 'Lecture des joueurs', ev.count + ' joueurs detectes · 128t serveurs FACEIT');
+            go(2, 35, 'Lecture des joueurs', ev.count + ' joueurs détectés · 128t serveurs FACEIT');
             milestone(35, 42, 'players');
           } else if (ev.step === 'kills') {
-            go(2, 45, 'Parsing des kills', ev.count + ' kills extraits · 1 round CS2 = 16 stats trackees');
+            go(2, 45, 'Parsing des kills', ev.count + ' kills extraits · 1 round CS2 = 16 stats trackées');
             milestone(45, 50, 'kills');
           } else if (ev.step === 'map') {
-            go(3, 52, 'Map detectee', String(ev.name).replace(/^de_/, '').toUpperCase());
+            go(3, 52, 'Map détectée', String(ev.name).replace(/^de_/, '').toUpperCase());
             milestone(52, 60, null);
           } else if (ev.step === 'rounds') {
             go(3, 62, 'Construction des rounds', ev.count + ' rounds · Calcul wins T vs CT');
             milestone(62, 68, 'rounds');
           } else if (ev.step === 'positions_start') {
-            go(4, 70, 'Calcul des positions', 'Echantillonnage de ' + ev.ticks + ' ticks pour les heatmaps');
+            go(4, 70, 'Calcul des positions', 'Échantillonnage de ' + ev.ticks + ' ticks pour les heatmaps');
             milestone(70, 80, 'positions');
           } else if (ev.step === 'positions_done') {
-            go(4, 82, 'Positions terminees', ev.players + ' joueurs · ' + ev.points + ' points calcules');
+            go(4, 82, 'Positions terminées', ev.players + ' joueurs · ' + ev.points + ' points calculés');
             milestone(82, 88, 'finalize');
           } else if (ev.step === 'finalize') {
-            go(5, 90, 'Finalisation', 'Assemblage du resultat (kills + heatmaps + stats)...');
+            go(5, 90, 'Finalisation', 'Assemblage du résultat (kills + heatmaps + stats)...');
             milestone(90, 97, 'finalize');
           }
           break;
         case 'partial_ready':
-          // Parser v6.6.0+ : essentials prets (~30-45s sur grosse demo).
+          // Parser v6.6.0+ : essentials prêts (~30-45s sur grosse demo).
           // Les trajectoires de grenades arrivent en background via Supabase
-          // Realtime. On peut deja rediriger vers heatmap-results pour
-          // l'experience progressive.
+          // Realtime. On peut déjà rediriger vers heatmap-results pour
+          // l'expérience progressive.
           console.log('[FV-SSE] PARTIAL_READY received! phase1Sec:', ev.phase1Sec, 'dataKeys:', ev.data ? Object.keys(ev.data) : null);
           stopCreep();
           clearTimeout(timeoutId);
@@ -1587,7 +1587,7 @@ function parseViaSSE(jwt, storagePath, timeoutMs, demoId) {
           try { es.close(); } catch(_) {}
           // Fallback : si le parser v6.5.x renvoie 'done' direct (sans
           // partial_ready), on traite pareil. Le caller verra `partial`
-          // undefined et redirigera de toute facon.
+          // undefined et redirigera de toute façon.
           resolve({ data: ev.data, ok: true });
           break;
         case 'error':
@@ -1606,9 +1606,9 @@ function parseViaSSE(jwt, storagePath, timeoutMs, demoId) {
     es.onerror = () => {
       stopCreep();
       // EventSource ne distingue pas network-down vs server-close-normal.
-      // Si on a deja recu 'done' avant, le close est normal (resolve a
-      // ete appele, le reject ici est no-op). Si on est ici sans avoir
-      // recu 'done', c'est une vraie erreur reseau.
+      // Si on a déjà reçu 'done' avant, le close est normal (resolve a
+      // été appelé, le reject ici est no-op). Si on est ici sans avoir
+      // reçu 'done', c'est une vraie erreur réseau.
       clearTimeout(timeoutId);
       try { es.close(); } catch(_) {}
       reject({ status: 0, message: 'Connexion SSE perdue', code: 'SSE_DISCONNECT' });
@@ -1912,20 +1912,20 @@ async function startAnalysis() {
     document.getElementById('progressSub').textContent   = sub;
   }
 
-  // ── Insight ticker : tourne des CS2 facts toutes les 4s pour eduquer
-  // pendant l'attente. Reference ultrareview item 11 : transforme l'attente
-  // en valeur educative (lift +18-30% retention loading).
+  // ── Insight ticker : tourne des CS2 facts toutes les 4s pour éduquer
+  // pendant l'attente. Référence ultrareview item 11 : transforme l'attente
+  // en valeur éducative (lift +18-30% retention loading).
   const cs2Insights = [
-    '128 ticks/sec sur les serveurs FACEIT, on parse chaque tick pour reconstruire ta position au pixel pres.',
+    '128 ticks/sec sur les serveurs FACEIT, on parse chaque tick pour reconstruire ta position au pixel près.',
     'Top 1% Lvl 10 fait 0.85 kills/round contre 0.62 en moyenne Lvl 7. Ta heatmap va te dire pourquoi.',
-    'L\'impact des smokes pros = +23% kills/round sur les rounds anti-eco. On detecte tes utility patterns.',
-    'KAST moyen Lvl 7 = 68%. Top 1% = 78%+. Ton FV Rating te positionne sur 47 KPI ponderes.',
-    'On track ton orientation YAW au tick pres pour reperer tes erreurs de pre-aim sur chaque duel.',
+    'L\'impact des smokes pros = +23% kills/round sur les rounds anti-eco. On détecte tes utility patterns.',
+    'KAST moyen Lvl 7 = 68%. Top 1% = 78%+. Ton FV Rating te positionne sur 47 KPI pondérés.',
+    'On track ton orientation YAW au tick près pour repérer tes erreurs de pre-aim sur chaque duel.',
     'L\'AWP rapporte 1.42 ratio kill/round chez les pros contre 0.95 en moyenne. On benchmark ton arsenal.',
-    'On croise tes 20 derniers matchs FACEIT pour faire la moyenne de ton FV Rating et detecter les tendances.',
-    'Echantillonnage adaptatif : sur ta demo 200+ MB, on garde 4 ticks/sec pour heatmap fluide sans saturer ton browser.',
-    '1 round CS2 = 16 stats individuelles trackees. On les compresse en 6 KPIs digestes (FV, KAST, ADR, HS, Op K-D, MKs).',
-    'Top 8% Lvl 7 ouvre 58% de ses duels d\'entry. On detecte si tu prends trop de risques ou pas assez.',
+    'On croise tes 20 derniers matchs FACEIT pour faire la moyenne de ton FV Rating et détecter les tendances.',
+    'Échantillonnage adaptatif : sur ta demo 200+ MB, on garde 4 ticks/sec pour heatmap fluide sans saturer ton browser.',
+    '1 round CS2 = 16 stats individuelles trackées. On les compresse en 6 KPIs digestes (FV, KAST, ADR, HS, Op K-D, MKs).',
+    'Top 8% Lvl 7 ouvre 58% de ses duels d\'entry. On détecte si tu prends trop de risques ou pas assez.',
   ];
   let insightIdx = 0;
   const insightEl = document.getElementById('progressInsight');
@@ -1944,27 +1944,27 @@ async function startAnalysis() {
 
   // Progression animée pendant le fetch (avancé lentement jusqu'à 88%)
   // Chaque étape a un timing réaliste basé sur ce que fait réellement le parser.
-  // Les messages > 80s sont rassurants en cas de parsing plus long que prevu
-  // (grosse demo, serveur charge) pour reduire le taux d'abandon.
+  // Les messages > 80s sont rassurants en cas de parsing plus long que prévu
+  // (grosse demo, serveur chargé) pour réduire le taux d'abandon.
   // Microcopy ultrareview item 11 (lift +18-30% retention loading) : chaque
   // sub-message teaser un insight CS2 concret pour transformer l'attente passive
-  // en education + anchoring de la valeur. References pros / benchmarks Lvl 7.
+  // en éducation + anchoring de la valeur. Références pros / benchmarks Lvl 7.
   const autoSteps = [
     { delay:800,  step:0, pct:8,  title:'Envoi du fichier',            sub:'Transfert en cours...' },
     { delay:3000, step:1, pct:20, title:'Parsing CS2',                 sub:'Lecture des ticks bruts (128t serveurs FACEIT)' },
     { delay:5000, step:1, pct:32, title:'Parsing CS2',                 sub:'Extraction positions · La moyenne FACEIT Lvl 7 marque 58% des duels d\'ouverture' },
-    { delay:8000, step:2, pct:44, title:'Calcul des zones',            sub:'Analyse des rounds · 1 round CS2 = 16 stats individuelles trackees' },
+    { delay:8000, step:2, pct:44, title:'Calcul des zones',            sub:'Analyse des rounds · 1 round CS2 = 16 stats individuelles trackées' },
     { delay:12000,step:2, pct:54, title:'Calcul des zones',            sub:'Mapping grenades · L\'impact de smokes pros = +23% kills/round' },
     { delay:18000,step:3, pct:63, title:'Génération des heatmaps',     sub:'Kill zones · On compare avec le top 20 HLTV (rating 1.05-1.30)' },
     { delay:25000,step:3, pct:70, title:'Génération des heatmaps',     sub:'Trajectoires · L\'AWP rapporte 1.42 ratio kill/round chez les pros' },
     { delay:35000,step:4, pct:76, title:'FV Rating',                   sub:'Impact par round · On checke si t\'as ace ce match (rare : 1 sur 47)' },
     { delay:50000,step:4, pct:82, title:'FV Rating',                   sub:'Pondération KPIs · KAST Lvl 7 moyen = 68%, top 1% = 78%+' },
     { delay:70000,step:4, pct:87, title:'Finalisation',                sub:'On croise tes 20 derniers matchs pour le diagnostic Coach IA...' },
-    // Messages rassurants si le parsing depasse les 80s (grosses demos)
+    // Messages rassurants si le parsing dépasse les 80s (grosses demos)
     { delay:85000, step:4, pct:89, title:'Finalisation',               sub:'Demo volumineuse · Plus on a de ticks, plus l\'analyse est précise' },
     { delay:120000,step:4, pct:91, title:'Finalisation',               sub:'Serveur chargé · Ton FV Rating arrive dans quelques instants' },
     { delay:180000,step:4, pct:93, title:'Finalisation',               sub:'Map complexe · 5v5 rounds longs = beaucoup d\'événements à scorer' },
-    { delay:240000,step:4, pct:95, title:'Finalisation',               sub:'Derniere etape · Génération du rapport personnalisé' },
+    { delay:240000,step:4, pct:95, title:'Finalisation',               sub:'Dernière étape · Génération du rapport personnalisé' },
   ];
 
   const timers = autoSteps.map(s =>
@@ -1972,32 +1972,32 @@ async function startAnalysis() {
   );
 
   try {
-    go(0, 3, 'Connexion au serveur', 'Verification de la session...');
+    go(0, 3, 'Connexion au serveur', 'Vérification de la session...');
 
     // ── 1. Auth check : on a besoin du JWT pour signer l'upload Supabase
-    //     ET pour s'authentifier aupres du parser via Authorization header.
+    //     ET pour s'authentifier auprès du parser via Authorization header.
     const { data: { user }, error: authErr } = await _sb.auth.getUser();
-    if (authErr || !user) throw new Error('Tu dois etre connecte pour analyser une demo.');
+    if (authErr || !user) throw new Error('Tu dois être connecté pour analyser une demo.');
 
     // ── 2. Upload direct vers Supabase Storage (bypass Railway proxy
-    //     -> plus de timeout 5min sur l'upload, marche meme pour 450+ MB).
+    //     -> plus de timeout 5min sur l'upload, marche même pour 450+ MB).
     go(0, 6, 'Envoi du fichier', selectedFile.name + ' (' + Math.round(fileSizeMB) + ' MB)');
     const fileId = crypto.randomUUID();
     const storagePath = user.id + '/' + fileId + '.dem';
     const { error: uploadErr } = await _sb.storage
       .from('demos-incoming')
       .upload(storagePath, selectedFile, { cacheControl: '3600', upsert: false });
-    if (uploadErr) throw new Error('Upload Supabase echec : ' + uploadErr.message);
+    if (uploadErr) throw new Error('Upload Supabase échec : ' + uploadErr.message);
 
-    // ── 3. Recup du JWT actif pour le call parser
+    // ── 3. Récup du JWT actif pour le call parser
     const { data: { session } } = await _sb.auth.getSession();
     const jwt = session?.access_token;
-    if (!jwt) throw new Error('Session expiree, reconnecte-toi.');
+    if (!jwt) throw new Error('Session expirée, reconnecte-toi.');
 
     // ── 3.bis. PRE-INSERT demos row (parsing progressif v6.6.0+)
     //   On INSERT la row AVANT le parsing pour que le parser puisse UPDATE
     //   directement la row avec trajectories_data quand phase 2 finit.
-    //   parse_session_id = uuid pour correler les events SSE avec la row.
+    //   parse_session_id = uuid pour corréler les events SSE avec la row.
     //   Le frontend UPDATEra map/rounds/total_kills/fv_rating sur partial_ready.
     let demoId = null;
     try {
@@ -2014,7 +2014,7 @@ async function startAnalysis() {
       if (demoId) sessionStorage.setItem('lastDemoId', demoId);
       console.log('[demo] Pre-INSERT demos row:', demoId);
     } catch (e) {
-      // Fallback : si l'INSERT echoue, on continue sans demoId (le parser
+      // Fallback : si l'INSERT échoue, on continue sans demoId (le parser
       // skippe l'UPDATE Supabase, l'user reste sur le flow legacy 'done')
       console.warn('[demo] pre-INSERT demos failed:', e.message);
     }
@@ -2022,19 +2022,19 @@ async function startAnalysis() {
     // ── 4. Parser via SSE (Server-Sent Events) pour progress live.
     //     L'endpoint /parse-from-storage-stream push des events :
     //     download / parsing.players / parsing.kills / parsing.rounds / ...
-    //     L'user voit en live l'etape en cours au lieu d'un spinner generique.
-    //     Si SSE echoue (network, EventSource non-supporte), fallback POST.
+    //     L'user voit en live l'étape en cours au lieu d'un spinner générique.
+    //     Si SSE échoue (network, EventSource non-supporté), fallback POST.
     //     Avec demoId : parser fait flow 2-phases (partial_ready -> redirect).
-    go(1, 12, 'Connexion au parser', 'Etablissement du stream temps reel...');
+    go(1, 12, 'Connexion au parser', 'Établissement du stream temps réel...');
     timers.forEach(t => clearTimeout(t)); // stop les fake-progress timers
 
     let data;
     try {
       data = await parseViaSSE(jwt, storagePath, timeoutMs, demoId);
     } catch (sseErr) {
-      // Erreurs metier : pas de fallback (le POST donnerait le meme resultat)
+      // Erreurs métier : pas de fallback (le POST donnerait le même résultat)
       if (sseErr.status === 422 || sseErr.code === 'DEMO_BOT_DETECTED') {
-        showError(sseErr.message || "Cette demo n'a pas pu etre parsee. Essaie une autre demo.");
+        showError(sseErr.message || "Cette demo n'a pas pu être parsée. Essaie une autre demo.");
         return;
       }
       // Erreurs network/SSE : fallback POST classique
@@ -2057,7 +2057,7 @@ async function startAnalysis() {
       });
       if (res.status === 422) {
         const d = await res.json().catch(() => ({}));
-        showError(d.message || "Cette demo n'a pas pu etre parsee. Essaie une autre demo.");
+        showError(d.message || "Cette demo n'a pas pu être parsée. Essaie une autre demo.");
         return;
       }
       clearTimeout(timeout);
@@ -2072,12 +2072,12 @@ async function startAnalysis() {
       sessionStorage.setItem('demoData', JSON.stringify(data.data));
     } catch(e) {
       console.warn('sessionStorage full, stripping HUD-only fields from positions...');
-      // Essentiels a garder : position, tick, team, round, hp, YAW (orientation pin),
-      // weapon (arme active + droppee a la mort), grenades inventory (strip au-dessus
+      // Essentiels à garder : position, tick, team, round, hp, YAW (orientation pin),
+      // weapon (arme active + droppée à la mort), grenades inventory (strip au-dessus
       // du pin). On strippe : armure/helmet/defuser/money (visuel HUD secondaire).
       // Strip 1 : garde TOUS les HUD essentials (weapon, armor, helmet,
       // defuser, money, hp, yaw). Drop uniquement les champs grenade déjà
-      // absents du parser (smk/fl/...) + r (round derivable depuis tick).
+      // absents du parser (smk/fl/...) + r (round dérivable depuis tick).
       const stripped = {...data.data};
       if (stripped.positions && typeof stripped.positions === 'object') {
         Object.keys(stripped.positions).forEach(name => {
@@ -2094,7 +2094,7 @@ async function startAnalysis() {
             m: p.m ?? p.money ?? 0,
           }));
         });
-        // Sous-sampling supplementaire : garde 1 position sur 2 pour diviser
+        // Sous-sampling supplémentaire : garde 1 position sur 2 pour diviser
         // la taille par 2 en fallback (reste fluide pour le replay).
         Object.keys(stripped.positions).forEach(name => {
           stripped.positions[name] = stripped.positions[name].filter((_, i) => i % 2 === 0);
