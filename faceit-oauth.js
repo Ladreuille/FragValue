@@ -35,7 +35,16 @@
         if (cfg.clientId || cfg.client_id) clientId = cfg.clientId || cfg.client_id;
       } catch (_) {}
 
-      const redirectUri = window.location.origin + '/faceit-callback.html';
+      // Origine canonique pour OAuth FACEIT. Force https://fragvalue.com en
+      // prod meme si l'user est sur un deploiement preview Vercel, car
+      // FACEIT n'a que l'URL prod en whitelist dans son developer dashboard.
+      // Sans ce fix, FACEIT refuse l'OAuth (redirect_uri_mismatch) ou
+      // redirige vers une preview que l'user n'a pas en session.
+      // Pour localhost (dev), on garde l'origin local.
+      const h = window.location.hostname;
+      const isLocal = h === 'localhost' || h === '127.0.0.1' || h.startsWith('192.168.');
+      const authOrigin = isLocal ? window.location.origin : 'https://fragvalue.com';
+      const redirectUri = authOrigin + '/faceit-callback.html';
 
       // 2. PKCE : code_verifier + code_challenge (SHA-256)
       const verifierBytes = new Uint8Array(32);
