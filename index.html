@@ -22,7 +22,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 
 <meta charset="UTF-8">
 <meta name="google-site-verification" content="y0MDEIYpPuKojBRvwJAj1nTM099BY0Ah-ZHv-uDRHD0">
-<meta name="description" content="FragValue : Coach IA personnalisé pour CS2 FACEIT. Analyse tes 20 derniers matchs, obtiens un diagnostic chiffré, des objectifs hebdo, le 2D replay et les heatmaps tactiques.">
+<meta name="description" content="FragValue : Coach OS pour CS2. Debrief tactique en 30 min, planning hebdo, anti-strat war room. La plateforme des coaches d'academies et hubs FACEIT serieux.">
 <meta name="keywords" content="CS2, FACEIT, analyse, stats, demo parser, coach IA, FV Rating, heatmap, 2D replay, progression, ELO, KAST, ADR, scout, roster, team">
 <meta name="theme-color" content="#080909">
 <meta name="author" content="FragValue">
@@ -30,8 +30,8 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <link rel="alternate" hreflang="fr" href="https://fragvalue.com/">
 <link rel="alternate" hreflang="en" href="https://fragvalue.com/en/">
 <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/">
-<meta property="og:title" content="FragValue : Coach IA CS2 · Analyse tes matchs FACEIT">
-<meta property="og:description" content="Le seul outil qui te livre un diagnostic personnalisé en 90s après chaque match FACEIT : 3 forces chiffrées, 3 axes, 4 actions concrètes, 1 objectif hebdo et la map prioritaire. 2D replay et heatmaps en bonus.">
+<meta property="og:title" content="FragValue : Coach OS pour CS2">
+<meta property="og:description" content="Debrief tactique en 30 min, planning hebdo, anti-strat war room. Une plateforme pour les coaches d'equipes CS2 qui veulent gagner du temps et de la profondeur.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://fragvalue.com/">
 <meta property="og:image" content="https://fragvalue.com/og/home.png">
@@ -46,7 +46,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <meta name="twitter:image" content="https://fragvalue.com/og/home.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
 <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
-<title>FragValue : Coach IA CS2 · Analyse FACEIT, 2D Replay, Heatmaps</title>
+<title>FragValue : Coach OS pour CS2</title>
 
 <!-- Structured data : Organization + SoftwareApplication pour SEO Google -->
 <script type="application/ld+json">
@@ -900,6 +900,180 @@ section{padding:100px 80px;position:relative}
   .all-tools-grid{grid-template-columns:1fr}
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   HERO V3 · Coach OS · Refonte Phase 1 (preview/coach-platform-refonte)
+   ══════════════════════════════════════════════════════════════════
+   Discipline soustractive : 2 elements seulement (headline massive
+   + tagline + 1 CTA). Tactical radar reste en background mais opacity
+   reduite a 0.12. Le hero occupe 100vh pour un focal point unique.
+*/
+.hero-v3{
+  position:relative;
+  min-height:100vh;
+  width:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:120px 32px 80px;
+  text-align:center;
+  overflow:hidden;
+  /* Override des styles hero legacy */
+  margin:0;
+  max-width:none;
+}
+.hero-v3 .hero-radar{
+  opacity:.12;
+  position:absolute;inset:0;width:100%;height:100%;
+  pointer-events:none;z-index:0;
+}
+.hero-v3-content{
+  position:relative;z-index:2;
+  display:flex;flex-direction:column;align-items:center;gap:48px;
+  max-width:1400px;
+}
+.hero-v3-headline{
+  font-family:var(--display);
+  font-weight:400;
+  text-transform:uppercase;
+  letter-spacing:-.015em;
+  line-height:.88;
+  margin:0;
+  color:var(--text);
+}
+.hero-v3-line-1{
+  display:block;
+  font-size:clamp(96px,16vw,260px);
+  /* Slight lime accent on the dot via accent2 weight */
+  background:linear-gradient(180deg,#fff 0%,#fff 70%,#d9eebd 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+}
+.hero-v3-line-2{
+  display:block;
+  font-size:clamp(56px,9vw,140px);
+  color:var(--accent);
+  text-shadow:0 0 60px rgba(184,255,87,.35);
+  margin-top:8px;
+}
+.hero-v3-tagline{
+  font-family:var(--mono);
+  font-size:clamp(13px,1.4vw,18px);
+  line-height:1.7;
+  color:var(--text2);
+  max-width:520px;
+  margin:0;
+  letter-spacing:.02em;
+}
+.hero-v3-tagline em{
+  font-style:normal;color:var(--text);font-weight:700;
+  border-bottom:1px solid var(--accent);
+  padding-bottom:2px;
+}
+.hero-v3-cta{
+  margin-top:8px;
+}
+.hero-v3-btn{
+  padding:18px 36px !important;
+  font-size:14px !important;
+  letter-spacing:.06em;
+  gap:12px !important;
+}
+.hero-v3-scroll-hint{
+  position:absolute;
+  bottom:48px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  z-index:3;
+  opacity:.5;
+  animation:scrollHintFade 3s ease-in-out 1.5s infinite;
+}
+.hint-line{
+  width:1px;height:42px;
+  background:linear-gradient(180deg,transparent 0%,var(--accent) 100%);
+}
+.hint-text{
+  font-family:var(--mono);
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--text3);
+}
+@keyframes scrollHintFade{
+  0%,100%{opacity:.3;transform:translate(-50%,0)}
+  50%{opacity:.7;transform:translate(-50%,6px)}
+}
+
+/* Mobile : reduce paddings + sizes */
+@media (max-width:780px){
+  .hero-v3{padding:80px 20px 60px;min-height:90vh}
+  .hero-v3-content{gap:32px}
+  .hero-v3-line-1{font-size:clamp(64px,18vw,120px)}
+  .hero-v3-line-2{font-size:clamp(40px,11vw,80px)}
+  .hero-v3-tagline{font-size:13px;line-height:1.6}
+  .hero-v3-btn{padding:14px 24px !important;font-size:13px !important}
+  .hero-v3-scroll-hint{bottom:24px}
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   STICKY WIDGET bas-gauche · Lando "Next Race" pattern
+   ══════════════════════════════════════════════════════════════════
+   Anchore tout au long du scroll. Donne l'illusion "app vivante".
+   Pour FragValue : statut roster + prochaine session.
+*/
+.sticky-widget{
+  position:fixed;
+  left:24px;bottom:24px;
+  z-index:50;
+  padding:14px 18px;
+  background:rgba(8,9,9,.85);
+  border:1px solid var(--border2);
+  border-radius:12px;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  font-family:var(--mono);
+  min-width:180px;
+  box-shadow:0 8px 32px rgba(0,0,0,.4),
+             0 0 0 1px rgba(184,255,87,.06);
+  /* Subtle fade-in on page load */
+  animation:stickyWidgetIn .8s cubic-bezier(.2,.7,.2,1) 1.2s backwards;
+}
+@keyframes stickyWidgetIn{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.sticky-widget-label{
+  font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--text3);
+  margin-bottom:6px;
+}
+.sticky-widget-value{
+  font-family:var(--display);
+  font-size:22px;line-height:1;
+  color:var(--text);
+  margin-bottom:6px;
+  letter-spacing:.01em;
+}
+.sticky-widget-meta{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;letter-spacing:.04em;
+  color:var(--text2);
+}
+.sticky-widget-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 10px var(--accent);
+  animation:widgetDotPulse 2s ease-in-out infinite;
+}
+@keyframes widgetDotPulse{
+  0%,100%{opacity:.8;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.3)}
+}
+/* Auto-hide widget en mobile (overlaps avec CTA) */
+@media (max-width:780px){
+  .sticky-widget{display:none}
+}
+/* Hide quand le footer arrive en vue (via JS class .hidden) */
+.sticky-widget.hidden{
+  opacity:0;transform:translateY(20px);
+  pointer-events:none;
+  transition:opacity .3s ease, transform .3s ease;
+}
+
 /* ── CURSOR REVEAL · Lando-inspired masked layer reveal ──
    Section fullscreen avec 2 layers. Layer 1 = surface stats (visible
    partout). Layer 2 = verite tactique (visible UNIQUEMENT sous la souris,
@@ -1078,23 +1252,23 @@ section{padding:100px 80px;position:relative}
 .brand-marquee{
   position:relative;width:100%;overflow:hidden;
   border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-  padding:32px 0;
-  background:radial-gradient(120% 100% at 50% 50%, rgba(184,255,87,.025) 0%, transparent 70%);
+  padding:60px 0;
+  background:radial-gradient(120% 100% at 50% 50%, rgba(184,255,87,.035) 0%, transparent 70%);
   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 6%,#000 94%,transparent 100%);
           mask-image:linear-gradient(90deg,transparent 0%,#000 6%,#000 94%,transparent 100%);
 }
 .brand-marquee-track{
   display:inline-flex;gap:0;white-space:nowrap;
-  animation:bm-scroll 44s linear infinite;
+  animation:bm-scroll 90s linear infinite;
   will-change:transform;
 }
 .brand-marquee:hover .brand-marquee-track{animation-play-state:paused}
 .bm-item{
   font-family:var(--display);
-  font-size:clamp(48px,8vw,112px);
-  font-weight:400;line-height:1;letter-spacing:.015em;
+  font-size:clamp(72px,13vw,220px);
+  font-weight:400;line-height:1;letter-spacing:.005em;
   color:var(--text3);text-transform:uppercase;
-  padding-right:24px;
+  padding-right:40px;
 }
 .bm-item em{
   font-style:normal;color:var(--accent);
@@ -1271,146 +1445,65 @@ footer{
 </head>
 <body>
 
-<!-- NAV · 5 items max -->
-<nav>
+<!-- NAV · refonte Coach Platform : minimaliste, focus B2B -->
+<nav class="nav-v3">
   <a href="/" class="nav-logo">Frag<span>Value</span></a>
   <div class="nav-links">
-    <a href="#ai-coach" style="color:var(--accent)">Coach IA</a>
-    <a href="#features">Fonctionnalités</a>
     <a href="pricing.html">Tarifs</a>
+    <a href="/developers.html">Developers</a>
   </div>
   <div id="navAuth">
-    <a href="/demo.html" class="nav-cta" style="background:transparent;color:var(--accent);border:1px solid rgba(184,255,87,.3)">Analyser</a>
     <a href="/login.html" class="nav-cta" id="navLoginBtn">Se connecter</a>
     <a href="/account.html" class="nav-cta" id="navAccountBtn" style="display:none">Mon espace</a>
   </div>
 </nav>
 
-<!-- TICKER -->
-<div class="ticker" aria-hidden="true">
-  <div class="ticker-track" id="tickerTrack">
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>COACH IA PERSONNALISÉ</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>LINEUP LIBRARY PRO</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>FV RATING · IMPACT RÉEL</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>2D REPLAY INTERACTIF</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>SCOUT 2 À 5 JOUEURS</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>HEATMAPS TACTIQUES</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>STATS ROUND PAR ROUND</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>ROSTER & TEAM STATS</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>COACH IA PERSONNALISÉ</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>LINEUP LIBRARY PRO</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>FV RATING · IMPACT RÉEL</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>2D REPLAY INTERACTIF</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>SCOUT 2 À 5 JOUEURS</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>HEATMAPS TACTIQUES</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>STATS ROUND PAR ROUND</div>
-    <div class="ticker-item"><svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="var(--accent)"/></svg>ROSTER & TEAM STATS</div>
-  </div>
-</div>
-
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-grid"></div>
-  <div class="hero-glow"></div>
-  <!-- ════════ Tactical CS2 radar background ════════
-       Canvas 2D anime : mini-Mirage + 5 player dots + smoke expansions
-       + kill markers + radar sweep. Loop 15s. Subtle opacity 0.2.
-       Disabled on mobile (perf) + reduced-motion (accessibility). -->
+<!-- ════════ HERO V3 — Coach OS · refonte Phase 1 ════════
+     Discipline soustractive : tickers, stats card droite, sub paragraph
+     dense, trust badges → tous degages. Reste : tactical radar bg +
+     massive Anton H1 + 1 tagline + 1 CTA. Single focal point.
+     Lisibilite cible : un coach landing comprend "Coach OS pour CS2"
+     en 5 secondes max. -->
+<section class="hero hero-v3">
   <canvas class="hero-radar" id="heroRadar" aria-hidden="true"></canvas>
-  <div class="hero-tag" style="background:linear-gradient(135deg,rgba(184,255,87,.15) 0%,rgba(184,255,87,.05) 100%);border-color:rgba(184,255,87,.4);color:var(--accent);display:inline-flex;align-items:center;gap:6px">
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-    Auto-sync FACEIT · LIVE depuis mai 2026
-  </div>
-  <h1>
-    <span class="anim-word">Pourquoi</span>
-    <span class="anim-word">t'as perdu</span><br>
-    <em class="anim-word">round&nbsp;14&nbsp;?</em><br>
-    <span class="anim-word">FragValue te le dit.</span>
-  </h1>
-  <p class="hero-sub">Tes stats CS2 te donnent ton ADR et ton KAST. <strong>Le Coach IA FragValue te dit le pourquoi tactique</strong> : citation de tick, decision adversaire, action concrete a travailler. Auto-sync FACEIT active. Tu joues, on analyse, tu progresses.</p>
-  <div class="hero-actions">
-    <a href="/demo.html" class="btn-primary">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-      Analyser mon 1er match gratuitement
-    </a>
-    <a href="#features" class="btn-secondary">Voir les fonctionnalités →</a>
-  </div>
-  <!-- Hero stats : trust signals factuels, pas de mock de volume -->
-  <div class="hero-stats">
-    <div>
-      <div class="hero-stat-val">AUTO</div>
-      <div class="hero-stat-label">Sync FACEIT · zero clic</div>
-    </div>
-    <div>
-      <div class="hero-stat-val">11</div>
-      <div class="hero-stat-label">Axes de progression IA</div>
-    </div>
-    <div>
-      <div class="hero-stat-val">5 min</div>
-      <div class="hero-stat-label">Match fini → analyse prete</div>
+
+  <div class="hero-v3-content">
+    <h1 class="hero-v3-headline">
+      <span class="hero-v3-line-1">Coach&nbsp;OS.</span>
+      <span class="hero-v3-line-2">Pour&nbsp;CS2.</span>
+    </h1>
+    <p class="hero-v3-tagline">
+      Debrief tactique. Planning. Anti-strat.<br>
+      <em>Une plateforme.</em>
+    </p>
+    <div class="hero-v3-cta">
+      <a href="/coach-dashboard.html" class="btn-primary hero-v3-btn">
+        Configurer mon equipe
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M13 5l7 7-7 7"/>
+        </svg>
+      </a>
     </div>
   </div>
 
-  <!-- Trust badges : reduit a 2 (les + impactants pour conversion).
-       Les autres (Stripe, RGPD, Made in France) restent dans le footer. -->
-  <div class="trust-band" style="display:flex;align-items:center;justify-content:center;gap:18px;margin-top:18px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase">
-    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>14j satisfait ou rembourse</span>
-    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Annulation 1 clic</span>
-  </div>
-
-  <!-- DEMO PREVIEW : teaser authentique de ce que FragValue delivre -->
-  <div class="demo-preview">
-    <div class="demo-label">
-      <span class="demo-live-dot"></span>
-      Ce que tu obtiens après un match
-    </div>
-    <div class="demo-context"><strong>Dust2 · 18 rounds</strong> · analyse FACEIT live</div>
-    <div class="demo-body">
-      <div class="demo-card">
-        <div class="demo-card-label">FV Rating</div>
-        <div class="demo-card-val green">1.42</div>
-        <div class="demo-card-sub">Top 18% niveau 8</div>
-      </div>
-      <div class="demo-card">
-        <div class="demo-card-label">KAST</div>
-        <div class="demo-card-val">74%</div>
-        <div class="demo-card-sub">+6% vs. moyenne</div>
-      </div>
-      <div class="demo-card">
-        <div class="demo-card-label">ADR</div>
-        <div class="demo-card-val gold">87.3</div>
-        <div class="demo-card-sub">Référence pro : 82.1</div>
-      </div>
-      <div class="demo-card">
-        <div class="demo-card-label">Opening duels</div>
-        <div class="demo-card-val">63%</div>
-        <div class="demo-card-sub">Win rate premier duel</div>
-      </div>
-      <div class="demo-coach">
-        <div class="demo-coach-head">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
-          Coach IA · Diagnostic
-        </div>
-        <div class="demo-coach-quote">
-          Profil solide en duels d'ouverture (63%). Ton vrai plafond : la régularité du KAST. Vise +6 pts de consistance sur tes 5 prochains matchs.
-        </div>
-        <div class="demo-coach-footer">
-          <div class="demo-coach-obj">
-            <span class="demo-coach-obj-label">Objectif hebdo</span>
-            <span class="demo-coach-obj-val">KAST ≥ 70% · 5 matchs</span>
-          </div>
-          <div class="demo-coach-trend">
-            <svg class="demo-coach-spark" viewBox="0 0 60 20" preserveAspectRatio="none">
-              <polyline points="0,14 8,12 16,13 24,9 32,11 40,7 48,8 60,5" fill="none" stroke="#b8ff57" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="60" cy="5" r="2.5" fill="#b8ff57"/>
-            </svg>
-            <span class="demo-coach-trend-pct">↗ +12%</span>
-          </div>
-        </div>
-      </div>
-    </div>
+  <!-- Scroll hint subtil bas du hero, disparait apres le 1er scroll -->
+  <div class="hero-v3-scroll-hint" aria-hidden="true">
+    <span class="hint-line"></span>
+    <span class="hint-text">Decouvrir</span>
   </div>
 </section>
+
+<!-- Sticky widget anchore bas-gauche pendant tout le scroll (Lando-style).
+     Pour FragValue : un coach voit en permanence "ou en est mon roster".
+     Sans backend pour l'instant : valeurs placeholder editoriales. -->
+<aside class="sticky-widget" aria-label="Etat du roster" id="stickyWidget">
+  <div class="sticky-widget-label">Prochaine session</div>
+  <div class="sticky-widget-value">Vendredi 21h</div>
+  <div class="sticky-widget-meta">
+    <span class="sticky-widget-dot"></span>
+    4 / 5 joueurs prets
+  </div>
+</aside>
 
 <!-- ════════ CURSOR REVEAL (Lando-style cinematic moment) ════════
      Section fullscreen avec 2 layers superposes : la surface (ce que les
@@ -1420,42 +1513,42 @@ footer{
      la surface, FragValue revele la profondeur sous ton regard.
      Mobile : 2 cartes empilees verticalement (pas de cursor sur touch). -->
 <section class="reveal-section" id="cursorReveal">
-  <!-- Layer 1 : surface stats (defaut visible partout) -->
+  <!-- Layer 1 : surface stats du roster (defaut visible partout) -->
   <div class="reveal-layer reveal-default">
     <div class="reveal-tag">CE QUE TU VOIS</div>
-    <h2 class="reveal-headline">Tu vois ton match<br>comme <em>ca</em>.</h2>
+    <h2 class="reveal-headline">Ton roster te dit<br><em>combien</em>.</h2>
     <div class="reveal-stats">
       <div class="reveal-stat">
         <div class="reveal-stat-val">1.10</div>
-        <div class="reveal-stat-label">K / D</div>
+        <div class="reveal-stat-label">K / D moyen</div>
       </div>
       <div class="reveal-sep"></div>
       <div class="reveal-stat">
         <div class="reveal-stat-val">65<span>%</span></div>
-        <div class="reveal-stat-label">KAST</div>
+        <div class="reveal-stat-label">KAST equipe</div>
       </div>
       <div class="reveal-sep"></div>
       <div class="reveal-stat">
         <div class="reveal-stat-val">78</div>
-        <div class="reveal-stat-label">ADR</div>
+        <div class="reveal-stat-label">ADR moyen</div>
       </div>
     </div>
-    <div class="reveal-sub">Stats que FACEIT et Leetify te montrent.</div>
+    <div class="reveal-sub">Les stats que FACEIT et Leetify donnent deja.</div>
   </div>
 
-  <!-- Layer 2 : verite tactique (revele sous le curseur uniquement) -->
+  <!-- Layer 2 : verite tactique pour le coach (revele sous le curseur) -->
   <div class="reveal-layer reveal-truth">
-    <div class="reveal-tag truth">CE QUE FRAGVALUE VOIT</div>
-    <h2 class="reveal-headline">FragValue le voit<br>comme <em>ca</em>.</h2>
+    <div class="reveal-tag truth">CE QUE FRAGVALUE TE DIT</div>
+    <h2 class="reveal-headline">FragValue te dit<br><em>pourquoi</em>.</h2>
     <div class="reveal-stats">
-      <div class="reveal-stat">
-        <div class="reveal-stat-val accent">0.42</div>
-        <div class="reveal-stat-label">FV Rating</div>
-      </div>
-      <div class="reveal-sep"></div>
       <div class="reveal-stat">
         <div class="reveal-stat-val accent">22<span>%</span></div>
         <div class="reveal-stat-label">Entry win T-side</div>
+      </div>
+      <div class="reveal-sep"></div>
+      <div class="reveal-stat">
+        <div class="reveal-stat-val accent">3</div>
+        <div class="reveal-stat-label">Morts mid Cache</div>
       </div>
       <div class="reveal-sep"></div>
       <div class="reveal-stat">
@@ -1463,7 +1556,7 @@ footer{
         <div class="reveal-stat-label">Trade rate</div>
       </div>
     </div>
-    <div class="reveal-sub truth">3 morts T-side mid Cache &lt; 15s. Tu over-peek systematiquement.</div>
+    <div class="reveal-sub truth">Ton roster over-peek sur Cache, sans utility. Voici le drill a assigner cette semaine.</div>
   </div>
 
   <!-- Cursor lens (suit la souris, crosshair lime) -->
@@ -1475,6 +1568,17 @@ footer{
     Bouge la souris sur la page
   </div>
 </section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     REFONTE COACH PLATFORM · Phase 1 (preview/coach-platform-refonte)
+     Les sections ci-dessous sont MASQUEES temporairement (style display:none)
+     pour exposer uniquement Hero V3 + Cursor reveal + Brand marquee + Footer.
+     Elles seront remplacees vague par vague par les nouvelles Capability sections
+     (VOD Coordinator, Practice OS, Anti-Strat War Room, Coach IA, Pricing).
+     Ne pas SUPPRIMER : on reuse certaines briques (testimonials, pricing layout)
+     dans les nouvelles sections. C'est plus rapide d'en cacher que de re-coder.
+     ════════════════════════════════════════════════════════════════ -->
+<div class="refonte-legacy-hidden" style="display:none" aria-hidden="true" data-refonte="phase-1-hide-legacy">
 
 <!-- ════════ AUTO-SYNC FACEIT (ton moat, ajoute mai 2026) ════════
      Premier produit avec acces officiel Downloads API.
@@ -2130,6 +2234,8 @@ footer{
   </div>
 </section>
 
+</div><!-- /refonte-legacy-hidden : fin du masquage Phase 1 -->
+
 <!-- BRAND MARQUEE · cinematic velocity strip Lando-inspired -->
 <!--
   Bande typographique grande echelle qui defile lentement entre les sections et
@@ -2140,15 +2246,12 @@ footer{
 -->
 <section class="brand-marquee" aria-hidden="true">
   <div class="brand-marquee-track">
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;CS2 analytics decoded&nbsp;&middot;&nbsp;</span>
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Stats redefined&nbsp;&middot;&nbsp;</span>
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;FACEIT native&nbsp;&middot;&nbsp;</span>
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Coach IA built-in&nbsp;&middot;&nbsp;</span>
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Coach OS for CS2&nbsp;&middot;&nbsp;</span>
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Debrief in 30 min&nbsp;&middot;&nbsp;</span>
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Anti-strat ready&nbsp;&middot;&nbsp;</span>
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Practice planned&nbsp;&middot;&nbsp;</span>
     <!-- Duplicate track for seamless infinite loop -->
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;CS2 analytics decoded&nbsp;&middot;&nbsp;</span>
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Stats redefined&nbsp;&middot;&nbsp;</span>
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;FACEIT native&nbsp;&middot;&nbsp;</span>
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Coach IA built-in&nbsp;&middot;&nbsp;</span>
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Practice planned&nbsp;&middot;&nbsp;</span>
   </div>
 </section>
 
