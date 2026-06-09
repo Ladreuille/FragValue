@@ -331,15 +331,41 @@ nav{
   animation:fadeUp .6s .3s ease both
 }
 /* btn-primary : standard commun (14x28 + 13px + radius-md 8) */
+/* Glow Lando-inspired : box-shadow radial lime au repos pour donner
+   l'aura "neon dans le noir", amplifie au hover. Aligne avec la palette
+   lime sur dark de la marque. Anime via pseudo ::after pour ne pas
+   conflicter avec les transform du :hover existant. */
 .btn-primary{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   background:var(--accent);color:#000;border:none;
   padding:14px 28px;border-radius:8px;
   font-family:var(--mono);font-size:13px;font-weight:700;
   text-decoration:none;letter-spacing:.04em;text-transform:uppercase;
-  cursor:pointer;transition:all .15s cubic-bezier(.2,.8,.25,1)
+  cursor:pointer;transition:all .2s cubic-bezier(.2,.8,.25,1);
+  position:relative;
+  box-shadow:0 0 0 rgba(184,255,87,0),
+             0 4px 14px rgba(184,255,87,.18);
 }
-.btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,255,87,.15)}
+.btn-primary::after{
+  content:"";position:absolute;inset:-2px;border-radius:10px;
+  background:radial-gradient(60% 80% at 50% 100%, rgba(184,255,87,.55) 0%, transparent 70%);
+  filter:blur(14px);opacity:.45;z-index:-1;
+  transition:opacity .25s ease, filter .25s ease;
+  pointer-events:none;
+}
+.btn-primary:hover{
+  filter:brightness(1.1);
+  transform:translateY(-2px);
+  box-shadow:0 0 0 1px rgba(184,255,87,.25),
+             0 12px 32px rgba(184,255,87,.35),
+             0 0 60px rgba(184,255,87,.2);
+}
+.btn-primary:hover::after{opacity:.85;filter:blur(20px)}
+.btn-primary:active{transform:translateY(0);transition-duration:.08s}
+@media (prefers-reduced-motion: reduce){
+  .btn-primary::after{display:none}
+  .btn-primary:hover{transform:none}
+}
 .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none}
 .btn-secondary{
   color:var(--text2);font-size:13px;text-decoration:none;
@@ -874,6 +900,48 @@ section{padding:100px 80px;position:relative}
   .all-tools-grid{grid-template-columns:1fr}
 }
 
+/* ── BRAND MARQUEE · Lando-inspired velocity strip ──
+   Bande typo grande echelle qui defile lentement avant le footer.
+   Pause au hover pour permettre la lecture, mask-image pour fade des bords
+   (evite le clip visuel brutal aux extremites du viewport). Respect
+   prefers-reduced-motion via animation: none.
+*/
+.brand-marquee{
+  position:relative;width:100%;overflow:hidden;
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:32px 0;
+  background:radial-gradient(120% 100% at 50% 50%, rgba(184,255,87,.025) 0%, transparent 70%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 6%,#000 94%,transparent 100%);
+          mask-image:linear-gradient(90deg,transparent 0%,#000 6%,#000 94%,transparent 100%);
+}
+.brand-marquee-track{
+  display:inline-flex;gap:0;white-space:nowrap;
+  animation:bm-scroll 44s linear infinite;
+  will-change:transform;
+}
+.brand-marquee:hover .brand-marquee-track{animation-play-state:paused}
+.bm-item{
+  font-family:var(--display);
+  font-size:clamp(48px,8vw,112px);
+  font-weight:400;line-height:1;letter-spacing:.015em;
+  color:var(--text3);text-transform:uppercase;
+  padding-right:24px;
+}
+.bm-item em{
+  font-style:normal;color:var(--accent);
+  text-shadow:0 0 28px rgba(184,255,87,.28);
+}
+@keyframes bm-scroll{
+  0%{transform:translateX(0)}
+  100%{transform:translateX(-50%)}
+}
+@media (prefers-reduced-motion: reduce){
+  .brand-marquee-track{animation:none;transform:translateX(0)}
+}
+@media (max-width:640px){
+  .brand-marquee{padding:24px 0}
+}
+
 /* ── FOOTER ── */
 footer{
   border-top:1px solid var(--border);
@@ -939,6 +1007,32 @@ footer{
    reveals doux et 1-2 effets count-up qui ajoutent de la vie sans
    distraire de la conversion. */
 @media (prefers-reduced-motion: no-preference) {
+
+  /* 1b. Hero accent word "round 14 ?" : shimmer lime sweep cinematique
+     (style Lando : un highlight lumineux qui balaye le mot accent toutes
+     les 6s pour creer un "battement" de marque sans distraire). */
+  .hero h1 em.anim-word{
+    position:relative;
+    background:linear-gradient(90deg,
+      var(--accent) 0%,
+      var(--accent) 40%,
+      #fff 50%,
+      var(--accent) 60%,
+      var(--accent) 100%);
+    background-size:200% 100%;
+    background-position:100% 0;
+    -webkit-background-clip:text;
+            background-clip:text;
+    -webkit-text-fill-color:transparent;
+            text-fill-color:transparent;
+    color:transparent;
+    animation:wordReveal .9s cubic-bezier(.2,.7,.2,1) forwards,
+              accentShimmer 6s ease-in-out 2.5s infinite;
+  }
+  @keyframes accentShimmer{
+    0%, 100%{ background-position:100% 0; }
+    50%{ background-position:0% 0; }
+  }
 
   /* 1. Hero title staggered reveal : mots qui apparaissent en cascade */
   .hero h1 .anim-word {
@@ -1803,6 +1897,28 @@ footer{
   </div>
 </section>
 
+<!-- BRAND MARQUEE · cinematic velocity strip Lando-inspired -->
+<!--
+  Bande typographique grande echelle qui defile lentement entre les sections et
+  le footer. Lit comme une "signature de marque" : FragValue revient en lime
+  comme un battement, separe par des descripteurs courts. Hover pause la
+  scroll pour laisser le user lire. Edge fade via mask-image pour eviter
+  l'effet "clip brutal" au bord de viewport.
+-->
+<section class="brand-marquee" aria-hidden="true">
+  <div class="brand-marquee-track">
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;CS2 analytics decoded&nbsp;&middot;&nbsp;</span>
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Stats redefined&nbsp;&middot;&nbsp;</span>
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;FACEIT native&nbsp;&middot;&nbsp;</span>
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Coach IA built-in&nbsp;&middot;&nbsp;</span>
+    <!-- Duplicate track for seamless infinite loop -->
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;CS2 analytics decoded&nbsp;&middot;&nbsp;</span>
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Stats redefined&nbsp;&middot;&nbsp;</span>
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;FACEIT native&nbsp;&middot;&nbsp;</span>
+    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Coach IA built-in&nbsp;&middot;&nbsp;</span>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-logo">Frag<span>Value</span></div>
@@ -2192,7 +2308,9 @@ async function startCheckout(plan) {
   // 1. Scroll-reveal : add .scroll-reveal class to sections, trigger
   // .is-visible when 15% du viewport est atteint. Une fois revealed,
   // on observe plus (perf).
-  const targets = document.querySelectorAll('section');
+  // Exclu : .hero (visible direct), .brand-marquee (auto-anime, fade-in casse
+  // le rythme de la marquee scrolling horizontale).
+  const targets = document.querySelectorAll('section:not(.brand-marquee)');
   targets.forEach(s => s.classList.add('scroll-reveal'));
   // Hero deja visible : remove la class pour qu'il s'affiche immediatement
   const heroEl = document.querySelector('.hero');
