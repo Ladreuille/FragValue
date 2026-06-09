@@ -1004,9 +1004,18 @@ nav.nav-v3.scrolled{
   max-width:none;
 }
 .hero-v3 .hero-radar{
-  opacity:.12;
+  opacity:.22;
   position:absolute;inset:0;width:100%;height:100%;
   pointer-events:none;z-index:0;
+}
+/* Lime glow radial behind hero — richesse visuelle */
+.hero-v3::before{
+  content:"";
+  position:absolute;inset:0;
+  background:
+    radial-gradient(60% 50% at 50% 60%, rgba(184,255,87,.08) 0%, transparent 50%),
+    radial-gradient(40% 30% at 50% 100%, rgba(184,255,87,.05) 0%, transparent 60%);
+  pointer-events:none;z-index:1;
 }
 .hero-v3-content{
   position:relative;z-index:2;
@@ -1163,7 +1172,234 @@ nav.nav-v3.scrolled{
   transition:opacity .3s ease, transform .3s ease;
 }
 
-/* ── CURSOR REVEAL · Lando-inspired masked layer reveal ──
+/* ══════════════════════════════════════════════════════════════════
+   COMPARISON SECTION · refonte v2 (replace cursor reveal illisible)
+   ══════════════════════════════════════════════════════════════════
+   Side-by-side propre : LEFT subdued grey "ton scoreboard", RIGHT lime
+   prominent "ce qu'il cache". Divider central "vs". Mobile : stacked.
+   Pas de cursor magic. Premium par clarte, pas par effets.
+*/
+.compare-section{
+  position:relative;
+  padding:var(--space-lg) var(--space-sm);
+  background:
+    radial-gradient(80% 60% at 50% 0%, rgba(184,255,87,.04) 0%, transparent 70%),
+    var(--bg-deep);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  overflow:hidden;
+}
+/* Subtle grain texture pour casser le plat (premium feel) */
+.compare-section::before{
+  content:"";
+  position:absolute;inset:0;
+  background-image:radial-gradient(circle at 20% 30%, rgba(184,255,87,.04) 0%, transparent 50%),
+                   radial-gradient(circle at 80% 70%, rgba(184,255,87,.025) 0%, transparent 50%);
+  pointer-events:none;
+}
+.compare-intro{
+  position:relative;z-index:2;
+  text-align:center;
+  max-width:var(--container-base);
+  margin:0 auto var(--space-md);
+}
+.compare-overline{
+  display:inline-block;
+  font-family:var(--mono);
+  font-size:var(--font-mono-tag);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--accent);
+  padding:6px 14px;
+  border:1px solid rgba(184,255,87,.3);
+  border-radius:var(--radius-pill);
+  background:rgba(184,255,87,.05);
+  margin-bottom:var(--space-sm);
+}
+.compare-title{
+  font-family:var(--display);
+  font-size:var(--font-display-m);
+  font-weight:400;line-height:1.0;
+  letter-spacing:-.01em;
+  text-transform:uppercase;
+  color:var(--text);
+  margin:0;
+}
+.compare-title em{
+  font-style:normal;
+  color:var(--accent);
+  text-shadow:var(--glow-lime);
+}
+.compare-grid{
+  position:relative;z-index:2;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:stretch;
+  gap:0;
+  max-width:1320px;
+  margin:0 auto;
+}
+.compare-card{
+  position:relative;
+  padding:var(--space-md) var(--space-sm);
+  border:1px solid var(--border);
+  background:rgba(15,16,16,.6);
+  border-radius:var(--radius2);
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;
+  gap:var(--space-sm);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  transition:transform .35s var(--ease-out-cubic),
+             border-color .25s ease,
+             box-shadow .35s ease;
+}
+.compare-default{
+  /* Subdued, ton scoreboard classique */
+}
+.compare-truth{
+  border-color:rgba(184,255,87,.25);
+  background:linear-gradient(180deg, rgba(184,255,87,.04) 0%, rgba(15,16,16,.6) 60%);
+  box-shadow:0 0 0 1px rgba(184,255,87,.08),
+             0 12px 48px rgba(184,255,87,.06);
+}
+.compare-truth:hover{
+  transform:translateY(-4px);
+  border-color:rgba(184,255,87,.5);
+  box-shadow:0 0 0 1px rgba(184,255,87,.25),
+             0 24px 64px rgba(184,255,87,.18),
+             var(--glow-lime-strong);
+}
+.compare-card-tag{
+  font-family:var(--mono);
+  font-size:var(--font-mono-tag);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--text3);
+  padding:5px 12px;
+  border:1px solid var(--border2);
+  border-radius:var(--radius-pill);
+  background:rgba(255,255,255,.02);
+}
+.compare-card-tag.truth{
+  color:var(--accent);
+  border-color:rgba(184,255,87,.5);
+  background:rgba(184,255,87,.08);
+  box-shadow:var(--glow-lime);
+}
+.compare-card-headline{
+  font-family:var(--display);
+  font-size:var(--font-display-s);
+  font-weight:400;line-height:1;
+  color:var(--text2);
+  letter-spacing:-.01em;
+  text-transform:uppercase;
+  margin:0;
+}
+.compare-card-headline.truth{
+  color:var(--accent);
+  text-shadow:var(--glow-lime);
+}
+.compare-card-stats{
+  display:flex;
+  align-items:center;
+  gap:var(--space-sm);
+  flex-wrap:nowrap;
+}
+.cstat{
+  display:flex;flex-direction:column;gap:6px;align-items:center;min-width:84px;
+}
+.cstat-val{
+  font-family:var(--display);
+  font-size:clamp(48px, 6vw, 88px);
+  font-weight:400;line-height:1;
+  color:var(--text2);
+  letter-spacing:.01em;
+}
+.cstat-val span{
+  font-size:.55em;opacity:.8;margin-left:2px;
+}
+.cstat.truth .cstat-val{
+  color:var(--accent);
+  text-shadow:0 0 24px rgba(184,255,87,.45);
+}
+.cstat-label{
+  font-family:var(--mono);
+  font-size:var(--font-mono-tag);
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--text3);
+  white-space:nowrap;
+}
+.cstat-sep{
+  width:1px;height:48px;
+  background:var(--border2);
+  flex-shrink:0;
+}
+.compare-card-sub{
+  font-family:var(--mono);
+  font-size:13px;
+  line-height:1.7;
+  color:var(--text3);
+  max-width:340px;
+  margin:0;
+}
+.compare-card-sub.truth{
+  color:var(--text2);
+  font-weight:700;
+}
+.compare-divider{
+  display:flex;align-items:center;justify-content:center;
+  padding:0 var(--space-sm);
+  position:relative;
+}
+.compare-divider::before,
+.compare-divider::after{
+  content:"";
+  position:absolute;
+  left:50%;width:1px;
+  background:linear-gradient(180deg, transparent 0%, var(--border-bright) 50%, transparent 100%);
+}
+.compare-divider::before{ top:0;height:40%; }
+.compare-divider::after{ bottom:0;height:40%; }
+.divider-vs{
+  position:relative;z-index:2;
+  width:48px;height:48px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);
+  font-size:18px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:var(--accent);
+  background:var(--bg-deep);
+  border:1px solid var(--accent);
+  box-shadow:0 0 24px rgba(184,255,87,.35),
+             inset 0 0 12px rgba(184,255,87,.1);
+}
+
+/* Mobile : stacked vertical */
+@media (max-width:880px){
+  .compare-section{padding:var(--space-md) var(--space-sm)}
+  .compare-title{font-size:clamp(36px, 8vw, 64px)}
+  .compare-grid{grid-template-columns:1fr;gap:var(--space-sm)}
+  .compare-card{padding:var(--space-sm)}
+  .compare-divider{
+    padding:var(--space-xs) 0;
+    flex-direction:row;
+  }
+  .compare-divider::before,
+  .compare-divider::after{
+    left:0;width:40%;height:1px;
+    background:linear-gradient(90deg, transparent 0%, var(--border-bright) 50%, transparent 100%);
+  }
+  .compare-divider::before{top:50%;left:0}
+  .compare-divider::after{top:50%;right:0;left:auto}
+  .compare-card-stats{gap:var(--space-xs)}
+  .cstat-val{font-size:clamp(40px, 12vw, 64px)}
+  .cstat-sep{height:32px}
+}
+
+/* ── CURSOR REVEAL · Lando-inspired masked layer reveal (LEGACY non utilise) ──
    Section fullscreen avec 2 layers. Layer 1 = surface stats (visible
    partout). Layer 2 = verite tactique (visible UNIQUEMENT sous la souris,
    via mask radial 280px). Cursor lens lime avec crosshair.
@@ -1332,7 +1568,92 @@ nav.nav-v3.scrolled{
   .reveal-hint-dot{animation:none}
 }
 
-/* ── BRAND MARQUEE · Lando-inspired velocity strip ──
+/* ══════════════════════════════════════════════════════════════════
+   BRAND WORDMARK · editorial statement (replace marquee defile)
+   ══════════════════════════════════════════════════════════════════
+   Plus de defile, plus elegant. FragValue massif lime accent.
+*/
+.brand-wordmark{
+  position:relative;
+  padding:var(--space-lg) var(--space-sm);
+  background:
+    radial-gradient(60% 80% at 50% 50%, rgba(184,255,87,.06) 0%, transparent 70%),
+    var(--bg-deep);
+  border-top:1px solid var(--border);
+  text-align:center;
+  overflow:hidden;
+}
+.brand-wordmark::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(180deg, transparent 0%, rgba(184,255,87,.02) 50%, transparent 100%);
+  pointer-events:none;
+}
+.brand-wordmark-inner{
+  position:relative;z-index:2;
+  display:flex;flex-direction:column;align-items:center;
+  gap:var(--space-sm);
+  max-width:var(--container-edge);
+  margin:0 auto;
+}
+.brand-wordmark-overline{
+  font-family:var(--mono);
+  font-size:var(--font-mono-tag);
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  color:var(--text3);
+}
+.brand-wordmark-text{
+  font-family:var(--display);
+  font-weight:400;
+  font-size:var(--font-display-l);
+  line-height:.85;
+  margin:0;
+  letter-spacing:-.02em;
+  text-transform:uppercase;
+  color:var(--text);
+}
+.brand-wordmark-text em{
+  font-style:normal;
+  color:var(--accent);
+  text-shadow:var(--glow-lime-strong),
+              0 0 120px rgba(184,255,87,.4);
+}
+.brand-wordmark-tagline{
+  font-family:var(--mono);
+  font-size:var(--font-body-l);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--text2);
+  margin-top:var(--space-xs);
+}
+@media (max-width:780px){
+  .brand-wordmark{padding:var(--space-md) var(--space-sm)}
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   GRAIN TEXTURE · visual richness pour casser le plat
+   ══════════════════════════════════════════════════════════════════
+   Petit grain SVG fixed sur le body, opacity 0.04 (subtil mais present).
+   Donne le feel "film cinematic" plutot que "flat SaaS".
+*/
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:9999;
+  opacity:.06;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.7 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode:overlay;
+}
+@media (prefers-reduced-motion: reduce){
+  body::after{display:none}
+}
+
+/* ── BRAND MARQUEE · Lando-inspired velocity strip (LEGACY, non utilise) ──
    Bande typo grande echelle qui defile lentement avant le footer.
    Pause au hover pour permettre la lecture, mask-image pour fade des bords
    (evite le clip visuel brutal aux extremites du viewport). Respect
@@ -1594,67 +1915,69 @@ footer{
   </div>
 </aside>
 
-<!-- ════════ CURSOR REVEAL (Lando-style cinematic moment) ════════
-     Section fullscreen avec 2 layers superposes : la surface (ce que les
-     stats classiques montrent) et la verite (ce que FragValue revele).
-     La souris est une loupe lime 280px qui devoile la couche FragValue
-     dans la couche surface. Metaphore litterale du produit : tu vois
-     la surface, FragValue revele la profondeur sous ton regard.
-     Mobile : 2 cartes empilees verticalement (pas de cursor sur touch). -->
-<section class="reveal-section" id="cursorReveal">
-  <!-- Layer 1 : surface stats du roster (defaut visible partout) -->
-  <div class="reveal-layer reveal-default">
-    <div class="reveal-tag">TON SCOREBOARD</div>
-    <h2 class="reveal-headline"><em>Combien</em>.</h2>
-    <div class="reveal-stats">
-      <div class="reveal-stat">
-        <div class="reveal-stat-val">1.10</div>
-        <div class="reveal-stat-label">K / D</div>
-      </div>
-      <div class="reveal-sep"></div>
-      <div class="reveal-stat">
-        <div class="reveal-stat-val">65<span>%</span></div>
-        <div class="reveal-stat-label">KAST</div>
-      </div>
-      <div class="reveal-sep"></div>
-      <div class="reveal-stat">
-        <div class="reveal-stat-val">78</div>
-        <div class="reveal-stat-label">ADR</div>
-      </div>
-    </div>
-    <div class="reveal-sub">Ce que tout le monde voit deja.</div>
+<!-- ════════ COMPARISON SECTION (refonte v2 — replace cursor reveal) ════════
+     Side-by-side propre, statique, premium. Pas de JS magic, pas d'overlap.
+     Left : ton scoreboard (gris, subdued). Right : le pourquoi (lime, vivant).
+     Divider vertical "vs" lime au milieu. Hover sur right card = lift + glow.
+     Mobile : stacked vertical avec divider "vs" horizontal.
+-->
+<section class="compare-section" id="comparison">
+  <div class="compare-intro">
+    <div class="compare-overline">Le decalage tactique</div>
+    <h2 class="compare-title">Ton roster te montre <em>combien</em>.<br>FragValue te dit <em>pourquoi</em>.</h2>
   </div>
 
-  <!-- Layer 2 : verite tactique pour le coach (revele sous le curseur) -->
-  <div class="reveal-layer reveal-truth">
-    <div class="reveal-tag truth">CE QU'IL CACHE</div>
-    <h2 class="reveal-headline"><em>Pourquoi</em>.</h2>
-    <div class="reveal-stats">
-      <div class="reveal-stat">
-        <div class="reveal-stat-val accent">22<span>%</span></div>
-        <div class="reveal-stat-label">Entry T</div>
+  <div class="compare-grid">
+    <!-- LEFT : ce que tu vois deja partout -->
+    <article class="compare-card compare-default">
+      <div class="compare-card-tag">TON SCOREBOARD</div>
+      <div class="compare-card-headline">Combien.</div>
+      <div class="compare-card-stats">
+        <div class="cstat">
+          <div class="cstat-val">1.10</div>
+          <div class="cstat-label">K / D</div>
+        </div>
+        <div class="cstat-sep"></div>
+        <div class="cstat">
+          <div class="cstat-val">65<span>%</span></div>
+          <div class="cstat-label">KAST</div>
+        </div>
+        <div class="cstat-sep"></div>
+        <div class="cstat">
+          <div class="cstat-val">78</div>
+          <div class="cstat-label">ADR</div>
+        </div>
       </div>
-      <div class="reveal-sep"></div>
-      <div class="reveal-stat">
-        <div class="reveal-stat-val accent">3x</div>
-        <div class="reveal-stat-label">Morts mid</div>
-      </div>
-      <div class="reveal-sep"></div>
-      <div class="reveal-stat">
-        <div class="reveal-stat-val accent">0<span>%</span></div>
-        <div class="reveal-stat-label">Trade</div>
-      </div>
+      <div class="compare-card-sub">Ce que tout le monde voit deja.</div>
+    </article>
+
+    <!-- DIVIDER central : "vs" en cercle lime -->
+    <div class="compare-divider" aria-hidden="true">
+      <span class="divider-vs">vs</span>
     </div>
-    <div class="reveal-sub truth">Le pourquoi tactique que personne te dit.</div>
-  </div>
 
-  <!-- Cursor lens (suit la souris, crosshair lime) -->
-  <div class="reveal-lens" aria-hidden="true"></div>
-
-  <!-- Hint UX (disparait apres premiere interaction) -->
-  <div class="reveal-hint" id="revealHint">
-    <span class="reveal-hint-dot"></span>
-    Bouge la souris sur la page
+    <!-- RIGHT : le diagnostic tactique FragValue -->
+    <article class="compare-card compare-truth">
+      <div class="compare-card-tag truth">CE QU'IL CACHE</div>
+      <div class="compare-card-headline truth">Pourquoi.</div>
+      <div class="compare-card-stats">
+        <div class="cstat truth">
+          <div class="cstat-val">22<span>%</span></div>
+          <div class="cstat-label">Entry T-side</div>
+        </div>
+        <div class="cstat-sep"></div>
+        <div class="cstat truth">
+          <div class="cstat-val">3<span>x</span></div>
+          <div class="cstat-label">Morts mid Cache</div>
+        </div>
+        <div class="cstat-sep"></div>
+        <div class="cstat truth">
+          <div class="cstat-val">0<span>%</span></div>
+          <div class="cstat-label">Trade rate</div>
+        </div>
+      </div>
+      <div class="compare-card-sub truth">Ton roster over-peek mid sans utility. Drill suggere : smoke mid + flash. A travailler cette semaine.</div>
+    </article>
   </div>
 </section>
 
@@ -2333,14 +2656,19 @@ footer{
   scroll pour laisser le user lire. Edge fade via mask-image pour eviter
   l'effet "clip brutal" au bord de viewport.
 -->
-<section class="brand-marquee" aria-hidden="true">
-  <div class="brand-marquee-track">
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Coach OS for CS2&nbsp;&middot;&nbsp;</span>
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Debrief in 30 min&nbsp;&middot;&nbsp;</span>
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Anti-strat ready&nbsp;&middot;&nbsp;</span>
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Practice planned&nbsp;&middot;&nbsp;</span>
-    <!-- Duplicate track for seamless infinite loop -->
-    <span class="bm-item"><em>FragValue</em>&nbsp;&middot;&nbsp;Practice planned&nbsp;&middot;&nbsp;</span>
+<!-- ════════ BRAND WORDMARK · statique editorial (replace marquee defile) ════════
+     Statement de marque statique, plus elegant que le defile.
+     Overline mono + FragValue massif Anton + tagline mono dessous.
+-->
+<section class="brand-wordmark" aria-hidden="false">
+  <div class="brand-wordmark-inner">
+    <div class="brand-wordmark-overline">2026 &middot; Made in France</div>
+    <h2 class="brand-wordmark-text">
+      Frag<em>Value</em>.
+    </h2>
+    <div class="brand-wordmark-tagline">
+      Coach OS for CS2.
+    </div>
   </div>
 </section>
 
