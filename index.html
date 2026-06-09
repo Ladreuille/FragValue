@@ -194,21 +194,80 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 :root{
-  --bg:       #080909;
-  --surface:  #0f1010;
-  --border:   #1c1e1e;
-  --border2:  #252727;
-  --text:     #e8eaea;
-  --text2:    #7a8080;
-  --text3:    #8a9090;
-  --accent:   #b8ff57;
-  --accent2:  #7ddd1a;
-  --danger:   #ff4444;
-  --gold:     #f5c842;
-  --mono:     'Space Mono', monospace;
-  --display:  'Anton', sans-serif;
-  --radius:   6px;
-  --radius2:  12px;
+  /* ══════════════════════════════════════════════════════════════════
+     DESIGN SYSTEM · Coach Platform Refonte · Phase 2
+     ══════════════════════════════════════════════════════════════════
+     Discipline : 3 niveaux fond, 4 niveaux texte, 8 spacing values,
+     7 typography sizes, 4 radius. Tout le site rentre dans ces tokens.
+  */
+
+  /* ── Color : 3 levels of background depth ── */
+  --bg:           #080909;  /* surface principale, viewport bg */
+  --bg-deep:      #000000;  /* sections cinematiques (cursor reveal, full sections) */
+  --bg-elevated:  #0f1010;  /* cards, popovers, surfaces elevees */
+  --surface:      #0f1010;  /* alias backward-compat */
+
+  /* ── Color : 4 levels of border (depth visual hierarchy) ── */
+  --border:       #1c1e1e;
+  --border2:      #252727;
+  --border-bright:#3a3d3d;  /* hover states, active outlines */
+
+  /* ── Color : 4 levels of text contrast ── */
+  --text:         #e8eaea;  /* primary text, headlines */
+  --text2:        #7a8080;  /* secondary, subtitles */
+  --text3:        #8a9090;  /* tertiary, captions */
+  --text-dim:     #555a5a;  /* labels, microcopy */
+
+  /* ── Brand accent + glow tokens ── */
+  --accent:       #b8ff57;
+  --accent2:      #7ddd1a;  /* hover, pressed */
+  --accent-dim:   rgba(184,255,87,.15);
+  --glow-lime:    0 0 28px rgba(184,255,87,.35);
+  --glow-lime-strong: 0 0 60px rgba(184,255,87,.55);
+
+  /* ── Semantic accent (kept for cards : urgent / success / premium) ── */
+  --danger:       #ff4444;
+  --gold:         #f5c842;
+
+  /* ── Typography stack ── */
+  --mono:         'Space Mono', monospace;
+  --display:      'Anton', sans-serif;
+
+  /* ── Typography scale (Lando-style massive headlines) ── */
+  --font-display-xl: clamp(120px, 16vw, 280px);  /* Hero only */
+  --font-display-l:  clamp(80px, 12vw, 200px);   /* Brand marquee, hero accent */
+  --font-display-m:  clamp(56px, 9vw, 140px);    /* Section H1 (Capability headlines) */
+  --font-display-s:  clamp(32px, 5vw, 64px);     /* Sub-headlines, pricing tier names */
+  --font-display-xs: clamp(24px, 3vw, 40px);     /* Card titles */
+  --font-body-l:     18px;                       /* Subtitles, primary copy */
+  --font-body-m:     16px;                       /* Standard body */
+  --font-body-s:     14px;                       /* Compact text */
+  --font-mono-tag:   11px;                       /* Tags, labels, monospace */
+
+  /* ── Spacing scale (discipline : 6 values uniquement) ── */
+  --space-xs:   8px;    /* inline gaps, tight */
+  --space-sm:   24px;   /* card padding, gap small */
+  --space-md:   64px;   /* sections internal */
+  --space-lg:   160px;  /* padding section vertical */
+  --space-xl:   240px;  /* padding hero, final CTA */
+  --space-xxl:  320px;  /* whitespace cinematique entre Capabilities */
+
+  /* ── Radius scale (sharp design preference) ── */
+  --radius:     6px;    /* default cards */
+  --radius2:    12px;   /* sticky widget, prominent cards */
+  --radius-sharp: 0;    /* editorial sections sans round */
+  --radius-pill:  999px;/* tags, badges */
+
+  /* ── Easing curves (motion design tokens) ── */
+  --ease-out-cubic:    cubic-bezier(.2, .7, .2, 1);     /* standard out */
+  --ease-out-back:     cubic-bezier(.34, 1.56, .64, 1); /* bouncy reveals */
+  --ease-in-out:       cubic-bezier(.45, 0, .55, 1);    /* smooth transitions */
+
+  /* ── Layout container widths ── */
+  --container-narrow: 720px;   /* prose, dense content */
+  --container-base:   1100px;  /* standard sections */
+  --container-wide:   1400px;  /* hero, full-bleed */
+  --container-edge:   1680px;  /* max page width */
 }
 
 html{scroll-behavior:smooth}
@@ -912,7 +971,7 @@ section{padding:100px 80px;position:relative}
   min-height:100vh;
   width:100%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:120px 32px 80px;
+  padding:var(--space-xl) var(--space-sm) var(--space-lg);
   text-align:center;
   overflow:hidden;
   /* Override des styles hero legacy */
@@ -926,8 +985,8 @@ section{padding:100px 80px;position:relative}
 }
 .hero-v3-content{
   position:relative;z-index:2;
-  display:flex;flex-direction:column;align-items:center;gap:48px;
-  max-width:1400px;
+  display:flex;flex-direction:column;align-items:center;gap:var(--space-md);
+  max-width:var(--container-wide);
 }
 .hero-v3-headline{
   font-family:var(--display);
@@ -940,7 +999,7 @@ section{padding:100px 80px;position:relative}
 }
 .hero-v3-line-1{
   display:block;
-  font-size:clamp(96px,16vw,260px);
+  font-size:var(--font-display-xl);
   /* Slight lime accent on the dot via accent2 weight */
   background:linear-gradient(180deg,#fff 0%,#fff 70%,#d9eebd 100%);
   -webkit-background-clip:text;background-clip:text;
@@ -948,14 +1007,14 @@ section{padding:100px 80px;position:relative}
 }
 .hero-v3-line-2{
   display:block;
-  font-size:clamp(56px,9vw,140px);
+  font-size:var(--font-display-m);
   color:var(--accent);
-  text-shadow:0 0 60px rgba(184,255,87,.35);
-  margin-top:8px;
+  text-shadow:var(--glow-lime-strong);
+  margin-top:var(--space-xs);
 }
 .hero-v3-tagline{
   font-family:var(--mono);
-  font-size:clamp(13px,1.4vw,18px);
+  font-size:var(--font-body-l);
   line-height:1.7;
   color:var(--text2);
   max-width:520px;
@@ -968,13 +1027,18 @@ section{padding:100px 80px;position:relative}
   padding-bottom:2px;
 }
 .hero-v3-cta{
-  margin-top:8px;
+  margin-top:var(--space-xs);
 }
 .hero-v3-btn{
   padding:18px 36px !important;
-  font-size:14px !important;
+  font-size:var(--font-body-s) !important;
   letter-spacing:.06em;
   gap:12px !important;
+  border-radius:var(--radius2) !important;
+  box-shadow:var(--glow-lime), 0 4px 14px rgba(184,255,87,.18) !important;
+}
+.hero-v3-btn:hover{
+  box-shadow:var(--glow-lime-strong), 0 12px 32px rgba(184,255,87,.4) !important;
 }
 .hero-v3-scroll-hint{
   position:absolute;
@@ -2263,12 +2327,11 @@ footer{
     <a href="levels.html">Progresser</a>
     <a href="scout.html">Scout</a>
     <a href="compare.html">Comparer</a>
-    <a href="lineup-library.html">Lineups</a>
     <a href="stats-guide.html">Guide stats</a>
-    <a href="astuces.html">Astuces</a>
     <a href="how-it-works.html">Comment ça marche</a>
     <a href="pricing.html">Tarifs</a>
-    <a href="compare-outils.html">FragValue vs Leetify</a>
+    <a href="/developers.html">Developers</a>
+    <a href="blog.html">Blog</a>
     <a href="cgv.html">CGV</a>
     <a href="mentions-legales.html">Mentions légales</a>
     <a href="privacy.html">Confidentialité</a>
