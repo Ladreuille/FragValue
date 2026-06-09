@@ -900,6 +900,175 @@ section{padding:100px 80px;position:relative}
   .all-tools-grid{grid-template-columns:1fr}
 }
 
+/* ── CURSOR REVEAL · Lando-inspired masked layer reveal ──
+   Section fullscreen avec 2 layers. Layer 1 = surface stats (visible
+   partout). Layer 2 = verite tactique (visible UNIQUEMENT sous la souris,
+   via mask radial 280px). Cursor lens lime avec crosshair.
+   Mobile : on stack les 2 layers verticalement, on cache le lens.
+*/
+.reveal-section{
+  position:relative;width:100%;
+  min-height:100vh;
+  background:linear-gradient(180deg,#050505 0%,#080909 100%);
+  overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  cursor:none;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.reveal-layer{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:80px 32px;gap:32px;
+  pointer-events:none;
+}
+.reveal-default{z-index:1}
+.reveal-truth{
+  z-index:2;
+  /* Mask : circle radius 280px qui suit (--rmx, --rmy).
+     Edge feather sur 24px pour eviter clip dur. */
+  --r:280px;
+  -webkit-mask-image:radial-gradient(circle at var(--rmx,50%) var(--rmy,50%),
+    rgba(0,0,0,1) 0,
+    rgba(0,0,0,1) calc(var(--r) - 24px),
+    rgba(0,0,0,0) var(--r));
+          mask-image:radial-gradient(circle at var(--rmx,50%) var(--rmy,50%),
+    rgba(0,0,0,1) 0,
+    rgba(0,0,0,1) calc(var(--r) - 24px),
+    rgba(0,0,0,0) var(--r));
+}
+.reveal-tag{
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--text2);
+  padding:6px 14px;border:1px solid var(--border2);border-radius:40px;
+  background:rgba(255,255,255,.02);
+}
+.reveal-tag.truth{
+  color:var(--accent);border-color:rgba(184,255,87,.4);
+  background:rgba(184,255,87,.06);
+  box-shadow:0 0 28px rgba(184,255,87,.15);
+}
+.reveal-headline{
+  font-family:var(--display);
+  font-size:clamp(56px,9vw,140px);
+  font-weight:400;line-height:.95;
+  color:var(--text);margin:0;letter-spacing:-.01em;
+  text-transform:uppercase;
+}
+.reveal-headline em{
+  font-style:normal;color:var(--text3);
+  text-decoration:underline;text-decoration-color:var(--border2);
+  text-decoration-thickness:3px;text-underline-offset:8px;
+}
+.reveal-truth .reveal-headline em{
+  color:var(--accent);text-decoration-color:var(--accent);
+  text-shadow:0 0 40px rgba(184,255,87,.5);
+}
+.reveal-stats{
+  display:flex;align-items:center;gap:48px;
+  margin-top:8px;
+}
+.reveal-stat{display:flex;flex-direction:column;gap:6px;align-items:center}
+.reveal-stat-val{
+  font-family:var(--display);
+  font-size:clamp(56px,7vw,108px);
+  font-weight:400;line-height:1;
+  color:var(--text2);
+  letter-spacing:.01em;
+}
+.reveal-stat-val.accent{
+  color:var(--accent);
+  text-shadow:0 0 30px rgba(184,255,87,.4);
+}
+.reveal-stat-val span{font-size:.55em;opacity:.8;margin-left:2px}
+.reveal-stat-label{
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  letter-spacing:.15em;text-transform:uppercase;
+  color:var(--text3);
+}
+.reveal-sep{
+  width:1px;height:60px;background:var(--border2);
+}
+.reveal-sub{
+  font-family:var(--mono);font-size:13px;line-height:1.6;
+  color:var(--text3);max-width:560px;margin-top:8px;
+}
+.reveal-sub.truth{color:var(--accent);font-weight:700}
+
+/* Cursor lens : circle lime qui suit le curseur. Inertia via JS lerp. */
+.reveal-lens{
+  position:absolute;
+  left:var(--rmx,50%);top:var(--rmy,50%);
+  width:280px;height:280px;border-radius:50%;
+  border:1px solid rgba(184,255,87,.55);
+  pointer-events:none;z-index:3;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 80px rgba(184,255,87,.18),
+             inset 0 0 40px rgba(184,255,87,.04);
+}
+/* Crosshair lime au centre du lens */
+.reveal-lens::before,.reveal-lens::after{
+  content:"";position:absolute;
+  background:rgba(184,255,87,.5);
+  top:50%;left:50%;
+}
+.reveal-lens::before{width:32px;height:1px;transform:translate(-50%,-50%)}
+.reveal-lens::after{width:1px;height:32px;transform:translate(-50%,-50%)}
+
+.reveal-hint{
+  position:absolute;left:50%;bottom:48px;transform:translateX(-50%);
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--text2);
+  display:flex;align-items:center;gap:10px;
+  opacity:0;animation:hintIn 1s ease 1.5s forwards;
+  pointer-events:none;
+  transition:opacity .4s ease;
+}
+.reveal-hint.dismissed{opacity:0!important}
+.reveal-hint-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 12px var(--accent);
+  animation:hintPulse 1.6s ease-in-out infinite;
+}
+@keyframes hintIn{to{opacity:1}}
+@keyframes hintPulse{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.4);opacity:.5}
+}
+
+/* Mobile : pas de cursor, on stack les 2 layers en cartes */
+@media (max-width:780px){
+  .reveal-section{
+    cursor:auto;min-height:auto;padding:60px 0;
+    flex-direction:column;gap:24px;
+  }
+  .reveal-layer{
+    position:relative;inset:auto;
+    padding:48px 24px;gap:20px;
+  }
+  .reveal-truth{
+    -webkit-mask-image:none;mask-image:none;
+    background:radial-gradient(120% 80% at 50% 50%, rgba(184,255,87,.04) 0%, transparent 70%);
+    border-top:1px solid var(--border);
+  }
+  .reveal-headline{font-size:42px}
+  .reveal-stats{gap:24px;flex-wrap:wrap;justify-content:center}
+  .reveal-stat-val{font-size:48px}
+  .reveal-sep{display:none}
+  .reveal-lens,.reveal-hint{display:none}
+}
+
+/* Reduce motion : show both layers stacked, no cursor follow */
+@media (prefers-reduced-motion: reduce){
+  .reveal-section{cursor:auto;flex-direction:column;min-height:auto;padding:48px 0}
+  .reveal-layer{position:relative;inset:auto;padding:32px}
+  .reveal-truth{-webkit-mask-image:none;mask-image:none}
+  .reveal-lens,.reveal-hint{display:none}
+  .reveal-hint-dot{animation:none}
+}
+
 /* ── BRAND MARQUEE · Lando-inspired velocity strip ──
    Bande typo grande echelle qui defile lentement avant le footer.
    Pause au hover pour permettre la lecture, mask-image pour fade des bords
@@ -1240,6 +1409,70 @@ footer{
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ════════ CURSOR REVEAL (Lando-style cinematic moment) ════════
+     Section fullscreen avec 2 layers superposes : la surface (ce que les
+     stats classiques montrent) et la verite (ce que FragValue revele).
+     La souris est une loupe lime 280px qui devoile la couche FragValue
+     dans la couche surface. Metaphore litterale du produit : tu vois
+     la surface, FragValue revele la profondeur sous ton regard.
+     Mobile : 2 cartes empilees verticalement (pas de cursor sur touch). -->
+<section class="reveal-section" id="cursorReveal">
+  <!-- Layer 1 : surface stats (defaut visible partout) -->
+  <div class="reveal-layer reveal-default">
+    <div class="reveal-tag">CE QUE TU VOIS</div>
+    <h2 class="reveal-headline">Tu vois ton match<br>comme <em>ca</em>.</h2>
+    <div class="reveal-stats">
+      <div class="reveal-stat">
+        <div class="reveal-stat-val">1.10</div>
+        <div class="reveal-stat-label">K / D</div>
+      </div>
+      <div class="reveal-sep"></div>
+      <div class="reveal-stat">
+        <div class="reveal-stat-val">65<span>%</span></div>
+        <div class="reveal-stat-label">KAST</div>
+      </div>
+      <div class="reveal-sep"></div>
+      <div class="reveal-stat">
+        <div class="reveal-stat-val">78</div>
+        <div class="reveal-stat-label">ADR</div>
+      </div>
+    </div>
+    <div class="reveal-sub">Stats que FACEIT et Leetify te montrent.</div>
+  </div>
+
+  <!-- Layer 2 : verite tactique (revele sous le curseur uniquement) -->
+  <div class="reveal-layer reveal-truth">
+    <div class="reveal-tag truth">CE QUE FRAGVALUE VOIT</div>
+    <h2 class="reveal-headline">FragValue le voit<br>comme <em>ca</em>.</h2>
+    <div class="reveal-stats">
+      <div class="reveal-stat">
+        <div class="reveal-stat-val accent">0.42</div>
+        <div class="reveal-stat-label">FV Rating</div>
+      </div>
+      <div class="reveal-sep"></div>
+      <div class="reveal-stat">
+        <div class="reveal-stat-val accent">22<span>%</span></div>
+        <div class="reveal-stat-label">Entry win T-side</div>
+      </div>
+      <div class="reveal-sep"></div>
+      <div class="reveal-stat">
+        <div class="reveal-stat-val accent">0<span>%</span></div>
+        <div class="reveal-stat-label">Trade rate</div>
+      </div>
+    </div>
+    <div class="reveal-sub truth">3 morts T-side mid Cache &lt; 15s. Tu over-peek systematiquement.</div>
+  </div>
+
+  <!-- Cursor lens (suit la souris, crosshair lime) -->
+  <div class="reveal-lens" aria-hidden="true"></div>
+
+  <!-- Hint UX (disparait apres premiere interaction) -->
+  <div class="reveal-hint" id="revealHint">
+    <span class="reveal-hint-dot"></span>
+    Bouge la souris sur la page
   </div>
 </section>
 
@@ -2309,8 +2542,9 @@ async function startCheckout(plan) {
   // .is-visible when 15% du viewport est atteint. Une fois revealed,
   // on observe plus (perf).
   // Exclu : .hero (visible direct), .brand-marquee (auto-anime, fade-in casse
-  // le rythme de la marquee scrolling horizontale).
-  const targets = document.querySelectorAll('section:not(.brand-marquee)');
+  // le rythme de la marquee scrolling horizontale), .reveal-section (cursor
+  // tracking necessite que la section soit en place direct, pas avec transform).
+  const targets = document.querySelectorAll('section:not(.brand-marquee):not(.reveal-section)');
   targets.forEach(s => s.classList.add('scroll-reveal'));
   // Hero deja visible : remove la class pour qu'il s'affiche immediatement
   const heroEl = document.querySelector('.hero');
@@ -2375,6 +2609,69 @@ async function startCheckout(plan) {
     });
   }, { threshold: 0.5 });
   valueEls.forEach(el => countIo.observe(el));
+
+  // 4. Cursor reveal Lando-style : la souris devient une loupe lime 280px
+  // qui devoile la couche "verite FragValue" sous la couche "stats surface".
+  // Inertia via lerp (0.15) pour mouvement fluide. Auto-pause sur sortie de
+  // viewport. Disable sur touch (pas de cursor sur mobile).
+  const revealSection = document.getElementById('cursorReveal');
+  const revealHint = document.getElementById('revealHint');
+  if (revealSection && !('ontouchstart' in window)) {
+    let targetX = 0, targetY = 0;
+    let currentX = 0, currentY = 0;
+    let initialized = false;
+    let inSection = false;
+    let hintDismissed = false;
+
+    // Initialize au centre de la section
+    function initCenter() {
+      const rect = revealSection.getBoundingClientRect();
+      currentX = targetX = rect.width / 2;
+      currentY = targetY = rect.height / 2;
+      revealSection.style.setProperty('--rmx', currentX + 'px');
+      revealSection.style.setProperty('--rmy', currentY + 'px');
+      initialized = true;
+    }
+
+    revealSection.addEventListener('mouseenter', () => {
+      if (!initialized) initCenter();
+      inSection = true;
+    });
+    revealSection.addEventListener('mouseleave', () => { inSection = false; });
+
+    revealSection.addEventListener('mousemove', (e) => {
+      if (!initialized) initCenter();
+      const rect = revealSection.getBoundingClientRect();
+      targetX = e.clientX - rect.left;
+      targetY = e.clientY - rect.top;
+      if (!hintDismissed && revealHint) {
+        revealHint.classList.add('dismissed');
+        hintDismissed = true;
+      }
+    });
+
+    function loop() {
+      if (inSection) {
+        // Lerp 15% per frame ≈ catch-up en 200ms (smooth mais reactif)
+        currentX += (targetX - currentX) * 0.15;
+        currentY += (targetY - currentY) * 0.15;
+        revealSection.style.setProperty('--rmx', currentX + 'px');
+        revealSection.style.setProperty('--rmy', currentY + 'px');
+      }
+      requestAnimationFrame(loop);
+    }
+    // Initialize quand la section entre dans le viewport pour la 1ere fois
+    const revealIo = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting && !initialized) {
+          initCenter();
+          loop();
+          revealIo.unobserve(revealSection);
+        }
+      });
+    }, { threshold: 0.1 });
+    revealIo.observe(revealSection);
+  }
 
 })();
 </script>
