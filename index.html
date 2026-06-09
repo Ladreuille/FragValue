@@ -1099,9 +1099,9 @@ section{padding:100px 80px;position:relative}
 .reveal-default{z-index:1}
 .reveal-truth{
   z-index:2;
-  /* Mask : circle radius 280px qui suit (--rmx, --rmy).
-     Edge feather sur 24px pour eviter clip dur. */
-  --r:280px;
+  /* Mask : circle radius 360px qui suit (--rmx, --rmy).
+     Edge feather sur 32px pour eviter clip dur. */
+  --r:360px;
   -webkit-mask-image:radial-gradient(circle at var(--rmx,50%) var(--rmy,50%),
     rgba(0,0,0,1) 0,
     rgba(0,0,0,1) calc(var(--r) - 24px),
@@ -1125,8 +1125,8 @@ section{padding:100px 80px;position:relative}
 }
 .reveal-headline{
   font-family:var(--display);
-  font-size:clamp(56px,9vw,140px);
-  font-weight:400;line-height:.95;
+  font-size:clamp(40px,6vw,96px);
+  font-weight:400;line-height:1.0;
   color:var(--text);margin:0;letter-spacing:-.01em;
   text-transform:uppercase;
 }
@@ -1146,7 +1146,7 @@ section{padding:100px 80px;position:relative}
 .reveal-stat{display:flex;flex-direction:column;gap:6px;align-items:center}
 .reveal-stat-val{
   font-family:var(--display);
-  font-size:clamp(56px,7vw,108px);
+  font-size:clamp(36px,5vw,72px);
   font-weight:400;line-height:1;
   color:var(--text2);
   letter-spacing:.01em;
@@ -1174,7 +1174,7 @@ section{padding:100px 80px;position:relative}
 .reveal-lens{
   position:absolute;
   left:var(--rmx,50%);top:var(--rmy,50%);
-  width:280px;height:280px;border-radius:50%;
+  width:360px;height:360px;border-radius:50%;
   border:1px solid rgba(184,255,87,.55);
   pointer-events:none;z-index:3;
   transform:translate(-50%,-50%);
@@ -1515,8 +1515,8 @@ footer{
 <section class="reveal-section" id="cursorReveal">
   <!-- Layer 1 : surface stats du roster (defaut visible partout) -->
   <div class="reveal-layer reveal-default">
-    <div class="reveal-tag">CE QUE TU VOIS</div>
-    <h2 class="reveal-headline">Ton roster te dit<br><em>combien</em>.</h2>
+    <div class="reveal-tag">SANS FRAGVALUE</div>
+    <h2 class="reveal-headline">Tu sais <em>combien</em>.</h2>
     <div class="reveal-stats">
       <div class="reveal-stat">
         <div class="reveal-stat-val">1.10</div>
@@ -1525,29 +1525,29 @@ footer{
       <div class="reveal-sep"></div>
       <div class="reveal-stat">
         <div class="reveal-stat-val">65<span>%</span></div>
-        <div class="reveal-stat-label">KAST equipe</div>
+        <div class="reveal-stat-label">KAST</div>
       </div>
       <div class="reveal-sep"></div>
       <div class="reveal-stat">
         <div class="reveal-stat-val">78</div>
-        <div class="reveal-stat-label">ADR moyen</div>
+        <div class="reveal-stat-label">ADR</div>
       </div>
     </div>
-    <div class="reveal-sub">Les stats que FACEIT et Leetify donnent deja.</div>
+    <div class="reveal-sub">Stats deja donnees par FACEIT et Leetify.</div>
   </div>
 
   <!-- Layer 2 : verite tactique pour le coach (revele sous le curseur) -->
   <div class="reveal-layer reveal-truth">
-    <div class="reveal-tag truth">CE QUE FRAGVALUE TE DIT</div>
-    <h2 class="reveal-headline">FragValue te dit<br><em>pourquoi</em>.</h2>
+    <div class="reveal-tag truth">AVEC FRAGVALUE</div>
+    <h2 class="reveal-headline">Tu sais <em>pourquoi</em>.</h2>
     <div class="reveal-stats">
       <div class="reveal-stat">
         <div class="reveal-stat-val accent">22<span>%</span></div>
-        <div class="reveal-stat-label">Entry win T-side</div>
+        <div class="reveal-stat-label">Entry T-side</div>
       </div>
       <div class="reveal-sep"></div>
       <div class="reveal-stat">
-        <div class="reveal-stat-val accent">3</div>
+        <div class="reveal-stat-val accent">3x</div>
         <div class="reveal-stat-label">Morts mid Cache</div>
       </div>
       <div class="reveal-sep"></div>
@@ -1556,7 +1556,7 @@ footer{
         <div class="reveal-stat-label">Trade rate</div>
       </div>
     </div>
-    <div class="reveal-sub truth">Ton roster over-peek sur Cache, sans utility. Voici le drill a assigner cette semaine.</div>
+    <div class="reveal-sub truth">Ton roster over-peek Cache sans utility. Drill suggere : smoke mid.</div>
   </div>
 
   <!-- Cursor lens (suit la souris, crosshair lime) -->
