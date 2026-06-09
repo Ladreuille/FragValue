@@ -960,6 +960,101 @@ section{padding:100px 80px;position:relative}
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   HOMEPAGE V3 OVERRIDES · pour rendre tout irreprochable
+   ══════════════════════════════════════════════════════════════════
+   nav.js injecte une nav complexe (sections + dropdowns). Sur la homepage
+   refonte on veut MINIMAL : juste logo + login + tarifs. On masque le reste.
+   On hide aussi le popup-signup trigger, le cookie banner massif a un style
+   compact, et le canvas radar perd ses overlays debug.
+*/
+body[data-page="home-v3"] nav.fv-nav .fv-sections,
+body[data-page="home-v3"] nav.fv-nav .fv-bell,
+body[data-page="home-v3"] nav.fv-nav .fv-skip-link{
+  display:none !important;
+}
+body[data-page="home-v3"] nav.fv-nav{
+  background:transparent !important;
+  border-bottom:1px solid transparent !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  transition:background .25s var(--ease-out-cubic),
+             backdrop-filter .25s var(--ease-out-cubic),
+             border-bottom-color .25s var(--ease-out-cubic) !important;
+}
+body[data-page="home-v3"] nav.fv-nav.fv-scrolled,
+body[data-page="home-v3"] nav.fv-nav.scrolled{
+  background:rgba(8,9,9,.78) !important;
+  backdrop-filter:blur(16px) saturate(150%) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(150%) !important;
+  border-bottom:1px solid rgba(184,255,87,.12) !important;
+  box-shadow:0 4px 24px rgba(0,0,0,.4) !important;
+}
+/* Logo + auth nav reste, on s'assure de leur look minimal */
+body[data-page="home-v3"] nav.fv-nav .fv-logo{
+  font-family:var(--display);font-size:18px;
+  color:var(--text2);letter-spacing:.04em;
+  text-decoration:none;
+}
+body[data-page="home-v3"] nav.fv-nav .fv-logo span{color:var(--accent)}
+body[data-page="home-v3"] nav.fv-nav .fv-auth,
+body[data-page="home-v3"] nav.fv-nav .fv-right{
+  display:flex;align-items:center;gap:12px;
+}
+body[data-page="home-v3"] nav.fv-nav .fv-login,
+body[data-page="home-v3"] nav.fv-nav .fv-cta{
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  padding:8px 14px;border-radius:6px;
+  color:var(--text2);text-decoration:none;
+  transition:color .15s ease;
+}
+body[data-page="home-v3"] nav.fv-nav .fv-login:hover{color:var(--accent)}
+
+/* Cookie banner : passer en barre fine bottom au lieu de modal massif */
+body[data-page="home-v3"] #fvCookieBanner{
+  position:fixed !important;
+  bottom:0 !important;left:0 !important;right:0 !important;
+  top:auto !important;
+  padding:10px 20px !important;
+  background:rgba(8,9,9,.92) !important;
+  backdrop-filter:blur(12px) !important;
+  -webkit-backdrop-filter:blur(12px) !important;
+  border-top:1px solid rgba(184,255,87,.15) !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  font-size:11px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  flex-wrap:wrap !important;
+  gap:12px !important;
+  max-width:none !important;
+  margin:0 !important;
+  z-index:100 !important;
+}
+body[data-page="home-v3"] #fvCookieBanner > div,
+body[data-page="home-v3"] #fvCookieBanner > p{
+  font-size:11px !important;
+  line-height:1.4 !important;
+  margin:0 !important;
+  max-width:680px !important;
+  color:var(--text3) !important;
+}
+body[data-page="home-v3"] #fvCookieBanner button{
+  font-size:11px !important;
+  padding:6px 14px !important;
+  border-radius:6px !important;
+}
+
+/* Popup signup overlay : on garde mais on cache son TRIGGER bubble vert bas-droite
+   qui pollue le hero premium. Si le user veut signup il clique le CTA hero. */
+.fv-popup-trigger,
+.fv-popup-bubble,
+[class*="popup-trigger"]{
+  display:none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
    NAV V3 · Sticky avec opacity transition au scroll
    ══════════════════════════════════════════════════════════════════
    Au top : transparent (laisse le hero respirer).
@@ -1034,10 +1129,8 @@ nav.nav-v3.scrolled{
 .hero-v3-line-1{
   display:block;
   font-size:var(--font-display-xl);
-  /* Slight lime accent on the dot via accent2 weight */
-  background:linear-gradient(180deg,#fff 0%,#fff 70%,#d9eebd 100%);
-  -webkit-background-clip:text;background-clip:text;
-  -webkit-text-fill-color:transparent;color:transparent;
+  color:#fff;
+  text-shadow:0 0 80px rgba(255,255,255,.15);
 }
 .hero-v3-line-2{
   display:block;
@@ -1853,7 +1946,7 @@ footer{
 </style>
 <script src="/analytics.js" defer></script>
 </head>
-<body>
+<body data-page="home-v3">
 
 <!-- NAV · refonte Coach Platform : minimaliste, focus B2B -->
 <nav class="nav-v3">
@@ -3025,16 +3118,10 @@ async function startCheckout(plan) {
       ctx.stroke();
     }
 
-    // 7. Round counter en coin haut-droit
-    const round = currentRound(t);
-    ctx.fillStyle = 'rgba(184,255,87,0.65)';
-    ctx.font = 'bold 11px "Space Mono", monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(`R${round.r} · ${round.score}`, W * 0.92, H * 0.18);
-    // Subtle "LIVE" indicator with dot
-    ctx.fillStyle = 'rgba(184,255,87,0.4)';
-    ctx.font = '9px "Space Mono", monospace';
-    ctx.fillText('● TACTICAL VIEW', W * 0.92, H * 0.215);
+    // 7. Round counter en coin haut-droit (REMOVED Phase Polish — trop de bruit
+    //    sur le hero refonte coach-platform). Le canvas reste juste tactical
+    //    radar pur, sans labels HUD. Les rounds continuent en interne pour
+    //    le sweep + smoke timing mais ne s'affichent plus.
 
     requestAnimationFrame(render);
   }
