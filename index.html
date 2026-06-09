@@ -960,6 +960,31 @@ section{padding:100px 80px;position:relative}
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   NAV V3 · Sticky avec opacity transition au scroll
+   ══════════════════════════════════════════════════════════════════
+   Au top : transparent (laisse le hero respirer).
+   Au scroll > 80px : background semi-opaque + blur + bordure subtile lime.
+*/
+nav.nav-v3{
+  position:fixed;
+  top:0;left:0;right:0;
+  z-index:100;
+  transition:background .25s var(--ease-out-cubic),
+             backdrop-filter .25s var(--ease-out-cubic),
+             border-bottom-color .25s var(--ease-out-cubic),
+             box-shadow .3s ease;
+  background:transparent;
+  border-bottom:1px solid transparent;
+}
+nav.nav-v3.scrolled{
+  background:rgba(8,9,9,.78);
+  backdrop-filter:blur(16px) saturate(150%);
+  -webkit-backdrop-filter:blur(16px) saturate(150%);
+  border-bottom:1px solid rgba(184,255,87,.12);
+  box-shadow:0 4px 24px rgba(0,0,0,.4);
+}
+
+/* ══════════════════════════════════════════════════════════════════
    HERO V3 · Coach OS · Refonte Phase 1 (preview/coach-platform-refonte)
    ══════════════════════════════════════════════════════════════════
    Discipline soustractive : 2 elements seulement (headline massive
@@ -2844,5 +2869,128 @@ async function startCheckout(plan) {
 
 <script src="popup-signup.js" defer></script>
 <script src="/nav.js" defer></script>
+
+<!-- ══════════════════════════════════════════════════════════════
+     REFONTE PHASE 3 · Premium scroll experience
+     ══════════════════════════════════════════════════════════════
+     Lenis : smooth scroll lerp (feel "premium app")
+     GSAP + ScrollTrigger : scroll-linked animations sticky/pin/scrub
+     Sticky widget : hide on footer approach
+     Sticky nav : opacity transition au scroll
+
+     CDN versions stables (gratuit, no npm) :
+     - Lenis 1.1.x : 5kb gzipped
+     - GSAP 3.12.x core + ScrollTrigger : 34kb gzipped
+-->
+<script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.1.13/dist/lenis.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
+
+<script defer>
+(function() {
+  'use strict';
+
+  // Respect prefers-reduced-motion : skip Lenis + GSAP, fallback CSS only
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion) return;
+
+  // Attendre que Lenis + GSAP soient charges (defer = apres DOMContentLoaded)
+  window.addEventListener('load', () => {
+    // 1. LENIS smooth scroll
+    // Lerp : 0.1 = tres smooth, 0.15 = standard, 0.2 = rapide
+    // duration : combien de temps pour atteindre la cible
+    if (typeof Lenis !== 'undefined') {
+      const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        smoothTouch: false, // tactile reste natif pour pas casser scroll mobile
+      });
+
+      function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+
+      // Bridge Lenis → GSAP ScrollTrigger pour que les animations restent sync
+      if (typeof gsap !== 'undefined' && gsap.registerPlugin && typeof ScrollTrigger !== 'undefined') {
+        gsap.registerPlugin(ScrollTrigger);
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+        gsap.ticker.lagSmoothing(0);
+      }
+    }
+
+    // 2. STICKY NAV opacity au scroll (transparent → solid au scroll > 100px)
+    const nav = document.querySelector('nav.nav-v3');
+    if (nav) {
+      let lastScroll = 0;
+      function updateNav() {
+        const y = window.scrollY;
+        if (y > 80) nav.classList.add('scrolled');
+        else nav.classList.remove('scrolled');
+        lastScroll = y;
+      }
+      window.addEventListener('scroll', updateNav, { passive: true });
+      updateNav();
+    }
+
+    // 3. STICKY WIDGET : hide a l'approche du footer (200px avant)
+    const widget = document.getElementById('stickyWidget');
+    const footer = document.querySelector('footer');
+    if (widget && footer && typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.create({
+        trigger: footer,
+        start: 'top bottom-=200',
+        onEnter: () => widget.classList.add('hidden'),
+        onLeaveBack: () => widget.classList.remove('hidden'),
+      });
+    }
+
+    // 4. HERO V3 subtle scroll-linked translate-up
+    // Le hero "remonte" doucement quand on scroll, donnant la sensation
+    // que le contenu suivant emerge de dessous. Lando 10% scroll moment.
+    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+      const heroContent = document.querySelector('.hero-v3-content');
+      const heroRadar = document.querySelector('.hero-v3 .hero-radar');
+      if (heroContent) {
+        gsap.to(heroContent, {
+          y: -120,
+          opacity: 0.4,
+          scrollTrigger: {
+            trigger: '.hero-v3',
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 1,
+          }
+        });
+      }
+      if (heroRadar) {
+        gsap.to(heroRadar, {
+          y: -60,
+          scale: 1.1,
+          scrollTrigger: {
+            trigger: '.hero-v3',
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 1,
+          }
+        });
+      }
+
+      // Scroll hint : fade out apres le 1er scroll
+      const scrollHint = document.querySelector('.hero-v3-scroll-hint');
+      if (scrollHint) {
+        ScrollTrigger.create({
+          trigger: '.hero-v3',
+          start: 'top top-=80',
+          onEnter: () => gsap.to(scrollHint, { opacity: 0, duration: 0.3 }),
+        });
+      }
+    }
+  });
+})();
+</script>
 </body>
 </html>
