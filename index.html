@@ -1213,20 +1213,25 @@ nav.nav-v3.scrolled{
 */
 .sticky-widget{
   position:fixed;
-  left:24px;bottom:24px;
+  left:24px;bottom:80px;
   z-index:50;
   padding:14px 18px;
-  background:rgba(8,9,9,.85);
+  background:rgba(8,9,9,.92);
   border:1px solid var(--border2);
   border-radius:12px;
   backdrop-filter:blur(12px);
   -webkit-backdrop-filter:blur(12px);
   font-family:var(--mono);
-  min-width:180px;
-  box-shadow:0 8px 32px rgba(0,0,0,.4),
-             0 0 0 1px rgba(184,255,87,.06);
+  min-width:200px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5),
+             0 0 0 1px rgba(184,255,87,.08),
+             0 0 24px rgba(184,255,87,.06);
   /* Subtle fade-in on page load */
   animation:stickyWidgetIn .8s cubic-bezier(.2,.7,.2,1) 1.2s backwards;
+}
+/* Si user a accepte cookies (banner hidden), widget peut descendre */
+body.cookies-accepted .sticky-widget{
+  bottom:24px;
 }
 @keyframes stickyWidgetIn{
   from{opacity:0;transform:translateY(20px)}
@@ -3308,6 +3313,30 @@ async function startCheckout(plan) {
 <script defer>
 (function() {
   'use strict';
+
+  // Detect cookie banner dismissal → relax sticky-widget bottom margin
+  // (cookie banner takes ~48px bottom barre, widget peut redescendre apres)
+  function watchCookieBanner() {
+    const observer = new MutationObserver(() => {
+      if (!document.getElementById('fvCookieBanner')) {
+        document.body.classList.add('cookies-accepted');
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: false });
+    // Si banner deja absent au load (user a deja accepte)
+    setTimeout(() => {
+      if (!document.getElementById('fvCookieBanner')) {
+        document.body.classList.add('cookies-accepted');
+        observer.disconnect();
+      }
+    }, 500);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', watchCookieBanner);
+  } else {
+    watchCookieBanner();
+  }
 
   // Respect prefers-reduced-motion : skip Lenis + GSAP, fallback CSS only
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
