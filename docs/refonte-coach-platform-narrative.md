@@ -17,7 +17,7 @@ Le pitch "stats avancees CS2" de FragValue est mort. Le repositionnement coach-f
 
 L'analyse competitive ([refonte-coach-platform-benchmark](./b2b-coaching-platform-mvp-spec.md)) confirme :
 - 3 concepts produits indispensables et defensifs vs FACEIT identifies
-- Strategy : 1 produit unifie "Coach OS" avec 3 capabilities (VOD Coordinator, Practice OS, Anti-Strat War Room)
+- Strategy : 1 produit unifie "Coach OS" avec 3 capabilities (VOD Coordinator, Practice OS, Anti-Strat Strat Time)
 - Sequence : Vague 1 VOD Coordinator MVP, Vague 2 integration Practice, Vague 3 premium Anti-Strat
 
 ## Discipline soustractive : ce qui meurt
@@ -156,17 +156,17 @@ EN 10 MIN.
 
 **Subtitle** :
 ```
-Drills, scrims, accountability Discord.
+Drills, praccs, accountability Discord.
 Coach IA propose, tu valides.
 ```
 
 **Product UI demo** :
 - Weekly grid lundi → dimanche
-- Slots scrim qui se remplissent automatiquement
+- Slots pracc qui se remplissent automatiquement
 - Drills assignments qui glissent dans des cells
 - Players names qui apparaissent avec status (ready/late/missing)
 
-### Section 5 — Capability 3 : Anti-Strat War Room
+### Section 5 — Capability 3 : Anti-Strat Strat Time
 
 **Headline** (Anton 140px) :
 ```
@@ -220,7 +220,7 @@ D'EQUIPE.
 | **Solo legacy** | 9 EUR/mois | Players solo deja inscrits | Acces solo, grandfathered (non promu) |
 | **Team Starter** | 49 EUR/mois | Coach amateur 5 joueurs | VOD Coordinator, dashboard roster |
 | **Team Pro** | 149 EUR/mois | Academie semi-pro | + Practice OS, + Coach IA roster, + Discord deep |
-| **Team Elite** | 249 EUR/mois | Esport org | + Anti-Strat War Room, + multi-roster, + priority parsing |
+| **Team Elite** | 249 EUR/mois | Esport org | + Anti-Strat Strat Time, + multi-roster, + priority parsing |
 | **Enterprise** | Custom | Karmine, Vitality, Heroic-tier | Tout + SSO + support dedie + integration custom |
 
 Hover state mask reveal sur chaque card.

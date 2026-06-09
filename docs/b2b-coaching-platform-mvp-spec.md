@@ -64,7 +64,7 @@ Cible : 5-15 clients structures dans les 6 premiers mois, ARR ~30-90k EUR.
 - Comparatif eleve vs pro (utiliser pro_demos data deja en place)
 - Replay annotations partage coach-eleve (fv_annotations existe deja)
 - Export PDF rapport hebdo (le coach l'envoie au Player Manager)
-- Match scrim tracking (coach et adversaires)
+- Match pracc tracking (coach et adversaires)
 
 ### Out-of-scope (v2+)
 
@@ -228,7 +228,7 @@ Avant de demarrer le dev (semaine 7) :
 
 ## Roadmap post-MVP
 
-- **v1.1** (mois 3) : VOD scrim tracker, integration Demos.gg / Bo3.gg pour matchs scrims non-FACEIT
+- **v1.1** (mois 3) : VOD pracc tracker, integration Demos.gg / Bo3.gg pour matchs praccs non-FACEIT
 - **v1.2** (mois 4) : Replay annotations collaboratives coach + eleve (fv_annotations.is_collaborative)
 - **v1.3** (mois 5) : Pre-match brief generator IA ("on joue contre X academy demain, voici leurs patterns")
 - **v2.0** (mois 6-9) : Multi-org enterprise tier (Karmine, Vitality), SSO, custom branding white-label
