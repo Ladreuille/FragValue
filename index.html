@@ -1010,6 +1010,86 @@ body[data-page="home-v3"] nav.fv-nav .fv-cta{
 }
 body[data-page="home-v3"] nav.fv-nav .fv-login:hover{color:var(--accent)}
 
+/* EN toggle button : plus discret (text3 + no border lime) sur la home v3 */
+body[data-page="home-v3"] nav.fv-nav #navLangBtn,
+body[data-page="home-v3"] nav.fv-nav .fv-lang-btn,
+body[data-page="home-v3"] nav.fv-nav [class*="lang"]{
+  font-family:var(--mono) !important;
+  font-size:11px !important;
+  color:var(--text3) !important;
+  background:transparent !important;
+  border:1px solid transparent !important;
+  padding:6px 10px !important;
+  border-radius:6px !important;
+  letter-spacing:.06em;
+}
+body[data-page="home-v3"] nav.fv-nav #navLangBtn:hover,
+body[data-page="home-v3"] nav.fv-nav .fv-lang-btn:hover{
+  color:var(--text2) !important;
+  background:rgba(255,255,255,.03) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE GLOBAL SWEEP · phase polish
+   ══════════════════════════════════════════════════════════════════
+   Verifie que tous les nouveaux elements rentrent sur mobile (375px)
+   et tablette (768px). Sticky widget hidden mobile (overlap CTA).
+*/
+@media (max-width:780px){
+  /* Hero V3 mobile : moins de padding, headlines plus petits */
+  .hero-v3{padding:90px 16px 80px}
+  .hero-v3-line-1, .hero-v3-line-2{
+    font-size:clamp(40px, 11vw, 72px);
+    letter-spacing:-.015em;
+  }
+  .hero-v3-tagline{
+    font-size:13px;line-height:1.6;
+    padding:0 8px;
+  }
+  .hero-v3-content{gap:24px}
+
+  /* Sticky widget : masque sur mobile (deja fait mais on confirme) */
+  .sticky-widget{display:none !important}
+
+  /* Compare section mobile : cards stacked, divider horizontal */
+  .compare-section{padding:60px 16px}
+  .compare-intro{margin-bottom:48px}
+  .compare-title .ct-line{
+    white-space:normal;
+    font-size:clamp(20px, 5.5vw, 32px);
+  }
+  .compare-grid{grid-template-columns:1fr;gap:24px}
+  .compare-divider{
+    padding:8px 0;
+    flex-direction:row;
+  }
+  .compare-divider::before,
+  .compare-divider::after{
+    left:0;width:40%;height:1px;
+    background:linear-gradient(90deg, transparent 0%, var(--border-bright) 50%, transparent 100%);
+  }
+  .compare-divider::before{top:50%;left:0;height:1px}
+  .compare-divider::after{top:50%;right:0;left:auto;height:1px}
+  .compare-card{padding:32px 20px}
+  .compare-card-headline{font-size:32px}
+  .cstat-val{font-size:36px}
+  .cstat-label{font-size:9px}
+
+  /* Section divider mobile : reduit */
+  .section-divider{height:64px}
+
+  /* Final CTA mobile */
+  .final-cta-headline{font-size:clamp(28px, 8vw, 48px)}
+  .final-cta-sub{font-size:13px}
+
+  /* Brand wordmark mobile */
+  .brand-wordmark{padding:60px 16px}
+  .brand-wordmark-text{font-size:clamp(40px, 11vw, 64px)}
+  .brand-wordmark-tagline{font-size:14px}
+
+  /* Scroll progress bar : keep visible (utile mobile) */
+}
+
 /* Cookie banner : passer en barre fine bottom au lieu de modal massif */
 body[data-page="home-v3"] #fvCookieBanner{
   position:fixed !important;
@@ -1170,9 +1250,124 @@ nav.nav-v3.scrolled{
   gap:12px !important;
   border-radius:var(--radius2) !important;
   box-shadow:var(--glow-lime), 0 4px 14px rgba(184,255,87,.18) !important;
+  overflow:hidden;
+}
+.hero-v3-btn svg{
+  transition:transform .35s var(--ease-out-cubic);
 }
 .hero-v3-btn:hover{
   box-shadow:var(--glow-lime-strong), 0 12px 32px rgba(184,255,87,.4) !important;
+}
+.hero-v3-btn:hover svg{
+  transform:translateX(6px);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SCROLL PROGRESS BAR · lime indicator top viewport
+   ══════════════════════════════════════════════════════════════════
+   Donne le feel "premium app" en montrant la progression du scroll.
+*/
+.scroll-progress{
+  position:fixed;
+  top:0;left:0;right:0;
+  height:2px;
+  z-index:200;
+  pointer-events:none;
+  background:rgba(184,255,87,.06);
+}
+.scroll-progress::after{
+  content:"";
+  position:absolute;
+  top:0;left:0;bottom:0;
+  width:var(--scroll-pct, 0%);
+  background:linear-gradient(90deg, var(--accent2), var(--accent));
+  box-shadow:0 0 12px rgba(184,255,87,.5);
+  transition:width .12s linear;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SECTION DIVIDER · transition fine entre Hero → Compare
+   ══════════════════════════════════════════════════════════════════
+   Marque le passage entre les 2 sections avec une ligne lime fine
+   + dot animé pulsant. Optimise le rythme visuel.
+*/
+.section-divider{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:120px;
+  background:linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+}
+.section-divider::before,
+.section-divider::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    var(--border) 30%,
+    var(--border-bright) 50%,
+    var(--border) 70%,
+    transparent 100%);
+  max-width:200px;
+}
+.section-divider-dot{
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 16px rgba(184,255,87,.6);
+  margin:0 16px;
+  animation:dividerPulse 2.4s ease-in-out infinite;
+}
+@keyframes dividerPulse{
+  0%,100%{opacity:.7;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.4)}
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   FINAL CTA · closing moment avant le footer
+   ══════════════════════════════════════════════════════════════════
+   Section minimaliste avec headline + CTA, capture les users qui ont
+   scrollé jusqu'en bas. Réduit le bounce rate.
+*/
+.final-cta{
+  position:relative;
+  padding:var(--space-lg) var(--space-sm);
+  text-align:center;
+  background:
+    radial-gradient(80% 60% at 50% 50%, rgba(184,255,87,.05) 0%, transparent 70%),
+    var(--bg-deep);
+  border-top:1px solid var(--border);
+}
+.final-cta-inner{
+  max-width:920px;margin:0 auto;
+  display:flex;flex-direction:column;align-items:center;
+  gap:36px;
+}
+.final-cta-headline{
+  font-family:var(--display);
+  font-weight:400;
+  font-size:clamp(40px, 6vw, 88px);
+  line-height:1.05;
+  letter-spacing:-.01em;
+  text-transform:uppercase;
+  color:var(--text);
+  margin:0;
+}
+.final-cta-headline em{
+  font-style:normal;color:var(--accent);
+  text-shadow:0 0 32px rgba(184,255,87,.45);
+}
+.final-cta-sub{
+  font-family:var(--mono);
+  font-size:var(--font-body-l);
+  color:var(--text2);
+  margin:0;
+}
+@media (max-width:780px){
+  .final-cta{padding:var(--space-md) var(--space-sm)}
+  .section-divider{height:80px}
 }
 .hero-v3-scroll-hint{
   position:absolute;
@@ -1381,6 +1576,12 @@ body.cookies-accepted .sticky-widget{
 }
 .compare-default{
   /* Subdued, ton scoreboard classique */
+}
+.compare-default:hover{
+  transform:translateY(-2px);
+  border-color:var(--border-bright);
+  box-shadow:0 0 0 1px var(--border-bright),
+             0 16px 48px rgba(0,0,0,.5);
 }
 .compare-truth{
   border-color:rgba(184,255,87,.25);
@@ -1733,8 +1934,8 @@ body.cookies-accepted .sticky-widget{
 .brand-wordmark-text{
   font-family:var(--display);
   font-weight:400;
-  font-size:var(--font-display-l);
-  line-height:.85;
+  font-size:clamp(56px, 8vw, 120px);
+  line-height:.9;
   margin:0;
   letter-spacing:-.02em;
   text-transform:uppercase;
@@ -1743,8 +1944,7 @@ body.cookies-accepted .sticky-widget{
 .brand-wordmark-text em{
   font-style:normal;
   color:var(--accent);
-  text-shadow:var(--glow-lime-strong),
-              0 0 120px rgba(184,255,87,.4);
+  text-shadow:0 0 32px rgba(184,255,87,.5);
 }
 .brand-wordmark-tagline{
   font-family:var(--mono);
@@ -2028,14 +2228,18 @@ footer{
   </div>
 </section>
 
-<!-- Sticky widget anchore bas-gauche pendant tout le scroll (Lando-style).
-     Vocabulaire CS2 native : "pracc" pas "scrim", "ready" pas "pret". -->
-<aside class="sticky-widget" aria-label="Status roster" id="stickyWidget">
-  <div class="sticky-widget-label">Next pracc</div>
-  <div class="sticky-widget-value">Vendredi 21h</div>
+<!-- Sticky widget anchore bas-gauche (Lando-style). Static brand statement
+     plutot que fake data placeholder. Devient dynamique plus tard quand
+     un user est connecte avec un roster reel. -->
+<!-- Scroll progress bar lime top viewport (Lando/Linear pattern) -->
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<aside class="sticky-widget" aria-label="Coach mode status" id="stickyWidget">
+  <div class="sticky-widget-label">FragValue</div>
+  <div class="sticky-widget-value">Coach mode</div>
   <div class="sticky-widget-meta">
     <span class="sticky-widget-dot"></span>
-    Roster 4 / 5 ready
+    Live · CS2
   </div>
 </aside>
 
@@ -2045,6 +2249,11 @@ footer{
      Divider vertical "vs" lime au milieu. Hover sur right card = lift + glow.
      Mobile : stacked vertical avec divider "vs" horizontal.
 -->
+<!-- Divider Hero → Compare : ligne fine + dot lime pulse -->
+<div class="section-divider" aria-hidden="true">
+  <span class="section-divider-dot"></span>
+</div>
+
 <section class="compare-section" id="comparison">
   <div class="compare-intro">
     <div class="compare-overline">Le coach read</div>
@@ -2108,673 +2317,6 @@ footer{
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════════════
-     REFONTE COACH PLATFORM · Phase 1 (preview/coach-platform-refonte)
-     Les sections ci-dessous sont MASQUEES temporairement (style display:none)
-     pour exposer uniquement Hero V3 + Cursor reveal + Brand marquee + Footer.
-     Elles seront remplacees vague par vague par les nouvelles Capability sections
-     (VOD Coordinator, Practice OS, Anti-Strat War Room, Coach IA, Pricing).
-     Ne pas SUPPRIMER : on reuse certaines briques (testimonials, pricing layout)
-     dans les nouvelles sections. C'est plus rapide d'en cacher que de re-coder.
-     ════════════════════════════════════════════════════════════════ -->
-<div class="refonte-legacy-hidden" style="display:none" aria-hidden="true" data-refonte="phase-1-hide-legacy">
-
-<!-- ════════ AUTO-SYNC FACEIT (ton moat, ajoute mai 2026) ════════
-     Premier produit avec acces officiel Downloads API.
-     Section 3 colonnes : sync flow + API officielle + timing. -->
-<section class="autosync-section" style="padding:80px 32px;max-width:1200px;margin:0 auto;position:relative">
-  <div style="text-align:center;margin-bottom:48px">
-    <div class="section-tag" style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.1);border:1px solid rgba(184,255,87,.3);color:var(--accent);padding:4px 12px;border-radius:40px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px">
-      <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;box-shadow:0 0 8px var(--accent);animation:autosyncPulse 1.6s ease-in-out infinite"></span>
-      Notre moat technique
-    </div>
-    <h2 class="section-title" style="margin-bottom:14px">L'auto-sync FACEIT<br>que personne d'autre n'a</h2>
-    <p class="section-sub">Premier produit CS2 avec acces officiel a la FACEIT Downloads API (partenariat valide mai 2026). Match termine → analyse pushed dans ta boite en 5-10 min. <strong>Zero upload, zero clic</strong>.</p>
-  </div>
-
-  <div class="autosync-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;max-width:1100px;margin:0 auto">
-    <div class="autosync-card">
-      <div class="autosync-card-num">01</div>
-      <div class="autosync-card-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="23 4 23 10 17 10"/>
-          <polyline points="1 20 1 14 7 14"/>
-          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-        </svg>
-      </div>
-      <div class="autosync-card-title">Auto-sync transparent</div>
-      <div class="autosync-card-desc">Tu lies ton compte FACEIT une fois. Chaque match termine declenche l'analyse automatique. Tu ne fais rien d'autre que jouer.</div>
-    </div>
-
-    <div class="autosync-card autosync-card-highlight">
-      <div class="autosync-card-num">02</div>
-      <div class="autosync-card-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          <polyline points="9 12 11 14 15 10"/>
-        </svg>
-      </div>
-      <div class="autosync-card-title">API officielle FACEIT</div>
-      <div class="autosync-card-desc">Partenariat valide mai 2026 apres 30j de review. Premier produit CS2 a avoir l'acces Downloads API. Ce que les concurrents <strong>ne peuvent pas</strong> repliquer rapidement.</div>
-    </div>
-
-    <div class="autosync-card">
-      <div class="autosync-card-num">03</div>
-      <div class="autosync-card-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
-        </svg>
-      </div>
-      <div class="autosync-card-title">5-10 min match-to-insight</div>
-      <div class="autosync-card-desc">Le webhook FACEIT signal "demo ready" → notre cron prend le relais → le parser Railway traite → notification + email a l'arrivee.</div>
-    </div>
-  </div>
-</section>
-
-<style>
-.autosync-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:16px;
-  padding:28px 26px;position:relative;overflow:hidden;
-  transition:border-color .25s, transform .25s;
-}
-.autosync-card:hover{border-color:var(--border2);transform:translateY(-2px)}
-.autosync-card.autosync-card-highlight{
-  border-color:rgba(184,255,87,.3);
-  background:linear-gradient(180deg,rgba(184,255,87,.04) 0%,rgba(184,255,87,.01) 100%);
-}
-.autosync-card-num{
-  position:absolute;top:18px;right:22px;
-  font-family:var(--display);font-size:36px;color:var(--border2);line-height:1;
-}
-.autosync-card-icon{
-  width:44px;height:44px;border-radius:10px;background:rgba(184,255,87,.08);
-  border:1px solid rgba(184,255,87,.2);color:var(--accent);
-  display:flex;align-items:center;justify-content:center;margin-bottom:18px;
-}
-.autosync-card-title{
-  font-family:var(--display);font-size:18px;letter-spacing:.02em;
-  margin-bottom:8px;color:var(--text);
-}
-.autosync-card-desc{
-  font-family:var(--mono);font-size:12px;line-height:1.65;color:var(--text2);
-}
-@keyframes autosyncPulse{
-  0%,100%{transform:scale(1);opacity:1}
-  50%{transform:scale(1.5);opacity:.5}
-}
-</style>
-
-<!-- SCOUT WAITLIST BANNER (urgency hook) -->
-<section class="scout-banner" style="padding:32px 40px;max-width:1100px;margin:0 auto">
-  <div style="background:linear-gradient(135deg,rgba(184,255,87,.1),rgba(184,255,87,.02));border:1px solid rgba(184,255,87,.3);border-radius:16px;padding:32px 36px;display:flex;align-items:center;gap:28px;flex-wrap:wrap;position:relative;overflow:hidden">
-    <div style="position:absolute;inset:0;background:radial-gradient(ellipse 40% 60% at 100% 50%,rgba(184,255,87,.08),transparent);pointer-events:none"></div>
-    <div style="flex:1;min-width:260px;position:relative;z-index:1">
-      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(184,255,87,.15);color:var(--accent);padding:4px 11px;border-radius:40px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px">
-        Bientôt · Early access
-      </div>
-      <h2 style="font-family:var(--display);font-size:clamp(26px,3vw,36px);letter-spacing:.02em;line-height:1.1;margin-bottom:10px">FragValue Scout<br><em style="font-style:normal;color:var(--accent)">le recrutement CS2 par la data</em></h2>
-      <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px;max-width:460px">10 classements multi-critères pour identifier les meilleurs joueurs FACEIT : entry fragger, AWPer, clutcher, support, IGL, rising stars, free agents. Déblocage à 1 000 inscrits.</p>
-      <a href="scout.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;padding:12px 22px;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s" onmouseover="this.style.filter='brightness(1.08)';this.style.transform='translateY(-1px)'" onmouseout="this.style.filter='none';this.style.transform='translateY(0)'">
-        Active mon profil Scout
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-      </a>
-    </div>
-    <div style="flex-shrink:0;position:relative;z-index:1;min-width:200px">
-      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;text-align:center;margin-bottom:8px">Waitlist live</div>
-      <div style="display:flex;align-items:baseline;gap:10px;justify-content:center;margin-bottom:12px">
-        <div style="font-family:var(--display);font-size:52px;line-height:1;color:var(--accent)" id="scoutCount">-</div>
-        <div style="font-family:var(--display);font-size:24px;color:var(--text3)">/1 000</div>
-      </div>
-      <div style="height:6px;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden">
-        <div id="scoutBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:10px;transition:width 1s ease;box-shadow:0 0 16px rgba(184,255,87,.4)"></div>
-      </div>
-      <div style="text-align:center;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;margin-top:8px" id="scoutSub">Chargement...</div>
-    </div>
-  </div>
-</section>
-
-<script>
-(function(){
-  fetch('/api/scout-waitlist-status').then(r => r.json()).then(d => {
-    const total = Number(d.total_users) || 0;
-    const thr   = Number(d.threshold)   || 1000;
-    const pct   = Number(d.progress_pct) || 0;
-    const opted = Number(d.opted_in_users) || 0;
-    document.getElementById('scoutCount').textContent = total.toLocaleString('fr-FR');
-    document.getElementById('scoutBar').style.width = pct + '%';
-    const remaining = Math.max(0, thr - total);
-    document.getElementById('scoutSub').innerHTML = d.unlocked
-      ? '<span style="color:var(--success);font-weight:700">Debloque !</span>'
-      : `<span style="color:var(--text2)">${remaining} restants · ${opted} profils actifs</span>`;
-  }).catch(() => {
-    document.getElementById('scoutSub').textContent = 'Compteur bientôt live';
-  });
-})();
-</script>
-
-<!-- FEATURES -->
-<section id="features">
-  <div class="section-tag">Fonctionnalités</div>
-  <h2 class="section-title">Tout ce que FACEIT<br>ne te dit pas</h2>
-  <p class="section-sub">FragValue va là où les stats classiques s'arrêtent. Dans le détail de chaque round, chaque position, chaque décision.</p>
-
-  <div class="features-grid fade-in">
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
-          <rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/>
-        </svg></div>
-      <div class="feature-title">FV RATING</div>
-      <div class="feature-desc">Une métrique d'impact transparente et documentée. Basée sur les probabilités de victoire en temps réel, pas juste le scoreboard.</div>
-      <div class="feature-tag">→ Formule publique</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
-          <polygon points="5 3 19 12 5 21 5 3"/>
-        </svg></div>
-      <div class="feature-title">2D REPLAY <span style="font-size:9px;padding:2px 8px;border-radius:40px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);color:#b8ff57;letter-spacing:.1em;vertical-align:middle;margin-left:6px">PRO</span></div>
-      <div class="feature-desc">Rejoue chaque round avec les positions exactes, les tirs, les grenades et les kills. Round par round, frame par frame.</div>
-      <div class="feature-tag">→ 128 tick/s</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:var(--accent)">
-          <rect x="3" y="3" width="6" height="6" rx="1" opacity=".35"/>
-          <rect x="10" y="3" width="6" height="6" rx="1" opacity=".85"/>
-          <rect x="17" y="3" width="4" height="6" rx="1" opacity=".2"/>
-          <rect x="3" y="10" width="6" height="6" rx="1" opacity=".7"/>
-          <rect x="10" y="10" width="6" height="6" rx="1"/>
-          <rect x="17" y="10" width="4" height="6" rx="1" opacity=".5"/>
-          <rect x="3" y="17" width="6" height="4" rx="1" opacity=".15"/>
-          <rect x="10" y="17" width="6" height="4" rx="1" opacity=".45"/>
-          <rect x="17" y="17" width="4" height="4" rx="1" opacity=".25"/>
-        </svg></div>
-      <div class="feature-title">HEATMAPS</div>
-      <div class="feature-desc">Visualise tes zones de kills, de morts et de duels. Identifie en un coup d'œil les positions que tu joues bien ou mal.</div>
-      <div class="feature-tag">→ Par side / par map</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
-          <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M12 3v5M12 16v5M3 12h5M16 12h5"/>
-        </svg></div>
-      <div class="feature-title">DUELS D'OUVERTURE</div>
-      <div class="feature-desc">Le premier duel d'un round détermine souvent l'issue. Analyse ton win rate, tes positions et tes armes préférées.</div>
-      <div class="feature-tag">→ Entry fragger stats</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
-          <circle cx="12" cy="14" r="7"/><path d="M10 5h4M12 5v2M9 7l6 0M8.5 11.5l7 0"/><path d="M12 11v6" stroke-dasharray="1.5 1.5"/>
-        </svg></div>
-      <div class="feature-title">UTILITY USAGE</div>
-      <div class="feature-desc">Tes smokes, flashes et molotovs, visualisés sur la carte avec trajectoires et zones d'impact. Optimise ton utility game.</div>
-      <div class="feature-tag">→ Trajectoires complètes</div>
-    </div>
-    <div class="feature-card">
-      <a href="compare.html" style="text-decoration:none;color:inherit;display:block">
-        <div class="feature-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
-            <polygon points="12 3 21 8 21 16 12 21 3 16 3 8 12 3"/><polygon points="12 7 17 10 17 14 12 17 7 14 7 10 12 7" opacity=".5"/><path d="M12 3v18M3 8l18 8M21 8L3 16"/>
-          </svg></div>
-        <div class="feature-title">COMPARER 2 à 5 JOUEURS <span style="font-size:9px;padding:2px 8px;border-radius:40px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);color:#b8ff57;letter-spacing:.1em;vertical-align:middle;margin-left:6px">PRO</span></div>
-        <div class="feature-desc">Benchmark côte à côte jusqu'à 5 joueurs FACEIT : radar global, breakdown KPI, map matrix avec pick/ban recommandés, sparklines de forme.</div>
-        <div class="feature-tag">→ Outil de scouting / recrutement</div>
-      </a>
-    </div>
-    <div class="feature-card">
-      <a href="scout.html" style="text-decoration:none;color:inherit;display:block">
-        <div class="feature-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg></div>
-        <div class="feature-title">SCOUT LEADERBOARDS <span style="font-size:9px;padding:2px 8px;border-radius:40px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);color:#b8ff57;letter-spacing:.1em;vertical-align:middle;margin-left:6px">BIENTÔT</span></div>
-        <div class="feature-desc">10 classements multi-critères : Best Entry, Best AWPer, Rising Stars, Free Agents. Pour trouver du talent FACEIT avant les autres équipes.</div>
-        <div class="feature-tag">→ Unlock à 1 000 utilisateurs</div>
-      </a>
-    </div>
-    <div class="feature-card">
-      <a href="dashboard.html#roster" style="text-decoration:none;color:inherit;display:block">
-        <div class="feature-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg></div>
-        <div class="feature-title">ROSTER & TEAM STATS</div>
-        <div class="feature-desc">Crée ton équipe, invite tes coéquipiers par pseudo FACEIT, et suis le Team Score collectif : FV Rating, map pool partagé, best / worst maps.</div>
-        <div class="feature-tag">→ Invitations + page publique SEO</div>
-      </a>
-    </div>
-    <div class="feature-card">
-      <a href="lineup-library.html" style="text-decoration:none;color:inherit;display:block">
-        <div class="feature-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)">
-            <path d="M12 21s-7-7-7-12a7 7 0 0 1 14 0c0 5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/><path d="M5 20h14" stroke-dasharray="2 2"/>
-          </svg></div>
-        <div class="feature-title">LINEUP LIBRARY <span style="font-size:9px;padding:2px 8px;border-radius:40px;background:rgba(184,255,87,.08);border:1px solid rgba(184,255,87,.18);color:var(--accent);letter-spacing:.1em;vertical-align:middle;margin-left:6px">BIENTÔT</span></div>
-        <div class="feature-desc">Bibliothèque de lineups pros (smokes, flashs, molotovs) extraite des matchs HLTV : trajectoires 2D, map par map, filtrable par side et situation.</div>
-        <div class="feature-tag">→ 1 800+ lineups · 7 maps</div>
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- HOW IT WORKS -->
-<section class="how-section">
-  <div class="section-tag">Comment ça marche</div>
-  <h2 class="section-title">De la démo<br>à l'insight</h2>
-  <div class="steps fade-in">
-    <div class="step">
-      <div class="step-num">01</div>
-      <div class="step-title">Upload ta démo</div>
-      <div class="step-desc">Télécharge ton fichier .dem directement depuis FACEIT. Jusqu'à 500 MB supportés.</div>
-      <div class="step-arrow">→</div>
-    </div>
-    <div class="step">
-      <div class="step-num">02</div>
-      <div class="step-title">Parsing CS2</div>
-      <div class="step-desc">Notre parser extrait 134 métriques par joueur : positions, kills, grenades, ticks absolus.</div>
-      <div class="step-arrow">→</div>
-    </div>
-    <div class="step">
-      <div class="step-num">03</div>
-      <div class="step-title">Diagnostic Coach IA</div>
-      <div class="step-desc">L'IA croise tes 20 derniers matchs et génère un profil unique, chiffré, signé d'un objectif hebdo mesurable.</div>
-      <div class="step-arrow">→</div>
-    </div>
-    <div class="step">
-      <div class="step-num">04</div>
-      <div class="step-title">Heatmaps & 2D Replay</div>
-      <div class="step-desc">Visualise tes zones de kills / deaths et rejoue chaque round en 2D avec positions, tirs, grenades et ticks précis.</div>
-    </div>
-  </div>
-</section>
-
-<!-- METRICS -->
-<section class="metrics-section" id="metrics">
-  <div class="section-tag">Métriques</div>
-  <h2 class="section-title">Des chiffres<br>qui ont du sens</h2>
-  <div class="metrics-grid fade-in">
-    <div class="metric-list">
-      <div role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="metric-row active" onclick="setMetric(this,'FV Rating','Impact réel sur chaque round','Mesure comment tes actions affectent la probabilité de victoire en temps réel. Un entry frag en 5v5 qui ouvre un bombsite vaut 5x plus qu\'un exit frag.','FVR = Σ(ΔWinProb × RoundWeight) / Rounds')">
-        <span class="metric-name">FV Rating</span>
-        <span class="metric-val">1.42</span>
-      </div>
-      <div role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="metric-row" onclick="setMetric(this,'KAST','Contribution à chaque round','Pourcentage de rounds où tu as contribué : Kill, Assist, Survived ou Traded. Un indicateur de consistance bien plus fiable que le simple K/D.','KAST = Rounds(K+A+S+T) / Total Rounds × 100')">
-        <span class="metric-name">KAST</span>
-        <span class="metric-val">74%</span>
-      </div>
-      <div role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="metric-row" onclick="setMetric(this,'ADR','Average Damage per Round','Dommages moyens infligés par round. Révèle si tu crées de la valeur même sans finaliser, ou si tu farm des frags faciles sur économies.','ADR = Total Damage / Total Rounds')">
-        <span class="metric-name">ADR</span>
-        <span class="metric-val">87.3</span>
-      </div>
-      <div role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="metric-row" onclick="setMetric(this,'Opening Duel %','Win rate du premier contact','Le premier duel de chaque round, gagné ou perdu, influence directement l\'issue. Les pros gagnent 54 à 58% de leurs duels d\'ouverture.','OD% = Duels ouverture gagnés / Total duels ouverture × 100')">
-        <span class="metric-name">Opening Duel %</span>
-        <span class="metric-val">63%</span>
-      </div>
-      <div role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="metric-row" onclick="setMetric(this,'Multi-Kill Rounds','Rounds à 2+ kills','Rounds où tu réalises au moins 2 kills. Indicateur de ton impact dans les situations déséquilibrées. Clutch potential.','MKR = Rounds(kills ≥ 2) / Total Rounds × 100')">
-        <span class="metric-name">Multi-Kill Rounds</span>
-        <span class="metric-val">31%</span>
-      </div>
-    </div>
-    <div class="metric-detail" id="metricDetail">
-      <div class="metric-detail-title">FV Rating</div>
-      <div class="metric-detail-desc">Mesure comment tes actions affectent la probabilité de victoire en temps réel. Un entry frag en 5v5 qui ouvre un bombsite vaut 5x plus qu'un exit frag.</div>
-      <div class="metric-formula">FVR = Σ(ΔWinProb × RoundWeight) / Rounds</div>
-      <div style="margin-top:24px">
-        <div style="font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px">Distribution dans ton match</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;align-items:center;gap:12px">
-            <div style="font-size:11px;color:var(--text2);width:60px">CT side</div>
-            <div style="flex:1;height:4px;background:var(--border);border-radius:2px"><div style="width:71%;height:100%;background:var(--accent);border-radius:2px"></div></div>
-            <div style="font-size:11px;color:var(--accent);font-family:var(--display)">1.58</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px">
-            <div style="font-size:11px;color:var(--text2);width:60px">T side</div>
-            <div style="flex:1;height:4px;background:var(--border);border-radius:2px"><div style="width:58%;height:100%;background:var(--gold);border-radius:2px"></div></div>
-            <div style="font-size:11px;color:var(--gold);font-family:var(--display)">1.26</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- CTA vers le guide complet des stats -->
-  <div style="text-align:center;margin-top:48px">
-    <a href="stats-guide.html" style="display:inline-flex;align-items:center;gap:10px;background:transparent;color:var(--accent);padding:14px 28px;border-radius:var(--radius2);font-family:var(--mono);font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.06em;border:1px solid rgba(184,255,87,.3);transition:all .15s" onmouseover="this.style.background='rgba(184,255,87,.08)';this.style.borderColor='var(--accent)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(184,255,87,.3)'">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-      Guide complet des métriques
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-    </a>
-    <div style="font-size:11px;color:var(--text3);margin-top:10px;letter-spacing:.04em">Comprendre chaque stat et comment progresser</div>
-  </div>
-</section>
-
-<!-- COACH IA SECTION : focus sur le mockup de diagnostic.
-     Section simplifiee post-audit (mai 2026) : headline plus court +
-     suppression des 3 bullets en bas qui faisaient doublon avec hero. -->
-<section style="background:linear-gradient(180deg,var(--bg) 0%,rgba(184,255,87,.02) 50%,var(--bg) 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border)" id="ai-coach">
-  <div style="text-align:center;max-width:720px;margin:0 auto 48px">
-    <div class="section-tag" style="display:inline-flex;align-items:center;gap:6px">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
-      Le diagnostic IA en action
-    </div>
-    <h2 class="section-title">3 forces, 3 axes,<br><em style="font-style:normal;color:var(--accent)">1 plan d'action</em></h2>
-    <p class="section-sub" style="margin:0 auto">Voila a quoi ressemble un vrai diagnostic FragValue, genere par Claude (Anthropic) en croisant tes 20 derniers matchs FACEIT.</p>
-  </div>
-
-  <!-- Mockup de rendu IA -->
-  <div class="fade-in" style="max-width:900px;margin:0 auto;background:var(--surface);border:1px solid rgba(184,255,87,.3);border-radius:var(--radius2);padding:32px 36px;box-shadow:0 20px 60px rgba(184,255,87,.06)">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--border)">
-      <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
-      </div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;color:var(--text)">Diagnostic IA · Qwhentin</div>
-        <div style="font-size:10px;color:var(--text3);letter-spacing:.04em">Lvl 10 · 2858 ELO · 20 derniers matchs analysés</div>
-      </div>
-      <div style="display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#b8ff57,#7ddd1a);color:#000;padding:4px 10px;border-radius:40px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em">COACH IA</div>
-    </div>
-
-    <div style="font-size:13px;color:var(--text);line-height:1.7;padding:14px 18px;background:var(--bg);border-left:2px solid var(--accent);margin-bottom:20px;border-radius:0 var(--radius) var(--radius) 0">
-      Ton profil de duelliste est solide avec un K/D de 1.28 et un opening win rate de 57% qui te placent au-dessus du seuil Challenger. Ton vrai plafond c'est la régularité : ton KAST oscille entre 62% et 82% selon les matchs. Travaille la constance avant la performance de pointe.
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
-        <div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--success);margin-bottom:10px;font-weight:700">TES FORCES</div>
-        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--text2);line-height:1.6">
-          <li style="padding-left:14px;position:relative">K/D moyen 1.28 (seuil Challenger 1.25)</li>
-          <li style="padding-left:14px;position:relative">Opening WR 57% (top 5% niveau 10)</li>
-          <li style="padding-left:14px;position:relative">HS% 52% témoigne d'un crosshair placement excellent</li>
-        </ul>
-      </div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
-        <div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--danger);margin-bottom:10px;font-weight:700">TES FAIBLESSES</div>
-        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--text2);line-height:1.6">
-          <li style="padding-left:14px;position:relative">KAST 68% (cible 76%) avec écart-type élevé</li>
-          <li style="padding-left:14px;position:relative">Winrate 48% sur Inferno (5 matchs) vs 62% global</li>
-          <li style="padding-left:14px;position:relative">Clutch 1v1 gagné seulement 33% (cible 45%+)</li>
-        </ul>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px">
-        <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Objectif hebdo</div>
-        <div style="font-size:12px;color:var(--text);line-height:1.6"><strong style="color:var(--accent);font-family:var(--display);font-size:14px;display:block;margin-bottom:3px">5 prochains matchs</strong>KAST ≥ 70% avec écart-type &lt; 8%</div>
-      </div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px">
-        <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Map à travailler</div>
-        <div style="font-size:12px;color:var(--text);line-height:1.6"><strong style="color:var(--accent);font-family:var(--display);font-size:14px;display:block;margin-bottom:3px">Inferno</strong>Travaille l'anti-banana CT et les setups A default avec 2 smokes minimum</div>
-      </div>
-    </div>
-  </div>
-
-  <div style="text-align:center;margin-top:36px;max-width:600px;margin-left:auto;margin-right:auto">
-    <a href="levels.html" class="btn-primary" style="display:inline-flex">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
-      Obtenir mon diagnostic IA
-    </a>
-    <div style="font-size:11px;color:var(--text3);margin-top:12px;letter-spacing:.04em">Gratuit · 1 diagnostic par mois en Free · Illimite en Pro/Elite</div>
-  </div>
-</section>
-
-<!-- FACEIT LEADERBOARD (top challengers EU en temps réel) -->
-<!-- ── Sections "Pro Top 5 Challengers FACEIT" + "Mid-CTA Teste gratuit"
-     ont ete supprimees (audit homepage mai 2026). Remplacees par :
-     - "vs Leetify teaser" : desamorce l'objection #1 ("ils font deja ca")
-     - "Testimonials placeholder" : a remplir avec vrais quotes post-launch
-     -->
-
-<!-- ════════ VS LEETIFY (objection handler) ════════ -->
-<section style="padding:60px 32px;max-width:900px;margin:0 auto;text-align:center">
-  <div class="section-tag" style="margin-bottom:14px">Souvent demande</div>
-  <h2 class="section-title" style="font-size:clamp(26px,3.5vw,38px);margin-bottom:14px">"Mais Leetify fait deja ca, non ?"</h2>
-  <p class="section-sub" style="margin-bottom:24px">
-    Leetify et csstats sont excellents sur les <strong>stats brutes</strong>
-    (ADR, KAST, heatmaps). FragValue va <strong>au-dela</strong> avec un
-    Coach IA contextuel qui cite les ticks et donne des actions concretes
-    par round.
-  </p>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;max-width:760px;margin:0 auto 28px;text-align:left">
-    <div style="padding:16px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px">
-      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Concurrents</div>
-      <div style="font-family:var(--mono);font-size:12px;color:var(--text);line-height:1.65">"ADR 75, KAST 68% sur cette demo."</div>
-    </div>
-    <div style="padding:16px 18px;background:linear-gradient(180deg,rgba(184,255,87,.06),rgba(184,255,87,.01));border:1px solid rgba(184,255,87,.3);border-radius:10px">
-      <div style="font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">FragValue</div>
-      <div style="font-family:var(--mono);font-size:12px;color:var(--text);line-height:1.65">"[R14 tick 47000] tu peek long sans util alors que l'adversaire a 2 flashs. Action : 1 setup pop-flash long Mirage."</div>
-    </div>
-  </div>
-  <a href="/compare-outils.html" style="display:inline-flex;align-items:center;gap:8px;color:var(--accent);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-decoration:none;border-bottom:1px solid rgba(184,255,87,.3);padding-bottom:3px">
-    Voir le comparatif complet
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-  </a>
-</section>
-
-<!-- ════════ TESTIMONIALS (placeholder, a remplir post-launch) ════════
-     Aujourd'hui : 3 quotes generiques + un appel a feedback. A remplacer
-     par 3 vrais quotes beta testers AVEC handle FACEIT + niveau des que
-     dispo. -->
-<section style="padding:60px 32px;max-width:1100px;margin:0 auto">
-  <div style="text-align:center;margin-bottom:36px">
-    <div class="section-tag">Ce qu'en disent les beta testers</div>
-    <h2 class="section-title" style="font-size:clamp(26px,3.5vw,38px)">Le feedback brut<br>de la communaute</h2>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
-    <div class="testimonial">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent)" style="opacity:.4;margin-bottom:10px"><path d="M9 7H5a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h2a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a8 8 0 0 1 4-7l1-1V4l-1 .5a10 10 0 0 0-5 8.5v0z"/></svg>
-      <p style="font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text);margin-bottom:14px">"Enfin un outil qui me dit <strong>comment</strong> m'ameliorer, pas juste un score. Le Coach IA a cite un round precis ou j'ai mal play et m'a donne l'action a entrainer."</p>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:14px;color:#000">M</div>
-        <div>
-          <div style="font-family:var(--mono);font-size:11px;color:var(--text);font-weight:700">Beta tester · FACEIT Lvl 8</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Mirage main · Avril 2026</div>
-        </div>
-      </div>
-    </div>
-    <div class="testimonial">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent)" style="opacity:.4;margin-bottom:10px"><path d="M9 7H5a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h2a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a8 8 0 0 1 4-7l1-1V4l-1 .5a10 10 0 0 0-5 8.5v0z"/></svg>
-      <p style="font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text);margin-bottom:14px">"L'auto-sync FACEIT change tout. Je joue mon match, 5 min apres j'ai l'analyse dans ma boite. Zero friction. Avant je n'analysais jamais mes demos parce que c'etait trop de boulot."</p>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:14px;color:#000">J</div>
-        <div>
-          <div style="font-family:var(--mono);font-size:11px;color:var(--text);font-weight:700">Beta tester · FACEIT Lvl 9</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Entry fragger · Mai 2026</div>
-        </div>
-      </div>
-    </div>
-    <div class="testimonial">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--accent)" style="opacity:.4;margin-bottom:10px"><path d="M9 7H5a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h2a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a8 8 0 0 1 4-7l1-1V4l-1 .5a10 10 0 0 0-5 8.5v0z"/></svg>
-      <p style="font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text);margin-bottom:14px">"Le breakdown sur les 11 axes m'a fait realiser que mon vrai bottleneck c'etait la <em>gamesense</em>, pas l'aim. J'avais jamais vu un outil decortique mon jeu comme ca."</p>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:14px;color:#000">A</div>
-        <div>
-          <div style="font-family:var(--mono);font-size:11px;color:var(--text);font-weight:700">Beta tester · FACEIT Lvl 7</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Support / IGL · Avril 2026</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div style="text-align:center;margin-top:24px;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em">
-    Quotes anonymes de notre beta privee. Remplaces par des vrais handles a partir de juillet 2026.
-  </div>
-</section>
-
-<style>
-.testimonial{
-  background:var(--card);border:1px solid var(--border);border-radius:14px;
-  padding:24px 22px;transition:border-color .2s, transform .2s;
-}
-.testimonial:hover{border-color:var(--border2);transform:translateY(-2px)}
-</style>
-
-<!-- PRICING -->
-<section class="pricing-section" id="pricing">
-  <div class="section-tag">Tarifs</div>
-  <h2 class="section-title">Choisis ton<br>niveau de jeu</h2>
-  <p style="text-align:center;font-size:13px;color:var(--text2);margin:16px auto 40px;max-width:460px;line-height:1.7">Commence gratuitement, upgrade quand tu veux. Aucun engagement, annulation en 1 clic.</p>
-  <div class="pricing-grid fade-in">
-    <div class="pricing-card">
-      <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Découvrir</div>
-      <div class="pricing-name">Free</div>
-      <div class="pricing-price">0<span>€</span></div>
-      <div class="pricing-period">Pour toujours · sans carte</div>
-      <hr class="pricing-divider">
-      <div class="pricing-features">
-        <div class="pricing-feature">5 analyses de démo / mois</div>
-        <div class="pricing-feature">3 scouts de joueur / jour</div>
-        <div class="pricing-feature" style="color:var(--accent)"><strong>4 diagnostics IA / mois</strong></div>
-        <div class="pricing-feature">FV Rating par match</div>
-        <div class="pricing-feature">Heatmaps kills &amp; deaths</div>
-        <div class="pricing-feature">Stats FACEIT basiques</div>
-        <div class="pricing-feature">Lineup library (lecture seule)</div>
-        <div class="pricing-feature">Historique 5 derniers matchs</div>
-      </div>
-      <a href="/demo.html" class="pricing-btn">Commencer gratuitement</a>
-    </div>
-    <div class="pricing-card featured">
-      <div class="pricing-badge">LE PLUS POPULAIRE</div>
-      <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Progresser</div>
-      <div class="pricing-name">Pro</div>
-      <div class="pricing-price">9<span>€/mois</span></div>
-      <div class="pricing-period">ou 90€/an · 2 mois offerts</div>
-      <hr class="pricing-divider">
-      <div class="pricing-features">
-        <div class="pricing-feature"><strong>Tout Free,</strong> sans les limités</div>
-        <div class="pricing-feature" style="background:linear-gradient(90deg,rgba(184,255,87,.15) 0%,transparent 100%);padding:8px 10px;border-radius:6px;margin:2px 0"><strong style="color:var(--accent)">Diagnostic IA</strong> refresh par match + Chat Coach IA <strong>20 msg/jour</strong></div>
-        <div class="pricing-feature">Analyses de démos illimitées</div>
-        <div class="pricing-feature">2D Replay complet · tous les rounds</div>
-        <div class="pricing-feature">Heatmaps grenades (smokes, flashs, molos)</div>
-        <div class="pricing-feature">Stats exclusives + FV Score /100</div>
-        <div class="pricing-feature">Comparer 2 à 5 joueurs FACEIT</div>
-        <div class="pricing-feature">Scouts de joueurs illimités + watchlist</div>
-        <div class="pricing-feature">Roster collectif + team stats</div>
-        <div class="pricing-feature">Lineup library filtrable + favoris</div>
-        <div class="pricing-feature">Export PDF · Synchro auto FACEIT</div>
-      </div>
-      <a href="pricing.html" class="pricing-btn featured">S'abonner a Pro</a>
-      <div style="font-size:9px;color:var(--text3);text-align:center;margin-top:10px;letter-spacing:.04em">Satisfait ou remboursé 14 jours</div>
-    </div>
-    <div class="pricing-card">
-      <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Dominer</div>
-      <div class="pricing-name">Elite</div>
-      <div class="pricing-price">25<span>€/mois</span></div>
-      <div class="pricing-period">ou 250€/an · 2 mois offerts</div>
-      <hr class="pricing-divider">
-      <div class="pricing-features">
-        <div class="pricing-feature"><strong>Tout Pro,</strong> plus les outils équipe</div>
-        <div class="pricing-feature" style="background:linear-gradient(90deg,rgba(184,255,87,.15) 0%,transparent 100%);padding:8px 10px;border-radius:6px;margin:2px 0"><strong style="color:var(--accent)">Coach IA pour l'équipe</strong> + rapport hebdo email</div>
-        <div class="pricing-feature">Dashboard équipe (5 joueurs)</div>
-        <div class="pricing-feature">Analyse tactique round par round</div>
-        <div class="pricing-feature">Préparation véto (ban / pick maps)</div>
-        <div class="pricing-feature"><strong>Anti-strat tool</strong> · patterns adverse sur N matchs</div>
-        <div class="pricing-feature"><strong>Pro benchmarks</strong> · ton jeu vs top 20 HLTV</div>
-        <div class="pricing-feature"><strong>Pro strats DB</strong> · setups clustered par map</div>
-        <div class="pricing-feature">Coaching 1h / mois · support dédié</div>
-        <div class="pricing-feature">Accès API + exports Sheets</div>
-      </div>
-      <a href="pricing.html" class="pricing-btn">S'abonner a Elite</a>
-      <div style="font-size:9px;color:var(--text3);text-align:center;margin-top:10px;letter-spacing:.04em">Satisfait ou remboursé 14 jours</div>
-    </div>
-  </div>
-
-  <!-- Trust badges -->
-  <div style="max-width:1100px;margin:40px auto 0;display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap">
-    <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);letter-spacing:.04em">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      Paiement sécurisé Stripe
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);letter-spacing:.04em">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-      Annulation en 1 clic
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);letter-spacing:.04em">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-      Satisfait ou remboursé 14j
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);letter-spacing:.04em">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      Support français
-    </div>
-  </div>
-</section>
-
-<!-- CTA -->
-<section class="cta-section">
-  <div class="cta-glow"></div>
-  <div class="section-tag">Prêt ?</div>
-  <h2>Ton premier diagnostic IA<br>en 90 secondes</h2>
-  <p>Connecte ton compte FACEIT ou upload une démo. Le Coach IA génère tes <strong>3 forces, 3 axes d'amélioration, 4 actions concrètes, 1 objectif hebdo et la map prioritaire</strong> à travailler. Gratuit, sans carte bancaire.</p>
-  <div style="display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap">
-    <a href="/demo.html" class="btn-primary" style="display:inline-flex;font-size:14px;padding:16px 32px">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/></svg>
-      Obtenir mon diagnostic IA
-    </a>
-    <a href="pricing.html" class="btn-secondary" style="font-size:13px">Voir les plans →</a>
-  </div>
-  <div class="cta-meta">
-    <span>Gratuit · Sans carte</span>
-    <span>Diagnostic en 90s · Heatmaps & 2D Replay en bonus</span>
-    <span>FACEIT API ou upload .dem</span>
-  </div>
-</section>
-
-<!-- TOUS LES OUTILS FRAGVALUE : section internal linking pour SEO + nav.
-     Cf. ultrareview SEO P1 : avant index.html avait seulement 8 hrefs vers
-     3 pages -> "internal linking famine". Cette section pousse 8 pages
-     money en HTML statique (crawlable) avec contexte. -->
-<section class="all-tools-section">
-  <h2 class="all-tools-h">Tous les outils FragValue</h2>
-  <p class="all-tools-sub">Tout ce qu'il te faut pour progresser à CS2 et FACEIT, en un seul endroit.</p>
-  <div class="all-tools-grid">
-    <a href="/demo.html" class="all-tools-card">
-      <div class="all-tools-card-name">Analyse de demo</div>
-      <div class="all-tools-card-desc">Upload ton .dem FACEIT et obtiens FV Rating, heatmaps, KPIs avancés en 90s.</div>
-    </a>
-    <a href="/scout.html" class="all-tools-card">
-      <div class="all-tools-card-name">Scout</div>
-      <div class="all-tools-card-desc">Stats publiques de n'importe quel pseudo FACEIT : ELO, KD, ADR, KAST sur 20 derniers matchs.</div>
-    </a>
-    <a href="/compare.html" class="all-tools-card">
-      <div class="all-tools-card-name">Comparer joueurs</div>
-      <div class="all-tools-card-desc">Compare 2 à 5 joueurs côte à côte. Idéal pour scrim, recrutement ou stack matching.</div>
-    </a>
-    <a href="/levels.html" class="all-tools-card">
-      <div class="all-tools-card-name">Progresser FACEIT</div>
-      <div class="all-tools-card-desc">Roadmap niveau par niveau de Lvl 1 à Lvl 10 : seuils ELO, stats cibles, axes de jeu.</div>
-    </a>
-    <a href="/lineup-library.html" class="all-tools-card">
-      <div class="all-tools-card-name">Lineup library</div>
-      <div class="all-tools-card-desc">1 800+ lineups smoke / molotov / flash sur 7 maps actives. Filtres par map / position.</div>
-    </a>
-    <a href="/prep-veto.html" class="all-tools-card">
-      <div class="all-tools-card-name">Prep veto BO3 / BO5</div>
-      <div class="all-tools-card-desc">Analyse adverse data-driven, séquence ban-pick officielle, win probability par map.</div>
-    </a>
-    <a href="/anti-strat.html" class="all-tools-card">
-      <div class="all-tools-card-name">Anti-strat</div>
-      <div class="all-tools-card-desc">Patterns d'execute / retake adverse détectés sur leurs derniers matchs. Counters proposés.</div>
-    </a>
-    <a href="/blog.html" class="all-tools-card">
-      <div class="all-tools-card-name">Blog & guides</div>
-      <div class="all-tools-card-desc">Tips CS2, comment passer Lvl 10, FV Rating expliqué, ADR/KAST décryptés.</div>
-    </a>
-    <a href="/compare-outils.html" class="all-tools-card">
-      <div class="all-tools-card-name">FragValue vs Leetify</div>
-      <div class="all-tools-card-desc">Comparatif détaillé des outils d'analyse CS2 : prix, features, Coach IA, FACEIT integration.</div>
-    </a>
-    <a href="/pricing.html" class="all-tools-card all-tools-card-cta">
-      <div class="all-tools-card-name" style="color:var(--accent)">Voir les tarifs →</div>
-      <div class="all-tools-card-desc">Free / Pro 9€/mois (7j gratuits) / Elite 25€/mois. Sans engagement, satisfait ou remboursé 14j.</div>
-    </a>
-  </div>
-</section>
-
-</div><!-- /refonte-legacy-hidden : fin du masquage Phase 1 -->
-
 <!-- BRAND MARQUEE · cinematic velocity strip Lando-inspired -->
 <!--
   Bande typographique grande echelle qui defile lentement entre les sections et
@@ -2789,7 +2331,7 @@ footer{
 -->
 <section class="brand-wordmark" aria-hidden="false">
   <div class="brand-wordmark-inner">
-    <div class="brand-wordmark-overline">2026 &middot; Made in France</div>
+    <div class="brand-wordmark-overline">FragValue.com</div>
     <h2 class="brand-wordmark-text">
       Frag<em>Value</em>.
     </h2>
@@ -2799,23 +2341,35 @@ footer{
   </div>
 </section>
 
-<!-- FOOTER -->
+<!-- ════════ FINAL CTA · capture les users qui ont scrollé jusqu'en bas ════════ -->
+<section class="final-cta">
+  <div class="final-cta-inner">
+    <h2 class="final-cta-headline">
+      Prêt à <em>coacher mieux</em> ?
+    </h2>
+    <p class="final-cta-sub">
+      30 jours gratuits. Sans carte. Sans engagement.
+    </p>
+    <a href="/coach-dashboard.html" class="btn-primary hero-v3-btn">
+      Lancer le coach mode
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14M13 5l7 7-7 7"/>
+      </svg>
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER minimaliste : essential links seulement -->
 <footer>
   <div class="footer-logo">Frag<span>Value</span></div>
   <div class="footer-links">
-    <a href="dashboard.html">Mon jeu</a>
-    <a href="levels.html">Progresser</a>
-    <a href="scout.html">Scout</a>
-    <a href="compare.html">Comparer</a>
-    <a href="stats-guide.html">Guide stats</a>
-    <a href="how-it-works.html">Comment ça marche</a>
     <a href="pricing.html">Tarifs</a>
     <a href="/developers.html">Developers</a>
     <a href="blog.html">Blog</a>
-    <a href="cgv.html">CGV</a>
-    <a href="mentions-legales.html">Mentions légales</a>
-    <a href="privacy.html">Confidentialité</a>
     <a href="mailto:contact@fragvalue.com">Contact</a>
+    <a href="cgv.html">CGV</a>
+    <a href="privacy.html">Confidentialité</a>
+    <a href="mentions-legales.html">Mentions légales</a>
   </div>
   <!-- Social links : Discord (community) + TikTok (shorts) + X (annonces, build in public) -->
   <div class="footer-socials" style="display:flex;align-items:center;justify-content:center;gap:14px;margin:18px 0 8px">
@@ -3407,6 +2961,18 @@ async function startCheckout(plan) {
       }
       window.addEventListener('scroll', updateNav, { passive: true });
       updateNav();
+    }
+
+    // 2b. SCROLL PROGRESS BAR : top viewport lime indicator
+    const progress = document.getElementById('scrollProgress');
+    if (progress) {
+      function updateProgress() {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        const pct = max > 0 ? (window.scrollY / max) * 100 : 0;
+        progress.style.setProperty('--scroll-pct', pct + '%');
+      }
+      window.addEventListener('scroll', updateProgress, { passive: true });
+      updateProgress();
     }
 
     // 3. STICKY WIDGET : hide a l'approche du footer (200px avant)
