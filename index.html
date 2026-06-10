@@ -1410,7 +1410,7 @@ nav.nav-v3.scrolled{
 */
 .sticky-widget{
   position:fixed;
-  left:24px;bottom:80px;
+  left:24px;bottom:120px;
   z-index:50;
   padding:14px 18px;
   background:rgba(8,9,9,.92);
@@ -1723,6 +1723,130 @@ body.cookies-accepted .sticky-widget{
   .compare-card-stats{gap:var(--space-xs)}
   .cstat-val{font-size:clamp(40px, 12vw, 64px)}
   .cstat-sep{height:32px}
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   CAPABILITIES PREVIEW · 3 chantiers du coach (entre Compare et Final CTA)
+   ══════════════════════════════════════════════════════════════════
+   Grid 3 colonnes desktop, stack mobile. Chaque card a un numero massif
+   en accent, une mini-viz SVG dans son cadre lime, headline Anton + desc
+   mono. Hover lift + border lime. Card 02 featured (mid card, plus haute).
+*/
+.capabilities{
+  position:relative;
+  padding:var(--space-lg) var(--space-sm);
+  background:
+    radial-gradient(70% 60% at 50% 0%, rgba(184,255,87,.035) 0%, transparent 60%),
+    var(--bg);
+  border-top:1px solid var(--border);
+}
+.capabilities-intro{
+  position:relative;z-index:2;
+  text-align:center;
+  max-width:var(--container-base);
+  margin:0 auto 96px;
+  padding:0 24px;
+}
+.capabilities-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:24px;
+  max-width:1280px;
+  margin:0 auto;
+}
+.cap-card{
+  position:relative;
+  padding:36px 28px 32px;
+  border:1px solid var(--border);
+  background:rgba(15,16,16,.5);
+  border-radius:var(--radius2);
+  display:flex;flex-direction:column;
+  gap:24px;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  transition:transform .35s var(--ease-out-cubic),
+             border-color .25s ease,
+             box-shadow .35s ease,
+             background .25s ease;
+  overflow:hidden;
+}
+.cap-card::after{
+  /* Subtle lime accent line top, draws attention */
+  content:"";
+  position:absolute;
+  top:0;left:24px;right:24px;
+  height:1px;
+  background:linear-gradient(90deg, transparent 0%, rgba(184,255,87,.25) 50%, transparent 100%);
+  opacity:0;
+  transition:opacity .3s ease;
+}
+.cap-card:hover{
+  transform:translateY(-6px);
+  border-color:rgba(184,255,87,.35);
+  background:rgba(20,22,22,.7);
+  box-shadow:0 0 0 1px rgba(184,255,87,.12),
+             0 32px 64px rgba(0,0,0,.5),
+             0 0 48px rgba(184,255,87,.08);
+}
+.cap-card:hover::after{opacity:1}
+.cap-card-featured{
+  /* Mid card slightly elevated visually */
+  border-color:rgba(184,255,87,.18);
+  background:linear-gradient(180deg, rgba(184,255,87,.04) 0%, rgba(15,16,16,.5) 60%);
+}
+.cap-card-featured::after{opacity:.5}
+.cap-num{
+  font-family:var(--display);
+  font-size:48px;
+  line-height:1;
+  font-weight:400;
+  color:var(--accent);
+  letter-spacing:-.02em;
+  text-shadow:0 0 24px rgba(184,255,87,.35);
+}
+.cap-visual{
+  width:100%;
+  height:140px;
+  border-radius:var(--radius);
+  background:rgba(0,0,0,.4);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.cap-visual svg{
+  width:100%;height:100%;
+  display:block;
+}
+.cap-content{
+  display:flex;flex-direction:column;gap:12px;
+  flex:1;
+}
+.cap-headline{
+  font-family:var(--display);
+  font-size:32px;line-height:1;
+  font-weight:400;
+  color:var(--text);
+  letter-spacing:-.005em;
+  margin:0;
+  text-transform:uppercase;
+}
+.cap-desc{
+  font-family:var(--mono);
+  font-size:13px;line-height:1.65;
+  color:var(--text2);
+  margin:0;
+}
+@media (max-width:980px){
+  .capabilities{padding:var(--space-md) var(--space-sm)}
+  .capabilities-grid{
+    grid-template-columns:1fr;
+    max-width:540px;
+    gap:20px;
+  }
+  .capabilities-intro{margin-bottom:56px}
+  .cap-card{padding:28px 24px}
+  .cap-num{font-size:40px}
+  .cap-headline{font-size:28px}
+  .cap-visual{height:120px}
 }
 
 /* ── CURSOR REVEAL · Lando-inspired masked layer reveal (LEGACY non utilise) ──
@@ -2313,6 +2437,86 @@ footer{
         </div>
       </div>
       <div class="compare-card-sub truth">Over-peek mid sans util. Try out : smoke mid + flash. À bosser cette sem.</div>
+    </article>
+  </div>
+</section>
+
+<!-- ════════ CAPABILITIES PREVIEW · les 3 chantiers du coach ════════
+     Section visuelle montrant les 3 vagues du produit (VOD Coordinator,
+     Pracc Block, Anti-Strat Strat Time). Chaque card a une mini-viz SVG
+     qui evoque la feature + hover lift state. Remplit l'espace vide
+     entre Compare et Final CTA, donne envie d'engager.
+-->
+<section class="capabilities" id="capabilities">
+  <div class="capabilities-intro">
+    <div class="compare-overline">Les 3 chantiers du coach</div>
+    <h2 class="compare-title">
+      <span class="ct-line">Une plateforme.</span>
+      <span class="ct-line">Trois moments du job.</span>
+    </h2>
+  </div>
+
+  <div class="capabilities-grid">
+    <article class="cap-card">
+      <div class="cap-num">01</div>
+      <div class="cap-visual" aria-hidden="true">
+        <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+          <!-- 2D map abstract pour VOD coordinator -->
+          <rect x="10" y="10" width="180" height="100" fill="none" stroke="rgba(184,255,87,.2)" stroke-width="1" rx="4"/>
+          <rect x="30" y="30" width="40" height="30" fill="rgba(184,255,87,.06)" rx="2"/>
+          <rect x="130" y="60" width="40" height="30" fill="rgba(184,255,87,.06)" rx="2"/>
+          <line x1="50" y1="45" x2="150" y2="75" stroke="rgba(184,255,87,.25)" stroke-dasharray="2 3" stroke-width="1"/>
+          <circle cx="50" cy="45" r="4" fill="var(--accent)"/>
+          <circle cx="150" cy="75" r="4" fill="var(--accent)"/>
+          <text x="100" y="100" fill="var(--text3)" font-family="Space Mono, monospace" font-size="7" text-anchor="middle" letter-spacing="1">ROUND 07 · MID</text>
+        </svg>
+      </div>
+      <div class="cap-content">
+        <h3 class="cap-headline">VOD Coordinator</h3>
+        <p class="cap-desc">Debrief tactique 4h → 30 min. Annote les rounds critiques, assigne par joueur, Discord async.</p>
+      </div>
+    </article>
+
+    <article class="cap-card cap-card-featured">
+      <div class="cap-num">02</div>
+      <div class="cap-visual" aria-hidden="true">
+        <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+          <!-- Calendar grid abstract pour Pracc Block -->
+          <rect x="10" y="10" width="180" height="100" fill="none" stroke="rgba(184,255,87,.2)" stroke-width="1" rx="4"/>
+          <rect x="22" y="30" width="20" height="60" fill="rgba(184,255,87,.06)" rx="2"/>
+          <rect x="46" y="40" width="20" height="50" fill="rgba(184,255,87,.18)" rx="2"/>
+          <rect x="70" y="22" width="20" height="68" fill="rgba(184,255,87,.06)" rx="2"/>
+          <rect x="94" y="35" width="20" height="55" fill="rgba(184,255,87,.32)" rx="2"/>
+          <rect x="118" y="48" width="20" height="42" fill="rgba(184,255,87,.06)" rx="2"/>
+          <rect x="142" y="28" width="20" height="62" fill="rgba(184,255,87,.18)" rx="2"/>
+          <rect x="166" y="55" width="14" height="35" fill="rgba(184,255,87,.06)" rx="2"/>
+          <text x="100" y="105" fill="var(--text3)" font-family="Space Mono, monospace" font-size="7" text-anchor="middle" letter-spacing="1">LUN — DIM</text>
+        </svg>
+      </div>
+      <div class="cap-content">
+        <h3 class="cap-headline">Pracc Block</h3>
+        <p class="cap-desc">Planifie la semaine en 10 min. Drills, praccs, accountability Discord. Coach IA propose, tu valides.</p>
+      </div>
+    </article>
+
+    <article class="cap-card">
+      <div class="cap-num">03</div>
+      <div class="cap-visual" aria-hidden="true">
+        <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+          <!-- Win rate trend chart pour Anti-Strat -->
+          <rect x="10" y="10" width="180" height="100" fill="none" stroke="rgba(184,255,87,.2)" stroke-width="1" rx="4"/>
+          <line x1="20" y1="85" x2="180" y2="85" stroke="rgba(184,255,87,.15)" stroke-width="1" stroke-dasharray="2 4"/>
+          <polyline points="20,80 45,70 70,72 95,55 120,48 145,38 170,28"
+            fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="170" cy="28" r="4" fill="var(--accent)"/>
+          <circle cx="170" cy="28" r="8" fill="none" stroke="rgba(184,255,87,.35)" stroke-width="1"/>
+          <text x="100" y="105" fill="var(--text3)" font-family="Space Mono, monospace" font-size="7" text-anchor="middle" letter-spacing="1">WIN RATE +18%</text>
+        </svg>
+      </div>
+      <div class="cap-content">
+        <h3 class="cap-headline">Anti-Strat Strat Time</h3>
+        <p class="cap-desc">Prepare le samedi avant tout le monde. Demos adversaires automatiques, patterns par map, strat time collaborative.</p>
+      </div>
     </article>
   </div>
 </section>
