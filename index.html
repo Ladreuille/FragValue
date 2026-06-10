@@ -1324,19 +1324,36 @@ body.cookies-accepted .sticky-widget{
 }
 .compare-title{
   font-family:var(--display);
-  font-size:clamp(28px, 4.5vw, 64px);
-  font-weight:400;line-height:1.15;
-  letter-spacing:-.005em;
+  font-weight:400;
+  line-height:1.2;
+  letter-spacing:-.015em;
   text-transform:none;
   color:var(--text);
   margin:0 auto;
-  max-width:920px;
+  max-width:1320px;
+}
+/* Chaque phrase occupe une ligne entiere, force no-wrap.
+   Le clamp est calcule pour que la 2eme phrase (la plus longue, 43 chars)
+   tienne sur une ligne entiere a viewport 1280px+. */
+.compare-title .ct-line{
+  display:block;
+  white-space:nowrap;
+  font-size:clamp(20px, 3.2vw, 48px);
+  margin:8px 0;
 }
 .compare-title em{
   font-style:normal;
   color:var(--accent);
   text-shadow:0 0 24px rgba(184,255,87,.4);
   font-weight:400;
+}
+/* Sous 880px viewport, on autorise le wrap (mobile/tablette).
+   Sinon la phrase serait illisible en font tres reduit. */
+@media (max-width:880px){
+  .compare-title .ct-line{
+    white-space:normal;
+    font-size:clamp(22px, 5vw, 36px);
+  }
 }
 .compare-grid{
   position:relative;z-index:2;
@@ -2031,7 +2048,10 @@ footer{
 <section class="compare-section" id="comparison">
   <div class="compare-intro">
     <div class="compare-overline">Le coach read</div>
-    <h2 class="compare-title">Tes stats montrent <em>le probleme</em>.<br>Le coach les lit et te donne <em>les solutions</em>.</h2>
+    <h2 class="compare-title">
+      <span class="ct-line">Tes stats montrent <em>le probleme</em>.</span>
+      <span class="ct-line">Le coach les lit et te donne <em>les solutions</em>.</span>
+    </h2>
   </div>
 
   <div class="compare-grid">
