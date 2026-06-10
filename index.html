@@ -1849,6 +1849,106 @@ body.cookies-accepted .sticky-widget{
   .cap-visual{height:120px}
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   CAPABILITIES SVG ANIMATIONS · Phase 4a product UI demos
+   ══════════════════════════════════════════════════════════════════
+   Chaque mini-viz s'anime en loop pour donner vie aux cards.
+   - Card 01 VOD : dots pulsent stagger + scanner voyage entre eux
+   - Card 02 Pracc : bars croissent en cascade
+   - Card 03 Anti-Strat : chart se trace + dot pulse + ring expand
+*/
+
+/* ── Card 01 VOD Coordinator ── */
+.vod-dot{
+  transform-origin:center;
+  transform-box:fill-box;
+  animation:vodDotPulse 2.4s ease-in-out infinite;
+}
+.vod-dot-1{animation-delay:0s}
+.vod-dot-2{animation-delay:1.2s}
+@keyframes vodDotPulse{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.6;transform:scale(1.35)}
+}
+.vod-trail{
+  stroke-dasharray:5;
+  stroke-dashoffset:0;
+  animation:vodTrailShift 2.4s linear infinite;
+}
+@keyframes vodTrailShift{
+  to{stroke-dashoffset:-10}
+}
+/* Scanner dot traverse de (50,45) a (150,75) puis retour */
+.vod-scanner{
+  animation:vodScannerMove 4.8s ease-in-out infinite;
+}
+@keyframes vodScannerMove{
+  0%,100%{transform:translate(0,0);opacity:.9}
+  40%{transform:translate(100px,30px);opacity:1}
+  50%{transform:translate(100px,30px);opacity:0}
+  60%{transform:translate(100px,30px);opacity:0}
+  90%{transform:translate(0,0);opacity:0}
+  95%{opacity:.9}
+}
+
+/* ── Card 02 Pracc Calendar ── */
+.prc-bar{
+  transform-origin:bottom center;
+  transform-box:fill-box;
+  animation:prcBarGrow 4.2s ease-in-out infinite;
+}
+.prc-bar-1{animation-delay:0s}
+.prc-bar-2{animation-delay:.18s}
+.prc-bar-3{animation-delay:.36s}
+.prc-bar-4{animation-delay:.54s}
+.prc-bar-5{animation-delay:.72s}
+.prc-bar-6{animation-delay:.9s}
+.prc-bar-7{animation-delay:1.08s}
+@keyframes prcBarGrow{
+  0%,100%{transform:scaleY(.55);opacity:.55}
+  35%,65%{transform:scaleY(1);opacity:1}
+}
+
+/* ── Card 03 Anti-Strat Strat Time ── */
+.ant-line{
+  stroke-dasharray:280;
+  stroke-dashoffset:280;
+  animation:antLineDraw 5s ease-in-out infinite;
+}
+@keyframes antLineDraw{
+  0%{stroke-dashoffset:280}
+  50%{stroke-dashoffset:0}
+  85%{stroke-dashoffset:0;opacity:1}
+  100%{stroke-dashoffset:0;opacity:.3}
+}
+.ant-dot{
+  transform-origin:170px 28px;
+  transform-box:fill-box;
+  animation:antDotPulse 1.8s ease-in-out infinite;
+}
+@keyframes antDotPulse{
+  0%,100%{opacity:.8;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.25)}
+}
+.ant-ring{
+  transform-origin:170px 28px;
+  transform-box:fill-box;
+  animation:antRingExpand 2.2s ease-out infinite;
+}
+@keyframes antRingExpand{
+  0%{transform:scale(.5);opacity:1}
+  100%{transform:scale(2.4);opacity:0}
+}
+
+/* Reduce motion : disable all SVG animations */
+@media (prefers-reduced-motion: reduce){
+  .vod-dot, .vod-trail, .vod-scanner,
+  .prc-bar,
+  .ant-line, .ant-dot, .ant-ring{
+    animation:none !important;
+  }
+}
+
 /* ── CURSOR REVEAL · Lando-inspired masked layer reveal (LEGACY non utilise) ──
    Section fullscreen avec 2 layers. Layer 1 = surface stats (visible
    partout). Layer 2 = verite tactique (visible UNIQUEMENT sous la souris,
@@ -2460,14 +2560,16 @@ footer{
     <article class="cap-card">
       <div class="cap-num">01</div>
       <div class="cap-visual" aria-hidden="true">
-        <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+        <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" class="cap-svg-vod">
           <!-- 2D map abstract pour VOD coordinator -->
           <rect x="10" y="10" width="180" height="100" fill="none" stroke="rgba(184,255,87,.2)" stroke-width="1" rx="4"/>
           <rect x="30" y="30" width="40" height="30" fill="rgba(184,255,87,.06)" rx="2"/>
           <rect x="130" y="60" width="40" height="30" fill="rgba(184,255,87,.06)" rx="2"/>
-          <line x1="50" y1="45" x2="150" y2="75" stroke="rgba(184,255,87,.25)" stroke-dasharray="2 3" stroke-width="1"/>
-          <circle cx="50" cy="45" r="4" fill="var(--accent)"/>
-          <circle cx="150" cy="75" r="4" fill="var(--accent)"/>
+          <line class="vod-trail" x1="50" y1="45" x2="150" y2="75" stroke="rgba(184,255,87,.4)" stroke-dasharray="2 3" stroke-width="1.2"/>
+          <circle class="vod-dot vod-dot-1" cx="50" cy="45" r="4" fill="var(--accent)"/>
+          <circle class="vod-dot vod-dot-2" cx="150" cy="75" r="4" fill="var(--accent)"/>
+          <!-- Scanner dot qui voyage entre les 2 points -->
+          <circle class="vod-scanner" cx="50" cy="45" r="2.5" fill="#fff" opacity="0.9"/>
           <text x="100" y="100" fill="var(--text3)" font-family="Space Mono, monospace" font-size="7" text-anchor="middle" letter-spacing="1">ROUND 07 · MID</text>
         </svg>
       </div>
@@ -2480,16 +2582,16 @@ footer{
     <article class="cap-card cap-card-featured">
       <div class="cap-num">02</div>
       <div class="cap-visual" aria-hidden="true">
-        <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
-          <!-- Calendar grid abstract pour Pracc Block -->
+        <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" class="cap-svg-pracc">
+          <!-- Calendar grid abstract pour Pracc Calendar -->
           <rect x="10" y="10" width="180" height="100" fill="none" stroke="rgba(184,255,87,.2)" stroke-width="1" rx="4"/>
-          <rect x="22" y="30" width="20" height="60" fill="rgba(184,255,87,.06)" rx="2"/>
-          <rect x="46" y="40" width="20" height="50" fill="rgba(184,255,87,.18)" rx="2"/>
-          <rect x="70" y="22" width="20" height="68" fill="rgba(184,255,87,.06)" rx="2"/>
-          <rect x="94" y="35" width="20" height="55" fill="rgba(184,255,87,.32)" rx="2"/>
-          <rect x="118" y="48" width="20" height="42" fill="rgba(184,255,87,.06)" rx="2"/>
-          <rect x="142" y="28" width="20" height="62" fill="rgba(184,255,87,.18)" rx="2"/>
-          <rect x="166" y="55" width="14" height="35" fill="rgba(184,255,87,.06)" rx="2"/>
+          <rect class="prc-bar prc-bar-1" x="22" y="30" width="20" height="60" fill="rgba(184,255,87,.06)" rx="2"/>
+          <rect class="prc-bar prc-bar-2" x="46" y="40" width="20" height="50" fill="rgba(184,255,87,.18)" rx="2"/>
+          <rect class="prc-bar prc-bar-3" x="70" y="22" width="20" height="68" fill="rgba(184,255,87,.06)" rx="2"/>
+          <rect class="prc-bar prc-bar-4" x="94" y="35" width="20" height="55" fill="rgba(184,255,87,.32)" rx="2"/>
+          <rect class="prc-bar prc-bar-5" x="118" y="48" width="20" height="42" fill="rgba(184,255,87,.06)" rx="2"/>
+          <rect class="prc-bar prc-bar-6" x="142" y="28" width="20" height="62" fill="rgba(184,255,87,.18)" rx="2"/>
+          <rect class="prc-bar prc-bar-7" x="166" y="55" width="14" height="35" fill="rgba(184,255,87,.06)" rx="2"/>
           <text x="100" y="105" fill="var(--text3)" font-family="Space Mono, monospace" font-size="7" text-anchor="middle" letter-spacing="1">LUN — DIM</text>
         </svg>
       </div>
@@ -2502,14 +2604,14 @@ footer{
     <article class="cap-card">
       <div class="cap-num">03</div>
       <div class="cap-visual" aria-hidden="true">
-        <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+        <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" class="cap-svg-ant">
           <!-- Win rate trend chart pour Anti-Strat -->
           <rect x="10" y="10" width="180" height="100" fill="none" stroke="rgba(184,255,87,.2)" stroke-width="1" rx="4"/>
           <line x1="20" y1="85" x2="180" y2="85" stroke="rgba(184,255,87,.15)" stroke-width="1" stroke-dasharray="2 4"/>
-          <polyline points="20,80 45,70 70,72 95,55 120,48 145,38 170,28"
+          <polyline class="ant-line" points="20,80 45,70 70,72 95,55 120,48 145,38 170,28"
             fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="170" cy="28" r="4" fill="var(--accent)"/>
-          <circle cx="170" cy="28" r="8" fill="none" stroke="rgba(184,255,87,.35)" stroke-width="1"/>
+          <circle class="ant-dot" cx="170" cy="28" r="4" fill="var(--accent)"/>
+          <circle class="ant-ring" cx="170" cy="28" r="8" fill="none" stroke="rgba(184,255,87,.5)" stroke-width="1"/>
           <text x="100" y="105" fill="var(--text3)" font-family="Space Mono, monospace" font-size="7" text-anchor="middle" letter-spacing="1">WIN RATE +18%</text>
         </svg>
       </div>
