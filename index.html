@@ -41,8 +41,8 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
 <meta property="og:locale" content="fr_FR">
 <meta property="og:site_name" content="FragValue">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="FragValue : Coach IA CS2 pour progresser sur FACEIT">
-<meta name="twitter:description" content="Analyse tes matchs FACEIT avec l'IA. Diagnostic personnalisé, 2D replay, heatmaps et recrutement pro.">
+<meta name="twitter:title" content="FragValue : Coach mode pour CS2">
+<meta name="twitter:description" content="VOD review en 30 min. Pracc calendar hebdo. Anti-strat strat time. L'outil des coaches qui veulent du read tactique, pas juste du scoreboard.">
 <meta name="twitter:image" content="https://fragvalue.com/og/home.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
 <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
@@ -279,17 +279,8 @@ body::before{
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
   pointer-events:none;z-index:0;opacity:.4
 }
-/* ── SUBTLE GRID PATTERN : fond technique discret ── */
-body::after{
-  content:'';position:fixed;inset:0;
-  background-image:
-    linear-gradient(rgba(184,255,87,.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(184,255,87,.02) 1px, transparent 1px);
-  background-size:60px 60px;
-  mask-image:radial-gradient(ellipse at 50% 10%, rgba(0,0,0,.7) 0%, transparent 60%);
-  -webkit-mask-image:radial-gradient(ellipse at 50% 10%, rgba(0,0,0,.7) 0%, transparent 60%);
-  pointer-events:none;z-index:0
-}
+/* (Grid pattern body::after supprime : il etait ecrase par la regle
+   grain texture body::after plus bas dans la cascade, donc jamais rendu.) */
 /* Divider decoratif entre sections principales */
 section + section{position:relative}
 section + section::before{
@@ -967,9 +958,10 @@ section{padding:100px 80px;position:relative}
    On hide aussi le popup-signup trigger, le cookie banner massif a un style
    compact, et le canvas radar perd ses overlays debug.
 */
+/* Le skip link (WCAG 2.4.1) doit rester accessible au focus clavier,
+   il ne fait pas partie du chrome de nav qu'on masque. */
 body[data-page="home-v3"] nav.fv-nav .fv-sections,
-body[data-page="home-v3"] nav.fv-nav .fv-bell,
-body[data-page="home-v3"] nav.fv-nav .fv-skip-link{
+body[data-page="home-v3"] nav.fv-nav .fv-bell{
   display:none !important;
 }
 body[data-page="home-v3"] nav.fv-nav{
@@ -1752,8 +1744,11 @@ body.cookies-accepted .sticky-widget{
   }
   .compare-divider::before{top:50%;left:0}
   .compare-divider::after{top:50%;right:0;left:auto}
-  .compare-card-stats{gap:var(--space-xs)}
-  .cstat-val{font-size:clamp(40px, 12vw, 64px)}
+  .compare-card-stats{gap:var(--space-xs);justify-content:center}
+  /* min-width:0 + clamp plus bas : 3 stats cote a cote doivent tenir
+     dans ~230px utiles sur iPhone SE (320px) sans deborder de la card */
+  .cstat{min-width:0}
+  .cstat-val{font-size:clamp(28px, 10vw, 64px)}
   .cstat-sep{height:32px}
 }
 
@@ -2365,6 +2360,12 @@ body.cookies-accepted .sticky-widget{
     animation:none !important;
     opacity:1 !important;
   }
+  /* Animations infinies restantes (pulse dots, scroll hint) : statiques */
+  .section-divider-dot,
+  .sticky-widget-dot,
+  .hero-v3-scroll-hint{
+    animation:none !important;
+  }
 }
 
 /* ── CURSOR REVEAL · Lando-inspired masked layer reveal (LEGACY non utilise) ──
@@ -2841,6 +2842,9 @@ footer{
      massive Anton H1 + 1 tagline + 1 CTA. Single focal point.
      Lisibilite cible : un coach landing comprend "Coach OS pour CS2"
      en 5 secondes max. -->
+<!-- Landmark main (WCAG) : cible native du skip link "Aller au contenu principal"
+     injecte par nav.js, et navigation par landmarks pour les lecteurs d'ecran. -->
+<main id="main-content">
 <section class="hero hero-v3">
   <canvas class="hero-radar" id="heroRadar" aria-hidden="true"></canvas>
 
@@ -2856,7 +2860,7 @@ footer{
     <div class="hero-v3-cta">
       <a href="/coach-dashboard.html" class="btn-primary hero-v3-btn">
         Lancer le coach mode
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
           <path d="M5 12h14M13 5l7 7-7 7"/>
         </svg>
       </a>
@@ -2876,7 +2880,7 @@ footer{
 <!-- Scroll progress bar lime top viewport (Lando/Linear pattern) -->
 <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
 
-<aside class="sticky-widget" aria-label="Coach mode status" id="stickyWidget">
+<aside class="sticky-widget" aria-label="Statut du coach mode" id="stickyWidget">
   <div class="sticky-widget-label">FragValue</div>
   <div class="sticky-widget-value">Coach mode</div>
   <div class="sticky-widget-meta">
@@ -2993,7 +2997,7 @@ footer{
       </div>
       <div class="cap-content">
         <h3 class="cap-headline">VOD Coordinator</h3>
-        <p class="cap-desc">Debrief tactique 4h → 30 min. Annote les rounds critiques, assigne par joueur, Discord async.</p>
+        <p class="cap-desc">Débrief tactique 4h → 30 min. Annote les rounds critiques, assigne par joueur, Discord async.</p>
       </div>
     </article>
 
@@ -3010,7 +3014,7 @@ footer{
           <rect class="prc-bar prc-bar-5" x="118" y="48" width="20" height="42" fill="rgba(184,255,87,.06)" rx="2"/>
           <rect class="prc-bar prc-bar-6" x="142" y="28" width="20" height="62" fill="rgba(184,255,87,.18)" rx="2"/>
           <rect class="prc-bar prc-bar-7" x="166" y="55" width="14" height="35" fill="rgba(184,255,87,.06)" rx="2"/>
-          <text x="100" y="105" fill="var(--text3)" font-family="Space Mono, monospace" font-size="7" text-anchor="middle" letter-spacing="1">LUN — DIM</text>
+          <text x="100" y="105" fill="var(--text3)" font-family="Space Mono, monospace" font-size="7" text-anchor="middle" letter-spacing="1">LUN · DIM</text>
         </svg>
       </div>
       <div class="cap-content">
@@ -3035,7 +3039,7 @@ footer{
       </div>
       <div class="cap-content">
         <h3 class="cap-headline">Anti-Strat Strat Time</h3>
-        <p class="cap-desc">Prépare tes matchs avant tout le monde. Demos adversaires automatiques, patterns par map, strat time collaborative.</p>
+        <p class="cap-desc">Prépare tes matchs avant tout le monde. Démos adverses automatiques, patterns par map, strat time collaboratif.</p>
       </div>
     </article>
   </div>
@@ -3059,7 +3063,7 @@ footer{
       Pracc, try out, strat time, match : tout aligné sur la même timeline.
     </p>
   </div>
-  <div class="featured-pracc-mockup" role="img" aria-label="Aperçu du Pracc Calendar de la semaine 41 : pracc, try out, strat time et match aligné sur 7 jours">
+  <div class="featured-pracc-mockup" role="img" aria-label="Aperçu du Pracc Calendar de la semaine 41 : pracc, try out, strat time et match alignés sur 7 jours">
     <div class="fpc-toolbar" aria-hidden="true">
       <span class="fpc-tag">ROSTER · Semaine 41</span>
       <span class="fpc-tag">Vendredi 21h · ESEA LFA · vs DropOff</span>
@@ -3092,7 +3096,7 @@ footer{
       </div>
       <div class="fpc-day">
         <div class="fpc-day-label">SAM</div>
-        <div class="fpc-slot fpc-slot-muted">Off · debrief 19h</div>
+        <div class="fpc-slot fpc-slot-muted">Off · débrief 19h</div>
       </div>
       <div class="fpc-day">
         <div class="fpc-day-label">DIM</div>
@@ -3138,7 +3142,7 @@ footer{
       <p class="coach-ia-sub">
         Pas un chatbot générique. Le coach IA voit ton roster,
         lit tes pracc, te retourne les patterns map par map avec les
-        timecodes des demos pour aller direct.
+        timecodes des démos pour aller direct.
       </p>
       <div class="coach-ia-meta">
         <span class="ia-tag">VOIT TON ROSTER</span>
@@ -3172,7 +3176,7 @@ footer{
           </div>
         </div>
         <div class="chat-msg msg-user msg-4">
-          <div class="msg-bubble">Show moi sur la carte</div>
+          <div class="msg-bubble">Montre-moi sur la map</div>
         </div>
       </div>
       <div class="chat-input">
@@ -3205,12 +3209,13 @@ footer{
     </p>
     <a href="/coach-dashboard.html" class="btn-primary hero-v3-btn">
       Lancer le coach mode
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
         <path d="M5 12h14M13 5l7 7-7 7"/>
       </svg>
     </a>
   </div>
 </section>
+</main>
 
 <!-- FOOTER minimaliste : essential links seulement -->
 <footer>
@@ -3282,10 +3287,14 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-async function startCheckout(plan) {
-  // Defensive : si user clic le bouton avant que window._sb soit init, on attend
+async function startCheckout(plan, _retries) {
+  // Defensive : si user clic le bouton avant que window._sb soit init, on attend.
+  // Cap a 50 retries (5s) : si le CDN Supabase est bloque (adblock, reseau),
+  // on route vers login plutot que de boucler a l'infini.
   if (!window._sb) {
-    return new Promise(r => setTimeout(() => r(startCheckout(plan)), 100));
+    const tries = (_retries || 0) + 1;
+    if (tries > 50) { window.location.href = 'login.html'; return; }
+    return new Promise(r => setTimeout(() => r(startCheckout(plan, tries)), 100));
   }
   const { data: { session } } = await window._sb.auth.getSession();
   const headers = { 'Content-Type': 'application/json' };
@@ -3317,7 +3326,7 @@ async function startCheckout(plan) {
     const banner = document.getElementById('checkout-error') || document.createElement('div');
     banner.id = 'checkout-error';
     banner.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a0000;border:1px solid #ff4444;color:#ff6666;font-family:"Space Mono",monospace;font-size:13px;padding:12px 24px;z-index:9999;border-radius:6px;';
-    banner.textContent = 'Erreur reseau. Réessaye.';
+    banner.textContent = 'Erreur réseau. Réessaye.';
     document.body.appendChild(banner);
     setTimeout(() => banner.remove(), 5000);
   }
@@ -3584,6 +3593,10 @@ async function startCheckout(plan) {
   'use strict';
   // Respect prefers-reduced-motion (1-3% des users sensibles vestibulaires)
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // Fail-open : sans IntersectionObserver on n'ajoute JAMAIS .scroll-reveal
+  // (opacity:0), sinon le contenu resterait invisible a vie. Les sections
+  // s'affichent alors statiquement, sans animation d'entree.
+  if (!('IntersectionObserver' in window)) return;
 
   // 1. Scroll-reveal : add .scroll-reveal class to sections, trigger
   // .is-visible when 15% du viewport est atteint. Une fois revealed,
@@ -3770,6 +3783,10 @@ async function startCheckout(plan) {
       if (!document.getElementById('fvCookieBanner')) {
         document.body.classList.add('cookies-accepted');
         observer.disconnect();
+      } else {
+        // Banner injecte APRES le check initial 500ms (script cookie lent) :
+        // on retire la classe posee a tort pour que le widget remonte
+        document.body.classList.remove('cookies-accepted');
       }
     });
     observer.observe(document.body, { childList: true, subtree: false });
@@ -3804,18 +3821,20 @@ async function startCheckout(plan) {
         smoothTouch: false, // tactile reste natif pour pas casser scroll mobile
       });
 
-      function raf(time) {
-        lenis.raf(time);
-        requestAnimationFrame(raf);
-      }
-      requestAnimationFrame(raf);
-
-      // Bridge Lenis → GSAP ScrollTrigger pour que les animations restent sync
+      // Un seul driver pour lenis.raf : le ticker GSAP quand il est la
+      // (bridge ScrollTrigger), sinon fallback rAF natif. Les deux en meme
+      // temps = lerp avance 2x par frame (scroll trop rapide + CPU gaspille).
       if (typeof gsap !== 'undefined' && gsap.registerPlugin && typeof ScrollTrigger !== 'undefined') {
         gsap.registerPlugin(ScrollTrigger);
         lenis.on('scroll', ScrollTrigger.update);
         gsap.ticker.add((time) => { lenis.raf(time * 1000); });
         gsap.ticker.lagSmoothing(0);
+      } else {
+        function raf(time) {
+          lenis.raf(time);
+          requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
       }
     }
 
