@@ -1325,6 +1325,38 @@ nav.nav-v3.scrolled{
   50%{opacity:1;transform:scale(1.4)}
 }
 
+/* Stinger Phase 6 : au scroll-in du divider, les lignes balaient du centre
+   vers les bords et le dot flash lime fort une fois, puis revient au pulse.
+   Arme via JS (.stinger-armed), fire au IntersectionObserver (.stinger-fire).
+   Les users reduced-motion ou no-JS ne sont jamais armes : divider statique. */
+.section-divider::before{transform-origin:right center}
+.section-divider::after{transform-origin:left center}
+.section-divider.stinger-armed::before,
+.section-divider.stinger-armed::after{
+  transform:scaleX(0);
+}
+.section-divider.stinger-armed .section-divider-dot{
+  opacity:0;
+  animation:none;
+}
+.section-divider.stinger-fire::before,
+.section-divider.stinger-fire::after{
+  animation:stingerSweep .9s cubic-bezier(.2,.7,.2,1) forwards;
+}
+@keyframes stingerSweep{
+  from{transform:scaleX(0)}
+  to{transform:scaleX(1)}
+}
+.section-divider.stinger-fire .section-divider-dot{
+  animation:stingerFlash .9s cubic-bezier(.2,.7,.2,1) forwards,
+            dividerPulse 2.4s ease-in-out .9s infinite;
+}
+@keyframes stingerFlash{
+  0%{opacity:0;transform:scale(.2);box-shadow:0 0 0 rgba(184,255,87,0)}
+  45%{opacity:1;transform:scale(2.4);box-shadow:0 0 48px rgba(184,255,87,.95),0 0 96px rgba(184,255,87,.45)}
+  100%{opacity:1;transform:scale(1);box-shadow:0 0 16px rgba(184,255,87,.6)}
+}
+
 /* ══════════════════════════════════════════════════════════════════
    FINAL CTA · closing moment avant le footer
    ══════════════════════════════════════════════════════════════════
@@ -3578,6 +3610,23 @@ async function startCheckout(plan) {
   }, { threshold: 0.15, rootMargin: '0px 0px -80px 0px' });
   targets.forEach(t => io.observe(t));
 
+  // 1b. Divider stingers (Phase 6) : les lignes du divider balaient du
+  // centre vers les bords + dot flash lime au premier scroll-in. Arme
+  // seulement ici (donc jamais pour reduced-motion ni no-JS : le early
+  // return au-dessus protege, divider statique en fallback).
+  const dividers = document.querySelectorAll('.section-divider');
+  dividers.forEach(d => d.classList.add('stinger-armed'));
+  const stingerIo = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.remove('stinger-armed');
+        e.target.classList.add('stinger-fire');
+        stingerIo.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.6 });
+  dividers.forEach(d => stingerIo.observe(d));
+
   // 2. Count-up animation pour le FV Rating dans demo preview hero
   // (la valeur 1.42 compte de 0.00 vers 1.42 au scroll-in). Easing
   // cubic-out pour effet satisfaisant.
@@ -3850,6 +3899,88 @@ async function startCheckout(plan) {
       }
     }
   });
+})();
+</script>
+
+<!-- ════════ A/B INSTRUMENTATION · metriques refonte v3 (Phase 6) ════════
+  Mesure les metriques de succes du narrative doc pour la decision
+  go-live vs rollback :
+  - Time on page mediane (cible 120s+)     -> engagement_heartbeat
+  - Scroll depth 75% (cible 60%+)          -> scroll_depth
+  - Coach IA conv start rate (cible 12%+)  -> section_view coach-ia + cta
+  - Signup rate coach persona (cible 2-3%) -> coach_cta_click
+  Tous les events portent site_version=v3_coach pour segmenter dans GA4
+  vs la baseline historique. Consent Mode v2 (head) gere l'anonymisation
+  cookieless si le user refuse les cookies : aucun event individuel. -->
+<script>
+(function() {
+  'use strict';
+  if (typeof gtag !== 'function') return;
+  var V = 'v3_coach';
+
+  // 1. Scroll depth : 25/50/75/100, un event par palier
+  var marks = [25, 50, 75, 100];
+  var fired = {};
+  function onScroll() {
+    var doc = document.documentElement;
+    var depth = Math.round((doc.scrollTop + window.innerHeight) / doc.scrollHeight * 100);
+    for (var i = 0; i < marks.length; i++) {
+      var m = marks[i];
+      if (depth >= m && !fired[m]) {
+        fired[m] = true;
+        gtag('event', 'scroll_depth', { percent: m, site_version: V });
+      }
+    }
+    if (fired[100]) window.removeEventListener('scroll', onScroll);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // 2. Time on page : heartbeats a 15/30/60/120s de temps VISIBLE
+  // (compte seulement quand l'onglet est au premier plan, pas le temps
+  // ou la page traine en background)
+  var beats = [15, 30, 60, 120];
+  var visibleSec = 0;
+  var beatIdx = 0;
+  var beatTimer = setInterval(function() {
+    if (document.visibilityState !== 'visible') return;
+    visibleSec++;
+    if (visibleSec >= beats[beatIdx]) {
+      gtag('event', 'engagement_heartbeat', { seconds: beats[beatIdx], site_version: V });
+      beatIdx++;
+      if (beatIdx >= beats.length) clearInterval(beatTimer);
+    }
+  }, 1000);
+
+  // 3. CTA clicks vers le coach mode (hero + final CTA)
+  var ctas = document.querySelectorAll('a.hero-v3-btn');
+  for (var c = 0; c < ctas.length; c++) {
+    (function(btn) {
+      btn.addEventListener('click', function() {
+        var section = btn.closest('section');
+        var loc = section && section.classList.contains('final-cta') ? 'final_cta' : 'hero';
+        gtag('event', 'coach_cta_click', { cta_location: loc, site_version: V });
+      });
+    })(ctas[c]);
+  }
+
+  // 4. Section views : funnel de scroll, 1 event par section au 1er view.
+  // Threshold bas (0.1) : les sections tall sur mobile ne depassent
+  // jamais 30% de ratio visible.
+  if ('IntersectionObserver' in window) {
+    var sectionIds = ['comparison', 'capabilities', 'featured-pracc', 'coach-ia'];
+    var sio = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          gtag('event', 'section_view', { section_id: e.target.id, site_version: V });
+          sio.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    sectionIds.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) sio.observe(el);
+    });
+  }
 })();
 </script>
 </body>
