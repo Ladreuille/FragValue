@@ -294,10 +294,33 @@ nav{
 }
 .pricing-hero h1{
   font-family:var(--display);
-  font-size:clamp(36px,4.5vw,60px);
-  line-height:.95;letter-spacing:.01em;
+  font-size:clamp(38px,5vw,76px);
+  line-height:.95;letter-spacing:-.01em;
+  text-transform:uppercase;
   margin-bottom:14px;
+  color:#fff;
   opacity:0;animation:up .4s ease forwards
+}
+.pricing-hero h1 .lime{color:var(--accent);display:block}
+.pricing-hero-overline{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);
+  border:1px solid rgba(184,255,87,.25);
+  background:rgba(184,255,87,.04);
+  padding:7px 15px;border-radius:999px;
+  margin-bottom:22px;
+  opacity:0;animation:up .4s ease forwards
+}
+.pricing-hero-overline::before{
+  content:'';width:7px;height:7px;
+  background:var(--accent);border-radius:50%;
+  box-shadow:0 0 8px var(--accent);
+  animation:overlinePulse 1.8s ease-in-out infinite
+}
+@keyframes overlinePulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){
+  .pricing-hero-overline::before{animation:none}
 }
 .pricing-hero-sub{
   font-size:14px;color:var(--text2);line-height:1.7;
@@ -342,9 +365,11 @@ section{padding:80px 80px;position:relative;z-index:1}
   color:var(--accent);margin-bottom:16px
 }
 .section-title{
-  font-family:var(--display);font-size:clamp(36px,4vw,56px);
-  line-height:1;letter-spacing:.01em;margin-bottom:16px
+  font-family:var(--display);font-size:clamp(32px,4.5vw,64px);
+  line-height:1;letter-spacing:-.005em;margin-bottom:16px;
+  text-transform:uppercase;color:#fff
 }
+.section-title em{font-style:normal;color:var(--accent)}
 .section-sub{font-size:14px;color:var(--text2);max-width:520px;line-height:1.8}
 
 /* PRICING CARDS */
@@ -914,9 +939,11 @@ section{padding:80px 80px;position:relative;z-index:1}
   pointer-events:none
 }
 .cta-section h2{
-  font-family:var(--display);font-size:clamp(40px,5vw,72px);
-  line-height:.95;margin-bottom:20px
+  font-family:var(--display);font-size:clamp(40px,5.5vw,84px);
+  line-height:.95;margin-bottom:20px;
+  text-transform:uppercase;color:#fff;letter-spacing:-.01em
 }
+.cta-section h2 em{font-style:normal;color:var(--accent)}
 .cta-section p{font-size:14px;color:var(--text2);max-width:400px;margin:0 auto 40px}
 /* btn-primary : standard commun (14x28 + 13px + radius-md 8) */
 .btn-primary{
@@ -1025,8 +1052,9 @@ footer{
 <!-- HERO -->
 <div class="pricing-hero">
   <div class="pricing-hero-glow"></div>
-  <h1>Choisis ton<br>niveau de jeu</h1>
-  <p class="pricing-hero-sub">Du joueur curieux au coach pro. <strong style="color:var(--accent)">Acces immediat</strong> avec Pro &middot; Sans engagement &middot; Annulation 1 clic &middot; Satisfait ou rembourse 14 jours.</p>
+  <div class="pricing-hero-overline">Tarifs · Sans engagement</div>
+  <h1>Choisis ton niveau.<span class="lime">Commence gratuit.</span></h1>
+  <p class="pricing-hero-sub">Du joueur curieux au coach pro. <strong style="color:var(--accent)">Accès immédiat</strong> avec Pro &middot; Sans engagement &middot; Annulation 1 clic &middot; Satisfait ou remboursé 14 jours.</p>
 
   <!-- BILLING TOGGLE -->
   <div class="billing-toggle">
@@ -1068,8 +1096,8 @@ footer{
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
         Offre fondateurs &middot; Limite 50 places
       </div>
-      <h2 class="ltd-card-title">Pro a vie pour <span>99 EUR</span></h2>
-      <p class="ltd-card-desc">Un seul paiement, plus jamais d'abonnement. Tu deviens un des 50 fondateurs FragValue avec acces Discord prive <code>#founders</code> + toutes les features Pro a vie (auto-sync FACEIT, Coach IA, 2D Replay, futures features incluses).</p>
+      <h2 class="ltd-card-title">Pro à vie pour <span>99 EUR</span></h2>
+      <p class="ltd-card-desc">Un seul paiement, plus jamais d'abonnement. Tu deviens un des 50 fondateurs FragValue avec accès Discord privé <code>#founders</code> + toutes les features Pro à vie (auto-sync FACEIT, Coach IA, 2D Replay, futures features incluses).</p>
       <div class="ltd-card-stats">
         <div class="ltd-stat">
           <div class="ltd-stat-val"><span id="ltdAvailable">--</span></div>
@@ -1081,7 +1109,7 @@ footer{
         </div>
         <div class="ltd-stat">
           <div class="ltd-stat-val ltd-stat-val-accent">99 EUR</div>
-          <div class="ltd-stat-label">paye une fois &middot; a vie</div>
+          <div class="ltd-stat-label">payé une fois &middot; à vie</div>
         </div>
       </div>
       <div class="ltd-card-progress">
@@ -1092,7 +1120,7 @@ footer{
       </div>
       <button type="button" class="ltd-cta" id="ltdCta" onclick="startLifetimeCheckout(this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-        Reserver mon acces Pro a vie &middot; 99 EUR
+        Réserver mon accès Pro à vie &middot; 99 EUR
       </button>
       <div class="ltd-card-meta">
         Paiement Stripe securise &middot; 14j satisfait ou rembourse &middot; Stock decremente en temps reel
@@ -1317,7 +1345,7 @@ footer{
 <!-- FEATURE COMPARISON TABLE -->
 <section class="compare-section fade-in">
   <div class="section-tag">Comparaison détaillée</div>
-  <h2 class="section-title">Tout ce qui est inclus</h2>
+  <h2 class="section-title">Tout ce qui est <em>inclus</em></h2>
 
   <table class="compare-table">
     <thead>
@@ -1509,7 +1537,7 @@ footer{
 <!-- FAQ -->
 <section class="faq-section fade-in">
   <div class="section-tag">Questions fréquentes</div>
-  <h2 class="section-title">Besoin de précisions ?</h2>
+  <h2 class="section-title">Besoin de <em>précisions</em> ?</h2>
 
   <div class="faq-list">
 
@@ -1608,7 +1636,7 @@ footer{
 <section class="cta-section fade-in">
   <div class="cta-glow"></div>
   <div class="section-tag">C'est le moment</div>
-  <h2>Prêt à progresser ?</h2>
+  <h2>Prêt à <em>progresser</em> ?</h2>
   <p>Commence gratuitement, upgrade quand tu veux. Tes stats n'attendent que toi.</p>
   <a href="demo.html" class="btn-primary">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
