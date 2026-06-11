@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/fragvalue_icon.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="description" content="FragValue VOD Coordinator · Débrief tactique CS2 de 4h à 30 min : annote les rounds critiques, assigne par joueur, distribue en async sur Discord.">
+  <meta name="keywords" content="CS2, VOD review, débrief, coach, annotation, rounds, roster, Discord, FACEIT">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#080909">
+  <link rel="canonical" href="https://fragvalue.com/vod-coordinator.html">
+  <link rel="alternate" hreflang="fr" href="https://fragvalue.com/vod-coordinator.html">
+  <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/vod-coordinator.html">
+  <meta property="og:title" content="FragValue · VOD Coordinator">
+  <meta property="og:description" content="Débrief tactique 4h vers 30 min. Annote les rounds critiques, assigne par joueur, Discord async.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fragvalue.com/vod-coordinator.html">
+  <meta property="og:image" content="https://fragvalue.com/og/home.png">
+  <meta property="og:image:alt" content="FragValue">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="FragValue · VOD Coordinator">
+  <meta name="twitter:description" content="Débrief tactique 4h vers 30 min. Annote les rounds critiques, assigne par joueur, Discord async.">
+  <meta name="twitter:image" content="https://fragvalue.com/og/home.png">
+  <title>FragValue · VOD Coordinator CS2 (débrief tactique async)</title>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "FragValue VOD Coordinator",
+  "description": "Le débrief tactique CS2 qui passe de 4h à 30 min : annotations par round, assignations par joueur, distribution async sur Discord.",
+  "url": "https://fragvalue.com/vod-coordinator.html",
+  "inLanguage": "fr-FR",
+  "isPartOf": { "@type": "WebSite", "name": "FragValue", "url": "https://fragvalue.com" },
+  "publisher": { "@type": "Organization", "name": "FragValue", "logo": { "@type": "ImageObject", "url": "https://fragvalue.com/fragvalue_icon.svg" } }
+}
+</script>
+
+<link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   VOD COORDINATOR · page produit early access (design system V3)
+   ══════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#080909;
+  --bg-elevated:#0f1010;
+  --border:rgba(255,255,255,.07);
+  --border-bright:rgba(255,255,255,.14);
+  --text:#e8eaea;
+  --text2:#7a8080;
+  --text3:#4a5050;
+  --accent:#b8ff57;
+  --display:'Anton',sans-serif;
+  --mono:'Space Mono',monospace;
+  --radius2:12px;
+  --ease-out-cubic:cubic-bezier(.215,.61,.355,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--mono);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+a{color:inherit}
+
+.pp-hero{padding:160px 24px 64px;text-align:center}
+.pp-overline{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);
+  border:1px solid rgba(184,255,87,.25);
+  background:rgba(184,255,87,.04);
+  padding:8px 16px;border-radius:999px;margin-bottom:28px;
+}
+.pp-hero h1{
+  font-family:var(--display);
+  font-size:clamp(40px,7vw,108px);
+  font-weight:400;line-height:.95;letter-spacing:-.01em;
+  color:#fff;text-transform:uppercase;margin-bottom:22px;
+}
+.pp-hero h1 em{font-style:normal;color:var(--accent)}
+.pp-hero-sub{
+  font-size:16px;color:var(--text2);line-height:1.6;
+  max-width:560px;margin:0 auto 36px;
+}
+.btn-lime{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--accent);color:#000;
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;
+  padding:16px 28px;border-radius:8px;text-decoration:none;
+  box-shadow:0 0 32px rgba(184,255,87,.25);
+  transition:transform .25s var(--ease-out-cubic),box-shadow .25s;
+}
+.btn-lime:hover{transform:translateY(-2px);box-shadow:0 0 48px rgba(184,255,87,.4)}
+
+/* ── MOCKUP VOD REVIEW ── */
+.vod-wrap{max-width:1100px;margin:0 auto;padding:0 24px 64px}
+.vod-mockup{
+  background:linear-gradient(180deg,rgba(15,16,16,.6) 0%,rgba(11,12,12,.92) 100%);
+  border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;
+  box-shadow:0 40px 80px rgba(0,0,0,.5),0 0 0 1px rgba(184,255,87,.04);
+}
+.vod-toolbar{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  background:rgba(0,0,0,.4);
+}
+.vod-tag{
+  font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  padding:6px 10px;border-radius:4px;
+  border:1px solid var(--border);color:var(--text2);
+}
+.vod-tag-live{
+  border-color:rgba(184,255,87,.4);
+  background:rgba(184,255,87,.08);
+  color:var(--accent);position:relative;padding-left:22px;
+}
+.vod-tag-live::before{
+  content:'';position:absolute;left:8px;top:50%;
+  transform:translateY(-50%);
+  width:7px;height:7px;background:var(--accent);border-radius:50%;
+  box-shadow:0 0 8px var(--accent);
+  animation:vodPulse 1.6s ease-in-out infinite;
+}
+@keyframes vodPulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* Timeline : barre de progression avec markers de rounds annotes */
+.vod-timeline{padding:28px 24px 12px}
+.vod-timeline-bar{
+  position:relative;height:6px;border-radius:3px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border);
+}
+.vod-timeline-progress{
+  position:absolute;inset:0;width:46%;
+  background:linear-gradient(90deg,rgba(184,255,87,.25),rgba(184,255,87,.6));
+  border-radius:3px;
+}
+.vod-marker{
+  position:absolute;top:50%;transform:translate(-50%,-50%);
+  width:14px;height:14px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--accent);
+  box-shadow:0 0 10px rgba(184,255,87,.5);
+}
+.vod-marker.dim{border-color:var(--text3);box-shadow:none}
+.vod-timeline-labels{
+  display:flex;justify-content:space-between;
+  font-size:10px;color:var(--text3);letter-spacing:.05em;
+  padding:10px 0 0;
+}
+
+/* Cards annotations */
+.vod-notes{padding:16px 20px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.vod-note{
+  padding:16px;background:rgba(255,255,255,.02);
+  border:1px solid var(--border);border-radius:8px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.vod-note-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vod-note-tc{
+  font-size:11px;padding:3px 8px;border-radius:4px;
+  background:rgba(184,255,87,.08);
+  border:1px solid rgba(184,255,87,.18);
+  color:var(--accent);letter-spacing:.03em;
+}
+.vod-note-assignee{
+  font-size:10px;padding:3px 8px;border-radius:999px;
+  border:1px solid var(--border-bright);color:var(--text2);
+  text-transform:uppercase;letter-spacing:.05em;
+}
+.vod-note p{font-size:12px;color:var(--text);line-height:1.5}
+.vod-note-status{font-size:10px;color:var(--text3);letter-spacing:.05em;text-transform:uppercase}
+.vod-note-status.seen{color:var(--accent)}
+
+/* ── VALUE POINTS ── */
+.pp-points{max-width:1100px;margin:0 auto;padding:32px 24px 64px}
+.pp-points-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.pp-point{
+  padding:28px 24px;background:var(--bg-elevated);
+  border:1px solid var(--border);border-radius:var(--radius2);
+}
+.pp-point-num{
+  font-family:var(--display);font-size:36px;color:var(--accent);
+  line-height:1;margin-bottom:14px;opacity:.85;
+}
+.pp-point h3{
+  font-family:var(--display);font-size:22px;font-weight:400;
+  color:#fff;text-transform:uppercase;letter-spacing:.02em;margin-bottom:10px;
+}
+.pp-point p{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* ── FINAL CTA ── */
+.pp-final{
+  max-width:760px;margin:24px auto 96px;padding:48px 32px;text-align:center;
+  background:linear-gradient(180deg,rgba(184,255,87,.05) 0%,rgba(15,16,16,.6) 100%);
+  border:1px solid rgba(184,255,87,.2);border-radius:16px;
+}
+.pp-final h2{
+  font-family:var(--display);font-size:clamp(28px,4.5vw,56px);
+  font-weight:400;line-height:1;color:#fff;text-transform:uppercase;margin-bottom:18px;
+}
+.pp-final h2 em{font-style:normal;color:var(--accent)}
+.pp-final p{font-size:14px;color:var(--text2);line-height:1.65;max-width:520px;margin:0 auto 30px}
+
+@media (max-width:640px){
+  .pp-hero{padding:130px 20px 48px}
+  .pp-points{padding:24px 20px 48px}
+  .pp-final{margin:16px 20px 64px;padding:36px 22px}
+}
+@media (prefers-reduced-motion: reduce){
+  .vod-tag-live::before{animation:none}
+}
+</style>
+</head>
+<body data-page="vod-coordinator">
+
+<main id="main-content">
+
+<!-- ══════════ HERO ══════════ -->
+<section class="pp-hero">
+  <div class="pp-overline">Early access · En construction avec les premiers rosters</div>
+  <h1>VOD Coordinator.<br><em>4h deviennent 30 min.</em></h1>
+  <p class="pp-hero-sub">
+    Le débrief tactique sans la réunion marathon. Tu annotes les rounds
+    critiques avec les timecodes, tu assignes par joueur, chacun regarde
+    sa part en async sur Discord. Le lundi soir redevient libre.
+  </p>
+  <a href="/coach-dashboard.html#early-access" class="btn-lime">
+    Rejoindre l'early access
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+  </a>
+</section>
+
+<!-- ══════════ MOCKUP ══════════ -->
+<div class="vod-wrap">
+  <div class="vod-mockup" role="img" aria-label="Aperçu du VOD Coordinator : timeline du match avec rounds annotés, assignations par joueur et statut de lecture">
+    <div class="vod-toolbar" aria-hidden="true">
+      <span class="vod-tag">Match LFA · vs DropOff · Mirage 13-9</span>
+      <span class="vod-tag">3 rounds annotés · 2 joueurs assignés</span>
+      <span class="vod-tag vod-tag-live">REVIEW EN COURS</span>
+    </div>
+    <div class="vod-timeline" aria-hidden="true">
+      <div class="vod-timeline-bar">
+        <div class="vod-timeline-progress"></div>
+        <span class="vod-marker" style="left:18%"></span>
+        <span class="vod-marker" style="left:46%"></span>
+        <span class="vod-marker dim" style="left:74%"></span>
+      </div>
+      <div class="vod-timeline-labels">
+        <span>R01</span><span>R06</span><span>R12</span><span>R18</span><span>R22</span>
+      </div>
+    </div>
+    <div class="vod-notes" aria-hidden="true">
+      <div class="vod-note">
+        <div class="vod-note-head">
+          <span class="vod-note-tc">R04 · 3:21</span>
+          <span class="vod-note-assignee">Toxic</span>
+        </div>
+        <p>Over-peek mid sans util alors que l'AWPer est ready. Regarde le smoke connector avant peek.</p>
+        <span class="vod-note-status seen">Vu · 1 réponse</span>
+      </div>
+      <div class="vod-note">
+        <div class="vod-note-head">
+          <span class="vod-note-tc">R11 · 8:14</span>
+          <span class="vod-note-assignee">Coup</span>
+        </div>
+        <p>Rotation B trop tardive après le fake A. Le call était bon, le timing à retravailler en pracc.</p>
+        <span class="vod-note-status seen">Vu</span>
+      </div>
+      <div class="vod-note">
+        <div class="vod-note-head">
+          <span class="vod-note-tc">R19 · 12:48</span>
+          <span class="vod-note-assignee">Tout le roster</span>
+        </div>
+        <p>Anti-eco perdu : pas de trade sur l'entry. À revoir ensemble avant le strat time de jeudi.</p>
+        <span class="vod-note-status">En attente · 3 / 5</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ VALUE POINTS ══════════ -->
+<section class="pp-points" aria-label="Ce que le VOD Coordinator change">
+  <div class="pp-points-grid">
+    <div class="pp-point">
+      <div class="pp-point-num">01</div>
+      <h3>Annote en timecodes</h3>
+      <p>Tu marques les rounds critiques directement sur la timeline du match. Chaque note embarque son timecode : le joueur arrive au bon moment de la démo en un clic.</p>
+    </div>
+    <div class="pp-point">
+      <div class="pp-point-num">02</div>
+      <h3>Assigne par joueur</h3>
+      <p>Chaque note part au joueur concerné, pas au channel général. Toxic reçoit ses over-peeks, Coup ses rotations. Personne ne subit 4h de review pour 12 minutes qui le concernent.</p>
+    </div>
+    <div class="pp-point">
+      <div class="pp-point-num">03</div>
+      <h3>Async sur Discord</h3>
+      <p>Les notes partent sur Discord, chacun regarde quand il peut, tu vois qui a vu quoi. Le débrief vit entre les sessions au lieu de les manger.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FINAL CTA ══════════ -->
+<section class="pp-final" aria-labelledby="pp-final-heading">
+  <h2 id="pp-final-heading">Construis-le <em>avec nous</em>.</h2>
+  <p>
+    Le VOD Coordinator se développe avec les 20 premiers rosters early access.
+    Tu coaches une équipe CS2 ? Ton feedback définit le produit.
+  </p>
+  <a href="/coach-dashboard.html#early-access" class="btn-lime">Rejoindre l'early access</a>
+</section>
+
+</main>
+
+<script src="/nav.js"></script>
+<script src="/footer.js" defer></script>
+</body>
+</html>

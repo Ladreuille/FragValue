@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/fragvalue_icon.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="description" content="FragValue Pracc Calendar · La semaine de ton roster CS2 sur une seule vue : praccs, try outs, strat time, matchs. Ready check intégré, zéro réunion Discord.">
+  <meta name="keywords" content="CS2, pracc, calendrier, planning, roster, scrim, strat time, coach, équipe, FACEIT">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#080909">
+  <link rel="canonical" href="https://fragvalue.com/pracc-calendar.html">
+  <link rel="alternate" hreflang="fr" href="https://fragvalue.com/pracc-calendar.html">
+  <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/pracc-calendar.html">
+  <meta property="og:title" content="FragValue · Pracc Calendar">
+  <meta property="og:description" content="7 jours, 1 vue, 0 réunion Discord. Le plan de bataille hebdo de ton roster CS2, partagé en temps réel.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fragvalue.com/pracc-calendar.html">
+  <meta property="og:image" content="https://fragvalue.com/og/home.png">
+  <meta property="og:image:alt" content="FragValue">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="FragValue · Pracc Calendar">
+  <meta name="twitter:description" content="7 jours, 1 vue, 0 réunion Discord. Le plan de bataille hebdo de ton roster CS2, partagé en temps réel.">
+  <meta name="twitter:image" content="https://fragvalue.com/og/home.png">
+  <title>FragValue · Pracc Calendar CS2 (planning hebdo du roster)</title>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "FragValue Pracc Calendar",
+  "description": "Le planning hebdo du roster CS2 : praccs, try outs, strat time et matchs alignés sur une seule timeline partagée.",
+  "url": "https://fragvalue.com/pracc-calendar.html",
+  "inLanguage": "fr-FR",
+  "isPartOf": { "@type": "WebSite", "name": "FragValue", "url": "https://fragvalue.com" },
+  "publisher": { "@type": "Organization", "name": "FragValue", "logo": { "@type": "ImageObject", "url": "https://fragvalue.com/fragvalue_icon.svg" } }
+}
+</script>
+
+<link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   PRACC CALENDAR · page produit early access (design system V3)
+   ══════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#080909;
+  --bg-elevated:#0f1010;
+  --border:rgba(255,255,255,.07);
+  --border-bright:rgba(255,255,255,.14);
+  --text:#e8eaea;
+  --text2:#7a8080;
+  --text3:#4a5050;
+  --accent:#b8ff57;
+  --display:'Anton',sans-serif;
+  --mono:'Space Mono',monospace;
+  --radius2:12px;
+  --ease-out-cubic:cubic-bezier(.215,.61,.355,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--mono);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+a{color:inherit}
+
+.pp-hero{padding:160px 24px 64px;text-align:center}
+.pp-overline{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);
+  border:1px solid rgba(184,255,87,.25);
+  background:rgba(184,255,87,.04);
+  padding:8px 16px;border-radius:999px;margin-bottom:28px;
+}
+.pp-hero h1{
+  font-family:var(--display);
+  font-size:clamp(40px,7vw,108px);
+  font-weight:400;line-height:.95;letter-spacing:-.01em;
+  color:#fff;text-transform:uppercase;margin-bottom:22px;
+}
+.pp-hero h1 em{font-style:normal;color:var(--accent)}
+.pp-hero-sub{
+  font-size:16px;color:var(--text2);line-height:1.6;
+  max-width:560px;margin:0 auto 36px;
+}
+.btn-lime{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--accent);color:#000;
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;
+  padding:16px 28px;border-radius:8px;text-decoration:none;
+  box-shadow:0 0 32px rgba(184,255,87,.25);
+  transition:transform .25s var(--ease-out-cubic),box-shadow .25s;
+}
+.btn-lime:hover{transform:translateY(-2px);box-shadow:0 0 48px rgba(184,255,87,.4)}
+
+/* ── MOCKUP CALENDRIER (herite de la home V3) ── */
+.fpc-wrap{max-width:1200px;margin:0 auto;padding:0 24px 64px}
+.featured-pracc-mockup{
+  background:linear-gradient(180deg,rgba(15,16,16,.6) 0%,rgba(11,12,12,.92) 100%);
+  border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;
+  box-shadow:0 40px 80px rgba(0,0,0,.5),0 0 0 1px rgba(184,255,87,.04);
+}
+.fpc-toolbar{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  background:rgba(0,0,0,.4);
+}
+.fpc-tag{
+  font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  padding:6px 10px;border-radius:4px;
+  border:1px solid var(--border);color:var(--text2);
+}
+.fpc-tag-active{
+  border-color:rgba(184,255,87,.4);
+  background:rgba(184,255,87,.08);
+  color:var(--accent);position:relative;padding-left:22px;
+}
+.fpc-tag-active::before{
+  content:'';position:absolute;left:8px;top:50%;
+  transform:translateY(-50%);
+  width:7px;height:7px;background:var(--accent);border-radius:50%;
+  box-shadow:0 0 8px var(--accent);
+  animation:fpcPulse 1.6s ease-in-out infinite;
+}
+@keyframes fpcPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.fpc-grid{
+  padding:24px 20px;
+  display:grid;grid-template-columns:repeat(7,1fr);gap:10px;
+}
+.fpc-day{
+  padding:14px 12px;
+  background:rgba(255,255,255,.02);
+  border:1px solid var(--border);border-radius:6px;
+  min-height:120px;display:flex;flex-direction:column;gap:8px;
+  transition:transform .25s,border-color .25s;
+}
+.fpc-day:hover{transform:translateY(-2px);border-color:rgba(184,255,87,.2)}
+.fpc-day-label{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.08em}
+.fpc-slot{
+  font-size:12px;color:var(--text);padding:7px 9px;
+  background:rgba(184,255,87,.06);border-radius:4px;
+  border-left:2px solid rgba(184,255,87,.45);line-height:1.3;
+}
+.fpc-slot-muted{background:rgba(255,255,255,.02);border-left-color:var(--text3);color:var(--text3)}
+.fpc-meta{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.03em}
+.fpc-warn{
+  font-family:var(--mono);font-size:10px;color:#ffa971;
+  padding:3px 7px;background:rgba(255,153,102,.1);border-radius:3px;
+  border-left:2px solid rgba(255,153,102,.4);
+}
+.fpc-active{
+  border-color:rgba(184,255,87,.5);
+  background:rgba(184,255,87,.05);
+  box-shadow:0 0 24px rgba(184,255,87,.12),inset 0 0 24px rgba(184,255,87,.04);
+}
+.fpc-active .fpc-day-label{color:var(--accent)}
+.fpc-slot-match{
+  background:rgba(184,255,87,.22);
+  border-left-color:var(--accent);border-left-width:3px;
+  color:var(--accent);font-weight:600;
+}
+.fpc-footer{
+  padding:20px 24px;border-top:1px solid var(--border);
+  display:flex;flex-wrap:wrap;gap:48px;background:rgba(0,0,0,.25);
+}
+.fpc-stat{display:flex;flex-direction:column}
+.fpc-stat-num{
+  font-family:var(--display);font-size:34px;color:var(--accent);
+  line-height:1;font-weight:400;letter-spacing:-.01em;
+}
+.fpc-stat-label{
+  font-family:var(--mono);font-size:10px;color:var(--text3);
+  margin-top:6px;letter-spacing:.04em;text-transform:uppercase;
+}
+
+/* ── VALUE POINTS ── */
+.pp-points{max-width:1100px;margin:0 auto;padding:32px 24px 64px}
+.pp-points-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.pp-point{
+  padding:28px 24px;background:var(--bg-elevated);
+  border:1px solid var(--border);border-radius:var(--radius2);
+}
+.pp-point-num{
+  font-family:var(--display);font-size:36px;color:var(--accent);
+  line-height:1;margin-bottom:14px;opacity:.85;
+}
+.pp-point h3{
+  font-family:var(--display);font-size:22px;font-weight:400;
+  color:#fff;text-transform:uppercase;letter-spacing:.02em;margin-bottom:10px;
+}
+.pp-point p{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* ── FINAL CTA ── */
+.pp-final{
+  max-width:760px;margin:24px auto 96px;padding:48px 32px;text-align:center;
+  background:linear-gradient(180deg,rgba(184,255,87,.05) 0%,rgba(15,16,16,.6) 100%);
+  border:1px solid rgba(184,255,87,.2);border-radius:16px;
+}
+.pp-final h2{
+  font-family:var(--display);font-size:clamp(28px,4.5vw,56px);
+  font-weight:400;line-height:1;color:#fff;text-transform:uppercase;margin-bottom:18px;
+}
+.pp-final h2 em{font-style:normal;color:var(--accent)}
+.pp-final p{font-size:14px;color:var(--text2);line-height:1.65;max-width:520px;margin:0 auto 30px}
+
+@media (max-width:980px){
+  .fpc-grid{grid-template-columns:repeat(2,1fr)}
+  .fpc-footer{gap:24px;padding:18px 20px}
+  .fpc-stat-num{font-size:28px}
+}
+@media (max-width:640px){
+  .pp-hero{padding:130px 20px 48px}
+  .pp-points{padding:24px 20px 48px}
+  .pp-final{margin:16px 20px 64px;padding:36px 22px}
+}
+@media (prefers-reduced-motion: reduce){
+  .fpc-tag-active::before{animation:none}
+}
+</style>
+</head>
+<body data-page="pracc-calendar">
+
+<main id="main-content">
+
+<!-- ══════════ HERO ══════════ -->
+<section class="pp-hero">
+  <div class="pp-overline">Early access · En construction avec les premiers rosters</div>
+  <h1>Pracc Calendar.<br><em>7 jours, 1 vue.</em></h1>
+  <p class="pp-hero-sub">
+    Le plan de bataille hebdo de ton roster, partagé en temps réel.
+    Pracc, try outs, strat time, match : tout aligné sur la même timeline.
+    Zéro réunion Discord pour caler la semaine.
+  </p>
+  <a href="/coach-dashboard.html#early-access" class="btn-lime">
+    Rejoindre l'early access
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+  </a>
+</section>
+
+<!-- ══════════ MOCKUP ══════════ -->
+<div class="fpc-wrap">
+  <div class="featured-pracc-mockup" role="img" aria-label="Aperçu du Pracc Calendar de la semaine 41 : pracc, try outs, strat time et match alignés sur 7 jours">
+    <div class="fpc-toolbar" aria-hidden="true">
+      <span class="fpc-tag">ROSTER · Semaine 41</span>
+      <span class="fpc-tag">Vendredi 21h · ESEA LFA · vs DropOff</span>
+      <span class="fpc-tag fpc-tag-active">SESSION ACTIVE</span>
+    </div>
+    <div class="fpc-grid" aria-hidden="true">
+      <div class="fpc-day">
+        <div class="fpc-day-label">LUN</div>
+        <div class="fpc-slot fpc-slot-muted">VOD review · 19h</div>
+      </div>
+      <div class="fpc-day">
+        <div class="fpc-day-label">MAR</div>
+        <div class="fpc-slot">Pracc · 20h</div>
+        <div class="fpc-meta">5 / 5 ready</div>
+      </div>
+      <div class="fpc-day">
+        <div class="fpc-day-label">MER</div>
+        <div class="fpc-slot">Pracc · 20h</div>
+        <div class="fpc-warn">Coup missing</div>
+      </div>
+      <div class="fpc-day">
+        <div class="fpc-day-label">JEU</div>
+        <div class="fpc-slot">Strat time · 21h</div>
+        <div class="fpc-meta">Mirage T-side</div>
+      </div>
+      <div class="fpc-day fpc-active">
+        <div class="fpc-day-label">VEN</div>
+        <div class="fpc-slot fpc-slot-match">Match LFA · 21h</div>
+        <div class="fpc-meta">vs DropOff</div>
+      </div>
+      <div class="fpc-day">
+        <div class="fpc-day-label">SAM</div>
+        <div class="fpc-slot fpc-slot-muted">Off · débrief 19h</div>
+      </div>
+      <div class="fpc-day">
+        <div class="fpc-day-label">DIM</div>
+        <div class="fpc-slot">Pracc · 20h</div>
+        <div class="fpc-meta">5 / 5 ready</div>
+      </div>
+    </div>
+    <div class="fpc-footer" aria-hidden="true">
+      <div class="fpc-stat">
+        <span class="fpc-stat-num">8h30</span>
+        <span class="fpc-stat-label">Pracc cumulé / semaine</span>
+      </div>
+      <div class="fpc-stat">
+        <span class="fpc-stat-num">12</span>
+        <span class="fpc-stat-label">Try outs prévus</span>
+      </div>
+      <div class="fpc-stat">
+        <span class="fpc-stat-num">4 / 5</span>
+        <span class="fpc-stat-label">Roster en moyenne</span>
+      </div>
+      <div class="fpc-stat">
+        <span class="fpc-stat-num">100%</span>
+        <span class="fpc-stat-label">Visibilité staff</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ VALUE POINTS ══════════ -->
+<section class="pp-points" aria-label="Ce que le Pracc Calendar change">
+  <div class="pp-points-grid">
+    <div class="pp-point">
+      <div class="pp-point-num">01</div>
+      <h3>Ready check intégré</h3>
+      <p>Chaque joueur confirme sa dispo en un clic. Tu sais à 18h si la pracc de 20h tient, pas à 19h55 sur Discord.</p>
+    </div>
+    <div class="pp-point">
+      <div class="pp-point-num">02</div>
+      <h3>Coach IA propose</h3>
+      <p>Le coach IA lit les résultats de la semaine et propose le planning : quels try outs prioriser, quelle map bosser en strat time. Tu valides, il cale.</p>
+    </div>
+    <div class="pp-point">
+      <div class="pp-point-num">03</div>
+      <h3>Visibilité staff totale</h3>
+      <p>Manager, analyste, structure : tout le monde voit la même timeline. Fini les triple bookings et les praccs fantômes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FINAL CTA ══════════ -->
+<section class="pp-final" aria-labelledby="pp-final-heading">
+  <h2 id="pp-final-heading">Construis-le <em>avec nous</em>.</h2>
+  <p>
+    Le Pracc Calendar se développe avec les 20 premiers rosters early access.
+    Tu coaches une équipe CS2 ? Ton feedback définit le produit.
+  </p>
+  <a href="/coach-dashboard.html#early-access" class="btn-lime">Rejoindre l'early access</a>
+</section>
+
+</main>
+
+<script src="/nav.js"></script>
+<script src="/footer.js" defer></script>
+</body>
+</html>

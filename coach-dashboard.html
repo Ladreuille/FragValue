@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/fragvalue_icon.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="description" content="FragValue Coach mode · Ton QG d'avant-match CS2 : analyse de démos, anti-strat, prep veto, roster. VOD Coordinator et Pracc Calendar en early access.">
+  <meta name="keywords" content="CS2, coach, coach mode, pracc, VOD review, anti-strat, prep veto, roster, FACEIT, équipe">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#080909">
+  <link rel="canonical" href="https://fragvalue.com/coach-dashboard.html">
+  <link rel="alternate" hreflang="fr" href="https://fragvalue.com/coach-dashboard.html">
+  <link rel="alternate" hreflang="x-default" href="https://fragvalue.com/coach-dashboard.html">
+  <meta property="og:title" content="FragValue · Coach mode">
+  <meta property="og:description" content="Ton QG d'avant-match CS2. Analyse de démos, anti-strat, prep veto, roster. VOD Coordinator et Pracc Calendar en early access.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fragvalue.com/coach-dashboard.html">
+  <meta property="og:image" content="https://fragvalue.com/og/home.png">
+  <meta property="og:image:alt" content="FragValue">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="FragValue · Coach mode">
+  <meta name="twitter:description" content="Ton QG d'avant-match CS2. Analyse de démos, anti-strat, prep veto, roster. VOD Coordinator et Pracc Calendar en early access.">
+  <meta name="twitter:image" content="https://fragvalue.com/og/home.png">
+  <title>FragValue · Coach mode pour CS2 (QG d'avant-match)</title>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "FragValue Coach mode",
+  "description": "Le QG d'avant-match du coach CS2 : analyse de démos, anti-strat, prep veto, gestion de roster. VOD Coordinator et Pracc Calendar en early access.",
+  "url": "https://fragvalue.com/coach-dashboard.html",
+  "inLanguage": "fr-FR",
+  "isPartOf": { "@type": "WebSite", "name": "FragValue", "url": "https://fragvalue.com" },
+  "publisher": { "@type": "Organization", "name": "FragValue", "logo": { "@type": "ImageObject", "url": "https://fragvalue.com/fragvalue_icon.svg" } }
+}
+</script>
+
+<link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   COACH MODE HUB · design system V3 (tokens herites de la home refonte)
+   ══════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#080909;
+  --bg-elevated:#0f1010;
+  --border:rgba(255,255,255,.07);
+  --border-bright:rgba(255,255,255,.14);
+  --text:#e8eaea;
+  --text2:#7a8080;
+  --text3:#4a5050;
+  --accent:#b8ff57;
+  --display:'Anton',sans-serif;
+  --mono:'Space Mono',monospace;
+  --radius2:12px;
+  --ease-out-cubic:cubic-bezier(.215,.61,.355,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--mono);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+a{color:inherit}
+
+/* ── HERO compact ── */
+.cm-hero{
+  padding:160px 24px 80px;
+  text-align:center;
+  position:relative;
+}
+.cm-overline{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+  border:1px solid rgba(184,255,87,.25);
+  background:rgba(184,255,87,.04);
+  padding:8px 16px;
+  border-radius:999px;
+  margin-bottom:28px;
+}
+.cm-overline::before{
+  content:'';
+  width:7px;height:7px;
+  background:var(--accent);
+  border-radius:50%;
+  box-shadow:0 0 8px var(--accent);
+  animation:cmPulse 1.8s ease-in-out infinite;
+}
+@keyframes cmPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.cm-hero h1{
+  font-family:var(--display);
+  font-size:clamp(44px,8vw,120px);
+  font-weight:400;
+  line-height:.95;
+  letter-spacing:-.01em;
+  color:#fff;
+  margin-bottom:22px;
+  text-transform:uppercase;
+}
+.cm-hero h1 em{font-style:normal;color:var(--accent)}
+.cm-hero-sub{
+  font-size:16px;
+  color:var(--text2);
+  line-height:1.6;
+  max-width:560px;
+  margin:0 auto 36px;
+}
+.cm-hero-ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn-lime{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--accent);color:#000;
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;
+  padding:16px 28px;border-radius:8px;text-decoration:none;
+  box-shadow:0 0 32px rgba(184,255,87,.25);
+  transition:transform .25s var(--ease-out-cubic),box-shadow .25s;
+}
+.btn-lime:hover{transform:translateY(-2px);box-shadow:0 0 48px rgba(184,255,87,.4)}
+.btn-ghost{
+  display:inline-flex;align-items:center;gap:10px;
+  background:transparent;color:var(--text);
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;
+  padding:16px 28px;border-radius:8px;text-decoration:none;
+  border:1px solid var(--border-bright);
+  transition:border-color .25s,transform .25s var(--ease-out-cubic);
+}
+.btn-ghost:hover{border-color:rgba(184,255,87,.4);transform:translateY(-2px)}
+
+/* ── SECTIONS ── */
+.cm-section{max-width:1100px;margin:0 auto;padding:64px 24px}
+.cm-section-head{margin-bottom:36px}
+.cm-section-tag{
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:12px;
+}
+.cm-section h2{
+  font-family:var(--display);
+  font-size:clamp(28px,4vw,52px);
+  font-weight:400;line-height:1;
+  color:#fff;text-transform:uppercase;letter-spacing:.01em;
+}
+.cm-section h2 em{font-style:normal;color:var(--accent)}
+
+/* ── TOOL CARDS ── */
+.cm-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:14px;
+}
+.cm-card{
+  position:relative;
+  display:flex;flex-direction:column;gap:12px;
+  padding:28px 24px;
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:var(--radius2);
+  text-decoration:none;
+  transition:transform .3s var(--ease-out-cubic),border-color .25s,box-shadow .3s;
+}
+.cm-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(184,255,87,.35);
+  box-shadow:0 24px 48px rgba(0,0,0,.45),0 0 0 1px rgba(184,255,87,.1);
+}
+.cm-card-tag{
+  align-self:flex-start;
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 10px;border-radius:4px;
+}
+.cm-card-tag.live{
+  color:var(--accent);
+  border:1px solid rgba(184,255,87,.35);
+  background:rgba(184,255,87,.07);
+}
+.cm-card-tag.soon{
+  color:var(--text2);
+  border:1px solid var(--border-bright);
+  background:rgba(255,255,255,.03);
+}
+.cm-card h3{
+  font-family:var(--display);
+  font-size:24px;font-weight:400;
+  color:#fff;letter-spacing:.02em;text-transform:uppercase;
+}
+.cm-card p{font-size:13px;color:var(--text2);line-height:1.6;flex:1}
+.cm-card-arrow{
+  font-size:12px;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.cm-card-arrow svg{transition:transform .25s var(--ease-out-cubic)}
+.cm-card:hover .cm-card-arrow svg{transform:translateX(5px)}
+.cm-card.soon-card{opacity:.92}
+.cm-card.soon-card:hover{border-color:var(--border-bright);box-shadow:0 24px 48px rgba(0,0,0,.35)}
+
+/* ── EARLY ACCESS ── */
+.cm-early{
+  max-width:760px;margin:48px auto 96px;padding:48px 32px;
+  text-align:center;
+  background:linear-gradient(180deg,rgba(184,255,87,.05) 0%,rgba(15,16,16,.6) 100%);
+  border:1px solid rgba(184,255,87,.2);
+  border-radius:16px;
+}
+.cm-early h2{
+  font-family:var(--display);
+  font-size:clamp(28px,4.5vw,56px);
+  font-weight:400;line-height:1;color:#fff;
+  text-transform:uppercase;margin-bottom:18px;
+}
+.cm-early h2 em{font-style:normal;color:var(--accent)}
+.cm-early p{
+  font-size:14px;color:var(--text2);line-height:1.65;
+  max-width:520px;margin:0 auto 30px;
+}
+.cm-early-ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+@media (max-width:640px){
+  .cm-hero{padding:130px 20px 56px}
+  .cm-section{padding:40px 20px}
+  .cm-early{margin:24px 20px 64px;padding:36px 22px}
+}
+@media (prefers-reduced-motion: reduce){
+  .cm-overline::before{animation:none}
+}
+</style>
+</head>
+<body data-page="coach-dashboard">
+
+<main id="main-content">
+
+<!-- ══════════ HERO ══════════ -->
+<section class="cm-hero">
+  <div class="cm-overline">Coach mode · Early access</div>
+  <h1>Ton QG <em>d'avant-match</em>.</h1>
+  <p class="cm-hero-sub">
+    Tout ce qu'un coach CS2 prépare avant de lancer le serveur :
+    démos analysées, patterns adverses, veto, roster. Au même endroit.
+  </p>
+  <div class="cm-hero-ctas">
+    <a href="/demo.html" class="btn-lime">
+      Analyser une démo
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+    </a>
+    <a href="#early-access" class="btn-ghost">Rejoindre l'early access</a>
+  </div>
+</section>
+
+<!-- ══════════ OUTILS LIVE ══════════ -->
+<section class="cm-section" aria-labelledby="live-tools-heading">
+  <div class="cm-section-head">
+    <div class="cm-section-tag">Disponible aujourd'hui</div>
+    <h2 id="live-tools-heading">Tes outils, <em>prêts</em>.</h2>
+  </div>
+  <div class="cm-grid">
+    <a href="/demo.html" class="cm-card">
+      <span class="cm-card-tag live">Live</span>
+      <h3>Analyse de démos</h3>
+      <p>Upload une démo, récupère le diagnostic complet : FV Rating, heatmaps, 2D replay, round par round.</p>
+      <span class="cm-card-arrow">Lancer <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
+    </a>
+    <a href="/anti-strat.html" class="cm-card">
+      <span class="cm-card-tag live">Live</span>
+      <h3>Anti-Strat Tool</h3>
+      <p>Les patterns de l'équipe adverse sur N matchs : executes, retakes, utility, timings. Counters actionnables.</p>
+      <span class="cm-card-arrow">Lancer <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
+    </a>
+    <a href="/prep-veto.html" class="cm-card">
+      <span class="cm-card-tag live">Live</span>
+      <h3>Prep Veto</h3>
+      <p>Prépare ton veto BO1, BO3 ou BO5 avec les stats par map des deux équipes. Décide avant le lobby.</p>
+      <span class="cm-card-arrow">Lancer <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
+    </a>
+    <a href="/team.html" class="cm-card">
+      <span class="cm-card-tag live">Live</span>
+      <h3>Roster &amp; équipe</h3>
+      <p>Crée ton roster, invite tes joueurs, suis la progression de chacun depuis un seul écran.</p>
+      <span class="cm-card-arrow">Lancer <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<!-- ══════════ MODULES EARLY ACCESS ══════════ -->
+<section class="cm-section" aria-labelledby="soon-tools-heading">
+  <div class="cm-section-head">
+    <div class="cm-section-tag">En construction avec les premiers rosters</div>
+    <h2 id="soon-tools-heading">Les 2 prochains <em>chantiers</em>.</h2>
+  </div>
+  <div class="cm-grid">
+    <a href="/vod-coordinator.html" class="cm-card soon-card">
+      <span class="cm-card-tag soon">Early access</span>
+      <h3>VOD Coordinator</h3>
+      <p>Débrief tactique 4h vers 30 min. Annote les rounds critiques, assigne par joueur, Discord async.</p>
+      <span class="cm-card-arrow">Découvrir <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
+    </a>
+    <a href="/pracc-calendar.html" class="cm-card soon-card">
+      <span class="cm-card-tag soon">Early access</span>
+      <h3>Pracc Calendar</h3>
+      <p>La semaine de ton roster sur une seule vue : praccs, try outs, strat time, matchs. Zéro réunion Discord.</p>
+      <span class="cm-card-arrow">Découvrir <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<!-- ══════════ EARLY ACCESS CTA ══════════ -->
+<section class="cm-early" id="early-access" aria-labelledby="early-access-heading">
+  <h2 id="early-access-heading">Les 20 premiers <em>rosters</em>.</h2>
+  <p>
+    VOD Coordinator et Pracc Calendar se construisent avec un petit groupe
+    de coachs : académies, équipes semi-pro, hubs sérieux. Tu coaches un
+    roster CS2 ? Rejoins le Discord ou écris-nous, on t'embarque.
+  </p>
+  <div class="cm-early-ctas">
+    <a href="https://discord.gg/Z4PsRKVsN" target="_blank" rel="noopener" class="btn-lime">Rejoindre le Discord</a>
+    <a href="mailto:contact@fragvalue.com?subject=Early%20access%20coach%20mode" class="btn-ghost">contact@fragvalue.com</a>
+  </div>
+</section>
+
+</main>
+
+<script src="/nav.js"></script>
+<script src="/footer.js" defer></script>
+</body>
+</html>
