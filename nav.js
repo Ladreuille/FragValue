@@ -317,7 +317,7 @@
         { href: link('/prep-veto.html'), label: T.prepVeto, badge: 'elite' },
         { href: link('/anti-strat.html'), label: T.antiStrat, badge: 'elite' },
         { href: link('/vod-coordinator.html'), label: T.vodCoord, badge: 'soon' },
-        { href: link('/pracc-calendar.html'), label: T.praccCal, badge: 'soon' },
+        { href: link('/pracc-planner.html'), label: T.praccCal },
       ],
     },
   ];

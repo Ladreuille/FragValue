@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<!-- Google tag (gtag.js) - Consent Mode v2 EU/EEA strict -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied',
+  'functionality_storage': 'granted',
+  'security_storage': 'granted',
+  'wait_for_update': 500,
+  'region': ['EEA','CH','GB']
+});
+gtag('js', new Date());
+gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Strict;Secure' });
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H6PLDKSCJR"></script>
+
+  <meta charset="UTF-8"/>
+  <link rel="icon" href="/fragvalue_icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="description" content="FragValue Pracc Planner · Le planning hebdo de ton roster CS2 : praccs, try outs, strat time, matchs. Ready check par joueur, partagé en temps réel.">
+  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#080909">
+  <title>FragValue · Pracc Planner (planning du roster)</title>
+
+<link rel="preload" href="/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/spacemono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   PRACC PLANNER · app coach mode (design system V3, page applicative)
+   ══════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#080909;
+  --bg-elevated:#0f1010;
+  --border:rgba(255,255,255,.07);
+  --border-bright:rgba(255,255,255,.14);
+  --text:#e8eaea;
+  --text2:#7a8080;
+  --text3:#4a5050;
+  --accent:#b8ff57;
+  --warn:#ffa971;
+  --danger:#ff6b6b;
+  --display:'Anton',sans-serif;
+  --mono:'Space Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--mono);font-size:13px;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+a{color:inherit}
+button{font-family:var(--mono);cursor:pointer}
+
+.page{max-width:1280px;margin:0 auto;padding:96px 24px 80px}
+
+/* ── HEADER ── */
+.pl-head{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;margin-bottom:20px;
+}
+.pl-title{
+  font-family:var(--display);
+  font-size:clamp(30px,3.5vw,44px);
+  text-transform:uppercase;letter-spacing:-.005em;
+  color:#fff;line-height:1;
+}
+.pl-roster-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;letter-spacing:.06em;color:var(--accent);
+  border:1px solid rgba(184,255,87,.3);
+  background:rgba(184,255,87,.05);
+  padding:5px 12px;border-radius:999px;margin-top:10px;
+}
+.pl-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.btn-lime{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--accent);color:#000;border:none;
+  font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  padding:11px 18px;border-radius:7px;
+  box-shadow:0 0 24px rgba(184,255,87,.2);
+  transition:transform .2s,box-shadow .2s;
+}
+.btn-lime:hover{transform:translateY(-1px);box-shadow:0 0 36px rgba(184,255,87,.35)}
+.btn-ghost{
+  display:inline-flex;align-items:center;gap:8px;
+  background:transparent;color:var(--text);
+  border:1px solid var(--border-bright);
+  font-size:12px;font-weight:700;letter-spacing:.04em;
+  padding:10px 14px;border-radius:7px;
+  transition:border-color .2s;
+}
+.btn-ghost:hover{border-color:rgba(184,255,87,.4)}
+
+/* ── WEEK NAV ── */
+.pl-weeknav{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:18px;flex-wrap:wrap;
+}
+.pl-weeknav button{
+  background:var(--bg-elevated);border:1px solid var(--border);
+  color:var(--text);width:34px;height:34px;border-radius:7px;
+  font-size:15px;display:flex;align-items:center;justify-content:center;
+  transition:border-color .2s;
+}
+.pl-weeknav button:hover{border-color:rgba(184,255,87,.4)}
+.pl-week-label{
+  font-size:12px;letter-spacing:.05em;color:var(--text2);
+  text-transform:uppercase;
+}
+.pl-week-label strong{color:#fff;font-weight:700}
+.pl-today-btn{
+  width:auto !important;padding:0 12px;font-size:11px !important;
+  letter-spacing:.05em;text-transform:uppercase;
+}
+
+/* ── GRID 7 JOURS ── */
+.pl-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:10px;
+  margin-bottom:18px;
+}
+.pl-day{
+  background:var(--bg-elevated);
+  border:1px solid var(--border);border-radius:8px;
+  min-height:170px;padding:12px 10px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.pl-day.today{border-color:rgba(184,255,87,.45);box-shadow:0 0 18px rgba(184,255,87,.08)}
+.pl-day-label{
+  font-size:11px;letter-spacing:.08em;color:var(--text3);
+  display:flex;justify-content:space-between;align-items:baseline;
+}
+.pl-day.today .pl-day-label{color:var(--accent)}
+.pl-day-num{font-size:10px;color:var(--text3)}
+.pl-slot{
+  font-size:12px;line-height:1.35;color:var(--text);
+  padding:8px 9px;border-radius:5px;
+  background:rgba(184,255,87,.06);
+  border-left:2px solid rgba(184,255,87,.45);
+  cursor:pointer;
+  transition:transform .15s,background .15s;
+}
+.pl-slot:hover{transform:translateX(2px);background:rgba(184,255,87,.11)}
+.pl-slot .t{display:block;font-size:10px;color:var(--text3);letter-spacing:.03em}
+.pl-slot.type-match{
+  background:rgba(184,255,87,.2);
+  border-left-color:var(--accent);border-left-width:3px;
+  color:var(--accent);font-weight:700;
+}
+.pl-slot.type-match .t{color:rgba(184,255,87,.7)}
+.pl-slot.type-off,.pl-slot.type-vod_review{
+  background:rgba(255,255,255,.025);
+  border-left-color:var(--text3);color:var(--text2);
+}
+.pl-slot.type-strat_time{border-left-color:#9ad7ff;background:rgba(154,215,255,.06)}
+.pl-slot.type-try_out{border-left-color:var(--warn);background:rgba(255,169,113,.06)}
+.pl-slot-ready{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10px;color:var(--text3);margin-top:4px;letter-spacing:.03em;
+}
+.pl-slot-ready.full{color:var(--accent)}
+.pl-slot-ready.warn{color:var(--warn)}
+
+/* ── FOOTER STATS ── */
+.pl-stats{
+  display:flex;gap:40px;flex-wrap:wrap;
+  padding:18px 22px;
+  background:var(--bg-elevated);
+  border:1px solid var(--border);border-radius:8px;
+}
+.pl-stat{display:flex;flex-direction:column}
+.pl-stat-num{
+  font-family:var(--display);font-size:30px;color:var(--accent);
+  line-height:1;letter-spacing:-.01em;
+}
+.pl-stat-label{
+  font-size:10px;color:var(--text3);margin-top:5px;
+  letter-spacing:.05em;text-transform:uppercase;
+}
+
+/* ── ETATS VIDES ── */
+.pl-empty{
+  text-align:center;padding:90px 24px;
+  border:1px dashed var(--border-bright);border-radius:12px;
+}
+.pl-empty h2{
+  font-family:var(--display);font-size:clamp(24px,3vw,36px);
+  text-transform:uppercase;color:#fff;margin-bottom:12px;
+}
+.pl-empty p{color:var(--text2);max-width:440px;margin:0 auto 24px;line-height:1.6}
+
+/* ── MODALS ── */
+.pl-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.pl-overlay.open{display:flex}
+.pl-modal{
+  width:100%;max-width:460px;max-height:88vh;overflow:auto;
+  background:#0c0d0d;border:1px solid var(--border-bright);
+  border-radius:12px;padding:26px 24px;
+}
+.pl-modal h2{
+  font-family:var(--display);font-size:24px;text-transform:uppercase;
+  color:#fff;margin-bottom:18px;letter-spacing:.01em;
+}
+.pl-field{margin-bottom:14px}
+.pl-field label{
+  display:block;font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--text3);margin-bottom:6px;
+}
+.pl-field input,.pl-field select,.pl-field textarea{
+  width:100%;background:var(--bg);border:1px solid var(--border-bright);
+  border-radius:6px;color:var(--text);font-family:var(--mono);font-size:13px;
+  padding:10px 12px;outline:none;
+}
+.pl-field input:focus,.pl-field select:focus,.pl-field textarea:focus{border-color:rgba(184,255,87,.5)}
+.pl-field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pl-modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+.btn-danger{
+  background:transparent;border:1px solid rgba(255,107,107,.4);color:var(--danger);
+  font-size:12px;font-weight:700;padding:10px 14px;border-radius:7px;
+  margin-right:auto;
+}
+.btn-danger:hover{background:rgba(255,107,107,.08)}
+
+/* Detail modal : RSVP */
+.pl-detail-meta{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.pl-detail-meta div{font-size:12px;color:var(--text2)}
+.pl-detail-meta strong{color:var(--text)}
+.pl-rsvp-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 0;border-top:1px solid var(--border);
+  font-size:12px;
+}
+.pl-rsvp-row .who{color:var(--text)}
+.pl-rsvp-status{font-size:10px;letter-spacing:.05em;text-transform:uppercase}
+.pl-rsvp-status.ready{color:var(--accent)}
+.pl-rsvp-status.no{color:var(--danger)}
+.pl-rsvp-status.maybe{color:var(--warn)}
+.pl-rsvp-status.none{color:var(--text3)}
+.pl-my-rsvp{margin-top:18px}
+.pl-my-rsvp-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.pl-rsvp-btns{display:flex;gap:8px}
+.pl-rsvp-btn{
+  flex:1;background:var(--bg);border:1px solid var(--border-bright);
+  color:var(--text2);font-size:11px;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;padding:10px 8px;border-radius:7px;
+  transition:all .15s;
+}
+.pl-rsvp-btn:hover{border-color:rgba(184,255,87,.4)}
+.pl-rsvp-btn.active-ready{background:rgba(184,255,87,.15);border-color:var(--accent);color:var(--accent)}
+.pl-rsvp-btn.active-maybe{background:rgba(255,169,113,.12);border-color:var(--warn);color:var(--warn)}
+.pl-rsvp-btn.active-no{background:rgba(255,107,107,.1);border-color:var(--danger);color:var(--danger)}
+
+.pl-toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:#0c0d0d;border:1px solid rgba(184,255,87,.4);color:var(--text);
+  font-size:12px;padding:12px 20px;border-radius:8px;z-index:300;
+  transition:transform .3s;box-shadow:0 12px 40px rgba(0,0,0,.5);
+}
+.pl-toast.show{transform:translateX(-50%) translateY(0)}
+
+@media (max-width:980px){
+  .pl-grid{grid-template-columns:repeat(2,1fr)}
+  .pl-day{min-height:120px}
+}
+@media (max-width:560px){
+  .page{padding:88px 14px 56px}
+  .pl-grid{grid-template-columns:1fr}
+  .pl-stats{gap:22px}
+  .pl-field-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body data-page="pracc-planner">
+
+<main id="main-content" class="page">
+  <div id="app">
+    <div class="pl-empty" style="border:none">
+      <p>Chargement du planner...</p>
+    </div>
+  </div>
+</main>
+
+<div class="pl-overlay" id="editOverlay" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+  <div class="pl-modal">
+    <h2 id="editTitle">Nouvelle session</h2>
+    <form id="editForm">
+      <input type="hidden" id="fEventId">
+      <div class="pl-field-row">
+        <div class="pl-field">
+          <label for="fType">Type</label>
+          <select id="fType">
+            <option value="pracc">Pracc</option>
+            <option value="match">Match</option>
+            <option value="strat_time">Strat time</option>
+            <option value="vod_review">VOD review</option>
+            <option value="try_out">Try out</option>
+            <option value="off">Off / repos</option>
+          </select>
+        </div>
+        <div class="pl-field">
+          <label for="fDuration">Durée (min)</label>
+          <input type="number" id="fDuration" min="15" max="720" step="15" value="120">
+        </div>
+      </div>
+      <div class="pl-field">
+        <label for="fStart">Date et heure</label>
+        <input type="datetime-local" id="fStart" required>
+      </div>
+      <div class="pl-field-row">
+        <div class="pl-field">
+          <label for="fMap">Map (optionnel)</label>
+          <input type="text" id="fMap" placeholder="Mirage, Inferno...">
+        </div>
+        <div class="pl-field">
+          <label for="fOpponent">Adversaire (optionnel)</label>
+          <input type="text" id="fOpponent" placeholder="vs DropOff">
+        </div>
+      </div>
+      <div class="pl-field">
+        <label for="fNotes">Notes (optionnel)</label>
+        <textarea id="fNotes" rows="2" placeholder="Focus T-side, try out smoke connector..."></textarea>
+      </div>
+      <div class="pl-modal-actions">
+        <button type="button" class="btn-danger" id="btnDelete" style="display:none">Supprimer</button>
+        <button type="button" class="btn-ghost" onclick="closeEdit()">Annuler</button>
+        <button type="submit" class="btn-lime" id="btnSave">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="pl-overlay" id="detailOverlay" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+  <div class="pl-modal">
+    <h2 id="detailTitle">Session</h2>
+    <div class="pl-detail-meta" id="detailMeta"></div>
+    <div id="detailRsvps"></div>
+    <div class="pl-my-rsvp" id="myRsvpBlock">
+      <div class="pl-my-rsvp-label">Ta dispo</div>
+      <div class="pl-rsvp-btns">
+        <button class="pl-rsvp-btn" id="rsvpReady" onclick="setRsvp('ready')">Ready</button>
+        <button class="pl-rsvp-btn" id="rsvpMaybe" onclick="setRsvp('maybe')">Peut-être</button>
+        <button class="pl-rsvp-btn" id="rsvpNo" onclick="setRsvp('no')">Pas dispo</button>
+      </div>
+    </div>
+    <div class="pl-modal-actions">
+      <button type="button" class="btn-ghost" id="btnEditFromDetail" style="display:none">Modifier</button>
+      <button type="button" class="btn-ghost" onclick="closeDetail()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="pl-toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script defer>
+document.addEventListener('DOMContentLoaded', async function() {
+  'use strict';
+  if (typeof supabase === 'undefined') {
+    document.getElementById('app').innerHTML = '<div class="pl-empty"><h2>Erreur réseau</h2><p>Impossible de charger les dépendances. Recharge la page.</p></div>';
+    return;
+  }
+
+  const SB_URL  = 'https://xmyruycvvkmcwysfygcq.supabase.co';
+  const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhteXJ1eWN2dmttY3d5c2Z5Z2NxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTQzMzcsImV4cCI6MjA4OTUzMDMzN30.TaPIaI7puA3qnIrkHQ-VL9o9QgegmOjJR8yYVYsi8oI';
+  const sb = supabase.createClient(SB_URL, SB_ANON);
+  window._sb = sb;
+
+  const TYPE_LABELS = {
+    pracc: 'Pracc', match: 'Match', strat_time: 'Strat time',
+    vod_review: 'VOD review', try_out: 'Try out', off: 'Off'
+  };
+  const DAYS = ['LUN','MAR','MER','JEU','VEN','SAM','DIM'];
+
+  // ── State ──
+  let session = null;
+  let roster = null;
+  let players = [];
+  let isOwner = false;
+  let canEdit = false;
+  let weekStart = mondayOf(new Date());
+  let events = [];
+  let rsvps = {};   // event_id -> [{user_id, status}]
+  let currentDetail = null;
+
+  function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function mondayOf(d) {
+    const x = new Date(d); x.setHours(0,0,0,0);
+    const day = (x.getDay() + 6) % 7;
+    x.setDate(x.getDate() - day);
+    return x;
+  }
+  function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  function fmtTime(iso) {
+    const d = new Date(iso);
+    return String(d.getHours()).padStart(2,'0') + 'h' + (d.getMinutes() ? String(d.getMinutes()).padStart(2,'0') : '');
+  }
+  function fmtRange(start) {
+    const end = addDays(start, 6);
+    const f = (d) => d.getDate() + ' ' + d.toLocaleDateString('fr-FR', { month: 'short' });
+    return f(start) + ' au ' + f(end);
+  }
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2600);
+  }
+  function playerName(uid) {
+    const p = players.find(p => p.user_id === uid);
+    if (p) return p.faceit_nickname || 'Joueur';
+    if (roster && roster.user_id === uid) return 'Coach';
+    return 'Membre';
+  }
+
+  // ── Auth + roster ──
+  const { data: sessRes } = await sb.auth.getSession();
+  session = sessRes && sessRes.session;
+  if (!session) {
+    document.getElementById('app').innerHTML =
+      '<div class="pl-empty"><h2>Connecte-toi</h2><p>Le Pracc Planner est réservé aux rosters FragValue. Connecte-toi pour voir le planning de ton équipe.</p><a href="/login.html" class="btn-lime">Se connecter</a></div>';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/roster?view=my_roster', {
+      headers: { 'Authorization': 'Bearer ' + session.access_token }
+    });
+    const d = await res.json();
+    roster = d.roster;
+    players = d.players || [];
+    isOwner = !!d.is_owner;
+  } catch (e) { roster = null; }
+
+  if (!roster) {
+    document.getElementById('app').innerHTML =
+      '<div class="pl-empty"><h2>Pas encore de roster</h2><p>Le planner se branche sur ton équipe. Crée ton roster et invite tes joueurs, le planning hebdo apparaîtra ici.</p><a href="/team.html" class="btn-lime">Créer mon roster</a></div>';
+    return;
+  }
+  const me = players.find(p => p.user_id === session.user.id);
+  canEdit = isOwner || !!(me && me.is_captain);
+
+  // ── Data ──
+  async function loadWeek() {
+    const from = weekStart.toISOString();
+    const to = addDays(weekStart, 7).toISOString();
+    const { data: evts, error } = await sb.from('roster_events')
+      .select('*')
+      .eq('roster_id', roster.id)
+      .gte('starts_at', from).lt('starts_at', to)
+      .order('starts_at');
+    if (error) { toast('Erreur de chargement'); return; }
+    events = evts || [];
+    rsvps = {};
+    if (events.length) {
+      const { data: rs } = await sb.from('roster_event_rsvps')
+        .select('event_id,user_id,status')
+        .in('event_id', events.map(e => e.id));
+      (rs || []).forEach(r => {
+        (rsvps[r.event_id] = rsvps[r.event_id] || []).push(r);
+      });
+    }
+    render();
+  }
+
+  // ── Render ──
+  function render() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const teamSize = Math.max(players.filter(p => !p.is_sub).length, 1);
+
+    let daysHtml = '';
+    for (let i = 0; i < 7; i++) {
+      const day = addDays(weekStart, i);
+      const dayEvents = events.filter(e => {
+        const d = new Date(e.starts_at);
+        return d.getFullYear() === day.getFullYear() && d.getMonth() === day.getMonth() && d.getDate() === day.getDate();
+      });
+      const slots = dayEvents.map(e => {
+        const r = rsvps[e.id] || [];
+        const ready = r.filter(x => x.status === 'ready').length;
+        const readyCls = ready >= teamSize ? 'full' : (r.some(x => x.status === 'no') ? 'warn' : '');
+        const label = e.title || TYPE_LABELS[e.event_type] || e.event_type;
+        const extra = e.event_type === 'match' && e.opponent ? ' ' + escHtml(e.opponent) : '';
+        return '<div class="pl-slot type-' + e.event_type + '" data-id="' + e.id + '">' +
+          '<span class="t">' + fmtTime(e.starts_at) + (e.map ? ' · ' + escHtml(e.map) : '') + '</span>' +
+          escHtml(label) + extra +
+          (e.event_type !== 'off' ? '<span class="pl-slot-ready ' + readyCls + '">' + ready + ' / ' + teamSize + ' ready</span>' : '') +
+          '</div>';
+      }).join('');
+      const isToday = day.getTime() === today.getTime();
+      daysHtml += '<div class="pl-day' + (isToday ? ' today' : '') + '">' +
+        '<div class="pl-day-label"><span>' + DAYS[i] + '</span><span class="pl-day-num">' + day.getDate() + '</span></div>' +
+        slots + '</div>';
+    }
+
+    const praccMin = events.filter(e => e.event_type === 'pracc').reduce((s, e) => s + (e.duration_min || 0), 0);
+    const praccH = Math.floor(praccMin / 60) + 'h' + (praccMin % 60 ? String(praccMin % 60).padStart(2,'0') : '');
+    const matches = events.filter(e => e.event_type === 'match').length;
+    const allR = Object.values(rsvps).flat();
+    const readyPct = allR.length ? Math.round(allR.filter(r => r.status === 'ready').length / allR.length * 100) : 0;
+
+    document.getElementById('app').innerHTML =
+      '<div class="pl-head">' +
+        '<div>' +
+          '<div class="pl-title">Pracc Planner</div>' +
+          '<span class="pl-roster-tag">' + escHtml(roster.team_name) + (roster.tag ? ' · ' + escHtml(roster.tag) : '') + (canEdit ? ' · coach' : '') + '</span>' +
+        '</div>' +
+        '<div class="pl-actions">' +
+          (canEdit ? '<button class="btn-lime" id="btnNew">+ Session</button>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="pl-weeknav">' +
+        '<button id="wPrev" aria-label="Semaine précédente">‹</button>' +
+        '<button id="wNext" aria-label="Semaine suivante">›</button>' +
+        '<button id="wToday" class="pl-today-btn">Cette semaine</button>' +
+        '<span class="pl-week-label">Semaine du <strong>' + fmtRange(weekStart) + '</strong></span>' +
+      '</div>' +
+      '<div class="pl-grid">' + daysHtml + '</div>' +
+      (events.length === 0
+        ? '<div class="pl-empty"><h2>Semaine vide</h2><p>' + (canEdit
+            ? 'Planifie ta première session : pracc, strat time, match. Ton roster verra tout en temps réel et confirmera sa dispo.'
+            : 'Ton coach n\'a encore rien planifié cette semaine.') + '</p>' +
+          (canEdit ? '<button class="btn-lime" id="btnNewEmpty">Planifier la semaine</button>' : '') + '</div>'
+        : '<div class="pl-stats">' +
+            '<div class="pl-stat"><span class="pl-stat-num">' + (praccMin ? praccH : '0h') + '</span><span class="pl-stat-label">Pracc planifié</span></div>' +
+            '<div class="pl-stat"><span class="pl-stat-num">' + events.length + '</span><span class="pl-stat-label">Sessions</span></div>' +
+            '<div class="pl-stat"><span class="pl-stat-num">' + matches + '</span><span class="pl-stat-label">Match' + (matches > 1 ? 's' : '') + '</span></div>' +
+            '<div class="pl-stat"><span class="pl-stat-num">' + readyPct + '%</span><span class="pl-stat-label">Réponses ready</span></div>' +
+          '</div>');
+
+    document.getElementById('wPrev').onclick = () => { weekStart = addDays(weekStart, -7); loadWeek(); };
+    document.getElementById('wNext').onclick = () => { weekStart = addDays(weekStart, 7); loadWeek(); };
+    document.getElementById('wToday').onclick = () => { weekStart = mondayOf(new Date()); loadWeek(); };
+    const bn = document.getElementById('btnNew'); if (bn) bn.onclick = () => openEdit(null);
+    const bne = document.getElementById('btnNewEmpty'); if (bne) bne.onclick = () => openEdit(null);
+    document.querySelectorAll('.pl-slot').forEach(el => {
+      el.onclick = () => openDetail(el.getAttribute('data-id'));
+    });
+  }
+
+  // ── Modal edition ──
+  window.closeEdit = () => document.getElementById('editOverlay').classList.remove('open');
+  function openEdit(evt) {
+    document.getElementById('editTitle').textContent = evt ? 'Modifier la session' : 'Nouvelle session';
+    document.getElementById('fEventId').value = evt ? evt.id : '';
+    document.getElementById('fType').value = evt ? evt.event_type : 'pracc';
+    document.getElementById('fDuration').value = evt ? evt.duration_min : 120;
+    const base = evt ? new Date(evt.starts_at) : (() => { const d = addDays(weekStart, 1); d.setHours(20, 0, 0, 0); return d; })();
+    const pad = (n) => String(n).padStart(2, '0');
+    document.getElementById('fStart').value = base.getFullYear() + '-' + pad(base.getMonth()+1) + '-' + pad(base.getDate()) + 'T' + pad(base.getHours()) + ':' + pad(base.getMinutes());
+    document.getElementById('fMap').value = evt && evt.map ? evt.map : '';
+    document.getElementById('fOpponent').value = evt && evt.opponent ? evt.opponent : '';
+    document.getElementById('fNotes').value = evt && evt.notes ? evt.notes : '';
+    document.getElementById('btnDelete').style.display = evt ? '' : 'none';
+    document.getElementById('editOverlay').classList.add('open');
+  }
+
+  document.getElementById('editForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('fEventId').value;
+    const payload = {
+      roster_id: roster.id,
+      event_type: document.getElementById('fType').value,
+      starts_at: new Date(document.getElementById('fStart').value).toISOString(),
+      duration_min: parseInt(document.getElementById('fDuration').value, 10) || 120,
+      map: document.getElementById('fMap').value.trim() || null,
+      opponent: document.getElementById('fOpponent').value.trim() || null,
+      notes: document.getElementById('fNotes').value.trim() || null,
+      created_by: session.user.id
+    };
+    const q = id
+      ? sb.from('roster_events').update(payload).eq('id', id)
+      : sb.from('roster_events').insert(payload);
+    const { error } = await q;
+    if (error) { toast('Erreur : ' + (error.message || 'enregistrement impossible')); return; }
+    closeEdit();
+    toast(id ? 'Session modifiée' : 'Session planifiée');
+    loadWeek();
+  };
+
+  document.getElementById('btnDelete').onclick = async () => {
+    const id = document.getElementById('fEventId').value;
+    if (!id) return;
+    const { error } = await sb.from('roster_events').delete().eq('id', id);
+    if (error) { toast('Erreur : suppression impossible'); return; }
+    closeEdit();
+    toast('Session supprimée');
+    loadWeek();
+  };
+
+  // ── Modal detail + RSVP ──
+  window.closeDetail = () => document.getElementById('detailOverlay').classList.remove('open');
+  function openDetail(id) {
+    const evt = events.find(e => e.id === id);
+    if (!evt) return;
+    currentDetail = evt;
+    const label = evt.title || TYPE_LABELS[evt.event_type] || evt.event_type;
+    document.getElementById('detailTitle').textContent = label + (evt.opponent ? ' ' + evt.opponent : '');
+    const d = new Date(evt.starts_at);
+    const dur = evt.duration_min >= 60
+      ? Math.floor(evt.duration_min / 60) + 'h' + (evt.duration_min % 60 ? String(evt.duration_min % 60).padStart(2,'0') : '')
+      : evt.duration_min + ' min';
+    document.getElementById('detailMeta').innerHTML =
+      '<div><strong>' + d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) + '</strong> à <strong>' + fmtTime(evt.starts_at) + '</strong> · ' + dur + '</div>' +
+      (evt.map ? '<div>Map : <strong>' + escHtml(evt.map) + '</strong></div>' : '') +
+      (evt.notes ? '<div>' + escHtml(evt.notes) + '</div>' : '');
+
+    const r = rsvps[evt.id] || [];
+    const memberIds = players.filter(p => p.user_id).map(p => p.user_id);
+    if (isOwner && roster.user_id && !memberIds.includes(roster.user_id)) memberIds.push(roster.user_id);
+    const rows = memberIds.map(uid => {
+      const mine = r.find(x => x.user_id === uid);
+      const st = mine ? mine.status : 'none';
+      const stLabel = { ready: 'Ready', no: 'Pas dispo', maybe: 'Peut-être', none: 'En attente' }[st];
+      return '<div class="pl-rsvp-row"><span class="who">' + escHtml(playerName(uid)) + '</span><span class="pl-rsvp-status ' + st + '">' + stLabel + '</span></div>';
+    }).join('');
+    document.getElementById('detailRsvps').innerHTML = rows;
+
+    const mine = r.find(x => x.user_id === session.user.id);
+    ['ready','maybe','no'].forEach(s => {
+      const btn = document.getElementById('rsvp' + s.charAt(0).toUpperCase() + s.slice(1));
+      btn.className = 'pl-rsvp-btn' + (mine && mine.status === s ? ' active-' + s : '');
+    });
+
+    const be = document.getElementById('btnEditFromDetail');
+    if (canEdit) {
+      be.style.display = '';
+      be.onclick = () => { closeDetail(); openEdit(evt); };
+    } else {
+      be.style.display = 'none';
+    }
+    document.getElementById('detailOverlay').classList.add('open');
+  }
+
+  window.setRsvp = async (status) => {
+    if (!currentDetail) return;
+    const { error } = await sb.from('roster_event_rsvps').upsert(
+      { event_id: currentDetail.id, user_id: session.user.id, status: status, updated_at: new Date().toISOString() },
+      { onConflict: 'event_id,user_id' }
+    );
+    if (error) { toast('Erreur : dispo non enregistrée'); return; }
+    toast('Dispo enregistrée');
+    await loadWeek();
+    openDetail(currentDetail.id);
+  };
+
+  // Fermeture overlay au clic dehors
+  ['editOverlay','detailOverlay'].forEach(id => {
+    document.getElementById(id).addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+    });
+  });
+
+  loadWeek();
+});
+</script>
+<script src="/nav.js" defer></script>
+<script src="/footer.js" defer></script>
+</body>
+</html>
