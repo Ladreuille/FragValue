@@ -19,13 +19,14 @@
   const FV_LANG = (document.documentElement.lang === 'en'
                 || window.location.pathname.startsWith('/en/')) ? 'en' : 'fr';
   const T_FR = {
-    monJeu: 'Mon jeu', progresser: 'Progresser', pros: 'Pros', equipe: 'Équipe',
+    monJeu: 'Mon jeu', progresser: 'Progresser', pros: 'Pros', equipe: 'Coach mode',
     apercu: 'Aperçu', mesMatchs: 'Mes matchs', nouvelleDemo: 'Nouvelle démo',
     scout: 'Scout', comparer: 'Comparer',
     roadmap: 'Roadmap', maProgression: 'Ma progression', guideStats: 'Guide des stats', lineupLib: 'Lineup library', blog: 'Blog',
     astuces: 'Astuces & tips', howItWorks: 'Comment ça marche', sitemap: 'Plan du site',
     proDemos: 'Pro demos (HLTV)', proBenchmarks: 'Pro benchmarks',
-    teamDash: 'Team dashboard', prepVeto: 'Prep veto', antiStrat: 'Anti-strat',
+    teamDash: 'Roster & équipe', prepVeto: 'Prep veto', antiStrat: 'Anti-strat',
+    coachHub: 'QG coach mode', vodCoord: 'VOD Coordinator', praccCal: 'Pracc Calendar',
     soonBadge: 'BIENTÔT',
     tarifs: 'Tarifs', connexion: 'Connexion', monEspace: 'Mon espace',
     skipLink: 'Aller au contenu principal',
@@ -41,13 +42,14 @@
     locale: 'fr-FR',
   };
   const T_EN = {
-    monJeu: 'My game', progresser: 'Improve', pros: 'Pros', equipe: 'Team',
+    monJeu: 'My game', progresser: 'Improve', pros: 'Pros', equipe: 'Coach mode',
     apercu: 'Overview', mesMatchs: 'My matches', nouvelleDemo: 'New demo',
     scout: 'Scout', comparer: 'Compare',
     roadmap: 'Roadmap', maProgression: 'My progress', guideStats: 'Stats guide', lineupLib: 'Lineup library', blog: 'Blog',
     astuces: 'Tips & tricks', howItWorks: 'How it works', sitemap: 'Sitemap',
     proDemos: 'Pro demos (HLTV)', proBenchmarks: 'Pro benchmarks',
-    teamDash: 'Team dashboard', prepVeto: 'Veto prep', antiStrat: 'Anti-strat',
+    teamDash: 'Roster & team', prepVeto: 'Veto prep', antiStrat: 'Anti-strat',
+    coachHub: 'Coach mode hub', vodCoord: 'VOD Coordinator', praccCal: 'Pracc Calendar',
     soonBadge: 'SOON',
     tarifs: 'Pricing', connexion: 'Login', monEspace: 'My account',
     skipLink: 'Skip to main content',
@@ -310,9 +312,12 @@
       key: 'equipe',
       label: T.equipe,
       items: [
+        { href: link('/coach-dashboard.html'), label: T.coachHub },
         { href: link('/team.html'), label: T.teamDash, badge: 'elite' },
         { href: link('/prep-veto.html'), label: T.prepVeto, badge: 'elite' },
         { href: link('/anti-strat.html'), label: T.antiStrat, badge: 'elite' },
+        { href: link('/vod-coordinator.html'), label: T.vodCoord, badge: 'soon' },
+        { href: link('/pracc-calendar.html'), label: T.praccCal, badge: 'soon' },
       ],
     },
   ];
