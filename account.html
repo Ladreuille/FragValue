@@ -503,9 +503,14 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
     .toggle input:checked + .toggle-slider{background:rgba(184,255,87,.15);border-color:var(--accent)}
     .toggle input:checked + .toggle-slider::before{transform:translateX(20px);background:var(--accent)}
 
-    /* Header section de la page */
+    /* Header section de la page (V3 : uppercase Anton, reste dense car
+       page applicative, pas un hero marketing) */
     .page-header{margin-bottom:24px}
-    .page-title{font-family:var(--display);font-size:32px;letter-spacing:.02em;color:var(--text);margin-bottom:4px}
+    .page-title{
+      font-family:var(--display);font-size:clamp(30px,3.5vw,44px);
+      letter-spacing:-.005em;text-transform:uppercase;
+      color:#fff;margin-bottom:6px;line-height:1
+    }
     .page-sub{font-size:12px;color:var(--text2);font-family:var(--mono)}
 
     @media(max-width:768px){.page{padding:16px}}
@@ -549,7 +554,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
       <!-- Sous-titre dynamique mis a jour par setTab() pour donner le contexte
            de chaque tab. Ne pas hardcoder "abonnement+prefs+securite" si on
            est sur le tab Feedback (par ex). -->
-      <div class="page-sub" id="pageSub">Plan, parrainage, credits Coach IA, communauté Discord</div>
+      <div class="page-sub" id="pageSub">Plan, parrainage, crédits Coach IA, communauté Discord</div>
     </div>
 
     <!-- FIRST DEMO BANNER : affiche si l'user n'a jamais analyse de demo.
@@ -658,7 +663,7 @@ gtag('config', 'G-H6PLDKSCJR', { anonymize_ip: true, cookie_flags: 'SameSite=Str
           </div>
           <div class="cc-balance-wrap">
             <div class="cc-balance-label">Crédits bonus</div>
-            <div class="cc-balance-value" id="ccBalance">0 <span>credits</span></div>
+            <div class="cc-balance-value" id="ccBalance">0 <span>crédits</span></div>
             <div class="cc-balance-sub" id="ccExpiry">-</div>
           </div>
           <button type="button" class="cc-buy-btn" onclick="openCreditsModal()">
@@ -1302,7 +1307,7 @@ const isEN = document.documentElement.lang === 'en' || window.location.pathname.
 // Sous-titres contextuels par tab. Refletent ce que l'user va voir
 // concretement (plus parlant qu'un generique "abonnement+settings+securite").
 const TAB_SUBTITLES = {
-  subscription: 'Plan, factures, credits Coach IA, communauté Discord',
+  subscription: 'Plan, factures, crédits Coach IA, communauté Discord',
   settings:     'Profil, notifications, parrainage, données scout',
   security:     'Mot de passe, sessions, remboursement, suppression',
   feedback:     'Tickets envoyés à l\'équipe (bug, idée, positif, négatif)',
@@ -2010,7 +2015,7 @@ async function loadTeamMembers(adminEmail) {
           <div class="team-seat-idx">#${s.idx}</div>
           <div class="team-seat-info">
             <div class="team-seat-name">Place libre</div>
-            <div class="team-seat-sub">Click "Inviter un coequipier" ci-dessus</div>
+            <div class="team-seat-sub">Clique sur "Inviter un coéquipier" ci-dessus</div>
           </div>
           <div></div><div></div><div></div>
         </div>`;
@@ -2037,7 +2042,7 @@ async function loadTeamMembers(adminEmail) {
         <div class="team-head-title">Plan Elite · <strong>${d.used_seats || 1}/${d.total_seats || 5}</strong> joueurs actifs</div>
         <button type="button" class="team-invite-btn" onclick="openInviteTeammateModal()" ${canInvite ? '' : 'disabled'}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          ${canInvite ? 'Inviter un coequipier' : 'Toutes les places prises'}
+          ${canInvite ? 'Inviter un coéquipier' : 'Toutes les places prises'}
         </button>
       </div>
       <div class="team-seats">${seatsHtml}</div>
@@ -2071,7 +2076,7 @@ async function openInviteTeammateModal() {
   modal.innerHTML = `
     <div style="position:relative;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:28px 32px;max-width:480px;width:100%">
       <button type="button" id="invTeamClose" aria-label="Fermer" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer">×</button>
-      <h2 style="font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:8px;letter-spacing:.02em">Inviter un coequipier</h2>
+      <h2 style="font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:8px;letter-spacing:.02em">Inviter un coéquipier</h2>
       <p style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:18px">L'invite recevra un lien magique pour activer Pro sur son compte. Aucune action de paiement requise de sa part - tu paies son acces avec ton abonnement Elite.</p>
       <label for="invTeamEmail" style="display:block;font-family:var(--mono);font-size:11px;color:var(--text2);margin-bottom:6px">Email du coequipier *</label>
       <input id="invTeamEmail" type="email" placeholder="player@example.com" required style="width:100%;background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12px;color:var(--text);margin-bottom:14px;outline:none">
@@ -2723,7 +2728,7 @@ async function openRefundDialog() {
     modal.innerHTML = `
       <div style="position:relative;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:28px 32px;max-width:480px;width:100%">
         <button type="button" id="refundClose" aria-label="Fermer" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer">×</button>
-        <h2 id="refundTitle" style="font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:10px;letter-spacing:.02em">Remboursement integral ${eur} ${cur}</h2>
+        <h2 id="refundTitle" style="font-family:var(--display);font-size:22px;color:var(--text);margin-bottom:10px;letter-spacing:.02em">Remboursement intégral ${eur} ${cur}</h2>
         <p style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px">
           On te rembourse <strong style="color:var(--accent)">${eur} ${cur}</strong> (dernier paiement). Ton acces Pro/Elite sera coupe immediatement et tu repasseras en plan Free. Le credit apparait sur ta CB sous 5 a 10 jours ouvres.
         </p>
