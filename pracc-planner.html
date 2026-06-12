@@ -571,6 +571,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('editOverlay').classList.add('open');
   }
 
+  // Notification Discord (fire and forget) : DM aux joueurs lies +
+  // channel d'equipe si configure. L'echec ne bloque jamais le planner.
+  function notifyDiscord(eventId, action, snapshot) {
+    try {
+      fetch('/api/planner-notify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({ event_id: eventId, action: action, snapshot: snapshot || null })
+      }).catch(() => {});
+    } catch (e) { /* silencieux */ }
+  }
+
   document.getElementById('editForm').onsubmit = async (e) => {
     e.preventDefault();
     const id = document.getElementById('fEventId').value;
@@ -584,23 +599,34 @@ document.addEventListener('DOMContentLoaded', async function() {
       notes: document.getElementById('fNotes').value.trim() || null,
       created_by: session.user.id
     };
-    const q = id
-      ? sb.from('roster_events').update(payload).eq('id', id)
-      : sb.from('roster_events').insert(payload);
-    const { error } = await q;
-    if (error) { toast('Erreur : ' + (error.message || 'enregistrement impossible')); return; }
+    let savedId = id;
+    if (id) {
+      const { error } = await sb.from('roster_events').update(payload).eq('id', id);
+      if (error) { toast('Erreur : ' + (error.message || 'enregistrement impossible')); return; }
+    } else {
+      const { data, error } = await sb.from('roster_events').insert(payload).select('id').single();
+      if (error) { toast('Erreur : ' + (error.message || 'enregistrement impossible')); return; }
+      savedId = data && data.id;
+    }
     closeEdit();
     toast(id ? 'Session modifiée' : 'Session planifiée');
+    if (savedId) notifyDiscord(savedId, id ? 'updated' : 'created');
     loadWeek();
   };
 
   document.getElementById('btnDelete').onclick = async () => {
     const id = document.getElementById('fEventId').value;
     if (!id) return;
+    const evt = events.find(e => e.id === id);
     const { error } = await sb.from('roster_events').delete().eq('id', id);
     if (error) { toast('Erreur : suppression impossible'); return; }
     closeEdit();
     toast('Session supprimée');
+    if (evt) notifyDiscord(id, 'deleted', {
+      roster_id: evt.roster_id, event_type: evt.event_type,
+      starts_at: evt.starts_at, duration_min: evt.duration_min,
+      map: evt.map, opponent: evt.opponent
+    });
     loadWeek();
   };
 

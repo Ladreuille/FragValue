@@ -342,6 +342,78 @@ export default async function handler(req, res) {
     }
   }
 
-  // Autres types non geres pour l'instant (modals, components, autocomplete)
+  // Type 3 = message component (boutons RSVP du Pracc Planner)
+  if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
+    const customId = interaction.data?.custom_id || '';
+    if (customId.startsWith('rsvp:')) {
+      try {
+        const response = await handlePlannerRsvp(interaction, customId);
+        return res.status(200).json(response);
+      } catch (err) {
+        console.error('[discord-interactions] rsvp failed:', err);
+        return res.status(200).json(ephemeralResponse(
+          'Erreur lors de l\'enregistrement de ta dispo. Reessaye ou passe par le planner web.',
+        ));
+      }
+    }
+    return res.status(200).json(ephemeralResponse('Bouton inconnu.'));
+  }
+
+  // Autres types non geres pour l'instant (modals, autocomplete)
   return res.status(200).json({ type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE, data: { content: 'Type d\'interaction non gere.', flags: MessageFlags.EPHEMERAL } });
+}
+
+// ── Pracc Planner : clic sur un bouton Ready / Peut-etre / Pas dispo ───────
+// custom_id = rsvp:<event_id>:<ready|maybe|no>
+// Le Discord user doit avoir lie son compte (discord_links) et etre membre
+// du roster (roster_players) ou owner (rosters.user_id).
+async function handlePlannerRsvp(interaction, customId) {
+  const [, eventId, status] = customId.split(':');
+  if (!eventId || !['ready', 'maybe', 'no'].includes(status)) {
+    return ephemeralResponse('Reponse invalide.');
+  }
+  const discordUserId = interaction.member?.user?.id || interaction.user?.id;
+  if (!discordUserId) return ephemeralResponse('Impossible de t\'identifier sur Discord.');
+
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    return ephemeralResponse('Service temporairement indisponible (config Supabase).');
+  }
+  const { createClient } = await import('@supabase/supabase-js');
+  const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+  const { data: link } = await sb.from('discord_links')
+    .select('user_id').eq('discord_id', discordUserId).maybeSingle();
+  if (!link?.user_id) {
+    return ephemeralResponse(
+      `Ton compte Discord n'est pas lie a FragValue. Lie-le depuis ${'https://fragvalue.com/account.html'} puis reclique.`,
+    );
+  }
+
+  // L'event existe-t-il encore ?
+  const { data: evt } = await sb.from('roster_events')
+    .select('id,roster_id,event_type,starts_at').eq('id', eventId).maybeSingle();
+  if (!evt) return ephemeralResponse('Cette session a ete supprimee du planner.');
+
+  // Membership : membre du roster ou owner
+  const { data: roster } = await sb.from('rosters')
+    .select('user_id').eq('id', evt.roster_id).maybeSingle();
+  const { data: membership } = await sb.from('roster_players')
+    .select('id').eq('roster_id', evt.roster_id).eq('user_id', link.user_id).maybeSingle();
+  if (!membership && roster?.user_id !== link.user_id) {
+    return ephemeralResponse('Tu ne fais pas partie de ce roster.');
+  }
+
+  const { error } = await sb.from('roster_event_rsvps').upsert(
+    { event_id: eventId, user_id: link.user_id, status, updated_at: new Date().toISOString() },
+    { onConflict: 'event_id,user_id' },
+  );
+  if (error) {
+    console.error('[discord-interactions] rsvp upsert:', error.message);
+    return ephemeralResponse('Erreur d\'enregistrement. Reessaye.');
+  }
+
+  const labels = { ready: 'Ready', maybe: 'Peut-etre', no: 'Pas dispo' };
+  return ephemeralResponse(
+    `Dispo enregistree : **${labels[status]}**. Le planner est a jour : https://fragvalue.com/pracc-planner.html`,
+  );
 }
